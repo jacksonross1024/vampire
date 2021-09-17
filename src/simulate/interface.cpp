@@ -14,6 +14,7 @@
 #include "errors.hpp"
 #include "sim.hpp"
 #include "vio.hpp"
+#include "stats.hpp"
 
 // Internal sim header
 #include "internal.hpp"
@@ -219,6 +220,26 @@ namespace sim{
          double tt = atof(value.c_str()); // convert string to uint64_t
          vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 0, 1000,"input","0 - 1 A");
          sim::domain_wall_width = tt;
+         return true;
+      }
+      test = "convergence-criteria";
+      if (word == test) {
+         sim::calculate_program_convergence = true;
+         stats::calculate_system_energy = true;
+         stats::calculate_system_magnetization = true;
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unitless", 0.0, 1.0, "input", "0 - 1");
+         sim::convergence_criteria = c;
+      //   std::cout << "convergence-criteria: " << c << std::endl;
+         return true;
+      }
+      test = "convergence-check";
+      if (word == test) {
+         sim::calculate_program_convergence = true;
+         unsigned int c = atoi(value.c_str());
+         vin::check_for_valid_int(c, word, line, prefix, 2, sim::equilibration_time, "input", "2 - equilibration-time-steps");
+         sim::convergence_check = c;
+     //    std::cout << "convergence-check: " << c << std::endl;
          return true;
       }
       //--------------------------------------------------------------------

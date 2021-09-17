@@ -129,6 +129,7 @@ namespace vout{
    void mean_system_spin_temperature(std::ostream& stream, bool header);
    void mean_material_spin_temperature(std::ostream& stream, bool header);
 
+   void convergence_rate(std::ostream& stream, bool header);
 
    //-------------------------------------------------------------------------
    // Funciton protypes for functions inside: datalog.cpp

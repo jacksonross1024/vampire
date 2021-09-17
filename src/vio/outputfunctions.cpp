@@ -557,4 +557,13 @@ namespace vout{
          stream << sim::track_pos_z << "\t";
       }
    }
+
+   //Output function 72
+   void convergence_rate(std::ostream& stream, bool header) {
+    //  if (stats::program_convergence.did_converge()) {
+     //    std::cout << "program_convergence " << std::endl;
+         stream << stats::program_convergence.output_convergence_rate(header);
+      
+   }
+
 }

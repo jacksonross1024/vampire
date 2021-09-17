@@ -6,6 +6,7 @@
 program_objects =\
 bmark.o \
 cmc_anisotropy.o \
+convergence.o \
 curie_temperature.o \
 diagnostics.o \
 exchange_stiffness.o \

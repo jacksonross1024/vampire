@@ -266,6 +266,19 @@ const std::vector<double>& energy_statistic_t::get_total_energy(){
 
 }
 
+// 
+// 
+// 
+const double energy_statistic_t::get_total_system_energy() {
+ 
+   const double temp = total_energy[0];
+   return temp;
+
+}
+
+const double energy_statistic_t::get_mean_total_system_energy() {
+   return (mean_total_energy[0] / mean_counter);
+}
 //------------------------------------------------------------------------------------------------------
 // Function to get const reference for total energy data (in Tesla)
 //------------------------------------------------------------------------------------------------------

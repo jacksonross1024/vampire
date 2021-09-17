@@ -42,6 +42,7 @@
 // vio module headers
 #include "internal.hpp"
 #include "../create/internal.hpp"
+#include "stats.hpp"
 
 namespace vin{
 
@@ -648,6 +649,7 @@ namespace vin{
             sim::TTG=hscc;
             return EXIT_SUCCESS;
         }
+ 
         //--------------------------------------------------------------------
         test="cooling-function";
         if(word==test){
@@ -1605,6 +1607,15 @@ namespace vin{
             output_list.push_back(68);
             return EXIT_SUCCESS;
         }
+        test = "convergence-rate";
+        if (word == test) {
+           // stats::convergence_program.output_convergence_rate();
+            sim::output_convergence_counter = true;
+            stats::program_convergence.output_convergence();
+          //  output_list.push_back(72);
+            return EXIT_SUCCESS;
+        }
+
 
         //--------------------------------------------------------------------
         // keyword not found

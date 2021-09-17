@@ -408,6 +408,11 @@ std::string magnetization_statistic_t::output_normalized_mean_magnetization_leng
 
 }
 
+const double magnetization_statistic_t::get_normalized_mean_system_magnetization_length() {
+
+   return (mean_magnetization[3] / mean_counter) ; 
+}
+
 //------------------------------------------------------------------------------------------------------
 // Function to output normalised mean magnetisation length values as string
 //------------------------------------------------------------------------------------------------------

@@ -310,6 +310,8 @@ int run(){
    // Precondition spins at equilibration temperature
    montecarlo::monte_carlo_preconditioning();
 
+if (calculate_program_convergence) stats::program_convergence.initialize(sim::convergence_criteria, sim::convergence_check);
+
    // For MPI version, calculate initialisation time
    if(vmpi::my_rank==0){
 		std::cout << "Starting Simulation with Program ";
@@ -657,6 +659,7 @@ void integrate_serial(uint64_t n_steps){
 				}
             // Increment time
             sim::internal::increment_time();
+			if (stats::program_convergence.did_converge()) break;
          }
          break;
 
@@ -670,6 +673,7 @@ void integrate_serial(uint64_t n_steps){
 
 				// increment time
 				sim::internal::increment_time();
+				if (stats::program_convergence.did_converge()) break;
 			}
 			break;
 
@@ -678,6 +682,7 @@ void integrate_serial(uint64_t n_steps){
             sim::LLG_Midpoint();
             // increment time
             sim::internal::increment_time();
+			if (stats::program_convergence.did_converge()) break;
          }
          break;
 
@@ -686,6 +691,7 @@ void integrate_serial(uint64_t n_steps){
 				montecarlo::cmc_step();
 				// increment time
 				sim::internal::increment_time();
+				if (stats::program_convergence.did_converge()) break;
 			}
 			break;
 
@@ -694,6 +700,7 @@ void integrate_serial(uint64_t n_steps){
 				montecarlo::cmc_mc_step();
 				// increment time
 				sim::internal::increment_time();
+				if (stats::program_convergence.did_converge()) break;
 			}
 			break;
 
@@ -702,6 +709,7 @@ void integrate_serial(uint64_t n_steps){
 				sim::internal::llg_quantum_step();
 				// increment time
 				sim::internal::increment_time();
+				if (stats::program_convergence.did_converge()) break;
 			}
 			break;
 
@@ -771,6 +779,7 @@ int integrate_mpi(uint64_t n_steps){
 			#endif
 				// increment time
 				sim::internal::increment_time();
+				if (stats::program_convergence.did_converge()) break;
 			}
 			break;
 
@@ -788,6 +797,7 @@ int integrate_mpi(uint64_t n_steps){
 
 				// increment time
 				sim::internal::increment_time();
+				if (stats::program_convergence.did_converge()) break;
 			}
 			break;
 
@@ -803,6 +813,7 @@ int integrate_mpi(uint64_t n_steps){
 			#endif
 				// increment time
 				sim::internal::increment_time();
+				if (stats::program_convergence.did_converge()) break;
 			}
 			break;
 
@@ -894,6 +905,7 @@ void multiscale_simulation_steps(int n_steps){
 
          //incremenet time
          sim::internal::increment_time();
+		 if (stats::program_convergence.did_converge()) break;
       }
 
    }

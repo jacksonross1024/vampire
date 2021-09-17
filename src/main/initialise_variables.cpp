@@ -179,7 +179,7 @@ int default_system(){
 	material[0].element="Ag ";
 
 	// Disable Error Checking
-	err::check=false;
+//	err::check=false;
 
 	// Initialise random number generator
 	mtrandom::grnd.seed(2106975519);

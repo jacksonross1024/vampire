@@ -231,6 +231,11 @@ namespace sim{
 	extern std::vector < double > domain_wall_second_vector_y;
 	extern std::vector < double > domain_wall_second_vector_z;
 
+	extern bool calculate_program_convergence;
+	extern double convergence_criteria;
+	extern unsigned int convergence_check;
+	extern bool output_convergence_counter;
+	
 	//------------------------------------------------------------------------
    // getter functions to give access to internal sim variables
    //------------------------------------------------------------------------

@@ -28,6 +28,8 @@ namespace stats{
    bool calculate_system_spin_temperature       = false;
    bool calculate_material_spin_temperature     = false;
 
+   
+
    energy_statistic_t system_energy("s");
    energy_statistic_t material_energy("m");
 
@@ -47,6 +49,11 @@ namespace stats{
 
    spin_temperature_statistic_t system_spin_temperature("s"); 
    spin_temperature_statistic_t material_spin_temperature("m"); 
+
+   convergence_statistic_t program_convergence("c");
+ 
+
+   
 
    //-----------------------------------------------------------------------------
    // Shared variables used for statistics calculation

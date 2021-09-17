@@ -21,6 +21,8 @@
 #include "unitcell.hpp"
 #include "vio.hpp"
 #include "vmpi.hpp"
+#include "stats.hpp"
+#include "errors.hpp"
 
 // sim namespace
 namespace sim{
@@ -32,9 +34,12 @@ namespace internal{
 // Function to increment time counter and associated variables
 //------------------------------------------------------------------------------
 void increment_time(){
+   if(err::check) std::cout << "increment time has been called" << std::endl;
 
    // set flag checkpoint_loaded_flag to false since first step of simulations was performed
-   sim::checkpoint_loaded_flag=false;
+   sim::checkpoint_loaded_flag = false;
+
+   
 
 	sim::time++;
 	sim::head_position[0]+=sim::head_speed*mp::dt_SI*1.0e10;
@@ -65,6 +70,10 @@ void increment_time(){
                           atoms::z_spin_array,
                           atoms::m_spin_array);
 
+   //std::cout << stats::calculate_system_energy << std::endl;
+
+   if (stats::program_convergence.get_method()) stats::program_convergence.update_counter();            
+   
    return;
 
 }

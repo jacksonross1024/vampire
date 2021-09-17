@@ -272,6 +272,9 @@ namespace vout{
 		case 68:
 			vout::mean_material_spin_temperature(stream, header);
 			break;
+		case 72:
+			vout::convergence_rate(stream, header);
+			break;
         case 999: //AJN
       		vout::standard_deviation(stream,header);
       		break;

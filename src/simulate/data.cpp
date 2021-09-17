@@ -62,6 +62,11 @@ namespace sim{
    uint64_t partial_time = 1000; // same as time-step-increment
    uint64_t equilibration_time = 0; // equilibration time steps
 
+   bool calculate_program_convergence           = false;
+   double convergence_criteria;
+   unsigned int convergence_check;
+   bool output_convergence_counter              = false;
+
    int domain_wall_axis = 0;
    double domain_wall_position = 0.25;
    double domain_wall_discretisation = 10;
