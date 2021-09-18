@@ -103,9 +103,11 @@ int curie_temperature(){
 
 	// Perform Temperature Loop
 	while(sim::temperature<=sim::Tmax){
+		stats::program_convergence.do_converge();
 
 		// Equilibrate system
 		sim::integrate(sim::equilibration_time);
+		stats::program_convergence.end_convergence();
 
 		// Reset mean magnetisation counters
 		stats::mag_m_reset();

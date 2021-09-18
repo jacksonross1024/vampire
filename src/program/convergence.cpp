@@ -31,6 +31,7 @@ namespace stats{
     // Function to tell convergence class to begin convergence analysis
     //-------------------------
     void convergence_statistic_t::do_converge() {
+        if (!sim::calculate_program_convergence) return;
         convergence_method = true;
         counter = 0;
     }
@@ -39,27 +40,35 @@ namespace stats{
     // End of equilibrium check; if flag sent without convergence, sends 0 counter
     //--------------------------
     void convergence_statistic_t::end_convergence() {
-        if (convergence_method) {
+        if (!sim::calculate_program_convergence) return;
+        if (!converged) {
          //   vout::screen_output_list.push_back(72);
        //     vout::file_output_list.push_back(72);
             vout::write_out(std::cout, convergence_output_list);
             std::cout << "Equilibrium may not have been reached. More steps may be necessary." << std::endl;
         }
         convergence_method = false;
+        converged = false;
     }
     //-------------------------
     // Function to return the status past convergence status of a simulation
     //-----------------------------
     bool convergence_statistic_t::did_converge() {
+                if (!sim::calculate_program_convergence) return false;
+
         return converged;
     }
 
     //Getter for convergence method
     bool convergence_statistic_t::get_method() {
+                if (!sim::calculate_program_convergence) return false;
+
         return convergence_method;
     }
 
     unsigned int convergence_statistic_t::get_converged_counter() {
+                if (!sim::calculate_program_convergence) return 0;
+
         return converged_counter;
     }
     //-----------------------------
@@ -97,10 +106,12 @@ namespace stats{
     // Function to test if a simulation has converged. 
     //-----------------------------
     void  convergence_statistic_t::is_converged(unsigned int n_steps) {
+                if (!sim::calculate_program_convergence) return;
 
+        if (err::check) std::cout << "convergence check has been called" << std::endl;
         //test the convergence of the magnetisation and energy of a simulation
-        if (abs(convergence_magnetisation[0] - convergence_magnetisation[1]) < (convergence_magnetisation[0] * convergence_criteria)) magnetisation_converged = true;
-        if (abs(convergence_energy[0] - convergence_energy[1]) < (abs(convergence_energy[0]) * convergence_criteria)) energy_converged = true;
+        if ((abs(convergence_magnetisation[0] - convergence_magnetisation[1])) < (convergence_magnetisation[0] * convergence_criteria)) magnetisation_converged = true;
+        if ((abs(convergence_energy[0] - convergence_energy[1])) < (abs(convergence_energy[0]) * convergence_criteria)) energy_converged = true;
         
         //if both are converged, the convergence is switched
         if (energy_converged && magnetisation_converged) {
@@ -108,9 +119,14 @@ namespace stats{
             convergence_method = false;         // the method set to false so no further analysis is done
             converged_counter = counter;        // count is saved 
             counter = 0;                        // counter reset for next equilibrium check
-            if(output_convergence_counter) std::cout << "Convergence may have occured. Exiting equilibration steps on " << converged_counter << "out of " << sim::equilibration_time << std::endl;             // adds convergence rate to output list if flag is enabled
+            energy_converged = false;           //reset energy
+            magnetisation_converged = false;    //reset magnetisation
+           // if(output_convergence_counter)      vout::write_out(zmag, convergence_output_list);
+            // std::cout << "Convergence may have occured. Exiting equilibration steps on " << converged_counter << " out of " << sim::equilibration_time << std::endl;             // adds convergence rate to output list if flag is enabled
+     
          //   std::cout << "Convergence may have occured. Exiting equilibration steps on " << converged_counter << "out of " << sim::equilibration_time << std::endl;             // adds convergence rate to output list if flag is enabled
-        //std::cout << "Program may have converged on step " << converged_counter << " of " << n_steps << std::endl;
+         //   std::cout << (abs(convergence_energy[0] - convergence_energy[1])) << " vs " << (abs(convergence_energy[0]) * convergence_criteria) << std::endl;
+           //  std::cout << (abs(convergence_magnetisation[0] - convergence_magnetisation[1])) << " vs " << (convergence_magnetisation[0] * convergence_criteria) << std::endl;
         }
       //  return converged;
     }
@@ -119,14 +135,14 @@ namespace stats{
     // Function to initialize the data sets and assign to the convergence arrays. Not meant to be called outside of the class
     //-----------------------------
     void convergence_statistic_t::initialize_first_pass() {
-
+   ////     std::cout << "fail"<< std::endl;
          update_data(atoms::x_spin_array, atoms::y_spin_array, atoms::z_spin_array, atoms::m_spin_array, atoms::type_array, sim::temperature);
-
+//std::cout << "fail"<< std::endl;
         
         convergence_magnetisation[0] = stats::system_magnetization.get_normalized_mean_system_magnetization_length();
-       
+     //  std::cout << "fail"<< std::endl;
         convergence_energy[0]        = stats::system_energy.get_mean_total_system_energy();
-    
+    //std::cout << "fail"<< std::endl;
     }
 
 
@@ -164,7 +180,9 @@ namespace stats{
     // Function to update the convergence arrays. Internal function not meant to be called outside of class
     //-----------------------------
     void convergence_statistic_t::update_convergence() {
+                if (!sim::calculate_program_convergence) return;
 
+        if (err::check) std::cout << "update convergence has been called" << std::endl;
         //First updates the data
         update_data(atoms::x_spin_array, atoms::y_spin_array, atoms::z_spin_array, atoms::m_spin_array, atoms::type_array, sim::temperature);
   
@@ -180,19 +198,18 @@ namespace stats{
     // Function to update the convergence arrays and counter. This is the one to call outside the class
     //-----------------------------
     void convergence_statistic_t::update_counter() {
+                if (!sim::calculate_program_convergence) return;
+
         //if convergence setting has been turned off, this will avoid the convergence
-        if (!convergence_method) {
-            return;
-        }
-           //       std::cout << counter << convergence_check << std::endl;
+        if (err::check == true)   std::cout << "update counter has been called" << std::endl;
 
         //checks convergence on criteria of convergence-check
         if ( (counter % convergence_check == 0) && (counter != 0)) {
-         //   std::cout << "counter multiples of 100 " << counter << std::endl;
+         //   std::cout << "counter multiples of concergence-check " << counter << std::endl;
             is_converged(counter);
             update_convergence();
-         //   std::cout << "magnetisation0: " << convergence_magnetisation[0] << " energy0: " << convergence_energy[0] << std::endl;
-         //   std::cout << "magnetisation1: " << convergence_magnetisation[1] << " energy1: " << convergence_energy[1] << std::endl;
+       //   std::cout << "magnetisation0: " << convergence_magnetisation[0] << " energy0: " << convergence_energy[0] << std::endl;
+        //  std::cout << "magnetisation1: " << convergence_magnetisation[1] << " energy1: " << convergence_energy[1] << std::endl;
         }
         // second initialization
         else if (counter == (convergence_check - 1)) {

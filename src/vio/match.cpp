@@ -1611,6 +1611,7 @@ namespace vin{
         if (word == test) {
            // stats::convergence_program.output_convergence_rate();
             sim::output_convergence_counter = true;
+            sim::calculate_program_convergence = true;
             stats::program_convergence.output_convergence();
           //  output_list.push_back(72);
             return EXIT_SUCCESS;

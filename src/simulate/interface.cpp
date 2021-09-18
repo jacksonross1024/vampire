@@ -230,7 +230,7 @@ namespace sim{
          double c = atof(value.c_str());
          vin::check_for_valid_value(c, word, line, prefix, unit, "unitless", 0.0, 1.0, "input", "0 - 1");
          sim::convergence_criteria = c;
-      //   std::cout << "convergence-criteria: " << c << std::endl;
+         std::cout << "convergence-criteria: " << c << std::endl;
          return true;
       }
       test = "convergence-check";
