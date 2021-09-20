@@ -21,6 +21,8 @@
 #include "vio.hpp"
 #include "stopwatch.hpp"
 #include "atoms.hpp"
+#include "material.hpp"
+
 namespace stats{
 
 //-------------------------------------------
@@ -35,6 +37,9 @@ namespace stats{
 
 
 void spin_temperature_statistic_t::set_mask(const int mask_length, const std::vector<int>& mag_mask) {
+
+    if (err::check) std::cout << "Initializing spin temperature...";
+
        //check magnetisation statistic
     if(mask_length == 0) {
         terminaltextcolor(RED);
@@ -100,6 +105,8 @@ void spin_temperature_statistic_t::set_mask(const int mask_length, const std::ve
         zlog << zTs() << "Programmer Error - Uninitilized spin-temp masks" << std::endl;
         err::vexit();
     }
+
+    if (err::check) std::cout << "initialized." << std::endl;
    return;
 
 }
@@ -130,8 +137,7 @@ void spin_temperature_statistic_t::calculate(const std::vector<double>& sx, cons
     }
   
    //create local variables
-    double S[3];
-    double H[3]; 
+
     
     
         int mask_num = 0;
@@ -173,6 +179,14 @@ void spin_temperature_statistic_t::calculate(const std::vector<double>& sx, cons
             mean_spin_counter[mask_num] += 1;
             mean_spin_temperature[mask_num] += total_spin_temperature[mask_num];
          }
+
+        //unscale temperature
+        for (int mat = 0; mat < mp::material.size(); mat++) {
+            double alpha = mp::material[mat].temperature_rescaling_alpha;
+            double Tc = mp::material[mat].temperature_rescaling_Tc;
+            //if T < Tc, then Tr= Tc * (T/Tc)^alpha
+            if (total_spin_temperature[mat] < Tc) total_spin_temperature[mat] = pow((total_spin_temperature[mat] / Tc) , 1 / alpha) * Tc;
+        }
           // Zero empty mask id's
          for(unsigned int id=0; id < zero_list.size(); ++id) total_spin_temperature[zero_list[id]]=0.0;
 
