@@ -1145,7 +1145,9 @@ namespace vin{
 
         return EXIT_SUCCESS;
     }
-
+//=======================================================================================================
+// mathc_vout_list
+//======================================================================================================= 
     int match_vout_list(string const word, string const value, int const line, std::vector<unsigned int> & output_list){
 
         std::string prefix="output:";
@@ -1304,12 +1306,20 @@ namespace vin{
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
-        test="material-standard-deviation";
+        test="system-standard-deviation";
         if(word==test){
             // Set flags for calculations of standard deviation and magnetization
-            stats::calculate_material_standard_deviation=true;
-            stats::calculate_material_magnetization=true;
+            stats::calculate_system_standard_deviation=true;
+          //  stats::calculate_material_magnetization=true;
+            stats::calculate_system_magnetization = true;
             output_list.push_back(999); //AJN
+            return EXIT_SUCCESS;
+        }
+        test = "system-standard-deviation-length";
+        if (word == test) {
+            stats::calculate_system_standard_deviation = true;
+            stats::calculate_system_magnetization = true;
+            output_list.push_back(998); //JLRoss
             return EXIT_SUCCESS;
         }
         //-------------------------------------------------------------------
@@ -1610,10 +1620,11 @@ namespace vin{
         test = "convergence-rate";
         if (word == test) {
            // stats::convergence_program.output_convergence_rate();
-            sim::output_convergence_counter = true;
+           // sim::output_convergence_counter = true;
             sim::calculate_program_convergence = true;
-            stats::program_convergence.output_convergence();
-          //  output_list.push_back(72);
+            stats::calculate_system_magnetization = true;
+            stats::calculate_system_energy = true;
+            output_list.push_back(72);
             return EXIT_SUCCESS;
         }
 

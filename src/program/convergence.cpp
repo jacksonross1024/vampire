@@ -46,6 +46,7 @@ namespace stats{
        //     vout::file_output_list.push_back(72);
             vout::write_out(std::cout, convergence_output_list);
             std::cout << "Equilibrium may not have been reached. More steps may be necessary." << std::endl;
+            converged_counter = counter;
         }
         convergence_method = false;
         converged = false;
@@ -235,25 +236,25 @@ namespace stats{
      //   std::cout << counter << std::endl;
            // result string stream
          std::ostringstream res;
-        unsigned int count;
-        if (converged) count = converged_counter;
-        else count = counter;
 
         if(vout::custom_precision){
             res.precision(vout::precision);
           if(vout::fixed) res.setf( std::ios::fixed, std::ios::floatfield );
         }
         vout::fixed_width_output result(res,vout::fw_size); 
-        if (header) result << name + std::to_string(counter);
-        else result << counter;
+     
+       // if (converged) output_counter = converged_counter;
+
+        if (header) result << name + std::to_string(converged_counter);
+        else result << converged_counter;
 
         return result.str();
 
     }
 
     void convergence_statistic_t::output_convergence() {
-        output_convergence_counter = sim::output_convergence_counter;
-        if (!convergence_output_list.size()) convergence_output_list.push_back(72);
+       // output_convergence_counter = sim::output_convergence_counter;
+     //   if (!convergence_output_list.size()) convergence_output_list.push_back(72);
         
     }
 

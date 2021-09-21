@@ -79,7 +79,7 @@ namespace stats
    extern bool calculate_material_height_magnetization;
    extern bool calculate_system_specific_heat;
    extern bool calculate_material_specific_heat;
-   extern bool calculate_material_standard_deviation;// AJN
+   extern bool calculate_system_standard_deviation;// AJN
    extern bool calculate_system_susceptibility;
    extern bool calculate_material_susceptibility;
    extern bool calculate_system_spin_temperature;
@@ -225,6 +225,7 @@ namespace stats
       friend class susceptibility_statistic_t;
       friend class standard_deviation_statistic_t;
       friend class spin_temperature_statistic_t;
+
       public:
          magnetization_statistic_t (std::string n):initialized(false){
            name = n;
@@ -361,11 +362,12 @@ namespace stats
            name=n;
          };
          void initialize(magnetization_statistic_t& mag_stat);
-         void update(const std::vector<double>& magnetization);
+         bool is_initialized();
+         void calculate(const std::vector<double>& magnetization);
          void reset_averages();
          std::string output_standard_deviation(bool header);
-         double get_mean_standard_deviation_length();
-         std::string output_mean_standard_deviation_length(bool header);
+         double get_standard_deviation_length();
+         std::string output_standard_deviation_length(bool header);
 
       private:
          bool initialized;
@@ -395,7 +397,7 @@ namespace stats
 
    extern susceptibility_statistic_t system_susceptibility;
    extern susceptibility_statistic_t material_susceptibility;
-   extern standard_deviation_statistic_t material_standard_deviation;
+   extern standard_deviation_statistic_t system_standard_deviation;
 
     extern spin_temperature_statistic_t system_spin_temperature;
     extern spin_temperature_statistic_t material_spin_temperature;
