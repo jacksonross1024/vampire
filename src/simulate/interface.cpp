@@ -145,6 +145,11 @@ namespace sim{
             sim::integrator = sim::llg_quantum;
             return true;
          }
+         test = "velocity-verlet";
+         if (value == test) {
+            sim::integrator = sim::velocity_verlet;
+            return true;
+         }
          //--------------------------------------------------------------------
          else{
             terminaltextcolor(RED);
@@ -240,6 +245,13 @@ namespace sim{
          vin::check_for_valid_int(c, word, line, prefix, 2, sim::equilibration_time, "input", "2 - equilibration-time-steps");
          sim::convergence_check = c;
      //    std::cout << "convergence-check: " << c << std::endl;
+         return true;
+      }
+      test = "conduction-electrons";
+      if (word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "e/atom", 0.0, 128, "input", "Number of conduction electrons / atom");
+         sim::conduction_electrons = c;
          return true;
       }
       //--------------------------------------------------------------------
@@ -343,6 +355,14 @@ namespace sim{
          sim::internal::mp[super_index].sot_asm.set(sotasm);
          return true;
       }
+      test = "perfect-fermi-gas";
+      if (word == test) {
+         sim::calculate_fermi_distribution = true;
+         return true;
+      }
+      test = "conduction-electrons";
+      
+
       //--------------------------------------------------------------------
       // keyword not found
       //--------------------------------------------------------------------

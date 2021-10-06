@@ -34,6 +34,7 @@ namespace stats{
         if (!sim::calculate_program_convergence) return;
         convergence_method = true;
         counter = 0;
+        statistics_counter = 0;
     }
 
     //-------------------------
@@ -44,7 +45,7 @@ namespace stats{
         if (!converged) {
          //   vout::screen_output_list.push_back(72);
        //     vout::file_output_list.push_back(72);
-            vout::write_out(std::cout, convergence_output_list);
+         //   vout::write_out(std::cout, convergence_output_list);
             std::cout << "Equilibrium may not have been reached. More steps may be necessary." << std::endl;
             converged_counter = counter;
         }
@@ -89,7 +90,7 @@ namespace stats{
             convergence_method = false;
             magnetisation_converged = false;
             
-            output_convergence();
+         //   output_convergence_statistics();
            // convergence_output_list.resize(1, 0);
 
             if( !convergence_criteria || !convergence_check) {
@@ -122,13 +123,7 @@ namespace stats{
             counter = 0;                        // counter reset for next equilibrium check
             energy_converged = false;           //reset energy
             magnetisation_converged = false;    //reset magnetisation
-           // if(output_convergence_counter)      vout::write_out(zmag, convergence_output_list);
-            // std::cout << "Convergence may have occured. Exiting equilibration steps on " << converged_counter << " out of " << sim::equilibration_time << std::endl;             // adds convergence rate to output list if flag is enabled
-     
-         //   std::cout << "Convergence may have occured. Exiting equilibration steps on " << converged_counter << "out of " << sim::equilibration_time << std::endl;             // adds convergence rate to output list if flag is enabled
-         //   std::cout << (abs(convergence_energy[0] - convergence_energy[1])) << " vs " << (abs(convergence_energy[0]) * convergence_criteria) << std::endl;
-           //  std::cout << (abs(convergence_magnetisation[0] - convergence_magnetisation[1])) << " vs " << (convergence_magnetisation[0] * convergence_criteria) << std::endl;
-        }
+ }
       //  return converged;
     }
 
@@ -136,14 +131,13 @@ namespace stats{
     // Function to initialize the data sets and assign to the convergence arrays. Not meant to be called outside of the class
     //-----------------------------
     void convergence_statistic_t::initialize_first_pass() {
-   ////     std::cout << "fail"<< std::endl;
+
          update_data(atoms::x_spin_array, atoms::y_spin_array, atoms::z_spin_array, atoms::m_spin_array, atoms::type_array, sim::temperature);
-//std::cout << "fail"<< std::endl;
-        
+
         convergence_magnetisation[0] = stats::system_magnetization.get_normalized_mean_system_magnetization_length();
-     //  std::cout << "fail"<< std::endl;
+ 
         convergence_energy[0]        = stats::system_energy.get_mean_total_system_energy();
-    //std::cout << "fail"<< std::endl;
+
     }
 
 
@@ -199,7 +193,7 @@ namespace stats{
     // Function to update the convergence arrays and counter. This is the one to call outside the class
     //-----------------------------
     void convergence_statistic_t::update_counter() {
-                if (!sim::calculate_program_convergence) return;
+        if (!sim::calculate_program_convergence) return;
 
         //if convergence setting has been turned off, this will avoid the convergence
         if (err::check == true)   std::cout << "update counter has been called" << std::endl;
@@ -213,19 +207,23 @@ namespace stats{
         //  std::cout << "magnetisation1: " << convergence_magnetisation[1] << " energy1: " << convergence_energy[1] << std::endl;
         }
         // second initialization
-        else if (counter == (convergence_check - 1)) {
+        if (counter == (convergence_check - 1)) {
         //    std::cout << "counter 99" << counter << std::endl;
             initialize_second_pass();
          //   std::cout << "magnetisation1: " << convergence_magnetisation[1] << " energy1: " << convergence_energy[1] << std::endl;
         }
         // first initialization
-        else if (counter == 0) {
+        if (counter == 0) {
          //   std::cout << "Counter 0: " << counter << std::endl;
             initialize_first_pass();
          //   std::cout << "magnetisation0: " << convergence_magnetisation[0] << " energy0: " << convergence_energy[0] << std::endl;
         }
         //move counter forward one
+        if (statistics_counter % convergence_statistic_output == 0) {
+            output_convergence_statistics();
+        }
         counter += 1;
+        statistics_counter += 1;
     }
 
     //-----------------------------
@@ -243,19 +241,27 @@ namespace stats{
         }
         vout::fixed_width_output result(res,vout::fw_size); 
      
-       // if (converged) output_counter = converged_counter;
+         if (!converged) converged_counter = counter;
 
-        if (header) result << name + std::to_string(converged_counter);
-        else result << converged_counter;
+        if (header) result << name + std::to_string(counter);
+        else result << counter;
 
         return result.str();
 
     }
 
-    void convergence_statistic_t::output_convergence() {
-       // output_convergence_counter = sim::output_convergence_counter;
-     //   if (!convergence_output_list.size()) convergence_output_list.push_back(72);
-        
+    void convergence_statistic_t::output_convergence_statistics() {
+        std::ofstream stats;
+        if(!zmag.is_open()){
+            // check for checkpoint continue and append data
+            if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag) zmag.open("statistics",std::ofstream::app);
+            // otherwise overwrite file
+            else{
+               zmag.open("statistics",std::ofstream::trunc);
+          
+            }
+         }
+        vout::write_out(zmag, vout::file_output_list);
     }
 
 }

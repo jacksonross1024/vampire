@@ -449,6 +449,11 @@ namespace vin{
                 sim::program=73;
                 return EXIT_SUCCESS;
             }
+            test = "CASTLE";
+            if (value == test) {
+                sim::program=74;
+                return EXIT_SUCCESS;
+            }
             else{
             terminaltextcolor(RED);
                         std::cout << word << '\t' << test << std::endl;
@@ -1627,7 +1632,51 @@ namespace vin{
             output_list.push_back(72);
             return EXIT_SUCCESS;
         }
-
+        test = "convergence-statistics";
+        if (word == test) {
+            sim::calculate_program_convergence = true;
+            stats::calculate_system_magnetization = true;
+            stats::calculate_system_energy = true;
+            unsigned int s = atoi(value.c_str());
+            check_for_valid_int(s, word, line, prefix, 0, 10000000, "input", "0 to sim::equilibration");
+            stats::program_convergence.convergence_statistic_output = s;
+            return EXIT_SUCCESS;
+      }
+      test = "fermi-distribution";
+    if (word == test) {
+        sim::calculate_fermi_distribution = true;
+        return EXIT_SUCCESS;
+    }
+      test = "fermi-energy";
+      if (word == test) {
+         sim::calculate_fermi_distribution = true;
+         output_list.push_back(73);
+         return EXIT_SUCCESS;
+      }
+      test = "fermi-pressure";
+      if (word == test) {
+         sim::calculate_fermi_distribution = true;
+         output_list.push_back(74);
+         return EXIT_SUCCESS;
+      }
+      test = "fermi-Cv";
+      if (word == test) {
+        sim::calculate_fermi_distribution = true;
+         output_list.push_back(75);
+         return EXIT_SUCCESS;
+      }
+      test = "relativistic-fermi-energy";
+      if (word == test) {
+        sim::calculate_fermi_distribution = true;
+         output_list.push_back(76);
+         return EXIT_SUCCESS;
+      }
+      test = "relativistic-fermi-pressure";
+      if (word == test) {
+       sim::calculate_fermi_distribution = true;
+         output_list.push_back(77);
+         return EXIT_SUCCESS;
+      }  
 
         //--------------------------------------------------------------------
         // keyword not found

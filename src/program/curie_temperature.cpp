@@ -129,6 +129,8 @@ int curie_temperature(){
 		// Output data
 		vout::data();
 
+		if (sim::calculate_fermi_distribution) 	sim::fermi_calculations(sim::temperature);
+
 		// Increment temperature
 		sim::temperature+=sim::delta_temperature;
 

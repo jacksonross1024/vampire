@@ -55,6 +55,7 @@ namespace program
    extern void mm_A_calculation();
    extern void exchange_stiffness();
 
+
 	// Sundry programs and diagnostics not under general release
 	extern int LLB_Boltzmann();
 	extern int timestep_scaling();

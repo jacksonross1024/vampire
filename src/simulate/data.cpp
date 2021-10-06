@@ -14,6 +14,7 @@
 
 // Internal sim header
 #include "internal.hpp"
+#include "CASTLE.hpp"
 
 namespace sim{
    //----------------------------------------------------------------------------
@@ -77,6 +78,31 @@ namespace sim{
    std::vector < double > domain_wall_second_vector_y(100,0);
    std::vector < double > domain_wall_second_vector_z(100,1.0);
 
+
+   //Fermi Gas
+   bool calculate_fermi_distribution;
+   std::vector<long double> fermi_distribution_array;
+   double temperature_variable;
+   long double beta_variable;
+   double fermi_size;
+   long double eps_variable;
+   long double mu;
+
+   long double mu_0; //mu at T = 0
+	long double E_0; //E at T = 0
+   double P_0;
+	double fermi_electrons; //number of conduction electrons; perfect gas = num_atoms
+   double conduction_electrons; //conduction electrons per atom. perfect gas = 1
+	double fermi_volume; //volume to calculate the electron density
+   double eta;     // = 1 / Beta * mu_0
+   double fermi_density;
+
+   bool fermi_pressure = false;
+   bool fermi_energy = false;
+   bool fermi_Cv = false;
+   bool fermi_function= false;
+
+  
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -114,3 +140,72 @@ namespace sim{
    }
 
 } // end of sim namespace
+
+namespace CASTLE {
+
+        bool CASTLE_program;
+      bool CASTLE_output_data = false;
+      bool equilibrium_step;
+   int velocity_verlet_step(double dt);
+
+   int CASTLE_output_rate;
+
+
+     int lattice_atoms;
+    double conduction_electrons;
+    int core_electrons;
+
+    double lattice_height;
+    double lattice_width;
+    double lattice_depth;
+
+    double atomic_size;
+    double screening_depth;
+    double v_f;
+    double mu_f;
+    double E_f;
+
+    double TKE;
+    double TPE;
+    int total_spin_up;
+    int total_spin_down;
+    std::vector<std::vector<bool> > symmetry_list;
+
+   double temperature;
+
+     double total_time_steps;
+     double dt;
+     int current_time_step;
+     double loop_time;
+
+   std::vector<double> electron_position; //superarray of past locations for each step
+   std::vector<double> new_electron_position;
+   std::vector<double> electron_velocity; //superarray for past velocities for each step
+   std::vector<double> new_electron_velocity;
+   std::vector<double> electron_acc;  
+   std::vector<double> new_acc_array;
+   std::vector<double> atom_position;
+   std::vector<double> mean_data_array;
+   std::vector<double> lattice_electrons;
+   std::vector<bool> conduction_electron_spin;
+   std::vector<bool> lattice_electron_spin;
+
+   //std::vector<struct electron> electron_list; //This is probably not the best way to do this
+    
+
+   void initialize(const double num_electrons, const double num_atoms);
+
+   void create();
+   void create_gif();
+
+    std::ofstream lattice_output;
+    std::ofstream electron_position_output_up;
+    std::ofstream electron_position_output_down;
+    std::ofstream electron_velocity_output;
+    std::ofstream mean_data;
+    std::ofstream electron_spin_output;
+
+
+
+
+}

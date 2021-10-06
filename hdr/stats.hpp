@@ -129,7 +129,8 @@ namespace stats
          std::string output_convergence_rate(bool header);
          void do_converge();
          void end_convergence();
-         void output_convergence();
+         void output_convergence_statistics();
+         unsigned int convergence_statistic_output;
 
 
 
@@ -141,6 +142,7 @@ namespace stats
          bool convergence_method; // do we check the convergence
          unsigned int counter;
          unsigned int converged_counter;
+         unsigned int statistics_counter;
          bool output_convergence_counter;
          std::string name;
          std::vector<double> convergence_magnetisation;

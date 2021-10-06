@@ -47,6 +47,7 @@
 #include "anisotropy.hpp"
 #include "atoms.hpp"
 #include "program.hpp"
+#include "CASTLE.hpp"
 #include "cells.hpp"
 #include "../cells/internal.hpp"
 #include "../micromagnetic/internal.hpp"
@@ -312,6 +313,8 @@ int run(){
 
 if (calculate_program_convergence) stats::program_convergence.initialize(sim::convergence_criteria, sim::convergence_check);
 
+if (calculate_fermi_distribution)	sim::initialize_fermi_gas();
+
    // For MPI version, calculate initialisation time
    if(vmpi::my_rank==0){
 		std::cout << "Starting Simulation with Program ";
@@ -526,6 +529,13 @@ if (calculate_program_convergence) stats::program_convergence.initialize(sim::co
 			}
 			program::boltzmann_dist_micromagnetic_llg();
 			break;
+		case 74:
+			if (vmpi::my_rank == 0) {
+				std::cout << "CASTLE..." << std::endl;
+				zlog << "CASTLE..." << std::endl;
+			}
+			CASTLE::create();
+			break;
 		default:{
 			std::cerr << "Unknown Internal Program ID "<< sim::program << " requested, exiting" << std::endl;
 			zlog << "Unknown Internal Program ID "<< sim::program << " requested, exiting" << std::endl;
@@ -713,6 +723,14 @@ void integrate_serial(uint64_t n_steps){
 			}
 			break;
 
+		case sim::velocity_verlet:
+			for (uint64_t ti = 0; ti < n_steps; ti++) {
+				CASTLE::velocity_verlet_step(mp::dt_SI);
+				sim::internal::increment_time();
+				if ( (n_steps % 1000) == 0) std::cout << ".";
+			//	CASTLE::update_data();
+			}
+			break;
 		default:{
 			std::cerr << "Unknown integrator type "<< sim::integrator << " requested, exiting" << std::endl;
          err::vexit();

@@ -5,6 +5,7 @@
 # List module object filenames
 program_objects =\
 bmark.o \
+CASTLE.o \
 cmc_anisotropy.o \
 convergence.o \
 curie_temperature.o \

@@ -14,7 +14,7 @@
 // simulation methods implementation. These functions should
 // not be accessed outside of the simulate module.
 //---------------------------------------------------------------------
-
+#include <vector>
 
 
 namespace sim{

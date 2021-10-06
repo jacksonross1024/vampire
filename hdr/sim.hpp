@@ -71,7 +71,7 @@ namespace sim{
 
 	// enumerated list for integrators
 	enum integrator_t{ llg_heun = 0, monte_carlo = 1, llg_midpoint = 2,
-							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5};
+							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5, velocity_verlet = 6};
 
 	extern std::ofstream mag_file;
 	extern uint64_t time;
@@ -195,6 +195,8 @@ namespace sim{
 	extern int LLG_Midpoint_mpi();
 	extern int LLG_Midpoint_cuda();
 
+	//extra new Integrators
+	extern int velocity_verlet_step();
 
 	// Integrator initialisers
 	extern int LLGinit();
@@ -235,6 +237,47 @@ namespace sim{
 	extern double convergence_criteria;
 	extern unsigned int convergence_check;
 	extern bool output_convergence_counter;
+
+
+
+	//Fermi Gas models
+
+	
+	extern bool calculate_fermi_distribution; //interface.cpp
+
+	extern std::vector<long double> fermi_distribution_array; //array holding distribution of occupation
+	extern double temperature_variable; //temperature from sim
+	extern long double beta_variable; // 1 / kBT
+	extern double fermi_size; 	// num_atoms
+
+	extern void initialize_fermi_gas(); //set up constants and variables from "material"
+	extern void fermi_calculations(double sim_temp); //call to set up and calculate the fermi function
+	extern long double fermi_distribution(long double eps); //function inside fermi_distribution(); calculates occupation for a given eps
+	extern long double eps_variable;	//eps variable corresponding to energy of states
+	extern long double mu;				// chemical potential. Constant for perfect gas
+
+	extern long double mu_0; 	//mu at T = 0
+	extern long double E_0; 	//E at T = 0
+	extern double P_0; 			//P at T = 0
+	extern double eta;
+	extern double fermi_electrons; //number of conduction electrons; perfect gas = num_atoms
+	extern double fermi_volume; //volume to calculate the electron density
+	extern double fermi_density;	// electrons / volume
+	extern double conduction_electrons; //conduting electron sper atom
+
+
+	extern bool fermi_function; //bool for calculating and outputing fermi distribution
+	extern bool fermi_energy; // bool for calculating and outputing fermi energy
+	extern bool fermi_Cv;
+	extern bool fermi_pressure;
+
+
+	extern std::string output_fermi_energy();
+	extern std::string output_fermi_Cv();
+	extern std::string output_fermi_pressure();
+	extern std::string output_relativistic_fermi_energy();
+	extern std::string output_relativistic_fermi_pressure();
+
 	
 	//------------------------------------------------------------------------
    // getter functions to give access to internal sim variables

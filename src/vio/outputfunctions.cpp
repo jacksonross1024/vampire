@@ -264,9 +264,15 @@ namespace vout{
    }
 
    // Output Function 999 - with Header
-   void standard_deviation(std::ostream& stream, bool header){
-      stream << stats::material_standard_deviation.output_standard_deviation(header);
+   void system_standard_deviation(std::ostream& stream, bool header){
+      stream << stats::system_standard_deviation.output_standard_deviation(header);
    }
+
+   //Output Function 998 - with Header
+   void system_standard_deviation_length(std::ostream& stream, bool header) {
+      stream << stats::system_standard_deviation.output_standard_deviation_length(header);
+   }
+   
    // Output Function 22
    void phonon_temperature(std::ostream& stream, bool header){
      stream << generic_output_double("Phonon_temp",sim::TTTp,header);
@@ -565,5 +571,25 @@ namespace vout{
          stream << stats::program_convergence.output_convergence_rate(header);
       
    }
+   // 73
+   void out_fermi_energy(std::ostream& stream) {
+      stream << sim::output_fermi_energy();
+   }
+   // 74
+      void out_fermi_pressure(std::ostream& stream) {
+      stream << sim::output_fermi_pressure();
+   }
+   // 75
+   void out_fermi_Cv(std::ostream& stream) {
+      stream << sim::output_fermi_Cv();
+   }
+   // 76
+   void out_rel_fermi_energy(std::ostream& stream) {
+      stream << sim::output_relativistic_fermi_energy();
+   }
 
+   // 77
+   void out_rel_fermi_pressure(std::ostream& stream) {
+      stream << sim::output_relativistic_fermi_pressure();
+   }
 }

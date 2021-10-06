@@ -38,6 +38,8 @@ namespace cells{
    extern std::vector < std::vector <int> > index_atoms_array;
    extern std::vector<int> index_atoms_array1D;
 
+   extern const double atomic_volume;
+
    extern std::vector<double> volume_array;
    extern std::vector<double> cell_coords_array_x; /// arrays to store cells positions
    extern std::vector<double> cell_coords_array_y;

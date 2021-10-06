@@ -275,8 +275,26 @@ namespace vout{
 		case 72:
 			vout::convergence_rate(stream, header);
 			break;
+		case 73:
+			vout::out_fermi_energy(stream);
+			break;
+		case 74:
+			vout::out_fermi_pressure(stream);
+			break;
+		case 75:
+			vout::out_fermi_Cv(stream);
+			break;
+		case 76:
+			vout::out_rel_fermi_energy(stream);
+			break;
+		case 77:
+			vout::out_rel_fermi_pressure(stream);
+			break;
+		case 998:
+			vout::system_standard_deviation_length(stream, header);
+			break;
         case 999: //AJN
-      		vout::standard_deviation(stream,header);
+      		vout::system_standard_deviation(stream,header);
       		break;
 //=======
 
