@@ -66,15 +66,15 @@ int velocity_verlet_step(double dt) {
           //  electron_position_output_up << time_stamp << "\n";
 
         electron_position_output_down.open("CASTLE/Electron_Position_Down/" + time_stamp + "D.xyz");
-            electron_position_output_down << total_spin_down << "\n";
+            electron_position_output_down << conduction_electrons << "\n";
             electron_position_output_down << time_stamp << "\n";
 
         electron_velocity_output.open("CASTLE/CASTLE_Electron_velocities/" + time_stamp + ".txt");
             electron_velocity_output << "Electron number    x-component     y-component    z-component     length" << "\n";
 
-        electron_spin_output.open("CASTLE/Electron_Spin/" + time_stamp + ".txt");
-            electron_spin_output << conduction_electrons << "\n";
-            electron_spin_output << "       1 is up, 0 is down" << "\n";
+      //  electron_spin_output.open("CASTLE/Electron_Spin/" + time_stamp + ".txt");
+       //     electron_spin_output << conduction_electrons << "\n";
+       //     electron_spin_output << "       1 is up, 0 is down" << "\n";
    // acceleration_output.open("CASTLE/test" + time_stamp);
 
         

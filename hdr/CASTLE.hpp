@@ -103,14 +103,14 @@ namespace CASTLE {
     //outputs
     extern double TKE;
     extern double TPE;
-    extern int total_spin_up;
-    extern int total_spin_down;
+  //  extern int total_spin_up;
+  //  extern int total_spin_down;
     extern std::ofstream lattice_output;
-    extern std::ofstream electron_position_output_up;
+  //  extern std::ofstream electron_position_output_up;
     extern std::ofstream electron_position_output_down;
     extern std::ofstream electron_velocity_output;
     extern std::ofstream mean_data;
-    extern std::ofstream electron_spin_output;
+  //  extern std::ofstream electron_spin_output;
 
     
     //control functions
