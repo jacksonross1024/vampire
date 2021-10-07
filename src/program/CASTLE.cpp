@@ -40,11 +40,11 @@ void create() {
     // Create output file instances
     //=========
     std::ofstream lattice_output;
-    std::ofstream electron_position_output_up;
+   // std::ofstream electron_position_output_up;
     std::ofstream electron_position_output_down;
     std::ofstream electron_velocity_output;
     std::ofstream mean_data;
-    std::ofstream electron_spin_output;
+ //   std::ofstream electron_spin_output;
 
         std::cout << "Building CASTLE..." <<std::endl;
 
@@ -91,7 +91,7 @@ void create() {
     //========
     // Run averaging step
     //========
-    sim::integrate(loop_time);
+    sim::integrate(total_time_steps);
 
     //========
     // Output data
@@ -122,9 +122,9 @@ void initialize () {
     //=========
     // Grab simulation variables from VAMPIRE
     //=========
-    conduction_electrons = 1728;  //sim::conduction_electrons;
+    conduction_electrons = 20*20*20;  //sim::conduction_electrons;
     CASTLE_output_rate = 1; //sim::CASTLE_output_rate;
-    total_electrons = 20 * 20 * 20; //sim::total_electrons;
+  //  total_electrons = 20 * 20 * 20; //sim::total_electrons;
     lattice_atoms = 20 * 20 * 20; //sim::lattice_atoms;
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
@@ -166,9 +166,9 @@ void initialize_lattice() {
     screening_depth = atomic_size * 0.25 * 0.5; //sim::screening_depth; //Angstroms 
     lattice_atoms = 20 * 20 * 20; //Better lattice creation will come from VAMPIRE in future
 
-    lattice_height = 38.0; //A
-    lattice_width  = 38.0; // A
-    lattice_depth  = 38.0; // A
+    lattice_height = 40.0; //A
+    lattice_width  = 40.0; // A
+    lattice_depth  = 40.0; // A
 
     lattice_output.open("CASTLE/CASTLE_Lattice.xyz");
 
@@ -181,9 +181,9 @@ void initialize_lattice() {
     int array_index = 0; //local loop index variable
     for (int a = 0; a < lattice_atoms; ++a) {  
         array_index = 3*a;
-        atom_position[array_index]     = atomic_size * (a % 20); //lattice creation awaiting future development
-        atom_position[array_index + 1] = atomic_size * ((int(floor(a / 20))) % 20);
-        atom_position[array_index + 2] = atomic_size * floor(a / 400);
+        atom_position[array_index]     = 1+ atomic_size * (a % 20); //lattice creation awaiting future development
+        atom_position[array_index + 1] = 1+ atomic_size * ((int(floor(a / 20))) % 20);
+        atom_position[array_index + 2] = 1+ atomic_size * floor(a / 400);
         lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
     lattice_output.close();
@@ -219,14 +219,14 @@ void initialize_electrons() {
     //========
     electron_position.resize(conduction_electrons * 3, 0.0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
     new_electron_position.resize(conduction_electrons * 3, 0.0);
-    lattice_electrons.resize((total_electrons - conduction_electrons), 0.0);
+   // lattice_electrons.resize((total_electrons - conduction_electrons), 0.0);
     electron_velocity.resize(conduction_electrons * 3, 0.0); //Angstroms
     new_electron_velocity.resize(conduction_electrons * 3, 0.0); //Angstroms
     electron_force.resize(conduction_electrons * 3, 0.0); //current and future arrays
     new_force_array.resize(conduction_electrons * 3, 0.0);
     mean_data_array.resize(total_time_steps*5 + 5, 0.0);
-    conduction_electron_spin.resize(conduction_electrons, false);
-    lattice_electron_spin.resize((total_electrons - conduction_electrons), false);
+   // conduction_electron_spin.resize(conduction_electrons, false);
+   // lattice_electron_spin.resize((total_electrons - conduction_electrons), false);
     symmetry_list.resize(conduction_electrons);
 
      //   std::cout << "conduction electrons" << conduction_electrons << std::endl;
@@ -235,33 +235,42 @@ void initialize_electrons() {
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> Pos_distrib(1, 360);
 
-    n_f = 1e30 * total_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
-    E_f = 3 * constants::h * constants::h * total_electrons * pow((3 * n_f / (8 * M_PI)), 0.666666667) / (10 * constants::m_e); //Fermi-energy // meters
-    mu_f = 5 * E_f / (3 * total_electrons);//Fermi-level //meters
+    n_f = 1e30 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
+    E_f = 3 * constants::h * constants::h * conduction_electrons * pow((3 * n_f / (8 * M_PI)), 0.666666667) / (10 * constants::m_e); //Fermi-energy // meters
+    mu_f = 5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
     v_f = sqrt(2 * E_f / constants::m_e); //meters
     TKE = 0; //total Kinetic energy, meters
     //  total_spin_up = 0;
     total_spin_down = 0;
    
 
-    double phi,theta, modifier, x_pos,y_pos,z_pos = 0.0;
+    double phi,theta, x_pos,y_pos,z_pos = 0.0;
     //super loop for each conducting electron
     int array_index_l, array_index = 0;
     conduction_electrons = 0;
-    for (int e = 0; e < total_electrons; e++) {
-        
+    for (int e = 0; e < conduction_electrons; e++) {
+        array_index = 3*e;
         //random program for velocity initialization
         phi   = M_PI * Pos_distrib(gen) / 180;
         theta = M_PI * Pos_distrib(gen) / 180.0;
 
-                if (err::check) std::cout << "Prepare to set positions: " << total_electrons * 3 << std::endl;
+                if (err::check) std::cout << "Prepare to set positions: " << conduction_electrons * 3 << std::endl;
 
         //initialize and output electron posititons
         x_pos = (atomic_size * (e % 20)) + (cos(theta)*sin(phi) * screening_depth); //Angstroms
         y_pos = (atomic_size * ((int(floor(e / 20))) % 20)) + (sin(theta)*sin(phi) * screening_depth);
         z_pos = (atomic_size * floor(e/ 400)) + (cos(phi) * screening_depth);
      
-        if (x_pos < 6.001 || x_pos > 31.999) {
+        if (x_pos < 0.0) x_pos += 40.0;
+        else if (x_pos > 40.0) x_pos -= 40.0;
+
+        if (y_pos < 0.0) y_pos += 40.0;
+        else if (y_pos > 40.0) y_pos -= 40.0;
+
+        if (z_pos < 0.0) z_pos += 40.0;
+        else if (z_pos > 40.0) z_pos -= 40.0;
+
+       /* if (x_pos < 6.001 || x_pos > 31.999) {
             array_index_l += 1;
             lattice_electrons[array_index_l]     = x_pos;
             lattice_electrons[array_index_l + 1] = y_pos;
@@ -281,9 +290,9 @@ void initialize_electrons() {
             lattice_electrons[array_index_l + 1] = y_pos;
             lattice_electrons[array_index_l + 2] = z_pos;
           //  if (Pos_distrib(gen) > 180) lattice_electron_spin[array_index_l] = true;
-        } else {
+        } else { */
             
-            array_index = conduction_electrons*3;
+            
             electron_position[array_index]     = x_pos;
             electron_position[array_index + 1] = y_pos;
             electron_position[array_index + 2] = z_pos;
@@ -293,9 +302,9 @@ void initialize_electrons() {
                 total_spin_up += 1;
                 electron_position_output_up << "H" << "    " << electron_position[array_index] << "    " << electron_position[array_index + 1] << "    " << electron_position[array_index + 2] << std::endl;  
             } else { */
-            total_spin_down += 1;
+           
             electron_position_output_down << "H" << "    " << electron_position[array_index] << "    " << electron_position[array_index + 1] << "    " << electron_position[array_index + 2] << "\n";    
-            conduction_electrons +=1;
+            
           
             //std::random_device rd;  //Will be used to obtain a seed for the random number engine
             //std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -311,36 +320,65 @@ void initialize_electrons() {
             electron_velocity[array_index + 2] = cos(phi)            * v_f * 1e10;
             velocity_length = sqrt( (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index + 1]*electron_velocity[array_index + 1]) + (electron_velocity[array_index + 2]*electron_velocity[array_index + 2]) ); //Angstroms
                 //    std::cout << "v_f" << v_f << " velocity " << velocity_length << std::endl;
-            electron_velocity_output <<  conduction_electrons << "      " << electron_velocity[array_index] << "    " << electron_velocity[array_index + 1] << "    " << electron_velocity[array_index + 2] << "    " << velocity_length << std::endl;
+            electron_velocity_output << e << "      " << electron_velocity[array_index] << "    " << electron_velocity[array_index + 1] << "    " << electron_velocity[array_index + 2] << "    " << velocity_length << std::endl;
                     // if (err::check) std::cout << "Velocities randomized..." << std::endl;
             //   electron_spin_output << conduction_electrons << "  " << conduction_electron_spin[conduction_electrons - 1] << std::endl;
             TKE += 0.5 * constants::m_e * velocity_length * velocity_length * 1e10; //energy in Angstroms
         }
-    }
+    
     //electron_position_output_up.close();
     electron_position_output_down.close();
     electron_velocity_output.close();
     //electron_spin_output.close();
                 
 }
-
+/*
 void initialize_cells(int electron) {
-    num_cells = 0;
-    electrons_per_cell.resize(num_cells, 0);
-    electron_cell.resize(total_electrons, 0);
-    electron_position[electron];
-    for (int c = 0; c < num_cells; c++) {
-        
-        
+    num_cells = 64;
 
+    electrons_in_cell.resize(num_cells);
+    electron_cell.resize(total_electrons, 0);
+    std::vector<std::vector<std::vector<int> > > cell_list;
+    cell_list.resize(4);
+    int count = 0;
+    for (int j = 0; j < 4; j++) {
+        cell_list[j].resize(4);
+        for (int k = 0; k < 4; k++) {
+            cell_list[j][k].resize(4, 0.0);
+            for (int i = 0; i < 4; i ++) {
+                cell_list[j][k][i] = count;
+                count++;
+            }
+        }
     }
-}
+    x = electron_position[electron*3];
+    y = electron_position[electron*3 + 1];
+    z = electron_position[electron*3 + 2];
+    cell_x = x / (atomic_size * 4); 
+    cell_y = y / (atomic_size * 4);
+    cell_z = z / (atomic_size * 4);
+    x_cell = floor(cell_x);
+    y_cell = floor(cell_y);
+    z_cell = floor(cell_z);
+
+    current_cell = electron_cell[electron] = cell_list[x_cell][y_cell][z_cell];
+    electrons_per_cell[current_cell] += 1;
+    for (int cell = 0; cell < 27; cell++) {
+        current = 
+        electrons_per_cell[current]
+        for (int e = 0; e < )
+        electron_neightbors[electron] = 
+    }
+    electron_neighbors[electron] 
+    
+} */
+
 
 void initialize_forces() {
 
     int array_index, array_index_i = 0;
     
-    double x,y,z, a_x,a_y,a_z, d_x,d_y,d_z, modifier, x_distance,y_distance,z_distance, length = 0.0;
+    double x,y,z, a_x,a_y,a_z, d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length = 0.0;
     double e_distance_x,e_distance_y,e_distance_z, x_unit,y_unit,z_unit = 0.0; 
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
@@ -383,29 +421,28 @@ void initialize_forces() {
         y = electron_position[array_index + 1];
         z = electron_position[array_index + 2];
 
-        a_x = atomic_size * round(x / atomic_size); //closest x atom index
-        a_y = atomic_size * round(y / atomic_size); //closest y atom index
-        a_z = atomic_size * round(z / atomic_size); //closest z atom index
+        d_x = x - (atomic_size * round(x / atomic_size)); //closest x atom index
+        d_y = y - (atomic_size * round(y / atomic_size)); //closest y atom index
+        d_z = z - (atomic_size * round(z / atomic_size)); //closest z atom index
 
-        d_x = x - a_x;
-        d_y = y - a_y;
-        d_z = z - a_z;
       
             //cube around electron
-        for (int a = 0; a < 9; a++) {
-            modifier = (atomic_size * (a % 3)) - atomic_size;
-            x_distance = modifier - d_x;
-            y_distance = modifier - d_y;
-            z_distance = modifier - d_z;
+        for (int a = 0; a < 27; a++) {
+            x_mod = (atomic_size * (a % 3)) - atomic_size;
+            y_mod = (atomic_size * ((int(floor(a/3))) % 3)) - atomic_size;
+            z_mod = (atomic_size * floor(a / 9)) - atomic_size;
+            x_distance = x_mod - d_x;
+            y_distance = y_mod - d_y;
+            z_distance = z_mod - d_z;
 
             length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
              if (length < 0.00001) length = 0.00001;
            
             if (length > screening_depth) {
-                force = 1e-10 / (length * length * length * length * constants::m_e);
+                force = 1 / (length * length * length * length);
                 TPE += -4 * force * length; //Angstroms
             } else {
-                force = -1e-10 / (length * length * constants::m_e);
+                force = -1 / (length * length);
                 TPE += -2 * force * length;
             }
 
@@ -432,9 +469,7 @@ void initialize_forces() {
         array_index = 3*e;
     
        //set e-e repulsion
-        e_distance_x = electron_position[array_index];
-        e_distance_y = electron_position[array_index + 1];
-        e_distance_z = electron_position[array_index + 2];
+    
 
       //  electron_spin = conduction_electron_spin[e];
             if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
@@ -446,11 +481,17 @@ void initialize_forces() {
          //   electron_spin_two = conduction_electron_spin[i];
 
             array_index_i = 3*i;
-            x_distance = e_distance_x - electron_position[array_index_i];
-            y_distance = e_distance_y - electron_position[array_index_i + 1];
-            z_distance = e_distance_z - electron_position[array_index_i + 2];
+            x_distance = x - electron_position[array_index_i];
+            y_distance = y - electron_position[array_index_i + 1];
+            z_distance = z - electron_position[array_index_i + 2];
+
+            if (x_distance > 30) x_distance = 40 - x_distance + x;
+            if (y_distance > 30) y_distance = 40 - y_distance + y;
+            if (z_distance > 30) z_distance = 40 - z_distance + z;
 
             length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
+
+            if (length > 20) continue;
             //if (length < 0.000001) length = 0.000001;
 
           /*  if (electron_spin == electron_spin_two) {
@@ -458,7 +499,7 @@ void initialize_forces() {
                // std::cout << " 1, 0 " << 1e10 * (constants::K / (length * length * constants::m_e)) << " delta1,1 " << (635 * constants::kB / (length * constants::m_e)) << std::endl;
             }
             else { */
-            force = 1e-10 / (length * length * constants::m_e);
+            force = 1 / (length * length);
             
             TPE += -2 * force * length;
 
@@ -481,7 +522,7 @@ void initialize_forces() {
             //  if (e ==0)   std::cout << electron_force[array_index] << std::endl;
         } 
                 if(err::check) if(e ==0) std::cout << "Calculating conduction-lattice repulsion" << std::endl;
-        for (int i = 0; i < lattice_electrons.size(); i++) {
+     /*   for (int i = 0; i < lattice_electrons.size(); i++) {
 
         //    electron_spin_two = lattice_electron_spin[i];
 
@@ -493,11 +534,11 @@ void initialize_forces() {
             length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
             //if (length < 0.000001) length = 0.000001;
 
-         /*   if (electron_spin == electron_spin_two) {
+            if (electron_spin == electron_spin_two) {
                 force = 1e10 * ((constants::K / (length * length * constants::m_e))- (635 * constants::kB / (length * constants::m_e)));
                 
             }
-            else { */
+            else {
                 force = 1e-10 / (length * length * constants::m_e);
 
             
@@ -506,7 +547,8 @@ void initialize_forces() {
             electron_force[array_index]     += x_distance * force / length;
             electron_force[array_index + 1] += y_distance * force / length;
             electron_force[array_index + 2] += z_distance * force / length;
-        }
+        } 
+        */
         //electron potential walls of lattice
        /*
             electron_force[array_index]     += 2 / ((e_distance_x - 1.99) * (e_distance_x - 1.99));

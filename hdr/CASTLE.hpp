@@ -58,7 +58,7 @@ namespace CASTLE {
 
     extern int lattice_atoms; //number of lattice atoms
     extern double conduction_electrons; //number of conduction electrons
-    extern double total_electrons; //lattice + conduction electrons
+  //  extern double total_electrons; //lattice + conduction electrons
     extern double temperature;
 
     extern int velocity_verlet_step();
@@ -78,12 +78,13 @@ namespace CASTLE {
     extern double mu_f;
     extern double n_f;
     extern double velocity_length;
-
+   // extern int num_cells;
 
     //integration variables
     
     extern int current_time_step;
     extern double force; //Angstroms
+    extern double length; //Angstroms
     extern std::vector<double> atom_position;
     extern std::vector<double> electron_position; //superarray of past locations for each step
     extern std::vector<double> new_electron_position;
@@ -92,9 +93,11 @@ namespace CASTLE {
     extern std::vector<double> electron_force;  
     extern std::vector<double> new_force_array;
     extern std::vector<double> mean_data_array;
-    extern std::vector<double> lattice_electrons;
-    extern std::vector<bool>   conduction_electron_spin;
-    extern std::vector<bool>   lattice_electron_spin;
+   // extern std::vector<double> lattice_electrons;
+   // extern std::vector<bool>   conduction_electron_spin;
+   // extern std::vector<bool>   lattice_electron_spin;
+   // extern std::vector<int> electrons_per_cell; //size of number of cells
+   // extern std::vector<int>  electron_cell;       // cell address for each electron
     extern std::vector<std::vector<bool> > symmetry_list;
 
     //outputs
