@@ -58,60 +58,69 @@ namespace CASTLE {
 
     extern int lattice_atoms; //number of lattice atoms
     extern double conduction_electrons; //number of conduction electrons
+    extern double total_electrons; //lattice + conduction electrons
+    extern double temperature;
 
+    extern int velocity_verlet_step();
+    extern double lattice_height; //Angstroms
+    extern double lattice_width;  //Angsrtoms
+    extern double lattice_depth;  //Angstroms
+    extern double atomic_size;    //Angstroms
+    extern double screening_depth;//Angstroms
 
-    extern int velocity_verlet_step(double dt);
-    extern   double lattice_height;
-    extern double lattice_width;
-    extern    double lattice_depth;
-
-    extern   double atomic_size;
-    extern double screening_depth;
+    //simulation variables
+    extern double total_time_steps;
+    extern double loop_time;
+    extern int    CASTLE_output_rate; //output velocity and position data at this multiple
+    extern double dt;
     extern double v_f;
     extern double E_f;
-
-    extern double TKE;
-    extern double TPE;
-    extern int total_spin_up;
-    extern int total_spin_down;
-
-    extern std::vector<std::vector<bool> > symmetry_list;
-
-    extern double temperature;
     extern double mu_f;
+    extern double n_f;
+    extern double velocity_length;
 
-    extern  double total_time_steps;
-    extern double loop_time;
-    extern  double dt;
+
+    //integration variables
+    
     extern int current_time_step;
-
-    extern int CASTLE_output_rate; //output velocity and position data at this multiple
-
+    extern double force; //Angstroms
+    extern std::vector<double> atom_position;
     extern std::vector<double> electron_position; //superarray of past locations for each step
     extern std::vector<double> new_electron_position;
     extern std::vector<double> electron_velocity; //superarray for past velocities for each step
     extern std::vector<double> new_electron_velocity;
-    extern std::vector<double> electron_acc;  
-    extern std::vector<double> new_acc_array;
+    extern std::vector<double> electron_force;  
+    extern std::vector<double> new_force_array;
     extern std::vector<double> mean_data_array;
     extern std::vector<double> lattice_electrons;
     extern std::vector<bool>   conduction_electron_spin;
-    extern std::vector<bool> lattice_electron_spin;
+    extern std::vector<bool>   lattice_electron_spin;
+    extern std::vector<std::vector<bool> > symmetry_list;
 
-    extern std::vector<double> atom_position;
-    
-    extern void initialize(const double num_electrons, const double num_atoms);
-   
-    extern void create();
-    extern void update_data();
-    extern void create_gif();
-
+    //outputs
+    extern double TKE;
+    extern double TPE;
+    extern int total_spin_up;
+    extern int total_spin_down;
     extern std::ofstream lattice_output;
     extern std::ofstream electron_position_output_up;
     extern std::ofstream electron_position_output_down;
     extern std::ofstream electron_velocity_output;
     extern std::ofstream mean_data;
     extern std::ofstream electron_spin_output;
+
+    
+    //control functions
+    extern void initialize();
+    extern void initialize_lattice();
+    extern void initialize_electrons();
+    extern void initialize_cells();
+    extern void initialize_forces();
+    extern void create();
+    extern void output_data();
+    extern void create_gif();
+
+    
     
 
 /*  one day your time will come

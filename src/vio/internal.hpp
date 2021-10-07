@@ -77,7 +77,8 @@ namespace vout{
    void material_constraint_phi(std::ostream& stream,bool header);
    void material_constraint_theta(std::ostream& stream,bool header);
    void material_mean_systorque(std::ostream& stream,bool header);
-   void standard_deviation(std::ostream& stream,bool header);
+   void system_standard_deviation(std::ostream& stream,bool header);
+   void system_standard_deviation_length(std::ostream& stream, bool header);
    void mean_system_susceptibility(std::ostream& stream,bool header);
    void phonon_temperature(std::ostream& stream,bool header);
    void material_temperature(std::ostream& stream,bool header);
@@ -130,6 +131,12 @@ namespace vout{
    void mean_material_spin_temperature(std::ostream& stream, bool header);
 
    void convergence_rate(std::ostream& stream, bool header);
+
+   void out_fermi_energy(std::ostream& stream);
+   void out_fermi_pressure(std::ostream& stream);
+   void out_fermi_Cv(std::ostream& stream);
+   void out_rel_fermi_energy(std::ostream& stream);
+   void out_rel_fermi_pressure(std::ostream& stream);
 
    //-------------------------------------------------------------------------
    // Funciton protypes for functions inside: datalog.cpp

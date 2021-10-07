@@ -49,7 +49,11 @@ TKE = 0;
     std::ofstream electron_velocity_output;
     std::ofstream electron_spin_output;
 
-   
+    setup_output();
+    update_position();
+    update_forces();
+    update_velocity();
+    output_data();
         if(err::check) std::cout << "Initializing output files..." << "\n";
     if (current_time_step % CASTLE_output_rate == 0) {
        
@@ -80,10 +84,15 @@ TKE = 0;
 
     
    // #pragma omp parallel for
-        if (err::check) std::cout << "Updating new electron position." << "\n";
+            if (err::check) std::cout << "Updating new electron position." << "\n";
        // std::cout << "conduction electrons" << conduction_electrons << "\n";
 
-
+    int array_index_i, array_index_i_y, array_index_i_z = 0;
+    double x,y,z, a_x, a_y, a_z, d_x, d_y, d_z, x_distance, y_distance, z_distance = 0.0;
+    double velocity_length = 0.0;
+    double x_unit, y_unit, z_unit, length, force, modifier = 0.0;
+    bool electron_spin = false;
+    bool electron_spin_two = false;
     for (int e = 0; e < conduction_electrons; e++){ 
         array_index = 3*e;
         array_index_y = array_index + 1;
@@ -91,12 +100,12 @@ TKE = 0;
 
       // std::cout << "why are you dying...." << e << "\n";
     
-        new_electron_position[array_index]   = electron_position[array_index]   + (electron_velocity[array_index]   * dt) + (electron_acc[array_index]   * dt * dt * 0.5); // x superarray component
-        new_electron_position[array_index_y] = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt) + (electron_acc[array_index_y] * dt * dt * 0.5); // y superarray component
-        new_electron_position[array_index_z] = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt) + (electron_acc[array_index_z] * dt * dt * 0.5); // z superarray component
+        new_electron_position[array_index]   = electron_position[array_index]   + (electron_velocity[array_index]   * dt) + (electron_force[array_index]   * dt * dt * 0.5); // x superarray component
+        new_electron_position[array_index_y] = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt) + (electron_force[array_index_y] * dt * dt * 0.5); // y superarray component
+        new_electron_position[array_index_z] = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt) + (electron_force[array_index_z] * dt * dt * 0.5); // z superarray component
     
 
-       //  if (e == 0) std::cout << new_electron_position[array_index] << "   " << electron_position[array_index]  << "   " << (electron_velocity[array_index]   * dt) << "   " << (electron_acc[array_index]   * dt * dt * 0.5) << "\n";
+       //  if (e == 0) std::cout << new_electron_position[array_index] << "   " << electron_position[array_index]  << "   " << (electron_velocity[array_index]   * dt) << "   " << (electron_force[array_index]   * dt * dt * 0.5) << "\n";
         symmetry_list[e].resize(conduction_electrons, false);
 
         if (CASTLE_output_data)   {
@@ -106,20 +115,15 @@ TKE = 0;
   //  #pragma omp parallel for
     }
     
-        if (err::check) std::cout << "Positions updated... next step and array index: " << "\n";
+            if (err::check) std::cout << "Positions updated... next step and array index: " << "\n";
 
 
     //set forces local variables
 
-    int array_index_i, array_index_i_y, array_index_i_z = 0;
-    double x,y,z, a_x, a_y, a_z, d_x, d_y, d_z, x_distance, y_distance, z_distance = 0.0;
-    double velocity_length = 0.0;
-    double x_unit, y_unit, z_unit, length, force = 0.0;
-    bool electron_spin = false;
-    bool electron_spin_two = false;
+
     //forces and velocity integration
    // #pragma omp parallel for
-    if (err::check) std::cout << "Forces, spins, and velocities update..." << "\n";
+            if (err::check) std::cout << "Forces, spins, and velocities update..." << "\n";
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -132,7 +136,7 @@ TKE = 0;
 
         //spontaneous spin flip
         
-        velocity_length = 1e-10 * sqrt( (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index_y]*electron_velocity[array_index_y]) + (electron_velocity[array_index_z]*electron_velocity[array_index_z]) ); //meters
+        velocity_length = sqrt( (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index_y]*electron_velocity[array_index_y]) + (electron_velocity[array_index_z]*electron_velocity[array_index_z]) ); //meters
         
     //    double spin_chance = Spin_distrib(gen) * 0.0002;
         symmetry_list[e].resize(conduction_electrons, false);
@@ -188,17 +192,17 @@ TKE = 0;
   
          //atoms go ±1 from there
         for (int a = 0; a < 9; a++) {
-            double modifier = (atomic_size * (a % 3)) - atomic_size;
+            modifier = (atomic_size * (a % 3)) - atomic_size;
             x_distance = modifier - d_x;
             y_distance = modifier - d_y;
             z_distance = modifier - d_z;
             
-            length = 1e-10 *  sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance)); //meters
-            if (length < 1e-14) length = 1e-14;
+            length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance)); //meters
+            if (length < 0.00001) length = 0.00001;
             
             if (length > screening_depth) {
-                force = 1e-10 * constants::K / (length * length * length * length * constants::m_e); //Angstroms
-                TPE += -2 * force * length * 1e10;
+                force = 1e-10 / (length * length * length * length * constants::m_e); //Angstroms
+                TPE += -2 * force * length;
             } else {
                 velocity_length = sqrt( (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index_y]*electron_velocity[array_index_y]) + (electron_velocity[array_index_z]*electron_velocity[array_index_z]) );
                 int angle = Vel_distrib(gen);
@@ -208,19 +212,19 @@ TKE = 0;
                 electron_velocity[array_index_y] = sin(theta)*sin(phi) * velocity_length;
                 electron_velocity[array_index_z] = cos(phi)            * velocity_length;
 
-                new_electron_position[array_index]   = a_x + (cos(theta)*sin(phi) * screening_depth * 1e10);
-                new_electron_position[array_index_y] = a_y + (sin(theta)*sin(phi) * screening_depth * 1e10);
-                new_electron_position[array_index_z] = a_z + (cos(phi) * screening_depth * 1e10);
+                new_electron_position[array_index]   = a_x + (cos(theta)*sin(phi) * screening_depth);
+                new_electron_position[array_index_y] = a_y + (sin(theta)*sin(phi) * screening_depth);
+                new_electron_position[array_index_z] = a_z + (cos(phi)            * screening_depth);
 
                 length = screening_depth;
 
-                force = -1e10 * constants::K / (length * length * constants::m_e);
-                TPE += -2 * force * length * 1e10;
+                force = -1e10 / (length * length * constants::m_e);
+                TPE += -2 * force * length;
             }
 
-            new_acc_array[array_index]   += 1e-10 * force * x_distance / length;
-            new_acc_array[array_index_y] += 1e-10 * force * y_distance / length;
-            new_acc_array[array_index_z] += 1e-10 * force * z_distance / length;
+            new_force_array[array_index]   += force * x_distance / length;
+            new_force_array[array_index_y] += force * y_distance / length;
+            new_force_array[array_index_z] += force * z_distance / length;
         }
   
     //set e-e repulsion
@@ -239,32 +243,32 @@ TKE = 0;
             z_distance = z - new_electron_position[array_index_i_z]; 
 
 
-            length = 1e-10 * sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
-            // if (length < 0.000001) length = 0.000001;
+            length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
+            if (length < 0.00001) length = 0.00001;
             
          /*   if (electron_spin == electron_spin_two) {
                 force = 1e10 * ((constants::K / (length * length * constants::m_e))- (635 * constants::kB / (length * constants::m_e)));
                 
             }
             else { */
-                force = 1e10 * constants::K / (length * length * constants::m_e);
+                force = 1 / (length * length);
 
             
-            TPE += -2 * force * length * 1e10;
+            TPE += -2 * force * length;
 
-            x_unit = 1e-10 * x_distance * force / length;
-            y_unit = 1e-10 * y_distance * force / length;
-            z_unit = 1e-10 * z_distance * force / length;
+            x_unit = x_distance * force / length;
+            y_unit = y_distance * force / length;
+            z_unit = z_distance * force / length;
             
 
-            new_acc_array[array_index]     += x_unit;
-            new_acc_array[array_index + 1] += y_unit;
-            new_acc_array[array_index + 2] += z_unit;
+            new_force_array[array_index]     += x_unit;
+            new_force_array[array_index + 1] += y_unit;
+            new_force_array[array_index + 2] += z_unit;
 
             //make use of symmetry
-            new_acc_array[array_index_i]   += -1 * x_unit;
-            new_acc_array[array_index_i_y] += -1 * y_unit;
-            new_acc_array[array_index_i_z] += -1 * z_unit;
+            new_force_array[array_index_i]   += -1 * x_unit;
+            new_force_array[array_index_i_y] += -1 * y_unit;
+            new_force_array[array_index_i_z] += -1 * z_unit;
     
             symmetry_list[i][e] = true; //set symmetry flag
         }
@@ -275,31 +279,32 @@ TKE = 0;
             y_distance = y - lattice_electrons[array_index_i_y];
             z_distance = z - lattice_electrons[array_index_i_z];
 
-            length = 1e-10 * sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
-           // if (length < 0.000001) length = 0.000001;
+            length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
+            if (length < 0.00001) length = 0.00001;
             
          /*   if (electron_spin == electron_spin_two) {
                 force = 1e10 * ((constants::K / (length * length * constants::m_e))- (635 * constants::kB / (length * constants::m_e)));
                 
             }
             else { */
-                force = 1e10 * constants::K / (length * length * constants::m_e);
+                force = 1/ (length * length);
 
             
-            TPE += -2 * force * length * 1e10;
+            TPE += -2 * force * length;
 
-            new_acc_array[array_index]   += 1e-10 * x_distance * force / length; //Angstroms
-            new_acc_array[array_index_y] += 1e-10 * y_distance * force / length;
-            new_acc_array[array_index_z] += 1e-10 * z_distance * force / length;
+            new_force_array[array_index]   += x_distance * force / length; //Angstroms
+            new_force_array[array_index_y] += y_distance * force / length;
+            new_force_array[array_index_z] += z_distance * force / length;
         }
   
     
-        new_electron_velocity[array_index]   = electron_velocity[array_index]   + (electron_acc[array_index]   + new_acc_array[array_index])   * dt * 0.5; 
-        new_electron_velocity[array_index_y] = electron_velocity[array_index_y] + (electron_acc[array_index_y] + new_acc_array[array_index_y]) * dt * 0.5;
-        new_electron_velocity[array_index_z] = electron_velocity[array_index_z] + (electron_acc[array_index_z] + new_acc_array[array_index_z]) * dt * 0.5;
+
+        new_electron_velocity[array_index]   = electron_velocity[array_index]   + (electron_force[array_index]   + new_force_array[array_index])   * dt * 0.5; 
+        new_electron_velocity[array_index_y] = electron_velocity[array_index_y] + (electron_force[array_index_y] + new_force_array[array_index_y]) * dt * 0.5;
+        new_electron_velocity[array_index_z] = electron_velocity[array_index_z] + (electron_force[array_index_z] + new_force_array[array_index_z]) * dt * 0.5;
 
         velocity_length = sqrt( (new_electron_velocity[array_index]*new_electron_velocity[array_index]) + (new_electron_velocity[array_index_y]*new_electron_velocity[array_index_y]) + (new_electron_velocity[array_index_z]*new_electron_velocity[array_index_z]) );
-        TKE += velocity_length;
+        TKE += 0.5 * velocity_length * velocity_length;
 
         //lattice boundary conserves momentum and is one atom less than actual lattice to preserve boundary effect
         if (new_electron_position[array_index]   < (0.00001 + 3*atomic_size) || new_electron_position[array_index]   > (lattice_width - 3*atomic_size - 0.00001) ) new_electron_velocity[array_index]   *= -1.0;
@@ -308,7 +313,7 @@ TKE = 0;
 
         if (CASTLE_output_data) {
             electron_velocity_output << e << "  " << new_electron_velocity[array_index] << "    " << new_electron_velocity[array_index_y] << "  " << new_electron_velocity[array_index_z] << "  " << velocity_length << "\n";
-         //   acceleration_output << e << "   " << electron_acc[array_index] << " " << electron_acc[array_index_y] <<   "   " << electron_acc[array_index_z] << "\n";  
+         //   acceleration_output << e << "   " <<(electron_force[array_index] << " " <<(electron_force[array_index_y] <<   "   " <<(electron_force[array_index_z] << "\n";  
 
         }  
     }
@@ -316,7 +321,7 @@ TKE = 0;
     
         current_time_step += 1;
         electron_position = new_electron_position;
-        electron_acc = new_acc_array;
+        electron_force = new_force_array;
         electron_velocity = new_electron_velocity;
 
         electron_position_output_up.close();
@@ -324,20 +329,20 @@ TKE = 0;
         electron_velocity_output.close();
         electron_spin_output.close();
        
-        fill(new_acc_array.begin(), new_acc_array.end(), 0.0);
+        fill(new_force_array.begin(), new_force_array.end(), 0.0);
 
         if (equilibrium_step) {
-        mean_data_array[current_time_step*5]     = TKE ;
-        mean_data_array[current_time_step*5 + 1] = TPE ;
-        mean_data_array[current_time_step*5 + 2] = TPE / TKE;
-        mean_data_array[current_time_step*5 + 3] = 1e10 * sqrt(2 * TPE / constants::m_e);
+        mean_data_array[current_time_step*5]     = TKE * constants::K * 1e-20;
+        mean_data_array[current_time_step*5 + 1] = TPE * constants::K * 1e-10;
+        mean_data_array[current_time_step*5 + 2] = TPE * 1e-10/ TKE;
+        mean_data_array[current_time_step*5 + 3] = sqrt(2 * TPE * 1e-10 / constants::m_e);
      //   mean_data_array[current_time_step*5 + 4] = (total_spin_up - total_spin_down);
         }
         else {
-        mean_data_array[0]      += TKE / conduction_electrons;
-        mean_data_array[1] += TPE / conduction_electrons;
-        mean_data_array[2] += TPE / TKE;
-        mean_data_array[3] += TPE;
+        mean_data_array[0]      += TKE * constants::K * 1e-20 / conduction_electrons;
+        mean_data_array[1] += TPE * constants::K * 1e-10 / conduction_electrons;
+        mean_data_array[2] += TPE * 1e-10/ TKE;
+        mean_data_array[3] += sqrt(2 * TPE * 1e-10 / constants::m_e);
      //   mean_data_array[4] += (total_spin_up - total_spin_down);
        
         }
@@ -346,6 +351,34 @@ TKE = 0;
         CASTLE_output_data = false;
     return EXIT_SUCCESS;
 }
+void setup_output() {
+
+}
+
+void update_position(){
+
+}
+
+void update_forces() {
+
+}
+
+void update_cells() {
+
+}
+
+void update_velocity() {
+
+}
+
+void electron_e_a_coulomb() {
+
+}
+
+void electron_e_e_coulomb() {
+
+}
+
 
 } //end CASTLE namespace
 
