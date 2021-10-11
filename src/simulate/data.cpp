@@ -146,13 +146,13 @@ namespace CASTLE {
         bool CASTLE_program;
       bool CASTLE_output_data = false;
       bool equilibrium_step;
-   int velocity_verlet_step(double dt);
+   int velocity_verlet_step(double time_step);
 
    int CASTLE_output_rate;
 
 
      int lattice_atoms;
-    double conduction_electrons;
+    int conduction_electrons;
     int core_electrons;
 
     double lattice_height;
@@ -164,9 +164,12 @@ namespace CASTLE {
     double v_f;
     double mu_f;
     double E_f;
+    double n_f;
 
     double TKE;
     double TPE;
+    double MKE;
+    double MPE;
     int total_spin_up;
     int total_spin_down;
     std::vector<std::vector<bool> > symmetry_list;
@@ -182,28 +185,37 @@ namespace CASTLE {
    std::vector<double> new_electron_position;
    std::vector<double> electron_velocity; //superarray for past velocities for each step
    std::vector<double> new_electron_velocity;
-   std::vector<double> electron_acc;  
-   std::vector<double> new_acc_array;
+   std::vector<double> electron_force;  
+   std::vector<double> new_force_array;
    std::vector<double> atom_position;
    std::vector<double> mean_data_array;
    std::vector<double> lattice_electrons;
-   std::vector<bool> conduction_electron_spin;
-   std::vector<bool> lattice_electron_spin;
+   //std::vector<bool> conduction_electron_spin;
+   //std::vector<bool> lattice_electron_spin;
 
    //std::vector<struct electron> electron_list; //This is probably not the best way to do this
     
-
-   void initialize(const double num_electrons, const double num_atoms);
-
+   void initialize();
+   void initialize_lattice();
+   void initialize_electrons();
+   void initialize_forces();
    void create();
-   void create_gif();
+   void output_data();
+
+   void setup_output();
+   void update_position();
+   void update_dynamics();
+   double electron_e_a_coulomb(int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
+   double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
+   double update_velocity(int array_index);
+  
 
     std::ofstream lattice_output;
-    std::ofstream electron_position_output_up;
+    //std::ofstream electron_position_output_up;
     std::ofstream electron_position_output_down;
     std::ofstream electron_velocity_output;
     std::ofstream mean_data;
-    std::ofstream electron_spin_output;
+   // std::ofstream electron_spin_output;
 
 
 

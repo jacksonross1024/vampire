@@ -34,17 +34,6 @@ void create() {
             if (err::check) std::cout << "Creating CASTLE..." << std::endl; 
             if (err::check) std::cout << "  ";
   
-    
-    
-    //=========
-    // Create output file instances
-    //=========
-    std::ofstream lattice_output;
-   // std::ofstream electron_position_output_up;
-    std::ofstream electron_position_output_down;
-    std::ofstream electron_velocity_output;
-    std::ofstream mean_data;
- //   std::ofstream electron_spin_output;
 
         std::cout << "Building CASTLE..." <<std::endl;
 
@@ -58,8 +47,13 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-    
+        omp_set_dynamic(1);
+        //omp_set_num_threads(1);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
+        #pragma parallel 
+        {
+        //std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " Number of threads: " << omp_get_num_threads() << std::endl;
+        }
         std::cout << "Storming CASTLE..." << std::endl;
    
     
@@ -69,24 +63,17 @@ void create() {
     sim::integrate(total_time_steps);
     
         std::cout << "Average time step[s]:  " << (castle_watch.elapsed_seconds()) / total_time_steps << std::endl;
-    //create_gif();
-    
-
-    
 
         std::cout << "Equilibrium step complete. Averaging CASTLE..." << std::endl;
     
     //=========
     // Set up CASTLE for loop averaging step
     //=========
-    double current_time = castle_watch.elapsed_seconds();
+    castle_watch.start();
     equilibrium_step = false;
     current_time_step = 0;
     total_time_steps = sim::loop_time;
 
-    mean_data.open("CASTLE/loop_data");
-    mean_data << "mean-KE     mean-PE     total-KE    total-PE    mean-spin" << std::endl;
-    mean_data_array.resize(5, 0.0);
 
     //========
     // Run averaging step
@@ -96,10 +83,9 @@ void create() {
     //========
     // Output data
     //========
-    mean_data << mean_data_array[0] / loop_time  << "  " << mean_data_array[1] / loop_time  << "    " << mean_data_array[2] / loop_time << "  " << mean_data_array[3] / loop_time << "  " << mean_data_array[4] / loop_time << std::endl;  
-    mean_data.close();
 
-        std::cout << "Averaging complete. " << current_time - castle_watch.elapsed_seconds() << " [s] elapsed." << std::endl;
+    mean_data.close();
+        std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed." << std::endl;
 }
 
 //====================================
@@ -124,35 +110,28 @@ void initialize () {
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
     CASTLE_output_rate = 1; //sim::CASTLE_output_rate;
-  //  total_electrons = 20 * 20 * 20; //sim::total_electrons;
-    lattice_atoms = 20 * 20 * 20; //sim::lattice_atoms;
+    
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
-    loop_time = sim::loop_time;
-
+    
     current_time_step = 0;
 
+    
     //========
     // initialize electrons: lattice and conduction bands, velocity, spin, etc.
     //=======
     initialize_electrons();
             if (err::check) std::cout << "Electrons ready..." << std::endl;
-    //=======
-    // Create integration and nearest neighbor cells
-    //=======
-    initialize_cells();
-            if (err::check) std::cout << "Cells ready..." << std::endl;
+
     //=======
     // Calls forces set up
     //=======
     initialize_forces();
             if (err::check) std::cout << "Forces ready..." << std::endl;
 
-    //=======
-    // Outputs initial data
-    //=======
-    output_data();
-            if (err::check) std::cout << "Data output. Initialization complete." << std::endl;
+
+    mean_data.open("CASTLE/mean_data");
+    mean_data << "step      mean-KE     mean-PE " << "\n";
 
 }
 
@@ -203,15 +182,15 @@ void initialize_electrons() {
         electron_position_output_up << "Initial positions for spin up electrons" << std::endl;  
     */
 
-    electron_position_output_down.open("CASTLE/Electron_Position_Down/initD.xyz");
+    electron_position_output_down.open("CASTLE/Electron_Position/init.xyz");
     electron_position_output_down << conduction_electrons << "\n";  
-    electron_position_output_down << "Initial positions for spin down electrons" << "\n";  
+    electron_position_output_down << "Initial positions for electrons" << "\n";  
 
     
     electron_velocity_output.open("CASTLE/Electron_Velocities/init.txt");
     electron_velocity_output << "electron number    x-component     y-component     z-component     length" << std::endl;  
     
-        if (err::check) std::cout << "Lattice output file and electron position file opened..." << std::endl;
+            if (err::check) std::cout << "Lattice output file and electron position file opened..." << std::endl;
 
     //=========
     // Initialize arrays for holding electron variables
@@ -219,46 +198,45 @@ void initialize_electrons() {
     //========
     electron_position.resize(conduction_electrons * 3, 0.0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
     new_electron_position.resize(conduction_electrons * 3, 0.0);
-   // lattice_electrons.resize((total_electrons - conduction_electrons), 0.0);
+    // lattice_electrons.resize((total_electrons - conduction_electrons), 0.0);
     electron_velocity.resize(conduction_electrons * 3, 0.0); //Angstroms
     new_electron_velocity.resize(conduction_electrons * 3, 0.0); //Angstroms
     electron_force.resize(conduction_electrons * 3, 0.0); //current and future arrays
     new_force_array.resize(conduction_electrons * 3, 0.0);
     mean_data_array.resize(total_time_steps*5 + 5, 0.0);
-   // conduction_electron_spin.resize(conduction_electrons, false);
-   // lattice_electron_spin.resize((total_electrons - conduction_electrons), false);
-    symmetry_list.resize(conduction_electrons);
+    // conduction_electron_spin.resize(conduction_electrons, false);
+    // lattice_electron_spin.resize((total_electrons - conduction_electrons), false);
+    // symmetry_list.resize(conduction_electrons);
 
      //   std::cout << "conduction electrons" << conduction_electrons << std::endl;
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<> Pos_distrib(1, 360);
+    std::uniform_int_distribution<> Pos_distrib(1, 359);
 
     n_f = 1e30 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
     E_f = 3 * constants::h * constants::h * conduction_electrons * pow((3 * n_f / (8 * M_PI)), 0.666666667) / (10 * constants::m_e); //Fermi-energy // meters
     mu_f = 5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
     v_f = sqrt(2 * E_f / constants::m_e); //meters
-    TKE = 0; //total Kinetic energy, meters
+    //TKE = 0; //total Kinetic energy, meters
     //  total_spin_up = 0;
-    total_spin_down = 0;
+   // total_spin_down = 0;
    
 
-    double phi,theta, x_pos,y_pos,z_pos = 0.0;
+    double phi,theta, x_pos,y_pos,z_pos, velocity_length = 0.0;
     //super loop for each conducting electron
-    int array_index_l, array_index = 0;
-    conduction_electrons = 0;
+    int array_index = 0;
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         //random program for velocity initialization
         phi   = M_PI * Pos_distrib(gen) / 180;
         theta = M_PI * Pos_distrib(gen) / 180.0;
 
-                if (err::check) std::cout << "Prepare to set positions: " << conduction_electrons * 3 << std::endl;
+                if (err::check) std::cout << "Prepare to set positions: " << e << std::endl;
 
         //initialize and output electron posititons
         x_pos = (atomic_size * (e % 20)) + (cos(theta)*sin(phi) * screening_depth); //Angstroms
-        y_pos = (atomic_size * ((int(floor(e / 20))) % 20)) + (sin(theta)*sin(phi) * screening_depth);
+        y_pos = (atomic_size * ((int(floor(e / 20))) % 20)) + (sin(theta)*sin(phi) * screening_depth); //Sets on radius of screening depth from nucleus
         z_pos = (atomic_size * floor(e/ 400)) + (cos(phi) * screening_depth);
      
         if (x_pos < 0.0) x_pos += 40.0;
@@ -293,9 +271,9 @@ void initialize_electrons() {
         } else { */
             
             
-            electron_position[array_index]     = x_pos;
-            electron_position[array_index + 1] = y_pos;
-            electron_position[array_index + 2] = z_pos;
+        electron_position[array_index]     = x_pos;
+        electron_position[array_index + 1] = y_pos;
+        electron_position[array_index + 2] = z_pos;
 
          /*   if (Pos_distrib(gen) > 180) { 
                 conduction_electron_spin[conduction_electrons] = true;
@@ -303,27 +281,27 @@ void initialize_electrons() {
                 electron_position_output_up << "H" << "    " << electron_position[array_index] << "    " << electron_position[array_index + 1] << "    " << electron_position[array_index + 2] << std::endl;  
             } else { */
            
-            electron_position_output_down << "H" << "    " << electron_position[array_index] << "    " << electron_position[array_index + 1] << "    " << electron_position[array_index + 2] << "\n";    
+        electron_position_output_down << "H" << "    " << electron_position[array_index] << "    " << electron_position[array_index + 1] << "    " << electron_position[array_index + 2] << "\n";    
             
           
             //std::random_device rd;  //Will be used to obtain a seed for the random number engine
             //std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-            std::uniform_int_distribution<> Vel_distrib(0, 360);
-            int random_angle = Vel_distrib(gen);
-            phi   = M_PI * random_angle / 360.0;
-            theta = M_PI * random_angle / 180.0;
+        std::uniform_int_distribution<> Vel_distrib(0, 360);
+        int random_angle = Vel_distrib(gen);
+        phi   = M_PI * random_angle / 360.0;
+        theta = M_PI * random_angle / 180.0;
 
                     //  if (err::check) std::cout << "Random angles chosen. v_f: %d. cos(theta): %d. sin(theta): %d. sin(0.5 - phi): %d" << v_f << cos(theta) << sin(theta) << sin(0.5 - phi) << std::endl;
 
-            electron_velocity[array_index]     = cos(theta)*sin(phi) * v_f * 1e10; //gotta get back to Angstrom's
-            electron_velocity[array_index + 1] = sin(theta)*sin(phi) * v_f * 1e10;
-            electron_velocity[array_index + 2] = cos(phi)            * v_f * 1e10;
-            velocity_length = sqrt( (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index + 1]*electron_velocity[array_index + 1]) + (electron_velocity[array_index + 2]*electron_velocity[array_index + 2]) ); //Angstroms
+        electron_velocity[array_index]     = cos(theta)*sin(phi) * v_f * 1e10; //gotta get back to Angstrom's
+        electron_velocity[array_index + 1] = sin(theta)*sin(phi) * v_f * 1e10;
+        electron_velocity[array_index + 2] = cos(phi)            * v_f * 1e10;
+        velocity_length = (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index + 1]*electron_velocity[array_index + 1]) + (electron_velocity[array_index + 2]*electron_velocity[array_index + 2]); //Angstroms
                 //    std::cout << "v_f" << v_f << " velocity " << velocity_length << std::endl;
-            electron_velocity_output << e << "      " << electron_velocity[array_index] << "    " << electron_velocity[array_index + 1] << "    " << electron_velocity[array_index + 2] << "    " << velocity_length << std::endl;
+        electron_velocity_output << e << "      " << electron_velocity[array_index] << "    " << electron_velocity[array_index + 1] << "    " << electron_velocity[array_index + 2] << "    " << velocity_length << std::endl;
                     // if (err::check) std::cout << "Velocities randomized..." << std::endl;
             //   electron_spin_output << conduction_electrons << "  " << conduction_electron_spin[conduction_electrons - 1] << std::endl;
-            TKE += 0.5 * constants::m_e * velocity_length * velocity_length * 1e10; //energy in Angstroms
+            
         }
     
     //electron_position_output_up.close();
@@ -378,14 +356,14 @@ void initialize_forces() {
 
     int array_index, array_index_i = 0;
     
-    double x,y,z, a_x,a_y,a_z, d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length = 0.0;
+    double x,y,z, a_x,a_y,a_z, d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force = 0.0;
     double e_distance_x,e_distance_y,e_distance_z, x_unit,y_unit,z_unit = 0.0; 
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         //spontaneous spin flip
 
          //   double spin_chance = Spin_distrib(gen) * 0.0002;
-        symmetry_list[e].resize(conduction_electrons, false);
+         //symmetry_list[e].resize(conduction_electrons, false);
         
       // if (e == 0) std::cout << "deltaV " << deltaV << " eps " << (0.5 * constants::m_e * velocity_length * velocity_length) / (constants::kB * temperature) << " E_f " <<  E_f / (constants::kB * temperature) << std::endl;
     /*    double flip_chance = 1.0;
@@ -436,14 +414,14 @@ void initialize_forces() {
             z_distance = z_mod - d_z;
 
             length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
-             if (length < 0.00001) length = 0.00001;
+             if (length < 0.0001) length = 0.0001;
            
             if (length > screening_depth) {
                 force = 1 / (length * length * length * length);
-                TPE += -4 * force * length; //Angstroms
+                
             } else {
                 force = -1 / (length * length);
-                TPE += -2 * force * length;
+                
             }
 
             electron_force[array_index]     += force * x_distance / length;
@@ -452,46 +430,43 @@ void initialize_forces() {
 
         }
 
-            
              if (err::check) std::cout << "Nearest atoms set..." << std::endl;
 
 
     //set e-e repulsion local variables
             if (err::check) std::cout << "Initializing e-e repulsion symmetry." << std::endl;
        //     std::cout << "conduction electrons" << conduction_electrons << std::endl;
-  
-   // std::ofstream acceleration_output;
-   // acceleration_output.open("CASTLE/test");
-  //  bool electron_spin;
-  //  bool electron_spin_two;
+
     
-    
-        array_index = 3*e;
     
        //set e-e repulsion
     
 
       //  electron_spin = conduction_electron_spin[e];
-            if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
+                if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
         
         for (int i = 0; i < conduction_electrons; i++) {
             if (i == e) continue; //no self repulsion
-            if (symmetry_list[e][i]) continue;  //make use of symmetry
+            //if (symmetry_list[e][i]) continue;  //make use of symmetry
 
-         //   electron_spin_two = conduction_electron_spin[i];
+            //   electron_spin_two = conduction_electron_spin[i];
 
             array_index_i = 3*i;
             x_distance = x - electron_position[array_index_i];
             y_distance = y - electron_position[array_index_i + 1];
             z_distance = z - electron_position[array_index_i + 2];
 
-            if (x_distance > 30) x_distance = 40 - x_distance + x;
-            if (y_distance > 30) y_distance = 40 - y_distance + y;
-            if (z_distance > 30) z_distance = 40 - z_distance + z;
+            if (x_distance < -20)     x_distance = x_distance + 40;
+            else if (x_distance > 20) x_distance = x_distance - 40;
+            if (y_distance < -20)     y_distance = y_distance + 40;
+            else if (y_distance > 20) y_distance = y_distance - 40;
+            if (z_distance <  -20)    z_distance = z_distance + 40;
+            else if (z_distance > 20) z_distance = z_distance - 40;
 
-            length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
+            length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
 
-            if (length > 20) continue;
+            if (length > 400) continue;
+            length = sqrt(length);
             //if (length < 0.000001) length = 0.000001;
 
           /*  if (electron_spin == electron_spin_two) {
@@ -500,8 +475,6 @@ void initialize_forces() {
             }
             else { */
             force = 1 / (length * length);
-            
-            TPE += -2 * force * length;
 
             x_unit = x_distance * force / length;
             y_unit = y_distance * force / length;
@@ -512,12 +485,12 @@ void initialize_forces() {
             electron_force[array_index + 1] += y_unit;
             electron_force[array_index + 2] += z_unit;
 
-            //make use of symmetry
+         /*   //make use of symmetry
             electron_force[array_index_i]     += -1 * x_unit;
             electron_force[array_index_i + 1] += -1 * y_unit;
             electron_force[array_index_i + 2] += -1 * z_unit;
             symmetry_list[i][e] = true; //apply symmetry flag
-
+        */
 
             //  if (e ==0)   std::cout << electron_force[array_index] << std::endl;
         } 
@@ -563,26 +536,38 @@ void initialize_forces() {
 }
 
 void output_data() {
-     mean_data_array[0] = TKE * constants::K * 1e-20;
-     mean_data_array[1] = TPE * constants::K * 1e-10;
-     mean_data_array[2] = TPE * 1e-10/ TKE;
-     mean_data_array[3] = sqrt(2 * TPE * 1e-10 / constants::m_e);
-  //   mean_data_array[4] = (total_spin_up - total_spin_down);
      
-         //=========
+    //=========
     // Output equilibration step data
     //=========
-    mean_data_array.resize(total_time_steps*5, 0.0);
-    mean_data.open("CASTLE/mean_data");
-    mean_data << "step  mean-KE     mean-PE     total-KE    total-PE    mean-spin" << std::endl;
-    for (int t = 0; t < total_time_steps; t++) {
-        mean_data << t << "     " << mean_data_array[5*t] << "  " << mean_data_array[5*t + 1] << "  " << mean_data_array[5*t + 2] << "  " << mean_data_array[5*t + 3] << "  " << "\n";  
-    } mean_data.close();
+    
+    mean_data << current_time_step << "     " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << "   " << MPE * constants::K * 1e-20 * constants::m_e / CASTLE_output_rate << "\n";
+    MKE = MPE = 0.0;
+    int array_index,array_index_y,array_index_z = 0;
+    double x,y,z, velocity_length = 0.0;
+    for (int e = 0; e < conduction_electrons; e++) {
+        array_index = 3*e;
+        array_index_y = array_index + 1;
+        array_index_z = array_index + 2;
+
+        x = new_electron_velocity[array_index];
+        y = new_electron_velocity[array_index_y];
+        z = new_electron_velocity[array_index_z];
+        velocity_length = (x*x) + (y*y) + (z*z);
+        electron_position_output_down << "H" << "   " << new_electron_position[array_index] << "    " << new_electron_position[array_index_y] << "  " << new_electron_position[array_index_z] << "\n";
+        electron_velocity_output      << e   << "   " << x << "    " << y << "  " << z << "  " << velocity_length << "\n";
+    }
+
+    std::cout << "  " << current_time_step / total_time_steps * 100 << "%" << "\n";
+    //  electron_position_output_up.close();
+    electron_position_output_down.close();
+    electron_velocity_output.close();
+     //   electron_spin_output.close();
+    CASTLE_output_data = false;
 }
 
-void create_gif() {
 
-}
+
 
 } //end of CASTLE namespace
 
