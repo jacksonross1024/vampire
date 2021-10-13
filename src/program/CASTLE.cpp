@@ -418,7 +418,7 @@ void initialize_forces() {
         
             // force
             force = (28 * exp(-20 * length)) - exp(-length);
-
+         //   if(e == 0) std::cout << "force " << force << std::endl;
 
             electron_force[array_index]     += force * x_distance / length;
             electron_force[array_index + 1] += force * y_distance / length;
@@ -473,7 +473,7 @@ void initialize_forces() {
             }
             else { */
             force = 1 / (length * length);
-
+           // if(e == 0) std::cout << "force " << force << std::endl;
             x_unit = x_distance * force / length;
             y_unit = y_distance * force / length;
             z_unit = z_distance * force / length;
@@ -538,6 +538,13 @@ void output_data() {
     //=========
     // Output equilibration step data
     //=========
+    mean_data.precision(10);
+    electron_position_output_down.precision(10);
+    electron_velocity_output.precision(10);
+
+    mean_data << std::scientific;
+    electron_position_output_down << std::fixed;
+    electron_velocity_output << std::scientific;
     
     mean_data << current_time_step << ", " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " << MPE * constants::K / CASTLE_output_rate << ", " << (MPE*constants::K + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate <<  "\n";
     MKE = MPE = 0.0;

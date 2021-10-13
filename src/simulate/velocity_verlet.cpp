@@ -132,9 +132,9 @@ void update_position(){
 
       // std::cout << "why are you dying...." << e << "\n";
     
-        x_pos = electron_position[array_index]   + (electron_velocity[array_index]   * dt) + (electron_force[array_index]   * dt * dt * 0.5  * constants::K / constants::m_e); // x superarray component
-        y_pos = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt) + (electron_force[array_index_y] * dt * dt * 0.5  * constants::K / constants::m_e); // y superarray component
-        z_pos = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt) + (electron_force[array_index_z] * dt * dt * 0.5  * constants::K / constants::m_e); // z superarray component
+        x_pos = electron_position[array_index]   + (electron_velocity[array_index]   * dt) + (electron_force[array_index]   * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e); // x superarray component
+        y_pos = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt) + (electron_force[array_index_y] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e); // y superarray component
+        z_pos = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt) + (electron_force[array_index_z] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e); // z superarray component
 
         if (x_pos < 0.0) x_pos += 40.0;
         else if (x_pos > 40.0) x_pos -= 40.0;
@@ -149,7 +149,7 @@ void update_position(){
         new_electron_position[array_index_y] = y_pos;
         new_electron_position[array_index_z] = z_pos;
 
-       // if (e == 0) std::cout << new_electron_position[array_index] << "   " << electron_position[array_index]  << "   " << (electron_velocity[array_index]   * dt) << "   " << (electron_force[array_index]   * dt * dt * 0.5  * constants::K / constants::m_e) << "\n";
+        if (e == 0) std::cout << new_electron_position[array_index] << "   " << electron_position[array_index]  << "   " << (electron_velocity[array_index] * dt) << "   " << (electron_force[array_index] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e) << "\n";
         //symmetry_list[e].resize(conduction_electrons, false);
     }
 }
@@ -229,9 +229,9 @@ long double update_velocity(int array_index) {
         int array_index_z = array_index + 2;
 
      //   if (e == 0) std::cout << new_electron_velocity[array_index] << " " << electron_velocity[array_index] << "    " <<  electron_force[array_index]  << "    " << new_force_array[array_index]  << "    " <<  dt * 0.5  * constants::K / constants::m_e << "\n"; 
-        new_electron_velocity[array_index]   = electron_velocity[array_index]   + ((electron_force[array_index]   + new_force_array[array_index])   * dt * 0.5  * constants::K / constants::m_e); 
-        new_electron_velocity[array_index_y] = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_force_array[array_index_y]) * dt * 0.5  * constants::K / constants::m_e);
-        new_electron_velocity[array_index_z] = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_force_array[array_index_z]) * dt * 0.5  * constants::K / constants::m_e);
+        new_electron_velocity[array_index]   = electron_velocity[array_index]   + ((electron_force[array_index]   + new_force_array[array_index])   * dt * 0.5  * 1e30 * constants::K / constants::m_e); 
+        new_electron_velocity[array_index_y] = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_force_array[array_index_y]) * dt * 0.5  * 1e30 * constants::K / constants::m_e);
+        new_electron_velocity[array_index_z] = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_force_array[array_index_z]) * dt * 0.5  * 1e30 * constants::K / constants::m_e);
     
     long double velocity_length = (new_electron_velocity[array_index]*new_electron_velocity[array_index]) + (new_electron_velocity[array_index_y]*new_electron_velocity[array_index_y]) + (new_electron_velocity[array_index_z]*new_electron_velocity[array_index_z]); //Angstroms
     return (0.5 * velocity_length);
@@ -241,7 +241,8 @@ long double electron_e_a_coulomb(int array_index, double& x_force, double& y_for
   //set e-a attraction
         //calculate nearest neighbor;
     double d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length  = 0.0;
-    long double PE, force = 0.0;
+    double PE = 0.0;
+    double force = 0.0;
     d_x = x - ((atomic_size * round(x / atomic_size)) + 1); //closest x atom index
     d_y = y - ((atomic_size * round(y / atomic_size)) + 1); //closest y atom index
     d_z = z - ((atomic_size * round(z / atomic_size)) + 1); //closest z atom index
@@ -263,6 +264,7 @@ long double electron_e_a_coulomb(int array_index, double& x_force, double& y_for
             if (length < 0.0001) length = 0.0001;
             
             force = (28 * exp(-20 * length)) - exp(-length);
+           
                 /*
                 velocity_length = sqrt( (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index_y]*electron_velocity[array_index_y]) + (electron_velocity[array_index_z]*electron_velocity[array_index_z]) );
                 int angle = Vel_distrib(gen);
@@ -295,7 +297,7 @@ long double electron_e_a_coulomb(int array_index, double& x_force, double& y_for
 long double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z) {
     
     int array_index_i;
-    double d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length = 0.0;
+    double x_distance,y_distance,z_distance, length = 0.0;
     long double force, PE = 0.0;
   //set e-e repulsion
       //  #pragma omp parallel for
@@ -329,7 +331,7 @@ long double electron_e_e_coulomb(int e, int array_index, double& x_force, double
             }
             else { */
             force = 1 / (length * length);
-            
+            // if(array_index / 3 == 0) std::cout << "force " << force << std::endl;
             PE += force * length;
 
             x_force += x_distance * force / length;
