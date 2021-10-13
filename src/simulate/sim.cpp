@@ -727,7 +727,6 @@ void integrate_serial(uint64_t n_steps){
 			for (uint64_t ti = 0; ti < n_steps; ti++) {
 				CASTLE::velocity_verlet_step(mp::dt_SI);
 				sim::internal::increment_time();
-				if ( (n_steps % 1000) == 0) std::cout << ".";
 			//	CASTLE::update_data();
 			}
 			break;

@@ -47,8 +47,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        omp_set_dynamic(1);
-        //omp_set_num_threads(1);
+        omp_set_dynamic(0);
+        omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma parallel 
         {
@@ -109,7 +109,7 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 1; //sim::CASTLE_output_rate;
+    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
     
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
@@ -131,7 +131,7 @@ void initialize () {
 
 
     mean_data.open("CASTLE/mean_data");
-    mean_data << "step      mean-KE     mean-PE " << "\n";
+    mean_data << "step      mean-KE     mean-PE     mean-TE" << "\n";
 
 }
 
@@ -203,7 +203,7 @@ void initialize_electrons() {
     new_electron_velocity.resize(conduction_electrons * 3, 0.0); //Angstroms
     electron_force.resize(conduction_electrons * 3, 0.0); //current and future arrays
     new_force_array.resize(conduction_electrons * 3, 0.0);
-    mean_data_array.resize(total_time_steps*5 + 5, 0.0);
+    //mean_data_array.resize(total_time_steps*5 + 5, 0.0);
     // conduction_electron_spin.resize(conduction_electrons, false);
     // lattice_electron_spin.resize((total_electrons - conduction_electrons), false);
     // symmetry_list.resize(conduction_electrons);
@@ -399,9 +399,9 @@ void initialize_forces() {
         y = electron_position[array_index + 1];
         z = electron_position[array_index + 2];
 
-        d_x = x - (atomic_size * round(x / atomic_size)); //closest x atom index
-        d_y = y - (atomic_size * round(y / atomic_size)); //closest y atom index
-        d_z = z - (atomic_size * round(z / atomic_size)); //closest z atom index
+        d_x = x - ((atomic_size * round(x / atomic_size)) + 1); //closest x atom index
+        d_y = y - ((atomic_size * round(y / atomic_size)) + 1); //closest y atom index
+        d_z = z - ((atomic_size * round(z / atomic_size)) + 1); //closest z atom index
 
       
             //cube around electron
@@ -456,12 +456,14 @@ void initialize_forces() {
             y_distance = y - electron_position[array_index_i + 1];
             z_distance = z - electron_position[array_index_i + 2];
 
-            if (x_distance < -20)     x_distance = x_distance + 40;
-            else if (x_distance > 20) x_distance = x_distance - 40;
-            if (y_distance < -20)     y_distance = y_distance + 40;
-            else if (y_distance > 20) y_distance = y_distance - 40;
-            if (z_distance <  -20)    z_distance = z_distance + 40;
-            else if (z_distance > 20) z_distance = z_distance - 40;
+            if (x_distance < -30)     x_distance = x_distance + 40;
+            else if (x_distance > 30) x_distance = x_distance - 40;
+
+            if (y_distance < -30)     y_distance = y_distance + 40;
+            else if (y_distance > 30) y_distance = y_distance - 40;
+
+            if (z_distance <  -30)    z_distance = z_distance + 40;
+            else if (z_distance > 30) z_distance = z_distance - 40;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
 
@@ -541,7 +543,7 @@ void output_data() {
     // Output equilibration step data
     //=========
     
-    mean_data << current_time_step << "     " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << "   " << MPE * constants::K * 1e-20 * constants::m_e / CASTLE_output_rate << "\n";
+    mean_data << current_time_step << "     " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << "   " << MPE * constants::K / CASTLE_output_rate << "    " << (MPE*constants::K + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate <<  "\n";
     MKE = MPE = 0.0;
     int array_index,array_index_y,array_index_z = 0;
     double x,y,z, velocity_length = 0.0;
