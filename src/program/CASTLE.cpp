@@ -47,8 +47,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        omp_set_dynamic(0);
-        omp_set_num_threads(8);
+        //omp_set_dynamic(0);
+        //omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma parallel 
         {
@@ -109,7 +109,7 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
+    CASTLE_output_rate = 1; //sim::CASTLE_output_rate;
     
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
@@ -130,8 +130,8 @@ void initialize () {
             if (err::check) std::cout << "Forces ready..." << std::endl;
 
 
-    mean_data.open("CASTLE/mean_data");
-    mean_data << "step      mean-KE     mean-PE     mean-TE" << "\n";
+    mean_data.open("CASTLE/mean_data.csv");
+    mean_data << "step, mean-KE, mean-PE, mean-TE" << "\n";
 
 }
 
@@ -187,7 +187,7 @@ void initialize_electrons() {
     electron_position_output_down << "Initial positions for electrons" << "\n";  
 
     
-    electron_velocity_output.open("CASTLE/Electron_Velocities/init.txt");
+    electron_velocity_output.open("CASTLE/Electron_Velocity/init.txt");
     electron_velocity_output << "electron number    x-component     y-component     z-component     length" << std::endl;  
     
             if (err::check) std::cout << "Lattice output file and electron position file opened..." << std::endl;
@@ -215,7 +215,7 @@ void initialize_electrons() {
     std::uniform_int_distribution<> Pos_distrib(1, 359);
 
     n_f = 1e30 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
-    E_f = 3 * constants::h * constants::h * conduction_electrons * pow((3 * n_f / (8 * M_PI)), 0.666666667) / (10 * constants::m_e); //Fermi-energy // meters
+    E_f = 3 * constants::h * constants::h * conduction_electrons * pow((3 * n_f / (8 * M_PI)), 0.666666666666667) / (10 * constants::m_e); //Fermi-energy // meters
     mu_f = 5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
     v_f = sqrt(2 * E_f / constants::m_e); //meters
     //TKE = 0; //total Kinetic energy, meters
@@ -223,7 +223,7 @@ void initialize_electrons() {
    // total_spin_down = 0;
    
 
-    double phi,theta, x_pos,y_pos,z_pos, velocity_length = 0.0;
+    long double phi,theta, x_pos,y_pos,z_pos, velocity_length = 0.0;
     //super loop for each conducting electron
     int array_index = 0;
     for (int e = 0; e < conduction_electrons; e++) {
@@ -298,7 +298,7 @@ void initialize_electrons() {
         electron_velocity[array_index + 2] = cos(phi)            * v_f * 1e10;
         velocity_length = (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index + 1]*electron_velocity[array_index + 1]) + (electron_velocity[array_index + 2]*electron_velocity[array_index + 2]); //Angstroms
                 //    std::cout << "v_f" << v_f << " velocity " << velocity_length << std::endl;
-        electron_velocity_output << e << "      " << electron_velocity[array_index] << "    " << electron_velocity[array_index + 1] << "    " << electron_velocity[array_index + 2] << "    " << velocity_length << std::endl;
+        electron_velocity_output << e << "      " << 1e-10*electron_velocity[array_index] << "    " << 1e-10*electron_velocity[array_index + 1] << "    " << 1e-10*electron_velocity[array_index + 2] << "    " << 1e-20*velocity_length << std::endl;
                     // if (err::check) std::cout << "Velocities randomized..." << std::endl;
             //   electron_spin_output << conduction_electrons << "  " << conduction_electron_spin[conduction_electrons - 1] << std::endl;
             
@@ -414,15 +414,11 @@ void initialize_forces() {
             z_distance = z_mod - d_z;
 
             length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
-             if (length < 0.0001) length = 0.0001;
-           
-            if (length > screening_depth) {
-                force = 1 / (length * length * length * length);
-                
-            } else {
-                force = -1 / (length * length);
-                
-            }
+            if (length < 0.00001) length = 0.00001;
+        
+            // force
+            force = (28 * exp(-20 * length)) - exp(-length);
+
 
             electron_force[array_index]     += force * x_distance / length;
             electron_force[array_index + 1] += force * y_distance / length;
@@ -543,21 +539,21 @@ void output_data() {
     // Output equilibration step data
     //=========
     
-    mean_data << current_time_step << "     " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << "   " << MPE * constants::K / CASTLE_output_rate << "    " << (MPE*constants::K + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate <<  "\n";
+    mean_data << current_time_step << ", " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " << MPE * constants::K / CASTLE_output_rate << ", " << (MPE*constants::K + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate <<  "\n";
     MKE = MPE = 0.0;
     int array_index,array_index_y,array_index_z = 0;
-    double x,y,z, velocity_length = 0.0;
+    long double x,y,z, velocity_length = 0.0;
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         array_index_y = array_index + 1;
         array_index_z = array_index + 2;
 
-        x = new_electron_velocity[array_index];
-        y = new_electron_velocity[array_index_y];
-        z = new_electron_velocity[array_index_z];
+        x = 1e-10*new_electron_velocity[array_index];
+        y = 1e-10*new_electron_velocity[array_index_y];
+        z = 1e-10*new_electron_velocity[array_index_z];
         velocity_length = (x*x) + (y*y) + (z*z);
-        electron_position_output_down << "H" << "   " << new_electron_position[array_index] << "    " << new_electron_position[array_index_y] << "  " << new_electron_position[array_index_z] << "\n";
-        electron_velocity_output      << e   << "   " << x << "    " << y << "  " << z << "  " << velocity_length << "\n";
+        electron_position_output_down << "H" << ", " << new_electron_position[array_index] << "    " << new_electron_position[array_index_y] << "  " << new_electron_position[array_index_z] << "\n";
+        electron_velocity_output      << e   << ", " << x << ", " << y << ", " << z << ", " << velocity_length << "\n";
     }
 
     std::cout << "  " << current_time_step / total_time_steps * 100 << "%" << "\n";

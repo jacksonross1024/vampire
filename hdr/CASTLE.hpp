@@ -37,7 +37,7 @@
 #include <map>
 #include <ctime>
 #include <random>
-#include <omp.h> 
+//#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -73,11 +73,11 @@ namespace CASTLE {
     extern double total_time_steps;
     extern double loop_time;
     extern int    CASTLE_output_rate; //output velocity and position data at this multiple
-    extern double dt;
-    extern double v_f; //meters
-    extern double E_f; //meters
-    extern double mu_f; //meters
-    extern double n_f; //meters
+    extern long double dt;
+    extern long double v_f; //meters
+    extern long double E_f; //meters
+    extern long double mu_f; //meters
+    extern long double n_f; //meters
 
    // extern int num_cells;
 
@@ -87,8 +87,8 @@ namespace CASTLE {
     extern std::vector<double> atom_position;
     extern std::vector<double> electron_position; //Angstroms
     extern std::vector<double> new_electron_position;
-    extern std::vector<double> electron_velocity; //Angstroms
-    extern std::vector<double> new_electron_velocity;
+    extern std::vector<long double> electron_velocity; //Angstroms
+    extern std::vector<long double> new_electron_velocity;
     extern std::vector<double> electron_force;   //Angstroms
     extern std::vector<double> new_force_array;
     extern std::vector<double> mean_data_array;
@@ -100,10 +100,10 @@ namespace CASTLE {
     extern std::vector<std::vector<bool> > symmetry_list;
 
     //outputs
-    extern double TKE;
-    extern double TPE;
-    extern double MPE; //meters
-    extern double MKE; //meters
+    extern long double TKE;
+    extern long double TPE;
+    extern long double MPE; //meters
+    extern long double MKE; //meters
   //  extern int total_spin_up;
   //  extern int total_spin_down;
     extern std::ofstream lattice_output;
@@ -125,10 +125,10 @@ namespace CASTLE {
     extern void setup_output();
     extern void update_position();
     extern void update_dynamics();
-    extern double electron_e_a_coulomb(int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
-    extern double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
-    extern double update_velocity(int array_index);
-    
+    extern long double electron_e_a_coulomb(int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
+    extern long double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
+    extern long double update_velocity(int array_index);
+    extern long double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force);
 
 /*  one day your time will come
     struct atom {
