@@ -215,9 +215,11 @@ void initialize_electrons() {
     std::uniform_int_distribution<> Pos_distrib(1, 359);
 
     n_f = 1e30 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
-    E_f = 3 * constants::h * constants::h * conduction_electrons * pow((3 * n_f / (8 * M_PI)), 0.666666666666667) / (10 * constants::m_e); //Fermi-energy // meters
+    E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.666666666666667) / (2 * constants::m_e); //Fermi-energy // meters
     mu_f = 5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
     v_f = sqrt(2 * E_f / constants::m_e); //meters
+
+    std::cout << " E_f " << E_f << " mu_f " << mu_f << " v_f " << v_f << std::endl;
     //TKE = 0; //total Kinetic energy, meters
     //  total_spin_up = 0;
    // total_spin_down = 0;
@@ -356,8 +358,8 @@ void initialize_forces() {
 
     int array_index, array_index_i = 0;
     
-    double x,y,z, a_x,a_y,a_z, d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force = 0.0;
-    double e_distance_x,e_distance_y,e_distance_z, x_unit,y_unit,z_unit = 0.0; 
+    double x,y,z, d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force = 0.0;
+    double x_unit,y_unit,z_unit = 0.0; 
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         //spontaneous spin flip
@@ -417,7 +419,7 @@ void initialize_forces() {
             if (length < 0.00001) length = 0.00001;
         
             // force
-            force = (28 * exp(-20 * length)) - exp(-length);
+            force = -1*((1835.08 * exp(-25.6 * length)) - (2.4*exp(-length)));
          //   if(e == 0) std::cout << "force " << force << std::endl;
 
             electron_force[array_index]     += force * x_distance / length;
@@ -546,7 +548,7 @@ void output_data() {
     electron_position_output_down << std::fixed;
     electron_velocity_output << std::scientific;
     
-    mean_data << current_time_step << ", " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " << MPE * constants::K / CASTLE_output_rate << ", " << (MPE*constants::K + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate <<  "\n";
+    mean_data << current_time_step << ", " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " << MPE * 1e10 * constants::K / CASTLE_output_rate << ", " << ((MPE*constants::K*1e10) + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate <<  "\n";
     MKE = MPE = 0.0;
     int array_index,array_index_y,array_index_z = 0;
     long double x,y,z, velocity_length = 0.0;

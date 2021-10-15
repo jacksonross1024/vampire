@@ -161,7 +161,9 @@ void update_dynamics() {
     #pragma omp parallel for private(array_index, x_force,y_force,z_force, x,y,z)  schedule(static) reduction(+:TPE,TKE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
-        x_force = y_force = z_force = 0.0;
+        x_force = 0.0;
+        y_force = 0.0;
+        z_force = 0.0;
         x = new_electron_position[array_index];
         y = new_electron_position[array_index + 1];
         z = new_electron_position[array_index + 2];
@@ -240,9 +242,8 @@ long double update_velocity(int array_index) {
 long double electron_e_a_coulomb(int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z) {
   //set e-a attraction
         //calculate nearest neighbor;
-    double d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length  = 0.0;
+    double d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force  = 0.0;
     double PE = 0.0;
-    double force = 0.0;
     d_x = x - ((atomic_size * round(x / atomic_size)) + 1); //closest x atom index
     d_y = y - ((atomic_size * round(y / atomic_size)) + 1); //closest y atom index
     d_z = z - ((atomic_size * round(z / atomic_size)) + 1); //closest z atom index
@@ -261,9 +262,9 @@ long double electron_e_a_coulomb(int array_index, double& x_force, double& y_for
 
             length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance)); //Angstroms
             //if (array_index / 3 == 1050) std::cout << "distance from lattice atom" << x_distance << "    " << y_distance <<  "    " << z_distance << " " << length << std::endl;
-            if (length < 0.0001) length = 0.0001;
+            if (length < 0.00001) length = 0.00001;
             
-            force = (28 * exp(-20 * length)) - exp(-length);
+            force = -1*((1835.08 * exp(-25.6 * length)) - (2.4*exp(-length)));
            
                 /*
                 velocity_length = sqrt( (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index_y]*electron_velocity[array_index_y]) + (electron_velocity[array_index_z]*electron_velocity[array_index_z]) );
@@ -283,15 +284,15 @@ long double electron_e_a_coulomb(int array_index, double& x_force, double& y_for
                 force = -1e10 / (length * length * constants::m_e);
                 TPE += -2 * force * length;
             } */
-            PE += exp(-1) - ((7 / 5) * exp(-20*length));
-            }
+            PE += -2.4*exp(-length) + (716.8 * exp(-25.6*length));
+            
             //if (array_index / 3 == 1050) std::cout << "old force" << x_force << "  " << y_force << "   " << z_force << "   " << force << std::endl;
             x_force += force * x_distance / length;
             y_force += force * y_distance / length;
             z_force += force * z_distance / length;
             //if (array_index / 3 == 1050) std::cout << "new force" << x_force << "  " << y_force << "   " << z_force << "   " << force << std::endl;
-        
-    return PE * 1e10;
+        }
+    return PE;
 }
 
 long double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z) {
@@ -345,7 +346,7 @@ long double electron_e_e_coulomb(int e, int array_index, double& x_force, double
     
             symmetry_list[i][e] = true; //set symmetry flag */
         }
-    return (-0.5 * PE * 1e10);
+    return (-0.5 * PE);
 }
 
 long double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force) {
