@@ -33,7 +33,7 @@ namespace CASTLE {
 
 int velocity_verlet_step(double time_step) {
     
-    dt = 1e-19;
+    dt = 1e-17;
     TPE = 0;
     TKE = 0;
 
@@ -54,7 +54,7 @@ int velocity_verlet_step(double time_step) {
     update_dynamics();
 
             if (err::check) std::cout << "Output mean data" << std::endl;
-    if (CASTLE_output_data)   output_data();
+    if (CASTLE_output_data)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
 
 
 
@@ -109,7 +109,7 @@ void setup_output() {
     electron_position_output_down << time_stamp << "\n";
 
     electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".txt");
-    electron_velocity_output << "Electron number    x-component     y-component    z-component     length" << "\n";
+    //electron_velocity_output << "Electron number    x-component     y-component    z-component     length" << "\n";
 
     
       //  electron_spin_output.open("CASTLE/Electron_Spin/" + time_stamp + ".txt");
@@ -145,11 +145,14 @@ void update_position(){
         if (z_pos < 0.0) z_pos += 40.0;
         else if (z_pos > 40.0) z_pos -= 40.0;
 
+        if (electron_position[array_index] < 20 && x_pos > 20) x_flux++;
+        if (electron_position[array_index] > 20 && x_pos < 20) x_flux--;
+
         new_electron_position[array_index]   = x_pos;
         new_electron_position[array_index_y] = y_pos;
         new_electron_position[array_index_z] = z_pos;
 
-        if (e == 0) std::cout << new_electron_position[array_index] << "   " << electron_position[array_index]  << "   " << (electron_velocity[array_index] * dt) << "   " << (electron_force[array_index] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e) << "\n";
+       // if (e == 0) std::cout << new_electron_position[array_index] << "   " << electron_position[array_index]  << "   " << (electron_velocity[array_index] * dt) << "   " << (electron_force[array_index] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e) << "\n";
         //symmetry_list[e].resize(conduction_electrons, false);
     }
 }
@@ -231,11 +234,20 @@ long double update_velocity(int array_index) {
         int array_index_z = array_index + 2;
 
      //   if (e == 0) std::cout << new_electron_velocity[array_index] << " " << electron_velocity[array_index] << "    " <<  electron_force[array_index]  << "    " << new_force_array[array_index]  << "    " <<  dt * 0.5  * constants::K / constants::m_e << "\n"; 
-        new_electron_velocity[array_index]   = electron_velocity[array_index]   + ((electron_force[array_index]   + new_force_array[array_index])   * dt * 0.5  * 1e30 * constants::K / constants::m_e); 
-        new_electron_velocity[array_index_y] = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_force_array[array_index_y]) * dt * 0.5  * 1e30 * constants::K / constants::m_e);
-        new_electron_velocity[array_index_z] = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_force_array[array_index_z]) * dt * 0.5  * 1e30 * constants::K / constants::m_e);
-    
-    long double velocity_length = (new_electron_velocity[array_index]*new_electron_velocity[array_index]) + (new_electron_velocity[array_index_y]*new_electron_velocity[array_index_y]) + (new_electron_velocity[array_index_z]*new_electron_velocity[array_index_z]); //Angstroms
+        long double x_vel = electron_velocity[array_index]   + ((electron_force[array_index]   + new_force_array[array_index])   * dt * 0.5  * 1e30 * constants::K / constants::m_e); 
+        long double y_vel = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_force_array[array_index_y]) * dt * 0.5  * 1e30 * constants::K / constants::m_e);
+        long double z_vel = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_force_array[array_index_z]) * dt * 0.5  * 1e30 * constants::K / constants::m_e);
+        
+        new_electron_velocity[array_index]   = x_vel;
+        new_electron_velocity[array_index_y] = y_vel;
+        new_electron_velocity[array_index_z] = z_vel;
+
+        velocity_length_hist[array_index]   += abs(x_vel);
+        velocity_length_hist[array_index_y] += abs(y_vel);
+        velocity_length_hist[array_index_z] += abs(z_vel);
+        long double velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
+        velocity_length_hist[array_index + 3] += sqrt(velocity_length);
+      //  if(array_index / 3 ==0) std::cout << velocity_length_hist[array_index/3] << "\n";
     return (0.5 * velocity_length);
 }
 
@@ -251,10 +263,10 @@ long double electron_e_a_coulomb(int array_index, double& x_force, double& y_for
     //if (array_index / 3 == 1050) std::cout << "electron" << x << "    " << y <<  "    " << z << " " << std::endl;
     //if (array_index / 3 == 1050) std::cout << "distance from atom" << d_x << "    " << d_y <<  "    " << d_z << " " << std::endl;
          //atoms go ±1 from there
-        for (int a = 0; a < 27; a++) {
-            x_mod = (atomic_size * (a % 3)) - atomic_size;
-            y_mod = (atomic_size * ((int(floor(a/3))) % 3)) - atomic_size;
-            z_mod = (atomic_size * floor(a / 9)) - atomic_size;
+        for (int a = 0; a < 1331; a++) {
+            x_mod = (atomic_size * (a % 11)) - 5*atomic_size;
+            y_mod = (atomic_size * ((int(floor(a/11))) % 11)) - 5*atomic_size;
+            z_mod = (atomic_size * floor(a / 121)) - 5*atomic_size;
             x_distance = x_mod - d_x;
             y_distance = y_mod - d_y;
             z_distance = z_mod - d_z;
@@ -323,7 +335,7 @@ long double electron_e_e_coulomb(int e, int array_index, double& x_force, double
             else if (z_distance > 30) z_distance = z_distance - 40;
 
             length = ((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
-            if (length > 400) continue;
+            if (length > 100) continue;
 
             length = sqrt(length);
             /*   if (electron_spin == electron_spin_two) {
@@ -351,9 +363,9 @@ long double electron_e_e_coulomb(int e, int array_index, double& x_force, double
 
 long double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force) {
     
-    z_force -= 1e-11;
+ //   x_force -= 100;
 
-    return -1.0;
+   // return -1.0;
 }
 
 

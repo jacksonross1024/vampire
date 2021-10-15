@@ -104,6 +104,8 @@ namespace CASTLE {
     extern long double TPE;
     extern long double MPE; //meters
     extern long double MKE; //meters
+    extern int x_flux;
+    extern std::vector <long double> velocity_length_hist;
   //  extern int total_spin_up;
   //  extern int total_spin_down;
     extern std::ofstream lattice_output;

@@ -109,11 +109,11 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 1; //sim::CASTLE_output_rate;
+    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
     
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
-    
+    x_flux = 0.0;
     current_time_step = 0;
 
     
@@ -131,7 +131,7 @@ void initialize () {
 
 
     mean_data.open("CASTLE/mean_data.csv");
-    mean_data << "step, mean-KE, mean-PE, mean-TE" << "\n";
+    mean_data << "step, mean-KE, mean-PE, mean-TE, mean-x_flux" << "\n";
 
 }
 
@@ -207,7 +207,7 @@ void initialize_electrons() {
     // conduction_electron_spin.resize(conduction_electrons, false);
     // lattice_electron_spin.resize((total_electrons - conduction_electrons), false);
     // symmetry_list.resize(conduction_electrons);
-
+    velocity_length_hist.resize(conduction_electrons*4, 0.0);
      //   std::cout << "conduction electrons" << conduction_electrons << std::endl;
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -215,11 +215,11 @@ void initialize_electrons() {
     std::uniform_int_distribution<> Pos_distrib(1, 359);
 
     n_f = 1e30 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
-    E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.666666666666667) / (2 * constants::m_e); //Fermi-energy // meters
+    E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
     mu_f = 5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
     v_f = sqrt(2 * E_f / constants::m_e); //meters
 
-    std::cout << " E_f " << E_f << " mu_f " << mu_f << " v_f " << v_f << std::endl;
+    std::cout << "n_f: " << n_f <<  ", E_f: " << E_f << ", E_f(eV): " << E_f*6.242e18 << ", v_f " << v_f << std::endl;
     //TKE = 0; //total Kinetic energy, meters
     //  total_spin_up = 0;
    // total_spin_down = 0;
@@ -299,7 +299,7 @@ void initialize_electrons() {
         electron_velocity[array_index + 1] = sin(theta)*sin(phi) * v_f * 1e10;
         electron_velocity[array_index + 2] = cos(phi)            * v_f * 1e10;
         velocity_length = (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index + 1]*electron_velocity[array_index + 1]) + (electron_velocity[array_index + 2]*electron_velocity[array_index + 2]); //Angstroms
-                //    std::cout << "v_f" << v_f << " velocity " << velocity_length << std::endl;
+                  // std::cout << "v_f" << v_f << " velocity " << velocity_length * 1e-10 << std::endl;
         electron_velocity_output << e << "      " << 1e-10*electron_velocity[array_index] << "    " << 1e-10*electron_velocity[array_index + 1] << "    " << 1e-10*electron_velocity[array_index + 2] << "    " << 1e-20*velocity_length << std::endl;
                     // if (err::check) std::cout << "Velocities randomized..." << std::endl;
             //   electron_spin_output << conduction_electrons << "  " << conduction_electron_spin[conduction_electrons - 1] << std::endl;
@@ -407,10 +407,10 @@ void initialize_forces() {
 
       
             //cube around electron
-        for (int a = 0; a < 27; a++) {
-            x_mod = (atomic_size * (a % 3)) - atomic_size;
-            y_mod = (atomic_size * ((int(floor(a/3))) % 3)) - atomic_size;
-            z_mod = (atomic_size * floor(a / 9)) - atomic_size;
+        for (int a = 0; a < 1331; a++) {
+            x_mod = (atomic_size * (a % 11)) - 5*atomic_size;
+            y_mod = (atomic_size * ((int(floor(a/11))) % 11)) - 5*atomic_size;
+            z_mod = (atomic_size * floor(a / 121)) - 5*atomic_size;
             x_distance = x_mod - d_x;
             y_distance = y_mod - d_y;
             z_distance = z_mod - d_z;
@@ -465,7 +465,7 @@ void initialize_forces() {
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
 
-            if (length > 400) continue;
+            if (length > 100) continue;
             length = sqrt(length);
             //if (length < 0.000001) length = 0.000001;
 
@@ -548,10 +548,17 @@ void output_data() {
     electron_position_output_down << std::fixed;
     electron_velocity_output << std::scientific;
     
-    mean_data << current_time_step << ", " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " << MPE * 1e10 * constants::K / CASTLE_output_rate << ", " << ((MPE*constants::K*1e10) + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate <<  "\n";
+    mean_data << current_time_step << ", " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " << MPE * 1e10 * constants::K / CASTLE_output_rate << ", " << ((MPE*constants::K*1e10) + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate << ", " << x_flux / CASTLE_output_rate <<  "\n";
     MKE = MPE = 0.0;
     int array_index,array_index_y,array_index_z = 0;
     long double x,y,z, velocity_length = 0.0;
+    int num_bins = 1e4;
+    int max = 1e7;
+    int min = 1e1;
+    double width = (max - min) / num_bins;
+    std::vector <int> histogram;
+    histogram.resize(num_bins*4, 0.0);
+    int bin = 0;
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         array_index_y = array_index + 1;
@@ -560,14 +567,34 @@ void output_data() {
         x = 1e-10*new_electron_velocity[array_index];
         y = 1e-10*new_electron_velocity[array_index_y];
         z = 1e-10*new_electron_velocity[array_index_z];
-        velocity_length = (x*x) + (y*y) + (z*z);
+        velocity_length = sqrt((x*x) + (y*y) + (z*z));
         electron_position_output_down << "H" << ", " << new_electron_position[array_index] << "    " << new_electron_position[array_index_y] << "  " << new_electron_position[array_index_z] << "\n";
         electron_velocity_output      << e   << ", " << x << ", " << y << ", " << z << ", " << velocity_length << "\n";
-    }
+        
+        bin = int(floor(1e-10*velocity_length_hist[array_index]   / (width*CASTLE_output_rate)));
+        histogram[bin]++;
 
+        bin = int(floor(1e-10*velocity_length_hist[array_index_y] / (width*CASTLE_output_rate)));
+        histogram[bin + 1]++;
+
+        bin = int(floor(1e-10*velocity_length_hist[array_index_z] / (width*CASTLE_output_rate)));
+        histogram[bin + 2]++;
+        
+        bin = int(floor(1e-10*velocity_length_hist[array_index+3] / (width*CASTLE_output_rate)));
+        histogram[bin + 3]++;
+        
+        velocity_length_hist[array_index] = velocity_length_hist[array_index_y] = velocity_length_hist[array_index_z] = velocity_length_hist[array_index+1] = 0.0;
+       // if (e==0) std::cout << "v_f" << v_f << " velocity " << velocity_length << std::endl;
+    }
     std::cout << "  " << current_time_step / total_time_steps * 100 << "%" << "\n";
     //  electron_position_output_up.close();
     electron_position_output_down.close();
+    electron_velocity_output.close();
+    std::string time_stamp = std::to_string(current_time_step);
+    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + "_hist.csv");
+    for (int n=0; n < num_bins; n++) {
+        electron_velocity_output << min + width*n << ",  " << histogram[n*4]  << ", " << histogram[n*4 + 1]  << ", " << histogram[n*4 + 2] << ", " << histogram[n*4 + 3]  << "\n";
+    }
     electron_velocity_output.close();
      //   electron_spin_output.close();
     CASTLE_output_data = false;

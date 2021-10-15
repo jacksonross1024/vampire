@@ -180,6 +180,7 @@ namespace CASTLE {
      long double dt;
      int current_time_step;
      double loop_time;
+     int x_flux;
 
    std::vector<double> electron_position; //superarray of past locations for each step
    std::vector<double> new_electron_position;
@@ -192,6 +193,7 @@ namespace CASTLE {
    std::vector<double> lattice_electrons;
    //std::vector<bool> conduction_electron_spin;
    //std::vector<bool> lattice_electron_spin;
+   std::vector <long double> velocity_length_hist;
 
    //std::vector<struct electron> electron_list; //This is probably not the best way to do this
     
