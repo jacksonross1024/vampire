@@ -47,8 +47,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        omp_set_dynamic(0);
-        omp_set_num_threads(8);
+        //omp_set_dynamic(0);
+        //omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma parallel 
         {
@@ -71,7 +71,7 @@ void create() {
     //=========
     castle_watch.start();
     equilibrium_step = false;
-    current_time_step = 0;
+    CASTLE_output_rate = 1;
     total_time_steps = sim::loop_time;
 
 
@@ -132,7 +132,7 @@ void initialize () {
 
 
     mean_data.open("CASTLE/mean_data.csv");
-    mean_data << "step, mean-KE, mean-PE, mean-TE, mean-x_flux" << "\n";
+    mean_data << "step, mean-KE, mean-PE, mean-TE, mean-x_flux, -lambda, +lambda, mean-lambda, mean-Hfactor, calc-Hfactor" << "\n";
 
 }
 
@@ -537,7 +537,7 @@ void initialize_forces() {
 }
 
 void output_data() {
-     
+        
     //=========
     // Output equilibration step data
     //=========
@@ -549,58 +549,113 @@ void output_data() {
     electron_position_output_down << std::fixed;
     electron_velocity_output << std::scientific;
     
-    mean_data << current_time_step << ", " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " << MPE * 1e10 * constants::K / CASTLE_output_rate << ", " << ((MPE*constants::K*1e10) + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate << ", " << x_flux / CASTLE_output_rate <<  "\n";
-    MKE = MPE = 0.0;
-    int array_index,array_index_y,array_index_z = 0;
-    long double x,y,z, velocity_length = 0.0;
-    int num_bins = 1e4;
+    int array_index, array_index_y, array_index_z = 0;
+    long double x_pos, y_pos, z_pos = 0.0;
+    long double x_vel, y_vel ,z_vel, velocity_length, Hfac, lambda = 0.0;
+    int num_bins = 1e6;
     int max = 1e7;
-    int min = 1e1;
+    int min = 0;
+    int lattice_constant = 2;
     double width = (max - min) / num_bins;
     std::vector <int> histogram;
-    histogram.resize(num_bins*4, 0.0);
+    histogram.resize(num_bins*4, 0);
     int bin = 0;
+    long double x_Hfac = 0.0;
+    long double y_Hfac = 0.0;
+    long double z_Hfac = 0.0;
+    long double x_lambda = 0.0;
+    long double y_lambda = 0.0;
+    long double z_lambda = 0.0;
+    long double calc_lambda = 1/ sqrt(conduction_electrons);
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         array_index_y = array_index + 1;
         array_index_z = array_index + 2;
 
-        x = 1e-10*new_electron_velocity[array_index];
-        y = 1e-10*new_electron_velocity[array_index_y];
-        z = 1e-10*new_electron_velocity[array_index_z];
-        velocity_length = sqrt((x*x) + (y*y) + (z*z));
-        electron_position_output_down << "H" << ", " << new_electron_position[array_index] << "    " << new_electron_position[array_index_y] << "  " << new_electron_position[array_index_z] << "\n";
-        electron_velocity_output      << e   << ", " << x << ", " << y << ", " << z << ", " << velocity_length << "\n";
+        x_pos = new_electron_position[array_index];
+        y_pos = new_electron_position[array_index_y]; 
+        z_pos = new_electron_position[array_index_z];
+
+        x_lambda += cos(4*M_PI * x_pos / lattice_constant);
+        y_lambda += cos(4*M_PI * y_pos / lattice_constant);
+        z_lambda += cos(4*M_PI * z_pos / lattice_constant);
         
-        bin = int(floor(1e-10*velocity_length_hist[array_index]   / (width*CASTLE_output_rate)));
-        if(bin > histogram.size()/4) bin = histogram.size()/4;
+
+        x_vel = 1e-10*new_electron_velocity[array_index];
+        y_vel = 1e-10*new_electron_velocity[array_index_y];
+        z_vel = 1e-10*new_electron_velocity[array_index_z];
+        velocity_length = sqrt((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
+
+        electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
+        electron_velocity_output      << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << "\n";
+        
+/*
+        bin = int(floor(x_vel / width));
+        //if(bin > histogram.size()/4) bin = histogram.size()/4;
         histogram[bin]++;
+        if (bin == 0) std::cout << velocity_length_hist[array_index] << std::endl;
 
-        bin = int(floor(1e-10*velocity_length_hist[array_index_y] / (width*CASTLE_output_rate)));
-        if(bin > histogram.size()/4) bin = histogram.size()/4 + 1;
-	histogram[bin + 1]++;
+        bin = int(floor(y_vel / width));
+        //if(bin > histogram.size()/4) bin = histogram.size()/4 + 1;
+	    histogram[bin + 1]++;
+        if (bin == 0) std::cout << velocity_length_hist[array_index_y] << std::endl;
 
-        bin = int(floor(1e-10*velocity_length_hist[array_index_z] / (width*CASTLE_output_rate)));
-        if(bin > histogram.size()/4) bin = histogram.size()/4 + 2;
-	histogram[bin + 2]++;
-        
-        bin = int(floor(1e-10*velocity_length_hist[array_index+3] / (width*CASTLE_output_rate)));
-        if(bin > histogram.size()/4) bin = histogram.size()/4 + 3;
-	histogram[bin + 3]++;
-        
-        velocity_length_hist[array_index] = velocity_length_hist[array_index_y] = velocity_length_hist[array_index_z] = velocity_length_hist[array_index+1] = 0.0;
-       // if (e==0) std::cout << "v_f" << v_f << " velocity " << velocity_length << std::endl;
+        bin = int(floor(z_vel / width));
+        //if(bin > histogram.size()/4) bin = histogram.size()/4 + 2;
+	    histogram[bin + 2]++;
+        if (bin == 0) std::cout << velocity_length_hist[array_index_z] << std::endl;
+
+        bin = int(floor( velocity_length / width));
+        //if(bin > histogram.size()/4) bin = histogram.size()/4 + 3;
+	    histogram[bin + 3]++;
+        if (bin == 0) std::cout << velocity_length_hist[array_index+3] << std::endl;
+
+        velocity_length_hist[array_index]   = 0.0;
+        velocity_length_hist[array_index_y] = 0.0;
+        velocity_length_hist[array_index_z] = 0.0;
+        velocity_length_hist[array_index+3] = 0.0;
+       // if (e==0) std::cout << "v_f" << v_f << " velocity " << velocity_length << std::endl; */
     }
+    lambda = 0.333333333333 * (x_lambda + y_lambda + z_lambda) / (CASTLE_output_rate * conduction_electrons);
     std::cout << "  " << current_time_step / total_time_steps * 100 << "%" << "\n";
     //  electron_position_output_up.close();
     electron_position_output_down.close();
     electron_velocity_output.close();
     std::string time_stamp = std::to_string(current_time_step);
-    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + "_hist.csv");
+    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + "_Hfactor.csv");
+    int x_binval,y_binval,z_binval = 0;
     for (int n=0; n < num_bins; n++) {
-        electron_velocity_output << min + width*n << ",  " << histogram[n*4]  << ", " << histogram[n*4 + 1]  << ", " << histogram[n*4 + 2] << ", " << histogram[n*4 + 3]  << "\n";
+        x_binval = histogram[n*4];
+        y_binval = histogram[n*4 + 1];
+        z_binval = histogram[n*4 + 2];
+        if (x_binval > 0) x_Hfac += x_binval * log(x_binval / conduction_electrons);
+        if (y_binval > 0) y_Hfac += y_binval * log(y_binval / conduction_electrons);
+        if (z_binval > 0) z_Hfac += z_binval * log(z_binval / conduction_electrons);
+           // std::cout << x_binval << y_binval << z_binval << "\n";
+        histogram[n*4] = 0;
+        histogram[n*4 + 1] = 0;
+        histogram[4*n + 2] = 0;
+        histogram[4*n + 3] = 0;
+        
+        
+           // std::cout << x_Hfac << y_Hfac << z_Hfac << "\n";
+        electron_velocity_output << min + width*n << ",  " << x_binval  << ", " << y_binval  << ", " << z_binval << ", " << histogram[n*4 + 3]  << "\n";
     }
     electron_velocity_output.close();
+    Hfac = 0.333333333 * (x_Hfac + y_Hfac + z_Hfac) * width / (conduction_electrons * CASTLE_output_rate);
+    if (current_time_step > 0) {
+    mean_data << current_time_step << ", " \
+        << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " \
+        << MPE * 1e10 * constants::K / CASTLE_output_rate << ", "    \
+        << ((MPE*constants::K*1e10) + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate << ", " \
+        << x_flux / CASTLE_output_rate <<  ", " \
+        << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
+        << std::endl;
+       // << Hfac << ", ?" << 
+    }   
+
+    MKE = MPE = 0.0;
+    
      //   electron_spin_output.close();
     CASTLE_output_data = false;
 }
