@@ -47,8 +47,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        //omp_set_dynamic(0);
-        //omp_set_num_threads(8);
+        omp_set_dynamic(0);
+        omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma parallel 
         {
@@ -95,6 +95,7 @@ void initialize () {
        
             if (err::check) std::cout << "Initializing CASTLE..."  << std::endl;
 
+    
     //========
     // Initialize lattice
     //========
@@ -572,16 +573,20 @@ void output_data() {
         electron_velocity_output      << e   << ", " << x << ", " << y << ", " << z << ", " << velocity_length << "\n";
         
         bin = int(floor(1e-10*velocity_length_hist[array_index]   / (width*CASTLE_output_rate)));
+        if(bin > histogram.size()/4) bin = histogram.size()/4;
         histogram[bin]++;
 
         bin = int(floor(1e-10*velocity_length_hist[array_index_y] / (width*CASTLE_output_rate)));
-        histogram[bin + 1]++;
+        if(bin > histogram.size()/4) bin = histogram.size()/4 + 1;
+	histogram[bin + 1]++;
 
         bin = int(floor(1e-10*velocity_length_hist[array_index_z] / (width*CASTLE_output_rate)));
-        histogram[bin + 2]++;
+        if(bin > histogram.size()/4) bin = histogram.size()/4 + 2;
+	histogram[bin + 2]++;
         
         bin = int(floor(1e-10*velocity_length_hist[array_index+3] / (width*CASTLE_output_rate)));
-        histogram[bin + 3]++;
+        if(bin > histogram.size()/4) bin = histogram.size()/4 + 3;
+	histogram[bin + 3]++;
         
         velocity_length_hist[array_index] = velocity_length_hist[array_index_y] = velocity_length_hist[array_index_z] = velocity_length_hist[array_index+1] = 0.0;
        // if (e==0) std::cout << "v_f" << v_f << " velocity " << velocity_length << std::endl;

@@ -33,7 +33,7 @@ namespace CASTLE {
 
 int velocity_verlet_step(double time_step) {
     
-    dt = 1e-17;
+    dt = 1e-18;
     TPE = 0;
     TKE = 0;
 
@@ -138,12 +138,24 @@ void update_position(){
 
         if (x_pos < 0.0) x_pos += 40.0;
         else if (x_pos > 40.0) x_pos -= 40.0;
+	    if(abs(x_pos) > 40.0) {
+		    terminaltextcolor(RED);
+		    std::cout << "Latice bounds exceeded for " << e << " on " << current_time_step << ". " << x_pos << std::endl;
+        }
 
-        if (y_pos < 0.0) y_pos += 40.0;
+	    if (y_pos < 0.0) y_pos += 40.0;
         else if (y_pos > 40.0) y_pos -= 40.0;
+	    if(abs(y_pos) > 40.0) {
+		    terminaltextcolor(RED);
+		    std::cout << "Latice bounds exceeded for " << e << " on " << current_time_step << ". " << y_pos << std::endl;
+        }
 
-        if (z_pos < 0.0) z_pos += 40.0;
+	    if (z_pos < 0.0) z_pos += 40.0;
         else if (z_pos > 40.0) z_pos -= 40.0;
+	    if(abs(z_pos) > 40.0) {
+		    terminaltextcolor(RED);
+		    std::cout << "Latice bounds exceeded for " << e << " on " << current_time_step << ". " << z_pos << std::endl;
+	    }
 
         if (electron_position[array_index] < 20 && x_pos > 20) x_flux++;
         if (electron_position[array_index] > 20 && x_pos < 20) x_flux--;
@@ -155,6 +167,7 @@ void update_position(){
        // if (e == 0) std::cout << new_electron_position[array_index] << "   " << electron_position[array_index]  << "   " << (electron_velocity[array_index] * dt) << "   " << (electron_force[array_index] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e) << "\n";
         //symmetry_list[e].resize(conduction_electrons, false);
     }
+
 }
 
 void update_dynamics() {
@@ -365,7 +378,7 @@ long double electron_applied_voltage(int array_index, double& x_force, double& y
     
  //   x_force -= 100;
 
-   // return -1.0;
+    return 0;
 }
 
 
