@@ -45,7 +45,7 @@ int velocity_verlet_step(double time_step) {
     //std::ofstream electron_spin_output;
 
             if(err::check) std::cout << "Initializing output files..." << std::endl;
-    if (equilibrium_step && current_time_step % CASTLE_output_rate == 0) setup_output();
+    if (current_time_step % CASTLE_output_rate == 0) setup_output();
 
             if (err::check) std::cout << "Updating new electron position." << std::endl;
     update_position();
@@ -187,7 +187,7 @@ void update_dynamics() {
         //if (e == 1050) std::cout << x << "  " << y << " " << z <<   "    " << std::endl;
         TPE += electron_e_a_coulomb(array_index, x_force,y_force,z_force, x,y,z);
         TPE += electron_e_e_coulomb(e, array_index, x_force,y_force,z_force, x,y,z);
-        TPE += electron_applied_voltage(array_index, x_force,y_force,z_force);
+        if(!equilibrium_step) TPE += electron_applied_voltage(array_index, x_force,y_force,z_force);
        // if (e ==1050) std::cout << x_force << "    " << y_force << "   " << z_force << " normalization: " << constants::K / constants::m_e <<  std::endl;
 
        // #pragma omp critical 
@@ -376,9 +376,9 @@ long double electron_e_e_coulomb(int e, int array_index, double& x_force, double
 
 long double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force) {
     
- //   x_force -= 100;
+    x_force -= 100;
 
-    return 0;
+    return 100;
 }
 
 
