@@ -191,6 +191,7 @@ namespace CASTLE {
    std::vector<double> atom_position;
    std::vector<double> mean_data_array;
    std::vector<double> lattice_electrons;
+   std::vector<std::vector<int> > nearest_neighbor_list;
    //std::vector<bool> conduction_electron_spin;
    //std::vector<bool> lattice_electron_spin;
    std::vector <long double> velocity_length_hist;
@@ -209,9 +210,10 @@ namespace CASTLE {
    void update_dynamics();
    long double electron_e_a_coulomb(int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
    long double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
+   long double neighbor_e_e_coulomb(int e, int array_index, double &x_force, double &y_force, double &z_force, const double& x, const double& y, const double& z);
    long double update_velocity(int array_index);
    long double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force);
-
+   
     std::ofstream lattice_output;
     //std::ofstream electron_position_output_up;
     std::ofstream electron_position_output_down;

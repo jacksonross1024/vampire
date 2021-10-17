@@ -92,6 +92,7 @@ namespace CASTLE {
     extern std::vector<double> electron_force;   //Angstroms
     extern std::vector<double> new_force_array;
     extern std::vector<double> mean_data_array;
+    extern std::vector<std::vector<int> > nearest_neighbor_list;
    // extern std::vector<double> lattice_electrons;
    // extern std::vector<bool>   conduction_electron_spin;
    // extern std::vector<bool>   lattice_electron_spin;
@@ -129,6 +130,7 @@ namespace CASTLE {
     extern void update_dynamics();
     extern long double electron_e_a_coulomb(int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
     extern long double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
+    extern long double neighbor_e_e_coulomb(int e, int array_index, double &x_force, double &y_force, double &z_force, const double& x, const double& y, const double& z);
     extern long double update_velocity(int array_index);
     extern long double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force);
 

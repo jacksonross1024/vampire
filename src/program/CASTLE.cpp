@@ -132,7 +132,7 @@ void initialize () {
 
 
     mean_data.open("CASTLE/mean_data.csv");
-    mean_data << "step, mean-KE, mean-PE, mean-TE, mean-x_flux, -lambda, +lambda, mean-lambda, mean-Hfactor, calc-Hfactor" << "\n";
+    mean_data << "step, mean-KE, mean-PE, mean-TE, -lambda, +lambda, mean-lambda, mean-current_density, mean-drift_velocity, current, resistance" << "\n";
 
 }
 
@@ -229,7 +229,9 @@ void initialize_electrons() {
     long double phi,theta, x_pos,y_pos,z_pos, velocity_length = 0.0;
     //super loop for each conducting electron
     int array_index = 0;
+    nearest_neighbor_list.resize(conduction_electrons);
     for (int e = 0; e < conduction_electrons; e++) {
+        nearest_neighbor_list[e].resize(conduction_electrons * 0.5, -1);
         array_index = 3*e;
         //random program for velocity initialization
         phi   = M_PI * Pos_distrib(gen) / 180;
@@ -443,7 +445,7 @@ void initialize_forces() {
 
       //  electron_spin = conduction_electron_spin[e];
                 if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
-        
+        int neighbor_count = 0;
         for (int i = 0; i < conduction_electrons; i++) {
             if (i == e) continue; //no self repulsion
             //if (symmetry_list[e][i]) continue;  //make use of symmetry
@@ -466,6 +468,10 @@ void initialize_forces() {
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
 
+            if (length > 200) continue;
+            
+            nearest_neighbor_list[e][neighbor_count] = i;
+            neighbor_count++;
             if (length > 100) continue;
             length = sqrt(length);
             //if (length < 0.000001) length = 0.000001;
@@ -567,6 +573,8 @@ void output_data() {
     long double y_lambda = 0.0;
     long double z_lambda = 0.0;
     long double calc_lambda = 1/ sqrt(conduction_electrons);
+    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, x_vel,y_vel,z_vel, \
+    ) reduction(+:x_lambda,y_lambda,z_lambda) schedule(dynamic) omp_num_threads(2)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         array_index_y = array_index + 1;
@@ -586,9 +594,11 @@ void output_data() {
         z_vel = 1e-10*new_electron_velocity[array_index_z];
         velocity_length = sqrt((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
 
-        electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
-        electron_velocity_output      << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << "\n";
-        
+        #pragma omp critical
+        {
+            electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
+            electron_velocity_output      << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << "\n";
+        }
 /*
         bin = int(floor(x_vel / width));
         //if(bin > histogram.size()/4) bin = histogram.size()/4;
@@ -621,7 +631,7 @@ void output_data() {
     //  electron_position_output_up.close();
     electron_position_output_down.close();
     electron_velocity_output.close();
-    std::string time_stamp = std::to_string(current_time_step);
+  /*  std::string time_stamp = std::to_string(current_time_step);
     electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + "_Hfactor.csv");
     int x_binval,y_binval,z_binval = 0;
     for (int n=0; n < num_bins; n++) {
@@ -642,17 +652,26 @@ void output_data() {
         electron_velocity_output << min + width*n << ",  " << x_binval  << ", " << y_binval  << ", " << z_binval << ", " << histogram[n*4 + 3]  << "\n";
     }
     electron_velocity_output.close();
-    Hfac = 0.333333333 * (x_Hfac + y_Hfac + z_Hfac) * width / (conduction_electrons * CASTLE_output_rate);
+    Hfac = 0.333333333 * (x_Hfac + y_Hfac + z_Hfac) * width / (conduction_electrons * CASTLE_output_rate); */
+    double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate); //current density
+    double nu = j / (n_f * constants::e); //drift velocity
+    double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
+    
     if (current_time_step > 0) {
     mean_data << current_time_step << ", " \
         << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " \
         << MPE * 1e10 * constants::K / CASTLE_output_rate << ", "    \
         << ((MPE*constants::K*1e10) + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate << ", " \
-        << x_flux / CASTLE_output_rate <<  ", " \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
+        << j <<  ", " << nu << ", " << I << ", " << 4000 * 1e10 / I \
         << std::endl;
        // << Hfac << ", ?" << 
     }   
+    if (sqrt(MKE*2) > 10/dt) {
+        dt /= 10;
+        std::cout << "KE exceeding time-step. " << sqrt(MKE*2) << " Adjusting parameter. " << 1/dt << std::endl;
+    }
+    else if (sqrt(MKE*2) > 5/dt) std::cout << "KE begining to exceed time-step..." << 5/dt << std::endl;
 
     MKE = MPE = 0.0;
     
