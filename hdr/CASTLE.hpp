@@ -37,7 +37,7 @@
 #include <map>
 #include <ctime>
 #include <random>
-//#include <omp.h> 
+#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -83,6 +83,7 @@ namespace CASTLE {
 
     //integration variables
     extern int current_time_step;
+    extern double CASTLE_real_time;
    
     extern std::vector<double> atom_position;
     extern std::vector<double> electron_position; //Angstroms

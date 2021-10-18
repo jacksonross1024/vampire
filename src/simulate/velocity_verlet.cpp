@@ -59,6 +59,7 @@ int velocity_verlet_step(double time_step) {
 
 
     //reset integration
+    CASTLE_real_time += current_time_step * dt;
     current_time_step += 1;
 
     electron_position = new_electron_position;
@@ -429,7 +430,7 @@ long double electron_applied_voltage(int array_index, double& x_force, double& y
     
     x_force -= 100;
 
-    return -100.0 / constants::e ;
+    return -100.0 * 1e-10 / constants::e ;
 }
 
 

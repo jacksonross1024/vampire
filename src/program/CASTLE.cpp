@@ -50,9 +50,9 @@ void create() {
         //omp_set_dynamic(0);
         //omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
-        #pragma parallel 
+        #pragma omp parallel 
         {
-        //std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " Number of threads: " << omp_get_num_threads() << std::endl;
+            std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -60,6 +60,7 @@ void create() {
     //========
     // Integrate total time steps
     //========
+    castle_watch.start();
     sim::integrate(total_time_steps);
     
         std::cout << "Average time step[s]:  " << (castle_watch.elapsed_seconds()) / total_time_steps << std::endl;
@@ -73,7 +74,7 @@ void create() {
     equilibrium_step = false;
     CASTLE_output_rate = 1;
     total_time_steps = sim::loop_time;
-
+    dt = 1e-20;
 
     //========
     // Run averaging step
@@ -116,7 +117,7 @@ void initialize () {
     total_time_steps = sim::equilibration_time; //100
     x_flux = 0.0;
     current_time_step = 0;
-
+    CASTLE_real_time = 0.0;
     
     //========
     // initialize electrons: lattice and conduction bands, velocity, spin, etc.
@@ -132,7 +133,7 @@ void initialize () {
 
 
     mean_data.open("CASTLE/mean_data.csv");
-    mean_data << "step, mean-KE, mean-PE, mean-TE, -lambda, +lambda, mean-lambda, mean-current_density, mean-drift_velocity, current, resistance" << "\n";
+    mean_data << "time, step, mean-KE, mean-PE, mean-TE, -lambda, +lambda, mean-lambda, mean-current_density, mean-drift_velocity, current, resistance" << "\n";
 
 }
 
@@ -143,7 +144,7 @@ void initialize () {
 void initialize_lattice() {
     
     atomic_size = 2.0; // sim::atomic_size; //Angst diameter. 
-    screening_depth = atomic_size * 0.25 * 0.5; //sim::screening_depth; //Angstroms 
+    screening_depth = 0.36; //sim::screening_depth; //Angstroms 
     lattice_atoms = 20 * 20 * 20; //Better lattice creation will come from VAMPIRE in future
 
     lattice_height = 40.0; //A
@@ -573,8 +574,8 @@ void output_data() {
     long double y_lambda = 0.0;
     long double z_lambda = 0.0;
     long double calc_lambda = 1/ sqrt(conduction_electrons);
-    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, x_vel,y_vel,z_vel, \
-    ) reduction(+:x_lambda,y_lambda,z_lambda) schedule(dynamic) omp_num_threads(2)
+    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, x_vel,y_vel,z_vel \
+    ) reduction(+:x_lambda,y_lambda,z_lambda) schedule(dynamic) num_threads(3)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         array_index_y = array_index + 1;
@@ -658,20 +659,27 @@ void output_data() {
     double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
     
     if (current_time_step > 0) {
-    mean_data << current_time_step << ", " \
+    mean_data << CASTLE_real_time << ", " << current_time_step << ", " \
         << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " \
         << MPE * 1e10 * constants::K / CASTLE_output_rate << ", "    \
         << ((MPE*constants::K*1e10) + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate << ", " \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
-        << j <<  ", " << nu << ", " << I << ", " << 4000 * 1e10 / I \
+        << j <<  ", " << nu << ", " << I << ", " << 4000 *1e-10/ I \
         << std::endl;
        // << Hfac << ", ?" << 
     }   
-    if (sqrt(MKE*2) > 10/dt) {
-        dt /= 10;
-        std::cout << "KE exceeding time-step. " << sqrt(MKE*2) << " Adjusting parameter. " << 1/dt << std::endl;
-    }
-    else if (sqrt(MKE*2) > 5/dt) std::cout << "KE begining to exceed time-step..." << 5/dt << std::endl;
+    long double mean_vel = sqrt(2*MKE) / conduction_electrons; //Still Angstroms
+    if (mean_vel > 1/dt) std::cout << mean_vel << ", " << 1/dt << ", " << 1/(dt*1e-1) << std::endl;
+
+   /* bool one_time_slowdown = false;
+    if (sqrt(MKE*2) > (10/dt)) {
+        if (!one_time_slowdown) {
+            dt = dt * 1e-2;
+            one_time_slowdown = true;
+            std::cout << sqrt(MKE*2) << " KE exceeding time-step of " << 1e-1 * dt << " Adjusting parameter to: " << dt << std::endl;
+        }
+    } */
+  //  else if (sqrt(MKE*2) > 5/dt) std::cout << "KE begining to exceed time-step..." << 5/dt << std::endl;
 
     MKE = MPE = 0.0;
     

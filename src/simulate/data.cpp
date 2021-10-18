@@ -177,6 +177,7 @@ namespace CASTLE {
    double temperature;
 
      double total_time_steps;
+     double CASTLE_real_time;
      long double dt;
      int current_time_step;
      double loop_time;
