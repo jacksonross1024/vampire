@@ -33,7 +33,7 @@ namespace CASTLE {
 
 int velocity_verlet_step(double time_step) {
     
-    dt = 1e-18;
+    
     TPE = 0;
     TKE = 0;
 

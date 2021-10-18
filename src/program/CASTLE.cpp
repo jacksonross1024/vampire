@@ -52,7 +52,7 @@ void create() {
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
         {
-            std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+          //  std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -74,7 +74,7 @@ void create() {
     equilibrium_step = false;
     CASTLE_output_rate = 1;
     total_time_steps = sim::loop_time;
-    dt = 1e-20;
+    //dt = 1e-20;
 
     //========
     // Run averaging step
@@ -112,7 +112,7 @@ void initialize () {
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
     CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
-    
+    dt = 1e-18;
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
     x_flux = 0.0;
@@ -654,7 +654,7 @@ void output_data() {
     }
     electron_velocity_output.close();
     Hfac = 0.333333333 * (x_Hfac + y_Hfac + z_Hfac) * width / (conduction_electrons * CASTLE_output_rate); */
-    double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate); //current density
+    double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
     double nu = j / (n_f * constants::e); //drift velocity
     double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
     
@@ -669,8 +669,18 @@ void output_data() {
        // << Hfac << ", ?" << 
     }   
     long double mean_vel = sqrt(2*MKE) / conduction_electrons; //Still Angstroms
-    if (mean_vel > 1/dt) std::cout << mean_vel << ", " << 1/dt << ", " << 1/(dt*1e-1) << std::endl;
-
+   // std::cout << mean_vel*dt << std::endl;
+    if (mean_vel * dt > 0.0005) {
+        terminaltextcolor(RED); 
+        std::cout << "0.005 " << mean_vel << ", " << dt << ", " << dt*1e-1 << std::endl;
+        dt = dt * 1e-1;
+        terminaltextcolor(WHITE);
+    }
+    else if (mean_vel * dt > 0.00001) {
+        terminaltextcolor(YELLOW);
+        std::cout << "0.0001 " << mean_vel << ", " << dt << ", " << dt*1e-1 << std::endl;
+        terminaltextcolor(WHITE);
+    }
    /* bool one_time_slowdown = false;
     if (sqrt(MKE*2) > (10/dt)) {
         if (!one_time_slowdown) {
