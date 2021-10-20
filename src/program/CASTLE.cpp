@@ -362,8 +362,8 @@ void initialize_forces() {
 
     int array_index, array_index_i = 0;
     
-    double x,y,z, d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force = 0.0;
-    double x_unit,y_unit,z_unit = 0.0; 
+    long double x,y,z, d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force = 0.0;
+    long double x_unit,y_unit,z_unit = 0.0; 
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         //spontaneous spin flip
@@ -574,6 +574,7 @@ void output_data() {
     long double y_lambda = 0.0;
     long double z_lambda = 0.0;
     long double calc_lambda = 1/ sqrt(conduction_electrons);
+    long double x_mo,y_mo,z_mo = 0.0;
     #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, x_vel,y_vel,z_vel \
     ) reduction(+:x_lambda,y_lambda,z_lambda) schedule(dynamic) num_threads(3)
     for (int e = 0; e < conduction_electrons; e++) {
@@ -595,6 +596,9 @@ void output_data() {
         z_vel = 1e-10*new_electron_velocity[array_index_z];
         velocity_length = sqrt((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
 
+        x_mo += x_vel*1e10;
+        y_mo += y_vel*1e10;
+        z_mo += z_vel*1e10;
         #pragma omp critical
         {
             electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
@@ -654,13 +658,13 @@ void output_data() {
     }
     electron_velocity_output.close();
     Hfac = 0.333333333 * (x_Hfac + y_Hfac + z_Hfac) * width / (conduction_electrons * CASTLE_output_rate); */
-    double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
-    double nu = j / (n_f * constants::e); //drift velocity
-    double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
+    long double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
+    long double nu = j / (n_f * constants::e); //drift velocity
+    long double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
     
     if (current_time_step > 0) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " \
-        << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " \
+        << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << ", " << x_mo/CASTLE_output_rate << ", " << y_mo/CASTLE_output_rate << ", " << z_mo/CASTLE_output_rate << ", " \
         << MPE * 1e10 * constants::K / CASTLE_output_rate << ", "    \
         << ((MPE*constants::K*1e10) + (MKE*1e-20 * constants::m_e)) / CASTLE_output_rate << ", " \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \

@@ -183,15 +183,15 @@ namespace CASTLE {
      double loop_time;
      int x_flux;
 
-   std::vector<double> electron_position; //superarray of past locations for each step
-   std::vector<double> new_electron_position;
+   std::vector<long double> electron_position; //superarray of past locations for each step
+   std::vector<long double> new_electron_position;
    std::vector<long double> electron_velocity; //superarray for past velocities for each step
    std::vector<long double> new_electron_velocity;
-   std::vector<double> electron_force;  
-   std::vector<double> new_force_array;
+   std::vector<long double> electron_force;  
+   std::vector<long double> new_force_array;
    std::vector<double> atom_position;
    std::vector<double> mean_data_array;
-   std::vector<double> lattice_electrons;
+  // std::vector<double> lattice_electrons;
    std::vector<std::vector<int> > nearest_neighbor_list;
    //std::vector<bool> conduction_electron_spin;
    //std::vector<bool> lattice_electron_spin;
@@ -209,12 +209,12 @@ namespace CASTLE {
    void setup_output();
    void update_position();
    void update_dynamics();
-   long double electron_e_a_coulomb(int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
-   long double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
-   long double neighbor_e_e_coulomb(int e, int array_index, double &x_force, double &y_force, double &z_force, const double& x, const double& y, const double& z);
-   long double update_velocity(int array_index);
-   long double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force);
-   
+   extern long double electron_e_a_coulomb(int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+   extern long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+   extern long double neighbor_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+   extern long double update_velocity(int array_index);
+   extern long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
+
     std::ofstream lattice_output;
     //std::ofstream electron_position_output_up;
     std::ofstream electron_position_output_down;

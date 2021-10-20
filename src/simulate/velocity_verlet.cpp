@@ -31,7 +31,7 @@
 namespace CASTLE {
 
 
-int velocity_verlet_step(double time_step) {
+int velocity_verlet_step(long double time_step) {
     
     
     TPE = 0;
@@ -124,7 +124,7 @@ void setup_output() {
 void update_position(){
 
     int array_index,array_index_y,array_index_z = 0;
-    double x_pos,y_pos,z_pos = 0.0;
+    long double x_pos,y_pos,z_pos = 0.0;
     #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) schedule(static)
     for (int e = 0; e < conduction_electrons; e++){ 
         array_index = 3*e;
@@ -174,7 +174,7 @@ void update_position(){
 void update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
-    double x_force,y_force,z_force, x,y,z;
+    long double x_force,y_force,z_force, x,y,z;
     #pragma omp parallel for private(array_index, x_force,y_force,z_force, x,y,z)  schedule(static) reduction(+:TPE,TKE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
@@ -269,11 +269,11 @@ long double update_velocity(int array_index) {
     return (0.5 * velocity_length);
 }
 
-long double electron_e_a_coulomb(int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z) {
+long double electron_e_a_coulomb(int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z) {
   //set e-a attraction
         //calculate nearest neighbor;
-    double d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force  = 0.0;
-    double PE = 0.0;
+    long double d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force  = 0.0;
+    long double PE = 0.0;
     d_x = x - ((atomic_size * round(x / atomic_size)) + 1); //closest x atom index
     d_y = y - ((atomic_size * round(y / atomic_size)) + 1); //closest y atom index
     d_z = z - ((atomic_size * round(z / atomic_size)) + 1); //closest z atom index
@@ -325,10 +325,10 @@ long double electron_e_a_coulomb(int array_index, double& x_force, double& y_for
     return PE;
 }
 
-long double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z) {
+long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z) {
     
     int array_index_i;
-    double x_distance,y_distance,z_distance, length = 0.0;
+    long double x_distance,y_distance,z_distance, length = 0.0;
     long double force, PE = 0.0;
     int neighbor_count = 0;
     nearest_neighbor_list[e].resize(conduction_electrons * 0.5, -1);
@@ -385,8 +385,8 @@ long double electron_e_e_coulomb(int e, int array_index, double& x_force, double
     return (-0.5 * PE);
 }
 
-long double neighbor_e_e_coulomb(int e, int array_index, double &x_force, double &y_force, double &z_force, const double& x, const double& y, const double& z) {
-    double x_distance,y_distance,z_distance, length = 0.0;
+long double neighbor_e_e_coulomb(int e, int array_index, long double &x_force, long double &y_force, long double &z_force, const long double& x, const long double& y, const long double& z) {
+    long double x_distance,y_distance,z_distance, length = 0.0;
     long double force, PE = 0.0;
     int size = nearest_neighbor_list.size();
     int array_index_i;
@@ -426,7 +426,7 @@ long double neighbor_e_e_coulomb(int e, int array_index, double &x_force, double
     return (-0.5*PE);
 }
 
-long double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force) {
+long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force) {
     
     x_force -= 100;
 

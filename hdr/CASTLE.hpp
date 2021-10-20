@@ -86,12 +86,12 @@ namespace CASTLE {
     extern double CASTLE_real_time;
    
     extern std::vector<double> atom_position;
-    extern std::vector<double> electron_position; //Angstroms
-    extern std::vector<double> new_electron_position;
+    extern std::vector<long double> electron_position; //Angstroms
+    extern std::vector<long double> new_electron_position;
     extern std::vector<long double> electron_velocity; //Angstroms
     extern std::vector<long double> new_electron_velocity;
-    extern std::vector<double> electron_force;   //Angstroms
-    extern std::vector<double> new_force_array;
+    extern std::vector<long double> electron_force;   //Angstroms
+    extern std::vector<long double> new_force_array;
     extern std::vector<double> mean_data_array;
     extern std::vector<std::vector<int> > nearest_neighbor_list;
    // extern std::vector<double> lattice_electrons;
@@ -129,11 +129,11 @@ namespace CASTLE {
     extern void setup_output();
     extern void update_position();
     extern void update_dynamics();
-    extern long double electron_e_a_coulomb(int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
-    extern long double electron_e_e_coulomb(int e, int array_index, double& x_force, double& y_force, double& z_force, const double& x, const double& y, const double& z);
-    extern long double neighbor_e_e_coulomb(int e, int array_index, double &x_force, double &y_force, double &z_force, const double& x, const double& y, const double& z);
+    extern long double electron_e_a_coulomb(int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+    extern long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+    extern long double neighbor_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
     extern long double update_velocity(int array_index);
-    extern long double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force);
+    extern long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
 
 /*  one day your time will come
     struct atom {
