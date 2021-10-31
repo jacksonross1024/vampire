@@ -31,11 +31,12 @@
 namespace CASTLE {
 
 
-int velocity_verlet_step(long double time_step) {
+int velocity_verlet_step(double time_step) {
     
     
     TPE = 0;
     TKE = 0;
+    
 
             if (err::check) std::cout << "Calculating verlet integration...Time step: " << dt << std::endl;
 
@@ -52,19 +53,19 @@ int velocity_verlet_step(long double time_step) {
 
             if (err::check) std::cout << "Forces, spins, and velocities update..." << std::endl;
     update_dynamics();
-
+  //  std::cout << MPE/CASTLE_output_rate << ", " << TPE << ", " << MKE/CASTLE_output_rate << ", " << TKE << ", " << (MPE+MKE)/CASTLE_output_rate << ", " << TPE +TKE << ", " << std::endl;
             if (err::check) std::cout << "Output mean data" << std::endl;
     if (CASTLE_output_data)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
-
+    
 
 
     //reset integration
-    CASTLE_real_time += current_time_step * dt;
-    current_time_step += 1;
+    CASTLE_real_time += dt;
+    current_time_step++;
 
-    electron_position = new_electron_position;
-    electron_force = new_force_array;
-    electron_velocity = new_electron_velocity;
+    electron_position.swap(new_electron_position);
+    electron_force.swap(new_force_array);
+    electron_velocity.swap(new_electron_velocity);
 
    
     return EXIT_SUCCESS;
@@ -99,7 +100,7 @@ int velocity_verlet_step(long double time_step) {
 void setup_output() {
 
     CASTLE_output_data = true;
-    std::string time_stamp = std::to_string(current_time_step);
+    time_stamp = std::to_string(current_time_step);
 
       //  electron_position_output_up.open("CASTLE/Electron_Position_Up/" + time_stamp + "U.xyz");
         //    electron_position_output_up << total_spin_up << "\n";
@@ -109,8 +110,8 @@ void setup_output() {
     electron_position_output_down << conduction_electrons << "\n";
     electron_position_output_down << time_stamp << "\n";
 
-    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".txt");
-    //electron_velocity_output << "Electron number    x-component     y-component    z-component     length" << "\n";
+    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".csv");
+    electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length" << "\n";
 
     
       //  electron_spin_output.open("CASTLE/Electron_Spin/" + time_stamp + ".txt");
@@ -124,8 +125,8 @@ void setup_output() {
 void update_position(){
 
     int array_index,array_index_y,array_index_z = 0;
-    long double x_pos,y_pos,z_pos = 0.0;
-    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) schedule(static)
+    long double x_pos,y_pos,z_pos = 0;
+    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) schedule(static) reduction(+:x_flux,y_flux,z_flux)
     for (int e = 0; e < conduction_electrons; e++){ 
         array_index = 3*e;
         array_index_y = array_index + 1;
@@ -133,33 +134,50 @@ void update_position(){
 
       // std::cout << "why are you dying...." << e << "\n";
     
-        x_pos = electron_position[array_index]   + (electron_velocity[array_index]   * dt) + (electron_force[array_index]   * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e); // x superarray component
-        y_pos = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt) + (electron_force[array_index_y] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e); // y superarray component
-        z_pos = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt) + (electron_force[array_index_z] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e); // z superarray component
-
-        if (x_pos < 0.0) x_pos += 40.0;
-        else if (x_pos > 40.0) x_pos -= 40.0;
+        x_pos = electron_position[array_index]   + (electron_velocity[array_index]   * dt) + (electron_force[array_index]   * dt * dt * constants::K_A / (2*constants::m_e_r)); // x superarray component
+        y_pos = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt) + (electron_force[array_index_y] * dt * dt * constants::K_A / (2*constants::m_e_r)); // y superarray component
+        z_pos = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt) + (electron_force[array_index_z] * dt * dt * constants::K_A / (2*constants::m_e_r)); // z superarray component
+        
+      //  if(e==100) std::cout << x_pos << ", " << electron_position[array_index] << ", " << (electron_velocity[array_index]   * dt) << ", " << (electron_force[array_index]   * dt * dt * constants::K_A / (2*constants::m_e_r)) << std::endl; // x superarray component
+      // if(e==100) std::cout << e << ", " << electron_velocity[array_index] << " , " << 1e-10*electron_velocity[array_index + 1] << " , " << 1e-10*electron_velocity[array_index + 2] << std::endl;
+        if (x_pos < 0) {
+            x_pos += 40;
+            x_flux--;
+        }
+        else if (x_pos > 40) {
+            x_pos -= 40;
+            x_flux++;
+        }
 	  /*  if(abs(x_pos) > 40.0) {
 		    terminaltextcolor(RED);
 		    std::cout << "Latice bounds exceeded for " << e << " on " << current_time_step << ". " << x_pos << std::endl;
         } */
 
-	    if (y_pos < 0.0) y_pos += 40.0;
-        else if (y_pos > 40.0) y_pos -= 40.0;
+	    if (y_pos < 0) {
+            y_pos += 40;
+            y_flux--;
+        }
+        else if (y_pos > 40) {
+            y_pos -= 40;
+            y_flux++;
+        }
 	/*    if(abs(y_pos) > 40.0) {
 		    terminaltextcolor(RED);
 		    std::cout << "Latice bounds exceeded for " << e << " on " << current_time_step << ". " << y_pos << std::endl;
         } */
 
-	    if (z_pos < 0.0) z_pos += 40.0;
-        else if (z_pos > 40.0) z_pos -= 40.0;
+	    if (z_pos < 0) {
+            z_pos += 40;
+            z_flux--;
+        }
+        else if (z_pos > 40) {
+            z_pos -= 40;
+            z_flux++;
+        }
 	 /*   if(abs(z_pos) > 40.0) {
 		    terminaltextcolor(RED);
 		    std::cout << "Latice bounds exceeded for " << e << " on " << current_time_step << ". " << z_pos << std::endl;
 	    } */
-
-        if (electron_position[array_index] < 20 && x_pos > 20) x_flux++;
-        if (electron_position[array_index] > 20 && x_pos < 20) x_flux--;
 
         new_electron_position[array_index]   = x_pos;
         new_electron_position[array_index_y] = y_pos;
@@ -175,7 +193,13 @@ void update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
     long double x_force,y_force,z_force, x,y,z;
-    #pragma omp parallel for private(array_index, x_force,y_force,z_force, x,y,z)  schedule(static) reduction(+:TPE,TKE)
+
+ /*   std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> random_electron(0,8000);
+    chosen_electron = random_electron(gen); */
+    #pragma omp parallel for private(array_index, x_force,y_force,z_force, x,y,z)  schedule(static) reduction(+:TPE,TKE,chosen_electron)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         x_force = 0.0;
@@ -187,8 +211,9 @@ void update_dynamics() {
 
         TPE += electron_e_a_coulomb(array_index, x_force,y_force,z_force, x,y,z);
         //if (e == 1050) std::cout << x << "  " << y << " " << z <<   "    " << std::endl;
-        if(current_time_step % CASTLE_output_rate == 0) {
+        if(current_time_step % 10 == 0) {
             TPE += electron_e_e_coulomb(e, array_index, x_force,y_force,z_force, x,y,z);
+           // std::cout << nearest_neighbor_list[0].size() << std::endl;
         } else {
             TPE += neighbor_e_e_coulomb(e, array_index, x_force,y_force,z_force, x,y,z);
         }
@@ -207,6 +232,9 @@ void update_dynamics() {
     }
     MPE += TPE;
     MKE += TKE;
+    
+    //std::cout << "Count " << current_time_step << ", TPE: " << TPE * 1e10 * constants::K  << ", TKE: " << TKE * 1e-20 * constants::m_e  << ", mean-MPE: " << MPE * 1e10 * constants::K / CASTLE_output_rate << ", mean-MKE: " << MKE * 1e-20 * constants::m_e / CASTLE_output_rate << std::endl;
+
         //spontaneous spin flip
 
        
@@ -252,10 +280,11 @@ long double update_velocity(int array_index) {
         int array_index_z = array_index + 2;
 
      //   if (e == 0) std::cout << new_electron_velocity[array_index] << " " << electron_velocity[array_index] << "    " <<  electron_force[array_index]  << "    " << new_force_array[array_index]  << "    " <<  dt * 0.5  * constants::K / constants::m_e << "\n"; 
-        long double x_vel = electron_velocity[array_index]   + ((electron_force[array_index]   + new_force_array[array_index])   * dt * 0.5  * 1e30 * constants::K / constants::m_e); 
-        long double y_vel = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_force_array[array_index_y]) * dt * 0.5  * 1e30 * constants::K / constants::m_e);
-        long double z_vel = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_force_array[array_index_z]) * dt * 0.5  * 1e30 * constants::K / constants::m_e);
+        long double x_vel = electron_velocity[array_index]   + ((electron_force[array_index]   + new_force_array[array_index])   * dt  * constants::K_A / (2*constants::m_e_r)); 
+        long double y_vel = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_force_array[array_index_y]) * dt  * constants::K_A / (2*constants::m_e_r));
+        long double z_vel = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_force_array[array_index_z]) * dt  * constants::K_A / (2*constants::m_e_r));
         
+      //  if(array_index/3 ==100) std::cout << x_vel << ", " << electron_velocity[array_index] << ", " << y_vel << ", " << electron_velocity[array_index_y] << ", " << z_vel << ", " << electron_velocity[array_index_z] << std::endl;
         new_electron_velocity[array_index]   = x_vel;
         new_electron_velocity[array_index_y] = y_vel;
         new_electron_velocity[array_index_z] = z_vel;
@@ -263,39 +292,51 @@ long double update_velocity(int array_index) {
         velocity_length_hist[array_index]   += abs(x_vel);
         velocity_length_hist[array_index_y] += abs(y_vel);
         velocity_length_hist[array_index_z] += abs(z_vel); 
-       */ long double velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
+       */// long double velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
         //velocity_length_hist[array_index + 3] += sqrt(velocity_length); 
         //if(array_index / 3 ==0) std::cout << velocity_length_hist[array_index/3] << "\n";
-    return (0.5 * velocity_length);
+    return ((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
 }
 
 long double electron_e_a_coulomb(int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z) {
   //set e-a attraction
         //calculate nearest neighbor;
-    long double d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force  = 0.0;
-    long double PE = 0.0;
-    d_x = x - ((atomic_size * round(x / atomic_size)) + 1); //closest x atom index
-    d_y = y - ((atomic_size * round(y / atomic_size)) + 1); //closest y atom index
-    d_z = z - ((atomic_size * round(z / atomic_size)) + 1); //closest z atom index
+    long double d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force;
+    long double phi,theta, PE = 0;
 
+    d_x = x - ((atomic_size * round((x-1) / atomic_size)) + 1); //closest x atom index
+    d_y = y - ((atomic_size * round((y-1) / atomic_size)) + 1); //closest y atom index
+    d_z = z - ((atomic_size * round((z-1) / atomic_size)) + 1); //closest z atom index
+
+  //  long double radius = sqrtl((d_x*d_x)+(d_y*d_y)+(d_z*d_z));
+    //mean_radius[(array_index/3)*2] = radius;
+    //mean_radius[(array_index/3)*2 + 1] =  28*((3.3*expl(-3.3*radius)) - (expl(-1*radius)));
     //if (array_index / 3 == 1050) std::cout << "electron" << x << "    " << y <<  "    " << z << " " << std::endl;
     //if (array_index / 3 == 1050) std::cout << "distance from atom" << d_x << "    " << d_y <<  "    " << d_z << " " << std::endl;
          //atoms go ±1 from there
         for (int a = 0; a < 1331; a++) {
-            x_mod = (atomic_size * (a % 11)) - 5*atomic_size;
-            y_mod = (atomic_size * ((int(floor(a/11))) % 11)) - 5*atomic_size;
-            z_mod = (atomic_size * floor(a / 121)) - 5*atomic_size;
+            x_mod = (atomic_size * (a % 11)) - (5*atomic_size);
+            y_mod = (atomic_size * ((int(floor(a/11))) % 11)) - (5*atomic_size);
+            z_mod = (atomic_size * floor(a / 121)) - (5*atomic_size);
             x_distance = x_mod - d_x;
             y_distance = y_mod - d_y;
             z_distance = z_mod - d_z;
 
 
-            length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance)); //Angstroms
+            length = sqrtl((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance)); //Angstroms
+            if (length > 10) continue;
             //if (array_index / 3 == 1050) std::cout << "distance from lattice atom" << x_distance << "    " << y_distance <<  "    " << z_distance << " " << length << std::endl;
-            if (length < 0.00001) length = 0.00001;
-            
-            force = -1*((1835.08 * exp(-25.6 * length)) - (2.4*exp(-length)));
-           
+           // if (length < 0.00001) length = 0.00001;
+            if(length < 0.2) chosen_electron++;
+            if(length < e_p_cutoff) {
+
+            }
+               // terminaltextcolor(RED);
+                //std::cout << "Scattering event at electron " << array_index/3 << ". Length: " << length << std::endl;
+                //terminaltextcolor(WHITE);
+           // }
+            force = -28*((3.3* 3.3* expl(-3.3 * length)) - (expl(-1 * length)));
+                        //q*k*k * exp(-15(A**-1) * length (A));
                 /*
                 velocity_length = sqrt( (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index_y]*electron_velocity[array_index_y]) + (electron_velocity[array_index_z]*electron_velocity[array_index_z]) );
                 int angle = Vel_distrib(gen);
@@ -314,13 +355,26 @@ long double electron_e_a_coulomb(int array_index, long double& x_force, long dou
                 force = -1e10 / (length * length * constants::m_e);
                 TPE += -2 * force * length;
             } */
-            PE += -2.4*exp(-length) + (716.8 * exp(-25.6*length));
-            
+            PE += 28*((3.3*expl(-3.3*length)) - (expl(-1*length)));
+
+       /*     if (array_index/3 == chosen_electron){
+                if (x_distance > 0) {
+                    int bin = int(floor(x_distance *10));
+                    if(bin < 0) std::cout << "e-a, e " << array_index/3 << " bin " << bin <<  " length " << length << " x distance " << x_distance << std::endl;
+                 //   charge_distrib[bin] += -1*(2*((420*exp(-15*length)) - (exp(-1*length))))*x_distance / length;
+                }
+            } */
+
             //if (array_index / 3 == 1050) std::cout << "old force" << x_force << "  " << y_force << "   " << z_force << "   " << force << std::endl;
-            x_force += force * x_distance / length;
-            y_force += force * y_distance / length;
-            z_force += force * z_distance / length;
+            phi   = acosl(z_distance / length);
+            theta = atanl(y_distance / x_distance);
+            if (x_distance < 0) theta += M_PI;
+
+            x_force += force * cosl(theta)*sinl(phi);
+            y_force += force * sinl(theta)*sinl(phi);
+            z_force += force * cosl(phi);
             //if (array_index / 3 == 1050) std::cout << "new force" << x_force << "  " << y_force << "   " << z_force << "   " << force << std::endl;
+        
         }
     return PE;
 }
@@ -328,12 +382,16 @@ long double electron_e_a_coulomb(int array_index, long double& x_force, long dou
 long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z) {
     
     int array_index_i;
-    long double x_distance,y_distance,z_distance, length = 0.0;
-    long double force, PE = 0.0;
-    int neighbor_count = 0;
-    nearest_neighbor_list[e].resize(conduction_electrons * 0.5, -1);
+    long double x_distance,y_distance,z_distance,length;
+    long double force, theta,phi, PE = 0;
+    int neighbor_count = 1;
+
   //set e-e repulsion
       //  #pragma omp parallel for
+   //     std::ofstream nearest_neighbors;
+     //   int count = 0;
+    //    if(e==100) nearest_neighbors.open("CASTLE/Electron_Neighbors.txt");
+    
         for (int i = 0; i < conduction_electrons; i++) {
             if (i == e) continue; //no self repulsion
             //  if (symmetry_list[e][i]) continue;  //make use of symmetry
@@ -356,12 +414,15 @@ long double electron_e_e_coulomb(int e, int array_index, long double& x_force, l
 
             length = ((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
             
-            if (length > 200) continue;
+            if (length > 250) continue;
             nearest_neighbor_list[e][neighbor_count] = i;
             neighbor_count++;
+             
+          
             if (length > 100) continue; 
-
-            length = sqrt(length);
+           // count++;
+        //   if (e==100) nearest_neighbors << length << "\n";
+            length = sqrtl(length);
             /*   if (electron_spin == electron_spin_two) {
                 force = 1e10 * ((constants::K / (length * length * constants::m_e))- (635 * constants::kB / (length * constants::m_e)));
                 
@@ -370,10 +431,20 @@ long double electron_e_e_coulomb(int e, int array_index, long double& x_force, l
             force = 1 / (length * length);
             // if(array_index / 3 == 0) std::cout << "force " << force << std::endl;
             PE += force * length;
+       /*     if (e == chosen_electron){
+                if(x_distance < 0) {
+                    int bin = int(floor(abs(x_distance)*10));
+                    if(bin<0) std::cout << "e-e " << e << " bin " << bin <<  " length " << length << " x distance " << x_distance << std::endl;
+                   // charge_distrib[bin] += x_distance * length;
+                }
+            } */
+            phi   = acosl(z_distance / length);
+            theta = atanl(y_distance / x_distance);
+            if (x_distance < 0) theta += M_PI;
 
-            x_force += x_distance * force / length;
-            y_force += y_distance * force / length;
-            z_force += z_distance * force / length;
+            x_force += force * cosl(theta)*sinl(phi);
+            y_force += force * sinl(theta)*sinl(phi);
+            z_force += force * cosl(phi);
 
             /*    //make use of symmetry
             new_force_array[array_index_i]   += -1 * x_unit;
@@ -382,16 +453,30 @@ long double electron_e_e_coulomb(int e, int array_index, long double& x_force, l
     
             symmetry_list[i][e] = true; //set symmetry flag */
         }
-    return (-0.5 * PE);
+    nearest_neighbor_list[e][0] = neighbor_count;
+  //  nearest_neighbors << neighbor_count << std::endl;
+    //nearest_neighbors.close();
+  //  if(e==100) std::cout << neighbor_count << std::endl;
+    return PE;
 }
 
 long double neighbor_e_e_coulomb(int e, int array_index, long double &x_force, long double &y_force, long double &z_force, const long double& x, const long double& y, const long double& z) {
-    long double x_distance,y_distance,z_distance, length = 0.0;
-    long double force, PE = 0.0;
-    int size = nearest_neighbor_list.size();
+    long double x_distance,y_distance,z_distance, length;
+    long double force, theta,phi, PE = 0;
+    int size = 1+nearest_neighbor_list[e][0]; //.size();
     int array_index_i;
-    for (int i=0; i < size; i++) { //a better way exists to iterate this, just can't remember
-        if(nearest_neighbor_list[e][i] < 0) break; //terminate when reach end of nearest electron
+
+  //  std::ofstream nearest_electrons;
+    //int count = 0;
+  //  if(e==100) nearest_electrons.open("CASTLE/Nearest_Electron.txt");
+        
+   // if(e==100) std::cout << size << std::endl;
+    for (int i=1; i < size; i++) { //a better way exists to iterate this, just can't remember
+        if(nearest_neighbor_list[e][i] < 0) { //just in case
+           // if(e==100) std::cout << i << std::endl;
+            break; //terminate when reach end of nearest electron
+        }
+        
         array_index_i = nearest_neighbor_list[e][i] * 3;
 
         x_distance = x - new_electron_position[array_index_i]; //don't get caching but cut down iterations by large margin
@@ -404,11 +489,13 @@ long double neighbor_e_e_coulomb(int e, int array_index, long double &x_force, l
         else if (y_distance > 30) y_distance = y_distance - 40;
         if (z_distance <  -30)    z_distance = z_distance + 40;
         else if (z_distance > 30) z_distance = z_distance - 40;
-
+        
         length = ((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
         if (length > 100) continue; //exclude zone 2
-
-        length = sqrt(length);
+       // if(e==100) nearest_electrons << length << "\n";
+        //    count++;
+        
+        length = sqrtl(length);
             /*   if (electron_spin == electron_spin_two) {
                 force = 1e10 * ((constants::K / (length * length * constants::m_e))- (635 * constants::kB / (length * constants::m_e)));
                 
@@ -417,20 +504,34 @@ long double neighbor_e_e_coulomb(int e, int array_index, long double &x_force, l
         force = 1 / (length * length);
             // if(array_index / 3 == 0) std::cout << "force " << force << std::endl;
         PE += force * length;
+     /*   if (e == chosen_electron){
+            if(x_distance < 0) {
+                int bin = int(floor(abs(x_distance)*10));
+                 if(bin<0) std::cout << "e-e " << e << " bin " << bin <<  " length " << length << " x distance " << x_distance << std::endl;
+             //   charge_distrib[bin] += x_distance *force;
+            }
+        } */
 
-        x_force += x_distance * force / length;
-        y_force += y_distance * force / length;
-        z_force += z_distance * force / length;
+        phi   = acosl(z_distance / length);
+        theta = atanl(y_distance / x_distance);
+        if (x_distance < 0) theta += M_PI;
+
+        x_force += force * cosl(theta)*sinl(phi);
+        y_force += force * sinl(theta)*sinl(phi);
+        z_force += force * cosl(phi);
 
     }
-    return (-0.5*PE);
+   // nearest_electrons << size << std::endl;
+    //nearest_electrons.close();
+  //  if(e==100) std::cout << count << std::endl;
+    return PE;
 }
 
 long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force) {
     
-    x_force -= 100;
+    x_force -= 2;
 
-    return -100.0 * 1e-10 / constants::e ;
+    return 2; //-10.0 * 1e-10 / constants::e ;
 }
 
 

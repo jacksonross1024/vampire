@@ -144,7 +144,7 @@ namespace sim{
 namespace CASTLE {
 
         bool CASTLE_program;
-      bool CASTLE_output_data = false;
+      bool CASTLE_output_data;
       bool equilibrium_step;
    int velocity_verlet_step(double time_step);
 
@@ -153,7 +153,7 @@ namespace CASTLE {
 
      int lattice_atoms;
     int conduction_electrons;
-    int core_electrons;
+ //   int core_electrons;
 
     double lattice_height;
     double lattice_width;
@@ -170,9 +170,9 @@ namespace CASTLE {
     long double TPE;
     long double MKE;
     long double MPE;
-    int total_spin_up;
-    int total_spin_down;
-    std::vector<std::vector<bool> > symmetry_list;
+  //  int total_spin_up;
+    //int total_spin_down;
+  // std::vector<std::vector<bool> > symmetry_list;
 
    double temperature;
 
@@ -182,6 +182,10 @@ namespace CASTLE {
      int current_time_step;
      double loop_time;
      int x_flux;
+     int y_flux;
+     int z_flux;
+     int chosen_electron;
+     std::string time_stamp;
 
    std::vector<long double> electron_position; //superarray of past locations for each step
    std::vector<long double> new_electron_position;
@@ -189,13 +193,17 @@ namespace CASTLE {
    std::vector<long double> new_electron_velocity;
    std::vector<long double> electron_force;  
    std::vector<long double> new_force_array;
+   std::vector<long double> atomic_phonon_energy;
+   std::vector<long double> electron_potential;
+   std::vector<long double> charge_distrib;
    std::vector<double> atom_position;
    std::vector<double> mean_data_array;
   // std::vector<double> lattice_electrons;
    std::vector<std::vector<int> > nearest_neighbor_list;
    //std::vector<bool> conduction_electron_spin;
    //std::vector<bool> lattice_electron_spin;
-   std::vector <long double> velocity_length_hist;
+  // std::vector <long double> velocity_length_hist;
+  std::vector<long double> mean_radius;
 
    //std::vector<struct electron> electron_list; //This is probably not the best way to do this
     
@@ -203,6 +211,7 @@ namespace CASTLE {
    void initialize_lattice();
    void initialize_electrons();
    void initialize_forces();
+   void initialize_velocity();
    void create();
    void output_data();
 

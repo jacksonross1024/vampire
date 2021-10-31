@@ -37,7 +37,8 @@
 #include <map>
 #include <ctime>
 #include <random>
-//#include <omp.h> 
+#include <filesystem>
+#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -73,12 +74,13 @@ namespace CASTLE {
     extern double total_time_steps;
     extern double loop_time;
     extern int    CASTLE_output_rate; //output velocity and position data at this multiple
+    extern int chosen_electron;
     extern long double dt;
     extern long double v_f; //meters
     extern long double E_f; //meters
     extern long double mu_f; //meters
     extern long double n_f; //meters
-
+    extern long double e_p_cutoff;
    // extern int num_cells;
 
     //integration variables
@@ -92,6 +94,8 @@ namespace CASTLE {
     extern std::vector<long double> new_electron_velocity;
     extern std::vector<long double> electron_force;   //Angstroms
     extern std::vector<long double> new_force_array;
+    extern std::vector<long double> atomic_phonon_energy;
+    extern std::vector<long double> electron_potential;
     extern std::vector<double> mean_data_array;
     extern std::vector<std::vector<int> > nearest_neighbor_list;
    // extern std::vector<double> lattice_electrons;
@@ -100,6 +104,7 @@ namespace CASTLE {
    // extern std::vector<int> electrons_per_cell; //size of number of cells
    // extern std::vector<int>  electron_cell;       // cell address for each electron
     extern std::vector<std::vector<bool> > symmetry_list;
+    extern std::vector<long double> mean_radius;
 
     //outputs
     extern long double TKE;
@@ -107,7 +112,11 @@ namespace CASTLE {
     extern long double MPE; //meters
     extern long double MKE; //meters
     extern int x_flux;
-    extern std::vector <long double> velocity_length_hist;
+    extern int y_flux;
+    extern int z_flux;
+    extern std::string time_stamp;
+    //extern std::vector <long double> velocity_length_hist;
+    extern std::vector<long double> charge_distrib;
   //  extern int total_spin_up;
   //  extern int total_spin_down;
     extern std::ofstream lattice_output;
@@ -123,6 +132,7 @@ namespace CASTLE {
     extern void initialize_lattice();
     extern void initialize_electrons();
     extern void initialize_forces();
+    extern void initialize_velocity();
     extern void create();
     extern void output_data();
 
