@@ -188,7 +188,40 @@ void update_position(){
 
        // if (e == 0) std::cout << new_electron_position[array_index] << "   " << electron_position[array_index]  << "   " << (electron_velocity[array_index] * dt) << "   " << (electron_force[array_index] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e) << "\n";
         //symmetry_list[e].resize(conduction_electrons, false);
-    }
+    } 
+/*
+    int b;
+    int p_p_coupling;
+    long double d_x,d_y,d_z, excitation_energy;
+    std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> phonon_random_walk(0,26);
+    std::uniform_real_distribution<long double> phonon_jump_distrib(0,1);
+    #pragma omp parallel for private(b,p_p_coupling,excitation_energy) schedule(static) reduction(+:TLE)
+    for(int a = 0; a < lattice_atoms; a++) {
+        b = 0;
+     //   x = atom_position[3*a];
+       // y = atom_position[3*a + 1];
+        //z = atom_position[3*a + 2]; 
+        while(b != 27) {
+            array_index = atomic_nearest_atom_list[a][phonon_random_walk(gen)]*2;
+            p_p_coupling = atomic_phonon_energy[a*2+1];
+            excitation_energy = atomic_phonon_energy[2*a] - atomic_phonon_energy[array_index];
+           // d_x = x - atom_position[array_index];
+            //d_y = y - atom_position[array_index+1];
+            //d_z = z - atom_position[array_index+2]; 
+
+          //  length = sqrtl((d_x*d_x) + (d_y*d_y) + (d_z*d_z));
+            if(phonon_jump_distrib(gen) > 0.2*exp(-1*excitation_energy*p_p_coupling)) {
+                atomic_phonon_energy[array_index] += excitation_energy;
+                atomic_phonon_energy[2*a] += excitation_energy;
+                atomic_phonon_energy[2*a + 1] = 0;
+                TLE += excitation_energy;
+            }
+            b++;
+        }
+    } */
 
 }
 
@@ -202,7 +235,7 @@ long double update_dynamics() {
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> random_electron(0,8000);
     chosen_electron = random_electron(gen); */
-    #pragma omp parallel for private(array_index, x_force,y_force,z_force, x,y,z)  schedule(dynamic) reduction(+:TPE,TKE)
+    #pragma omp parallel for private(array_index, x_force,y_force,z_force, x,y,z)  schedule(static) reduction(+:TPE,TKE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         x_force = 0;
@@ -236,7 +269,6 @@ long double update_dynamics() {
         
       //  if (e ==1050) std::cout << new_force_array[array_index] << "    " << new_force_array[array_index+1] << "   " << new_force_array[array_index+2] << " normalization: " << constants::K / constants::m_e <<  std::endl;
         TKE += update_velocity(array_index);
-        
         
     }
     MPE += TPE;
@@ -394,7 +426,7 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
             //if (array_index / 3 == 1050) std::cout << "new force" << x_force << "  " << y_force << "   " << z_force << "   " << force << std::endl;
 
             if(length < 2) {
-               e_e_scattering(e, x_distance,y_distance,z_distance);
+               e_e_scattering(e,a, x_distance,y_distance,z_distance);
               // e_p_scattering(e, a, x_distance,y_distance,z_distance);
             }
           /*  if(length < 0.9) {
@@ -505,7 +537,7 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
             //if (array_index / 3 == 1050) std::cout << "new force" << x_force << "  " << y_force << "   " << z_force << "   " << force << std::endl;
 
             if(length < 2) {
-               TLE += e_e_scattering(e, x_distance,y_distance,z_distance);
+               e_e_scattering(e, a, x_distance,y_distance,z_distance);
             }
           /*  if(length < 0.9) {
                // e_e_scattering(array_index/3, x_distance,y_distance,z_distance);

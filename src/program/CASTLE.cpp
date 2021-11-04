@@ -46,13 +46,13 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        omp_set_dynamic(0);
-        omp_set_num_threads(8);
+      //  omp_set_dynamic(0);
+        //omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
         {
             #pragma omp critical
-            std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+        //    std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -167,18 +167,20 @@ void initialize_lattice() {
     lattice_output << lattice_atoms << "\n"; //xyz file requires first-line for number of elements
     lattice_output << " static lattice" "\n"; //comment line
     
-    atom_position.resize(lattice_atoms * 3, 0.0);
-    atomic_phonon_energy.resize(lattice_atoms, 0);
-    atomic_electron_energy.resize(lattice_atoms,0);
+    atom_position.resize(lattice_atoms * 3, 0);
+    atomic_phonon_energy.resize(lattice_atoms*2, 0);
+    new_atomic_phonon_energy.resize(lattice_atoms*2, 0);
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::normal_distribution<long double> e_en_distrib(-6.8,1);
-   
+    
     int array_index = 0; //local loop index variable
+    atomic_nearest_atom_list.resize(lattice_atoms);
     for (int a = 0; a < lattice_atoms; ++a) {  
+        atomic_nearest_atom_list[a].resize(27,0);
         array_index = 3*a;
-        atomic_phonon_energy[array_index]   = v_f;
+        atomic_phonon_energy[a*2]   = E_f;
        // atomic_phonon_energy[array_index+1] = v_f/3;
         //atomic_phonon_energy[array_index+2] = 1;
 
@@ -188,9 +190,29 @@ void initialize_lattice() {
         atom_position[array_index + 1] = 1+ atomic_size * ((int(floor(a / 20))) % 20);
         atom_position[array_index + 2] = 1+ atomic_size * floor(a / 400);
         
-        lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << ", " << atomic_electron_energy[a] << "\n";  
+        lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
     lattice_output.close();
+
+    long double x,y,z, l_x,l_y,l_z, length;
+    int neighbor_count;
+    for(int a = 0; a < lattice_atoms; a++) {
+        neighbor_count = 0;
+        x = atom_position[a*3];
+        y = atom_position[3*a + 1];
+        z = atom_position[3*a + 2];
+        for(int b = 0; b < lattice_atoms; b++) {
+            if(a==b) continue;
+            l_x = x - atom_position[3*b];
+            l_y = y - atom_position[3*b + 1];
+            l_z = z - atom_position[3*b + 2];
+
+            length = l_x*l_x + l_y*l_y + l_z*l_z;
+            if(length > 9) continue;
+            atomic_nearest_atom_list[a][neighbor_count] = b;
+            neighbor_count++;
+        }
+    }
 
 }
 
@@ -809,7 +831,7 @@ void initialize_velocity() {
     electron_velocity_output.close();
 
 }
-long double e_e_scattering(int e, const long double& l_x, const long double& l_y, const long double& l_z) {
+long double e_e_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z) {
 
     //std::uniform_real_distribution<long double> Theta_pos_distrib(0,2);
    // std::uniform_real_distribution<long double> Phi_pos_distrib(0,1);
@@ -818,13 +840,17 @@ long double e_e_scattering(int e, const long double& l_x, const long double& l_y
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<long double> range_distrib(-0.5,0.5);
+    std::uniform_real_distribution<long double> range_distrib(-1,1);
     std::uniform_real_distribution<long double> scattering_prob_distrib(0,1);
-    std::normal_distribution<long double> velocity_gaussian_distrib(1,0.1);
+    std::normal_distribution<long double> velocity_gaussian_distrib(0.75,0.2);
 
     int array_index = 3*e;
     bool collision = false;
-    long double fermi_energy = E_f;
+   // long double atom_energy = atomic_phonon_energy[2*a];
+
+    long double excitation_energy = 0;
+    long double excitation_constant = velocity_gaussian_distrib(gen);
+    
 
     long double Px = electron_velocity[array_index];
     long double Py = electron_velocity[array_index+1];
@@ -832,7 +858,7 @@ long double e_e_scattering(int e, const long double& l_x, const long double& l_y
     long double P = sqrtl(Px*Px+Py*Py+Pz*Pz);
     long double P_p = sqrtl(Px*Px+Py*Py);
     long double P_i = sqrtl(Pz*Pz);
-
+    long double scattering_velocity = P;
    
     long double d_p = sqrtl(l_x*l_x+l_y*l_y);
     long double d_i = sqrtl(l_z*l_z);
@@ -841,6 +867,10 @@ long double e_e_scattering(int e, const long double& l_x, const long double& l_y
     long double incline_value = M_PI * range_distrib(gen);
     long double normal_polar_angle = acosl((l_x*Px+l_y*Py)/(P_p*d_p));
     long double normal_incline_angle = acosl((l_z*Pz) / (P_i*d_i));
+     if ((P - (excitation_constant*(P - v_f*1e-5))) > 0) {
+        scattering_velocity = P - (excitation_constant*(P - v_f*1e-5));
+        excitation_energy = scattering_velocity*scattering_velocity*0.5*1e10*constants::m_e;
+    }
 
     if(normal_polar_angle > M_PI) normal_polar_angle = -1*(normal_polar_angle-M_PI);
     else if (normal_polar_angle < -1*M_PI) normal_polar_angle = -1*(normal_polar_angle+M_PI);
@@ -848,7 +878,7 @@ long double e_e_scattering(int e, const long double& l_x, const long double& l_y
     if(normal_incline_angle > M_PI) normal_incline_angle = -1*(normal_incline_angle-M_PI);
     else if (normal_incline_angle < -1*M_PI) normal_incline_angle = -1*(normal_incline_angle+M_PI);
 
-    long double scattering_velocity = P;
+    
     long double polar_scattering_angle = atanl(Py/Px);
     if(polar_scattering_angle < 0) polar_scattering_angle += M_PI;
     long double incline_scattering_angle = acosl(Pz/P);
@@ -867,35 +897,69 @@ long double e_e_scattering(int e, const long double& l_x, const long double& l_y
         collision = true;
     }
    // std::cout << scattering_velocity << std::endl;
-  /*  if(collision) {
-        if( (electron_potential[e]*constants::K*1e10+(P*P*constants::m_e*1e10/2)) < fermi_energy) {
-            scattering_velocity += 1e-5*sqrtl(2* (fermi_energy - ( (electron_potential[e]*1e10*constants::m_e)+(scattering_velocity*scattering_velocity*constants::m_e*1e10/2) ) )/constants::m_e)*0.5*velocity_gaussian_distrib(gen);
-        } else scattering_velocity -= 1e-5*sqrtl(2*(((electron_potential[e]*1e10*constants::m_e)+(scattering_velocity*scattering_velocity*constants::m_e*1e10/2)) - fermi_energy)/constants::m_e)*0.5*velocity_gaussian_distrib(gen);
-    } */
+    if(collision) {
+        atomic_phonon_energy[2*a] += excitation_energy;
+        P = scattering_velocity;
+        #pragma omp critical
+        {
+        TLE += excitation_energy;
+        }
+    } 
         //#pragma omp critical
       //  std::cout << "Scattering Velocity: " << scattering_velocity << ", incoming_velocity" << P << ", polar_probability " << polar_prob << ", incline_prob " << incline_prob << ", normal_polar_angle " << normal_polar_angle << ", " << ", polar_scattering_angle " << polar_scattering_angle << ", incline_scattering_angle" << incline_scattering_angle << std::endl;
-        #pragma omp critical
-        TLE += P*P - scattering_velocity*scattering_velocity;
+        //#pragma omp critical
+      //  TLE += P*P - scattering_velocity*scattering_velocity;
        // #pragma omp critical
         //if(TLE != 0) std::cout << TLE << std::endl;
      //   std::cout << scattering_velocity*1e5 << std::endl;
-        electron_velocity[array_index]   = scattering_velocity * cos(polar_scattering_angle)*sin(incline_scattering_angle);
-        electron_velocity[array_index+1] = scattering_velocity * sin(polar_scattering_angle)*sin(incline_scattering_angle);
-        electron_velocity[array_index+2] = scattering_velocity * cos(incline_scattering_angle); 
+        electron_velocity[array_index]   = P * cos(polar_scattering_angle)*sin(incline_scattering_angle);
+        electron_velocity[array_index+1] = P * sin(polar_scattering_angle)*sin(incline_scattering_angle);
+        electron_velocity[array_index+2] = P * cos(incline_scattering_angle); 
     
     return 0;//TLE;
 }
-/*
+
 long double e_a_scattering(int e, int a, const long double& x_distance, const long double& y_distance, const long double& z_distance) {
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<long double> phonon_jump_distrib(0,1);
-
-    if(phonon_range_jump(gen) < exp())
-
-    return TLE;
-} */
+    
+    long double atomic_energy = atomic_phonon_energy[2*a];
+    int p_e_reverse_coupling  = atomic_phonon_energy[2*a + 1];
+    int array_index = 3*e;
+    long double scattering_velocity = sqrtl((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]));
+    long double length = sqrtl((x_distance*x_distance)+(y_distance*y_distance)+(z_distance*z_distance));
+    long double electron_energy = 0.5*constants::m_e*1e10*scattering_velocity*scattering_velocity;
+    long double excitation_energy = exp(-1*length)*(electron_energy - atomic_energy);
+    if(excitation_energy > 0) {
+        if(phonon_jump_distrib(gen) > 0.5*exp(-1*excitation_energy)) {
+            #pragma omp critical 
+            {
+            atomic_phonon_energy[2*a] += excitation_energy;
+            atomic_phonon_energy[2*a +1]++;
+            TLE += excitation_energy;
+            }
+            scattering_velocity -= 1e-5*sqrtl(2*excitation_energy/constants::m_e);
+            
+        }
+    } else {
+        if(phonon_jump_distrib(gen) < 0.1*p_e_reverse_coupling*exp(-1*length)) {
+            #pragma omp critical 
+            {
+            atomic_phonon_energy[2*a] += excitation_energy;
+            atomic_phonon_energy[2*a+1] = 0;
+            TLE += excitation_energy;
+            }
+            scattering_velocity += 1e-5*sqrtl(-2*excitation_energy/constants::m_e);
+        
+        } else {
+            #pragma omp critical
+            atomic_phonon_energy[2*a+1]++;
+        }
+    }
+    return 0;
+} 
 
 void output_data() {
         
