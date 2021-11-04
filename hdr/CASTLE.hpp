@@ -81,6 +81,9 @@ namespace CASTLE {
     extern long double mu_f; //meters
     extern long double n_f; //meters
     extern long double e_p_cutoff;
+    extern long double capture_chance;
+
+    
    // extern int num_cells;
 
     //integration variables
@@ -95,22 +98,28 @@ namespace CASTLE {
     extern std::vector<long double> electron_force;   //Angstroms
     extern std::vector<long double> new_force_array;
     extern std::vector<long double> atomic_phonon_energy;
+    extern std::vector<long double> atomic_electron_energy;
     extern std::vector<long double> electron_potential;
     extern std::vector<double> mean_data_array;
+    extern std::vector<long double> captured_electron_list;
     extern std::vector<std::vector<int> > nearest_neighbor_list;
+    extern std::vector<std::vector<int> > nearest_atom_list;
+    extern std::vector<bool> electron_capture;
    // extern std::vector<double> lattice_electrons;
    // extern std::vector<bool>   conduction_electron_spin;
    // extern std::vector<bool>   lattice_electron_spin;
    // extern std::vector<int> electrons_per_cell; //size of number of cells
    // extern std::vector<int>  electron_cell;       // cell address for each electron
-    extern std::vector<std::vector<bool> > symmetry_list;
+    extern std::vector<std::vector<int> > scattering_list;
     extern std::vector<long double> mean_radius;
 
     //outputs
     extern long double TKE;
     extern long double TPE;
+    extern long double TLE;
     extern long double MPE; //meters
     extern long double MKE; //meters
+    extern long double MLE;
     extern int x_flux;
     extern int y_flux;
     extern int z_flux;
@@ -138,13 +147,15 @@ namespace CASTLE {
 
     extern void setup_output();
     extern void update_position();
-    extern void update_dynamics();
-    extern long double electron_e_a_coulomb(int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+    extern long double update_dynamics();
+    extern long double electron_e_a_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+    extern long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
     extern long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
     extern long double neighbor_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
     extern long double update_velocity(int array_index);
+    extern long double e_e_scattering(int e, const long double& l_x, const long double& l_y, const long double& l_z);
     extern long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
-
+    extern long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list);
 /*  one day your time will come
     struct atom {
         double x_position;

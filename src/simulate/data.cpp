@@ -166,10 +166,14 @@ namespace CASTLE {
     long double E_f;
    long double n_f;
 
+   
+
     long double TKE;
     long double TPE;
+    long double TLE;
     long double MKE;
     long double MPE;
+    long double MLE;
   //  int total_spin_up;
     //int total_spin_down;
   // std::vector<std::vector<bool> > symmetry_list;
@@ -186,6 +190,7 @@ namespace CASTLE {
      int z_flux;
      int chosen_electron;
      std::string time_stamp;
+     long double capture_chance;
 
    std::vector<long double> electron_position; //superarray of past locations for each step
    std::vector<long double> new_electron_position;
@@ -194,16 +199,21 @@ namespace CASTLE {
    std::vector<long double> electron_force;  
    std::vector<long double> new_force_array;
    std::vector<long double> atomic_phonon_energy;
+   std::vector<long double> atomic_electron_energy;
    std::vector<long double> electron_potential;
    std::vector<long double> charge_distrib;
    std::vector<double> atom_position;
    std::vector<double> mean_data_array;
+   std::vector<long double> captured_electron_list;
+   std::vector<bool> electron_capture;
   // std::vector<double> lattice_electrons;
    std::vector<std::vector<int> > nearest_neighbor_list;
+   std::vector<std::vector<int> > nearest_atom_list;
    //std::vector<bool> conduction_electron_spin;
    //std::vector<bool> lattice_electron_spin;
   // std::vector <long double> velocity_length_hist;
   std::vector<long double> mean_radius;
+  std::vector<std::vector<int> > scattering_list;
 
    //std::vector<struct electron> electron_list; //This is probably not the best way to do this
     
@@ -217,13 +227,15 @@ namespace CASTLE {
 
    void setup_output();
    void update_position();
-   void update_dynamics();
-   extern long double electron_e_a_coulomb(int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-   extern long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-   extern long double neighbor_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-   extern long double update_velocity(int array_index);
-   extern long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
-
+   long double update_dynamics();
+   long double electron_e_a_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+   long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+   long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+   long double neighbor_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
+   long double update_velocity(int array_index);
+   long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
+   long double e_e_scattering(int e, const long double& l_x, const long double& l_y, const long double& l_z);
+   long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list);
     std::ofstream lattice_output;
     //std::ofstream electron_position_output_up;
     std::ofstream electron_position_output_down;
