@@ -38,7 +38,7 @@
 #include <ctime>
 #include <random>
 //#include <filesystem>
-#include <omp.h> 
+//#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -101,6 +101,7 @@ namespace CASTLE {
     extern std::vector<long double> atomic_phonon_energy;
     extern std::vector<long double> new_atomic_phonon_energy;
     extern std::vector<long double> electron_potential;
+    extern std::vector<long double> new_electron_potential;
     extern std::vector<double> mean_data_array;
     extern std::vector<long double> captured_electron_list;
     extern std::vector<std::vector<int> > nearest_neighbor_list;
@@ -154,7 +155,8 @@ namespace CASTLE {
     extern long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
     extern long double neighbor_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
     extern long double update_velocity(int array_index);
-    extern long double e_e_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z);
+    extern long double e_a_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z);
+    extern long double e_p_scattering(int e, int a, const long double& x_distance, const long double& y_distance, const long double& z_distance);
     extern long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
     extern long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list);
 /*  one day your time will come

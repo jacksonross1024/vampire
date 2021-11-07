@@ -46,13 +46,13 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        omp_set_dynamic(0);
-        omp_set_num_threads(8);
+      //  omp_set_dynamic(0);
+       // omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
         {
             #pragma omp critical
-            std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+        //    std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -99,6 +99,19 @@ void initialize () {
       
      // filesystem::remove_all("CASTLE/Electron_Position");
     //========
+       //=========
+    // Grab simulation variables from VAMPIRE
+    //=========
+    conduction_electrons = 20*20*20;  //sim::conduction_electrons;
+    CASTLE_output_rate = 1; //sim::CASTLE_output_rate;
+    dt = 1e-4; //reducd seconds (e10 scale factor), femptoSeconds
+    temperature = 300; //sim::temperature;
+    total_time_steps = sim::equilibration_time; //100
+    x_flux = 0;
+    y_flux = 0;
+    z_flux = 0;
+    current_time_step = 0;
+    CASTLE_real_time = 0;
     // Initialize lattice
     //========
     initialize_lattice();
@@ -108,19 +121,7 @@ void initialize () {
     // Initialzie variables used by all functions
     //========
 
-    //=========
-    // Grab simulation variables from VAMPIRE
-    //=========
-    conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
-    dt = 1e-4; //reducd seconds (e10 scale factor), femptoSeconds
-    temperature = 300; //sim::temperature;
-    total_time_steps = sim::equilibration_time; //100
-    x_flux = 0;
-    y_flux = 0;
-    z_flux = 0;
-    current_time_step = 0;
-    CASTLE_real_time = 0;
+ 
     
     //========
     // initialize electrons: lattice and conduction bands, velocity, spin, etc.
@@ -152,12 +153,17 @@ void initialize_lattice() {
     atomic_size = 2; // sim::atomic_size; //Angst diameter. 
     screening_depth = 1; //sim::screening_depth; //Angstroms 
     lattice_atoms = 20 * 20 * 20; //Better lattice creation will come from VAMPIRE in future
-    long double omega = 3000 * pow(6*M_PI*M_PI*n_f, 0.333333333333333333333);
-    long double harmonic_constant = constants::h * omega;
+ //   long double omega = 3000 * pow(6*M_PI*M_PI*n_f, 0.333333333333333333333);
+  //  long double harmonic_constant = constants::h * omega;
     lattice_height = 40; //A
     lattice_width  = 40; // A
     lattice_depth  = 40; // A
 
+
+    n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
+    E_f = constants::h * constants::h * powl(3 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
+    mu_f = 5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
+    v_f = sqrt(2 * E_f / constants::m_e); //meters
     
     
     
@@ -180,7 +186,8 @@ void initialize_lattice() {
     for (int a = 0; a < lattice_atoms; ++a) {  
         atomic_nearest_atom_list[a].resize(27,0);
         array_index = 3*a;
-        atomic_phonon_energy[a*2]   = E_f;
+        TLE += atomic_phonon_energy[a*2]   = E_f;
+        //std::cout << atomic_phonon_energy[2*a] << std::endl;
        // atomic_phonon_energy[array_index+1] = v_f/3;
         //atomic_phonon_energy[array_index+2] = 1;
 
@@ -249,6 +256,7 @@ void initialize_electrons() {
     electron_force.resize(conduction_electrons * 3, 0); //current and future arrays
     new_force_array.resize(conduction_electrons * 3);
     electron_potential.resize(conduction_electrons, 0);
+    new_electron_potential.resize(conduction_electrons, 0);
     charge_distrib.resize(101, 0);
     mean_radius.resize(conduction_electrons*2);
     electron_capture.resize(conduction_electrons,false);
@@ -279,7 +287,7 @@ void initialize_electrons() {
     //  total_spin_up = 0;
    // total_spin_down = 0;
    
-    long double phi,theta, x_pos,y_pos,z_pos, velocity_length = 0;
+    long double phi,theta, x_pos,y_pos,z_pos; //velocity_length = 0;
     //super loop for each conducting electron
     int array_index = 0;
     nearest_neighbor_list.resize(conduction_electrons);
@@ -399,7 +407,7 @@ void initialize_cells(int electron) {
 
 long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list) {
     int electron_num;
-    long double Px,Py,Pz,P, radius,length, d_x,d_y,d_z, x_mod,y_mod,z_mod, array_index_i, x,y,z;
+    long double Px,Py,Pz,P, radius,length, d_x,d_y,d_z, x_mod,y_mod,z_mod, array_index_i;
 
     long double theta,phi, force, x_distance,y_distance,z_distance;
     long double new_potential = 0;
@@ -637,12 +645,12 @@ void initialize_forces() {
             PE    =  28*((3.3* exp(-3.3* length)) - (exp(-1 * length)));
             TPE += PE;
             electron_potential[e] += PE;
-            if (e == chosen_electron){
+        /*    if (e == chosen_electron){
                 if (x_distance > 0) {
                     int bin = int(floor(x_distance *10));
                   //  charge_distrib[bin] += -1*PE*x_distance / length;
                 }
-            }
+            } */
          //   if(e == 0) std::cout << "force " << force << std::endl;
             phi   = acosl(z_distance / length);
             theta = atanl(y_distance / x_distance);
@@ -712,12 +720,12 @@ void initialize_forces() {
             PE = force * length;
             electron_potential[e] += PE;
             TPE += PE;
-            if (e == chosen_electron){
+          /*  if (e == chosen_electron){
                 if (x_distance < 0) {
                     int bin = int(floorf(abs(x_distance) *10));
                   //  charge_distrib[bin] += PE * x_distance / length;
                 }
-            }
+            } */
            // if(e == 0) std::cout << "force " << force << std::endl;
             //    if (err::check) std::cout << "Distances grabbed" << std::endl; 
 
@@ -807,7 +815,7 @@ void initialize_velocity() {
 
     long double phi,theta, vel; //A/fS
     int array_index;
-    long double TE,PE;
+   // long double TE,PE;
     for(int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         theta = M_PI * Theta_Vel_distrib(gen);
@@ -831,7 +839,7 @@ void initialize_velocity() {
     electron_velocity_output.close();
 
 }
-long double e_e_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z) {
+long double e_a_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z) {
 
     //std::uniform_real_distribution<long double> Theta_pos_distrib(0,2);
    // std::uniform_real_distribution<long double> Phi_pos_distrib(0,1);
@@ -848,7 +856,7 @@ long double e_e_scattering(int e, int a, const long double& l_x, const long doub
     bool collision = false;
    // long double atom_energy = atomic_phonon_energy[2*a];
 
-    long double excitation_energy = 0;
+    
     long double excitation_constant = velocity_gaussian_distrib(gen);
     
 
@@ -859,8 +867,10 @@ long double e_e_scattering(int e, int a, const long double& l_x, const long doub
     long double P_p = sqrtl(Px*Px+Py*Py);
     long double P_i = sqrtl(Pz*Pz);
     long double scattering_velocity = P;
-    long double electron_TE = electron_potential[e]*constants::K*1e10 + P*P*constants::m_e*0.5;
+    long double electron_TE = 1e10*(electron_potential[e]*constants::K + P*P*constants::m_e*0.5);
    
+   
+
     long double d_p = sqrtl(l_x*l_x+l_y*l_y);
     long double d_i = sqrtl(l_z*l_z);
 
@@ -868,47 +878,61 @@ long double e_e_scattering(int e, int a, const long double& l_x, const long doub
     long double incline_value = M_PI * range_distrib(gen);
     long double normal_polar_angle = acosl((l_x*Px+l_y*Py)/(P_p*d_p));
     long double normal_incline_angle = acosl((l_z*Pz) / (P_i*d_i));
-     if ((electron_TE - (excitation_constant*(electron_TE - E_f))) > 0) {
-        scattering_velocity = 1e-5*sqrtl(2*(electron_TE - (excitation_constant*(electron_TE - E_f)))/constants::m_e);
-        excitation_energy = scattering_velocity*scattering_velocity*0.5*1e10*constants::m_e;
-       // std::cout << excitation_energy << ", " << scattering_velocity*1e5 << std::endl;
-    }
 
-    if(normal_polar_angle > M_PI) normal_polar_angle = -1*(normal_polar_angle-M_PI);
-    else if (normal_polar_angle < -1*M_PI) normal_polar_angle = -1*(normal_polar_angle+M_PI);
-
-    if(normal_incline_angle > M_PI) normal_incline_angle = -1*(normal_incline_angle-M_PI);
-    else if (normal_incline_angle < -1*M_PI) normal_incline_angle = -1*(normal_incline_angle+M_PI);
+    long double excitation_energy = abs(excitation_constant)*(electron_TE - atomic_phonon_energy[2*a]);
 
     
-    long double polar_scattering_angle = atanl(Py/Px);
-    if(polar_scattering_angle < 0) polar_scattering_angle += M_PI;
-    long double incline_scattering_angle = acosl(Pz/P);
-
-    long double polar_prob = velocity_gaussian_distrib(gen)*polar_value*polar_value* ( ( ((M_PI/2)+normal_polar_angle) * exp( (polar_value-1)*(polar_value-1)/(-8)) )+( ((M_PI/2)-normal_polar_angle) * exp( (polar_value+1)*(polar_value+1)/(-8)) ) )/(2*M_PI*sqrt(2*M_PI));
-    long double incline_prob = velocity_gaussian_distrib(gen)*incline_value*incline_value* ( ( ((M_PI/2)+normal_incline_angle)  * exp( (incline_value-1)*(incline_value-1)/(-8)) ) + ( ((M_PI/2)-normal_incline_angle) * exp( (incline_value-1)*(incline_value-1)/(-8)) ) )/(2*M_PI*sqrt(2*M_PI));
+    if (excitation_energy > 0) {
+      //  std::cout << electron_TE << ", " << atomic_phonon_energy[2*a] << ", " << excitation_energy << ", " << electron_TE - excitation_energy << std::endl;
+        excitation_energy = electron_TE - excitation_energy;
+        
+        scattering_velocity = 1e-5*sqrtl(2*excitation_energy/constants::m_e);
+       // std::cout << P - scattering_velocity << std::endl;
+      // if(scattering_velocity < 0) std::cout << P << ", " << scattering_velocity << ", " << P - scattering_velocity <<  std::endl;
     
-    if(scattering_prob_distrib(gen) < polar_prob) {
-        polar_scattering_angle = polar_value - normal_polar_angle;
+
+        if(normal_polar_angle > M_PI) normal_polar_angle = -1*(normal_polar_angle-M_PI);
+        else if (normal_polar_angle < -1*M_PI) normal_polar_angle = -1*(normal_polar_angle+M_PI);
+
+        if(normal_incline_angle > M_PI) normal_incline_angle = -1*(normal_incline_angle-M_PI);
+        else if (normal_incline_angle < -1*M_PI) normal_incline_angle = -1*(normal_incline_angle+M_PI);
+
+    
+        long double polar_scattering_angle = atanl(Py/Px);
+        if(polar_scattering_angle < 0) polar_scattering_angle += M_PI;
+        long double incline_scattering_angle = acosl(Pz/P);
+
+        long double polar_prob = velocity_gaussian_distrib(gen)*polar_value*polar_value* ( ( ((M_PI/2)+normal_polar_angle) * exp( (polar_value-1)*(polar_value-1)/(-8)) )+( ((M_PI/2)-normal_polar_angle) * exp( (polar_value+1)*(polar_value+1)/(-8)) ) )/(2*M_PI*sqrt(2*M_PI));
+        long double incline_prob = velocity_gaussian_distrib(gen)*incline_value*incline_value* ( ( ((M_PI/2)+normal_incline_angle)  * exp( (incline_value-1)*(incline_value-1)/(-8)) ) + ( ((M_PI/2)-normal_incline_angle) * exp( (incline_value-1)*(incline_value-1)/(-8)) ) )/(2*M_PI*sqrt(2*M_PI));
+    
+        if(scattering_prob_distrib(gen) < polar_prob) {
+            polar_scattering_angle = polar_value - normal_polar_angle;
       //  scattering_velocity *= velocity_gaussian_distrib(gen);
-        collision = true;
-    }
-    if(scattering_prob_distrib(gen) < incline_prob) {
-        incline_scattering_angle = incline_value - normal_incline_angle;
-        //scattering_velocity *= ;
-        collision = true;
-    }
-   // std::cout << scattering_velocity << std::endl;
-    if(collision) {
-        atomic_phonon_energy[2*a] += excitation_energy;
-        P = scattering_velocity;
-        #pragma omp critical
-        {
-        TLE += excitation_energy;
+            collision = true;
         }
-    } 
+        if(scattering_prob_distrib(gen) < incline_prob) {
+            incline_scattering_angle = incline_value - normal_incline_angle;
+        //scattering_velocity *= ;
+            collision = true;
+        }
+   // std::cout << scattering_velocity << std::endl;
+        if(collision) {
+        
+            if(scattering_velocity < P) {
+                if(electron_TE - atomic_phonon_energy[2*a] < 0) std::cout << "TE: " << electron_TE << ", E_f: " << atomic_phonon_energy[2*a] << std::endl;
+                P = scattering_velocity;
+            }
+            
+        
+            #pragma omp critical
+            {
+        
+            atomic_phonon_energy[2*a] += excitation_energy;
+            TLE += excitation_energy;
+            }
+        } 
         //#pragma omp critical
-      //  std::cout << "Scattering Velocity: " << scattering_velocity << ", incoming_velocity" << P << ", polar_probability " << polar_prob << ", incline_prob " << incline_prob << ", normal_polar_angle " << normal_polar_angle << ", " << ", polar_scattering_angle " << polar_scattering_angle << ", incline_scattering_angle" << incline_scattering_angle << std::endl;
+     //   std::cout << "Scattering Velocity: " << scattering_velocity << ", incoming_velocity" << P << std::endl; //", polar_probability " << polar_prob << ", incline_prob " << incline_prob << ", normal_polar_angle " << normal_polar_angle << ", " << ", polar_scattering_angle " << polar_scattering_angle << ", incline_scattering_angle" << incline_scattering_angle << std::endl;
         //#pragma omp critical
       //  TLE += P*P - scattering_velocity*scattering_velocity;
        // #pragma omp critical
@@ -917,11 +941,13 @@ long double e_e_scattering(int e, int a, const long double& l_x, const long doub
         electron_velocity[array_index]   = P * cos(polar_scattering_angle)*sin(incline_scattering_angle);
         electron_velocity[array_index+1] = P * sin(polar_scattering_angle)*sin(incline_scattering_angle);
         electron_velocity[array_index+2] = P * cos(incline_scattering_angle); 
-    
+    }
+
+    //TLE += atomic_phonon_energy[2*a];
     return 0;//TLE;
 }
 
-long double e_a_scattering(int e, int a, const long double& x_distance, const long double& y_distance, const long double& z_distance) {
+long double e_p_scattering(int e, int a, const long double& x_distance, const long double& y_distance, const long double& z_distance) {
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -997,8 +1023,8 @@ void output_data() {
  /*   long double x_mo = 0.0;
     long double y_mo = 0.0;
     long double z_mo = 0.0; */
-  //  #pragma omp parallel for private(velocity_length,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, x_vel,y_vel,z_vel \
-    ) reduction(+:x_lambda,y_lambda,z_lambda) schedule(dynamic) num_threads(1)
+  //  #pragma omp parallel for private(velocity_length,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, x_vel,y_vel,z_vel 
+   // ) reduction(+:x_lambda,y_lambda,z_lambda) schedule(dynamic) num_threads(1)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index   = 3*e;
         array_index_y = array_index + 1;
