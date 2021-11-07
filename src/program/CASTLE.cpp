@@ -46,13 +46,13 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-      //  omp_set_dynamic(0);
-        //omp_set_num_threads(8);
+        omp_set_dynamic(0);
+        omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
         {
             #pragma omp critical
-        //    std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+            std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -112,7 +112,7 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 50; //sim::CASTLE_output_rate;
+    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
     dt = 1e-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
@@ -842,7 +842,7 @@ long double e_e_scattering(int e, int a, const long double& l_x, const long doub
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<long double> range_distrib(-1,1);
     std::uniform_real_distribution<long double> scattering_prob_distrib(0,1);
-    std::normal_distribution<long double> velocity_gaussian_distrib(0.75,0.2);
+    std::normal_distribution<long double> velocity_gaussian_distrib(0.25,0.1);
 
     int array_index = 3*e;
     bool collision = false;
@@ -859,6 +859,7 @@ long double e_e_scattering(int e, int a, const long double& l_x, const long doub
     long double P_p = sqrtl(Px*Px+Py*Py);
     long double P_i = sqrtl(Pz*Pz);
     long double scattering_velocity = P;
+    long double electron_TE = electron_potential[e]*constants::K*1e10 + P*P*constants::m_e*0.5;
    
     long double d_p = sqrtl(l_x*l_x+l_y*l_y);
     long double d_i = sqrtl(l_z*l_z);
@@ -867,9 +868,10 @@ long double e_e_scattering(int e, int a, const long double& l_x, const long doub
     long double incline_value = M_PI * range_distrib(gen);
     long double normal_polar_angle = acosl((l_x*Px+l_y*Py)/(P_p*d_p));
     long double normal_incline_angle = acosl((l_z*Pz) / (P_i*d_i));
-     if ((P - (excitation_constant*(P - v_f*1e-5))) > 0) {
-        scattering_velocity = P - (excitation_constant*(P - v_f*1e-5));
+     if ((electron_TE - (excitation_constant*(electron_TE - E_f))) > 0) {
+        scattering_velocity = 1e-5*sqrtl(2*(electron_TE - (excitation_constant*(electron_TE - E_f)))/constants::m_e);
         excitation_energy = scattering_velocity*scattering_velocity*0.5*1e10*constants::m_e;
+       // std::cout << excitation_energy << ", " << scattering_velocity*1e5 << std::endl;
     }
 
     if(normal_polar_angle > M_PI) normal_polar_angle = -1*(normal_polar_angle-M_PI);
@@ -1105,9 +1107,9 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " \
         << MKE * 1e10 * constants::m_e / (2*CASTLE_output_rate) << ", " << TKE * 1e10 * constants::m_e/2 << ", " \
         << MPE * 1e10 * constants::K / (2*CASTLE_output_rate)<< ", " << TPE * 1e10 * constants::K/2 << ", " \
-        << (constants::m_e*MLE*1e10) / (2*CASTLE_output_rate) << ", " << (constants::m_e*1e10*TLE)/2 << ", " \
+        << (MLE) / (CASTLE_output_rate) << ", " << (TLE) << ", " \
         << ((MPE*constants::K*1e10/2) + (MKE*1e10 * constants::m_e/2)) /CASTLE_output_rate << ", " << ((TKE * 1e10 * constants::m_e/2) + (TPE * 1e10 * constants::K/2)) << ", " \
-        << ((MPE*constants::K*1e10/2) + ((MLE+MKE)*1e10 * constants::m_e/2)) / CASTLE_output_rate << ", " << (((TLE+TKE) * 1e10 * constants::m_e/2) + (TPE * 1e10 * constants::K/2)) << ", " \
+        << ((MPE*constants::K*1e10/2) + ((MKE)*1e10 * constants::m_e/2) + MLE) / CASTLE_output_rate << ", " << (((TKE) * 1e10 * constants::m_e/2) + (TPE * 1e10 * constants::K/2)) + TLE << ", " \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
         << chosen_electron / (CASTLE_output_rate*dt) << ", " << x_flux / CASTLE_output_rate<< ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate << ", " \
         << I << ", " << 4 / I \

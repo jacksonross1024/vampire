@@ -38,7 +38,7 @@
 #include <ctime>
 #include <random>
 //#include <filesystem>
-//#include <omp.h> 
+#include <omp.h> 
 
 
 #include "sim.hpp"
