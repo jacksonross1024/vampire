@@ -202,19 +202,19 @@ void update_position(){
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
    
-    #pragma omp parallel for private(b,array_index,excitation_energy, size) schedule(dynamic) reduction(+:TLE)
+   // #pragma omp parallel for private(b,array_index,excitation_energy, size) schedule(dynamic) reduction(+:TLE)
     for(int a = 0; a < lattice_atoms; a++) {
         
         b = 0;
         
-        size = atomic_nearest_particle_list[a][0]+1;
+        size = atomic_nearest_particle_list[a][0];
      //   x = atom_position[3*a];
        // y = atom_position[3*a + 1];
         //z = atom_position[3*a + 2]; 
         std::uniform_int_distribution<> phonon_random_walk(1,size);
         std::uniform_real_distribution<long double> phonon_jump_distrib(0,1);
         while(b != size) {
-            array_index = atomic_nearest_particle_list[a][phonon_random_walk(gen)]*2;
+            array_index = atomic_nearest_particle_list[a][phonon_random_walk(gen)];
             excitation_energy = 0.25*(atomic_phonon_energy[2*a] - atomic_phonon_energy[array_index]);
            // d_x = x - atom_position[array_index];
             //d_y = y - atom_position[array_index+1];
@@ -222,12 +222,12 @@ void update_position(){
 
           //  length = sqrtl((d_x*d_x) + (d_y*d_y) + (d_z*d_z));
             if(excitation_energy > 0) {
-                if(phonon_jump_distrib(gen) > 0.2*exp(-1*excitation_energy)) { //*atomic_phonon_energy[a*2+1])) {
-                    #pragma omp critical
-                    {
+                if(phonon_jump_distrib(gen) < (0.2 - 0.2*exp(-1*excitation_energy))) { //*atomic_phonon_energy[a*2+1])) {
+                   // #pragma omp critical
+                    
                     atomic_phonon_energy[array_index] += excitation_energy;
                     atomic_phonon_energy[2*a] -= excitation_energy;
-                    }
+                    
                   //  atomic_phonon_energy[2*a + 1] = 0;
                   //  TLE += excitation_energy;
                 }
@@ -486,7 +486,7 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
             P_p = sqrtl(Px*Px+Py*Py);
             P_i = sqrtl(Pz*Pz);
             scattering_velocity = P;
-            electron_TE = 1e30*(electron_potential[e]*constants::K + P*P*constants::m_e*0.5);
+            electron_TE = electron_potential[e]*constants::K_A + P*P*constants::m_e_r/2;
             
             d_p = sqrtl(l_x*l_x+l_y*l_y);
             d_i = sqrtl(l_z*l_z);
@@ -502,7 +502,7 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
       //  std::cout << electron_TE << ", " << atomic_phonon_energy[2*a] << ", " << excitation_energy << ", " << electron_TE - excitation_energy << std::endl;
               //  excitation_energy = electron_TE - excitation_energy;
         
-                scattering_velocity = sqrtl(2*excitation_energy/constants::m_e_r);
+                scattering_velocity = P - sqrtl(2*excitation_energy/constants::m_e_r);
        // std::cout << P - scattering_velocity << std::endl;
       // if(scattering_velocity < 0) std::cout << P << ", " << scattering_velocity << ", " << P - scattering_velocity <<  std::endl;
     
@@ -533,6 +533,8 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
                 }
    // std::cout << scattering_velocity << std::endl;
                 if(collision) {
+                   // if(scattering_velocity > P) std::cout << scattering_velocity << ", " << P << std::endl;
+                    P = scattering_velocity;
                     #pragma omp critical
                     {
                     chosen_electron++;

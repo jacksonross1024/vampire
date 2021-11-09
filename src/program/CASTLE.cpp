@@ -138,7 +138,7 @@ void initialize () {
     initialize_velocity();
 
   //  std::fill(electron_potential.begin(),electron_potential.end(),0);
-    std::cout << "E_f(AJ): " << E_f << ", v_f(m/s): " << v_f << ", TE(AJ): " << E_f*conduction_electrons << ", KE(AJ):" << TKE*1e10*constants::m_e/2 << ", PE " << TPE*1e10*constants::K/2 << ", PE+KE " <<  ((TKE*constants::m_e) + (TPE*constants::K))*1e10/2 << std::endl;
+    std::cout << "E_f(J): " << E_f << ", TLE(J): " << TLE*1e-20 << ", TE(AJ): " << E_f*conduction_electrons << ", KE(AJ):" << TKE*1e10*constants::m_e/2 << ", PE " << TPE*1e10*constants::K/2 << ", PE+KE " <<  ((TKE*constants::m_e) + (TPE*constants::K))*1e10/2 << std::endl;
     mean_data.open("CASTLE/mean_data.csv");
     mean_data << "time, step, mean-KE, KE, mean-PE, PE, mean-TE, TE, -lambda, +lambda, mean-lambda, mean-x_flux, mean-y_flux, mean-z_flux, current, resistance" << "\n";
 
@@ -217,8 +217,8 @@ void initialize_lattice() {
 
             length = l_x*l_x + l_y*l_y + l_z*l_z;
             if(length > 9) continue;
-            atomic_nearest_particle_list[a][2*neighbor_count] = b;
-            atomic_nearest_particle_list[a][neighbor_count*2 + 1] = 1;
+            atomic_nearest_particle_list[a][neighbor_count] = b;
+        //    atomic_nearest_particle_list[a][neighbor_count*2 + 1] = 1;
             neighbor_count++;
         }
          atomic_nearest_particle_list[a][0] = neighbor_count;
@@ -722,7 +722,7 @@ void initialize_forces() {
             
             PE = force * length;
             electron_potential[e] += PE;
-            TPE += PE;
+            TPE += PE/2;
           /*  if (e == chosen_electron){
                 if (x_distance < 0) {
                     int bin = int(floorf(abs(x_distance) *10));
@@ -826,14 +826,14 @@ void initialize_velocity() {
 
       //vel = sqrt(2*KE/m_e) =               TE     -     PE
        // if (e ==0 ) std::cout << electron_potential[e] << std::endl;
-        vel = 1e-5*sqrt(abs(2* ((E_f - ((1e10*electron_potential[e]*constants::K)/2))/constants::m_e))); // m/s -> Angstroms / s -> A/fs = 1e-5
+        vel = 1e-5*sqrtl(abs(2* ((E_f - (1e10*electron_potential[e]*constants::K))/constants::m_e))); // m/s -> Angstroms / s -> A/fs = 1e-5
       //  if(e == 0) std::cout << "KE: " << 0.5*constants::m_e*v_f*v_f << ", PE: " << electron_potential[e]*1e10*constants::K << std::endl;
         electron_velocity[array_index]     = cosl(theta)*sinl(phi)*vel; 
         electron_velocity[array_index + 1] = sinl(theta)*sinl(phi)*vel;
         electron_velocity[array_index + 2] = cosl(phi)*vel;
         TKE += vel*vel;
                   // std::cout << "v_f" << v_f << " velocity " << velocity_length * 1e-10 << std::endl;
-        electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << 1e5*vel << ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K*0.5 + vel*vel*constants::m_e*0.5) << std::endl;
+        electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << 1e5*vel << ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;
        // if(e==100) std::cout << e << ", " << 1e-10*electron_velocity[array_index] << " , " << 1e-10*electron_velocity[array_index + 1] << " , " << 1e-10*electron_velocity[array_index + 2] << " , " << 1e-10*vel << std::endl;
                     // if (err::check) std::cout << "Velocities randomized..." << std::endl;
             //   electron_spin_output << conduction_electrons << "  " << conduction_electron_spin[conduction_electrons - 1] << std::endl;
