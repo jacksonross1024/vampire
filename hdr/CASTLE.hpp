@@ -38,7 +38,7 @@
 #include <ctime>
 #include <random>
 //#include <filesystem>
-//#include <omp.h> 
+#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -78,6 +78,7 @@ namespace CASTLE {
     extern long double dt;
     extern long double v_f; //meters
     extern long double E_f; //meters
+    extern long double E_f_A;
     extern long double mu_f; //meters
     extern long double n_f; //meters
     extern long double e_p_cutoff;
@@ -91,7 +92,7 @@ namespace CASTLE {
     extern double CASTLE_real_time;
    
     extern std::vector<double> atom_position;
-    extern std::vector<std::vector<int> > atomic_nearest_atom_list;
+    extern std::vector<std::vector<int> > atomic_nearest_particle_list;
     extern std::vector<long double> electron_position; //Angstroms
     extern std::vector<long double> new_electron_position;
     extern std::vector<long double> electron_velocity; //Angstroms

@@ -164,6 +164,7 @@ namespace CASTLE {
    long double v_f;
    long double mu_f;
     long double E_f;
+   long double E_f_A;
    long double n_f;
 
    
@@ -204,7 +205,7 @@ namespace CASTLE {
    std::vector<long double> new_electron_potential;
    std::vector<long double> charge_distrib;
    std::vector<double> atom_position;
-   std::vector<std::vector<int> > atomic_nearest_atom_list;
+   std::vector<std::vector<int> > atomic_nearest_particle_list;
    std::vector<double> mean_data_array;
    std::vector<long double> captured_electron_list;
    std::vector<bool> electron_capture;
