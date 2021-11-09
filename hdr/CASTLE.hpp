@@ -38,7 +38,7 @@
 #include <ctime>
 #include <random>
 //#include <filesystem>
-#include <omp.h> 
+//#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -101,7 +101,7 @@ namespace CASTLE {
     extern std::vector<long double> new_force_array;
     extern std::vector<long double> atomic_phonon_energy;
     extern std::vector<long double> new_atomic_phonon_energy;
-    extern std::vector<long double> electron_potential;
+    extern std::vector<long double> electron_potential; //A-1
     extern std::vector<long double> new_electron_potential;
     extern std::vector<double> mean_data_array;
     extern std::vector<long double> captured_electron_list;

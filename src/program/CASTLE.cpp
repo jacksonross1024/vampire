@@ -46,13 +46,13 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        omp_set_dynamic(1);
-       omp_set_num_threads(8);
+      //  omp_set_dynamic(1);
+       //omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
         {
             #pragma omp critical
-           std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+        //   std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -137,7 +137,7 @@ void initialize () {
 
     initialize_velocity();
 
-    std::fill(electron_potential.begin(),electron_potential.end(),0);
+  //  std::fill(electron_potential.begin(),electron_potential.end(),0);
     std::cout << "E_f(AJ): " << E_f << ", v_f(m/s): " << v_f << ", TE(AJ): " << E_f*conduction_electrons << ", KE(AJ):" << TKE*1e10*constants::m_e/2 << ", PE " << TPE*1e10*constants::K/2 << ", PE+KE " <<  ((TKE*constants::m_e) + (TPE*constants::K))*1e10/2 << std::endl;
     mean_data.open("CASTLE/mean_data.csv");
     mean_data << "time, step, mean-KE, KE, mean-PE, PE, mean-TE, TE, -lambda, +lambda, mean-lambda, mean-x_flux, mean-y_flux, mean-z_flux, current, resistance" << "\n";
@@ -187,7 +187,7 @@ void initialize_lattice() {
     for (int a = 0; a < lattice_atoms; ++a) {  
         atomic_nearest_particle_list[a].resize(100,-1);
         array_index = 3*a;
-        TLE += atomic_phonon_energy[a*2]   = E_f*1e20;
+        TLE += atomic_phonon_energy[a*2]   = E_f_A;
         //std::cout << atomic_phonon_energy[2*a] << std::endl;
        // atomic_phonon_energy[array_index+1] = v_f/3;
         //atomic_phonon_energy[array_index+2] = 1;
@@ -198,7 +198,7 @@ void initialize_lattice() {
         atom_position[array_index + 1] = 1+ atomic_size * ((int(floor(a / 20))) % 20);
         atom_position[array_index + 2] = 1+ atomic_size * floor(a / 400);
         
-        lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
+        lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << ", " << atomic_phonon_energy[2*a] << "\n";  
     }
     lattice_output.close();
 
@@ -826,14 +826,14 @@ void initialize_velocity() {
 
       //vel = sqrt(2*KE/m_e) =               TE     -     PE
        // if (e ==0 ) std::cout << electron_potential[e] << std::endl;
-        vel = sqrt(abs(2* ((E_f_A - ((electron_potential[e]*constants::K_A)/2))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
+        vel = 1e-5*sqrt(abs(2* ((E_f - ((1e10*electron_potential[e]*constants::K)/2))/constants::m_e))); // m/s -> Angstroms / s -> A/fs = 1e-5
       //  if(e == 0) std::cout << "KE: " << 0.5*constants::m_e*v_f*v_f << ", PE: " << electron_potential[e]*1e10*constants::K << std::endl;
         electron_velocity[array_index]     = cosl(theta)*sinl(phi)*vel; 
         electron_velocity[array_index + 1] = sinl(theta)*sinl(phi)*vel;
         electron_velocity[array_index + 2] = cosl(phi)*vel;
         TKE += vel*vel;
                   // std::cout << "v_f" << v_f << " velocity " << velocity_length * 1e-10 << std::endl;
-        electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << 1e5*vel << std::endl;
+        electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << 1e5*vel << ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K*0.5 + vel*vel*constants::m_e*0.5) << std::endl;
        // if(e==100) std::cout << e << ", " << 1e-10*electron_velocity[array_index] << " , " << 1e-10*electron_velocity[array_index + 1] << " , " << 1e-10*electron_velocity[array_index + 2] << " , " << 1e-10*vel << std::endl;
                     // if (err::check) std::cout << "Velocities randomized..." << std::endl;
             //   electron_spin_output << conduction_electrons << "  " << conduction_electron_spin[conduction_electrons - 1] << std::endl;
@@ -1004,10 +1004,15 @@ void output_data() {
     //=========
     // Output equilibration step data
     //=========
+    std::ofstream atomic_phonon_output;
+    atomic_phonon_output.open("CASTLE/Atom_Phonon/" + time_stamp);
+    
+    atomic_phonon_output.precision(10);
     mean_data.precision(10);
     electron_position_output_down.precision(10);
     electron_velocity_output.precision(10);
 
+    atomic_phonon_output << std::scientific;
     mean_data << std::scientific;
     electron_position_output_down << std::fixed;
     electron_velocity_output << std::scientific;
@@ -1059,7 +1064,8 @@ void output_data() {
         //z_mo += z_vel;
        // #pragma omp critical
         {
-            electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << std::endl; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
+            atomic_phonon_output << atomic_phonon_energy[2*e] << "\n";
+            electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << electron_potential[e] << ", " << 1e10*electron_potential[e]*constants::K/2 + velocity_length*velocity_length*constants::m_e/0.5 << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
             electron_velocity_output      << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << "\n";
            // if(e==100) std::cout << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << std::endl;
         }
@@ -1112,6 +1118,7 @@ void output_data() {
     //  electron_position_output_up.close();
     electron_position_output_down.close();
     electron_velocity_output.close();
+    atomic_phonon_output.close();
   /*  std::string time_stamp = std::to_string(current_time_step);
     electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + "_Hfactor.csv");
     int x_binval,y_binval,z_binval = 0;
