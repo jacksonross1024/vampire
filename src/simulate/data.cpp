@@ -189,7 +189,7 @@ namespace CASTLE {
      int x_flux;
      int y_flux;
      int z_flux;
-     int chosen_electron;
+     long double chosen_electron;
      std::string time_stamp;
      long double capture_chance;
 

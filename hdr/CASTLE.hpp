@@ -74,7 +74,7 @@ namespace CASTLE {
     extern double total_time_steps;
     extern double loop_time;
     extern int    CASTLE_output_rate; //output velocity and position data at this multiple
-    extern int chosen_electron;
+    extern long double chosen_electron;
     extern long double dt;
     extern long double v_f; //meters
     extern long double E_f; //meters

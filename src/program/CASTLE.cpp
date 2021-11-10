@@ -46,13 +46,13 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        omp_set_dynamic(1);
-       omp_set_num_threads(8);
+      //  omp_set_dynamic(1);
+       //omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
         {
             #pragma omp critical
-           std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+         //  std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -103,7 +103,7 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
+    CASTLE_output_rate = 1; //sim::CASTLE_output_rate;
     dt = 1e-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
