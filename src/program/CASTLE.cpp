@@ -56,7 +56,99 @@ void create() {
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
+    long double x,y,z,r,r_min, a_x,a_y,a_z, d_x,d_y,d_z, p_x,p_y,p_z, d_p_x,d_p_y,d_p_z, p, force, f_x,f_y,f_z, d_f_x,d_f_y,d_f_z, theta, phi, potential;
+    std::ofstream electron_output;
+    std::ofstream ballistic_data;
+
+    a_x = 0;
+    a_y = 0;
+
+    x = -7;
+    y = 0;
+    d_z = 0;
+
+    p_x = -1e-5*v_f; 
+    p_y = 0;
+
+    d_z = 0;
+  
+ballistic_data.open("CASTLE/Ballistic_Data");
+for(int a = 0; a < 1500; a++) {
+
+    r = 7;
+    theta = M_PI*(1.25 - (a * 3.3333333333e-4));
+   
+   // ((a/3000) - 0.25)*M_PI;
+    x = r*cos(theta);
+    y = r*sin(theta);
+    int t = 0;
+   // std::cout << theta << ", " <<  x << ", " << y << std::endl;
+
+    std::string height  = std::to_string(a);
+    electron_output.open("Castle/Ballistic_Electron/" + height + ".xyz");
+    electron_output << "Ballistic Electron" << "\n" << "\n";
+    p_x = 1e-5*v_f; 
+    p_y = 0;
+
+    r_min = r = sqrtl((x*x)+(y*y));
+    force = 10*((3.3*3.3*exp(-3.3*r)) - exp(-1*r));
     
+    theta = atanl(y/x);
+    if (x < 0) theta += M_PI;
+    ballistic_data << theta << ", " << theta / M_PI << ", ";
+    f_x = force * cosl(theta);
+    f_y = force * sinl(theta);
+
+   // std::cout << force<< ", " << f_x << ", " << f_y << std::endl; 
+   // std::cout << "time_step: " << t << ", x_distance: " << x << ", y_distance: " << y << "\n";
+    while(r <= 7.01) {
+        
+       // std::string time = std::to_string(t);
+        // new output file
+        
+        //updte position
+        d_x = x + (p_x*dt) + (f_x*dt*dt*constants::K_A / (2*constants::m_e_r));
+        d_y = y + (p_y*dt) + (f_y*dt*dt*constants::K_A / (2*constants::m_e_r));
+      //  d_z = z + (p_z*dt) + (f_z*dt*dt*constants::K_A / (2*constants::m_e_r));
+
+        if (t % 10 == 0) electron_output << t << ", " << d_x << ", " << d_y << ", " << d_z << "\n";
+        
+
+        //update forces
+        r = sqrtl((d_x*d_x)+(d_y*d_y));
+        if(r < r_min) r_min = r;
+        force = 10*((3.3*3.3*exp(-3.3*r)) - exp(-1*r));
+        //potential = 12*((3.3*exp(-1*r)) - exp(-1*r));
+
+     //   phi   = acosl(d_z / r);
+        theta = atanl(d_y / d_x);
+        if(d_x < 0) theta += M_PI;
+    
+
+        d_f_x = force * cosl(theta);
+        d_f_y = force * sinl(theta);
+      //  d_f_z = force * cosl(phi);
+
+        //update velocity
+        p_x += ((d_f_x + f_x)*dt*constants::K_A / (2*constants::m_e_r));
+        p_y += ((d_f_y + f_y)*dt*constants::K_A / (2*constants::m_e_r));
+       // d_p_z = p_z + ((d_f_z + f_z)*dt*constants::K_A / (2*constants::m_e_r));
+
+        x = d_x;
+        y = d_y;
+       
+        f_x = d_f_x;
+        f_y = d_f_y;
+       
+        t++;
+
+        phi = atanl(p_y/p_x);
+        if(p_x < 0) phi += M_PI;
+    }
+    electron_output.close();
+   // std::cout << "time_step: " << t << ", x_distance: " << d_x << ", y_distance: " << d_y << "\n";
+    ballistic_data << theta / M_PI << ", " << r_min << ", " << phi / M_PI << "\n";
+} ballistic_data.close();
     //========
     // Integrate total time steps
     //========
