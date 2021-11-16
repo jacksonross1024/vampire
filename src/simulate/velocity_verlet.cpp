@@ -193,17 +193,17 @@ void update_position(){
        // if (e == 0) std::cout << new_electron_position[array_index] << "   " << electron_position[array_index]  << "   " << (electron_velocity[array_index] * dt) << "   " << (electron_force[array_index] * dt * dt * 0.5  * 1e30 * constants::K / constants::m_e) << "\n";
         //symmetry_list[e].resize(conduction_electrons, false);
     } 
-
+/*
     int b;
     int p_p_coupling;
     int size;
-    long double d_x,d_y,d_z, excitation_energy;
+    long double d_x,d_y,d_z, x,y,z, excitation_energy, length;
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-   std::uniform_int_distribution<> phonon_random_walk(1,18);
-        std::uniform_real_distribution<long double> phonon_jump_distrib(0,1);
-   // #pragma omp parallel for private(b,array_index,excitation_energy, size) schedule(dynamic) reduction(+:TLE)
+    std::uniform_int_distribution<> phonon_random_walk(1,18);
+    std::uniform_real_distribution<long double> phonon_jump_distrib(0,1);
+    #pragma omp parallel for private(b,array_index,excitation_energy, size) schedule(dynamic) reduction(+:TLE)
     for(int a = 0; a < lattice_atoms; a++) {
         
         b = 0;
@@ -214,45 +214,46 @@ void update_position(){
      //   x = atom_position[3*a];
        // y = atom_position[3*a + 1];
         //z = atom_position[3*a + 2]; 
-        /*
+        
         while(b != size) {
-            int choice = phonon_random_walk(gen);
             
-            array_index = atomic_nearest_particle_list[a][choice];
-            excitation_energy = 0.25*(atomic_phonon_energy[a] - atomic_phonon_energy[array_index]);
-           // d_x = x - atom_position[array_index];
-            //d_y = y - atom_position[array_index+1];
-            //d_z = z - atom_position[array_index+2]; 
+            array_index = atomic_nearest_particle_list[a][phonon_random_walk(gen)];
+            excitation_energy = (atomic_phonon_energy[a] - atomic_phonon_energy[array_index])*0.1;
+          //  if(floor((atomic_phonon_energy[a] - atomic_phonon_energy[array_index])/harmonic_constant) > 0) excitation_energy = harmonic_constant;
+            //else if (floor((atomic_phonon_energy[a] - atomic_phonon_energy[array_index])/harmonic_constant)) < 0) excitation_energy = -1*harmonic_constant;
+          //  d_x = x - atom_position[3*array_index];
+            //d_y = y - atom_position[3*array_index+1];
+            //d_z = z - atom_position[3*array_index+2]; 
 
-          //  length = sqrtl((d_x*d_x) + (d_y*d_y) + (d_z*d_z));
+            //length = sqrtl((d_x*d_x) + (d_y*d_y) + (d_z*d_z));
             if(excitation_energy > 0) {
                 if(phonon_jump_distrib(gen) < (0.2 - 0.2*exp(-1*excitation_energy))) { //*atomic_phonon_energy[a*2+1])) {
-                   // #pragma omp critical
+                    #pragma omp critical
+                    {
                 //    std::cout << atomic_phonon_energy[a] << ", " << atomic_phonon_energy[array_index] << ", " << array_index << ", " << choice << std::endl;
                     atomic_phonon_energy[array_index] += excitation_energy;
                     atomic_phonon_energy[a] -= excitation_energy;
-                    
+                    }
                   //  atomic_phonon_energy[2*a + 1] = 0;
                   //  TLE += excitation_energy;
                 }
             }
-            b++; */
-        
-    }// std::cout << TLE;
-
+            b++; 
+        }
+    }// std::cout << TLE; */
 }
 
 long double update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
     long double x_force,y_force,z_force, x,y,z;
-    std::cout << TLE << ", ";
+  //  std::cout << TLE << ", ";
  /*   std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> random_electron(0,8000);
     chosen_electron = random_electron(gen); */
-    #pragma omp parallel for private(array_index, x_force,y_force,z_force, x,y,z)  schedule(dynamic) reduction(+:TPE,TKE)
+    #pragma omp parallel for private(array_index, x_force,y_force,z_force, x,y,z)  schedule(static) reduction(+:TPE,TKE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         x_force = 0;
@@ -262,13 +263,13 @@ long double update_dynamics() {
         y = new_electron_position[array_index + 1];
         z = new_electron_position[array_index + 2];
 
-        if(current_time_step % 10 == 0) {
+        if(current_time_step % 15 == 0) {
             TPE += electron_e_a_coulomb(e, array_index, x_force,y_force,z_force, x,y,z);
         //if (e == 1050) std::cout << x << "  " << y << " " << z <<   "    " << std::endl;
         } else {
             TPE += neighbor_e_a_coulomb(e, array_index, x_force,y_force,z_force, x,y,z);
         } 
-        if(current_time_step % 10 == 0) {
+        if(current_time_step % 15 == 0) {
             TPE += electron_e_e_coulomb(e, array_index, x_force,y_force,z_force, x,y,z);
            // std::cout << nearest_neighbor_list[0].size() << std::endl;
         } else {
@@ -291,7 +292,7 @@ long double update_dynamics() {
     MPE += TPE;
     MKE += TKE;
     MLE += TLE;
-    std::cout << chosen_electron << ", " << TLE << std::endl;
+   // std::cout << chosen_electron << ", " << TLE << std::endl;
     //std::cout << ", " << TLE << std::endl;
    // std::cout << "Count " << current_time_step << ", TPE: " << TPE * 1e10 * constants::K  << ", TKE: " << TKE * 1e10 * constants::m_e  << ", mean-MPE: " << MPE * 1e10 * constants::K / CASTLE_output_rate << ", mean-MKE: " << MKE * 1e10 * constants::m_e / CASTLE_output_rate << std::endl;
 
@@ -478,7 +479,7 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
         z_force += force * cosl(phi);
             //if (array_index / 3 == 1050) std::cout << "new force" << x_force << "  " << y_force << "   " << z_force << "   " << force << std::endl;
 
-        if( length < 2 && !collision && current_time_step > 1) {
+   /*     if( length < 2 && !collision) {// && current_time_step > 1) {
             
             l_x = x_distance;
             l_y = y_distance;
@@ -502,16 +503,24 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
             normal_polar_angle = acosl((l_x*Px+l_y*Py)/(P_p*d_p));
             normal_incline_angle = acosl((l_z*Pz) / (P_i*d_i));
 
-            excitation_energy = excitation_constant*(electron_TE - E_f_A);
+        /*    excitation_energy = 0;
+            if(floor((electron_TE - atomic_phonon_energy[a]) / harmonic_constant) > 0 ) excitation_energy = harmonic_constant;
+            else if (floor((electron_TE - atomic_phonon_energy[a]) / harmonic_constant) < 0) excitation_energy = -1*harmonic_constant;
+            
+            if(excitation_energy != 0) { 
+            scattering_velocity = P - (excitation_energy / harmonic_constant) * sqrtl(2*harmonic_constant/constants::m_e_r);
+            if(scattering_velocity < 0) continue;
+                
             
           //  std::cout << electron_TE << ", " << E_f*1e20 << std::endl;
-            if ( excitation_energy > 0 ) {
-                scattering_velocity = P - sqrtl(2*excitation_energy/constants::m_e_r);
-            if(scattering_velocity > 0) {
+          excitation_energy = excitation_constant*(electron_TE - atomic_phonon_energy[a]);
+            if(!excitation_energy) scattering_velocity = P;
+            else scattering_velocity = P - (sqrtl(2*abs(excitation_energy)/constants::m_e_r)*excitation_energy/abs(excitation_energy)); 
+            if(scattering_velocity < 0) continue;
       //  std::cout << electron_TE << ", " << atomic_phonon_energy[2*a] << ", " << excitation_energy << ", " << electron_TE - excitation_energy << std::endl;
               //  excitation_energy = electron_TE - excitation_energy;
         
-               
+           //   std::cout << P << ", " << scattering_velocity << ", " << excitation_energy << std::endl;
        // std::cout << P - scattering_velocity << std::endl;
       // if(scattering_velocity < 0) std::cout << P << ", " << scattering_velocity << ", " << P - scattering_velocity <<  std::endl;
     
@@ -525,8 +534,8 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
                 if(polar_scattering_angle < 0) polar_scattering_angle += M_PI;
                 incline_scattering_angle = acosl(Pz/P);
 
-                polar_prob = excitation_constant*polar_value*polar_value* ( ( ((M_PI/2)+normal_polar_angle) * exp( (polar_value-1)*(polar_value-1)/(-8)) )+( ((M_PI/2)-normal_polar_angle) * exp( (polar_value+1)*(polar_value+1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
-                incline_prob = excitation_constant*incline_value*incline_value* ( ( ((M_PI/2)+normal_incline_angle)  * exp( (incline_value-1)*(incline_value-1)/(-8)) ) + ( ((M_PI/2)-normal_incline_angle) * exp( (incline_value-1)*(incline_value-1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
+                polar_prob = polar_value*polar_value* ( ( ((M_PI/2)+normal_polar_angle) * exp( (polar_value-1)*(polar_value-1)/(-8)) )+( ((M_PI/2)-normal_polar_angle) * exp( (polar_value+1)*(polar_value+1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
+                incline_prob = incline_value*incline_value* ( ( ((M_PI/2)+normal_incline_angle)  * exp( (incline_value-1)*(incline_value-1)/(-8)) ) + ( ((M_PI/2)-normal_incline_angle) * exp( (incline_value-1)*(incline_value-1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
              //   std::cout << polar_prob << ", " << incline_prob << std::endl;
                 if(scattering_prob_distrib(gen) < polar_prob) {
                     polar_scattering_angle = polar_value - normal_polar_angle;
@@ -544,7 +553,7 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
                    
                     #pragma omp critical
                     {
-                    chosen_electron += (P-scattering_velocity)*(P-scattering_velocity)*constants::m_e_r/2;
+                   // chosen_electron += (P-scattering_velocity)*(P-scattering_velocity)*constants::m_e_r/2;
                    // std::cout << atomic_phonon_energy[a] << ", " << excitation_energy << std::endl;
                     atomic_phonon_energy[a] += excitation_energy;
                     TLE += excitation_energy;
@@ -564,7 +573,7 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
         //if(TLE != 0) std::cout << TLE << std::endl;
      //   std::cout << scattering_velocity*1e5 << std::endl;
               
-            }
+            
             //    e_a_scattering(e, a, x_distance,y_distance,z_distance);
                // e_p_scattering(e, a, x_distance, y_distance, z_distance);
               // e_p_scattering(e, a, x_distance,y_distance,z_distance);
@@ -585,7 +594,7 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
                        electron_capture[array_index/3] = true;
                     }
                 }
-            } */ }
+            } */  
     }
     new_electron_potential[e] = PE;
     nearest_atom_list[e][0] = neighbor_count;
@@ -709,7 +718,7 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
         z_force += force * cosl(phi);
             //if (array_index / 3 == 1050) std::cout << "new force" << x_force << "  " << y_force << "   " << z_force << "   " << force << std::endl;
 
-        if(length < 2 && !collision && current_time_step > 1 ) {
+    /*    if(length < 2 && !collision) {// && current_time_step > 1 ) {
                // e_a_scattering(e, a, x_distance,y_distance,z_distance);
            
             l_x = x_distance;
@@ -734,15 +743,15 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
             normal_polar_angle = acosl(((l_x*Px)+(l_y*Py))/(P_p*d_p));
             normal_incline_angle = acosl((l_z*Pz) / (P_i*d_i));
 
-            excitation_energy = excitation_constant*(electron_TE - E_f_A);
-              if ( excitation_energy > 0 ) {
-                scattering_velocity = P - sqrtl(2*excitation_energy/constants::m_e_r);
-            if(scattering_velocity > 0) {
+            excitation_energy = excitation_constant*(electron_TE - atomic_phonon_energy[a]);
+            if(!excitation_energy) scattering_velocity = P;
+            else scattering_velocity = P - (sqrtl(2*abs(excitation_energy)/constants::m_e_r)*excitation_energy/abs(excitation_energy)); 
+            if(scattering_velocity < 0) continue;
       //  std::cout << electron_TE << ", " << atomic_phonon_energy[2*a] << ", " << excitation_energy << ", " << electron_TE - excitation_energy << std::endl;
               //  excitation_energy = electron_TE - excitation_energy;
         
             
-                    
+          // std::cout << P << ", " << scattering_velocity << ", " << excitation_energy << std::endl;
        // std::cout << P - scattering_velocity << std::endl;
       // if(scattering_velocity < 0) std::cout << P << ", " << scattering_velocity << ", " << P - scattering_velocity <<  std::endl;
     
@@ -758,8 +767,8 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
                 if(polar_scattering_angle < 0) polar_scattering_angle += M_PI;
                 incline_scattering_angle = acosl(Pz/P);
 
-                polar_prob = excitation_constant*polar_value*polar_value* ( ( ((M_PI/2)+normal_polar_angle) * exp( (polar_value-1)*(polar_value-1)/(-8)) )+( ((M_PI/2)-normal_polar_angle) * exp( (polar_value+1)*(polar_value+1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
-                incline_prob = excitation_constant*incline_value*incline_value* ( ( ((M_PI/2)+normal_incline_angle)  * exp( (incline_value-1)*(incline_value-1)/(-8)) ) + ( ((M_PI/2)-normal_incline_angle) * exp( (incline_value-1)*(incline_value-1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
+                polar_prob = polar_value*polar_value* ( ( ((M_PI/2)+normal_polar_angle) * exp( (polar_value-1)*(polar_value-1)/(-8)) )+( ((M_PI/2)-normal_polar_angle) * exp( (polar_value+1)*(polar_value+1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
+                incline_prob = incline_value*incline_value* ( ( ((M_PI/2)+normal_incline_angle)  * exp( (incline_value-1)*(incline_value-1)/(-8)) ) + ( ((M_PI/2)-normal_incline_angle) * exp( (incline_value-1)*(incline_value-1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
              //    std::cout << d_p << ", " << P_p << ", " << normal_polar_angle << ", " << normal_incline_angle << std::endl;
                 if(scattering_prob_distrib(gen) < polar_prob) {
                    polar_scattering_angle = polar_value - normal_polar_angle;
@@ -776,7 +785,7 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
                    
                     #pragma omp critical
                     {
-                    chosen_electron += (P-scattering_velocity)*(P-scattering_velocity)*constants::m_e_r/2;
+                  //  chosen_electron += (P-scattering_velocity)*(P-scattering_velocity)*constants::m_e_r/2;
                    // std::cout << atomic_phonon_energy[a] << ", " << excitation_energy << std::endl;
                     atomic_phonon_energy[a] += excitation_energy;
                     TLE += excitation_energy;
@@ -788,10 +797,10 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
                       electron_velocity[array_index]   = P * cos(polar_scattering_angle)*sin(incline_scattering_angle);
                 electron_velocity[array_index+1] = P* sin(polar_scattering_angle)*sin(incline_scattering_angle);
                 electron_velocity[array_index+2] = P * cos(incline_scattering_angle); 
-
+*/
                 //#pragma omp critical
               //  std::cout << sqrtl((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2])) << ", " << P-scattering_velocity << ", " << sqrtl(2*excitation_energy/constants::m_e_r) << std::endl;
-                }
+                
         //#pragma omp critical
      //   std::cout << "Scattering Velocity: " << scattering_velocity << ", incoming_velocity" << P << std::endl; //", polar_probability " << polar_prob << ", incline_prob " << incline_prob << ", normal_polar_angle " << normal_polar_angle << ", " << ", polar_scattering_angle " << polar_scattering_angle << ", incline_scattering_angle" << incline_scattering_angle << std::endl;
         //#pragma omp critical
@@ -800,9 +809,9 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
         //if(TLE != 0) std::cout << TLE << std::endl;
      //   std::cout << scattering_velocity*1e5 << std::endl;
               
-            }
+            
                 //e_p_scattering(e, a, x_distance, y_distance, z_distance);
-        }
+        
           /*  if(length < 0.9) {
                // e_e_scattering(array_index/3, x_distance,y_distance,z_distance);
                 long double capture = capture_chance_distrib(gen);
@@ -819,7 +828,7 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
                        electron_capture[array_index/3] = true;
                     }
                 }
-            } */ }
+            } */ 
     }
     new_electron_potential[e] = PE;
   //  std::cout << electron_potential[e] << std::endl;
@@ -986,9 +995,9 @@ long double neighbor_e_e_coulomb(int e, int array_index, long double &x_force, l
 
 long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force) {
     
-    x_force -= 2;
-
-    return 2; //-10.0 * 1e-10 / constants::e ;
+    x_force -= 4e-9;
+    new_electron_potential[array_index/3] += -4e-9;
+    return -4e-9; //-10.0 * 1e-10 / constants::e ;
 }
 
 
