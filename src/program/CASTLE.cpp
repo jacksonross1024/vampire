@@ -56,7 +56,7 @@ void create() {
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
-    long double x,y,z,r,r_min, a_x,a_y,a_z, d_x,d_y,d_z, p_x,p_y,p_z, d_p_x,d_p_y,d_p_z, p, force, f_x,f_y,f_z, d_f_x,d_f_y,d_f_z, theta, phi, potential;
+ /*   long double x,y,z,r,r_min, a_x,a_y,a_z, d_x,d_y,d_z, p_x,p_y,p_z, d_p_x,d_p_y,d_p_z, p, force, f_x,f_y,f_z, d_f_x,d_f_y,d_f_z, theta, phi, potential;
     std::ofstream electron_output;
     std::ofstream ballistic_data;
 
@@ -148,7 +148,7 @@ for(int a = 0; a < 1500; a++) {
     electron_output.close();
    // std::cout << "time_step: " << t << ", x_distance: " << d_x << ", y_distance: " << d_y << "\n";
     ballistic_data << theta / M_PI << ", " << r_min << ", " << phi / M_PI << "\n";
-} ballistic_data.close();
+} ballistic_data.close(); */
     //========
     // Integrate total time steps
     //========
@@ -195,7 +195,7 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 1; //sim::CASTLE_output_rate;
+    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
     dt = 1e-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
@@ -293,7 +293,7 @@ void initialize_lattice() {
         
         lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << ", " << atomic_phonon_energy[a] << "\n";  
     }
-    std::cout << TLE << std::endl;
+ //   std::cout << TLE << std::endl;
     lattice_output.close();
 
     long double x,y,z, x_distance,y_distance,z_distance, length;
@@ -363,7 +363,7 @@ void initialize_electrons() {
     new_electron_potential.resize(conduction_electrons, 0);
     charge_distrib.resize(101, 0);
     mean_radius.resize(conduction_electrons*2);
-    electron_capture.resize(conduction_electrons,false);
+  //  electron_capture.resize(conduction_electrons,false);
     //mean_data_array.resize(total_time_steps*5 + 5, 0.0);
     // conduction_electron_spin.resize(conduction_electrons, false);
     // lattice_electron_spin.resize((total_electrons - conduction_electrons), false);
@@ -386,7 +386,10 @@ void initialize_electrons() {
     TPE = 0;
     TKE = 0;
 
-    
+    MPE = 0;
+    MKE = 0;
+    MLE = 0;
+
     //TKE = 0; //total Kinetic energy, meters
     //  total_spin_up = 0;
    // total_spin_down = 0;
@@ -677,9 +680,9 @@ void initialize_forces() {
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     //std::uniform_int_distribution<> random_electron(0,8000);
    // chosen_electron = random_electron(gen);
-    int array_index, array_index_i;
+    int array_index, array_index_i, atom_array, neighbor_count = 1;
     long double x,y,z, d_x,d_y,d_z, x_mod,y_mod,z_mod, x_distance,y_distance,z_distance, length, force;
-    long double theta,phi, PE;
+    long double theta,phi, PE, negative_PE;
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         //spontaneous spin flip
@@ -715,38 +718,70 @@ void initialize_forces() {
         } */
         
         
-
+        negative_PE = 0;
             //calculate e-a force
         x = electron_position[array_index];
         y = electron_position[array_index + 1];
         z = electron_position[array_index + 2];
 
-        d_x = x - ((atomic_size * round((x-1) / atomic_size)) + 1); //closest x atom index
-        d_y = y - ((atomic_size * round((y-1) / atomic_size)) + 1); //closest y atom index
-        d_z = z - ((atomic_size * round((z-1) / atomic_size)) + 1); //closest z atom index
-        length = sqrt((d_x*d_x)+(d_y*d_y)+(d_z*d_z));
-      //  if(e==0) std::cout << 99*((405* exp(-15* length)) - (exp(-1 * length)))/4 << std::endl;
-      int count = 0;
-      //  std::cout << "d_r: " << sqrt((d_x*d_x)+(d_y*d_y)+(d_z*d_z)) << std::endl;
-            //cube around electron
-        long double negative_PE = 0;
-        for (int a = 0; a < 1331; a++) {
-            
+    for (int a = 0; a < lattice_atoms; a++) {
+        atom_array = 3*a;
+        x_distance = x - atom_position[atom_array];
+        y_distance = y - atom_position[atom_array+1];
+        z_distance = z - atom_position[atom_array+2]; 
+
+    //mean_radius[(array_index/3)*2] = radius;
+    //mean_radius[(array_index/3)*2 + 1] =  28*((3.3*expl(-3.3*radius)) - (expl(-1*radius)));
+    //if (array_index / 3 == 1050) std::cout << "electron" << x << "    " << y <<  "    " << z << " " << std::endl;
+    //if (array_index / 3 == 1050) std::cout << "distance from atom" << d_x << "    " << d_y <<  "    " << d_z << " " << std::endl;
+         //atoms go ±1 from there
+    /*    for (int a = 0; a < 1331; a++) {
             x_mod = (atomic_size * (a % 11)) - (5*atomic_size);
             y_mod = (atomic_size * ((int(floor(a/11))) % 11)) - (5*atomic_size);
             z_mod = (atomic_size * floor(a / 121)) - (5*atomic_size);
             x_distance = x_mod - d_x;
             y_distance = y_mod - d_y;
-            z_distance = z_mod - d_z;
+            z_distance = z_mod - d_z;  */
 
-            length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
-            if (length < 0.00001) length = 0.00001;
-            if(length > 10) continue;
-            count++;
+        if (x_distance < -30)     x_distance = x_distance + 40;
+        else if (x_distance > 30) x_distance = x_distance - 40;
+        if (y_distance < -30)     y_distance = y_distance + 40;
+        else if (y_distance > 30) y_distance = y_distance - 40;
+        if (z_distance <  -30)    z_distance = z_distance + 40;
+        else if (z_distance > 30) z_distance = z_distance - 40; 
+
+        x_distance *= -1;
+        y_distance *= -1;
+        z_distance *= -1;
+
+        length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
+        if(length > 250) continue;
+        nearest_atom_list[e][neighbor_count] = a;
+        neighbor_count++;
+        if (length > 169) continue;
+
+        length = sqrtl(length);
+           // #pragma omp critical
+         //    std::cout << x_distance << ", " << y_distance << ", " << z_distance << ", " << length << std::endl;
+            //if (array_index / 3 == 1050) std::cout << "distance from lattice atom" << x_distance << "    " << y_distance <<  "    " << z_distance << " " << length << std::endl;
+           // if (length < 0.00001) length = 0.00001;
+          //  if(length < 0.2) chosen_electron++;
+        
+       // std::cout << length << std::endl;
+               // terminaltextcolor(RED);
+                //std::cout << "Scattering event at electron " << array_index/3 << ". Length: " << length << std::endl;
+                //terminaltextcolor(WHITE);
+           // }
+        force = -28*((16* expl(-4 * length)) - (expl(-1 * length)));
+                        //q*k*k * exp(-15(A**-1) * length (A));
+    
+        PE = 28*((3.3*expl(-3.3*length)) - (expl(-1*length)));
+       
+      //  if(e==0) std::cout << 99*((405* exp(-15* length)) - (exp(-1 * length)))/4 << std::en
+
+           // length = sqrt((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
+           // count++;
             // force
-            force = -28*((3.3*3.3 * exp(-3.3 * length)) - (exp(-1 * length)));
-           
-            PE    =  28*((3.3* exp(-3.3* length)) - (exp(-1 * length)));
             TPE += PE;
             electron_potential[e] += PE;
         /*    if (e == chosen_electron){
@@ -777,11 +812,11 @@ void initialize_forces() {
     
        //set e-e repulsion
     
-    //    std::cout << "e-a attraction: " << negative_PE;
+        std::cout << "e-a attraction: " << negative_PE;
       //  electron_spin = conduction_electron_spin[e];
                 if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
-        int neighbor_count = 0;
-        count = 0;
+        neighbor_count = 1;
+     //   count = 0;
         long double positive_PE = 0;
         for (int i = 0; i < conduction_electrons; i++) {
             if (i == e) continue; //no self repulsion
@@ -810,7 +845,7 @@ void initialize_forces() {
             nearest_neighbor_list[e][neighbor_count] = i;
             neighbor_count++;
             if (length > 100) continue;
-            count++;
+           // count++;
             length = sqrt(length);
             //if (length < 0.000001) length = 0.000001;
 
@@ -819,9 +854,10 @@ void initialize_forces() {
                // std::cout << " 1, 0 " << 1e10 * (constants::K / (length * length * constants::m_e)) << " delta1,1 " << (635 * constants::kB / (length * constants::m_e)) << std::endl;
             }
             else { */
-            force = 1 / (length * length);
+            force = 1 / (length*length);
             
             PE = force * length;
+           // length = sqrtl(length);
             electron_potential[e] += PE;
             TPE += PE/2;
           /*  if (e == chosen_electron){
@@ -901,7 +937,7 @@ void initialize_forces() {
             }
             charge_distribution_output.close();
         } */
-      //   std::cout << ". e-e repulsion: " << positive_PE << ". net force: " << positive_PE + negative_PE << std::endl;
+         std::cout << ". e-e repulsion: " << positive_PE << ". net force: " << positive_PE + negative_PE << ", count: " << neighbor_count <<  std::endl;
     }
 
 }
@@ -1165,7 +1201,7 @@ void output_data() {
         //z_mo += z_vel;
        // #pragma omp critical
         {
-            atomic_phonon_output << atomic_phonon_energy[2*e] << "\n";
+            atomic_phonon_output << atomic_phonon_energy[e] << "\n";
             electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << electron_potential[e] << ", " << 1e10*electron_potential[e]*constants::K + velocity_length*constants::m_e/0.5 << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
             electron_velocity_output      << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << "\n";
            // if(e==100) std::cout << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << std::endl;
@@ -1251,10 +1287,10 @@ void output_data() {
         << MKE * 1e10 * constants::m_e / 2 << ", "\ 
         << MPE * 1e10 * constants::K << ", "\
         << (MLE*1e-20)  << ", "\
-        << ((MPE*constants::K*1e10) + (MKE*1e10 * constants::m_e/2)) /CASTLE_output_rate << ", "\ 
-        << ((MPE*constants::K*1e10) + ((MKE)*1e10 * constants::m_e/2) + MLE*1e-20) / CASTLE_output_rate << ", "\ 
+        << ((MPE*constants::K*1e10) + (MKE*1e10 * constants::m_e/2))  << ", "\ 
+        << ((MPE*constants::K*1e10) + ((MKE)*1e10 * constants::m_e/2) + MLE*1e-20)  << ", "\ 
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
-        << chosen_electron  << ", " << x_flux / CASTLE_output_rate<< ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate << ", " \
+        << chosen_electron  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
         << I << ", " << 4 / I \
         << std::endl;
     }
@@ -1267,7 +1303,7 @@ void output_data() {
         << ((MPE*constants::K*1e10) + (MKE*1e10 * constants::m_e/2)) /CASTLE_output_rate << ", " \
         << ((MPE*constants::K*1e10) + ((MKE)*1e10 * constants::m_e/2) + MLE*1e-20) / CASTLE_output_rate << ", " \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
-        << chosen_electron / (CASTLE_output_rate) << ", " << x_flux / CASTLE_output_rate<< ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate << ", " \
+        << chosen_electron * 0.05 << ", " << x_flux * 0.05 << ", " << y_flux * 0.05 << ", " << z_flux * 0.05 << ", " \
         << I << ", " << 4 / I \
         << std::endl;
        // << Hfac << ", ?" << 
