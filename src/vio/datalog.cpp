@@ -252,7 +252,7 @@ namespace vout{
       		vout::mean_system_specific_heat(stream,header);
       		break;
       	case 62:
-      		vout::mean_material_specific_heat(stream,header);
+      	//	vout::mean_material_specific_heat(stream,header);
       		break;
               case 63:
                  vout::material_total_energy(stream,header);

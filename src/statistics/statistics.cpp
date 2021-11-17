@@ -52,7 +52,7 @@ namespace stats{
          if(stats::calculate_material_specific_heat)       stats::material_specific_heat.calculate(stats::material_energy.get_total_energy());
 
          // standard deviation in time-step
-         if(stats::calculate_material_standard_deviation)     stats::material_standard_deviation.update(stats::system_magnetization.get_magnetization());
+      //   if(stats::calculate_material_standard_deviation)     stats::material_standard_deviation.update(stats::system_magnetization.get_magnetization());
         
          // update susceptibility statistics
          if(stats::calculate_system_susceptibility)         stats::system_susceptibility.calculate(stats::system_magnetization.get_magnetization());
@@ -94,7 +94,7 @@ namespace stats{
          if(stats::calculate_material_height_magnetization) stats::material_height_magnetization.reset_magnetization_averages();
         
          // standard deviation in time-step
-         if(stats::calculate_material_standard_deviation)     stats::material_standard_deviation.reset_averages();
+      //   if(stats::calculate_material_standard_deviation)     stats::material_standard_deviation.reset_averages();
 
          // reset specific_heat statistics
          if(stats::calculate_system_specific_heat) stats::system_specific_heat.reset_averages();

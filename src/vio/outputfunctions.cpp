@@ -265,12 +265,12 @@ namespace vout{
 
    // Output Function 999 - with Header
    void system_standard_deviation(std::ostream& stream, bool header){
-      stream << stats::system_standard_deviation.output_standard_deviation(header);
+      //stream << stats::system_standard_deviation.output_standard_deviation(header);
    }
 
    //Output Function 998 - with Header
    void system_standard_deviation_length(std::ostream& stream, bool header) {
-      stream << stats::system_standard_deviation.output_standard_deviation_length(header);
+      //stream << stats::system_standard_deviation.output_standard_deviation_length(header);
    }
    
    // Output Function 22

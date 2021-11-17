@@ -126,7 +126,7 @@ namespace stats{
       if(stats::calculate_material_specific_heat) stats::material_specific_heat.initialize(stats::material_energy);
 
       // standard deviation in time
-      if(stats::calculate_material_standard_deviation) stats::material_standard_deviation.initialize(stats::system_magnetization);
+   //   if(stats::calculate_material_standard_deviation) stats::material_standard_deviation.initialize(stats::system_magnetization);
       
       // system susceptibility
       if(stats::calculate_system_susceptibility) stats::system_susceptibility.initialize(stats::system_magnetization);

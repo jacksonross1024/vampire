@@ -117,7 +117,7 @@ namespace vout{
 
    void MPITimings(std::ostream& stream,bool header);
    void mean_system_specific_heat(std::ostream& stream,bool header);
-   void mean_material_specific_heat(std::ostream& stream,bool header);
+  // void mean_material_specific_heat(std::ostream& stream,bool header);
    void material_total_energy(std::ostream& stream,bool header);
    void material_mean_total_energy(std::ostream& stream,bool header);
    void resistance(std::ostream& stream, bool header);
