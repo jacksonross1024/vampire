@@ -250,6 +250,7 @@ void initialize_lattice() {
     lattice_height = 40; //A
     lattice_width  = 40; // A
     lattice_depth  = 40; // A
+
     TLE = 0;
 
     n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
@@ -390,6 +391,10 @@ void initialize_electrons() {
     MKE = 0;
     MLE = 0;
 
+    e_a_neighbor_cutoff = 169;
+    e_e_neighbor_cutoff = 169;
+    e_a_coulomb_cutoff = 110;
+    e_e_coulomb_cutoff = 110;
     //TKE = 0; //total Kinetic energy, meters
     //  total_spin_up = 0;
    // total_spin_down = 0;
@@ -755,10 +760,10 @@ void initialize_forces() {
         z_distance *= -1;
 
         length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
-        if(length > 250) continue;
+        if(length > e_a_neighbor_cutoff) continue;
         nearest_atom_list[e][neighbor_count] = a;
         neighbor_count++;
-        if (length > 169) continue;
+        if (length > e_a_coulomb_cutoff) continue;
 
         length = sqrtl(length);
            // #pragma omp critical
@@ -775,7 +780,7 @@ void initialize_forces() {
         force = -28*((16* expl(-4 * length)) - (expl(-1 * length)));
                         //q*k*k * exp(-15(A**-1) * length (A));
     
-        PE = 28*((3.3*expl(-3.3*length)) - (expl(-1*length)));
+        PE = 28*((4*expl(-4*length)) - (expl(-1*length)));
        
       //  if(e==0) std::cout << 99*((405* exp(-15* length)) - (exp(-1 * length)))/4 << std::en
 
@@ -812,7 +817,7 @@ void initialize_forces() {
     
        //set e-e repulsion
     
-        std::cout << "e-a attraction: " << negative_PE;
+      //  std::cout << "e-a attraction: " << negative_PE;
       //  electron_spin = conduction_electron_spin[e];
                 if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
         neighbor_count = 1;
@@ -840,11 +845,11 @@ void initialize_forces() {
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
 
-            if (length > 250) continue;
+            if (length > e_e_neighbor_cutoff) continue;
             
             nearest_neighbor_list[e][neighbor_count] = i;
             neighbor_count++;
-            if (length > 100) continue;
+            if (length > e_e_coulomb_cutoff) continue;
            // count++;
             length = sqrt(length);
             //if (length < 0.000001) length = 0.000001;
@@ -937,7 +942,7 @@ void initialize_forces() {
             }
             charge_distribution_output.close();
         } */
-         std::cout << ". e-e repulsion: " << positive_PE << ". net force: " << positive_PE + negative_PE << ", count: " << neighbor_count <<  std::endl;
+       //  std::cout << ". e-e repulsion: " << positive_PE << ". net force: " << (positive_PE + negative_PE)*constants::K_A << ", count: " << neighbor_count <<  std::endl;
     }
 
 }

@@ -192,6 +192,10 @@ namespace CASTLE {
      long double chosen_electron;
      std::string time_stamp;
      long double capture_chance;
+       long double e_a_neighbor_cutoff;
+     long double e_a_coulomb_cutoff;
+     long double e_e_neighbor_cutoff;
+     long double e_e_coulomb_cutoff;
 
    std::vector<long double> electron_position; //superarray of past locations for each step
    std::vector<long double> new_electron_position;

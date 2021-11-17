@@ -83,7 +83,10 @@ namespace CASTLE {
     extern long double n_f; //meters
     extern long double e_p_cutoff;
     extern long double capture_chance;
-
+    extern long double e_a_neighbor_cutoff;
+    extern long double e_a_coulomb_cutoff;
+    extern long double e_e_neighbor_cutoff;
+    extern long double e_e_coulomb_cutoff;
     
    // extern int num_cells;
 

@@ -443,10 +443,10 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
         z_distance *= -1;
 
         length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
-        if(length > 250) continue;
+        if(length > e_a_neighbor_cutoff) continue;
         nearest_atom_list[e][neighbor_count] = a;
         neighbor_count++;
-        if (length > 100) continue;
+        if (length > e_a_coulomb_cutoff) continue;
 
         length = sqrtl(length);
      //   std::cout << e << ", " << length << std::endl;
@@ -461,10 +461,10 @@ long double electron_e_a_coulomb(int e, int array_index, long double& x_force, l
                 //std::cout << "Scattering event at electron " << array_index/3 << ". Length: " << length << std::endl;
                 //terminaltextcolor(WHITE);
            // }
-        force = -28*((3.3* 3.3* expl(-3.3 * length)) - (expl(-1 * length)));
+        force = -28*((16* expl(-4 * length)) - (expl(-1 * length)));
                         //q*k*k * exp(-15(A**-1) * length (A));
     
-        PE += 28*((3.3*expl(-3.3*length)) - (expl(-1*length)));
+        PE += 28*((4*expl(-4*length)) - (expl(-1*length)));
 
            
        /*     if (array_index/3 == chosen_electron){
@@ -693,7 +693,7 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
         z_distance *= -1;
 
         length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
-        if (length > 100) continue;
+        if (length > e_a_coulomb_cutoff) continue;
 
         length = sqrtl(length);
            // #pragma omp critical
@@ -706,10 +706,10 @@ long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, l
                 //std::cout << "Scattering event at electron " << array_index/3 << ". Length: " << length << std::endl;
                 //terminaltextcolor(WHITE);
            // }
-        force = -28*((3.3* 3.3* expl(-3.3 * length)) - (expl(-1 * length)));
+        force = -28*((16* expl(-4* length)) - (expl(-1 * length)));
                         //q*k*k * exp(-15(A**-1) * length (A));
     
-        PE += 28*((3.3*expl(-3.3*length)) - (expl(-1*length)));
+        PE += 28*((4*expl(-4*length)) - (expl(-1*length)));
           //   std::cout << 28*((3.3*expl(-3.3*length)) - (expl(-1*length))) << std::endl;
        /*     if (array_index/3 == chosen_electron){
                 if (x_distance > 0) {
@@ -884,12 +884,12 @@ long double electron_e_e_coulomb(int e, int array_index, long double& x_force, l
 
             length = ((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance));
             
-            if (length > 250) continue;
+            if (length > e_e_neighbor_cutoff) continue;
             nearest_neighbor_list[e][neighbor_count] = i;
             neighbor_count++;
              
           
-            if (length > 100) continue; 
+            if (length > e_e_coulomb_cutoff) continue; 
            // count++;
         //   if (e==100) nearest_neighbors << length << "\n";
            // length = sqrtl(length);
@@ -966,7 +966,7 @@ long double neighbor_e_e_coulomb(int e, int array_index, long double &x_force, l
         else if (z_distance > 30) z_distance = z_distance - 40;
         
         length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
-        if (length > 100) continue; //exclude zone 2
+        if (length > e_e_coulomb_cutoff) continue; //exclude zone 2
        // if(e==100) nearest_electrons << length << "\n";
         //    count++;
         
