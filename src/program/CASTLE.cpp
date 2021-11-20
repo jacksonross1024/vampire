@@ -46,13 +46,13 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-      //  omp_set_dynamic(1);
-       //omp_set_num_threads(8);
+        omp_set_dynamic(0);
+       omp_set_num_threads(6);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
         {
             #pragma omp critical
-         //  std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+           std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -164,21 +164,57 @@ for(int a = 0; a < 1500; a++) {
     //=========
     castle_watch.start();
     equilibrium_step = false;
-    CASTLE_output_rate = 10;
+    CASTLE_output_rate = 100;
     total_time_steps = sim::loop_time;
     //dt = 1e-20;
-
+    long double x,y,z;
+    int c = 0;
+ /*   for(int a = 0; a < lattice_atoms; a++) {
+        x = atom_position[3*a];
+        y = atom_position[3*a+1];
+        z = atom_position[3*a+2];
+        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22)) {
+            atomic_phonon_energy[a] *= 2;
+            c++;
+        }
+    }  
+      for(int a = 0; a < conduction_electrons; a++) {
+        x = electron_position[3*a];
+        y = electron_position[3*a+1];
+        z = electron_position[3*a+2];
+        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22)) {
+            electron_velocity[3*a]   *= 2;// 0.333333333333*sqrtl(2*E_f_A/constants::m_e_r);
+            electron_velocity[3*a+1] *= 2;//0.333333333333*sqrtl(2*E_f_A/constants::m_e_r);
+            electron_velocity[3*a+2] *= 2;//0.333333333333*sqrtl(2*E_f_A/constants::m_e_r);
+            c++;
+        }
+    }  */
+    std::cout << c << std::endl;
     //========
     // Run averaging step
     //========
-    sim::integrate(total_time_steps);
+   sim::integrate(total_time_steps);
 
+     std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed." << std::endl;
+
+/*      castle_watch.start();
+    equilibrium_step = false;
+    CASTLE_output_rate = 1;
+    total_time_steps = sim::loop_time;
+    //dt = 1e-20;
+   // long double x,y,z;
+    //int c = 0;
+  
+
+    sim::integrate(total_time_steps);
     //========
     // Output data
     //========
 
+     std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed." << std::endl;
+*/
     mean_data.close();
-        std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed." << std::endl;
+       
 }
 
 //====================================
@@ -195,7 +231,7 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
+    CASTLE_output_rate = 100; //sim::CASTLE_output_rate;
     dt = 1e-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
@@ -393,8 +429,8 @@ void initialize_electrons() {
 
     e_a_neighbor_cutoff = 169;
     e_e_neighbor_cutoff = 169;
-    e_a_coulomb_cutoff = 110;
-    e_e_coulomb_cutoff = 110;
+    e_a_coulomb_cutoff = 100;
+    e_e_coulomb_cutoff = 100;
     //TKE = 0; //total Kinetic energy, meters
     //  total_spin_up = 0;
    // total_spin_down = 0;
@@ -777,10 +813,10 @@ void initialize_forces() {
                 //std::cout << "Scattering event at electron " << array_index/3 << ". Length: " << length << std::endl;
                 //terminaltextcolor(WHITE);
            // }
-        force = -28*((16* expl(-4 * length)) - (expl(-1 * length)));
+        force = -28*((3.3*3.3* expl(-3.3 * length)) - (expl(-1 * length)));
                         //q*k*k * exp(-15(A**-1) * length (A));
     
-        PE = 28*((4*expl(-4*length)) - (expl(-1*length)));
+        PE = 28*((3.3*expl(-3.3*length)) - (expl(-1*length)));
        
       //  if(e==0) std::cout << 99*((405* exp(-15* length)) - (exp(-1 * length)))/4 << std::en
 
@@ -1314,7 +1350,7 @@ void output_data() {
        // << Hfac << ", ?" << 
     }   
     long double mean_vel = sqrt(MKE) / (CASTLE_output_rate *conduction_electrons); //Still Angstroms
-   // std::cout << mean_vel*dt << std::endl;
+    std::cout << mean_vel << std::endl;
     if (mean_vel * dt > 0.01) {
         terminaltextcolor(RED); 
         std::cout << "0.01 " << mean_vel << ", " << dt << ", " << dt*1e-1 << std::endl;

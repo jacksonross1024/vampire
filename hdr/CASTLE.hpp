@@ -38,7 +38,7 @@
 #include <ctime>
 #include <random>
 //#include <filesystem>
-//#include <omp.h> 
+#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -158,7 +158,7 @@ namespace CASTLE {
     extern long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
     extern long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
     extern long double neighbor_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-    extern long double update_velocity(int array_index);
+    extern long double update_velocity(int array_index, const long double& x, const long double& y, const long double& z);
     extern long double e_a_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z);
     extern long double e_p_scattering(int e, int a, const long double& x_distance, const long double& y_distance, const long double& z_distance);
     extern long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
