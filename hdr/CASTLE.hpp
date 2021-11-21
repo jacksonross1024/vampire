@@ -38,7 +38,7 @@
 #include <ctime>
 #include <random>
 //#include <filesystem>
-#include <omp.h> 
+//#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -60,7 +60,6 @@ namespace CASTLE {
 
     extern int lattice_atoms; //number of lattice atoms
     extern int conduction_electrons; //number of conduction electrons
-  //  extern double total_electrons; //lattice + conduction electrons
     extern double temperature;
 
     extern int velocity_verlet_step(double time_step);
@@ -81,13 +80,16 @@ namespace CASTLE {
     extern long double E_f_A;
     extern long double mu_f; //meters
     extern long double n_f; //meters
-    extern long double e_p_cutoff;
-    extern long double capture_chance;
+    extern long double atomic_mass;
+
+
     extern long double e_a_neighbor_cutoff;
     extern long double e_a_coulomb_cutoff;
     extern long double e_e_neighbor_cutoff;
     extern long double e_e_coulomb_cutoff;
-    
+    extern long double a_a_neighbor_cutoff;
+    extern long double a_a_coulomb_cutoff;
+
    // extern int num_cells;
 
     //integration variables
@@ -95,93 +97,91 @@ namespace CASTLE {
     extern double CASTLE_real_time;
    
     extern std::vector<double> atom_position;
-    extern std::vector<std::vector<int> > atomic_nearest_particle_list;
+    extern std::vector<double> new_atom_position;
+    extern std::vector<long double> atom_velocity; //Angstroms
+    extern std::vector<long double> new_atom_velocity;
+    extern std::vector<long double> atom_force;   //Angstroms
+    extern std::vector<long double> new_atom_force;
+    extern std::vector<std::vector<int> > atomic_nearest_electron_list;
+    extern std::vector<std::vector<int> > atomic_nearest_atom_list;
+
     extern std::vector<long double> electron_position; //Angstroms
     extern std::vector<long double> new_electron_position;
     extern std::vector<long double> electron_velocity; //Angstroms
     extern std::vector<long double> new_electron_velocity;
     extern std::vector<long double> electron_force;   //Angstroms
-    extern std::vector<long double> new_force_array;
-    extern std::vector<long double> atomic_phonon_energy;
-    extern std::vector<long double> new_atomic_phonon_energy;
+    extern std::vector<long double> new_electron_force;
     extern std::vector<long double> electron_potential; //A-1
     extern std::vector<long double> new_electron_potential;
-    extern std::vector<double> mean_data_array;
-    extern std::vector<long double> captured_electron_list;
-    extern std::vector<std::vector<int> > nearest_neighbor_list;
-    extern std::vector<std::vector<int> > nearest_atom_list;
-    extern std::vector<bool> electron_capture;
-   // extern std::vector<double> lattice_electrons;
-   // extern std::vector<bool>   conduction_electron_spin;
-   // extern std::vector<bool>   lattice_electron_spin;
-   // extern std::vector<int> electrons_per_cell; //size of number of cells
-   // extern std::vector<int>  electron_cell;       // cell address for each electron
-    extern std::vector<std::vector<int> > scattering_list;
-    extern std::vector<long double> mean_radius;
+    extern std::vector<std::vector<int> > electron_nearest_electron_list;
+    extern std::vector<std::vector<int> > electron_nearest_atom_list;
 
     //outputs
-    extern long double TKE;
-    extern long double TPE;
-    extern long double TLE;
+    extern long double TKE; //Angstroms
+    extern long double TPE; //Angstroms
+    extern long double TLE; //Angstroms
+    extern long double TEE; //Angstroms
+    extern long double TEPE; //Angstroms
+    extern long double TEKE; //Angstroms
+    extern long double TLPE; //Angstroms
+    extern long double TLKE; //Angstroms
+    
     extern long double MPE; //meters
     extern long double MKE; //meters
-    extern long double MLE;
+    extern long double MLE; //meters
+    extern long double MEE; //meters
+
     extern int x_flux;
     extern int y_flux;
     extern int z_flux;
     extern std::string time_stamp;
-    //extern std::vector <long double> velocity_length_hist;
-    extern std::vector<long double> charge_distrib;
-  //  extern int total_spin_up;
-  //  extern int total_spin_down;
     extern std::ofstream lattice_output;
-  //  extern std::ofstream electron_position_output_up;
+  
     extern std::ofstream electron_position_output_down;
     extern std::ofstream electron_velocity_output;
     extern std::ofstream mean_data;
-  //  extern std::ofstream electron_spin_output;
-
     
     //control functions
     extern void initialize();
+    extern void initialize_positions();
     extern void initialize_lattice();
     extern void initialize_electrons();
+    extern void initialize_atoms();
     extern void initialize_forces();
-    extern void initialize_velocity();
+    extern void initialize_electron_interactions();
+    extern void initialize_atomic_interactions();
+    extern void initialize_electron_atom_interactions();
+    extern void initialize_velocities();
     extern void create();
     extern void output_data();
 
     extern void setup_output();
     extern void update_position();
-    extern long double update_dynamics();
-    extern long double electron_e_a_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-    extern long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-    extern long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-    extern long double neighbor_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-    extern long double update_velocity(int array_index, const long double& x, const long double& y, const long double& z);
+    extern void update_dynamics();
+
+    extern void e_a_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                    long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
+    extern void neighbor_e_a_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                             long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
+    
+    extern void e_e_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                    long double& EPE);
+    extern void neighbor_e_e_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                             long double& EPE);
+    
+    extern void a_a_coulomb(const int e, const int array_index, \
+                   long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
+    extern void neighbor_a_a_coulomb(const int e, const int array_index, \
+                            long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
+
+    extern void update_velocity(int array_index, long double& EKE, long double& LKE);
+ 
+ /*
     extern long double e_a_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z);
     extern long double e_p_scattering(int e, int a, const long double& x_distance, const long double& y_distance, const long double& z_distance);
     extern long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
     extern long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list);
-/*  one day your time will come
-    struct atom {
-        double x_position;
-        double y_position;
-        double z_positon;
-
-        double x_velocity;
-        double y_velocity;
-        double z_velocity;
-
-        double x_acc;
-        double y_acc;
-        double z_acc;
-
-        std::vector<double> nearest_atom;
-        std::vector<double> nearest_electron;
-
-    }; */ 
-
+*/
 }
 
 

@@ -143,115 +143,133 @@ namespace sim{
 
 namespace CASTLE {
 
-        bool CASTLE_program;
-      bool CASTLE_output_data;
-      bool equilibrium_step;
-   int velocity_verlet_step(double time_step);
+     // input and material parameters
+   bool CASTLE_program;
+   bool CASTLE_output_data; //output position and velocity data
+   bool equilibrium_step;
 
-   int CASTLE_output_rate;
-
-
-     int lattice_atoms;
-    int conduction_electrons;
- //   int core_electrons;
-
-    double lattice_height;
-    double lattice_width;
-    double lattice_depth;
-
-    double atomic_size;
-    double screening_depth;
-   long double v_f;
-   long double mu_f;
-    long double E_f;
-   long double E_f_A;
-   long double n_f;
-
-   
-
-    long double TKE;
-    long double TPE;
-    long double TLE;
-    long double MKE;
-    long double MPE;
-    long double MLE;
-  //  int total_spin_up;
-    //int total_spin_down;
-  // std::vector<std::vector<bool> > symmetry_list;
-
+   int lattice_atoms; //number of lattice atoms
+   int conduction_electrons; //number of conduction electrons
    double temperature;
 
-     double total_time_steps;
-     double CASTLE_real_time;
-     long double dt;
-     int current_time_step;
-     double loop_time;
-     int x_flux;
-     int y_flux;
-     int z_flux;
-     long double chosen_electron;
-     std::string time_stamp;
-     long double capture_chance;
-       long double e_a_neighbor_cutoff;
-     long double e_a_coulomb_cutoff;
-     long double e_e_neighbor_cutoff;
-     long double e_e_coulomb_cutoff;
+   int velocity_verlet_step(double time_step);
+   double lattice_height; //Angstroms
+   double lattice_width;  //Angsrtoms
+   double lattice_depth;  //Angstroms
+   double atomic_size;    //Angstroms
+   double screening_depth;//Angstroms
 
-   std::vector<long double> electron_position; //superarray of past locations for each step
-   std::vector<long double> new_electron_position;
-   std::vector<long double> electron_velocity; //superarray for past velocities for each step
-   std::vector<long double> new_electron_velocity;
-   std::vector<long double> electron_force;  
-   std::vector<long double> new_force_array;
-   std::vector<long double> atomic_phonon_energy;
-   std::vector<long double> new_atomic_phonon_energy;
-   std::vector<long double> electron_potential;
-   std::vector<long double> new_electron_potential;
-   std::vector<long double> charge_distrib;
+    //simulation variables
+   double total_time_steps;
+   double loop_time;
+   int    CASTLE_output_rate; //output velocity and position data at this multiple
+   long double chosen_electron;
+   long double dt;
+   long double v_f; //meters
+   long double E_f; //meters
+   long double E_f_A;
+   long double mu_f; //meters
+   long double n_f; //meters
+   long double atomic_mass;
+
+
+   long double e_a_neighbor_cutoff;
+   long double e_a_coulomb_cutoff;
+   long double e_e_neighbor_cutoff;
+   long double e_e_coulomb_cutoff;
+   long double a_a_neighbor_cutoff;
+   long double a_a_coulomb_cutoff;
+
+    //integration variables
+   int current_time_step;
+   double CASTLE_real_time;
+   
    std::vector<double> atom_position;
-   std::vector<std::vector<int> > atomic_nearest_particle_list;
-   std::vector<double> mean_data_array;
-   std::vector<long double> captured_electron_list;
-   std::vector<bool> electron_capture;
-  // std::vector<double> lattice_electrons;
-   std::vector<std::vector<int> > nearest_neighbor_list;
-   std::vector<std::vector<int> > nearest_atom_list;
-   //std::vector<bool> conduction_electron_spin;
-   //std::vector<bool> lattice_electron_spin;
-  // std::vector <long double> velocity_length_hist;
-  std::vector<long double> mean_radius;
-  std::vector<std::vector<int> > scattering_list;
+   std::vector<double> new_atom_position;
+   std::vector<long double> atom_velocity; //Angstroms
+   std::vector<long double> new_atom_velocity;
+   std::vector<long double> atom_force;   //Angstroms
+   std::vector<long double> new_atom_force;
+   std::vector<std::vector<int> > atomic_nearest_electron_list;
+   std::vector<std::vector<int> > atomic_nearest_atom_list;
 
-   //std::vector<struct electron> electron_list; //This is probably not the best way to do this
+   std::vector<long double> electron_position; //Angstroms
+   std::vector<long double> new_electron_position;
+   std::vector<long double> electron_velocity; //Angstroms
+   std::vector<long double> new_electron_velocity;
+   std::vector<long double> electron_force;   //Angstroms
+   std::vector<long double> new_electron_force;
+   std::vector<long double> electron_potential; //A-1
+   std::vector<long double> new_electron_potential;
+   std::vector<std::vector<int> > electron_nearest_electron_list;
+   std::vector<std::vector<int> > electron_nearest_atom_list;
+
+    //outputs
+   long double TKE; //Angstroms
+   long double TPE; //Angstroms
+   long double TLE; //Angstroms
+   long double TEE; //Angstroms
+   long double TEPE; //Angstroms
+   long double TEKE; //Angstroms
+   long double TLPE; //Angstroms
+   long double TLKE; //Angstroms
     
+   long double MPE; //meters
+   long double MKE; //meters
+   long double MLE; //meters
+   long double MEE; //meters
+
+   int x_flux;
+   int y_flux;
+   int z_flux;
+   std::string time_stamp;
+   std::ofstream lattice_output;
+  
+   std::ofstream electron_position_output_down;
+   std::ofstream electron_velocity_output;
+   std::ofstream mean_data;
+    
+    //control functions
    void initialize();
+   void initialize_positions();
    void initialize_lattice();
    void initialize_electrons();
+   void initialize_atoms();
    void initialize_forces();
-   void initialize_velocity();
+   void initialize_electron_interactions();
+   void initialize_atomic_interactions();
+   void initialize_electron_atom_interactions();
+   void initialize_velocities();
    void create();
    void output_data();
 
    void setup_output();
    void update_position();
-   long double update_dynamics();
-   long double electron_e_a_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-   long double neighbor_e_a_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-   long double electron_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-   long double neighbor_e_e_coulomb(int e, int array_index, long double& x_force, long double& y_force, long double& z_force, const long double& x, const long double& y, const long double& z);
-   long double update_velocity(int array_index, const long double& x, const long double& y, const long double& z);
-   long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
+   void update_dynamics();
+
+   void e_a_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                    long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
+   void neighbor_e_a_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                             long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
+    
+   void e_e_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                    long double& EPE);
+   void neighbor_e_e_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                             long double& EPE);
+    
+   void a_a_coulomb(const int e, const int array_index, \
+                   long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
+   void neighbor_a_a_coulomb(const int e, const int array_index, \
+                            long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
+
+   void update_velocity(int array_index, long double& EKE, long double& LKE);
+
+/*
    long double e_a_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z);
    long double e_p_scattering(int e, int a, const long double& x_distance, const long double& y_distance, const long double& z_distance);
+   long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
    long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list);
-    std::ofstream lattice_output;
-    //std::ofstream electron_position_output_up;
-    std::ofstream electron_position_output_down;
-    std::ofstream electron_velocity_output;
-    std::ofstream mean_data;
-   // std::ofstream electron_spin_output;
 
-
-
+*/
 
 }
