@@ -205,19 +205,15 @@ namespace CASTLE {
    std::vector<std::vector<int> > electron_nearest_atom_list;
 
     //outputs
-   long double TKE; //Angstroms
-   long double TPE; //Angstroms
-   long double TLE; //Angstroms
-   long double TEE; //Angstroms
    long double TEPE; //Angstroms
    long double TEKE; //Angstroms
    long double TLPE; //Angstroms
    long double TLKE; //Angstroms
     
-   long double MPE; //meters
-   long double MKE; //meters
-   long double MLE; //meters
-   long double MEE; //meters
+   long double MEPE; //meters
+   long double MEKE; //meters
+   long double MLKE; //meters
+   long double MLPE; //meters
 
    int x_flux;
    int y_flux;
@@ -257,9 +253,9 @@ namespace CASTLE {
    void neighbor_e_e_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
                              long double& EPE);
     
-   void a_a_coulomb(const int e, const int array_index, \
+   void a_a_coulomb(const int a, const int array_index, \
                    long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
-   void neighbor_a_a_coulomb(const int e, const int array_index, \
+   void neighbor_a_a_coulomb(const int a, const int array_index, \
                             long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
 
    void update_velocity(int array_index, long double& EKE, long double& LKE);

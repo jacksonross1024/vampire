@@ -117,19 +117,16 @@ namespace CASTLE {
     extern std::vector<std::vector<int> > electron_nearest_atom_list;
 
     //outputs
-    extern long double TKE; //Angstroms
-    extern long double TPE; //Angstroms
-    extern long double TLE; //Angstroms
-    extern long double TEE; //Angstroms
+   
     extern long double TEPE; //Angstroms
     extern long double TEKE; //Angstroms
     extern long double TLPE; //Angstroms
     extern long double TLKE; //Angstroms
     
-    extern long double MPE; //meters
-    extern long double MKE; //meters
-    extern long double MLE; //meters
-    extern long double MEE; //meters
+    extern long double MEPE; //meters
+    extern long double MEKE; //meters
+    extern long double MLKE; //meters
+    extern long double MLPE; //meters
 
     extern int x_flux;
     extern int y_flux;
@@ -159,20 +156,20 @@ namespace CASTLE {
     extern void update_position();
     extern void update_dynamics();
 
-    extern void e_a_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
-                    long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
-    extern void neighbor_e_a_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
-                             long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
+    extern void e_a_coulomb(const int a, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
+    extern void neighbor_e_a_coulomb(const int a, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
+                long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
     
     extern void e_e_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
-                    long double& EPE);
+                long double& EPE);
     extern void neighbor_e_e_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
-                             long double& EPE);
+                long double& EPE);
     
-    extern void a_a_coulomb(const int e, const int array_index, \
-                   long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
-    extern void neighbor_a_a_coulomb(const int e, const int array_index, \
-                            long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
+    extern void a_a_coulomb(const int a, const int array_index, \
+                long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
+    extern void neighbor_a_a_coulomb(const int a, const int array_index, \
+                long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
 
     extern void update_velocity(int array_index, long double& EKE, long double& LKE);
  
