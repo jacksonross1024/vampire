@@ -171,7 +171,8 @@ namespace CASTLE {
    long double mu_f; //meters
    long double n_f; //meters
    long double atomic_mass;
-
+   long double mu_r;
+   long double combined_mass; 
 
    long double e_a_neighbor_cutoff;
    long double e_a_coulomb_cutoff;
@@ -190,6 +191,7 @@ namespace CASTLE {
    std::vector<long double> new_atom_velocity;
    std::vector<long double> atom_force;   //Angstroms
    std::vector<long double> new_atom_force;
+   std::vector<long double> atom_potential;
    std::vector<std::vector<int> > atomic_nearest_electron_list;
    std::vector<std::vector<int> > atomic_nearest_atom_list;
 

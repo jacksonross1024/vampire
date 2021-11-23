@@ -89,11 +89,11 @@ void update_position(){
 
       // std::cout << "why are you dying...." << e << "\n";
     
-        x_pos = electron_position[array_index]   + (electron_velocity[array_index]   * dt) + (electron_force[array_index]   * dt * dt * constants::K_A / (2*constants::m_e_r)); // x superarray component
-        y_pos = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt) + (electron_force[array_index_y] * dt * dt * constants::K_A / (2*constants::m_e_r)); // y superarray component
-        z_pos = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt) + (electron_force[array_index_z] * dt * dt * constants::K_A / (2*constants::m_e_r)); // z superarray component
+        x_pos = electron_position[array_index]   + (electron_velocity[array_index]   * dt) + (electron_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
+        y_pos = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt) + (electron_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
+        z_pos = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt) + (electron_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
         
-       // if(e==0) std::cout << x_pos << ", " << electron_position[array_index] << ", " << (electron_velocity[array_index]   * dt) << ", " << (electron_force[array_index]   * dt * dt * constants::K_A / (2*constants::m_e_r)) << std::endl; // x superarray component
+      //  if(e==0) std::cout << x_pos << ", " << electron_position[array_index] << ", " << (electron_velocity[array_index]   * dt) << ", " << (electron_force[array_index]   * dt * dt * constants::K_A / 2) << std::endl; // x superarray component
      //  if(e==100) std::cout << e << ", " << electron_velocity[array_index] << " , " << electron_velocity[array_index + 1] << " , " << electron_velocity[array_index + 2] << std::endl;
         if (x_pos < 0) {
             x_pos += 40;
@@ -126,11 +126,11 @@ void update_position(){
         new_electron_position[array_index_y] = y_pos;
         new_electron_position[array_index_z] = z_pos;
 
-        new_atom_position[array_index]   = atom_position[array_index]   + (atom_velocity[array_index]   * dt) + (atom_force[array_index]   * dt * dt * constants::K_A / (2*atomic_mass)); // x superarray component
-        new_atom_position[array_index_y] = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / (2*atomic_mass)); // y superarray component
-        new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / (2*atomic_mass)); // z superarray component
+        new_atom_position[array_index]   = atom_position[array_index]   + (atom_velocity[array_index]   * dt) + (atom_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
+        new_atom_position[array_index_y] = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
+        new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
         
-      //  if(e==0) std::cout << x_pos << ", " << atom_position[array_index] << ", " << (atom_velocity[array_index]   * dt) << ", " << (atom_force[array_index]   * dt * dt * constants::K_A / (2*atomic_mass)) << std::endl; // x superarray component
+        if(e==0) std::cout << x_pos << ", " << atom_position[array_index] << ", " << (atom_velocity[array_index]   * dt) << ", " << (atom_force[array_index]   * dt * dt * constants::K_A / (2*atomic_mass)) << std::endl; // x superarray component
         
         
         
@@ -200,15 +200,15 @@ void update_velocity(int array_index, long double& EKE, long double& LKE) {
         int array_index_z = array_index + 2;
 
      //   if (e == 0) std::cout << new_electron_velocity[array_index] << " " << electron_velocity[array_index] << "    " <<  electron_force[array_index]  << "    " << new_force_array[array_index]  << "    " <<  dt * 0.5  * constants::K / constants::m_e << "\n"; 
-        long double x_vel = new_electron_velocity[array_index]   = electron_velocity[array_index]   + ((electron_force[array_index]   + new_electron_force[array_index])   * dt  * constants::K_A / (2*constants::m_e_r)); 
-        long double y_vel = new_electron_velocity[array_index_y] = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_electron_force[array_index_y]) * dt  * constants::K_A / (2*constants::m_e_r));
-        long double z_vel = new_electron_velocity[array_index_z] = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_electron_force[array_index_z]) * dt  * constants::K_A / (2*constants::m_e_r));
+        long double x_vel = new_electron_velocity[array_index]   = electron_velocity[array_index]   + ((electron_force[array_index]   + new_electron_force[array_index])   * dt  * constants::K_A / 2); 
+        long double y_vel = new_electron_velocity[array_index_y] = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_electron_force[array_index_y]) * dt  * constants::K_A / 2);
+        long double z_vel = new_electron_velocity[array_index_z] = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_electron_force[array_index_z]) * dt  * constants::K_A / 2);
         long double vel = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
         EKE += vel;
 
-        x_vel = new_atom_velocity[array_index]   = atom_velocity[array_index]   + ((atom_force[array_index]   + new_atom_force[array_index])   * dt  * constants::K_A / (2*atomic_mass)); 
-        y_vel = new_atom_velocity[array_index_y] = atom_velocity[array_index_y] + ((atom_force[array_index_y] + new_atom_force[array_index_y]) * dt  * constants::K_A / (2*atomic_mass));
-        z_vel = new_atom_velocity[array_index_z] = atom_velocity[array_index_z] + ((atom_force[array_index_z] + new_atom_force[array_index_z]) * dt  * constants::K_A / (2*atomic_mass));
+        x_vel = new_atom_velocity[array_index]   = atom_velocity[array_index]   + ((atom_force[array_index]   + new_atom_force[array_index])   * dt  * constants::K_A / 2); 
+        y_vel = new_atom_velocity[array_index_y] = atom_velocity[array_index_y] + ((atom_force[array_index_y] + new_atom_force[array_index_y]) * dt  * constants::K_A / 2);
+        z_vel = new_atom_velocity[array_index_z] = atom_velocity[array_index_z] + ((atom_force[array_index_z] + new_atom_force[array_index_z]) * dt  * constants::K_A / 2);
         vel = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
         LKE += vel;
 }
@@ -266,13 +266,13 @@ void e_a_coulomb(const int a, const int array_index, long double& e_x_force, lon
         y_force = force * sinl(theta)*sinl(phi);
         z_force = force * cosl(phi);
 
-        a_x_force += x_force;
-        a_y_force += y_force;
-        a_z_force += z_force;
+        a_x_force += x_force * combined_mass;
+        a_y_force += y_force * combined_mass;
+        a_z_force += z_force * combined_mass;
 
-        e_x_force -= x_force;
-        e_y_force -= y_force;
-        e_z_force -= z_force;
+        e_x_force -= x_force * mu_r;
+        e_y_force -= y_force * mu_r;
+        e_z_force -= z_force * mu_r;
        /* a_x_force += force * cosl(theta)*sinl(phi);
         a_y_force += force * sinl(theta)*sinl(phi);
         a_z_force += force * cosl(phi);
@@ -339,13 +339,13 @@ void neighbor_e_a_coulomb(const int a, const int array_index, long double& e_x_f
         y_force = force * sinl(theta)*sinl(phi);
         z_force = force * cosl(phi);
 
-        a_x_force += x_force;
-        a_y_force += y_force;
-        a_z_force += z_force;
+        a_x_force += x_force * combined_mass;
+        a_y_force += y_force * combined_mass;
+        a_z_force += z_force * combined_mass;
 
-        e_x_force -= x_force;
-        e_y_force -= y_force;
-        e_z_force -= z_force;
+        e_x_force -= x_force * mu_r;
+        e_y_force -= y_force * mu_r;
+        e_z_force -= z_force * mu_r;
        /* a_x_force += force * cosl(theta)*sinl(phi);
         a_y_force += force * sinl(theta)*sinl(phi);
         a_z_force += force * cosl(phi);
@@ -404,9 +404,9 @@ void e_e_coulomb(const int e, const int array_index, long double& e_x_force, lon
             theta = atanl(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
-            e_x_force += force * cosl(theta)*sinl(phi);
-            e_y_force += force * sinl(theta)*sinl(phi);
-            e_z_force += force * cosl(phi);
+            e_x_force += force * cosl(theta)*sinl(phi) / constants::m_e_r;
+            e_y_force += force * sinl(theta)*sinl(phi)/ constants::m_e_r;
+            e_z_force += force * cosl(phi) / constants::m_e_r;
 
         }
     electron_nearest_electron_list[e][0] = neighbor_count;
@@ -452,9 +452,9 @@ void neighbor_e_e_coulomb(const int e, const int array_index, long double& e_x_f
         theta = atanl(y_distance / x_distance);
         if (x_distance < 0) theta += M_PI;
 
-        e_x_force += force * cosl(theta)*sinl(phi);
-        e_y_force += force * sinl(theta)*sinl(phi);
-        e_z_force += force * cosl(phi);
+        e_x_force += force * cosl(theta)*sinl(phi) / constants::m_e_r;
+            e_y_force += force * sinl(theta)*sinl(phi)/ constants::m_e_r;
+            e_z_force += force * cosl(phi) / constants::m_e_r;
 
     }
     EPE += PE/2;
@@ -505,9 +505,9 @@ void a_a_coulomb(const int a, const int array_index, \
             theta = atanl(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
-            a_x_force += force * cosl(theta)*sinl(phi);
-            a_y_force += force * sinl(theta)*sinl(phi);
-            a_z_force += force * cosl(phi);
+            a_x_force += force * cosl(theta)*sinl(phi) / atomic_mass;
+            a_y_force += force * sinl(theta)*sinl(phi) / atomic_mass;
+            a_z_force += force * cosl(phi) / atomic_mass;
 
         }
     atomic_nearest_atom_list[a][0] = neighbor_count;
@@ -554,9 +554,9 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
             theta = atanl(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
-            a_x_force += force * cosl(theta)*sinl(phi);
-            a_y_force += force * sinl(theta)*sinl(phi);
-            a_z_force += force * cosl(phi);
+            a_x_force += force * cosl(theta)*sinl(phi) / atomic_mass;
+            a_y_force += force * sinl(theta)*sinl(phi) / atomic_mass;
+            a_z_force += force * cosl(phi) / atomic_mass;
 
         }
     LPE += PE/2;

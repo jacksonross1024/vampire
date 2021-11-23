@@ -38,7 +38,7 @@
 #include <ctime>
 #include <random>
 //#include <filesystem>
-#include <omp.h> 
+//#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -81,6 +81,8 @@ namespace CASTLE {
     extern long double mu_f; //meters
     extern long double n_f; //meters
     extern long double atomic_mass;
+    extern long double mu_r; //inverse reduced mass in reduced units
+    extern long double combined_mass; //inverse with reduced units
 
 
     extern long double e_a_neighbor_cutoff;
@@ -102,6 +104,7 @@ namespace CASTLE {
     extern std::vector<long double> new_atom_velocity;
     extern std::vector<long double> atom_force;   //Angstroms
     extern std::vector<long double> new_atom_force;
+    extern std::vector<long double> atom_potential;
     extern std::vector<std::vector<int> > atomic_nearest_electron_list;
     extern std::vector<std::vector<int> > atomic_nearest_atom_list;
 
