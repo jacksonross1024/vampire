@@ -46,19 +46,23 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-      //  omp_set_dynamic(0);
-      // omp_set_num_threads(6);
+        omp_set_dynamic(0);
+        omp_set_num_threads(6);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
         {
             #pragma omp critical
-         //  std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+           std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         }
         std::cout << "Storming CASTLE..." << std::endl;
    
- /*   long double x,y,z,r,r_min, a_x,a_y,a_z, d_x,d_y,d_z, p_x,p_y,p_z, d_p_x,d_p_y,d_p_z, p, force, f_x,f_y,f_z, d_f_x,d_f_y,d_f_z, theta, phi, potential;
+    long double x,y,z,r,r_min, d_x,d_y,d_z, p_x,p_y,p_z, d_p_x,d_p_y,d_p_z, p, force, f_x,f_y,f_z, d_f_x,d_f_y,d_f_z, theta, phi, potential;
+    long double a_x,a_y, a_d_x,a_d_y,a_d_z, a_p_x,a_p_y, a_f_x,a_f_y, a_d_f_x,a_d_f_y;
     std::ofstream electron_output;
     std::ofstream ballistic_data;
+    std::ofstream atom_output;
+
+    dt = 1e-4;
 
     a_x = 0;
     a_y = 0;
@@ -70,8 +74,9 @@ void create() {
     p_x = -1e-5*v_f; 
     p_y = 0;
 
-    d_z = 0;
-  
+    a_p_x = 0;
+    a_p_y = 0;
+    a_d_z = 0;
 ballistic_data.open("CASTLE/Ballistic_Data");
 for(int a = 0; a < 1500; a++) {
 
@@ -87,17 +92,29 @@ for(int a = 0; a < 1500; a++) {
     std::string height  = std::to_string(a);
     electron_output.open("Castle/Ballistic_Electron/" + height + ".xyz");
     electron_output << "Ballistic Electron" << "\n" << "\n";
+    atom_output.open("CASTLE/Ballistic_Atom/" + height + ".xyz");
+    atom_output << "Ballistic Atom" << "\n" << "\n";
+
     p_x = 1e-5*v_f; 
     p_y = 0;
 
     r_min = r = sqrtl((x*x)+(y*y));
-    force = 10*((3.3*3.3*exp(-3.3*r)) - exp(-1*r));
+    force = 10*((3.3*3.3*exp(-3.3*r)) - 1 / (r*r));
     
     theta = atanl(y/x);
     if (x < 0) theta += M_PI;
+
     ballistic_data << theta << ", " << theta / M_PI << ", ";
     f_x = force * cosl(theta);
     f_y = force * sinl(theta);
+
+    a_f_x = -1*f_x;
+    a_f_y = -1*f_y;
+
+    a_p_x = 0;
+    a_p_y = 0;
+    a_x = 0;
+    a_y = 0;
 
    // std::cout << force<< ", " << f_x << ", " << f_y << std::endl; 
    // std::cout << "time_step: " << t << ", x_distance: " << x << ", y_distance: " << y << "\n";
@@ -111,13 +128,16 @@ for(int a = 0; a < 1500; a++) {
         d_y = y + (p_y*dt) + (f_y*dt*dt*constants::K_A / (2*constants::m_e_r));
       //  d_z = z + (p_z*dt) + (f_z*dt*dt*constants::K_A / (2*constants::m_e_r));
 
+        a_d_x = a_x + (a_p_x*dt) + (a_f_x*dt*dt*constants::K_A / (2*atomic_mass));
+        a_d_y = a_y + (a_p_y*dt) + (a_f_y*dt*dt*constants::K_A / (2*atomic_mass));
+
         if (t % 10 == 0) electron_output << t << ", " << d_x << ", " << d_y << ", " << d_z << "\n";
-        
+        if (t % 10 == 0) atom_output << t << ", " << a_d_x << ", " << a_d_y << ", " << a_d_z << "\n";
 
         //update forces
-        r = sqrtl((d_x*d_x)+(d_y*d_y));
+        r = sqrtl(((d_x - a_d_x)*(d_x - a_d_x)) + ((d_y - a_d_y)*(d_y - a_d_y)));
         if(r < r_min) r_min = r;
-        force = 10*((3.3*3.3*exp(-3.3*r)) - exp(-1*r));
+        force = -1.06*(1 - (27*exp(-5*r)*(5*r + 1))) / (r * r);
         //potential = 12*((3.3*exp(-1*r)) - exp(-1*r));
 
      //   phi   = acosl(d_z / r);
@@ -127,28 +147,39 @@ for(int a = 0; a < 1500; a++) {
 
         d_f_x = force * cosl(theta);
         d_f_y = force * sinl(theta);
+
+        a_d_f_x = -1*d_f_x;
+        a_d_f_y = -1*d_f_y;
       //  d_f_z = force * cosl(phi);
 
         //update velocity
         p_x += ((d_f_x + f_x)*dt*constants::K_A / (2*constants::m_e_r));
         p_y += ((d_f_y + f_y)*dt*constants::K_A / (2*constants::m_e_r));
+
+        a_p_x += ((a_d_f_x + a_f_x)*dt*constants::K_A / (2*atomic_mass));
+        a_p_y += ((a_d_f_y + a_f_y)*dt*constants::K_A / (2*atomic_mass));
        // d_p_z = p_z + ((d_f_z + f_z)*dt*constants::K_A / (2*constants::m_e_r));
 
         x = d_x;
         y = d_y;
-       
+        a_x = a_d_x;
+        a_y = a_d_y;
+
         f_x = d_f_x;
         f_y = d_f_y;
-       
+        a_f_x = a_d_f_x;
+        a_f_y = a_d_f_y;
+
         t++;
 
         phi = atanl(p_y/p_x);
         if(p_x < 0) phi += M_PI;
     }
     electron_output.close();
+    atom_output.close();
    // std::cout << "time_step: " << t << ", x_distance: " << d_x << ", y_distance: " << d_y << "\n";
     ballistic_data << theta / M_PI << ", " << r_min << ", " << phi / M_PI << "\n";
-} ballistic_data.close(); */
+} ballistic_data.close(); 
     //========
     // Integrate total time steps
     //========
@@ -231,7 +262,7 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 1; //sim::CASTLE_output_rate;
+    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
     dt = 1e-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
@@ -395,10 +426,10 @@ void initialize_electrons() {
 
     e_a_neighbor_cutoff = 225;
     e_e_neighbor_cutoff = 225;
-    e_a_coulomb_cutoff = 100;
-    e_e_coulomb_cutoff = 100;
+    e_a_coulomb_cutoff = 144;
+    e_e_coulomb_cutoff = 144;
     a_a_neighbor_cutoff = 225;
-    a_a_coulomb_cutoff = 100;
+    a_a_coulomb_cutoff = 144;
    
     long double phi,theta, x_pos,y_pos,z_pos; //velocity_length = 0;
     int array_index = 0;
@@ -657,7 +688,7 @@ void initialize_electron_interactions() {
             if (length > e_e_coulomb_cutoff) continue;
  
             length = sqrt(length);
- 
+            if(length < 0.11) length = 0.11;
             force = 1 / (length*length);        
             PE = force * length;
     
@@ -674,6 +705,7 @@ void initialize_electron_interactions() {
             electron_force[array_index + 2] += force * cos(phi);
        
         } 
+        std::cout << electron_potential[e] << std::endl;
                // if(err::check) if(e ==0) std::cout << "Calculating conduction-lattice repulsion" << std::endl;
     }
 }
@@ -721,6 +753,8 @@ void initialize_atomic_interactions() {
             if (length > a_a_coulomb_cutoff) continue;
            
             length = sqrt(length);
+
+            if(length < 0.11) length = 0.11;
 
             force = 2.1*((3.3*27*exp(-3.3*length)) - (1 / (2.1*length*length)));
             PE = 2.1*((27*exp(-3.3*length)) - (1 /(2.1*length)));
@@ -784,10 +818,12 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
 
             length = sqrtl(length);
             
-            force = -24*((3.3*3.3* expl(-3.3 * length)) - (expl(-1 * length))) + 1 / (length*length);
+            if(length < 0.11) length = 0.11;
+
+            force = -1.06*(1 - (27*exp(-5*length)*(5*length + 1))) / (length * length);
                         //q*k*k * exp(-15(A**-1) * length (A));
     
-            PE = 24*((3.3*expl(-3.3*length)) - (expl(-1*length))) - 1 / length;
+            PE = 1.06*(27*(expl(-5*length) / length) - (1 / length));
        
             TEPE += PE/2;
             TLPE += PE/2;
@@ -808,6 +844,7 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
             atom_force[array_index + 2] += force * cos(phi);
 
         }
+        
         atomic_nearest_electron_list[a][0] = nearest_electron_count;
     }
 }
@@ -832,6 +869,7 @@ void initialize_velocities() {
     TEKE = 0;
     TLKE = 0;
     for(int e = 0; e < conduction_electrons; e++) {
+        std::cout << electron_potential[e] << std::endl;
         array_index = 3*e;
         theta = M_PI * Theta_Vel_distrib(gen);
         phi = M_PI * Phi_Vel_distrib(gen);
@@ -1112,7 +1150,7 @@ void output_data() {
     
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " \
-        << MEKE * 1e10 * constants::m_e / 2 << ", " << MLKE * 1e-20 * atomic_mass / 2 << "," \
+        << MEKE * 1e10 * constants::m_e / 2 << ", " << MLKE * 1e-20 * atomic_mass / 2 << ", " \
         << MEPE * 1e10 * constants::K << ", " << MLPE * 1e10 * constants::K << ", " \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
         << chosen_electron  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
@@ -1121,7 +1159,7 @@ void output_data() {
     else {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " \
-        << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " << MLKE * 1e-20 * atomic_mass / (CASTLE_output_rate*2) << "," \
+        << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " << MLKE * 1e-20 * atomic_mass / (CASTLE_output_rate*2) << ", " \
         << MEPE * 1e10 * constants::K / CASTLE_output_rate << ", " << MLPE * 1e10 * constants::K / CASTLE_output_rate << ", " \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
         << chosen_electron  << ", " << x_flux / CASTLE_output_rate << ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate  << ", " \
