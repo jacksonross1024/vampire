@@ -163,59 +163,64 @@ namespace CASTLE {
    double total_time_steps;
    double loop_time;
    int    CASTLE_output_rate; //output velocity and position data at this multiple
-   long double chosen_electron;
-   long double dt;
-   long double v_f; //meters
-   long double E_f; //meters
-   long double E_f_A;
-   long double mu_f; //meters
-   long double n_f; //meters
-   long double atomic_mass;
-   long double mu_r;
-   long double combined_mass; 
+   double chosen_electron;
+   double dt;
+   double v_f; //meters
+   double E_f; //meters
+   double E_f_A;
+   double mu_f; //meters
+   double n_f; //meters
+   double atomic_mass;
+   double mu_r; //inverse reduced mass in reduced units
+   double combined_mass; //inverse with reduced units
 
-   long double e_a_neighbor_cutoff;
-   long double e_a_coulomb_cutoff;
-   long double e_e_neighbor_cutoff;
-   long double e_e_coulomb_cutoff;
-   long double a_a_neighbor_cutoff;
-   long double a_a_coulomb_cutoff;
+
+   double e_a_neighbor_cutoff;
+   double e_a_coulomb_cutoff;
+   double e_e_neighbor_cutoff;
+   double e_e_coulomb_cutoff;
+   double a_a_neighbor_cutoff;
+   double a_a_coulomb_cutoff;
+
+   // int num_cells;
 
     //integration variables
    int current_time_step;
    double CASTLE_real_time;
    
+   std::vector<double> atom_anchor_position;
    std::vector<double> atom_position;
    std::vector<double> new_atom_position;
-   std::vector<long double> atom_velocity; //Angstroms
-   std::vector<long double> new_atom_velocity;
-   std::vector<long double> atom_force;   //Angstroms
-   std::vector<long double> new_atom_force;
-   std::vector<long double> atom_potential;
+   std::vector<double> atom_velocity; //Angstroms
+   std::vector<double> new_atom_velocity;
+   std::vector<double> atom_force;   //Angstroms
+   std::vector<double> new_atom_force;
+   std::vector<double> atom_potential;
    std::vector<std::vector<int> > atomic_nearest_electron_list;
    std::vector<std::vector<int> > atomic_nearest_atom_list;
 
-   std::vector<long double> electron_position; //Angstroms
-   std::vector<long double> new_electron_position;
-   std::vector<long double> electron_velocity; //Angstroms
-   std::vector<long double> new_electron_velocity;
-   std::vector<long double> electron_force;   //Angstroms
-   std::vector<long double> new_electron_force;
-   std::vector<long double> electron_potential; //A-1
-   std::vector<long double> new_electron_potential;
+   std::vector<double> electron_position; //Angstroms
+   std::vector<double> new_electron_position;
+   std::vector<double> electron_velocity; //Angstroms
+   std::vector<double> new_electron_velocity;
+   std::vector<double> electron_force;   //Angstroms
+   std::vector<double> new_electron_force;
+   std::vector<double> electron_potential; //A-1
+   std::vector<double> new_electron_potential;
    std::vector<std::vector<int> > electron_nearest_electron_list;
    std::vector<std::vector<int> > electron_nearest_atom_list;
-
+   std::vector<double> mean_radius;
     //outputs
-   long double TEPE; //Angstroms
-   long double TEKE; //Angstroms
-   long double TLPE; //Angstroms
-   long double TLKE; //Angstroms
+   
+   double TEPE; //Angstroms
+   double TEKE; //Angstroms
+   double TLPE; //Angstroms
+   double TLKE; //Angstroms
     
-   long double MEPE; //meters
-   long double MEKE; //meters
-   long double MLKE; //meters
-   long double MLPE; //meters
+   double MEPE; //meters
+   double MEKE; //meters
+   double MLKE; //meters
+   double MLPE; //meters
 
    int x_flux;
    int y_flux;
@@ -245,23 +250,30 @@ namespace CASTLE {
    void update_position();
    void update_dynamics();
 
-   void e_a_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
-                    long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
-   void neighbor_e_a_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
-                             long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& EPE, long double& LPE);
+   void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+                double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
+   
+   void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+                double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
-   void e_e_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
-                    long double& EPE);
-   void neighbor_e_e_coulomb(const int e, const int array_index, long double& e_x_force, long double& e_y_force, long double& e_z_force, \
-                             long double& EPE);
+   void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+                double& EPE);
+   void neighbor_e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+                double& EPE);
     
    void a_a_coulomb(const int a, const int array_index, \
-                   long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
+                double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
    void neighbor_a_a_coulomb(const int a, const int array_index, \
-                            long double& a_x_force, long double& a_y_force, long double& a_z_force, long double& LPE);
+                double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
-   void update_velocity(int array_index, long double& EKE, long double& LKE);
-
+   void update_velocity(int array_index, double& EKE, double& LKE);
+ 
+ /*
+   double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
+   double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance);
+   double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force);
+   double reinitialize_electron_conserve_momentum(std::vector<double>& captured_electron_list);
+*/
 /*
    long double e_a_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z);
    long double e_p_scattering(int e, int a, const long double& x_distance, const long double& y_distance, const long double& z_distance);
