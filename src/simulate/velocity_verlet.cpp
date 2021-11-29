@@ -140,13 +140,13 @@ void update_position(){
 void update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
-    double e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE, EKE, LKE;
+    double e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE, EKE, LKE ,x,y,z;
     double TEPE = 0;
     double TLPE = 0;
     double TEKE = 0;
     double TLKE = 0;
 
-    #pragma omp parallel for private(array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE, EKE, LKE)\
+  //  #pragma omp parallel for private(array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE, EKE, LKE)\
      schedule(static) reduction(+:TEPE,TEKE,TLPE,TLKE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
@@ -162,6 +162,10 @@ void update_dynamics() {
         LPE = 0;
         EKE = 0;
         LKE = 0;
+
+        x = new_atom_position[array_index];
+        x = new_atom_position[array_index + 1];
+        z = new_atom_position[array_index + 2];
 
         if(current_time_step % 2 == 0) {
             e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
@@ -242,10 +246,7 @@ void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double&
     double length;
     double x_force, y_force, z_force, force,  phi,theta, PE = 0;
     int array_index_e, nearest_electron_count = 1;
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<double> scattering_chance (0,1);
+    
     x = new_atom_position[array_index];
     x = new_atom_position[array_index + 1];
     z = new_atom_position[array_index + 2];
@@ -253,10 +254,11 @@ void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double&
     for (int e = 0; e < conduction_electrons; e++) {
 
         array_index_e = 3*e;
-        x_distance = x - new_electron_position[array_index_e];
-        y_distance = y - new_electron_position[array_index_e + 1];
-        z_distance = z - new_electron_position[array_index_e + 2]; 
+        x_distance = new_atom_position[array_index] - new_electron_position[array_index_e];
+        y_distance = new_atom_position[array_index + 1] - new_electron_position[array_index_e + 1];
+        z_distance = new_atom_position[array_index + 2] - new_electron_position[array_index_e + 2]; 
        
+       if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance <<  std::endl;
         if (x_distance < (-30.0))     x_distance = x_distance + 40.0;
         else if (x_distance > 30.0) x_distance = x_distance - 40.0;
         if (y_distance < (-30.0))     y_distance = y_distance + 40.0;
@@ -267,13 +269,14 @@ void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double&
         length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
         
         if(length > e_a_neighbor_cutoff) continue;
+
          if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] << ", " << new_atom_position[array_index+1] << ", " << new_atom_position[array_index+2] << ", " << sqrtl(length) << std::endl;
         if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_electron_position[array_index_e] << ", " << new_electron_position[array_index_e+1] << ", " << new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
-         if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] - new_electron_position[array_index_e] << ", " << new_atom_position[array_index+1] - new_electron_position[array_index_e+1]<< ", " << new_atom_position[array_index+2] - new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
-         if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) << ", " << (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) << ", " << (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
-        if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) + (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) + (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
-        if(a == 100 ) std::cout << array_index_e / 3 << ", " << sqrt(((new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e])) + ((new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]))+ ((new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]))) << ", " << sqrtl(length) << std::endl;
-        if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance << std::endl;
+         if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] - new_electron_position[array_index_e] << ", " << new_atom_position[array_index+1] - new_electron_position[array_index_e+1]<< ", " << new_atom_position[array_index+2] - new_electron_position[array_index_e+2] << std::endl;
+        // if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) << ", " << (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) << ", " << (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
+       // if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) + (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) + (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
+        //if(a == 100 ) std::cout << array_index_e / 3 << ", " << sqrt(((new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e])) + ((new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]))+ ((new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]))) << ", " << sqrtl(length) << std::endl;
+        if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance << "\n" <<  std::endl;
         atomic_nearest_electron_list[a][nearest_electron_count] = e;
         nearest_electron_count++;
 
@@ -374,27 +377,22 @@ void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force
     double x_distance;
     double y_distance;
     double z_distance;
-    double x;
-    double y;
-    double z;
+    
     double length;
     double x_force, y_force, z_force, force,  phi,theta, PE = 0;
     int array_index_e;
 
     int size = atomic_nearest_electron_list[a][0];
-    if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
+ //   if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
 
-    x = new_atom_position[array_index];
-    y = new_atom_position[array_index + 1];
-    z = new_atom_position[array_index + 2];
     int count = 0;
     for (int e = 1; e < size; e++) {
        // if(atomic_nearest_electron_list[a][e] < 0) std::cout << a << ", " << e << std::endl;
         array_index_e = 3*atomic_nearest_electron_list[a][e];
         
-        x_distance = x - new_electron_position[array_index_e];
-        y_distance = y - new_electron_position[array_index_e + 1];
-        z_distance = z - new_electron_position[array_index_e + 2]; 
+        x_distance = new_atom_position[array_index] - new_electron_position[array_index_e];
+        y_distance = new_atom_position[array_index + 1] - new_electron_position[array_index_e + 1];
+        z_distance = new_atom_position[array_index + 2] - new_electron_position[array_index_e + 2]; 
       
          if (x_distance < (-30.0))     x_distance += 40.0;
         else if (x_distance > 30.0) x_distance -= 40.0;
@@ -407,10 +405,10 @@ void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force
           if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] << ", " << new_atom_position[array_index+1] << ", " << new_atom_position[array_index+2] << ", " << sqrtl(length) << std::endl;
         if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_electron_position[array_index_e] << ", " << new_electron_position[array_index_e+1] << ", " << new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
          if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] - new_electron_position[array_index_e] << ", " << new_atom_position[array_index+1] - new_electron_position[array_index_e+1]<< ", " << new_atom_position[array_index+2] - new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
-         if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) << ", " << (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) << ", " << (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
-        if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) + (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) + (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
-        if(a == 100 ) std::cout << array_index_e / 3 << ", " << sqrtl(((new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e])) + ((new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]))+ ((new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]))) << ", " << sqrtl(length) << std::endl;
-        if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance << std::endl;
+         //if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) << ", " << (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) << ", " << (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
+       // if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) + (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) + (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
+       // if(a == 100 ) std::cout << array_index_e / 3 << ", " << sqrtl(((new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e])) + ((new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]))+ ((new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]))) << ", " << sqrtl(length) << std::endl;
+        if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance << "\n" << std::endl;
         if (length > 144) continue;
         count++;
         

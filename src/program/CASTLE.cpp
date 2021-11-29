@@ -156,8 +156,12 @@ for(int a = 0; a < 1500; a++) {
 
         a_d_f_x = -1*d_f_x;
         a_d_f_y = -1*d_f_y;
-      //  d_f_z = force * cosl(phi);
-        if(r < 0.7 && !collision) {
+
+       // a_d_f_x += -2e7*a_d_x;
+        //a_d_f_y += -2e7*a_d_y;
+
+      //  d_f_z = force * cosl(phi); 
+     /*   if(r < 0.7 && !collision) {
             double excitation_energy = ((p_x*p_x)+(p_y*p_y))*constants::m_e_r*0.5 + 1.06*((27*expl(-5*r) / r) - (1 / r)) - E_f_A;
             double scattering_velocity = sqrtl((p_x*p_x)+(p_y*p_y)) - sqrtl(2*E_f_A/constants::m_e_r);
             if(excitation_energy > 0 && scattering_velocity > 0) {
@@ -182,7 +186,7 @@ for(int a = 0; a < 1500; a++) {
                 }
             }
                 
-        }
+        } */
         //update velocity
         p_x += ((d_f_x + f_x)*dt*constants::K_A / (2*constants::m_e_r));
         p_y += ((d_f_y + f_y)*dt*constants::K_A / (2*constants::m_e_r));
