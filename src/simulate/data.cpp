@@ -179,8 +179,7 @@ namespace CASTLE {
    double e_a_coulomb_cutoff;
    double e_e_neighbor_cutoff;
    double e_e_coulomb_cutoff;
-   double a_a_neighbor_cutoff;
-   double a_a_coulomb_cutoff;
+   
 
    // int num_cells;
 
@@ -190,12 +189,13 @@ namespace CASTLE {
    
    std::vector<double> atom_anchor_position;
    std::vector<double> atom_position;
-   std::vector<double> new_atom_position;
-   std::vector<double> atom_velocity; //Angstroms
-   std::vector<double> new_atom_velocity;
-   std::vector<double> atom_force;   //Angstroms
-   std::vector<double> new_atom_force;
+   // std::vector<double> new_atom_position;
+   // std::vector<double> atom_velocity; //Angstroms
+   // std::vector<double> new_atom_velocity;
+   // std::vector<double> atom_force;   //Angstroms
+   // std::vector<double> new_atom_force;
    std::vector<double> atom_potential;
+   std::vector<double> new_atom_potential;
    std::vector<std::vector<int> > atomic_nearest_electron_list;
    std::vector<std::vector<int> > atomic_nearest_atom_list;
 
@@ -214,13 +214,11 @@ namespace CASTLE {
    
    double TEPE; //Angstroms
    double TEKE; //Angstroms
-   double TLPE; //Angstroms
-   double TLKE; //Angstroms
+   double TLE;
     
    double MEPE; //meters
    double MEKE; //meters
-   double MLKE; //meters
-   double MLPE; //meters
+   double MLE;
 
    int x_flux;
    int y_flux;
@@ -250,11 +248,11 @@ namespace CASTLE {
    void update_position();
    void update_dynamics();
 
-   void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
+   void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+              //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
+   void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+               // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
    void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                 double& EPE);
@@ -266,7 +264,7 @@ namespace CASTLE {
    void neighbor_a_a_coulomb(const int a, const int array_index, \
                 double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
-   void update_velocity(int array_index, double& EKE, double& LKE);
+   void update_velocity(int array_index, double& EKE);
  
  /*
    double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);

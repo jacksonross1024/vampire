@@ -46,13 +46,12 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-     //   omp_set_dynamic(0);
-       // omp_set_num_threads(1);
-        std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
+        // omp_set_dynamic(0);
+        // omp_set_num_threads(8);
+        // std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
-    
             #pragma omp critical
-         //  std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+             std::cout << "OpenMP capability detected. Parallelizing integration." << std::endl;// Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -67,7 +66,7 @@ void create() {
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<double> scattering_chance (0,1);
 
-    dt = 1e-4;
+    //dt = 1e-4;
 
     a_x = 0;
     a_y = 0;
@@ -104,15 +103,17 @@ for(int a = 0; a < 1500; a++) {
     p_x = 3e-5*v_f; 
     p_y = 0;
 
-    r_min = r = sqrtl((x*x)+(y*y));
-    force = 10*((3.3*3.3*exp(-3.3*r)) - 1 / (r*r));
+    r_min = r = sqrt((x*x)+(y*y));
+  //  force = 10*((3.3*3.3*exp(-3.3*r)) - 1 / (r*r));
+    force = (1 - (5*exp(-4*r)*(4*r + 1))) / (r * r);
+    
     
     theta = atanl(y/x);
     if (x < 0) theta += M_PI;
 
     ballistic_data << theta << ", " << theta / M_PI << ", ";
-    f_x = force * cosl(theta);
-    f_y = force * sinl(theta);
+    f_x = force * cos(theta);
+    f_y = force * sin(theta);
 
     a_f_x = -1*f_x;
     a_f_y = -1*f_y;
@@ -141,18 +142,18 @@ for(int a = 0; a < 1500; a++) {
         if (t % 10 == 0) atom_output << t << ", " << a_d_x << ", " << a_d_y << ", " << a_d_z << "\n";
 
         //update forces
-        r = sqrtl(((d_x - a_d_x)*(d_x - a_d_x)) + ((d_y - a_d_y)*(d_y - a_d_y)));
+        r = sqrt(((d_x - a_d_x)*(d_x - a_d_x)) + ((d_y - a_d_y)*(d_y - a_d_y)));
         if(r < r_min) r_min = r;
         force = -1.06*(1 - (27*exp(-5*r)*(5*r + 1))) / (r * r);
         //potential = 12*((3.3*exp(-1*r)) - exp(-1*r));
 
-     //   phi   = acosl(d_z / r);
+     //   phi   = acos(d_z / r);
         theta = atanl(d_y / d_x);
         if(d_x < 0) theta += M_PI;
     
 
-        d_f_x = force * cosl(theta);
-        d_f_y = force * sinl(theta);
+        d_f_x = force * cos(theta);
+        d_f_y = force * sin(theta);
 
         a_d_f_x = -1*d_f_x;
         a_d_f_y = -1*d_f_y;
@@ -160,28 +161,28 @@ for(int a = 0; a < 1500; a++) {
        // a_d_f_x += -2e7*a_d_x;
         //a_d_f_y += -2e7*a_d_y;
 
-      //  d_f_z = force * cosl(phi); 
+      //  d_f_z = force * cos(phi); 
      /*   if(r < 0.7 && !collision) {
             double excitation_energy = ((p_x*p_x)+(p_y*p_y))*constants::m_e_r*0.5 + 1.06*((27*expl(-5*r) / r) - (1 / r)) - E_f_A;
-            double scattering_velocity = sqrtl((p_x*p_x)+(p_y*p_y)) - sqrtl(2*E_f_A/constants::m_e_r);
+            double scattering_velocity = sqrt((p_x*p_x)+(p_y*p_y)) - sqrt(2*E_f_A/constants::m_e_r);
             if(excitation_energy > 0 && scattering_velocity > 0) {
                 if(scattering_chance(gen) < (1 - exp(-1*excitation_energy))) {
-                double vel = sqrtl((p_x*p_x)+(p_y*p_y));
+                double vel = sqrt((p_x*p_x)+(p_y*p_y));
                 theta = atanl(p_y / p_x);
                 if(p_x < 0) theta += M_PI;
                 
                 
-                p_x = scattering_velocity * cosl(theta);
-                p_y = scattering_velocity * sinl(theta);
+                p_x = scattering_velocity * cos(theta);
+                p_y = scattering_velocity * sin(theta);
                 
 
-                vel = sqrtl((a_p_x*a_p_x)+(a_p_y*a_p_y));
+                vel = sqrt((a_p_x*a_p_x)+(a_p_y*a_p_y));
                 theta = atanl(a_p_y / a_p_x);
                 if(a_p_x < 0) theta += M_PI;
-                scattering_velocity += sqrtl(2*E_f_A/atomic_mass);
+                scattering_velocity += sqrt(2*E_f_A/atomic_mass);
               
-                a_p_x  = scattering_velocity * cosl(theta);
-                a_p_y = scattering_velocity * sinl(theta);
+                a_p_x  = scattering_velocity * cos(theta);
+                a_p_y = scattering_velocity * sin(theta);
                 collision = true;
                 }
             }
@@ -249,9 +250,9 @@ for(int a = 0; a < 1500; a++) {
         y = electron_position[3*a+1];
         z = electron_position[3*a+2];
         if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22)) {
-            electron_velocity[3*a]   *= 2;// 0.333333333333*sqrtl(2*E_f_A/constants::m_e_r);
-            electron_velocity[3*a+1] *= 2;//0.333333333333*sqrtl(2*E_f_A/constants::m_e_r);
-            electron_velocity[3*a+2] *= 2;//0.333333333333*sqrtl(2*E_f_A/constants::m_e_r);
+            electron_velocity[3*a]   *= 2;// 0.333333333333*sqrt(2*E_f_A/constants::m_e_r);
+            electron_velocity[3*a+1] *= 2;//0.333333333333*sqrt(2*E_f_A/constants::m_e_r);
+            electron_velocity[3*a+2] *= 2;//0.333333333333*sqrt(2*E_f_A/constants::m_e_r);
             c++;
         }
     }  */
@@ -297,7 +298,7 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
+    CASTLE_output_rate = 50; //sim::CASTLE_output_rate;
     dt = 1e-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
@@ -333,7 +334,7 @@ void initialize () {
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
-    std::cout << "E_f(J): " << E_f << ", TLE(J): " << (TLKE*1e-20*atomic_mass/2) + (TLPE*1e10*constants::K) << ", TE(J): " << E_f*conduction_electrons << ", TEKE(AJ):" << TEKE*1e10*constants::m_e/2 << ", TEPE " << TEPE*1e10*constants::K << ", TEE " <<  ((TEKE*constants::m_e)/2 + (TEPE*constants::K))*1e10 << ", EE(J): " << constants::m_e*TEKE*0.5*1e10 + constants::K*1e10*std::accumulate(electron_potential.begin(), electron_potential.end(), 0) <<  std::endl;
+    std::cout << "E_f(J): " << E_f << ", TLE(J): " << TLE*1e-20 << ", TE(J): " << E_f*conduction_electrons << ", TEKE(AJ):" << TEKE*1e10*constants::m_e/2 << ", TEPE " << TEPE*1e10*constants::K << ", TEE " <<  ((TEKE*constants::m_e)/2 + (TEPE*constants::K))*1e10 << ", EE(J): " << constants::m_e*TEKE*0.5*1e10 + constants::K*1e10*std::accumulate(electron_potential.begin(), electron_potential.end(), 0) <<  std::endl;
     mean_data.open("CASTLE/mean_data.csv");
     mean_data << "time, step, mean-EKE, mean-LKE, mean-EPE, mean-LPE, -lambda, +lambda, mean-lambda, mean-inelastic-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
 
@@ -365,8 +366,7 @@ void initialize_lattice() {
     lattice_width  = 40; // A
     lattice_depth  = 40; // A
 
-    TLPE = 0;
-    TLKE = 0;
+    TLE = 0;
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
 
@@ -387,13 +387,13 @@ void initialize_lattice() {
     
     atom_anchor_position.resize(lattice_atoms*3,0);
     atom_position.resize(lattice_atoms * 3, 0);
-    new_atom_position.resize(lattice_atoms * 3, 0);
-    atom_velocity.resize(lattice_atoms * 3,0);
-    new_atom_velocity.resize(lattice_atoms * 3,0);
-    atom_force.resize(lattice_atoms * 3,0);
-    new_atom_force.resize(lattice_atoms * 3,0);
+   // new_atom_position.resize(lattice_atoms * 3, 0);
+    //atom_velocity.resize(lattice_atoms * 3,0);
+    //new_atom_velocity.resize(lattice_atoms * 3,0);
+   // atom_force.resize(lattice_atoms * 3,0);
+   // new_atom_force.resize(lattice_atoms,0);
     atom_potential.resize(lattice_atoms,0);
-
+    new_atom_potential.resize(lattice_atoms,0);
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -404,7 +404,7 @@ void initialize_lattice() {
     atomic_nearest_electron_list.resize(lattice_atoms);
 
     for (int a = 0; a < lattice_atoms; ++a) {  
-        atomic_nearest_atom_list[a].resize(0.4*conduction_electrons,-1);
+        atomic_nearest_atom_list[a].resize(40,-1);
         atomic_nearest_electron_list[a].resize(0.4*conduction_electrons,-1);
         array_index = 3*a;
 
@@ -415,6 +415,8 @@ void initialize_lattice() {
         atom_position[array_index]   = atom_anchor_position[array_index]   + atom_position_distrib(gen);
         atom_position[array_index+1] = atom_anchor_position[array_index+1] + atom_position_distrib(gen);
         atom_position[array_index+2] = atom_anchor_position[array_index+2] + atom_position_distrib(gen);
+
+        TLE += atom_potential[a] = E_f_A*(1.01 - atom_position_distrib(gen));
 
         lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
@@ -456,7 +458,7 @@ void initialize_electrons() {
     std::normal_distribution<double> radius_mod(1, 0.1);
    
     n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
-    E_f = constants::h * constants::h * powl(3 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
+    E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
     mu_f = 5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
     v_f = sqrt(2 * E_f / constants::m_e); //meters
 
@@ -466,15 +468,14 @@ void initialize_electrons() {
 
     MEPE = 0;
     MEKE = 0;
-    MLKE = 0;
-    MLPE = 0;
+    MLE = 0;
 
     e_a_neighbor_cutoff = 250;
-    e_e_neighbor_cutoff = 144;
+    e_e_neighbor_cutoff = 250;
     e_a_coulomb_cutoff = 144;
     e_e_coulomb_cutoff = 144;
-    a_a_neighbor_cutoff = 6;
-    a_a_coulomb_cutoff = 6;
+    // a_a_neighbor_cutoff = 6;
+    // a_a_coulomb_cutoff = 6;
    
     double phi,theta, x_pos,y_pos,z_pos; //velocity_length = 0;
     int array_index = 0;
@@ -492,9 +493,9 @@ void initialize_electrons() {
         phi = M_PI*Phi_pos_distrib(gen);
 
         //initialize and output electron posititons
-        x_pos = 1+ (atomic_size * (e % 20)) + (cosl(theta)*sinl(phi)*screening_depth*radius_mod(gen)); //Angstroms
-        y_pos = 1+ (atomic_size * ((int(floor(e / 20))) % 20)) + (sinl(theta)*sinl(phi)*screening_depth*radius_mod(gen)); //Sets on radius of screening depth from nucleus
-        z_pos = 1+ (atomic_size * floor(e/ 400)) + (cosl(phi)*screening_depth)*radius_mod(gen);
+        x_pos = 1+ (atomic_size * (e % 20)) + (cos(theta)*sin(phi)*screening_depth*radius_mod(gen)); //Angstroms
+        y_pos = 1+ (atomic_size * ((int(floor(e / 20))) % 20)) + (sin(theta)*sin(phi)*screening_depth*radius_mod(gen)); //Sets on radius of screening depth from nucleus
+        z_pos = 1+ (atomic_size * floor(e/ 400)) + (cos(phi)*screening_depth)*radius_mod(gen);
 
         if (x_pos < 0) x_pos += 40;
         else if (x_pos > 40) x_pos -= 40;
@@ -583,7 +584,7 @@ double reinitialize_electron_conserve_momentum(std::vector<double>& captured_ele
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
           //  if (length < 0.00001) length = 0.00001;
             if(length > 100) continue;
-            length = sqrtl(length);
+            length = sqrt(length);
          //   std::cout << length << std::endl;
             // force
             force = -28*((3.3*3.3 * expl(-3.3 * length)) - (expl(-1 * length)));
@@ -593,7 +594,7 @@ double reinitialize_electron_conserve_momentum(std::vector<double>& captured_ele
             new_potential += 28*((3.3* expl(-3.3* length)) - (expl(-1 * length)));
           //  std::cout << "e-a " << new_potential << ", " << length << std::endl;
          //   if(e == 0) std::cout << "force " << force << std::endl;
-            phi   = acosl(z_distance / length);
+            phi   = acos(z_distance / length);
             theta = atanl(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
@@ -645,7 +646,7 @@ double reinitialize_electron_conserve_momentum(std::vector<double>& captured_ele
            // if(e == 0) std::cout << "force " << force << std::endl;
             //    if (err::check) std::cout << "Distances grabbed" << std::endl; 
 
-            phi   = acosl(z_distance / length);
+            phi   = acos(z_distance / length);
             theta = atanl(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
@@ -656,7 +657,7 @@ double reinitialize_electron_conserve_momentum(std::vector<double>& captured_ele
         }
        //KE1+PE1 = KE2+PE2
        //v2 = sqrt(2KE2/m_e) = sqrt(2(KE1+PE1-PE2)/m_e)
-        P = 1e-6*sqrtl(abs(2*((electron_potential[electron_num]*constants::K*1e10) + (P*constants::m_e*1e10/2)-(new_potential*constants::K*1e10))/constants::m_e));
+        P = 1e-6*sqrt(abs(2*((electron_potential[electron_num]*constants::K*1e10) + (P*constants::m_e*1e10/2)-(new_potential*constants::K*1e10))/constants::m_e));
       //  std::cout  << electron_potential[electron_num]*constants::K*1e10 + ((Px*Px)+(Py*Py)+(Pz*Pz))*constants::m_e*1e10/2 - new_potential*constants::K*1e10 - P*P*constants::m_e*1e10/2 <<  std::endl;
         theta = M_PI * Theta_Vel_distrib(gen);
         phi = M_PI * Phi_Vel_distrib(gen);
@@ -665,9 +666,9 @@ double reinitialize_electron_conserve_momentum(std::vector<double>& captured_ele
        // if (e ==0 ) std::cout << electron_potential[e] << std::endl;
       
       //  if(e == 0) std::cout << "KE: " << 0.5*constants::m_e*v_f*v_f << ", PE: " << electron_potential[e]*1e10*constants::K << std::endl;
-        electron_velocity[electron_num]     = cosl(theta)*sinl(phi)*P; 
-        electron_velocity[electron_num + 1] = sinl(theta)*sinl(phi)*P;
-        electron_velocity[electron_num + 2] = cosl(phi)*P;
+        electron_velocity[electron_num]     = cos(theta)*sin(phi)*P; 
+        electron_velocity[electron_num + 1] = sin(theta)*sin(phi)*P;
+        electron_velocity[electron_num + 2] = cos(phi)*P;
        // std::cout << constants::K*1e10*(electron_potential[electron_num]) << ", " << ((Px*Px)+(Py*Py)+(Pz*Pz))*constants::m_e*1e10/2 << ", " << new_potential*constants::K*1e10 << ", " << P*P*constants::m_e*1e10/2 << std::endl;
         TLE += constants::K*1e10*electron_potential[electron_num]+ ((Px*Px)+(Py*Py)+(Pz*Pz))*constants::m_e*1e10/2 - new_potential*constants::K*1e10 - P*P*constants::m_e*1e10/2;
     }
@@ -740,7 +741,7 @@ void initialize_electron_interactions() {
             electron_potential[e] += PE;
             TEPE += PE/2; 
 
-            phi   = acosl(z_distance / length);
+            phi   = acos(z_distance / length);
             theta = atanl(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
@@ -750,7 +751,7 @@ void initialize_electron_interactions() {
             electron_force[array_index + 2] += force * cos(phi) / constants::m_e_r;
        
         } 
-     //   std::cout << electron_potential[e] << std::endl;
+    //    std::cout << electron_potential[e] << std::endl;
                // if(err::check) if(e ==0) std::cout << "Calculating conduction-lattice repulsion" << std::endl;
     }
 }
@@ -774,10 +775,11 @@ void initialize_atomic_interactions() {
         for (int i = 0; i < lattice_atoms; i++) {
             //if (i == e) continue; //no self repulsion
 
-       
-            x_distance = x - atom_position[array_index];
-            y_distance = y - atom_position[array_index + 1];
-            z_distance = z - atom_position[array_index + 2];
+            array_index_i = i*3;
+
+            x_distance = x - atom_position[array_index_i];
+            y_distance = y - atom_position[array_index_i + 1];
+            z_distance = z - atom_position[array_index_i + 2];
 
             if (x_distance < -30)     x_distance = x_distance + 40;
             else if (x_distance > 30) x_distance = x_distance - 40;
@@ -791,31 +793,31 @@ void initialize_atomic_interactions() {
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
            
             if(length > 6) continue;
-            length = sqrt(length);
+          //  length = sqrt(length);
 
-            
-           force = 0;
+            atomic_nearest_atom_list[e][neighbor_count] = i;
+            neighbor_count++;
            // force = -2000*(length - 2);
            // PE = 1000*(length - 2)*(length - 2);
         //   if(e == 0) std::cout << force << ", " << length <<  std::endl;
            
-            atom_potential[e] += PE;
-            TLPE += PE/2;
+          //  atom_potential[e] += PE;
+           // TLPE += PE/2;
  
-            phi   = acosl(z_distance / length);
-            theta = atanl(y_distance / x_distance);
-            if (x_distance < 0) theta += M_PI;
+            //phi   = acos(z_distance / length);
+           // theta = atanl(y_distance / x_distance);
+           // if (x_distance < 0) theta += M_PI;
 
           //  atom_force[array_index]     += force * cos(theta)*sin(phi) / atomic_mass;
             //atom_force[array_index + 1] += force * sin(theta)*sin(phi) / atomic_mass;
             //atom_force[array_index + 2] += force * cos(phi) / atomic_mass;
 
             // if(e == 0) std::cout << e << ", " << force * cos(theta)*sin(phi) / atomic_mass << ", " << force * sin(theta)*sin(phi) / atomic_mass << ", " << force * cos(phi) / atomic_mass  << std::endl; // x superarray component
-            if(e==0 ) std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index+1] << ", " << atom_force[array_index+2]  << std::endl; // x superarray component
+          //  if(e==0 ) std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index+1] << ", " << atom_force[array_index+2]  << std::endl; // x superarray component
 
         }
         atomic_nearest_atom_list[e][0] = neighbor_count; 
-       // if(e==0) std::cout << "e-e count: " << count << std::endl;
+       // if(e / 1000 ==0) std::cout << "e-e count: " << neighbor_count << std::endl;
                 if(err::check) if(e ==0) std::cout << "Calculating conduction-lattice repulsion" << std::endl;
 
        //  std::cout << ". e-e repulsion: " << positive_PE << ". net force: " << (positive_PE + negative_PE)*constants::K_A << ", count: " << neighbor_count <<  std::endl;
@@ -828,11 +830,13 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
     double x,y,z, x_distance,y_distance,z_distance, length, force;
     double theta,phi, PE;
     
+    double r_min;
     for (int a = 0; a < lattice_atoms; a++) {
 
         array_index = 3*a;
         nearest_electron_count = 1;
         //nearest_atom_count = 1;
+        r_min = 1;
 
         x = atom_position[array_index];
         y = atom_position[array_index + 1];
@@ -861,26 +865,26 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
 
             if (length > e_a_coulomb_cutoff) continue;
 
-            length = sqrtl(length);
+            length = sqrt(length);
             
             if(length < 0.11) length = 0.11;
 
-            if(length < 0.7) {
+            if(length < 0.9) {
                 electron_nearest_atom_list[e][0] = a;
                 electron_nearest_atom_list[e][1] = false;
             }
 
-            force = -1.06*(1 - (27*exp(-5*length)*(5*length + 1))) / (length * length);
+            force = -1*(1 - (5*exp(-4*length)*(4*length + 1))) / (length * length);
                         //q*k*k * exp(-15(A**-1) * length (A));
           //  std::cout << force << std::endl;
-            PE = 1.06*(27*(expl(-5*length) / length) - (1 / length));
+            PE = (5*(expl(-4*length) / length)) - (1 / length);
            //  if(abs(PE) > 1) std::cout << PE << ", " << length << std::endl;
-            TEPE += PE/2;
-            TLPE += PE/2;
+            TEPE += PE;
+         //   TLPE += PE/2;
 
             electron_potential[e] += PE;
             atom_potential[e] += PE;
-            phi   = acosl(z_distance / length);
+            phi   = acos(z_distance / length);
             theta = atanl(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
@@ -889,12 +893,12 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
             electron_force[array_index_e + 1] += -1*force * sin(theta)*sin(phi) * mu_r;
             electron_force[array_index_e + 2] += -1*force * cos(phi) * mu_r;
 
-            atom_force[array_index]     += force * cos(theta)*sin(phi) * combined_mass;
-            atom_force[array_index + 1] += force * sin(theta)*sin(phi) * combined_mass;
-            atom_force[array_index + 2] += force * cos(phi) * combined_mass;
+           // atom_force[array_index]     += force * cos(theta)*sin(phi) * combined_mass;
+         //   atom_force[array_index + 1] += force * sin(theta)*sin(phi) * combined_mass;
+            //atom_force[array_index + 2] += force * cos(phi) * combined_mass;
 
            if(a == 0 && e < 10) std::cout << a << ", " << force * cos(theta)*sin(phi) * combined_mass << ", " << force * sin(theta)*sin(phi) * combined_mass << ", " << force * cos(phi) * combined_mass  << std::endl; // x superarray component
-            if(a==0 && e < 10) std::cout << a << ", " << atom_force[array_index] << ", " << atom_force[array_index+1] << ", " << atom_force[array_index+2]  << std::endl; // x superarray component
+           // if(a==0 && e < 10) std::cout << a << ", " << atom_force[array_index] << ", " << atom_force[array_index+1] << ", " << atom_force[array_index+2]  << std::endl; // x superarray component
 
         }
         
@@ -916,48 +920,49 @@ void initialize_velocities() {
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<double> Theta_Vel_distrib(0,2);
     std::uniform_real_distribution<double> Phi_Vel_distrib(0,1);
-
+    std::normal_distribution<double> vel_distrib(1.0,0.05);
     double phi,theta, vel; //A/fS
     int array_index;
     TEKE = 0;
-    TLKE = 0;
+    // TLKE = 0;
     for(int e = 0; e < conduction_electrons; e++) {
-       // std::cout << electron_potential[e] << std::endl;
+        std::cout << electron_potential[e] << std::endl;
         array_index = 3*e;
         theta = M_PI * Theta_Vel_distrib(gen);
         phi = M_PI * Phi_Vel_distrib(gen);
 
-        vel = sqrtl(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
-        
+        vel = 0;
+      //  if (electron_potential[e]*constants::K_A < E_f_A) vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
+        //if (vel > 4e6) vel = 3.4e6 * vel_distrib(gen);
         if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
-        electron_velocity[array_index]     = cosl(theta)*sinl(phi)*vel; 
-        electron_velocity[array_index + 1] = sinl(theta)*sinl(phi)*vel;
-        electron_velocity[array_index + 2] = cosl(phi)*vel;
+        electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
+        electron_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
+        electron_velocity[array_index + 2] = cos(phi)*vel;
         TEKE += vel*vel;
         
-        electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << 1e5*vel << std::endl; // ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;
+        electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << vel*1e5 << std::endl; // ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;
     
     }
     electron_velocity_output.close();
 
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 
-    vel = sqrtl(2*E_f_A / atomic_mass);
-    for(int a = 0; a < lattice_atoms; a++) {
-        array_index = 3*a;
+    // vel = sqrt(2*E_f_A / atomic_mass);
+    // for(int a = 0; a < lattice_atoms; a++) {
+    //     array_index = 3*a;
 
-        theta = M_PI * Theta_Vel_distrib(gen);
-        phi = M_PI * Phi_Vel_distrib(gen);
+    //     theta = M_PI * Theta_Vel_distrib(gen);
+    //     phi = M_PI * Phi_Vel_distrib(gen);
 
-        vel = sqrtl(-1*atom_potential[a]*constants::K_A/atomic_mass); // m/s -> Angstroms / s -> A/fs = 1e-5
-        atom_velocity[array_index]     = cosl(theta)*sinl(phi)*vel; 
-        atom_velocity[array_index + 1] = sinl(theta)*sinl(phi)*vel;
-        atom_velocity[array_index + 2] = cosl(phi)*vel;
-        TLKE += vel*vel;
-        std::cout << atom_potential[a]*constants::K_A << ", " << -0.5* atom_potential[a]*constants::K_A << ", " << vel*vel*atomic_mass / 2 << ", " << atom_potential[a]*constants::K_A + vel*vel*atomic_mass / 2 <<  std::endl;
-        atom_velocity_output << a << ", " << 1e5*atom_velocity[array_index] << " , " << 1e5*atom_velocity[array_index + 1] << " , " << 1e5*atom_velocity[array_index + 2] << " , " << 1e5*vel << std::endl;
-    }
-    atom_velocity_output.close();
+    //     vel = sqrt(-1*atom_potential[a]*constants::K_A/atomic_mass); // m/s -> Angstroms / s -> A/fs = 1e-5
+    //     atom_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
+    //     atom_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
+    //     atom_velocity[array_index + 2] = cos(phi)*vel;
+    //     TLKE += vel*vel;
+    //     std::cout << atom_potential[a]*constants::K_A << ", " << -0.5* atom_potential[a]*constants::K_A << ", " << vel*vel*atomic_mass / 2 << ", " << atom_potential[a]*constants::K_A + vel*vel*atomic_mass / 2 <<  std::endl;
+    //     atom_velocity_output << a << ", " << 1e5*atom_velocity[array_index] << " , " << 1e5*atom_velocity[array_index + 1] << " , " << 1e5*atom_velocity[array_index + 2] << " , " << 1e5*vel << std::endl;
+    // }
+    // atom_velocity_output.close();
 
             if (err::check) std::cout << "Atom velocity ready..." << std::endl;
 }
@@ -982,21 +987,21 @@ double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const 
     double Px = electron_velocity[array_index];
     double Py = electron_velocity[array_index+1];
     double Pz = electron_velocity[array_index+2];
-    double P = sqrtl(Px*Px+Py*Py+Pz*Pz);
-    double P_p = sqrtl(Px*Px+Py*Py);
-    double P_i = sqrtl(Pz*Pz);
+    double P = sqrt(Px*Px+Py*Py+Pz*Pz);
+    double P_p = sqrt(Px*Px+Py*Py);
+    double P_i = sqrt(Pz*Pz);
     double scattering_velocity = P;
     double electron_TE = 1e10*(electron_potential[e]*constants::K + P*P*constants::m_e*0.5);
    
    
 
-    double d_p = sqrtl(l_x*l_x+l_y*l_y);
-    double d_i = sqrtl(l_z*l_z);
-    double d_r = sqrtl((l_x*l_x)+(l_y*l_y)+(l_z*l_z));
+    double d_p = sqrt(l_x*l_x+l_y*l_y);
+    double d_i = sqrt(l_z*l_z);
+    double d_r = sqrt((l_x*l_x)+(l_y*l_y)+(l_z*l_z));
     double polar_value = M_PI * range_distrib(gen);
     double incline_value = M_PI * range_distrib(gen);
-    double normal_polar_angle = acosl((l_x*Px+l_y*Py)/(P_p*d_p));
-    double normal_incline_angle = acosl((l_z*Pz) / (P_i*d_i));
+    double normal_polar_angle = acos((l_x*Px+l_y*Py)/(P_p*d_p));
+    double normal_incline_angle = acos((l_z*Pz) / (P_i*d_i));
 
     double excitation_energy = abs(excitation_constant)*(electron_TE - atomic_phonon_energy[2*a]);
 
@@ -1005,7 +1010,7 @@ double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const 
       //  std::cout << electron_TE << ", " << atomic_phonon_energy[2*a] << ", " << excitation_energy << ", " << electron_TE - excitation_energy << std::endl;
         excitation_energy = electron_TE - excitation_energy;
         
-        scattering_velocity = 1e-5*sqrtl(2*excitation_energy/constants::m_e);
+        scattering_velocity = 1e-5*sqrt(2*excitation_energy/constants::m_e);
        // std::cout << P - scattering_velocity << std::endl;
       // if(scattering_velocity < 0) std::cout << P << ", " << scattering_velocity << ", " << P - scattering_velocity <<  std::endl;
     
@@ -1019,7 +1024,7 @@ double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const 
     
         double polar_scattering_angle = atanl(Py/Px);
         if(polar_scattering_angle < 0) polar_scattering_angle += M_PI;
-        double incline_scattering_angle = acosl(Pz/P);
+        double incline_scattering_angle = acos(Pz/P);
 
         double polar_prob = velocity_gaussian_distrib(gen)*polar_value*polar_value* ( ( ((M_PI/2)+normal_polar_angle) * exp( (polar_value-1)*(polar_value-1)/(-8)) )+( ((M_PI/2)-normal_polar_angle) * exp( (polar_value+1)*(polar_value+1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
         double incline_prob = velocity_gaussian_distrib(gen)*incline_value*incline_value* ( ( ((M_PI/2)+normal_incline_angle)  * exp( (incline_value-1)*(incline_value-1)/(-8)) ) + ( ((M_PI/2)-normal_incline_angle) * exp( (incline_value-1)*(incline_value-1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
@@ -1082,8 +1087,8 @@ double e_p_scattering(int e, int a, const double& x_distance, const double& y_di
     int p_p_coupling;
     int p_e_reverse_coupling; // = atomic_phonon_energy[2*a + 1];
     int array_index = 3*e;
-    double scattering_velocity = sqrtl((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]));
-    double length = sqrtl((x_distance*x_distance)+(y_distance*y_distance)+(z_distance*z_distance));
+    double scattering_velocity = sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]));
+    double length = sqrt((x_distance*x_distance)+(y_distance*y_distance)+(z_distance*z_distance));
     double electron_energy = 0.5*constants::m_e*1e10*scattering_velocity*scattering_velocity;
     double excitation_energy = exp(-1*length)*(electron_energy - atomic_energy);
     if(excitation_energy > 0) {
@@ -1094,7 +1099,7 @@ double e_p_scattering(int e, int a, const double& x_distance, const double& y_di
             atomic_phonon_energy[2*a +1]++;
             TLE += excitation_energy;
             }
-            scattering_velocity -= 1e-5*sqrtl(2*excitation_energy/constants::m_e);
+            scattering_velocity -= 1e-5*sqrt(2*excitation_energy/constants::m_e);
             
         }
     } else {
@@ -1105,7 +1110,7 @@ double e_p_scattering(int e, int a, const double& x_distance, const double& y_di
             atomic_phonon_energy[2*a+1] = 0;
             TLE += excitation_energy;
             }
-            scattering_velocity += 1e-5*sqrtl(-2*excitation_energy/constants::m_e);
+            scattering_velocity += 1e-5*sqrt(-2*excitation_energy/constants::m_e);
         
         } else {
             #pragma omp critical
@@ -1121,16 +1126,16 @@ void output_data() {
     // Output equilibration step data
     //=========
     time_stamp = std::to_string(current_time_step);
-    std::ofstream atomic_velocity_output;
-    atomic_velocity_output.open("CASTLE/Atom_Velocity/" + time_stamp);
-    atomic_velocity_output.precision(10);
-    atomic_velocity_output << std::scientific;
+    std::ofstream atomic_phonon_output;
+    atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
+    atomic_phonon_output.precision(10);
+    atomic_phonon_output << std::scientific;
 
-    std::ofstream atomic_position_output;
-    atomic_position_output.open("CASTLE/Atom_Position/" + time_stamp + ".xyz");
-    atomic_position_output << lattice_atoms << std::endl;
-    atomic_position_output << time_stamp << std::endl;
-    atomic_position_output << std::fixed;
+    // std::ofstream atomic_position_output;
+    // atomic_position_output.open("CASTLE/Atom_Position/" + time_stamp + ".xyz");
+    // atomic_position_output << lattice_atoms << std::endl;
+    // atomic_position_output << time_stamp << std::endl;
+    // atomic_position_output << std::fixed;
 
     electron_position_output_down.open("CASTLE/Electron_Position/" + time_stamp + ".xyz");
     electron_position_output_down << conduction_electrons << "\n";
@@ -1155,9 +1160,9 @@ void output_data() {
     double y_lambda = 0.0;
     double z_lambda = 0.0;
     double calc_lambda = 1/ sqrt(conduction_electrons);
-    double mean_rad = 0;
+    int mean_rad = 0;
     for (int e = 0; e < conduction_electrons; e++) {
-        mean_rad += mean_radius[e];
+       // mean_rad += mean_radius[e];
 
         array_index   = 3*e;
         array_index_y = array_index + 1;
@@ -1177,29 +1182,30 @@ void output_data() {
         z_vel = 1e5*new_electron_velocity[array_index_z];
         velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
 
-        
-        electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << electron_potential[e] << ", " << 1e10*electron_potential[e]*constants::K + velocity_length*constants::m_e/0.5 << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
-        electron_velocity_output      << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << "\n";
+        if(sqrt(velocity_length)*dt*1e-5 > 0.1) mean_rad++;
+        electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << electron_potential[e] << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
+        electron_velocity_output      << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << ", " << 1e10*electron_potential[e]*constants::K + velocity_length*constants::m_e/0.5 << "\n";
 
-        x_pos = new_atom_position[array_index];
-        y_pos = new_atom_position[array_index_y]; 
-        z_pos = new_atom_position[array_index_z];
+        // x_pos = new_atom_position[array_index];
+        // y_pos = new_atom_position[array_index_y]; 
+        // z_pos = new_atom_position[array_index_z];
 
-        x_vel = 1e5*new_atom_velocity[array_index];
-        y_vel = 1e5*new_atom_velocity[array_index_y];
-        z_vel = 1e5*new_atom_velocity[array_index_z];
-        velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
+    //     x_vel = 1e5*new_atom_velocity[array_index];
+    //     y_vel = 1e5*new_atom_velocity[array_index_y];
+    //     z_vel = 1e5*new_atom_velocity[array_index_z];
+    //     velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
 
-        atomic_position_output << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
-        atomic_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << "\n";
+    //     atomic_position_output << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
+        atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
     }
-    mean_rad /= conduction_electrons;
+    std::cout << mean_rad << std::endl;
+  //  mean_rad /= conduction_electrons;
     lambda = (x_lambda + y_lambda + z_lambda) / (3*CASTLE_output_rate * conduction_electrons);
     std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
    
     electron_position_output_down.close();
     electron_velocity_output.close();
-    atomic_velocity_output.close();
+   // atomic_phonon_output.close();
   
     double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
     double nu = j / (n_f * constants::e); //drift velocity
@@ -1207,8 +1213,8 @@ void output_data() {
     
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " \
-        << MEKE * 1e10 * constants::m_e / 2 << ", " << MLKE * 1e-20 * atomic_mass / 2 << ", " \
-        << MEPE * 1e10 * constants::K << ", " << MLPE * 1e10 * constants::K << ", " \
+        << MEKE * 1e10 * constants::m_e / 2 << ", " \
+        << MEPE * 1e10 * constants::K << ", " << MLE*1e-20 << ", " \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
         << mean_rad << ", " << chosen_electron  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
         << std::endl;
@@ -1216,12 +1222,12 @@ void output_data() {
     else {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " \
-        << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " << MLKE * 1e-20 * atomic_mass / (CASTLE_output_rate*2) << ", " \
-        << MEPE * 1e10 * constants::K / CASTLE_output_rate << ", " << MLPE * 1e10 * constants::K / CASTLE_output_rate << ", " \
+        << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " \
+        << MEPE * 1e10 * constants::K / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
         << mean_rad << ", " << chosen_electron  << ", " << x_flux / CASTLE_output_rate << ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate  << ", " \
         << std::endl;
-    }   
+     
     double mean_vel = sqrt(MEKE) / (CASTLE_output_rate *conduction_electrons); //Still Angstroms
     std::cout << mean_vel << std::endl;
     if (mean_vel * dt > 0.01) {
@@ -1230,16 +1236,17 @@ void output_data() {
         dt = dt * 1e-1;
         terminaltextcolor(WHITE);
     } 
-
+    }
     MEKE = 0;
     MEPE = 0;
-    MLKE = 0;
-    MLPE = 0;
+    MLE = 0;
+   // MLKE = 0;
+    //MLPE = 0;
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
     chosen_electron = 0;
-    std::fill(mean_radius.begin(), mean_radius.end(), 1);
+  //  std::fill(mean_radius.begin(), mean_radius.end(), 1);
      //   electron_spin_output.close();
     CASTLE_output_data = false;
 }
