@@ -184,7 +184,7 @@ namespace CASTLE {
    // int num_cells;
 
     //integration variables
-   int current_time_step;
+   long long int current_time_step;
    double CASTLE_real_time;
    
    std::vector<double> atom_anchor_position;
@@ -248,10 +248,10 @@ namespace CASTLE {
    void update_position();
    void update_dynamics();
 
-   void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
                // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
    void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \

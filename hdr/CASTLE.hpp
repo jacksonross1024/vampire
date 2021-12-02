@@ -38,7 +38,7 @@
 #include <ctime>
 #include <random>
 //#include <filesystem>
-//#include <omp.h> 
+#include <omp.h> 
 
 
 #include "sim.hpp"
@@ -95,7 +95,7 @@ namespace CASTLE {
    // extern int num_cells;
 
     //integration variables
-    extern int current_time_step;
+    extern long long int current_time_step;
     extern double CASTLE_real_time;
    
     extern std::vector<double> atom_anchor_position;
@@ -161,10 +161,10 @@ namespace CASTLE {
     extern void update_position();
     extern void update_dynamics();
 
-    extern void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+    extern void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   extern void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   extern void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
                 // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
     extern void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
