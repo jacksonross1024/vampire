@@ -63,6 +63,7 @@ int velocity_verlet_step(double time_step) {
     electron_position.swap(new_electron_position);
     electron_force.swap(new_electron_force);
     electron_velocity.swap(new_electron_velocity);
+
     atom_position.swap(new_atom_position);
     atom_velocity.swap(new_atom_velocity);
     atom_force.swap(new_atom_force);
@@ -130,9 +131,10 @@ void update_position(){
         new_atom_position[array_index_y] = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
         new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
         
+        if(new_atom_position[array_index]   < (atom_anchor_position[array_index]   - 0.1) || new_atom_position[array_index]   > (atom_anchor_position[array_index]   + 0.1)) atom_velocity[array_index]   *= -1;
+        if(new_atom_position[array_index_y] < (atom_anchor_position[array_index_y] - 0.1) || new_atom_position[array_index_y] > (atom_anchor_position[array_index_y] + 0.1)) atom_velocity[array_index_y] *= -1;
+        if(new_atom_position[array_index_z] < (atom_anchor_position[array_index_z] - 0.1) || new_atom_position[array_index_z] > (atom_anchor_position[array_index_z] + 0.1)) atom_velocity[array_index_z] *= -1;
       //   std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index_y] << ", " << atom_force[array_index_z]  << std::endl; // x superarray component
-        
-        
         
     } 
 }
@@ -140,13 +142,13 @@ void update_position(){
 void update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
-    double e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE, EKE, LKE ,x,y,z;
+    double e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE, EKE, LKE;
     double TEPE = 0;
     double TLPE = 0;
     double TEKE = 0;
     double TLKE = 0;
 
-  //  #pragma omp parallel for private(array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE, EKE, LKE)\
+    #pragma omp parallel for private(array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE, EKE, LKE)\
      schedule(static) reduction(+:TEPE,TEKE,TLPE,TLKE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
@@ -163,22 +165,19 @@ void update_dynamics() {
         EKE = 0;
         LKE = 0;
 
-        x = new_atom_position[array_index];
-        x = new_atom_position[array_index + 1];
-        z = new_atom_position[array_index + 2];
-
-        if(current_time_step % 2 == 0) {
-            e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
-            e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
-            a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
+        if(current_time_step % 20 == 0) {
+          e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
+          e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE); 
+          a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         
         } else {
-            e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
-           // neighbor_e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
-            //e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
+           // e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
             neighbor_e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
-            a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
-           // neighbor_a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
+            neighbor_e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
+            //e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
+           
+            //a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
+            neighbor_a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         }
         
         new_electron_force[array_index]     = e_x_force;
@@ -220,7 +219,7 @@ void update_velocity(int array_index, double& EKE, double& LKE) {
         vel = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
         LKE += vel;
 
-    if(current_time_step > 4000) {
+ /*   if(current_time_step > 4000) {
         for(int a = 0; a < conduction_electrons; a++) {
             x_vel = electron_position[3*a];
             y_vel = electron_position[3*a+1];
@@ -231,53 +230,49 @@ void update_velocity(int array_index, double& EKE, double& LKE) {
                 new_electron_velocity[3*a+2] *= 100 * 0.333333333333*sqrtl(2*E_f_A/constants::m_e_r) * exp(-1*pow(current_time_step - 40000, 2));
             }
         }
-    }
+    } */
 }
 
-void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                        double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
+void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+                 double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
 
     double x_distance;
     double y_distance;
     double z_distance;
-    double x;
-    double y;
-    double z;
+
     double length;
     double x_force, y_force, z_force, force,  phi,theta, PE = 0;
     int array_index_e, nearest_electron_count = 1;
     
-    x = new_atom_position[array_index];
-    x = new_atom_position[array_index + 1];
-    z = new_atom_position[array_index + 2];
     int count = 0;
-    for (int e = 0; e < conduction_electrons; e++) {
+    for (int a = 0; a < lattice_atoms; a++) {
 
-        array_index_e = 3*e;
-        x_distance = new_atom_position[array_index] - new_electron_position[array_index_e];
-        y_distance = new_atom_position[array_index + 1] - new_electron_position[array_index_e + 1];
-        z_distance = new_atom_position[array_index + 2] - new_electron_position[array_index_e + 2]; 
+        array_index_e = 3*a;
+        x_distance = new_electron_position[array_index]     - new_atom_position[array_index_e];
+        y_distance = new_electron_position[array_index + 1] - new_atom_position[array_index_e + 1];
+        z_distance = new_electron_position[array_index + 2] - new_atom_position[array_index_e + 2];
        
-       if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance <<  std::endl;
-        if (x_distance < (-30.0))     x_distance = x_distance + 40.0;
+       //if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance <<  std::endl;
+       
+        if (x_distance < -30.0)     x_distance = x_distance + 40.0;
         else if (x_distance > 30.0) x_distance = x_distance - 40.0;
-        if (y_distance < (-30.0))     y_distance = y_distance + 40.0;
+        if (y_distance < -30.0)     y_distance = y_distance + 40.0;
         else if (y_distance > 30.0) y_distance = y_distance - 40.0;
-        if (z_distance <  (-30.0))    z_distance = z_distance + 40.0;
+        if (z_distance <  -30.0)    z_distance = z_distance + 40.0;
         else if (z_distance > 30.0) z_distance = z_distance - 40.0;  
 
         length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
         
         if(length > e_a_neighbor_cutoff) continue;
 
-         if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] << ", " << new_atom_position[array_index+1] << ", " << new_atom_position[array_index+2] << ", " << sqrtl(length) << std::endl;
-        if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_electron_position[array_index_e] << ", " << new_electron_position[array_index_e+1] << ", " << new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
-         if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] - new_electron_position[array_index_e] << ", " << new_atom_position[array_index+1] - new_electron_position[array_index_e+1]<< ", " << new_atom_position[array_index+2] - new_electron_position[array_index_e+2] << std::endl;
-        // if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) << ", " << (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) << ", " << (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
-       // if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) + (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) + (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
-        //if(a == 100 ) std::cout << array_index_e / 3 << ", " << sqrt(((new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e])) + ((new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]))+ ((new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]))) << ", " << sqrtl(length) << std::endl;
-        if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance << "\n" <<  std::endl;
-        atomic_nearest_electron_list[a][nearest_electron_count] = e;
+      //    if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] << ", " << new_atom_position[array_index+1] << ", " << new_atom_position[array_index+2] << ", " << sqrtl(length) << std::endl;
+      //   if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_electron_position[array_index_e] << ", " << new_electron_position[array_index_e+1] << ", " << new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
+      //    if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] - new_electron_position[array_index_e] << ", " << new_atom_position[array_index+1] - new_electron_position[array_index_e+1]<< ", " << new_atom_position[array_index+2] - new_electron_position[array_index_e+2] << std::endl;
+      //   // if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) << ", " << (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) << ", " << (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
+      //  // if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) + (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) + (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
+      //   //if(a == 100 ) std::cout << array_index_e / 3 << ", " << sqrt(((new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e])) + ((new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]))+ ((new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]))) << ", " << sqrtl(length) << std::endl;
+      //   if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance << "\n" <<  std::endl;
+        atomic_nearest_electron_list[e][nearest_electron_count] = array_index_e;
         nearest_electron_count++;
 
         if (length > e_a_coulomb_cutoff) continue;
@@ -286,40 +281,41 @@ void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double&
        // if(a == 100) std::cout << e << ", " << sqrtl(length) << std::endl;
         length = sqrtl(length);
        // if(a==100) std::cout << e << ", " << length << std::endl;
-        if(length < 0.11) length = 0.11;
+      //  if(length < 0.11) length = 0.11;
 
         if(mean_radius[e] > length) {
             #pragma omp critical
             mean_radius[e] = length;
         }
 
-        force = -1.06*(1 - (27*exp(-5*length)*(5*length + 1))) / (length * length);
-                        //q*k*k * exp(-15(A**-1) * length (A));
-        PE += 1.06*((27*expl(-5*length) / length) - (1 / length));
+       force = -1*(1/(length * length) - 8*150*exp(-8*length));
+          //q*k*k * exp(-15(A**-1) * length (A));
+          //  std::cout << force << std::endl;
+        PE += 150*exp(-8*length) - (1 / length);
         
 
-        phi   = acosl(z_distance / length);
-        theta = atanl(y_distance / x_distance);
+        phi   = acos(z_distance / length);
+        theta = atan(y_distance / x_distance);
         if (x_distance < 0) theta += M_PI;
 
-        x_force = force * cosl(theta)*sinl(phi); 
-        y_force = force * sinl(theta)*sinl(phi);
-        z_force = force * cosl(phi);
+        x_force = force * cos(theta)*sin(phi); 
+        y_force = force * sin(theta)*sin(phi);
+        z_force = force * cos(phi);
 
-        a_x_force += x_force * combined_mass;
-        a_y_force += y_force * combined_mass;
-        a_z_force += z_force * combined_mass;
+        a_x_force -= x_force * combined_mass;
+        a_y_force -= y_force * combined_mass;
+        a_z_force -= z_force * combined_mass;
 
-        e_x_force -= x_force * mu_r;
-        e_y_force -= y_force * mu_r;
-        e_z_force -= z_force * mu_r;
-       /* a_x_force += force * cosl(theta)*sinl(phi);
-        a_y_force += force * sinl(theta)*sinl(phi);
-        a_z_force += force * cosl(phi);
+        e_x_force += x_force * mu_r;
+        e_y_force += y_force * mu_r;
+        e_z_force += z_force * mu_r;
+       /* a_x_force += force * cos(theta)*sin(phi);
+        a_y_force += force * sin(theta)*sin(phi);
+        a_z_force += force * cos(phi);
 
-        e_x_force += -1*force * cosl(theta)*sinl(phi);
-        e_y_force += -1*force * sinl(theta)*sinl(phi);
-        e_z_force += -1*force * cosl(phi); */
+        e_x_force += -1*force * cos(theta)*sin(phi);
+        e_y_force += -1*force * sin(theta)*sin(phi);
+        e_z_force += -1*force * cos(phi); */
      /*   if(length < 0.7 && current_time_step > 500) {
             if(electron_nearest_atom_list[e][0] == a && electron_nearest_atom_list[e][1]) continue;
             else if (electron_nearest_atom_list[e][0] != a) {
@@ -335,28 +331,28 @@ void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double&
             if (excitation_energy > 0 && scattering_velocity > 0) {
                 if(scattering_chance(gen) < (1 - exp(-1*excitation_energy*excitation_constant))) {
                 double vel = sqrtl((electron_velocity[array_index_e]*electron_velocity[array_index_e]) + (electron_velocity[array_index_e+1]*electron_velocity[array_index_e+1]) + (electron_velocity[array_index_e+2]*electron_velocity[array_index_e+2]));
-                double theta = atanl(electron_velocity[array_index_e+1] / electron_velocity[array_index_e]);
-                double phi = acosl(electron_velocity[array_index_e+2] / vel);
+                double theta = atan(electron_velocity[array_index_e+1] / electron_velocity[array_index_e]);
+                double phi = acos(electron_velocity[array_index_e+2] / vel);
                 if (electron_velocity[array_index_e] < 0) theta += M_PI;
                 #pragma omp critical
                 {
-                electron_velocity[array_index_e]   = scattering_velocity * cosl(theta)*sinl(phi);
-                electron_velocity[array_index_e+1] = scattering_velocity * sinl(theta)*sinl(phi);
-                electron_velocity[array_index_e+2] = scattering_velocity * cosl(phi);
+                electron_velocity[array_index_e]   = scattering_velocity * cos(theta)*sin(phi);
+                electron_velocity[array_index_e+1] = scattering_velocity * sin(theta)*sin(phi);
+                electron_velocity[array_index_e+2] = scattering_velocity * cos(phi);
                 
                 }
 
                 vel = sqrtl((atom_velocity[array_index_e]*atom_velocity[array_index_e]) + (atom_velocity[array_index_e+1]*atom_velocity[array_index_e+1]) + (atom_velocity[array_index_e+2]*atom_velocity[array_index_e+2]));
-                theta = atanl(atom_velocity[array_index_e+1] / atom_velocity[array_index_e]);
-                phi = acosl(atom_velocity[array_index_e+2] / vel);
+                theta = atan(atom_velocity[array_index_e+1] / atom_velocity[array_index_e]);
+                phi = acos(atom_velocity[array_index_e+2] / vel);
                 if(atom_velocity[array_index_e] < 0) theta += M_PI;
                 scattering_velocity += sqrtl(2*E_f_A/atomic_mass);
                 #pragma omp critical
                 {
                 chosen_electron++;
-                atom_velocity[array_index_e]   = scattering_velocity * cosl(theta)*sinl(phi);
-                atom_velocity[array_index_e+1] = scattering_velocity * sinl(theta)*sinl(phi);
-                atom_velocity[array_index_e+2] = scattering_velocity * cosl(phi);
+                atom_velocity[array_index_e]   = scattering_velocity * cos(theta)*sin(phi);
+                atom_velocity[array_index_e+1] = scattering_velocity * sin(theta)*sin(phi);
+                atom_velocity[array_index_e+2] = scattering_velocity * cos(phi);
                 }
                 electron_nearest_atom_list[e][1] = false;
                 }
@@ -366,13 +362,13 @@ void e_a_coulomb(const int a, const int& array_index, double& e_x_force, double&
     }
     LPE += PE /2;
     EPE += PE /2;
-    atomic_nearest_electron_list[a][0] = nearest_electron_count;
-    if(a == 100) std::cout << count << std::endl;
-    if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
+    atomic_nearest_electron_list[e][0] = nearest_electron_count;
+    //if(e == 100) std::cout << count << std::endl;
+   // if(e == 100) std::cout << atomic_nearest_electron_list[e][0] << std::endl;
 }
 
-void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                        double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
+void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+                          double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
 
     double x_distance;
     double y_distance;
@@ -382,40 +378,40 @@ void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force
     double x_force, y_force, z_force, force,  phi,theta, PE = 0;
     int array_index_e;
 
-    int size = atomic_nearest_electron_list[a][0];
+    int size = atomic_nearest_electron_list[e][0];
  //   if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
 
     int count = 0;
-    for (int e = 1; e < size; e++) {
+    for (int a = 1; a < size; a++) {
        // if(atomic_nearest_electron_list[a][e] < 0) std::cout << a << ", " << e << std::endl;
-        array_index_e = 3*atomic_nearest_electron_list[a][e];
+        array_index_e = atomic_nearest_electron_list[e][a];
         
-        x_distance = new_atom_position[array_index] - new_electron_position[array_index_e];
-        y_distance = new_atom_position[array_index + 1] - new_electron_position[array_index_e + 1];
-        z_distance = new_atom_position[array_index + 2] - new_electron_position[array_index_e + 2]; 
+        x_distance = new_electron_position[array_index]     - new_atom_position[array_index_e];
+        y_distance = new_electron_position[array_index + 1] - new_atom_position[array_index_e + 1];
+        z_distance = new_electron_position[array_index + 2] - new_atom_position[array_index_e + 2];
       
-         if (x_distance < (-30.0))     x_distance += 40.0;
+         if (x_distance < -30.0)     x_distance += 40.0;
         else if (x_distance > 30.0) x_distance -= 40.0;
-        if (y_distance < (-30.0))     y_distance += 40.0;
+        if (y_distance < -30.0)     y_distance += 40.0;
         else if (y_distance > 30.0) y_distance -= 40.0;
-        if (z_distance <  (-30.0))    z_distance += 40.0;
+        if (z_distance <  -30.0)    z_distance += 40.0;
         else if (z_distance > 30.0) z_distance -= 40.0;  
 
-        length = ((x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance)); //Angstroms
-          if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] << ", " << new_atom_position[array_index+1] << ", " << new_atom_position[array_index+2] << ", " << sqrtl(length) << std::endl;
-        if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_electron_position[array_index_e] << ", " << new_electron_position[array_index_e+1] << ", " << new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
-         if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] - new_electron_position[array_index_e] << ", " << new_atom_position[array_index+1] - new_electron_position[array_index_e+1]<< ", " << new_atom_position[array_index+2] - new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
-         //if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) << ", " << (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) << ", " << (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
-       // if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) + (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) + (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
-       // if(a == 100 ) std::cout << array_index_e / 3 << ", " << sqrtl(((new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e])) + ((new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]))+ ((new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]))) << ", " << sqrtl(length) << std::endl;
-        if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance << "\n" << std::endl;
-        if (length > 144) continue;
+        length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
+      //     if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] << ", " << new_atom_position[array_index+1] << ", " << new_atom_position[array_index+2] << ", " << sqrtl(length) << std::endl;
+      //   if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_electron_position[array_index_e] << ", " << new_electron_position[array_index_e+1] << ", " << new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
+      //    if(a == 100 ) std::cout << array_index_e / 3 << ", " << new_atom_position[array_index] - new_electron_position[array_index_e] << ", " << new_atom_position[array_index+1] - new_electron_position[array_index_e+1]<< ", " << new_atom_position[array_index+2] - new_electron_position[array_index_e+2] << ", " << sqrtl(length) << std::endl;
+      //    //if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) << ", " << (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) << ", " << (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
+      //  // if(a == 100 ) std::cout << array_index_e / 3 << ", " << (new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e]) + (new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]) + (new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]) << ", " << sqrtl(length) << std::endl;
+      //  // if(a == 100 ) std::cout << array_index_e / 3 << ", " << sqrtl(((new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e])) + ((new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]))+ ((new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]))) << ", " << sqrtl(length) << std::endl;
+      //   if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance << "\n" << std::endl;
+        if (length > e_a_coulomb_cutoff) continue;
         count++;
         
         length = sqrtl(length);
        // if(a==100) std::cout << array_index_e / 3 << ", " << length << std::endl;
 
-        if(length < 0.11) length = 0.11;
+     //   if(length < 0.11) length = 0.11;
         if(mean_radius[e] > length) {
             #pragma omp critical
             mean_radius[e] = length;
@@ -428,137 +424,130 @@ void neighbor_e_a_coulomb(const int a, const int& array_index, double& e_x_force
             if (excitation_energy > 0 && scattering_velocity > 0) {
 
                 double vel = sqrtl((electron_velocity[array_index_e]*electron_velocity[array_index_e]) + (electron_velocity[array_index_e+1]*electron_velocity[array_index_e+1]) + (electron_velocity[array_index_e+2]*electron_velocity[array_index_e+2]));
-                double theta = atanl(electron_velocity[array_index_e+1] / electron_velocity[array_index_e]);
-                double phi = acosl(electron_velocity[array_index_e+2] / vel);
+                double theta = atan(electron_velocity[array_index_e+1] / electron_velocity[array_index_e]);
+                double phi = acos(electron_velocity[array_index_e+2] / vel);
                 if (electron_velocity[array_index_e] < 0) theta += M_PI;
                 #pragma omp critical
                 {
-                electron_velocity[array_index_e]   = scattering_velocity * cosl(theta)*sinl(phi);
-                electron_velocity[array_index_e+1] = scattering_velocity * sinl(theta)*sinl(phi);
-                electron_velocity[array_index_e+2] = scattering_velocity * cosl(phi);
+                electron_velocity[array_index_e]   = scattering_velocity * cos(theta)*sin(phi);
+                electron_velocity[array_index_e+1] = scattering_velocity * sin(theta)*sin(phi);
+                electron_velocity[array_index_e+2] = scattering_velocity * cos(phi);
                 }
 
                 vel = sqrtl((atom_velocity[array_index_e]*atom_velocity[array_index_e]) + (atom_velocity[array_index_e+1]*atom_velocity[array_index_e+1]) + (atom_velocity[array_index_e+2]*atom_velocity[array_index_e+2]));
-                theta = atanl(atom_velocity[array_index_e+1] / atom_velocity[array_index_e]);
-                phi = acosl(atom_velocity[array_index_e+2] / vel);
+                theta = atan(atom_velocity[array_index_e+1] / atom_velocity[array_index_e]);
+                phi = acos(atom_velocity[array_index_e+2] / vel);
                 if(atom_velocity[array_index_e] < 0) theta += M_PI;
                 scattering_velocity += sqrtl(2*E_f_A/constants::m_e_r);
                 #pragma omp critical
                 {
                 chosen_electron++;
-                atom_velocity[array_index_e]   = scattering_velocity * cosl(theta)*sinl(phi);
-                atom_velocity[array_index_e+1] = scattering_velocity * sinl(theta)*sinl(phi);
-                atom_velocity[array_index_e+2] = scattering_velocity * cosl(phi);
+                atom_velocity[array_index_e]   = scattering_velocity * cos(theta)*sin(phi);
+                atom_velocity[array_index_e+1] = scattering_velocity * sin(theta)*sin(phi);
+                atom_velocity[array_index_e+2] = scattering_velocity * cos(phi);
                 }
             }
              
         } */
 
-        force = -1.06*(1 - (27*exp(-5*length)*(5*length + 1))) / (length * length);
-                        //q*k*k * exp(-15(A**-1) * length (A));
-        PE += 1.06*((27*expl(-5*length) / length) - (1 / length));
+        force = -1*(1/(length * length) - 8*150*exp(-8*length));
+          //q*k*k * exp(-15(A**-1) * length (A));
+          //  std::cout << force << std::endl;
+        PE += 150*exp(-8*length) - (1 / length);
         
-        phi   = acosl(z_distance / length);
-        theta = atanl(y_distance / x_distance);
+        phi   = acos(z_distance / length);
+        theta = atan(y_distance / x_distance);
         if (x_distance < 0) theta += M_PI;
 
-        x_force = force * cosl(theta)*sinl(phi); 
-        y_force = force * sinl(theta)*sinl(phi);
-        z_force = force * cosl(phi);
+        x_force = force * cos(theta)*sin(phi); 
+        y_force = force * sin(theta)*sin(phi);
+        z_force = force * cos(phi);
 
-        a_x_force += x_force * combined_mass;
-        a_y_force += y_force * combined_mass;
-        a_z_force += z_force * combined_mass;
+        a_x_force -= x_force * combined_mass;
+        a_y_force -= y_force * combined_mass;
+        a_z_force -= z_force * combined_mass;
 
-        e_x_force -= x_force * mu_r;
-        e_y_force -= y_force * mu_r;
-        e_z_force -= z_force * mu_r;
-       /* a_x_force += force * cosl(theta)*sinl(phi);
-        a_y_force += force * sinl(theta)*sinl(phi);
-        a_z_force += force * cosl(phi);
+        e_x_force += x_force * mu_r;
+        e_y_force += y_force * mu_r;
+        e_z_force += z_force * mu_r;
+       /* a_x_force += force * cos(theta)*sin(phi);
+        a_y_force += force * sin(theta)*sin(phi);
+        a_z_force += force * cos(phi);
 
-        e_x_force += -1*force * cosl(theta)*sinl(phi);
-        e_y_force += -1*force * sinl(theta)*sinl(phi);
-        e_z_force += -1*force * cosl(phi); */
+        e_x_force += -1*force * cos(theta)*sin(phi);
+        e_y_force += -1*force * sin(theta)*sin(phi);
+        e_z_force += -1*force * cos(phi); */
     }
     EPE += PE/2;
     LPE += PE/2;
-    if(a == 100) std::cout << count << std::endl;
+   // if(e == 100) std::cout << count << std::endl;
 }
 
 void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                double& EPE) {
+                 double& EPE) {
     
     int array_index_i;
     double x_distance,y_distance,z_distance,length, force, theta,phi, PE = 0;
     int neighbor_count = 1;
-
-        x_distance = new_electron_position[array_index];
-        y_distance = new_electron_position[array_index+1];
-        z_distance = new_electron_position[array_index+2];
 
         for (int i = 0; i < conduction_electrons; i++) {
             if (i == e) continue; //no self repulsion
            
             array_index_i = 3*i;
 
-            x_distance -= new_electron_position[array_index_i];
-            y_distance -= new_electron_position[array_index_i + 1];
-            z_distance -= new_electron_position[array_index_i + 2]; 
+            x_distance = new_electron_position[array_index]   - new_electron_position[array_index_i];
+            y_distance = new_electron_position[array_index+1] - new_electron_position[array_index_i + 1];
+            z_distance = new_electron_position[array_index+2] - new_electron_position[array_index_i + 2]; 
 
-            if (x_distance < -30)     x_distance = x_distance + 40;
-            else if (x_distance > 30) x_distance = x_distance - 40;
-            if (y_distance < -30)     y_distance = y_distance + 40;
-            else if (y_distance > 30) y_distance = y_distance - 40;
-            if (z_distance <  -30)    z_distance = z_distance + 40;
-            else if (z_distance > 30) z_distance = z_distance - 40;
+            if (x_distance < -30.0)     x_distance = x_distance + 40;
+            else if (x_distance > 30.0) x_distance = x_distance - 40;
+            if (y_distance < -30.0)     y_distance = y_distance + 40;
+            else if (y_distance > 30.0) y_distance = y_distance - 40;
+            if (z_distance <  -30.0)    z_distance = z_distance + 40;
+            else if (z_distance > 30.0) z_distance = z_distance - 40;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
             
-          //  if (length > e_e_neighbor_cutoff) continue;
+            if (length > e_e_neighbor_cutoff) continue;
 
-        //    electron_nearest_electron_list[e][neighbor_count] = array_index_i;
-      //      neighbor_count++;
+            electron_nearest_electron_list[e][neighbor_count] = array_index_i;
+            neighbor_count++;
             
             if (length > e_e_coulomb_cutoff) continue; 
 
             force = 1 / length;
             length = sqrtl(length);
-            if(length < 0.11) length = 0.11;
+          //  if(length < 0.11) length = 0.11;
             PE += force * length;
             
-            phi   = acosl(z_distance / length);
-            theta = atanl(y_distance / x_distance);
+            phi   = acos(z_distance / length);
+            theta = atan(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
-            e_x_force += force * cosl(theta)*sinl(phi) / constants::m_e_r;
-            e_y_force += force * sinl(theta)*sinl(phi)/ constants::m_e_r;
-            e_z_force += force * cosl(phi) / constants::m_e_r;
+            e_x_force += force * cos(theta)*sin(phi) / constants::m_e_r;
+            e_y_force += force * sin(theta)*sin(phi)/ constants::m_e_r;
+            e_z_force += force * cos(phi) / constants::m_e_r;
 
         }
-  //  electron_nearest_electron_list[e][0] = neighbor_count;
+    electron_nearest_electron_list[e][0] = neighbor_count;
     EPE += PE/2;
    // if(e == 100) std::cout << neighbor_count << std::endl;
 }
 
 void neighbor_e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                                double& EPE) {
+                          double& EPE) {
     
     double x_distance,y_distance,z_distance, length, force, theta,phi, PE = 0;
     int size = electron_nearest_electron_list[e][0]; //.size();
     int array_index_i;
 
-    x_distance = new_electron_position[array_index];
-    y_distance = new_electron_position[array_index+1];
-    z_distance = new_electron_position[array_index+2];
-
     for (int i=1; i < size; i++) {
         
         array_index_i = electron_nearest_electron_list[e][i];
 
-        x_distance -= new_electron_position[array_index_i]; //don't get caching but cut down iterations by large margin
-        y_distance -= new_electron_position[array_index_i + 1];
-        z_distance -= new_electron_position[array_index_i + 2];
+        x_distance = new_electron_position[array_index]   - new_electron_position[array_index_i];
+        y_distance = new_electron_position[array_index+1] - new_electron_position[array_index_i + 1];
+        z_distance = new_electron_position[array_index+2] - new_electron_position[array_index_i + 2]; 
     
         if (x_distance < -30)     x_distance = x_distance + 40;
         else if (x_distance > 30) x_distance = x_distance - 40;
@@ -572,17 +561,16 @@ void neighbor_e_e_coulomb(const int e, const int array_index, double& e_x_force,
 
         force = 1 / length;
         length = sqrtl(length);
-        if(length < 0.11) length = 0.11;
+    //    if(length < 0.11) length = 0.11;
         PE += force * length;
 
-        phi   = acosl(z_distance / length);
-        theta = atanl(y_distance / x_distance);
+        phi   = acos(z_distance / length);
+        theta = atan(y_distance / x_distance);
         if (x_distance < 0) theta += M_PI;
 
-        e_x_force += force * cosl(theta)*sinl(phi) / constants::m_e_r;
-            e_y_force += force * sinl(theta)*sinl(phi)/ constants::m_e_r;
-            e_z_force += force * cosl(phi) / constants::m_e_r;
-
+        e_x_force += force * cos(theta)*sin(phi) / constants::m_e_r;
+        e_y_force += force * sin(theta)*sin(phi)/ constants::m_e_r;
+        e_z_force += force * cos(phi) / constants::m_e_r;
     }
     EPE += PE/2;
   //  if(e == 100) std::cout << size << std::endl;
@@ -592,39 +580,35 @@ void a_a_coulomb(const int a, const int array_index, \
                         double& a_x_force, double& a_y_force, double& a_z_force, double& LPE) {
    
     double x_distance,y_distance,z_distance,length, force, theta,phi, PE = 0;
+    int array_index_i;
+    int size = atomic_nearest_atom_list[a][0];
  //   int neighbor_count = 1;
 
-        x_distance = new_atom_position[array_index];
-        y_distance = new_atom_position[array_index+1];
-        z_distance = new_atom_position[array_index+2];
-      
-               // if (err::check)  std::cout << "Calculating atomic interactions" << std::endl;
+        for (int i = 1; i < size; i++) {
+            //if (i == a) continue; //no self repulsion
 
-       // neighbor_count = 1;
+            array_index_i = atomic_nearest_atom_list[a][i];
 
-        for (int i = 0; i < lattice_atoms; i++) {
-            if (i == a) continue; //no self repulsion
-
-            x_distance -= new_atom_position[array_index];
-            y_distance -= new_atom_position[array_index + 1];
-            z_distance -= new_atom_position[array_index + 2];
+            x_distance = new_atom_position[array_index]   - new_atom_position[array_index_i];
+            y_distance = new_atom_position[array_index+1] - new_atom_position[array_index_i + 1];
+            z_distance = new_atom_position[array_index+2] - new_atom_position[array_index_i + 2];
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
            
-            if(length > 6) continue;
+            if(length > 4.2) continue;
 
             length = sqrt(length);
             force = -2000*(length - 2);
-            PE = 1000*(length - 2)*(length - 2);
+            PE += 1000*(length - 2)*(length - 2);
         //   if(e == 0) std::cout << force << ", " << length <<  std::endl;
  
-            phi   = acosl(z_distance / length);
-            theta = atanl(y_distance / x_distance);
+            phi   = acos(z_distance / length);
+            theta = atan(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
-            new_atom_force[array_index]     += force * cos(theta)*sin(phi) / atomic_mass;
-            new_atom_force[array_index + 1] += force * sin(theta)*sin(phi) / atomic_mass;
-            new_atom_force[array_index + 2] += force * cos(phi) / atomic_mass;
+            a_x_force += force * cos(theta)*sin(phi) / atomic_mass;
+            a_y_force += force * sin(theta)*sin(phi) / atomic_mass;
+            a_z_force += force * cos(phi) / atomic_mass;
         }
    // atomic_nearest_atom_list[a][0] = neighbor_count;
     LPE += PE/2;
@@ -638,18 +622,14 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
     double x_distance,y_distance,z_distance,length, force, theta,phi, PE = 0;
     double size = atomic_nearest_atom_list[a][0];
 
-        x_distance = new_atom_position[array_index];
-        y_distance = new_atom_position[array_index+1];
-        z_distance = new_atom_position[array_index+2];
-
         for (int i = 1; i < size; i++) {
            // if (i == a) continue; //no self repulsion
            
             array_index_i = atomic_nearest_atom_list[a][i];
 
-            x_distance -= new_atom_position[array_index_i];
-            y_distance -= new_atom_position[array_index_i + 1];
-            z_distance -= new_atom_position[array_index_i + 2]; 
+            x_distance = new_atom_position[array_index]   - new_atom_position[array_index_i];
+            y_distance = new_atom_position[array_index+1] - new_atom_position[array_index_i + 1];
+            z_distance = new_atom_position[array_index+2] - new_atom_position[array_index_i + 2];
 
             if (x_distance < -30)     x_distance = x_distance + 40;
             else if (x_distance > 30) x_distance = x_distance - 40;
@@ -663,16 +643,16 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
             if (length > a_a_coulomb_cutoff) continue; 
 
             length = sqrtl(length);
-            force = 4*(-2*exp(4 - 2*length) + 2*exp(length + 2));
-            PE = 4*(exp(4 - 2*length) - (2*exp(2 -length)) + 1);
+            force = -2000*(length - 2);
+            PE += 1000*(length - 2)*(length - 2);
             
-            phi   = acosl(z_distance / length);
-            theta = atanl(y_distance / x_distance);
+            phi   = acos(z_distance / length);
+            theta = atan(y_distance / x_distance);
             if (x_distance < 0) theta += M_PI;
 
-            a_x_force += force * cosl(theta)*sinl(phi) / atomic_mass;
-            a_y_force += force * sinl(theta)*sinl(phi) / atomic_mass;
-            a_z_force += force * cosl(phi) / atomic_mass;
+            a_x_force += force * cos(theta)*sin(phi) / atomic_mass;
+            a_y_force += force * sin(theta)*sin(phi) / atomic_mass;
+            a_z_force += force * cos(phi) / atomic_mass;
 
         }
     LPE += PE/2;
