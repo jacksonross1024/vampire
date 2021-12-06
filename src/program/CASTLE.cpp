@@ -46,7 +46,7 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-         omp_set_dynamic(1);
+         omp_set_dynamic(0);
          omp_set_num_threads(8);
         // std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
@@ -376,7 +376,7 @@ void initialize_lattice() {
     n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
     E_f = constants::h * constants::h * powl(3 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
     E_f_A = E_f*1e20; //Angstroms
-    mu_f = 5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
+    mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
     v_f = sqrt(2 * E_f / constants::m_e); //meters
     
     lattice_output.open("CASTLE/CASTLE_Lattice.xyz");
@@ -405,7 +405,7 @@ void initialize_lattice() {
 
     for (int a = 0; a < lattice_atoms; ++a) {  
         atomic_nearest_atom_list[a].resize(40,-1);
-        atomic_nearest_electron_list[a].resize(0.4*conduction_electrons,-1);
+        atomic_nearest_electron_list[a].resize(0.5*conduction_electrons,-1);
         array_index = 3*a;
 
         atom_anchor_position[array_index]     = 1 + atomic_size * (a % 20);// + atom_position_distrib(gen); //lattice creation awaiting future development
@@ -460,7 +460,7 @@ void initialize_electrons() {
    
     n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
     E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
-    mu_f = 5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
+    mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
     v_f = sqrt(2 * E_f / constants::m_e); //meters
 
     TEPE = 0;
@@ -471,10 +471,10 @@ void initialize_electrons() {
     MEKE = 0;
     MLE = 0;
 
-    e_a_neighbor_cutoff = 256;
-    e_e_neighbor_cutoff = 256;
-    e_a_coulomb_cutoff = 144;
-    e_e_coulomb_cutoff = 144;
+    e_a_neighbor_cutoff = 169;
+    e_e_neighbor_cutoff = 169;
+    e_a_coulomb_cutoff = 100;
+    e_e_coulomb_cutoff = 100;
     // a_a_neighbor_cutoff = 6;
     // a_a_coulomb_cutoff = 6;
    std::cout << true << false << std::endl;
@@ -486,7 +486,7 @@ void initialize_electrons() {
     if (err::check) std::cout << "Prepare to set position: " << std::endl;
     for (int e = 0; e < conduction_electrons; e++) {
 
-        electron_nearest_electron_list[e].resize(conduction_electrons * 0.4, -1);
+        electron_nearest_electron_list[e].resize(conduction_electrons * 0.5, -1);
         electron_nearest_atom_list[e].resize(conduction_electrons*0.1, 0);
         array_index = 3*e;
 
@@ -714,9 +714,9 @@ void initialize_electron_interactions() {
             if (i == e) continue; //no self repulsion
 
             array_index_i = 3*i;
-            x_distance = x - electron_position[array_index_i];
-            y_distance = y - electron_position[array_index_i + 1];
-            z_distance = z - electron_position[array_index_i + 2];
+            x_distance = electron_position[array_index] - electron_position[array_index_i];
+            y_distance = electron_position[array_index + 1] - electron_position[array_index_i + 1];
+            z_distance = electron_position[array_index + 2] - electron_position[array_index_i + 2];
 
             
             if (x_distance < -30)     x_distance = x_distance + 40;
@@ -879,9 +879,9 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
 
             length = sqrt(length);
             
-            if(length < 0.11) length = 0.11;
+           // if(length < 0.11) length = 0.11;
 
-            if(length < 3.5) {
+            if(length < 2.1) {
                 electron_nearest_atom_list[e][nearest_atom_count] = a;
                 nearest_atom_count++;
              //   electron_nearest_atom_list[e][nearest_electron_count*2 - 1] = a;
@@ -948,7 +948,7 @@ void initialize_velocities() {
         phi = M_PI * Phi_Vel_distrib(gen);
 
         vel = 0;
-        if (electron_potential[e]*constants::K_A < E_f_A) vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
+        vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
         if (vel > 4e6) vel = 3.4e6 * vel_distrib(gen);
         if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
         electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
@@ -1228,7 +1228,7 @@ void output_data() {
    
     electron_position_output_down.close();
     electron_velocity_output.close();
-   // atomic_phonon_output.close();
+    atomic_phonon_output.close();
   
     double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
     double nu = j / (n_f * constants::e); //drift velocity
