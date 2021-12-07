@@ -92,7 +92,7 @@ obj/random/mtrand.o \
 obj/random/random.o \
 obj/simulate/energy.o \
 obj/simulate/fields.o \
-obj/simulate/Fermi-Gas.o \
+obj/simulate/Fermi-gas.o \
 obj/simulate/LLB.o \
 obj/simulate/LLGHeun.o \
 obj/simulate/LLGMidpoint.o \

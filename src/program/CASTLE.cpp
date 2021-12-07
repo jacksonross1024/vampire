@@ -46,7 +46,7 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-         omp_set_dynamic(0);
+         omp_set_dynamic(1);
          omp_set_num_threads(8);
         // std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
@@ -298,10 +298,11 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 100; //sim::CASTLE_output_rate;
-    dt = 5e-4; //reducd seconds (e10 scale factor), femptoSeconds
+    CASTLE_output_rate = sim::partial_time;
+    dt = mp::dt_SI * 1e15;//-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
+    std::cout << dt << ", " << CASTLE_output_rate << std::endl;
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
@@ -405,7 +406,7 @@ void initialize_lattice() {
 
     for (int a = 0; a < lattice_atoms; ++a) {  
         atomic_nearest_atom_list[a].resize(40,-1);
-        atomic_nearest_electron_list[a].resize(0.5*conduction_electrons,-1);
+        atomic_nearest_electron_list[a].resize(0.4*conduction_electrons,-1);
         array_index = 3*a;
 
         atom_anchor_position[array_index]     = 1 + atomic_size * (a % 20);// + atom_position_distrib(gen); //lattice creation awaiting future development
@@ -471,10 +472,10 @@ void initialize_electrons() {
     MEKE = 0;
     MLE = 0;
 
-    e_a_neighbor_cutoff = 169;
-    e_e_neighbor_cutoff = 169;
-    e_a_coulomb_cutoff = 100;
-    e_e_coulomb_cutoff = 100;
+    e_a_neighbor_cutoff = 100;
+    e_e_neighbor_cutoff = 100;
+    e_a_coulomb_cutoff = 36;
+    e_e_coulomb_cutoff = 36;
     // a_a_neighbor_cutoff = 6;
     // a_a_coulomb_cutoff = 6;
    std::cout << true << false << std::endl;
@@ -486,7 +487,7 @@ void initialize_electrons() {
     if (err::check) std::cout << "Prepare to set position: " << std::endl;
     for (int e = 0; e < conduction_electrons; e++) {
 
-        electron_nearest_electron_list[e].resize(conduction_electrons * 0.5, -1);
+        electron_nearest_electron_list[e].resize(conduction_electrons * 0.4, -1);
         electron_nearest_atom_list[e].resize(conduction_electrons*0.1, 0);
         array_index = 3*e;
 
