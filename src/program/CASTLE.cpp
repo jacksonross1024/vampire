@@ -298,8 +298,8 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
-    CASTLE_output_rate = 10; //sim::CASTLE_output_rate;
-    dt = 1e-4; //reducd seconds (e10 scale factor), femptoSeconds
+    CASTLE_output_rate = sim::partial_time; //sim::CASTLE_output_rate;
+    dt = mp::dt_SI*1e16;//-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
     x_flux = 0;
@@ -470,10 +470,10 @@ void initialize_electrons() {
     MLKE = 0;
     MLPE = 0;
 
-    e_a_neighbor_cutoff = 256;
-    e_e_neighbor_cutoff = 256;
-    e_a_coulomb_cutoff = 144;
-    e_e_coulomb_cutoff = 144;
+    e_a_neighbor_cutoff = 100;
+    e_e_neighbor_cutoff = 100;
+    e_a_coulomb_cutoff = 36;
+    e_e_coulomb_cutoff = 36;
     a_a_neighbor_cutoff = 6;
     a_a_coulomb_cutoff = 6;
    
