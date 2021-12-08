@@ -242,15 +242,15 @@ void update_velocity(int array_index, double& EKE) {
             z_vel = vel*cos(phi);
         } */
         if(!equilibrium_step) {
-            double x = new_electron_position[array_index];
-            double y = new_electron_position[array_index_y];
-            double z = new_electron_position[array_index_z];
-            if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22) && current_time_step != 120000) {
-                x_vel += x_vel * 333.333333333* exp(-1*(current_time_step - 120000)*(current_time_step - 120000));
-                y_vel += y_vel * 333.333333333* exp(-1*(current_time_step - 120000)*(current_time_step - 120000));
-                z_vel += z_vel * 333.333333333* exp(-1*(current_time_step - 120000)*(current_time_step - 120000));
-            }
+        double x = new_electron_position[array_index];
+        double y = new_electron_position[array_index_y];
+        double z = new_electron_position[array_index_z];
+        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22) && current_time_step < sim::equilibration_time+40000) {
+            x_vel += x_vel * 133.333333333 * (current_time_step / sim::equilibration_time+40000 );
+            y_vel += y_vel * 133.333333333* (current_time_step / sim::equilibration_time+40000 );
+            z_vel += z_vel * 133.333333333* (current_time_step / sim::equilibration_time+40000 );
         }
+    }
         
         new_electron_velocity[array_index]   = x_vel;
         new_electron_velocity[array_index_y] = y_vel;
@@ -506,7 +506,7 @@ std::srand(std::time(nullptr));
                 double excitation_energy   = excitation_constant;
                 if(abs(excitation_energy)) {
                    //  std::cout << excitation_energy << std::endl;
-                    if(abs(excitation_constant/(mu_f)) > 1) excitation_energy = mu_f; 
+                    excitation_energy = mu_f * abs(floor(excitation_constant / E_f_A))*abs(floor(excitation_constant / E_f_A)); 
                     scattering_velocity = sqrt(scattering_velocity) - (sqrt(2*excitation_energy/constants::m_e_r));
                     if(excitation_constant < 0) {
                         scattering_velocity += 2*sqrt(excitation_energy*2/constants::m_e_r);
@@ -529,7 +529,7 @@ std::srand(std::time(nullptr));
                         #pragma omp critical
                         {
                         chosen_electron++;
-                        new_atom_potential[a] += excitation_energy;
+                        new_atom_potential[array_index_a/3] += excitation_energy;
                         }
                     }
                 }

@@ -483,7 +483,7 @@ void initialize_electrons() {
     int array_index = 0;
     electron_nearest_electron_list.resize(conduction_electrons);
     electron_nearest_atom_list.resize(conduction_electrons);
-    screening_depth *= radius_mod(gen);
+    
     if (err::check) std::cout << "Prepare to set position: " << std::endl;
     for (int e = 0; e < conduction_electrons; e++) {
 
@@ -493,7 +493,7 @@ void initialize_electrons() {
 
         theta = M_PI*Theta_pos_distrib(gen);
         phi = M_PI*Phi_pos_distrib(gen);
-
+        screening_depth =0.875* radius_mod(gen);
         //initialize and output electron posititons
         x_pos = atom_anchor_position[3*e]   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
         y_pos = atom_anchor_position[3*e+1] + sin(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Sets on radius of screening depth from nucleus
@@ -700,10 +700,6 @@ void initialize_electron_interactions() {
     
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
-
-        x = electron_position[array_index];
-        y = electron_position[array_index + 1];
-        z = electron_position[array_index + 2];
       
                 if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
 
@@ -715,7 +711,7 @@ void initialize_electron_interactions() {
             if (i == e) continue; //no self repulsion
 
             array_index_i = 3*i;
-            x_distance = electron_position[array_index] - electron_position[array_index_i];
+            x_distance = electron_position[array_index]     - electron_position[array_index_i];
             y_distance = electron_position[array_index + 1] - electron_position[array_index_i + 1];
             z_distance = electron_position[array_index + 2] - electron_position[array_index_i + 2];
 
@@ -735,7 +731,7 @@ void initialize_electron_interactions() {
             if (length > e_e_neighbor_cutoff) continue;
 
             long_PE += 1 / sqrt(length);
-            electron_nearest_electron_list[e][neighbor_count] = i;
+            electron_nearest_electron_list[e][neighbor_count] = array_index_i;
             neighbor_count++;
 
             if (length > e_e_coulomb_cutoff) continue;
@@ -808,18 +804,14 @@ void initialize_atomic_interactions() {
            // force = -2000*(length - 2);
            // PE = 1000*(length - 2)*(length - 2);
         //   if(e == 0) std::cout << force << ", " << length <<  std::endl;
-           
           //  atom_potential[e] += PE;
            // TLPE += PE/2;
- 
             //phi   = acos(z_distance / length);
            // theta = atanl(y_distance / x_distance);
-           // if (x_distance < 0) theta += M_PI;
-
+           // if (x_distance < 0) theta += M_PI
           //  atom_force[array_index]     += force * cos(theta)*sin(phi) / atomic_mass;
             //atom_force[array_index + 1] += force * sin(theta)*sin(phi) / atomic_mass;
             //atom_force[array_index + 2] += force * cos(phi) / atomic_mass;
-
             // if(e == 0) std::cout << e << ", " << force * cos(theta)*sin(phi) / atomic_mass << ", " << force * sin(theta)*sin(phi) / atomic_mass << ", " << force * cos(phi) / atomic_mass  << std::endl; // x superarray component
           //  if(e==0 ) std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index+1] << ", " << atom_force[array_index+2]  << std::endl; // x superarray component
 
@@ -847,9 +839,6 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
         //nearest_atom_count = 1;
         r_min = 1;
 
-        x = electron_position[array_index];
-        y = electron_position[array_index + 1];
-        z = electron_position[array_index + 2];
         double near_PE = 0;
     double long_PE = 0;
     double distant_PE = 0;
