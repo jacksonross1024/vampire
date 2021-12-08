@@ -159,10 +159,10 @@ void update_dynamics() {
     double e_x_force,e_y_force,e_z_force,EPE, EKE;
     double TEPE = 0;
     double TEKE = 0;
-    
+    TLE = 0;
 
-    #pragma omp parallel for private(array_index, e_x_force,e_y_force,e_z_force, EPE, EKE, TLE)\
-     schedule(static) reduction(+:TEPE,TEKE)
+    #pragma omp parallel for private(array_index, e_x_force,e_y_force,e_z_force, EPE, EKE)\
+     schedule(static) reduction(+:TEPE,TEKE, TLE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         e_x_force = 0;
@@ -170,7 +170,6 @@ void update_dynamics() {
         e_z_force = 0;
 
         EPE = 0;
-        TLE = 0;
         EKE = 0;
         
 

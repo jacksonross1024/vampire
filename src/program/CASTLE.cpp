@@ -360,7 +360,7 @@ void initialize_positions() {
 void initialize_lattice() {
     
     atomic_size = 2; // sim::atomic_size; //Angst diameter. 
-    screening_depth = 0.75; //sim::screening_depth; //Angstroms 
+    screening_depth = 0.875; //sim::screening_depth; //Angstroms 
     lattice_atoms = 20 * 20 * 20; //Better lattice creation will come from VAMPIRE in future
  
     lattice_height = 40; //A
@@ -943,14 +943,14 @@ void initialize_velocities() {
     TEKE = 0;
     // TLKE = 0;
     for(int e = 0; e < conduction_electrons; e++) {
-       if(e==1000) std::cout << electron_potential[e] << std::endl;
+      // if(e==1000) std::cout << electron_potential[e] << std::endl;
         array_index = 3*e;
         theta = M_PI * Theta_Vel_distrib(gen);
         phi = M_PI * Phi_Vel_distrib(gen);
 
         vel = 0;
-        vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
-        if (vel > 4e6) vel = 3.4e6 * vel_distrib(gen);
+        if(electron_potential[e]*constants::K_A < E_f_A) vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
+        //if (vel > 4e6) vel = 3.4e6 * vel_distrib(gen);
         if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
         electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
         electron_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
