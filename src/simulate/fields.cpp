@@ -36,13 +36,16 @@
 #include "material.hpp"
 #include "errors.hpp"
 #include "exchange.hpp"
+#include "environment.hpp"
 #include "dipole.hpp"
 #include "ltmp.hpp"
 #include "random.hpp"
 #include "sim.hpp"
 #include "spintorque.hpp"
+#include "spintransport.hpp"
 #include "stats.hpp"
 #include "vmpi.hpp"
+#include "../micromagnetic/internal.hpp"
 
 // sim module header
 #include "internal.hpp"
@@ -64,7 +67,9 @@ void calculate_fmr_fields(const int,const int);
 void calculate_lagrange_fields(const int,const int);
 void calculate_full_spin_fields(const int start_index,const int end_index);
 
-int calculate_spin_fields(const int start_index,const int end_index){
+namespace sim{
+
+void calculate_spin_fields(const int start_index,const int end_index){
 
 	///======================================================
 	/// 		Subroutine to calculate spin dependent fields
@@ -73,13 +78,14 @@ int calculate_spin_fields(const int start_index,const int end_index){
 	///======================================================
 
 	// check calling of routine if error checking is activated
-	if(err::check==true){std::cout << "calculate_spin_fields has been called" << std::endl;}
+	if(err::check==true) {std::cout << "calculate_spin_fields has been called" << std::endl;}
 
 	// Initialise Total Spin Fields to zero
 	fill (atoms::x_total_spin_field_array.begin()+start_index,atoms::x_total_spin_field_array.begin()+end_index,0.0);
 	fill (atoms::y_total_spin_field_array.begin()+start_index,atoms::y_total_spin_field_array.begin()+end_index,0.0);
 	fill (atoms::z_total_spin_field_array.begin()+start_index,atoms::z_total_spin_field_array.begin()+end_index,0.0);
 
+	
    //-----------------------------------------
 	// Calculate exchange Fields
    //-----------------------------------------
@@ -113,11 +119,12 @@ int calculate_spin_fields(const int start_index,const int end_index){
 	// Add spin torque fields
 	if(sim::internal::enable_spin_torque_fields == true) calculate_full_spin_fields(start_index,end_index);
 
-	return 0;
+	return;
 
 }
 
-int calculate_external_fields(const int start_index,const int end_index){
+
+void calculate_external_fields(const int start_index,const int end_index){
 	///======================================================
 	/// 		Subroutine to calculate external fields
 	///
@@ -135,12 +142,18 @@ int calculate_external_fields(const int start_index,const int end_index){
 	fill (atoms::y_total_external_field_array.begin()+start_index,atoms::y_total_external_field_array.begin()+end_index,0.0);
 	fill (atoms::z_total_external_field_array.begin()+start_index,atoms::z_total_external_field_array.begin()+end_index,0.0);
 
+
+  //reset thermal field arrays
+	fill (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index,0.0);
+	fill (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index,0.0);
+	fill (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index,0.0);
+
 	if(sim::program==7) calculate_hamr_fields(start_index,end_index);
    else if(sim::program==13){
 
       // Local thermal Fields
-      ltmp::get_localised_thermal_fields(atoms::x_total_external_field_array,atoms::y_total_external_field_array,
-            atoms::z_total_external_field_array, start_index, end_index);
+      ltmp::get_localised_thermal_fields(atoms::thermal_x_field,atoms::thermal_y_field,
+            atoms::thermal_z_field, start_index, end_index);
 
       // Applied Fields
       if(sim::hamiltonian_simulation_flags[2]==1) calculate_applied_fields(start_index,end_index);
@@ -159,13 +172,17 @@ int calculate_external_fields(const int start_index,const int end_index){
    // Get updated spin torque fields
    st::get_spin_torque_fields(atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array, start_index, end_index);
 
+   // Get updated spin torque fields
+   spin_transport::calculate_field(start_index, end_index, atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array);
+
 	// FMR Fields only for fmr program
 	if(sim::enable_fmr) calculate_fmr_fields(start_index,end_index);
 
 	// Dipolar Fields
 	calculate_dipolar_fields(start_index,end_index);
 
-	return 0;
+	return;
+}
 }
 
 int calculate_applied_fields(const int start_index,const int end_index){
@@ -239,6 +256,24 @@ int calculate_applied_fields(const int start_index,const int end_index){
 		}
 	}
 
+	if(micromagnetic::internal::bias_magnets == true){
+				for(int atom=start_index;atom<end_index;atom++){
+					atoms::x_total_external_field_array[atom] += micromagnetic::atomistic_bias_field_x[atom];
+					atoms::y_total_external_field_array[atom] += micromagnetic::atomistic_bias_field_y[atom];
+					atoms::z_total_external_field_array[atom] += micromagnetic::atomistic_bias_field_z[atom];
+			//		std::cout << atom << '\t' << micromagnetic::atomistic_bias_field_x[atom] << '\t' << std::endl;
+				}
+	}
+	if(environment::enabled == true){
+		for(int atom=start_index;atom<end_index;atom++){
+			atoms::x_total_external_field_array[atom] += environment::atomistic_environment_field_x[atom];
+			atoms::y_total_external_field_array[atom] += environment::atomistic_environment_field_y[atom];
+			atoms::z_total_external_field_array[atom] += environment::atomistic_environment_field_z[atom];
+	//		std::cout << atom << '\t' << micromagnetic::atomistic_bias_field_x[atom] << '\t' << std::endl;
+		}
+	}
+
+
 	return 0;
 
 }
@@ -271,18 +306,24 @@ int calculate_thermal_fields(const int start_index,const int end_index){
       sigma_prefactor.push_back(sqrt_T*mp::material[mat].H_th_sigma);
    }
 
-   generate (atoms::x_total_external_field_array.begin()+start_index,atoms::x_total_external_field_array.begin()+end_index, mtrandom::gaussian);
-   generate (atoms::y_total_external_field_array.begin()+start_index,atoms::y_total_external_field_array.begin()+end_index, mtrandom::gaussian);
-   generate (atoms::z_total_external_field_array.begin()+start_index,atoms::z_total_external_field_array.begin()+end_index, mtrandom::gaussian);
+  //reset thermal field arrays
+	fill (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index,0.0);
+	fill (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index,0.0);
+	fill (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index,0.0);
 
+	
+	generate (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index, mtrandom::gaussian);
+  	generate (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index, mtrandom::gaussian);
+    generate (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index, mtrandom::gaussian);
+	
    for(int atom=start_index;atom<end_index;atom++){
 
       const int imaterial=atoms::type_array[atom];
       const double H_th_sigma = sigma_prefactor[imaterial];
 
-      atoms::x_total_external_field_array[atom] *= H_th_sigma;
-		atoms::y_total_external_field_array[atom] *= H_th_sigma;
-		atoms::z_total_external_field_array[atom] *= H_th_sigma;
+     	atoms::thermal_x_field[atom] *= H_th_sigma;
+		atoms::thermal_y_field[atom] *= H_th_sigma;
+		atoms::thermal_z_field[atom] *= H_th_sigma;
 	}
 
    return EXIT_SUCCESS;
@@ -340,10 +381,10 @@ void calculate_hamr_fields(const int start_index,const int end_index){
 	const double Hvecz=sim::H_vec[2];
 
 	// Add localised thermal field
-	generate (atoms::x_total_external_field_array.begin()+start_index,atoms::x_total_external_field_array.begin()+end_index, mtrandom::gaussian);
-	generate (atoms::y_total_external_field_array.begin()+start_index,atoms::y_total_external_field_array.begin()+end_index, mtrandom::gaussian);
-	generate (atoms::z_total_external_field_array.begin()+start_index,atoms::z_total_external_field_array.begin()+end_index, mtrandom::gaussian);
-
+	generate (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index, mtrandom::gaussian);
+  	generate (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index, mtrandom::gaussian);
+    generate (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index, mtrandom::gaussian);
+	
 	if(sim::head_laser_on){
 		for(int atom=start_index;atom<end_index;atom++){
 			const int imaterial=atoms::type_array[atom];
@@ -352,9 +393,9 @@ void calculate_hamr_fields(const int start_index,const int end_index){
 			const double r2 = (cx-px)*(cx-px)+(cy-py)*(cy-py);
 			const double sqrt_T = sqrt(sim::Tmin+DeltaT*exp(-r2/fwhm2));
 			const double H_th_sigma = sqrt_T*mp::material[imaterial].H_th_sigma;
-			atoms::x_total_external_field_array[atom] *= H_th_sigma; //*mtrandom::gaussian();
-			atoms::y_total_external_field_array[atom] *= H_th_sigma; //*mtrandom::gaussian();
-			atoms::z_total_external_field_array[atom] *= H_th_sigma; //*mtrandom::gaussian();
+			atoms::thermal_x_field[atom] *= H_th_sigma;
+			atoms::thermal_y_field[atom] *= H_th_sigma;
+			atoms::thermal_z_field[atom] *= H_th_sigma;
 		}
 
 		// Add localised applied field
@@ -380,10 +421,10 @@ void calculate_hamr_fields(const int start_index,const int end_index){
 		for(int atom=start_index;atom<end_index;atom++){
 			const int imaterial=atoms::type_array[atom];
 			const double H_th_sigma = sqrt_T*material_parameters::material[imaterial].H_th_sigma;
-			atoms::x_total_external_field_array[atom] *= H_th_sigma; //*mtrandom::gaussian();
-			atoms::y_total_external_field_array[atom] *= H_th_sigma; //*mtrandom::gaussian();
-			atoms::z_total_external_field_array[atom] *= H_th_sigma; //*mtrandom::gaussian();
-		}
+			atoms::thermal_x_field[atom] *= H_th_sigma;
+			atoms::thermal_y_field[atom] *= H_th_sigma;
+			atoms::thermal_z_field[atom] *= H_th_sigma;
+	}
 	}
 }
 
@@ -393,7 +434,7 @@ void calculate_fmr_fields(const int start_index,const int end_index){
 
 	// Calculate fmr constants
 	const double real_time = sim::time*mp::dt_SI;
-	const double omega = sim::fmr_field_frequency*1.e9; // Hz
+	const double omega = sim::fmr_field_frequency; // Hz
 	const double Hfmrx = sim::fmr_field_unit_vector[0];
 	const double Hfmry = sim::fmr_field_unit_vector[1];
 	const double Hfmrz = sim::fmr_field_unit_vector[2];
@@ -412,11 +453,12 @@ void calculate_fmr_fields(const int start_index,const int end_index){
 
 		// Loop over all materials
 		for(unsigned int mat=0;mat<mp::material.size();mat++){
-			const double Hsinwt_local=mp::material[mat].fmr_field_strength*sin(2.0*M_PI*real_time*mp::material[mat].fmr_field_frequency);
+			const double Hsinwt_local = mp::material[mat].fmr_field_strength * sin( 2.0 * M_PI * real_time * mp::material[mat].fmr_field_frequency );
 
 			H_fmr_local.push_back(Hsinwt_local*mp::material[mat].fmr_field_unit_vector[0]);
 			H_fmr_local.push_back(Hsinwt_local*mp::material[mat].fmr_field_unit_vector[1]);
 			H_fmr_local.push_back(Hsinwt_local*mp::material[mat].fmr_field_unit_vector[2]);
+
 		}
 
 		// Add local field AND global field
@@ -525,8 +567,8 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		const double strj = stt_rj[material];
 		const double stpj = stt_pj[material];
 
-		const double lambda = 0.0;
-		const double factor = 1.0 / (1.0 + lambda*(sx*stpx + sy*stpy + sz*stpz) );
+		const double stt_lambda = stt_asm[material];
+		const double factor = 1.0 / (1.0 + stt_lambda*(sx*stpx + sy*stpy + sz*stpz) );
 
 		// calculate field
 		hx += factor * ( (strj-alpha*stpj)*(sy*stpz - sz*stpy) + (stpj+alpha*strj)*stpx );
@@ -545,10 +587,13 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		const double sotrj = sot_rj[material];
 		const double sotpj = sot_pj[material];
 
+		const double sot_lambda = sot_asm[material];
+		const double sot_factor = 1.0 / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
+
 		// calculate field
-		hx += (sotrj-alpha*sotpj)*(sy*sotpz - sz*sotpy) + (sotpj+alpha*sotrj)*sotpx;
-		hy += (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy;
-		hz += (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz;
+		hx += sot_factor * ( (sotrj-alpha*sotpj)*(sy*sotpz - sz*sotpy) + (sotpj+alpha*sotrj)*sotpx );
+		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );
+		hz += sot_factor * ( (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz );
 
 		//----------------------------------------------------------------------------------
 		// save field to spin field array

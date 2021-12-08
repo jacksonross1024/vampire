@@ -36,6 +36,43 @@
 enum pump_functions_t {square=0, two_temperature, double_pump_two_temperature, double_pump_square};
 
 namespace sim{
+
+	//track parameters
+	extern double track_Ms;
+	extern double track_bit_width;
+	extern double track_bit_depth;
+	extern double track_bit_size;
+
+	extern double track_bit_gap;
+	extern double track_track_gap;
+
+	extern double cross_track_velocity;
+	extern double down_track_velocity;
+
+	extern int track_num_bits_per_track;
+	extern int track_num_tracks;
+	extern double LFA_scan_field_step;
+	extern double Ms;
+	extern double track_pos_x;
+	extern double track_pos_z;
+	extern bool LFA;
+
+	// distance of tracks from read head
+	extern double track_fly_height; // Angstroms
+
+	extern double initial_down_track_position;
+	extern double initial_cross_track_position;
+
+	extern bool track_ms_file;
+
+	extern std::vector < double > track_field_x;
+	extern std::vector < double > track_field_y;
+	extern std::vector < double > track_field_z;
+
+	// enumerated list for integrators
+	enum integrator_t{ llg_heun = 0, monte_carlo = 1, llg_midpoint = 2,
+							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5, velocity_verlet = 6};
+
 	extern std::ofstream mag_file;
 	extern uint64_t time;
 	extern uint64_t total_time;
@@ -117,7 +154,7 @@ namespace sim{
 	extern int system_simulation_flags;
 	extern int hamiltonian_simulation_flags[10];
 
-	extern int integrator;
+	extern integrator_t integrator; // variable to specify integrator
 	extern int program;
 
    // Local system variables
@@ -158,6 +195,8 @@ namespace sim{
 	extern int LLG_Midpoint_mpi();
 	extern int LLG_Midpoint_cuda();
 
+	//extra new Integrators
+	extern int velocity_verlet_step();
 
 	// Integrator initialisers
 	extern int LLGinit();
@@ -166,6 +205,9 @@ namespace sim{
 	extern double calculate_spin_energy(const int atom);
    extern double spin_applied_field_energy(const double, const double, const double);
    extern double spin_magnetostatic_energy(const int, const double, const double, const double);
+
+	void calculate_spin_fields(const int start_index,const int end_index);
+	void calculate_external_fields(const int start_index,const int end_index);
 
    // LaGrange multiplier variables
    extern double lagrange_lambda_x;
@@ -176,9 +218,73 @@ namespace sim{
    extern bool   lagrange_multiplier;
    extern void   update_lagrange_lambda();
 
-   // Monte Carlo statistics counters
+	// Monte Carlo statistics counters
    extern double mc_statistics_moves;
    extern double mc_statistics_reject;
+
+	extern int domain_wall_axis;
+	extern double domain_wall_position;
+	extern double domain_wall_discretisation;
+	extern double domain_wall_centre;
+	extern double domain_wall_width;
+	extern std::vector < bool > anti_PBC;
+
+	extern std::vector < double > domain_wall_second_vector_x;
+	extern std::vector < double > domain_wall_second_vector_y;
+	extern std::vector < double > domain_wall_second_vector_z;
+
+	extern bool calculate_program_convergence;
+	extern double convergence_criteria;
+	extern unsigned int convergence_check;
+	extern bool output_convergence_counter;
+
+
+
+	//Fermi Gas models
+
+	
+	extern bool calculate_fermi_distribution; //interface.cpp
+
+	extern std::vector<long double> fermi_distribution_array; //array holding distribution of occupation
+	extern double temperature_variable; //temperature from sim
+	extern long double beta_variable; // 1 / kBT
+	extern double fermi_size; 	// num_atoms
+
+	extern void initialize_fermi_gas(); //set up constants and variables from "material"
+	extern void fermi_calculations(double sim_temp); //call to set up and calculate the fermi function
+	extern long double fermi_distribution(long double eps); //function inside fermi_distribution(); calculates occupation for a given eps
+	extern long double eps_variable;	//eps variable corresponding to energy of states
+	extern long double mu;				// chemical potential. Constant for perfect gas
+
+	extern long double mu_0; 	//mu at T = 0
+	extern long double E_0; 	//E at T = 0
+	extern double P_0; 			//P at T = 0
+	extern double eta;
+	extern double fermi_electrons; //number of conduction electrons; perfect gas = num_atoms
+	extern double fermi_volume; //volume to calculate the electron density
+	extern double fermi_density;	// electrons / volume
+	extern double conduction_electrons; //conduting electron sper atom
+
+
+	extern bool fermi_function; //bool for calculating and outputing fermi distribution
+	extern bool fermi_energy; // bool for calculating and outputing fermi energy
+	extern bool fermi_Cv;
+	extern bool fermi_pressure;
+
+
+	extern std::string output_fermi_energy();
+	extern std::string output_fermi_Cv();
+	extern std::string output_fermi_pressure();
+	extern std::string output_relativistic_fermi_energy();
+	extern std::string output_relativistic_fermi_pressure();
+
+	
+	//------------------------------------------------------------------------
+   // getter functions to give access to internal sim variables
+   //------------------------------------------------------------------------
+   std::vector<double> get_stt_polarization_unit_vector(); // unit vector spin polarization
+   std::vector<double> get_stt_rj(); // array of stt relaxation constants
+   std::vector<double> get_stt_pj(); // array of stt precession constants
 
 }
 

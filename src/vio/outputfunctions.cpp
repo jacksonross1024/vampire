@@ -21,6 +21,8 @@
 #include "montecarlo.hpp"
 #include "stats.hpp"
 #include "sim.hpp"
+#include "micromagnetic.hpp"
+#include "spintransport.hpp"
 
 // vio module headers
 #include "internal.hpp"
@@ -29,7 +31,7 @@ namespace vout{
 	// Output Function 0
     std::string generic_output_int(std::string str,uint64_t i, bool header){
       std::ostringstream res;
-      vout::fixed_width_output result(res,vout::fw_size_int); 
+      vout::fixed_width_output result(res,vout::fw_size_int);
       if(header){
            result << str;
         }
@@ -40,7 +42,7 @@ namespace vout{
     }
     std::string generic_output_double(std::string str,double d, bool header){
       std::ostringstream res;
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
       if(header){
            result << str;
         }
@@ -72,7 +74,7 @@ namespace vout{
    // Output Function 4 - with Header
    void Hvec(std::ostream& stream, bool header){
       std::ostringstream res;
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
       if(header) result << "B_vector_x" << "B_vector_y" << "B_vector_z";
       else result << sim::H_vec[0] << sim::H_vec[1] << sim::H_vec[2];
       stream << result.str();
@@ -160,7 +162,7 @@ namespace vout{
       if(vout::custom_precision){
          res.precision(vout::precision);
       }
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
       if(header){
          result << "Tot_torque_x"
                 << "Tot_torque_y"
@@ -179,7 +181,7 @@ namespace vout{
       if(vout::custom_precision){
          res.precision(vout::precision);
       }
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
       if(header){
          result << "Mean_torque_x"
                 << "Mean_torque_y"
@@ -206,7 +208,7 @@ namespace vout{
    // Output Function 18 - with Header
    void material_constraint_phi(std::ostream& stream, bool header){
       std::ostringstream res;
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
       for(int mat=0;mat<mp::num_materials;mat++){
          if(header){
             result << "ID" + std::to_string(mat) + "_Con_phi";
@@ -221,7 +223,7 @@ namespace vout{
    // Output Function 19 - with Header
    void material_constraint_theta(std::ostream& stream, bool header){
       std::ostringstream res;
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
       for(int mat=0;mat<mp::num_materials;mat++){
          if(header){
             result << "ID" + std::to_string(mat) + "_Con_theta";
@@ -239,7 +241,7 @@ namespace vout{
       if(vout::custom_precision){
          res.precision(vout::precision);
       }
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
       for(int mat=0;mat<mp::num_materials;mat++){
          if(header){
             result << "ID" + std::to_string(mat) + "_Mean_tor_x"
@@ -255,15 +257,22 @@ namespace vout{
       stream << result.str();
    }
 
+
    // Output Function 21 - with Header
    void mean_system_susceptibility(std::ostream& stream, bool header){
       stream << stats::system_susceptibility.output_mean_susceptibility(sim::temperature,header);
    }
 
    // Output Function 999 - with Header
-   void standard_deviation(std::ostream& stream, bool header){
-      stream << stats::material_standard_deviation.output_standard_deviation(header);
+   void system_standard_deviation(std::ostream& stream, bool header){
+      //stream << stats::system_standard_deviation.output_standard_deviation(header);
    }
+
+   //Output Function 998 - with Header
+   void system_standard_deviation_length(std::ostream& stream, bool header) {
+      //stream << stats::system_standard_deviation.output_standard_deviation_length(header);
+   }
+   
    // Output Function 22
    void phonon_temperature(std::ostream& stream, bool header){
      stream << generic_output_double("Phonon_temp",sim::TTTp,header);
@@ -272,7 +281,7 @@ namespace vout{
    // Output Function 23 - with Header
    void material_temperature(std::ostream& stream, bool header){
       std::ostringstream res;
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
       for(int mat=0;mat<mp::material.size();mat++){
          if(header){
             result << "ID" + std::to_string(mat) + "_Temp";
@@ -287,7 +296,7 @@ namespace vout{
    // Output Function 24 - with Header
    void material_applied_field_strength(std::ostream& stream, bool header){
       std::ostringstream res;
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
       for(int mat=0;mat<mp::material.size();mat++){
          if(header){
             result << "ID" + std::to_string(mat) + "_H";
@@ -302,7 +311,7 @@ namespace vout{
    // Output Function 25 - with Header
    void material_fmr_field_strength(std::ostream& stream, bool header){
       std::ostringstream res;
-      vout::fixed_width_output result(res,vout::fw_size); 
+      vout::fixed_width_output result(res,vout::fw_size);
 
       const double real_time=sim::time*mp::dt_SI;
 
@@ -480,5 +489,107 @@ namespace vout{
    void material_mean_total_energy(std::ostream& stream, bool header){
       stream << stats::material_energy.output_mean_energy(stats::total,header);
    }
+   //Output Function 65
+	void system_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::system_spin_temperature.output_spin_temperature(header);
+		
+	}
+	//Output Function 66
+	void material_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::material_spin_temperature.output_spin_temperature(header);
+		
+	}
+	//Output Function 67
+	void mean_system_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::system_spin_temperature.output_mean_spin_temperature(header);
+	}
 
+	//Output Function 68
+	void mean_material_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::material_spin_temperature.output_mean_spin_temperature(header);
+	}
+
+   // Output Function 65
+   void resistance(std::ostream& stream, bool header){
+      stream << generic_output_double("resistance", spin_transport::total_resistance, header);
+   }
+
+   // Output Function 66
+   void current(std::ostream& stream, bool header){
+      stream << generic_output_double("current", spin_transport::total_current, header);
+   }
+
+   // Output Function 67
+   void domain_wall_position(std::ostream& stream, bool header){
+      stream << sim::domain_wall_centre;
+   }
+
+   // Output Function 68
+   void MRresistance(std::ostream& stream, bool header){
+      if(header){
+         stream << "MR" << "\t";
+      }
+      else{
+         stream << micromagnetic::MR_resistance << "\t";
+      }
+   }
+
+   // Output Function 69
+   void lfa_ms(std::ostream& stream, bool header){
+      if(header){
+         stream << "MS" << "\t";
+      }
+      else{
+         stream << sim::Ms << "\t";
+      }
+   }
+
+   // Output Function 70
+   void x_track_pos(std::ostream& stream, bool header){
+      if(header){
+         stream << "x-pos" << "\t";
+      }
+      else{
+         stream << sim::track_pos_x << "\t";
+      }
+   }
+
+   // Output Function 71
+   void z_track_pos(std::ostream& stream, bool header){
+      if(header){
+         stream << "z pos" << "\t";
+      }
+      else{
+         stream << sim::track_pos_z << "\t";
+      }
+   }
+
+   //Output function 72
+   void convergence_rate(std::ostream& stream, bool header) {
+    //  if (stats::program_convergence.did_converge()) {
+     //    std::cout << "program_convergence " << std::endl;
+         stream << stats::program_convergence.output_convergence_rate(header);
+      
+   }
+   // 73
+   void out_fermi_energy(std::ostream& stream) {
+      stream << sim::output_fermi_energy();
+   }
+   // 74
+      void out_fermi_pressure(std::ostream& stream) {
+      stream << sim::output_fermi_pressure();
+   }
+   // 75
+   void out_fermi_Cv(std::ostream& stream) {
+      stream << sim::output_fermi_Cv();
+   }
+   // 76
+   void out_rel_fermi_energy(std::ostream& stream) {
+      stream << sim::output_relativistic_fermi_energy();
+   }
+
+   // 77
+   void out_rel_fermi_pressure(std::ostream& stream) {
+      stream << sim::output_relativistic_fermi_pressure();
+   }
 }

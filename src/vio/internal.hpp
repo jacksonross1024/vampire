@@ -77,7 +77,8 @@ namespace vout{
    void material_constraint_phi(std::ostream& stream,bool header);
    void material_constraint_theta(std::ostream& stream,bool header);
    void material_mean_systorque(std::ostream& stream,bool header);
-   void standard_deviation(std::ostream& stream,bool header);
+   void system_standard_deviation(std::ostream& stream,bool header);
+   void system_standard_deviation_length(std::ostream& stream, bool header);
    void mean_system_susceptibility(std::ostream& stream,bool header);
    void phonon_temperature(std::ostream& stream,bool header);
    void material_temperature(std::ostream& stream,bool header);
@@ -88,6 +89,9 @@ namespace vout{
    void mean_total_energy(std::ostream& stream,bool header);
    void total_anisotropy_energy(std::ostream& stream,bool header);
    void mean_total_anisotropy_energy(std::ostream& stream,bool header);
+   void lfa_ms(std::ostream& stream,bool header);
+   void x_track_pos(std::ostream& stream,bool header);
+   void z_track_pos(std::ostream& stream,bool header);
    //void total_cubic_anisotropy_energy(std::ostream& stream,bool header);
    //void mean_total_cubic_anisotropy_energy(std::ostream& stream,bool header);
    //void total_surface_anisotropy_energy(std::ostream& stream,bool header);
@@ -113,15 +117,34 @@ namespace vout{
 
    void MPITimings(std::ostream& stream,bool header);
    void mean_system_specific_heat(std::ostream& stream,bool header);
-   void mean_material_specific_heat(std::ostream& stream,bool header);
+  // void mean_material_specific_heat(std::ostream& stream,bool header);
    void material_total_energy(std::ostream& stream,bool header);
    void material_mean_total_energy(std::ostream& stream,bool header);
+   void resistance(std::ostream& stream, bool header);
+   void current(std::ostream& stream, bool header);
+   void domain_wall_position(std::ostream& stream,bool header);
+   void MRresistance(std::ostream& stream, bool header);
+
+   void system_spin_temperature(std::ostream& stream, bool header);
+   void material_spin_temperature(std::ostream& stream, bool header);
+   void mean_system_spin_temperature(std::ostream& stream, bool header);
+   void mean_material_spin_temperature(std::ostream& stream, bool header);
+
+   void convergence_rate(std::ostream& stream, bool header);
+
+   void out_fermi_energy(std::ostream& stream);
+   void out_fermi_pressure(std::ostream& stream);
+   void out_fermi_Cv(std::ostream& stream);
+   void out_rel_fermi_energy(std::ostream& stream);
+   void out_rel_fermi_pressure(std::ostream& stream);
 
    //-------------------------------------------------------------------------
    // Funciton protypes for functions inside: datalog.cpp
    //-------------------------------------------------------------------------
    void data();
    void zLogTsInit(std::string tmp);
+
+
 
 }
 

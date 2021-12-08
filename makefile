@@ -5,21 +5,29 @@
 #===================================================================
 
 # Specify compiler for MPI compilation with openmpi
-export OMPI_CXX=g++ -std=c++0x
+export OMPI_CXX=g++ -std=c++11
 
 #export OMPI_CXX=icc
 #export OMPI_CXX=pathCC
 # Specify compiler for MPI compilation with mpich
 #export MPICH_CXX=g++
 #export MPICH_CXX=bgxlc++
+
+# Include the FFTW library by uncommenting the -DFFT (off by default)
+#export incFFT= -DFFT -DFFTW_OMP -fopenmp
+#export FFTLIBS= -lfftw3_omp -lfftw3
+
 # Compilers
 ICC=icc -std=c++0x -DCOMP='"Intel C++ Compiler"'
-GCC=g++ -std=c++0x -DCOMP='"GNU C++ Compiler"'
+GCC=g++ -std=c++0x -DCOMP='"GNU C++ Compiler"' -fopenmp
 LLVM=g++ -DCOMP='"LLVM C++ Compiler"'
 PCC=pathCC -DCOMP='"Pathscale C++ Compiler"'
 IBM=bgxlc++ -DCOMP='"IBM XLC++ Compiler"'
 MPICC=mpicxx -DMPICF
 MPIICC=mpiicpc -DMPICF
+
+LIBS= -lstdc++
+#-lm $(FFTLIBS) -L/opt/local/lib/
 
 CCC_CFLAGS=-I./hdr -I./src/qvoronoi -O0
 CCC_LDFLAGS=-I./hdr -I./src/qvoronoi -O0
@@ -28,7 +36,7 @@ export LANG=C
 export LC_ALL=C
 
 # LIBS
-LIBS=
+
 CUDALIBS=-L/usr/local/cuda/lib64/ -lcuda -lcudart
 
 # Debug Flags
@@ -40,11 +48,10 @@ GCC_DBLFLAGS= -g -pg -fprofile-arcs -ftest-coverage -lstdc++ -std=c++0x -fbounds
 
 PCC_DBCFLAGS= -O0 -I./hdr -I./src/qvoronoi
 PCC_DBLFLAGS= -O0 -I./hdr -I./src/qvoronoi
-
 IBM_DBCFLAGS= -O0 -Wall -pedantic -Wextra -I./hdr -I./src/qvoronoi
 IBM_DBLFLAGS= -O0 -Wall -pedantic -Wextra -I./hdr -I./src/qvoronoi
 
-LLVM_DBCFLAGS= -Wall -Wextra -O0 -pedantic -std=c++11 -Wno-long-long -I./hdr -I./src/qvoronoi
+LLVM_DBCFLAGS= -Wall -Wextra -O0 -pedantic -std=c++11 -Wno-long-long -I./hdr -I./src/qvoronoi 
 LLVM_DBLFLAGS= -Wall -Wextra -O0 -lstdc++ -I./hdr -I./src/qvoronoi
 
 # Performance Flags
@@ -53,11 +60,11 @@ ICC_LDFLAGS= -I./hdr -I./src/qvoronoi -axCORE-AVX2
 #ICC_CFLAGS= -O3 -xT -ipo -static -fno-alias -align -falign-functions -vec-report -I./hdr
 #ICC_LDFLAGS= -lstdc++ -ipo -I./hdr -xT -vec-report
 
-LLVM_CFLAGS= -Wall -pedantic -O3 -mtune=native -funroll-loops -I./hdr -I./src/qvoronoi
-LLVM_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi
+LLVM_CFLAGS= -Wall -pedantic -O3 -mtune=native -funroll-loops -I./hdr -I./src/qvoronoi 
+LLVM_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi 
 
-GCC_CFLAGS=-O3 -mtune=native -funroll-all-loops -fexpensive-optimizations -funroll-loops -I./hdr -I./src/qvoronoi -std=c++0x
-GCC_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi
+GCC_CFLAGS=-O3 -mtune=native -funroll-all-loops -fexpensive-optimizations -funroll-loops -I./hdr -I./src/qvoronoi -std=c++0x 
+GCC_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi 
 
 PCC_CFLAGS=-O2 -march=barcelona -ipa -I./hdr -I./src/qvoronoi
 PCC_LDFLAGS= -I./hdr -I./src/qvoronoi -O2 -march=barcelona -ipa
@@ -85,11 +92,13 @@ obj/random/mtrand.o \
 obj/random/random.o \
 obj/simulate/energy.o \
 obj/simulate/fields.o \
+obj/simulate/Fermi-gas.o \
 obj/simulate/LLB.o \
 obj/simulate/LLGHeun.o \
 obj/simulate/LLGMidpoint.o \
 obj/simulate/sim.o \
 obj/simulate/standard_programs.o \
+obj/simulate/velocity_verlet.o \
 obj/spintorque/data.o \
 obj/spintorque/field.o \
 obj/spintorque/initialise.o \
@@ -131,16 +140,20 @@ include src/constants/makefile
 include src/dipole/makefile
 include src/exchange/makefile
 include src/gpu/makefile
+include src/hierarchical/makefile
 include src/ltmp/makefile
 include src/main/makefile
 include src/montecarlo/makefile
+include src/micromagnetic/makefile
 include src/mpi/makefile
 include src/neighbours/makefile
 include src/program/makefile
 include src/simulate/makefile
+include src/spintransport/makefile
 include src/statistics/makefile
 include src/unitcell/makefile
 include src/vio/makefile
+include src/environment/makefile
 
 # Cuda must be last for some odd reason
 include src/cuda/makefile
@@ -181,7 +194,7 @@ all: serial parallel vdc
 
 # Serial Targets
 serial: $(OBJECTS)
-	$(GCC) $(GCC_LDFLAGS) $(LIBS) $(OBJECTS) -o $(EXECUTABLE)
+	$(GCC) $(GCC_LDFLAGS)  $(OBJECTS) $(LIBS) -o $(EXECUTABLE)
 
 $(OBJECTS): obj/%.o: src/%.cpp
 	$(GCC) -c -o $@ $(GCC_CFLAGS) $(OPTIONS) $<
@@ -211,7 +224,7 @@ $(GCCDB_OBJECTS): obj/%_gdb.o: src/%.cpp
 	$(GCC) -c -o $@ $(GCC_DBCFLAGS) $(OPTIONS) $<
 
 serial-llvm-debug: $(LLVMDB_OBJECTS)
-	$(LLVM) $(LLVM_DBLFLAGS) $(LIBS) $(LLVMDB_OBJECTS) -o $(EXECUTABLE)
+	$(LLVM) $(LLVM_DBLFLAGS) $(LIBS) $(LLVMDB_OBJECTS) -o $(EXECUTABLE)-debug
 
 $(LLVMDB_OBJECTS): obj/%_llvmdb.o: src/%.cpp
 	$(LLVM) -c -o $@ $(LLVM_DBCFLAGS) $(OPTIONS) $<
@@ -237,7 +250,7 @@ $(PCCDB_OBJECTS): obj/%_pdb.o: src/%.cpp
 # MPI Targets
 
 parallel: $(MPI_OBJECTS)
-	$(MPICC) $(GCC_LDFLAGS) $(LIBS) $(MPI_OBJECTS) -o $(PEXECUTABLE)
+	$(MPICC) $(GCC_LDFLAGS) $(MPI_OBJECTS) $(LIBS) -o $(PEXECUTABLE)
 
 $(MPI_OBJECTS): obj/%_mpi.o: src/%.cpp
 	$(MPICC) -c -o $@ $(GCC_CFLAGS) $(OPTIONS) $<
@@ -319,6 +332,12 @@ tidy:
 
 vdc:
 	$(MAKE) -C util/vdc/
+
+vdc-debug:
+	$(MAKE) -C util/vdc/ gcc-debug
+
+vdc-purge:
+	$(MAKE) -C util/vdc/ purge
 
 install:
 	echo "Preparing installation package"

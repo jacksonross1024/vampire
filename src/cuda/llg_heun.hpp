@@ -28,11 +28,11 @@ namespace vcuda
          /**
           * @var gamma_rel / (1 + alpha ** 2)
           */
-         double prefactor;
+         cu_real_t prefactor;
          /**
           * @var lambda * prefactor
           */
-         double lambda_times_prefactor;
+         cu_real_t lambda_times_prefactor;
       };
 
       namespace llg
@@ -41,15 +41,6 @@ namespace vcuda
           * Private data
           */
          extern bool initialized;
-         extern cu_real_array_t x_spin_buffer_array;
-         extern cu_real_array_t y_spin_buffer_array;
-         extern cu_real_array_t z_spin_buffer_array;
-
-         extern cu_real_array_t dS_x_array;
-         extern cu_real_array_t dS_y_array;
-         extern cu_real_array_t dS_z_array;
-
-         extern thrust::device_vector<heun_parameters_t> heun_parameters_device;
 
          /*
           * Internal functions
@@ -66,6 +57,7 @@ namespace vcuda
                cu_real_t * x_spin, cu_real_t * y_spin, cu_real_t * z_spin,
                cu_real_t * x_sp_field, cu_real_t * y_sp_field, cu_real_t * z_sp_field,
                cu_real_t * x_ext_field, cu_real_t * y_ext_field, cu_real_t * z_ext_field,
+               cu_real_t * x_thermal_field, cu_real_t * y_thermal_field, cu_real_t * z_thermal_field,
                cu_real_t * dS_x, cu_real_t * dS_y, cu_real_t * dS_z,
                cu_real_t dt, size_t num_atoms
                );
@@ -76,6 +68,7 @@ namespace vcuda
                cu_real_t * x_spin, cu_real_t * y_spin, cu_real_t * z_spin,
                cu_real_t * x_sp_field, cu_real_t * y_sp_field, cu_real_t * z_sp_field,
                cu_real_t * x_ext_field, cu_real_t * y_ext_field, cu_real_t * z_ext_field,
+               cu_real_t * x_thermal_field, cu_real_t * y_thermal_field, cu_real_t * z_thermal_field,
                cu_real_t * x_spin_buffer, cu_real_t * y_spin_buffer, cu_real_t * z_spin_buffer,
                cu_real_t * dS_x, cu_real_t * dS_y, cu_real_t * dS_z,
                cu_real_t dt, size_t num_atoms

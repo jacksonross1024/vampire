@@ -22,6 +22,7 @@
 #include "dipole.hpp"
 #include "errors.hpp"
 #include "exchange.hpp"
+#include "environment.hpp"
 #include "material.hpp"
 #include "gpu.hpp"
 #include "grains.hpp"
@@ -35,10 +36,13 @@
 #include "montecarlo.hpp"
 #include "random.hpp"
 #include "spintorque.hpp"
+#include "spintransport.hpp"
 #include "unitcell.hpp"
-
+#include "micromagnetic.hpp"
 // vio module headers
 #include "internal.hpp"
+#include "../create/internal.hpp"
+#include "stats.hpp"
 
 namespace vin{
 
@@ -69,6 +73,7 @@ namespace vin{
         //-------------------------------------------------------------------
         // Call module input parameters
         //-------------------------------------------------------------------
+      //  std::cout << "YAY" <<std::endl;
         if(ltmp::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
         else if(anisotropy::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
         else if(cells::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
@@ -79,9 +84,11 @@ namespace vin{
         else if(montecarlo::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
         else if(sim::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
         else if(st::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
+        else if(spin_transport::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
         else if(unitcell::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
         else if(vio::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
-
+        else if(micromagnetic::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
+        else if(environment::match_input_parameter(key, word, value, unit, line)) return EXIT_SUCCESS;
         //===================================================================
         // Test for create variables
         //===================================================================
@@ -314,46 +321,8 @@ namespace vin{
         //-------------------------------------------------------------------
         // System simulation variables
         //-------------------------------------------------------------------
-        std::string test="integrator";
-        if(word==test){
-            test="llg-heun";
-            if(value==test){
-                sim::integrator=0;
-                return EXIT_SUCCESS;
-            }
-            test="monte-carlo";
-            if(value==test){
-                sim::integrator=1;
-                return EXIT_SUCCESS;
-            }
-            test="llg-midpoint";
-            if(value==test){
-                sim::integrator=2;
-                return EXIT_SUCCESS;
-            }
-            test="constrained-monte-carlo";
-            if(value==test){
-                sim::integrator=3;
-                return EXIT_SUCCESS;
-            }
-            test="hybrid-constrained-monte-carlo";
-            if(value==test){
-                sim::integrator=4;
-                return EXIT_SUCCESS;
-            }
-            else{
-            terminaltextcolor(RED);
-                std::cerr << "Error - value for \'sim:" << word << "\' must be one of:" << std::endl;
-                std::cerr << "\t\"llg-heun\"" << std::endl;
-                std::cerr << "\t\"llg-midpoint\"" << std::endl;
-                std::cerr << "\t\"monte-carlo\"" << std::endl;
-                std::cerr << "\t\"constrained-monte-carlo\"" << std::endl;
-            terminaltextcolor(WHITE);
-                err::vexit();
-            }
-        }
         //-------------------------------------------------------------------
-        test="program";
+        std::string test="program";
         if(word==test){
             test="benchmark";
             if(value==test){
@@ -450,21 +419,61 @@ namespace vin{
                 sim::program=51;
                 return EXIT_SUCCESS;
             }
+            test="domain-wall";
+            if(value==test){
+                sim::program=52;
+                return EXIT_SUCCESS;
+            }
+            test="exchange-stiffness";
+            if(value==test){
+                sim::program=53;
+                return EXIT_SUCCESS;
+            }
+            test="mm-A-calculation";
+            if(value==test){
+                sim::program=54;
+                return EXIT_SUCCESS;
+            }
+            test="field-sweep";
+            if(value==test){
+                sim::program=70;
+                return EXIT_SUCCESS;
+            }
+            test="disk-tracks";
+            if(value==test){
+               sim::program=72;
+               return EXIT_SUCCESS;
+            }
+            test="diagnostic-boltzmann-micromagnetic-llg";
+            if(value==test){
+                sim::program=73;
+                return EXIT_SUCCESS;
+            }
+            test = "CASTLE";
+            if (value == test) {
+                sim::program=74;
+                return EXIT_SUCCESS;
+            }
             else{
             terminaltextcolor(RED);
+                        std::cout << word << '\t' << test << std::endl;
                 std::cerr << "Error - value for \'sim:" << word << "\' must be one of:" << std::endl;
                 std::cerr << "\t\"benchmark\"" << std::endl;
+                std::cerr << "\t\"cmc-anisotropy\"" << std::endl;
+                std::cerr << "\t\"curie-temperature\"" << std::endl;
+                std::cerr << "\t\"domain-wall\"" << std::endl;
+                std::cerr << "\t\"effective-damping\"" << std::endl;
+                std::cerr << "\t\"exchange-stiffness\"" << std::endl;
+                std::cerr << "\t\"field-cool\"" << std::endl;
+                std::cerr << "\t\"laser-pulse\"" << std::endl;
+                std::cerr << "\t\"localised-field-cool\"" << std::endl;
+                std::cerr << "\t\"localised-temperature-pulse\"" << std::endl;
                 std::cerr << "\t\"time-series\"" << std::endl;
                 std::cerr << "\t\"hysteresis-loop\"" << std::endl;
-                std::cerr << "\t\"static-hysteresis-loop\"" << std::endl;
-                std::cerr << "\t\"curie-temperature\"" << std::endl;
-                std::cerr << "\t\"field-cool\"" << std::endl;
-                std::cerr << "\t\"localised-field-cool\"" << std::endl;
-                std::cerr << "\t\"laser-pulse\"" << std::endl;
-                std::cerr << "\t\"cmc-anisotropy\"" << std::endl;
+                std::cerr << "\t\"partial-hysteresis-loop\"" << std::endl;
                 std::cerr << "\t\"hybrid-cmc\"" << std::endl;
                 std::cerr << "\t\"reverse-hybrid-cmc\"" << std::endl;
-                std::cerr << "\t\"localised-temperature-pulse\"" << std::endl;
+                std::cerr << "\t\"static-hysteresis-loop\"" << std::endl;
             terminaltextcolor(WHITE);
             err::vexit();
             }
@@ -645,6 +654,7 @@ namespace vin{
             sim::TTG=hscc;
             return EXIT_SUCCESS;
         }
+ 
         //--------------------------------------------------------------------
         test="cooling-function";
         if(word==test){
@@ -818,6 +828,128 @@ namespace vin{
             mtrandom::integration_seed=is;
             return EXIT_SUCCESS;
         }
+        test="track-Ms";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "magnetisation", 0.0, 360.0,"input","0.0 - 100");
+        sim::track_Ms = m;
+        return EXIT_SUCCESS;
+     }
+     test="track-file";
+     if(word==test){
+          sim::track_ms_file=true; // Save checkpoint
+          return EXIT_SUCCESS;
+     }
+
+     test="track-bit-size-x";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", 0.0, 10000000.0,"input","0.0 - 10000000");
+        sim::track_bit_size = m;
+        return EXIT_SUCCESS;
+     }
+
+     test="track-bit-size-z";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", 0.0, 10000000.0,"input","0.0 - 10000000");
+        sim::track_bit_width = m;
+        return EXIT_SUCCESS;
+     }
+
+     test="track-bit-size-y";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", 0.0, 10000000.0,"input","0.0 - 10000000");
+        sim::track_bit_depth = m;
+        return EXIT_SUCCESS;
+     }
+     test="track-fly-height";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", 0.0, 36000.0,"input","0.0 - 100");
+        sim::track_fly_height = m;
+        return EXIT_SUCCESS;
+     }
+
+     test="track-gap-between-bits";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", 0.0, 36000.0,"input","0.0 - 100");
+        sim::track_bit_gap = m;
+        return EXIT_SUCCESS;
+     }
+     test="track-gap-between-tracks";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", 0.0, 36000.0,"input","0.0 - 100");
+        sim::track_track_gap = m;
+        return EXIT_SUCCESS;
+     }
+     test="LFA-track-field-step";
+     if(word==test){
+       double m=atof(value.c_str());
+       check_for_valid_value(m, word, line, prefix, unit, "none", 0.0, 36000.0,"input","0.0 - 100");
+       sim::LFA_scan_field_step = m;
+       return EXIT_SUCCESS;
+     }
+     test="LFA";
+     if(word==test){
+       sim::LFA = true;
+       return EXIT_SUCCESS;
+     }
+
+     test="num-tracks";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "none", 0.0, 100,"input","0.0 - 100");
+        sim::track_num_tracks = m;
+        return EXIT_SUCCESS;
+     }
+     test="num-bits-per-track";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "none", 0.0, 100.0,"input","0.0 - 100");
+        sim::track_num_bits_per_track = m;
+        std::cout << "N" << m << std::endl;
+
+        return EXIT_SUCCESS;
+     }
+
+
+
+     //--------------------------------------------------------------------
+     test="x-velocity";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", 0.0, 360.0,"input","0.0 - 360.0 degrees");
+        sim::cross_track_velocity = m;
+        return EXIT_SUCCESS;
+     }
+
+     //--------------------------------------------------------------------
+     test="z-velocity";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", 0.0, 360.0,"input","0.0 - 360.0 degrees");
+        sim::down_track_velocity = m;
+        return EXIT_SUCCESS;
+     }
+     //--------------------------------------------------------------------
+     test="initial-x-position";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", -100000000.0, 10000000.0,"input","0.0 - 360.0 degrees");
+        sim::initial_cross_track_position = m;
+        return EXIT_SUCCESS;
+     }
+     test="initial-z-position";
+     if(word==test){
+        double m=atof(value.c_str());
+        check_for_valid_value(m, word, line, prefix, unit, "length", -100000000.0, 10000000.0,"input","0.0 - 360.0 degrees");
+        sim::initial_down_track_position = m;
+        return EXIT_SUCCESS;
+     }
         //--------------------------------------------------------------------
         test="constraint-rotation-update";
         if(word==test){
@@ -994,7 +1126,7 @@ namespace vin{
         test="fmr-field-frequency";
         if(word==test){
             double w = atof(value.c_str());
-            check_for_valid_value(w, word, line, prefix, unit, "none", 0.0, 1.0e4,"input","0 - 10,000 GHz");
+            check_for_valid_value(w, word, line, prefix, unit, "frequency", 0.0, 1.0e14,"input","0 - 10,000 GHz");
             sim::fmr_field_frequency = w;
             return EXIT_SUCCESS;
         }
@@ -1018,7 +1150,9 @@ namespace vin{
 
         return EXIT_SUCCESS;
     }
-
+//=======================================================================================================
+// mathc_vout_list
+//======================================================================================================= 
     int match_vout_list(string const word, string const value, int const line, std::vector<unsigned int> & output_list){
 
         std::string prefix="output:";
@@ -1177,12 +1311,20 @@ namespace vin{
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
-        test="material-standard-deviation";
+        test="system-standard-deviation";
         if(word==test){
             // Set flags for calculations of standard deviation and magnetization
-            stats::calculate_material_standard_deviation=true;
-            stats::calculate_material_magnetization=true;
+        //    stats::calculate_system_standard_deviation=true;
+          //  stats::calculate_material_magnetization=true;
+            stats::calculate_system_magnetization = true;
             output_list.push_back(999); //AJN
+            return EXIT_SUCCESS;
+        }
+        test = "system-standard-deviation-length";
+        if (word == test) {
+          //  stats::calculate_system_standard_deviation = true;
+            stats::calculate_system_magnetization = true;
+            output_list.push_back(998); //JLRoss
             return EXIT_SUCCESS;
         }
         //-------------------------------------------------------------------
@@ -1396,6 +1538,47 @@ namespace vin{
            return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
+        test="resistance";
+        if(word==test){
+           output_list.push_back(65);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="current";
+        if(word==test){
+           output_list.push_back(66);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="domain-wall-centre";
+        if(word==test){
+            output_list.push_back(67);
+            return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="magneto-resistance";
+        if(word==test){
+           micromagnetic::enable_resistance = true;
+           output_list.push_back(68);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="lfa-ms";
+        if(word==test){
+           output_list.push_back(69);
+           return EXIT_SUCCESS;
+        }
+        test="track-pos-x";
+        if(word==test){
+           output_list.push_back(70);
+           return EXIT_SUCCESS;
+        }
+        test="track-pos-z";
+        if(word==test){
+           output_list.push_back(71);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
         test="gnuplot-array-format";
         if(word==test){
             vout::gnuplot_array_format=true;
@@ -1409,6 +1592,91 @@ namespace vin{
             vout::output_rate=r;
             return EXIT_SUCCESS;
         }
+                //--------------------------------------------------------------------
+        
+        test = "spin-temperature";
+        if (word == test) {
+            stats::calculate_system_spin_temperature = true;
+            stats::calculate_system_magnetization = true; //override magnetisation flag
+            output_list.push_back(65);
+            return EXIT_SUCCESS;
+        }
+        test = "material-spin-temperature";
+        if (word == test) {
+            stats::calculate_material_spin_temperature = true;
+            stats::calculate_material_magnetization = true; //override magnetisation flad
+            output_list.push_back(66);
+            return EXIT_SUCCESS;
+        }
+        test = "mean-spin-temperature";
+        if (word == test) {
+            stats::calculate_system_spin_temperature = true;
+            stats::calculate_system_magnetization = true;
+            output_list.push_back(67);
+            return EXIT_SUCCESS;
+        }
+        test = "mean-material-spin-temperature";
+        if (word == test) {
+            stats::calculate_material_spin_temperature = true;
+            stats::calculate_material_magnetization = true;
+            output_list.push_back(68);
+            return EXIT_SUCCESS;
+        }
+        test = "convergence-rate";
+        if (word == test) {
+           // stats::convergence_program.output_convergence_rate();
+           // sim::output_convergence_counter = true;
+            sim::calculate_program_convergence = true;
+            stats::calculate_system_magnetization = true;
+            stats::calculate_system_energy = true;
+            output_list.push_back(72);
+            return EXIT_SUCCESS;
+        }
+        test = "convergence-statistics";
+        if (word == test) {
+            sim::calculate_program_convergence = true;
+            stats::calculate_system_magnetization = true;
+            stats::calculate_system_energy = true;
+            unsigned int s = atoi(value.c_str());
+            check_for_valid_int(s, word, line, prefix, 0, 10000000, "input", "0 to sim::equilibration");
+            stats::program_convergence.convergence_statistic_output = s;
+            return EXIT_SUCCESS;
+      }
+      test = "fermi-distribution";
+    if (word == test) {
+        sim::calculate_fermi_distribution = true;
+        return EXIT_SUCCESS;
+    }
+      test = "fermi-energy";
+      if (word == test) {
+         sim::calculate_fermi_distribution = true;
+         output_list.push_back(73);
+         return EXIT_SUCCESS;
+      }
+      test = "fermi-pressure";
+      if (word == test) {
+         sim::calculate_fermi_distribution = true;
+         output_list.push_back(74);
+         return EXIT_SUCCESS;
+      }
+      test = "fermi-Cv";
+      if (word == test) {
+        sim::calculate_fermi_distribution = true;
+         output_list.push_back(75);
+         return EXIT_SUCCESS;
+      }
+      test = "relativistic-fermi-energy";
+      if (word == test) {
+        sim::calculate_fermi_distribution = true;
+         output_list.push_back(76);
+         return EXIT_SUCCESS;
+      }
+      test = "relativistic-fermi-pressure";
+      if (word == test) {
+       sim::calculate_fermi_distribution = true;
+         output_list.push_back(77);
+         return EXIT_SUCCESS;
+      }  
 
         //--------------------------------------------------------------------
         // keyword not found
@@ -1491,6 +1759,13 @@ namespace vin{
             output_list.push_back(22);
             return EXIT_SUCCESS;
         }
+        test="magneto-resistance";
+        if(word==test){
+          //std::cout << "A" <<std::endl;
+          micromagnetic::enable_resistance = true;
+          output_list.push_back(65);
+          return EXIT_SUCCESS;
+       }
         else
         //-------------------------------------------------------------------
         test="output-rate";
@@ -2234,53 +2509,21 @@ namespace vin{
             //--------------------------------------------------------------------
             test="fmr-field-strength";
             if(word==test){
-                double H=atof(value.c_str());
-                // test for unit
-                string unit_type="field";
-                // if no unit given, assume internal
-                if(unit.size() != 0){
-                    units::convert(unit,H,unit_type);
-                }
-                string str="field";
-                if(unit_type==str){
-                    // Test for valid range
-                    if((H>=0.0) && (H<1.0E5)){
-                        read_material[super_index].applied_field_strength=H;
-                        // set local fmr flag
-                        sim::local_fmr_field=true;
-                        return EXIT_SUCCESS;
-                    }
-                    else{
-                        terminaltextcolor(RED);
-                        std::cerr << "Error - sim:" << word << " on line " << line << " of input file must be in the range 0 - 1.0E5" << std::endl;
-                        terminaltextcolor(WHITE);
-                        err::vexit();
-                    }
-                }
-                else{
-                    terminaltextcolor(RED);
-                    std::cerr << "Error on line " << line << " of material file - unit type \'" << unit_type << "\' is invalid for parameter material[" << super_index+1 << "]:"<< word << " is outside of valid range 0.0 - 1.0E5" << std::endl;
-                    terminaltextcolor(WHITE);
-                    err::vexit();
-                }
+               double H = atof(value.c_str());
+               check_for_valid_value(H, word, line, prefix, unit, "field", 0.0, 1.0e5,"material","0 - 10,000 T");
+               read_material[super_index].fmr_field_strength=H;
+               // set local fmr flag
+               sim::local_fmr_field=true;
+               return EXIT_SUCCESS;
             }
             //--------------------------------------------------------------------
             test="fmr-field-frequency";
-            if(word==test){
-                double f=atof(value.c_str());
-                // Test for valid range
-                if((f>=0.0) && (f<1.0E20)){
-                    read_material[super_index].fmr_field_frequency=f;
-                    // set local fmr flag
-                    sim::local_fmr_field=true;
-                    return EXIT_SUCCESS;
-                }
-                else{
-                    terminaltextcolor(RED);
-                    std::cerr << "Error on line " << line << " of material file - material[" << super_index+1 << "]:"<< word << " is outside of valid range 0.0 - 1.0E20" << std::endl;
-                    terminaltextcolor(WHITE);
-                    err::vexit();
-                }
+            if( word == test ){
+               double f = atof(value.c_str());
+               check_for_valid_value(f, word, line, prefix, unit, "frequency", 0.0, 1.0e14,"material","0 - 10,000 GHz");
+               read_material[super_index].fmr_field_frequency = f;
+               sim::local_fmr_field = true;
+               return EXIT_SUCCESS;
             }
             //------------------------------------------------------------
             test="fmr-field-unit-vector";
@@ -2356,6 +2599,7 @@ namespace vin{
             The default value is false for all materials. Valid values are
             true, false or (blank) [same as true].
             */
+
             if(word==test){
                test="keep";
                // keep all atoms in simulation (for efficient parallelization)
@@ -2387,13 +2631,17 @@ namespace vin{
             //-------------------------------------------------------------------
             // Call module input parameters
             //-------------------------------------------------------------------
+
             else if(anisotropy::match_material_parameter(word, value, unit, line, super_index, sub_index, mp::max_materials)) return EXIT_SUCCESS;
             else if(create::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(dipole::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(exchange::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(sim::match_material_parameter(word, value, unit, line, super_index)) return EXIT_SUCCESS;
             else if(st::match_material(word, value, unit, line, super_index)) return EXIT_SUCCESS;
+            else if(spin_transport::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(unitcell::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
+            else if(micromagnetic::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
+            else if(environment::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
 
             //--------------------------------------------------------------------
             // keyword not found

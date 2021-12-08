@@ -16,6 +16,8 @@
 #include <vector>
 #include <string>
 
+#include "atoms.hpp"
+
 namespace stats
 //==========================================================
 // Namespace statistics
@@ -77,15 +79,81 @@ namespace stats
    extern bool calculate_material_height_magnetization;
    extern bool calculate_system_specific_heat;
    extern bool calculate_material_specific_heat;
-   extern bool calculate_material_standard_deviation;// AJN
+   extern bool calculate_system_standard_deviation;// AJN
    extern bool calculate_system_susceptibility;
    extern bool calculate_material_susceptibility;
+   extern bool calculate_system_spin_temperature;
+   extern bool calculate_material_spin_temperature;
+
+   
+
 
    // forward declaration of friend classes
    class susceptibility_statistic_t;
    class specific_heat_statistic_t;
 
    class standard_deviation_statistic_t;
+   class spin_temperature_statistic_t;
+   class convergence_statistic_t;
+
+
+
+
+
+//--------------------------------
+// convergence class definition
+//--------------------------------
+   class convergence_statistic_t {
+      public:
+         convergence_statistic_t (std::string n) {
+            name = n;
+ 
+    };
+    //----
+         void initialize(double criteria, unsigned int convergence_check_value);
+         void initialize_first_pass();
+         void initialize_second_pass();
+         bool did_converge();
+         bool get_method();
+         unsigned int get_converged_counter();
+         void is_converged(unsigned int n_steps);
+         void update_convergence();
+         void update_data(const std::vector<double>& sx, // spin unit vector
+               const std::vector<double>& sy,
+               const std::vector<double>& sz,
+               const std::vector<double>& mm,
+               const std::vector<int>& mat,
+               const double temperature);
+         void update_counter();
+         void update_mean_convergence();
+         std::string output_convergence_rate(bool header);
+         void do_converge();
+         void end_convergence();
+         void output_convergence_statistics();
+         unsigned int convergence_statistic_output;
+
+
+
+      private:
+         bool initialized;
+         bool magnetisation_converged;      // did it converge
+         bool energy_converged;
+         bool converged;
+         bool convergence_method; // do we check the convergence
+         unsigned int counter;
+         unsigned int converged_counter;
+         unsigned int statistics_counter;
+         bool output_convergence_counter;
+         std::string name;
+         std::vector<double> convergence_magnetisation;
+         std::vector<double> convergence_energy;
+         double convergence_criteria;  //convergence must reach below this error value
+         unsigned int convergence_check; // check convergence every ith time
+         std::vector<unsigned int> convergence_output_list;
+         
+
+   };
+
    //----------------------------------
    // Energy class definition
    //----------------------------------
@@ -112,6 +180,8 @@ namespace stats
       void set_magnetostatic_energy( std::vector<double>& new_energy, std::vector<double>& new_mean_energy);
 
       const std::vector<double>& get_total_energy();
+      const double get_total_system_energy();
+      const double get_mean_total_system_energy();
       const std::vector<double>& get_exchange_energy();
       const std::vector<double>& get_anisotropy_energy();
       const std::vector<double>& get_applied_field_energy();
@@ -156,6 +226,8 @@ namespace stats
 
       friend class susceptibility_statistic_t;
       friend class standard_deviation_statistic_t;
+      friend class spin_temperature_statistic_t;
+
       public:
          magnetization_statistic_t (std::string n):initialized(false){
            name = n;
@@ -166,6 +238,11 @@ namespace stats
          void calculate_magnetization(const std::vector<double>& sx, const std::vector<double>& sy, const std::vector<double>& sz, const std::vector<double>& mm);
          void set_magnetization(std::vector<double>& magnetization, std::vector<double>& mean_magnetization, long counter);
          void reset_magnetization_averages();
+         const std::vector<int>& get_mask_only();
+         const int get_mask_size();
+         const double get_system_magnetization_length();
+         const int get_mask_length();
+         const double get_normalized_mean_system_magnetization_length();
          const std::vector<double>& get_magnetization();
          std::string output_magnetization(bool header);
          std::string output_normalized_magnetization(bool header);
@@ -216,6 +293,39 @@ namespace stats
          std:: string name;
 
    };
+    //----------------------------------
+   //Spin_Temperature_Class_Definition
+   //----------------------------------
+
+   class spin_temperature_statistic_t{
+
+      public:
+         spin_temperature_statistic_t(std::string n):initialized(false) {
+            name = n;
+         };
+         void calculate(const std::vector<double>& sx, const std::vector<double>& sy, const std::vector<double>& sz, const std::vector<double>& sm,
+         const std::vector<double>& Hx_int, const std::vector<double>& Hy_int,const std::vector<double>& Hz_int,
+         const std::vector<double>& Hx_ext, const std::vector<double>& Hy_ext, const std::vector<double>& Hz_ext);
+         void set_mask(const int mask_length, const std::vector<int>& mag_mask);
+         std::string output_spin_temperature(bool header);
+         std::string output_mean_spin_temperature(bool header);
+         void reset();
+
+      private:
+         bool initialized;
+         int mask_size; //how many different materials
+         int num_atoms; //total number of atoms
+       
+         std::string name;
+         std::vector<int> zero_list;
+         std::vector<int> mask; 
+         std::vector <double> total_spin_temperature;
+         std::vector<double> spin_temperature_top;
+         std::vector<double> spin_temperature_bottom;
+         std::vector<double> mean_spin_temperature;
+         std::vector<double> mean_spin_counter;
+
+   };
 
    //----------------------------------
    // Susceptibility Class definition
@@ -254,9 +364,12 @@ namespace stats
            name=n;
          };
          void initialize(magnetization_statistic_t& mag_stat);
-         void update(const std::vector<double>& magnetization);
+         bool is_initialized();
+         void calculate(const std::vector<double>& magnetization);
          void reset_averages();
          std::string output_standard_deviation(bool header);
+         double get_standard_deviation_length();
+         std::string output_standard_deviation_length(bool header);
 
       private:
          bool initialized;
@@ -268,6 +381,7 @@ namespace stats
          std::vector<double> residual_sq;// running squared residual for each direction
          std::vector<double> mean; // running mean for each direction
          std::string name;
+         std::vector<double> stdDv_array;
 
    };
 
@@ -285,7 +399,14 @@ namespace stats
 
    extern susceptibility_statistic_t system_susceptibility;
    extern susceptibility_statistic_t material_susceptibility;
-   extern standard_deviation_statistic_t material_standard_deviation;
+   extern standard_deviation_statistic_t system_standard_deviation;
+
+    extern spin_temperature_statistic_t system_spin_temperature;
+    extern spin_temperature_statistic_t material_spin_temperature;
+
+    //convergence classes
+    extern convergence_statistic_t program_convergence;
+   
 }
 
 #endif /*STATS_H_*/

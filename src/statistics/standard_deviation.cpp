@@ -67,6 +67,7 @@ void standard_deviation_statistic_t::initialize(stats::magnetization_statistic_t
 // Welford's algorithm gives a running total.
 //
 //-------------------------------------------------------------------------------------------------------
+/*
 void standard_deviation_statistic_t::update(const std::vector<double>& magnetization){
 
    mean_counter+=1.0; // increment first, as divides by this.
@@ -80,13 +81,17 @@ void standard_deviation_statistic_t::update(const std::vector<double>& magnetiza
           mean[idx] += res1/mean_counter;
           res2 = m - mean[idx];
           residual_sq[idx]+=res1*res2;
+
+          stdDv_array[idx] += residual_sq[idx];
       }
 
    }
 
    return;
 
-}
+} */
+
+
 
 //------------------------------------------------------------------------------------------------------
 // Function to reset statistical averages
@@ -145,5 +150,41 @@ std::string standard_deviation_statistic_t::output_standard_deviation(bool heade
    return result.str();
 
 }
+/*
+double standard_deviation_statistic_t::get_mean_standard_deviation_length() {
+
+          const double imean_counter = 1.0/mean_counter;
+   
+          const double mean_length_stdDv = sqrt(residual_sq[3] * imean_counter);
+       
+
+      
+
+      return mean_length_stdDv;
+} */
+/*
+std::string standard_deviation_statistic_t::output_mean_standard_deviation_length(bool header) {
+
+   // result string stream
+   std::ostringstream res;
+
+   // set custom precision if enabled
+   if(vout::custom_precision){
+      res.precision(vout::precision);
+      if(vout::fixed) res.setf( std::ios::fixed, std::ios::floatfield );
+   }
+   vout::fixed_width_output result(res,vout::fw_size); 
+
+   double mean_length_stdDv = sqrt(residual_sq[3] / mean_counter);
+
+   if(header) {
+      result << name + std::to_string(mean_length_stdDv);
+   } else {
+      result << mean_length_stdDv;
+   }
+   
+return result.str();
+
+} */
 
 } // end of namespace stats

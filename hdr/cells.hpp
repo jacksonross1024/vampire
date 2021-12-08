@@ -28,12 +28,17 @@ namespace cells{
    extern int num_cells; /// number of macro-cells
    extern int num_local_cells; /// number of macro-cells
    extern double macro_cell_size; /// lateral size of local macro-cells (A)
+   extern double macro_cell_size_x; /// lateral size of local macro-cells (A)
+   extern double macro_cell_size_y; /// lateral size of local macro-cells (A)
+   extern double macro_cell_size_z; /// lateral size of local macro-cells (A)
 
    extern std::vector <int> local_cell_array;
    extern std::vector <int> num_atoms_in_cell; /// number of atoms in each cell
    extern std::vector <int> num_atoms_in_cell_global; /// global number of atoms in each cell
    extern std::vector < std::vector <int> > index_atoms_array;
    extern std::vector<int> index_atoms_array1D;
+
+   extern const double atomic_volume;
 
    extern std::vector<double> volume_array;
    extern std::vector<double> cell_coords_array_x; /// arrays to store cells positions
@@ -53,6 +58,10 @@ namespace cells{
    extern std::vector<double> field_array_z;
 
    extern std::vector<double> pos_and_mom_array;
+   extern std::vector<double> pos_array;
+
+   extern std::vector < double > num_macro_cells_fft; /// lateral size of local macro-cells (A)
+   extern std::vector<double> fft_cell_id_array;
 
    //---------------------------------------------------------------------------
    // Function to calculate magnetisation in cells

@@ -255,6 +255,8 @@ void temperature_pulse(){
 	sim::TTTe=sim::temperature;
 	sim::TTTp=sim::temperature;
 
+	
+
    // If local temperature is set then also initalise local temperatures
    if(sim::local_temperature==true){
       for(unsigned int mat=0;mat<mp::material.size();mat++){
@@ -262,11 +264,13 @@ void temperature_pulse(){
          else mp::material[mat].temperature=sim::TTTe;
       }
    }
-
+	
    // Equilibrate system
+   stats::program_convergence.do_converge();
 	while(sim::time<sim::equilibration_time){
 
 		sim::integrate(sim::partial_time);
+		if (stats::program_convergence.did_converge()) sim::equilibration_time = stats::program_convergence.get_converged_counter();
 
 		// Calculate magnetisation statistics
 		stats::mag_m();
@@ -274,7 +278,7 @@ void temperature_pulse(){
 		// Output data
 		vout::data();
 	}
-
+	stats::program_convergence.end_convergence();
 	//loop sim::runs times
 	for(int r=0; r<sim::runs;r++){
 
