@@ -150,12 +150,7 @@ void update_position(){
             }
         }
     } 
-    for(int a = 0; a < lattice_atoms; a++) {
-        atom_potential[a] += new_atom_potential[a];
-        TLE += atom_potential[a]; 
-        new_atom_potential[a] = 0;
-    }
-    MLE += TLE;
+    
 }
 
 void update_dynamics() {
@@ -166,7 +161,7 @@ void update_dynamics() {
     double TEKE = 0;
     
 
-    #pragma omp parallel for private(array_index, e_x_force,e_y_force,e_z_force, EPE, EKE)\
+    #pragma omp parallel for private(array_index, e_x_force,e_y_force,e_z_force, EPE, EKE, TLE)\
      schedule(static) reduction(+:TEPE,TEKE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
@@ -175,13 +170,18 @@ void update_dynamics() {
         e_z_force = 0;
 
         EPE = 0;
-        
+        TLE = 0;
         EKE = 0;
         
 
         if(current_time_step % 20 == 0) {
             e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force,EPE);
             e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
+            
+            atom_potential[e] += new_atom_potential[e];
+            TLE += atom_potential[e]; 
+            new_atom_potential[e] = 0;
+            
             
           //  a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         
@@ -214,6 +214,7 @@ void update_dynamics() {
 
     MEPE += TEPE;
     MEKE += TEKE;
+    MLE += TLE;
     //MLPE += TLPE;
    // MLKE += TLKE;
 }
@@ -285,6 +286,8 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<double> scattering_chance(0,1);
+
+  // std::uniform_int_distribution<> phonon_scattering_vector(0,phonon_size);
   //  int count = 0;
     for (int a = 0; a < lattice_atoms; a++) {
 
@@ -357,7 +360,7 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
         e_y_force += -1*force * sin(theta)*sin(phi);
         e_z_force += -1*force * cos(phi); */
         
-        if(length < 2.1 && !collision) {
+    /*    if(a == phonon_scattering_vector(gen)) {
             
             // if(electron_nearest_atom_list[e][nearest_electron_count*2] == a && electron_nearest_atom_list[e][nearest_electron_count*2 + 1]) continue;
             // else if (electron_nearest_atom_list[e][nearest_electron_count*2] != a) {
@@ -398,7 +401,7 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
                     }
                 }
             }
-        }
+        } */
     }
   //  LPE += PE /2;
     EPE += PE;
@@ -419,13 +422,14 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
     double force,  phi,theta, PE = 0;
     int array_index_a;
     bool collision = false;
-
+    int size = atomic_nearest_electron_list[e][0];
    // int nearest_atom_count = 1;
 std::srand(std::time(nullptr));
             std::random_device rd;  //Will be used to obtain a seed for the random number engine
             std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
             std::uniform_real_distribution<double> scattering_chance(0,1);
-    int size = atomic_nearest_electron_list[e][0];
+            std::uniform_int_distribution<> phonon_scattering_vector(1,size);
+    int phonon_collision = atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
  //   if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
 
     // int count = 0;
@@ -489,7 +493,7 @@ std::srand(std::time(nullptr));
         e_y_force += -1*force * sin(theta)*sin(phi);
         e_z_force += -1*force * cos(phi); */
         
-        if(length < 2.1 && !collision) {
+        if(array_index_a == phonon_collision) {
             
             // if(electron_nearest_atom_list[e][nearest_electron_count*2] == a && electron_nearest_atom_list[e][nearest_electron_count*2 + 1]) continue;
             // else if (electron_nearest_atom_list[e][nearest_electron_count*2] != a) {

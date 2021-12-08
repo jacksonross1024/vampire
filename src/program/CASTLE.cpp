@@ -46,7 +46,7 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-         omp_set_dynamic(1);
+         omp_set_dynamic(0);
          omp_set_num_threads(8);
         // std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
@@ -360,7 +360,7 @@ void initialize_positions() {
 void initialize_lattice() {
     
     atomic_size = 2; // sim::atomic_size; //Angst diameter. 
-    screening_depth = 1; //sim::screening_depth; //Angstroms 
+    screening_depth = 0.75; //sim::screening_depth; //Angstroms 
     lattice_atoms = 20 * 20 * 20; //Better lattice creation will come from VAMPIRE in future
  
     lattice_height = 40; //A
@@ -417,7 +417,7 @@ void initialize_lattice() {
         atom_position[array_index+1] = atom_anchor_position[array_index+1] + atom_position_distrib(gen);
         atom_position[array_index+2] = atom_anchor_position[array_index+2] + atom_position_distrib(gen);
 
-        TLE += atom_potential[a] = E_f_A*(1.01 - atom_position_distrib(gen));
+        TLE += atom_potential[a] = 203.5*(1.01 - atom_position_distrib(gen));
 
         lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
@@ -483,7 +483,7 @@ void initialize_electrons() {
     int array_index = 0;
     electron_nearest_electron_list.resize(conduction_electrons);
     electron_nearest_atom_list.resize(conduction_electrons);
-
+    screening_depth *= radius_mod(gen);
     if (err::check) std::cout << "Prepare to set position: " << std::endl;
     for (int e = 0; e < conduction_electrons; e++) {
 
@@ -495,9 +495,9 @@ void initialize_electrons() {
         phi = M_PI*Phi_pos_distrib(gen);
 
         //initialize and output electron posititons
-        x_pos = 1+ (atomic_size * (e % 20)) + (cos(theta)*sin(phi)*screening_depth*radius_mod(gen)); //Angstroms
-        y_pos = 1+ (atomic_size * ((int(floor(e / 20))) % 20)) + (sin(theta)*sin(phi)*screening_depth*radius_mod(gen)); //Sets on radius of screening depth from nucleus
-        z_pos = 1+ (atomic_size * floor(e/ 400)) + (cos(phi)*screening_depth)*radius_mod(gen);
+        x_pos = atom_anchor_position[3*e]   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
+        y_pos = atom_anchor_position[3*e+1] + sin(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Sets on radius of screening depth from nucleus
+        z_pos = atom_anchor_position[3*e+2] + cos(phi)*screening_depth;//*radius_mod(gen);
 
         if (x_pos < 0) x_pos += 40;
         else if (x_pos > 40) x_pos -= 40;
@@ -758,7 +758,7 @@ void initialize_electron_interactions() {
             electron_force[array_index + 2] += force * cos(phi) / constants::m_e_r;
        
         }
-        if(e == 1000) std::cout << "near: " << near_PE << ", long: " << long_PE << ", distant: " << distant_PE << std::endl; 
+      //  if(e == 1000) std::cout << "near: " << near_PE << ", long: " << long_PE << ", distant: " << distant_PE << std::endl; 
     //    std::cout << electron_potential[e] << std::endl;
                // if(err::check) if(e ==0) std::cout << "Calculating conduction-lattice repulsion" << std::endl;
     }
@@ -917,7 +917,7 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
 
         }
     //    std::cout << nearest_atom_count << std::endl;
-        if(e == 1000) std::cout << "near: " << near_PE << ", long: " << long_PE << ", distant: " << distant_PE << std::endl; 
+      //  if(e == 1000) std::cout << "near: " << near_PE << ", long: " << long_PE << ", distant: " << distant_PE << std::endl; 
         atomic_nearest_electron_list[e][0] = nearest_electron_count;
         electron_nearest_atom_list[e][0] = nearest_atom_count;
     }
@@ -1195,9 +1195,9 @@ void output_data() {
         y_pos = new_electron_position[array_index_y]; 
         z_pos = new_electron_position[array_index_z];
 
-        x_lambda += cos(4*M_PI * x_pos / lattice_constant);
-        y_lambda += cos(4*M_PI * y_pos / lattice_constant);
-        z_lambda += cos(4*M_PI * z_pos / lattice_constant);
+    //    x_lambda += cos(4*M_PI * x_pos / lattice_constant);
+      //  y_lambda += cos(4*M_PI * y_pos / lattice_constant);
+        //z_lambda += cos(4*M_PI * z_pos / lattice_constant);
         
 
         x_vel = 1e5*new_electron_velocity[array_index];
