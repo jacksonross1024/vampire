@@ -1,15 +1,15 @@
 // ==============================================
 //   Coupled Atomistic and Spintronic Thermal Lattice Ensemble
 //
-//         =========       ========     =========   ============   ||           =========
-//        ||             ||        ||   ||               ||        ||          ||
-//        ||             ||        ||   ||               ||        ||          ||
-//        ||             ||        ||   ||               ||        ||          ||
-//        ||             || ====== ||   =========        ||        ||           =========
-//        ||             ||        ||           ||       ||        ||          ||
-//        ||             ||        ||           ||       ||        ||          ||
-//        ||             ||        ||           ||       ||        ||          ||
-//         =========                    =========                   =========   =========
+//    =========       ========      ========   ============   ||           =========
+//   ||             ||        ||   ||               ||        ||          ||
+//   ||             ||        ||   ||               ||        ||          ||
+//   ||             ||        ||   ||               ||        ||          ||
+//   ||             || ====== ||   =========        ||        ||           =========
+//   ||             ||        ||           ||       ||        ||          ||
+//   ||             ||        ||           ||       ||        ||          ||
+//   ||             ||        ||           ||       ||        ||          ||
+//    =========                     ========                   =========   =========
 //
 
 //
@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-     //   omp_set_dynamic(0);
-       // omp_set_num_threads(1);
+        omp_set_dynamic(0);
+        omp_set_num_threads(6);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
     
@@ -231,9 +231,9 @@ for(int a = 0; a < 1500; a++) {
     //=========
     castle_watch.start();
     equilibrium_step = false;
-    CASTLE_output_rate = 40;
+    //CASTLE_output_rate = 40;
     total_time_steps = sim::loop_time;
-    dt = 1e-3;
+    //dt = 1e-3;
     //double x,y,z;
     //int c = 0;
  /*   for(int a = 0; a < lattice_atoms; a++) {
@@ -299,7 +299,7 @@ void initialize () {
     //=========
     conduction_electrons = 20*20*20;  //sim::conduction_electrons;
     CASTLE_output_rate = sim::partial_time; //sim::CASTLE_output_rate;
-    dt = mp::dt_SI*1e16;//-4; //reducd seconds (e10 scale factor), femptoSeconds
+    dt = mp::dt_SI*1e15;//-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
     x_flux = 0;
@@ -334,7 +334,7 @@ void initialize () {
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
-    std::cout << "E_f(J): " << E_f << ", TLE(J): " << (TLKE*1e-20*atomic_mass/2) + (TLPE*1e10*constants::K) << ", TE(J): " << E_f*conduction_electrons << ", TEKE(AJ):" << TEKE*1e10*constants::m_e/2 << ", TEPE " << TEPE*1e10*constants::K << ", TEE " <<  ((TEKE*constants::m_e)/2 + (TEPE*constants::K))*1e10 << ", EE(J): " << constants::m_e*TEKE*0.5*1e10 + constants::K*1e10*std::accumulate(electron_potential.begin(), electron_potential.end(), 0) <<  std::endl;
+    std::cout << "E_f(J): " << E_f << ", TLE(J): " << (TLKE*1e-20*atomic_mass/2) + (std::accumulate(atom_potential.begin(), atom_potential.end(), 0)*1e10*constants::K) << ", TE(J): " << E_f*conduction_electrons << ", TEKE(AJ):" << TEKE*1e10*constants::m_e/2 << ", TEPE " << TEPE*1e10*constants::K << ", TEE " <<  ((TEKE*constants::m_e)/2 + (TEPE*constants::K))*1e10 << ", EE(J): " << constants::m_e*TEKE*0.5*1e10 + constants::K*1e10*std::accumulate(electron_potential.begin(), electron_potential.end(), 0) <<  std::endl;
     mean_data.open("CASTLE/mean_data.csv");
     mean_data << "time, step, mean-EKE, mean-LKE, mean-EPE, mean-LPE, -lambda, +lambda, mean-lambda, mean-inelastic-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
 
@@ -359,7 +359,7 @@ void initialize_positions() {
 void initialize_lattice() {
     
     atomic_size = 2; // sim::atomic_size; //Angst diameter. 
-    screening_depth = 1; //sim::screening_depth; //Angstroms 
+    screening_depth = 0.875; //sim::screening_depth; //Angstroms 
     lattice_atoms = 20 * 20 * 20; //Better lattice creation will come from VAMPIRE in future
  
     lattice_height = 40; //A
@@ -398,15 +398,15 @@ void initialize_lattice() {
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::normal_distribution<double> atom_position_distrib(0.01,0.005);
+    std::normal_distribution<double> atom_position_distrib(0.0,0.005);
     
     int array_index; //local loop index variable
     atomic_nearest_atom_list.resize(lattice_atoms);
     atomic_nearest_electron_list.resize(lattice_atoms);
 
     for (int a = 0; a < lattice_atoms; ++a) {  
-        atomic_nearest_atom_list[a].resize(0.5*conduction_electrons,-1);
-        atomic_nearest_electron_list[a].resize(0.5*conduction_electrons,-1);
+        atomic_nearest_atom_list[a].resize(0.1*conduction_electrons,-1);
+        atomic_nearest_electron_list[a].resize(0.4*conduction_electrons,-1);
         array_index = 3*a;
 
         atom_anchor_position[array_index]     = 1 + atomic_size * (a % 20);// + atom_position_distrib(gen); //lattice creation awaiting future development
@@ -485,17 +485,18 @@ void initialize_electrons() {
     if (err::check) std::cout << "Prepare to set position: " << std::endl;
     for (int e = 0; e < conduction_electrons; e++) {
 
-        electron_nearest_electron_list[e].resize(conduction_electrons * 0.5, -1);
+        electron_nearest_electron_list[e].resize(conduction_electrons * 0.4, -1);
         electron_nearest_atom_list[e].resize(2, 0);
         array_index = 3*e;
 
         theta = M_PI*Theta_pos_distrib(gen);
         phi = M_PI*Phi_pos_distrib(gen);
 
+        screening_depth = 0.875* radius_mod(gen);
         //initialize and output electron posititons
-        x_pos = 1+ (atomic_size * (e % 20)) + (cos(theta)*sin(phi)*screening_depth*radius_mod(gen)); //Angstroms
-        y_pos = 1+ (atomic_size * ((int(floor(e / 20))) % 20)) + (sin(theta)*sin(phi)*screening_depth*radius_mod(gen)); //Sets on radius of screening depth from nucleus
-        z_pos = 1+ (atomic_size * floor(e/ 400)) + (cos(phi)*screening_depth)*radius_mod(gen);
+        x_pos = atom_anchor_position[3*e]    + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
+        y_pos = atom_anchor_position[3*e +1] + sin(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Sets on radius of screening depth from nucleus
+        z_pos = atom_anchor_position[3*e +2] + cos(phi)*screening_depth;//)*radius_mod(gen);
 
         if (x_pos < 0) x_pos += 40;
         else if (x_pos > 40) x_pos -= 40;
@@ -697,10 +698,6 @@ void initialize_electron_interactions() {
     double theta,phi, PE;
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
-
-        x = electron_position[array_index];
-        y = electron_position[array_index + 1];
-        z = electron_position[array_index + 2];
       
                 if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
 
@@ -710,7 +707,7 @@ void initialize_electron_interactions() {
             if (i == e) continue; //no self repulsion
 
             array_index_i = 3*i;
-            x_distance = electron_position[array_index] - electron_position[array_index_i];
+            x_distance = electron_position[array_index]   - electron_position[array_index_i];
             y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
             z_distance = electron_position[array_index+2] - electron_position[array_index_i + 2];
 
@@ -789,7 +786,7 @@ void initialize_atomic_interactions() {
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
            
-            if(length > 4.2) continue;
+            if(length > 4.3) continue;
             length = sqrt(length);
 
             atomic_nearest_atom_list[e][neighbor_count] = array_index_i;
@@ -834,10 +831,6 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
         array_index = 3*e;
         nearest_electron_count = 1;
         //nearest_atom_count = 1;
-
-        x = atom_position[array_index];
-        y = atom_position[array_index + 1];
-        z = atom_position[array_index + 2];
 
         for (int a = 0; a < lattice_atoms; a++) {
 
@@ -927,8 +920,9 @@ void initialize_velocities() {
         array_index = 3*e;
         theta = M_PI * Theta_Vel_distrib(gen);
         phi = M_PI * Phi_Vel_distrib(gen);
-
-        vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
+        
+        vel = 0;
+        if(electron_potential[e]*constants::K_A < E_f_A) vel = sqrt(abs(2* (E_f_A - (electron_potential[e]*constants::K_A)/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
         
         if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
         electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
@@ -943,14 +937,16 @@ void initialize_velocities() {
 
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 
-    vel = sqrt(2*E_f_A / atomic_mass);
+    vel = 0.0;// sqrt(2*E_f_A / atomic_mass);
     for(int a = 0; a < lattice_atoms; a++) {
         array_index = 3*a;
 
         theta = M_PI * Theta_Vel_distrib(gen);
         phi = M_PI * Phi_Vel_distrib(gen);
-
-        vel = sqrt(abs(atom_potential[a])*constants::K_A/atomic_mass); // m/s -> Angstroms / s -> A/fs = 1e-5
+        vel = 0;
+        if(atom_potential[a]*constants::K_A < E_f_A) vel = sqrt(abs(atom_potential[a]*constants::K_A/atomic_mass)); // m/s -> Angstroms / s -> A/fs = 1e-5
+        std::cout << vel << ", " << mu_f*1e20 << ", " <<atom_potential[a]*constants::K_A << ", " << sqrt(mu_f*1e20 - atom_potential[a]*constants::K_A) <<std::endl;
+        
         atom_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
         atom_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
         atom_velocity[array_index + 2] = cos(phi)*vel;
@@ -1168,9 +1164,9 @@ void output_data() {
         y_pos = new_electron_position[array_index_y]; 
         z_pos = new_electron_position[array_index_z];
 
-        x_lambda += cos(4*M_PI * x_pos / lattice_constant);
-        y_lambda += cos(4*M_PI * y_pos / lattice_constant);
-        z_lambda += cos(4*M_PI * z_pos / lattice_constant);
+      //  x_lambda += cos(4*M_PI * x_pos / lattice_constant);
+        //y_lambda += cos(4*M_PI * y_pos / lattice_constant);
+        //z_lambda += cos(4*M_PI * z_pos / lattice_constant);
         
 
         x_vel = 1e5*new_electron_velocity[array_index];
