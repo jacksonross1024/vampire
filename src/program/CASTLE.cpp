@@ -231,7 +231,7 @@ for(int a = 0; a < 1500; a++) {
     //=========
     castle_watch.start();
     equilibrium_step = false;
-    CASTLE_output_rate = 100;
+   // CASTLE_output_rate = 100;
     total_time_steps = sim::loop_time;
    // dt = 1e-3;
     //double x,y,z;
@@ -417,10 +417,11 @@ void initialize_lattice() {
         atom_position[array_index+1] = atom_anchor_position[array_index+1] + atom_position_distrib(gen);
         atom_position[array_index+2] = atom_anchor_position[array_index+2] + atom_position_distrib(gen);
 
-        TLE += atom_potential[a] = 203.5*(1.01 - atom_position_distrib(gen));
+        TLE += atom_potential[a] = 146*(1.01 - atom_position_distrib(gen));
 
         lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
+    new_atom_potential = atom_potential;
     lattice_output.close(); 
 }
 
@@ -1238,7 +1239,7 @@ void output_data() {
         << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " \
         << MEPE * 1e10 * constants::K / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  \
         << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
-        << mean_rad << ", " << chosen_electron / CASTLE_output_rate << ", " << x_flux / CASTLE_output_rate << ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate  << ", " \
+        << mean_rad << ", " << chosen_electron / double(CASTLE_output_rate) << ", " << x_flux / CASTLE_output_rate << ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate  << ", " \
         << std::endl;
      
     double mean_vel = sqrt(MEKE) / (CASTLE_output_rate *conduction_electrons); //Still Angstroms
