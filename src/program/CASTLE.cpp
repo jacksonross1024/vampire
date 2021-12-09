@@ -27,7 +27,7 @@
 
 namespace CASTLE {
 
-
+// Function to set up lattice, grab VAMPIRE variables, and call cerlet from simulation
 void create() {
 
             if (err::check) std::cout << "Creating CASTLE..." << std::endl; 
@@ -44,8 +44,10 @@ void create() {
     // Initialize the lattice, electrons, and starting forces
     //========
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
-
+    //function call for initialization functions
     initialize();
+        
+        //omp details
         omp_set_dynamic(0);
         omp_set_num_threads(6);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
@@ -264,22 +266,6 @@ for(int a = 0; a < 1500; a++) {
 
      std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed." << std::endl;
 
-/*      castle_watch.start();
-    equilibrium_step = false;
-    CASTLE_output_rate = 1;
-    total_time_steps = sim::loop_time;
-    //dt = 1e-20;
-   // double x,y,z;
-    //int c = 0;
-  
-
-    sim::integrate(total_time_steps);
-    //========
-    // Output data
-    //========
-
-     std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed." << std::endl;
-*/
     mean_data.close();
        
 }
@@ -307,30 +293,24 @@ void initialize () {
     z_flux = 0;
     current_time_step = 0;
     CASTLE_real_time = 0;
-    // Initialize lattice
+
+    // Initialize lattice and conduction electron band
     //========
     initialize_positions();
             if (err::check) std::cout << "Lattice built " << std::endl;
     
-    //========
-    // Initialzie variables used by all functions
-    //========
-
- 
     
     //========
-    // initialize electrons: lattice and conduction bands, velocity, spin, etc.
+    // initialize forces between lattice and conduction bands, velocity, spin, etc.
     //=======
     initialize_forces();
             if (err::check) std::cout << "Electrons ready..." << std::endl;
 
-    //=======
-    // Calls forces set up
-    //=======
+   
     
             if (err::check) std::cout << "Forces ready..." << std::endl;
-
-    initialize_velocities();
+    // initializes velocities for lattice and electrons
+        initialize_velocities();
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
@@ -691,6 +671,7 @@ void initialize_forces() {
     if (err::check)  std::cout << "Atomic electron interactions" << std::endl;
 }
 
+// e-e coulomb interactions 
 void initialize_electron_interactions() {
 
     int array_index, array_index_i, neighbor_count = 1;
@@ -755,6 +736,7 @@ void initialize_electron_interactions() {
     }
 }
 
+//a-a harmonic potential
 void initialize_atomic_interactions() {
 
     int array_index, array_index_i, neighbor_count;
@@ -820,7 +802,7 @@ void initialize_atomic_interactions() {
     }
 
 }
-
+//e-a screened coulomb potential
 void initialize_electron_atom_interactions() { //we'll need a more developed algorithmn for #electrons != #atoms
     int array_index, array_index_a, nearest_electron_count;
     double x,y,z, x_distance,y_distance,z_distance, length, force;
@@ -937,15 +919,15 @@ void initialize_velocities() {
 
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 
-    vel = 0.0;// sqrt(2*E_f_A / atomic_mass);
+    //vel = 0.0;// sqrt(2*E_f_A / atomic_mass);
     for(int a = 0; a < lattice_atoms; a++) {
         array_index = 3*a;
 
         theta = M_PI * Theta_Vel_distrib(gen);
         phi = M_PI * Phi_Vel_distrib(gen);
-        vel = 0;
-        if(atom_potential[a]*constants::K_A < E_f_A) vel = sqrt(abs(atom_potential[a]*constants::K_A/atomic_mass)); // m/s -> Angstroms / s -> A/fs = 1e-5
-        std::cout << vel << ", " << mu_f*1e20 << ", " <<atom_potential[a]*constants::K_A << ", " << sqrt(mu_f*1e20 - atom_potential[a]*constants::K_A) <<std::endl;
+        
+        vel = sqrt(2*abs(E_f_A - atom_potential[a]*constants::K_A)/atomic_mass); // m/s -> Angstroms / s -> A/fs = 1e-5
+        std::cout << vel << ", " << E_f_A << ", " <<atom_potential[a]*constants::K_A << ", " << sqrt(2*abs(E_f_A - atom_potential[a]*constants::K_A)/atomic_mass) <<std::endl;
         
         atom_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
         atom_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;

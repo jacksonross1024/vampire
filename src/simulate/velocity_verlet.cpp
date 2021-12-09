@@ -30,7 +30,7 @@
 
 namespace CASTLE {
 
-
+//main integration step wrapper
 int velocity_verlet_step(double time_step) {
     
     TEPE = 0;
@@ -55,7 +55,7 @@ int velocity_verlet_step(double time_step) {
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
     
 
-    if(current_time_step > 4000) dt = 1e-3;
+  
     //reset integration
     CASTLE_real_time += dt;
     current_time_step++;
@@ -77,6 +77,7 @@ void setup_output() {
     }
 
 
+//position update loop. omp optimized
 void update_position(){
 
     int array_index,array_index_y,array_index_z;
@@ -139,6 +140,7 @@ void update_position(){
     } 
 }
 
+//update forces and positions. omp optimized
 void update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
@@ -165,11 +167,13 @@ void update_dynamics() {
         EKE = 0;
         LKE = 0;
 
+        //update nearest neighbor cells
         if(current_time_step % 20 == 0) {
           e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
           e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE); 
           a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         
+        //run using faster nearest neighbor cells
         } else {
            // e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
             neighbor_e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
@@ -188,6 +192,7 @@ void update_dynamics() {
         new_atom_force[array_index + 1] = a_y_force;
         new_atom_force[array_index + 2] = a_z_force;
         
+        //update velocity
         update_velocity(array_index, EKE, LKE);
         
         TEPE += EPE;
@@ -202,6 +207,7 @@ void update_dynamics() {
     MLKE += TLKE;
 }
 
+//contains post equilibration step laser pulse
 void update_velocity(int array_index, double& EKE, double& LKE) {
     int array_index_y = array_index + 1;
     int array_index_z = array_index + 2;
@@ -212,16 +218,17 @@ void update_velocity(int array_index, double& EKE, double& LKE) {
     double z_vel = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_electron_force[array_index_z]) * dt  * constants::K_A / 2);
         
 
-    if(!equilibrium_step) {
+    //if(!equilibrium_step) {
         double x = new_electron_position[array_index];
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
-        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22) && current_time_step < sim::equilibration_time+40000) {
-            x_vel += x_vel * 133.333333333 * (current_time_step / sim::equilibration_time+40000 );
-            y_vel += y_vel * 133.333333333* (current_time_step / sim::equilibration_time+40000 );
-            z_vel += z_vel * 133.333333333* (current_time_step / sim::equilibration_time+40000 );
+        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22)){// && current_time_step < sim::equilibration_time+40000) {
+            x_vel += x_vel * 0.33333333333* (current_time_step / 40000.0);// (sim::equilibration_time+40000 ));
+            y_vel += y_vel * 0.33333333333* (current_time_step / 40000.0);// (sim::equilibration_time+40000 ));
+            z_vel += z_vel * 0.33333333333* (current_time_step / 40000.0);//(sim::equilibration_time+40000 ));
+            std::cout << current_time_step / (40000.0 + 10) << ", ";
         }
-    }
+  //  }
     new_electron_velocity[array_index]   = x_vel;
     new_electron_velocity[array_index_y] = y_vel;
     new_electron_velocity[array_index_z] = z_vel;
@@ -236,6 +243,7 @@ void update_velocity(int array_index, double& EKE, double& LKE) {
     LKE += vel;
 }
 
+//e-a coulomb over all space to reset nearest neighbors
 void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
 
@@ -370,6 +378,7 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
    // if(e == 100) std::cout << atomic_nearest_electron_list[e][0] << std::endl;
 }
 
+//nearest neighbor integration
 void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                           double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
 
@@ -486,6 +495,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
    // if(e == 100) std::cout << count << std::endl;
 }
 
+//all space cell reset
 void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                  double& EPE) {
     
@@ -537,6 +547,7 @@ void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& 
    // if(e == 100) std::cout << neighbor_count << std::endl;
 }
 
+//nearest neighbor cells
 void neighbor_e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                           double& EPE) {
     
@@ -579,6 +590,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index, double& e_x_force,
   //  if(e == 100) std::cout << size << std::endl;
 }
 
+// a-a interactions are still neighbor only for harmonic potential
 void a_a_coulomb(const int a, const int array_index, \
                         double& a_x_force, double& a_y_force, double& a_z_force, double& LPE) {
    
@@ -618,6 +630,7 @@ void a_a_coulomb(const int a, const int array_index, \
    // if(a == 100) std::cout << neighbor_count << std::endl;
 }
 
+//ditto
 void neighbor_a_a_coulomb(const int a, const int array_index, \
                         double& a_x_force, double& a_y_force, double& a_z_force, double& LPE) {
     
