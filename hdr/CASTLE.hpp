@@ -73,7 +73,7 @@ namespace CASTLE {
     extern double total_time_steps;
     extern double loop_time;
     extern int    CASTLE_output_rate; //output velocity and position data at this multiple
-    extern double chosen_electron;
+    extern int chosen_electron;
     extern double dt;
     extern double v_f; //meters
     extern double E_f; //meters
@@ -83,7 +83,7 @@ namespace CASTLE {
     extern double atomic_mass;
     extern double mu_r; //inverse reduced mass in reduced units
     extern double combined_mass; //inverse with reduced units
-
+    extern double Tr; // inverse seconds
 
     extern double e_a_neighbor_cutoff;
     extern double e_a_coulomb_cutoff;
