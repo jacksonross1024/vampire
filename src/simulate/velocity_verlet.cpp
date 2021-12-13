@@ -319,10 +319,10 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
        // if(a==100) std::cout << e << ", " << length << std::endl;
       //  if(length < 0.11) length = 0.11;
 
-        if(mean_radius[e] > length) {
+      /*  if(mean_radius[e] > length) {
             #pragma omp critical
             mean_radius[e] = length;
-        }
+        } */
 
        force = -1*(1/(length * length) - 8*150*exp(-8*length));
           //q*k*k * exp(-15(A**-1) * length (A));
@@ -449,10 +449,10 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
        // if(a==100) std::cout << array_index_e / 3 << ", " << length << std::endl;
 
      //   if(length < 0.11) length = 0.11;
-        if(mean_radius[e] > length) {
+       /* if(mean_radius[e] > length) {
             #pragma omp critical
             mean_radius[e] = length;
-        } /*
+        } */ /*
         if(length < 0.7) {
             double scattering_velocity = sqrtl((electron_velocity[array_index_e]*electron_velocity[array_index_e]) + (electron_velocity[array_index_e+1]*electron_velocity[array_index_e+1]) + (electron_velocity[array_index_e+2]*electron_velocity[array_index_e+2])) - sqrtl(2*E_f_A/constants::m_e_r);
             double excitation_energy = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*((electron_velocity[array_index_e]*electron_velocity[array_index_e]) + (electron_velocity[array_index_e+1]*electron_velocity[array_index_e+1]) + (electron_velocity[array_index_e+2]*electron_velocity[array_index_e+2]));
