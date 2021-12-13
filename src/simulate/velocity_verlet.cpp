@@ -128,13 +128,38 @@ void update_position(){
         new_electron_position[array_index_y] = y_pos;
         new_electron_position[array_index_z] = z_pos;
 
-        new_atom_position[array_index]   = atom_position[array_index]   + (atom_velocity[array_index]   * dt) + (atom_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
-        new_atom_position[array_index_y] = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
-        new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
+        x_pos = atom_position[array_index]   + (atom_velocity[array_index]   * dt) + (atom_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
+        y_pos = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
+        z_pos = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
         
-        if(new_atom_position[array_index]   < (atom_anchor_position[array_index]   - 0.1) || new_atom_position[array_index]   > (atom_anchor_position[array_index]   + 0.1)) atom_velocity[array_index]   *= -1;
-        if(new_atom_position[array_index_y] < (atom_anchor_position[array_index_y] - 0.1) || new_atom_position[array_index_y] > (atom_anchor_position[array_index_y] + 0.1)) atom_velocity[array_index_y] *= -1;
-        if(new_atom_position[array_index_z] < (atom_anchor_position[array_index_z] - 0.1) || new_atom_position[array_index_z] > (atom_anchor_position[array_index_z] + 0.1)) atom_velocity[array_index_z] *= -1;
+        if(x_pos < atom_anchor_position[array_index]  - 0.1) {
+            atom_velocity[array_index]   *= -1.0; 
+            x_pos = atom_anchor_position[array_index] - 0.1;
+        } 
+        else if (x_pos > atom_anchor_position[array_index] + 0.1) {
+            atom_velocity[array_index]   *= -1;
+            x_pos = atom_anchor_position[array_index] + 0.1; 
+        }
+        if(y_pos < atom_anchor_position[array_index_y] - 0.1){
+            atom_velocity[array_index_y] *= -1;
+            y_pos = atom_anchor_position[array_index_y] - 0.1;
+        }
+        else if (y_pos > atom_anchor_position[array_index_y] + 0.1) {
+            atom_velocity[array_index_y] *= -1;
+            y_pos = atom_anchor_position[array_index_y] + 0.1;
+        }
+        if(z_pos < atom_anchor_position[array_index_z] - 0.1){
+            atom_velocity[array_index_z] *= -1;
+            atom_anchor_position[array_index_z] - 0.1;
+        } 
+        else if (z_pos > atom_anchor_position[array_index_z] + 0.1) {
+            atom_velocity[array_index_z] *= -1;
+            z_pos = atom_anchor_position[array_index_z] + 0.1;
+        }
+
+        new_atom_position[array_index]   = x_pos;
+        new_atom_position[array_index_y] = y_pos;
+        new_atom_position[array_index_z] = z_pos;
       //   std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index_y] << ", " << atom_force[array_index_z]  << std::endl; // x superarray component
         
     } 
@@ -218,17 +243,17 @@ void update_velocity(int array_index, double& EKE, double& LKE) {
     double z_vel = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_electron_force[array_index_z]) * dt  * constants::K_A / 2);
         
 
-    //if(!equilibrium_step) {
+    if(!equilibrium_step) {
         double x = new_electron_position[array_index];
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
-        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22)){// && current_time_step < sim::equilibration_time+40000) {
-            x_vel += x_vel * 0.33333333333* (current_time_step / 40000.0);// (sim::equilibration_time+40000 ));
-            y_vel += y_vel * 0.33333333333* (current_time_step / 40000.0);// (sim::equilibration_time+40000 ));
-            z_vel += z_vel * 0.33333333333* (current_time_step / 40000.0);//(sim::equilibration_time+40000 ));
-            std::cout << current_time_step / (40000.0 + 10) << ", ";
+        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22) && current_time_step < sim::equilibration_time+40000) {
+            x_vel += x_vel * 0.0033333333333* (current_time_step / (sim::equilibration_time+40000 ));
+            y_vel += y_vel * 0.0033333333333* (current_time_step / (sim::equilibration_time+40000 ));
+            z_vel += z_vel * 0.0033333333333* (current_time_step / (sim::equilibration_time+40000 ));
+           // std::cout << current_time_step / (40000.0 + 10) << ", ";
         }
-  //  }
+    }
     new_electron_velocity[array_index]   = x_vel;
     new_electron_velocity[array_index_y] = y_vel;
     new_electron_velocity[array_index_z] = z_vel;
