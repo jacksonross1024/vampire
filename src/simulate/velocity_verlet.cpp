@@ -246,9 +246,9 @@ void update_velocity(int array_index, double& EKE) {
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
         if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22) && current_time_step < sim::equilibration_time+40000) {
-            x_vel += x_vel * 0.03333333333* (current_time_step / double(sim::equilibration_time+40000));
-            y_vel += y_vel * 0.03333333333* (current_time_step / double(sim::equilibration_time+40000 ));
-            z_vel += z_vel * 0.03333333333* (current_time_step / double(sim::equilibration_time+40000 ));
+            x_vel += x_vel * 0.03333333333* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
+            y_vel += y_vel * 0.03333333333* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
+            z_vel += z_vel * 0.03333333333* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
         }
     }
         
