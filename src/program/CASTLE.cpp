@@ -1132,7 +1132,7 @@ void output_data() {
     //=========
     // Output equilibration step data
     //=========
-    time_stamp = std::to_string(current_time_step);
+    /*time_stamp = std::to_string(current_time_step);
     std::ofstream atomic_phonon_output;
     atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
     atomic_phonon_output.precision(10);
@@ -1219,8 +1219,9 @@ void output_data() {
    
     electron_position_output_down.close();
     electron_velocity_output.close();
-    atomic_phonon_output.close();
+    atomic_phonon_output.close(); */
   
+    std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
     double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
     double nu = j / (n_f * constants::e); //drift velocity
     double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
@@ -1228,18 +1229,18 @@ void output_data() {
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " \
         << MEKE * 1e10 * constants::m_e / 2 << ", " \
-        << MEPE * 1e10 * constants::K << ", " << MLE*1e-20 << ", " \
-        << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
-        << mean_rad << ", " << chosen_electron  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
+        << MEPE * 1e10 * constants::K << ", " << MLE*1e-20 << ", " 
+        //<< -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
+        << chosen_electron  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
         << std::endl;
     }
     else {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " \
         << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " \
-        << MEPE * 1e10 * constants::K / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  \
-        << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " \
-        << mean_rad << ", " << chosen_electron / double(CASTLE_output_rate) << ", " << x_flux / CASTLE_output_rate << ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate  << ", " \
+        << MEPE * 1e10 * constants::K / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  
+        //<< -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
+        << chosen_electron / double(CASTLE_output_rate) << ", " << x_flux / CASTLE_output_rate << ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate  << ", " \
         << std::endl;
      
     double mean_vel = sqrt(MEKE) / (CASTLE_output_rate *conduction_electrons); //Still Angstroms
@@ -1260,7 +1261,7 @@ void output_data() {
     y_flux = 0;
     z_flux = 0;
     chosen_electron = 0;
-    std::fill(mean_radius.begin(), mean_radius.end(), 1);
+   // std::fill(mean_radius.begin(), mean_radius.end(), 1);
      //   electron_spin_output.close();
     CASTLE_output_data = false;
 }

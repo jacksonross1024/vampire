@@ -37,7 +37,7 @@ int velocity_verlet_step(double time_step) {
     TEKE = 0;
     TLE  = 0;
 
-    chosen_electron = 0;
+   // chosen_electron = 0;
 
             if (err::check) std::cout << "Calculating verlet integration...Time step: " << dt << std::endl;
 
@@ -246,9 +246,9 @@ void update_velocity(int array_index, double& EKE) {
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
         if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22) && current_time_step < sim::equilibration_time+40000) {
-            x_vel += x_vel * 3.333333333* (current_time_step / double(sim::equilibration_time+40000));
-            y_vel += y_vel * 3.333333333* (current_time_step / double(sim::equilibration_time+40000 ));
-            z_vel += z_vel * 3.333333333* (current_time_step / double(sim::equilibration_time+40000 ));
+            x_vel += x_vel * 0.03333333333* (current_time_step / double(sim::equilibration_time+40000));
+            y_vel += y_vel * 0.03333333333* (current_time_step / double(sim::equilibration_time+40000 ));
+            z_vel += z_vel * 0.03333333333* (current_time_step / double(sim::equilibration_time+40000 ));
         }
     }
         
@@ -280,11 +280,11 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
     double  force,  phi,theta, PE = 0;
     int array_index_a, nearest_electron_count = 1;
     int nearest_atom_count = 1;
-    bool collision = false;
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<double> scattering_chance(0,1);
+   // bool collision = false;
+    // std::srand(std::time(nullptr));
+    // std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    // std::uniform_real_distribution<double> scattering_chance(0,1);
 
   // std::uniform_int_distribution<> phonon_scattering_vector(0,phonon_size);
   //  int count = 0;
@@ -325,10 +325,10 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
        // if(a==100) std::cout << e << ", " << length << std::endl;
         // if(length < 0.11) length = 0.11;
 
-        if(mean_radius[e] > length) {
-            #pragma omp critical
-            mean_radius[e] = length;
-        }
+        // if(mean_radius[e] > length) {
+        //     #pragma omp critical
+        //     mean_radius[e] = length;
+        // }
 
         force = -1*(1/(length * length) - 8*150*exp(-8*length));
                         //q*k*k * exp(-15(A**-1) * length (A));
@@ -422,13 +422,13 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
     int array_index_a;
   //  bool collision = false;
     int size = atomic_nearest_electron_list[e][0];
-   // int nearest_atom_count = 1;
+    int nearest_atom_count = 0;
 std::srand(std::time(nullptr));
             std::random_device rd;  //Will be used to obtain a seed for the random number engine
             std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
             std::uniform_real_distribution<double> scattering_chance(0,1);
-            std::uniform_int_distribution<> phonon_scattering_vector(1,size);
-    int phonon_collision = atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
+            std::uniform_int_distribution<> phonon_scattering_vector(1,27);
+    int phonon_collision = phonon_scattering_vector(gen);// atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
  //   if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
 
     // int count = 0;
@@ -460,10 +460,10 @@ std::srand(std::time(nullptr));
         
         length = sqrt(length);
        // if(a==100) std::cout << array_index_e / 3 << ", " << length << std::endl;
-       if(mean_radius[e] > length) {
-            #pragma omp critical
-            mean_radius[e] = length;
-        }
+    //    if(mean_radius[e] > length) {
+    //         #pragma omp critical
+    //         mean_radius[e] = length;
+    //     }
         force = -1*(1/(length * length) - 8*150*exp(-8*length));
                         //q*k*k * exp(-15(A**-1) * length (A));
           //  std::cout << force << std::endl;
@@ -491,8 +491,9 @@ std::srand(std::time(nullptr));
         e_x_force += -1*force * cos(theta)*sin(phi);
         e_y_force += -1*force * sin(theta)*sin(phi);
         e_z_force += -1*force * cos(phi); */
-        
-        if(array_index_a == phonon_collision) {
+        if(length < 3) {
+            nearest_atom_count++;
+            if(nearest_atom_count == phonon_collision) {
             
             // if(electron_nearest_atom_list[e][nearest_electron_count*2] == a && electron_nearest_atom_list[e][nearest_electron_count*2 + 1]) continue;
             // else if (electron_nearest_atom_list[e][nearest_electron_count*2] != a) {
@@ -501,39 +502,32 @@ std::srand(std::time(nullptr));
             // }
             //double excitation_constant = -1.0 * dt / E_f_A;
             //if(current_time_step > 4000) excitation_constant = 0.1;
-                double scattering_velocity = (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]);
-                double excitation_constant = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity - atom_potential[array_index_a/3];
-                double excitation_energy   = excitation_constant;
-               // std::cout << electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity - atom_potential[array_index_a/3] << ", " << electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity << ", " << atom_potential[array_index_a/3] << std::endl;
-                if(abs(excitation_energy)) {
-                   //  std::cout << excitation_energy << std::endl;
-                    excitation_energy = mu_f + mu_f * floor(abs(excitation_constant / E_f_A))*floor(abs(excitation_constant / E_f_A)); 
-                   // std::cout << sqrt(scattering_velocity) << ", " << excitation_constant / E_f_A << ", " << floor(abs(excitation_constant / E_f_A)) << ", ";
-                    scattering_velocity = sqrt(scattering_velocity) - (sqrt(2.0*excitation_energy/constants::m_e_r));
-                    //std::cout << excitation_energy << ", " << scattering_velocity << std::endl;
-                    if(excitation_constant < 0) {
-                        scattering_velocity += 2.0*sqrt(excitation_energy*2.0/constants::m_e_r);
-                        // excitation_energy *= -1;
-                    }
+               double scattering_velocity = (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]);
+               // double EE = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity;
+                // - atom_potential[array_index_a/3];
+               // double excitation_energy   = deltaE;
+                  //  excitation_energy = mu_f + mu_f * floor(abs(excitation_constant / E_f_A))*floor(abs(excitation_constant / E_f_A)); 
+                //if(deltaE > 0) scattering_velocity = sqrt(scattering_velocity) - (sqrt(2.0*deltaE/constants::m_e_r));
+                //else scattering_velocity = sqrt(scattering_velocity) + (sqrt(2.0*abs(deltaE)/constants::m_e_r));  
+                //if(scattering_velocity < 0) continue;
                     
-                    if(scattering_velocity > 0) {
-                        if(scattering_chance(gen) > exp(-1.0*dt*abs(excitation_constant) / mu_f)) {
+                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7)) {
+                   // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
+                    std::uniform_real_distribution<double> Theta_pos_distrib(0,2.0);
+                    std::uniform_real_distribution<double> Phi_pos_distrib(0,1.0);
+                    double theta = Theta_pos_distrib(gen)*M_PI;
+                    double phi   = Phi_pos_distrib(gen) * M_PI;
+                    double deltaE = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity - atom_potential[array_index_a/3];
+                    scattering_velocity = sqrt(2.0*atom_potential[array_index_a/3]/constants::m_e_r);
                     
-                    // electron_nearest_atom_list[e][2*a+1] = true;
-                     //   collision = true;
-                        double vel = sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]));
-                        double theta = atan(electron_velocity[array_index+1] / electron_velocity[array_index]);
-                        double phi = acos(electron_velocity[array_index+2] / vel);
-                        if (electron_velocity[array_index] < 0) theta += M_PI;
-                        electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
-                        electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
-                        electron_velocity[array_index+2] = scattering_velocity * cos(phi);
+                    electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
+                    electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
+                    electron_velocity[array_index+2] = scattering_velocity * cos(phi);
                        // std::cout << scattering_velocity << std::endl;
-                        #pragma omp critical
-                        {
-                        chosen_electron++;
-                        new_atom_potential[array_index_a/3] += excitation_energy;
-                        }
+                    #pragma omp critical
+                    {
+                    chosen_electron++;
+                    new_atom_potential[array_index_a/3] += deltaE;
                     }
                 }
             }
