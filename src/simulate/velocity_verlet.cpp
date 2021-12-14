@@ -324,10 +324,10 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
        // if(a==100) std::cout << e << ", " << length << std::endl;
         // if(length < 0.11) length = 0.11;
 
-        // if(mean_radius[e] > length) {
-        //     #pragma omp critical
-        //     mean_radius[e] = length;
-        // }
+        if(mean_radius[e] > length) {
+            #pragma omp critical
+            mean_radius[e] = length;
+        }
 
         force = -1*(1/(length * length) - 8*150*exp(-8*length));
                         //q*k*k * exp(-15(A**-1) * length (A));
@@ -459,10 +459,10 @@ std::srand(std::time(nullptr));
         
         length = sqrt(length);
        // if(a==100) std::cout << array_index_e / 3 << ", " << length << std::endl;
-    //    if(mean_radius[e] > length) {
-    //         #pragma omp critical
-    //         mean_radius[e] = length;
-    //     }
+       if(mean_radius[e] > length) {
+            #pragma omp critical
+            mean_radius[e] = length;
+        }
         force = -1*(1/(length * length) - 8*150*exp(-8*length));
                         //q*k*k * exp(-15(A**-1) * length (A));
           //  std::cout << force << std::endl;
@@ -518,9 +518,9 @@ std::srand(std::time(nullptr));
                     double phi   = Phi_pos_distrib(gen) * M_PI;
                     double deltaE = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity - atom_potential[array_index_a/3];
                     
-                    if(deltaE < 0 ) {
-                      deltaE = atom_potential[array_index_a/3] - E_f_A;
-                      scattering_velocity += sqrt(2*deltaE / constants::m_e_r);
+                    if(deltaE < 0.0 ) {
+                      deltaE = E_f_A - atom_potential[array_index_a/3];
+                      scattering_velocity += sqrt(2.0*abs(deltaE) / constants::m_e_r);
                     } else scattering_velocity = sqrt(2.0*atom_potential[array_index_a/3]/constants::m_e_r);
                     
                     electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
