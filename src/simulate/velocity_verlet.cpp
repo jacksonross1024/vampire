@@ -510,14 +510,18 @@ std::srand(std::time(nullptr));
                 //else scattering_velocity = sqrt(scattering_velocity) + (sqrt(2.0*abs(deltaE)/constants::m_e_r));  
                 //if(scattering_velocity < 0) continue;
                     
-                if(scattering_chance(gen) < exp(-1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7)) {
-                   // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
+                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7)) {
+                  //  std::cout << exp(-1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7) << std::endl;
                     std::uniform_real_distribution<double> Theta_pos_distrib(0,2.0);
                     std::uniform_real_distribution<double> Phi_pos_distrib(0,1.0);
                     double theta = Theta_pos_distrib(gen)*M_PI;
                     double phi   = Phi_pos_distrib(gen) * M_PI;
                     double deltaE = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity - atom_potential[array_index_a/3];
-                    scattering_velocity = sqrt(2.0*atom_potential[array_index_a/3]/constants::m_e_r);
+                    
+                    if(deltaE < 0 ) {
+                      deltaE = atom_potential[array_index_a/3] - E_f_A;
+                      scattering_velocity += sqrt(2*deltaE / constants::m_e_r);
+                    } else scattering_velocity = sqrt(2.0*atom_potential[array_index_a/3]/constants::m_e_r);
                     
                     electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
                     electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);

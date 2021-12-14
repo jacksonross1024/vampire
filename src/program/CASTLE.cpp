@@ -1215,7 +1215,7 @@ void output_data() {
     //std::cout <<"speeding: " << speeding << ", proximity: " << proximity << ", close proxmity: " << close_proximity << std::endl;
     mean_rad /= conduction_electrons;
     //lambda = (x_lambda + y_lambda + z_lambda) / (3*CASTLE_output_rate * conduction_electrons);
-    std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
+  //  std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
    
     // electron_position_output_down.close();
     // electron_velocity_output.close();
