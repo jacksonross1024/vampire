@@ -247,11 +247,11 @@ void update_velocity(int array_index, double& EKE, double& LKE) {
         double x = new_electron_position[array_index];
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
-        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22) && current_time_step < sim::equilibration_time+40000) {
-            x_vel += x_vel * 0.0033333333333* (current_time_step / (sim::equilibration_time+40000 ));
-            y_vel += y_vel * 0.0033333333333* (current_time_step / (sim::equilibration_time+40000 ));
-            z_vel += z_vel * 0.0033333333333* (current_time_step / (sim::equilibration_time+40000 ));
-           // std::cout << current_time_step / (40000.0 + 10) << ", ";
+        if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 ) {
+            double en_scale = mu_f * 0.001 / sqrt(3);
+            x_vel += x_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
+            y_vel += y_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
+            z_vel += z_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
         }
     }
     new_electron_velocity[array_index]   = x_vel;
