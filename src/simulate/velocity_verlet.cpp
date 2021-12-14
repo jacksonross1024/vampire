@@ -245,7 +245,7 @@ void update_velocity(int array_index, double& EKE) {
         double x = new_electron_position[array_index];
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
-        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22) && current_time_step < sim::equilibration_time+40000) {
+        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22) ) {
             x_vel += x_vel * 0.03333333333* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
             y_vel += y_vel * 0.03333333333* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
             z_vel += z_vel * 0.03333333333* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
@@ -510,7 +510,7 @@ std::srand(std::time(nullptr));
                 //else scattering_velocity = sqrt(scattering_velocity) + (sqrt(2.0*abs(deltaE)/constants::m_e_r));  
                 //if(scattering_velocity < 0) continue;
                     
-                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7)) {
+                if(scattering_chance(gen) < exp(-1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7)) {
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
                     std::uniform_real_distribution<double> Theta_pos_distrib(0,2.0);
                     std::uniform_real_distribution<double> Phi_pos_distrib(0,1.0);
