@@ -417,7 +417,7 @@ void initialize_lattice() {
         atom_position[array_index+1] = atom_anchor_position[array_index+1] + atom_position_distrib(gen);
         atom_position[array_index+2] = atom_anchor_position[array_index+2] + atom_position_distrib(gen);
 
-        TLE += atom_potential[a] = 146*(1.01 - atom_position_distrib(gen));
+        TLE += atom_potential[a] = E_f_A;//146*(1.01 - atom_position_distrib(gen));
 
         lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
