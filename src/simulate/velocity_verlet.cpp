@@ -139,8 +139,8 @@ void update_position(){
         //new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
         
       //   std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index_y] << ", " << atom_force[array_index_z]  << std::endl; // x superarray component
-        
-        excitation_constant = atom_potential[e] - atom_potential[atomic_nearest_atom_list[e][phonon_transfer_vector(gen)]];
+        i = atomic_nearest_atom_list[e][phonon_transfer_vector(gen)];
+        excitation_constant = atom_potential[e] - atom_potential[i];
         if(excitation_constant > 0) continue;
         if(phonon_transfer_chance(gen) >  exp(-1*dt*excitation_constant / mu_f)) {
 
@@ -285,7 +285,6 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
     // std::random_device rd;  //Will be used to obtain a seed for the random number engine
     // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     // std::uniform_real_distribution<double> scattering_chance(0,1);
-
   // std::uniform_int_distribution<> phonon_scattering_vector(0,phonon_size);
   //  int count = 0;
     for (int a = 0; a < lattice_atoms; a++) {
