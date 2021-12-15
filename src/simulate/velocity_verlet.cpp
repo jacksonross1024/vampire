@@ -88,7 +88,7 @@ void update_position(){
     std::uniform_int_distribution<> phonon_transfer_vector(1,6);
     double excitation_constant;
     double excitation_energy = mu_f;
-    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) schedule(static) reduction(+:x_flux,y_flux,z_flux)
+    #pragma omp parallel for private(i, array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) schedule(static) reduction(+:x_flux,y_flux,z_flux)
     for (int e = 0; e < conduction_electrons; e++){ 
 
         array_index = 3*e;
@@ -141,11 +141,12 @@ void update_position(){
       //   std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index_y] << ", " << atom_force[array_index_z]  << std::endl; // x superarray component
         i = atomic_nearest_atom_list[e][phonon_transfer_vector(gen)];
         excitation_constant = atom_potential[e] - atom_potential[i];
-        if(excitation_constant > 0) continue;
+        if(excitation_constant < 0) continue;
         if(phonon_transfer_chance(gen) >  exp(-1*dt*excitation_constant / mu_f)) {
 
             #pragma omp critical
             {
+           //   std::cout << excitation_constant << ", " << excitation_energy << std::endl;
             new_atom_potential[e] -= excitation_energy;
             new_atom_potential[i] += excitation_energy;
             }
