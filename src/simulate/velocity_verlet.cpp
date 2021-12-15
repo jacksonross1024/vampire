@@ -63,7 +63,7 @@ int velocity_verlet_step(double time_step) {
     electron_force.swap(new_electron_force);
     electron_velocity.swap(new_electron_velocity);
     electron_potential.swap(new_electron_potential);
-    atom_potential.swap(new_atom_potential);
+  //  atom_potential.swap(new_atom_potential);
    // atom_position.swap(new_atom_position);
     //atom_velocity.swap(new_atom_velocity);
     //atom_force.swap(new_atom_force);
@@ -146,8 +146,8 @@ void update_position(){
 
             #pragma omp critical
             {
-            new_atom_potential[e] -= excitation_energy;
-            new_atom_potential[i] += excitation_energy;
+            atom_potential[e] -= excitation_energy;
+            atom_potential[i] += excitation_energy;
             }
         }
     }
@@ -255,10 +255,11 @@ void update_velocity(int array_index, double& EKE) {
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
         if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 ) {
-            double en_scale = mu_f * 0.001 / sqrt(3);
-            x_vel += x_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
-            y_vel += y_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
-            z_vel += z_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 40000)*(current_time_step - sim::equilibration_time - 40000));
+          const static double sigma = 1 / 1e3;
+          double en_scale = sigma * sqrt(2.0*5e3 / constants::m_e_r)/sqrt(2.0 * M_PI);
+            x_vel += x_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
+            y_vel += y_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
+            z_vel += z_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
         }
         
     }
@@ -518,14 +519,16 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 //else scattering_velocity = sqrt(scattering_velocity) + (sqrt(2.0*abs(deltaE)/constants::m_e_r));  
                 //if(scattering_velocity < 0) continue;
                 double deltaE = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity;
-                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(deltaE)) / 27.7)) {
+                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(abs(deltaE) / atom_potential[array_index_a/3]) / 27.7)) {
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
                     std::uniform_real_distribution<double> Theta_pos_distrib(0,2.0);
                     std::uniform_real_distribution<double> Phi_pos_distrib(0,1.0);
                     double theta = Theta_pos_distrib(gen)*M_PI;
                     double phi   = Phi_pos_distrib(gen) * M_PI;
                     deltaE -= atom_potential[array_index_a/3];
-                    scattering_velocity = sqrt(2.0*atom_potential[array_index_a/3]/constants::m_e_r);
+                    if(deltaE < 0.0) continue;
+                    else if (deltaE > E_f_A) deltaE = E_f_A;
+                    scattering_velocity -= sqrt(2.0*deltaE/constants::m_e_r);
                     
                     electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
                     electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
@@ -534,7 +537,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                     #pragma omp critical
                     {
                     chosen_electron++;
-                    new_atom_potential[array_index_a/3] += deltaE;
+                    atom_potential[array_index_a/3] += deltaE;
                     }
                 }
             }
