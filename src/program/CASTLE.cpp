@@ -1235,7 +1235,7 @@ void output_data() {
     
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      //  << MEKE * 1e10 * constants::m_e / 2 << ", " 
+        << MEKE * 1e10 * constants::m_e / 2 << ", " 
         << MEPE * 1e-20 << ", " << MLE*1e-20 << ", " 
         << ((MEPE+MEKE)*1e-20 - E_f*conduction_electrons) / (6.02e-23 * conduction_electrons * 2.52e2) << ", " << (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e6) << ", "
         << ((MEPE+MEKE)*1e-20 - E_f*conduction_electrons)/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e6) << ", "
@@ -1246,7 +1246,7 @@ void output_data() {
     else {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      //  << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " 
+        << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " 
         << MEPE * 1e-20 / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  
         << ((MEPE+MEKE)*1e-20 - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2) / CASTLE_output_rate << ", " << (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e6) / CASTLE_output_rate << ", "
         << (((MEPE+MEKE)*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e6)) / CASTLE_output_rate << ", " 

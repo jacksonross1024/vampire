@@ -141,9 +141,10 @@ void update_position(){
       //   std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index_y] << ", " << atom_force[array_index_z]  << std::endl; // x superarray component
         i = atomic_nearest_atom_list[e][phonon_transfer_vector(gen)];
         excitation_constant = atom_potential[e] - atom_potential[i];
-        if(excitation_constant > 0.0) continue;
+        if(excitation_constant < 0.0) continue;
+        
         if(phonon_transfer_chance(gen) >  exp(-1.0*dt*excitation_constant / mu_f)) {
-
+            if(excitation_constant > E_f_A) excitation_constant = E_f_A;
             #pragma omp critical
             {
             atom_potential[e] -= excitation_energy;
@@ -161,7 +162,7 @@ void update_dynamics() {
     double TEKE = 0;
     TLE = 0.0;
 
-    #pragma omp parallel for private(array_index, EPE, EKE)\
+    #pragma omp parallel for private(array_index, e_x_force, e_y_force, e_z_force, EPE, EKE)\
      schedule(static) reduction(+:TEPE,TEKE,TLE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
@@ -173,7 +174,7 @@ void update_dynamics() {
         EKE = 0;
         
 
-        if(current_time_step % 20 == 0) {
+        if(current_time_step % 15 == 0) {
             e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force,EPE);
             e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
           //  a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
@@ -521,13 +522,14 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 double deltaE = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity;
                 if(scattering_chance(gen) > exp(-1.0*dt*sqrt(abs(deltaE) / atom_potential[array_index_a/3]) / 27.7)) {
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
+                    deltaE -= atom_potential[array_index_a/3];
+                    if(deltaE < 0.0) continue;
+                     else if (deltaE > E_f_A) deltaE = E_f_A;
                     std::uniform_real_distribution<double> Theta_pos_distrib(0,2.0);
                     std::uniform_real_distribution<double> Phi_pos_distrib(0,1.0);
                     double theta = Theta_pos_distrib(gen)*M_PI;
                     double phi   = Phi_pos_distrib(gen) * M_PI;
-                    deltaE -= atom_potential[array_index_a/3];
-                    if(deltaE < 0.0) continue;
-                    else if (deltaE > E_f_A) deltaE = E_f_A;
+                    
                     scattering_velocity -= sqrt(2.0*deltaE/constants::m_e_r);
                     
                     electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
