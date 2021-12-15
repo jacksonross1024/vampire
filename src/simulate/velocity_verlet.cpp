@@ -59,7 +59,7 @@ int velocity_verlet_step(double time_step) {
     CASTLE_real_time += dt;
     current_time_step++;
 
-    electron_position.swap(new_electron_position);
+   // electron_position.swap(new_electron_position);
    // electron_force.swap(new_electron_force);
    // electron_velocity.swap(new_electron_velocity);
    // electron_potential.swap(new_electron_potential);
@@ -246,13 +246,14 @@ void update_velocity(int array_index, double& EKE) {
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
         if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 ) {
-            double en_scale = sqrt(2*5e-4/constants::m_e_r);
-            x_vel += x_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 4000)*(current_time_step - sim::equilibration_time - 4000));
-            y_vel += y_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 4000)*(current_time_step - sim::equilibration_time - 4000));
-            z_vel += z_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 4000)*(current_time_step - sim::equilibration_time - 4000));
+          const static double sigma = 1 / 1e3;
+          double en_scale = sigma * sqrt(2*5e1/constants::m_e_r) / sqrt(2.0 * M_PI);
+            x_vel += x_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
+            y_vel += y_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
+            z_vel += z_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
         
          //   std::cout << current_time_step / (sim::equilibration_time+40000.0) << std::endl;
-            new_electron_potential[array_index/3] = ((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel))*0.5*constants::m_e_r;
+            electron_potential[array_index/3] = ((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel))*0.5*constants::m_e_r;
             electron_velocity[array_index]   = x_vel;
             electron_velocity[array_index_y] = y_vel;
             electron_velocity[array_index_z] = z_vel;
@@ -426,7 +427,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
             std::random_device rd;  //Will be used to obtain a seed for the random number engine
             std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
             std::uniform_real_distribution<double> scattering_chance(0,1);
-            std::uniform_int_distribution<> phonon_scattering_vector(0,26);
+            std::uniform_int_distribution<> phonon_scattering_vector(1,27);
     int phonon_collision = phonon_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
  //   if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
 
@@ -510,7 +511,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
                 electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
                 electron_velocity[array_index+2] = scattering_velocity * cos(phi);
-                new_electron_potential[e] = E_f_A;
+                electron_potential[e] = E_f_A;
                        // std::cout << scattering_velocity << std::endl;
                 #pragma omp critical
                 {
