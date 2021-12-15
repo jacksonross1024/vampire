@@ -341,7 +341,7 @@ void initialize () {
   
     std::cout << "E_f(J): " << E_f << ", TLE(J): " << TLE*1e-20 << ", TE(J): " << E_f*conduction_electrons << ", TEKE(AJ):" << TEKE*1e10*constants::m_e/2 << ", TEPE " << TEPE*1e10*constants::K << ", TEE " <<  ((TEKE*constants::m_e)/2 + (TEPE*constants::K))*1e10 << ", EE(J): " << constants::m_e*TEKE*0.5*1e10 + constants::K*1e10*std::accumulate(electron_potential.begin(), electron_potential.end(), 0) <<  std::endl;
     mean_data.open("CASTLE/mean_data.csv");
-    mean_data << "time, step, mean-EKE, mean-LKE, mean-EPE, mean-LPE, -lambda, +lambda, mean-lambda, mean-inelastic-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
+    mean_data << "time, step, mean-EKE, mean-EPE, mean-LE, Te, Tp, mean-radius, mean-inelastic-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
 
 }
 
@@ -421,11 +421,11 @@ void initialize_lattice() {
         atom_position[array_index+1] = atom_anchor_position[array_index+1] + atom_position_distrib(gen);
         atom_position[array_index+2] = atom_anchor_position[array_index+2] + atom_position_distrib(gen);
 
-        TLE += atom_potential[a] = E_f_A;// 146*(1.01 - atom_position_distrib(gen));
+        TLE += new_atom_potential[a] = atom_potential[a] = E_f_A;// 146*(1.01 - atom_position_distrib(gen));
 
         lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
-    new_atom_potential = atom_potential;
+   // new_atom_potential = atom_potential;
     lattice_output.close(); 
 }
 
@@ -505,7 +505,7 @@ void initialize_electrons() {
         y_pos = atom_anchor_position[3*e+1] + sin(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Sets on radius of screening depth from nucleus
         z_pos = atom_anchor_position[3*e+2] + cos(phi)*screening_depth;//*radius_mod(gen);
 
-        electron_potential[e] = E_f_A;
+       // electron_potential[e] = E_f_A;
         
         if (x_pos < 0) x_pos += 40;
         else if (x_pos > 40) x_pos -= 40;
@@ -925,9 +925,9 @@ void initialize_velocities() {
     electron_velocity_output.open("CASTLE/Electron_Velocity/init.csv");
     electron_velocity_output << "electron number, x-component, y-component, z-component, length" << std::endl;  
 
-    std::ofstream atom_velocity_output;
-    atom_velocity_output.open("CASTLE/Atom_Velocity/init.csv");
-    atom_velocity_output << "atom number, x-component, y-component, z-component, length" << std::endl;
+    // std::ofstream atom_velocity_output;
+    // atom_velocity_output.open("CASTLE/Atom_Velocity/init.csv");
+    // atom_velocity_output << "atom number, x-component, y-component, z-component, length" << std::endl;
 
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -945,8 +945,8 @@ void initialize_velocities() {
         theta = M_PI * Theta_Vel_distrib(gen);
         phi = M_PI * Phi_Vel_distrib(gen);
 
-        vel = 0;//sqrt(2*E_f_A/constants::m_e_r);
-        if(electron_potential[e]*constants::K_A < E_f_A) vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
+        vel = sqrt(2*E_f_A/constants::m_e_r);
+        //if(electron_potential[e]*constants::K_A < E_f_A) vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
         //if (vel > 4e6) vel = 3.4e6 * vel_distrib(gen);
         if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
         electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
@@ -1237,10 +1237,10 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
         << MEKE * 1e10 * constants::m_e / 2 << ", " 
         << MEPE * 1e-20 << ", " << MLE*1e-20 << ", " 
-        << ((MEPE+MEKE)*1e-20 - E_f*conduction_electrons) / (6.02e-23 * conduction_electrons * 2.52e2) << ", " << (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e6) << ", "
-        << ((MEPE+MEKE)*1e-20 - E_f*conduction_electrons)/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e6) << ", "
+        << ((MEPE+MEKE)*1e-20 - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2) << ", " << (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e6) << ", "
+        << ((MEPE+MEKE)*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e6) << ", "
       //  << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
-        << mean_rad << ", " << chosen_electron  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
+        << mean_rad << ", " << double(chosen_electron)  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
         << std::endl;
     }
     else {
@@ -1251,7 +1251,7 @@ void output_data() {
         << ((MEPE+MEKE)*1e-20 - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2) / CASTLE_output_rate << ", " << (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e6) / CASTLE_output_rate << ", "
         << (((MEPE+MEKE)*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e6)) / CASTLE_output_rate << ", " 
        // << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
-        << mean_rad / CASTLE_output_rate<< ", " << chosen_electron / CASTLE_output_rate << ", " << x_flux / CASTLE_output_rate << ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate  << ", " \
+        << mean_rad << ", " << double(chosen_electron) / double(CASTLE_output_rate) << ", " << x_flux / CASTLE_output_rate << ", " << y_flux / CASTLE_output_rate << ", " << z_flux / CASTLE_output_rate  << ", " \
         << std::endl;
      
    // double mean_vel = sqrt(MEKE) / (CASTLE_output_rate *conduction_electrons); //Still Angstroms

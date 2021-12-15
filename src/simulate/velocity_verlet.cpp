@@ -258,9 +258,9 @@ void update_velocity(int array_index, double& EKE) {
         if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 ) {
           const static double sigma = 1 / 1e3;
           double en_scale = sigma * sqrt(2.0*5e3 / constants::m_e_r)/sqrt(2.0 * M_PI);
-            x_vel += x_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
-            y_vel += y_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
-            z_vel += z_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
+            x_vel += x_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 40000)*double(current_time_step - 40000));
+            y_vel += y_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 40000)*double(current_time_step - 40000));
+            z_vel += z_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 40000)*double(current_time_step - 40000));
         }
         
     }
@@ -519,8 +519,8 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 //if(deltaE > 0) scattering_velocity = sqrt(scattering_velocity) - (sqrt(2.0*deltaE/constants::m_e_r));
                 //else scattering_velocity = sqrt(scattering_velocity) + (sqrt(2.0*abs(deltaE)/constants::m_e_r));  
                 //if(scattering_velocity < 0) continue;
-                double deltaE = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity;
-                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(abs(deltaE) / atom_potential[array_index_a/3]) / 27.7)) {
+                double deltaE = constants::m_e_r*0.5*scattering_velocity;
+                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(deltaE / atom_potential[array_index_a/3]) / 27.7)) {
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
                     deltaE -= atom_potential[array_index_a/3];
                     if(deltaE < 0.0) continue;
