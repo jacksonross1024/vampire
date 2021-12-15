@@ -63,7 +63,7 @@ int velocity_verlet_step(double time_step) {
    // electron_force.swap(new_electron_force);
    // electron_velocity.swap(new_electron_velocity);
    // electron_potential.swap(new_electron_potential);
-   // atom_potential.swap(new_atom_potential);
+    atom_potential.swap(new_atom_potential);
    // atom_position.swap(new_atom_position);
     //atom_velocity.swap(new_atom_velocity);
     //atom_force.swap(new_atom_force);
@@ -88,7 +88,7 @@ void update_position(){
     std::uniform_int_distribution<> phonon_transfer_vector(1,6);
     double excitation_constant;
     double excitation_energy = mu_f;
-    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) schedule(static) reduction(+:x_flux,y_flux,z_flux)
+    #pragma omp parallel for private(i,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) schedule(static) reduction(+:x_flux,y_flux,z_flux)
     for (int e = 0; e < conduction_electrons; e++){ 
 
         array_index = 3*e;
@@ -141,7 +141,7 @@ void update_position(){
       //   std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index_y] << ", " << atom_force[array_index_z]  << std::endl; // x superarray component
         i = atomic_nearest_atom_list[e][phonon_transfer_vector(gen)];
         excitation_constant = atom_potential[e] - atom_potential[i];
-        if(excitation_constant > 0.0) continue;
+        if(excitation_constant < 0.0) continue;
         if(phonon_transfer_chance(gen) >  exp(-1.0*dt*excitation_constant / mu_f)) {
 
             #pragma omp critical
@@ -151,10 +151,6 @@ void update_position(){
             }
         }
     }
-    for(int a = 0; a < lattice_atoms; a++) {
-        atom_potential[a] += new_atom_potential[a];
-        new_atom_potential[a] = 0;
-    } 
     
 }
 
@@ -249,16 +245,17 @@ void update_velocity(int array_index, double& EKE) {
         double x = new_electron_position[array_index];
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
-        if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 && current_time_step < sim::equilibration_time+40000) {
-            double en_scale = mu_f * 0.001 / sqrt(3);
-            x_vel += x_vel * en_scale * current_time_step / (sim::equilibration_time+40000.0);
-            y_vel += y_vel * en_scale * current_time_step / (sim::equilibration_time+40000.0);
-            z_vel += z_vel * en_scale * current_time_step / (sim::equilibration_time+40000.0);
+        if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 ) {
+            double en_scale = sqrt(2*5e-4/constants::m_e_r);
+            x_vel += x_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 4000)*(current_time_step - sim::equilibration_time - 4000));
+            y_vel += y_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 4000)*(current_time_step - sim::equilibration_time - 4000));
+            z_vel += z_vel * en_scale* exp(-0.5*(current_time_step - sim::equilibration_time - 4000)*(current_time_step - sim::equilibration_time - 4000));
+        
          //   std::cout << current_time_step / (sim::equilibration_time+40000.0) << std::endl;
-            electron_potential[array_index/3] += mu_f*0.001;
-            new_electron_velocity[array_index]   = x_vel;
-            new_electron_velocity[array_index_y] = y_vel;
-            new_electron_velocity[array_index_z] = z_vel;
+            new_electron_potential[array_index/3] = ((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel))*0.5*constants::m_e_r;
+            electron_velocity[array_index]   = x_vel;
+            electron_velocity[array_index_y] = y_vel;
+            electron_velocity[array_index_z] = z_vel;
         }
     
        // EKE = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
@@ -318,7 +315,7 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
         atomic_nearest_electron_list[e][nearest_electron_count] = array_index_a;
         nearest_electron_count++;
 
-     /*   if (length > e_a_coulomb_cutoff) continue;
+        if (length > e_a_coulomb_cutoff) continue;
        // count++;
 
        // if(a == 100) std::cout << e << ", " << sqrt(length) << std::endl;
@@ -330,7 +327,7 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
             #pragma omp critical
             mean_radius[e] = length;
         }
-
+        /*
         force = -1*(1/(length * length) - 8*150*exp(-8*length));
                         //q*k*k * exp(-15(A**-1) * length (A));
           //  std::cout << force << std::endl;
@@ -461,12 +458,12 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
         count++;
         // count++;
         
-    /*    length = sqrt(length);
+       length = sqrt(length);
        // if(a==100) std::cout << array_index_e / 3 << ", " << length << std::endl;
        if(mean_radius[e] > length) {
             #pragma omp critical
             mean_radius[e] = length;
-        }
+        } /*
         force = -1*(1/(length * length) - 8*150*exp(-8*length));
                         //q*k*k * exp(-15(A**-1) * length (A));
           //  std::cout << force << std::endl;
@@ -498,8 +495,9 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
         if(count == phonon_collision) {
           //  std::cout << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << sqrt(electron_potential[e]) << ", " << Tr << ", " << dt / (sqrt(electron_potential[e]) * Tr) << std::endl;
             double scattering = scattering_chance(gen);
-            if(scattering > exp(dt / (sqrt(electron_potential[e]) * Tr))) {
-                double excitation_energy = electron_potential[e] - atom_potential[array_index_a/3];
+            if(scattering > exp(-1.0*dt*sqrt(atom_potential[array_index_a/3]) / (sqrt(electron_potential[e]) * 27.7))) {
+                double deltaE = electron_potential[e] - atom_potential[array_index_a/3];
+              //  if(deltaE < 0.0) std::cout << deltaE << std::endl;
                 std::uniform_real_distribution<double> theta_distrib(0.0,2.0);
                 std::uniform_real_distribution<double> phi_distrib(0.0,1.0);
                     // electron_nearest_atom_list[e][2*a+1] = true;
@@ -512,14 +510,14 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
                 electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
                 electron_velocity[array_index+2] = scattering_velocity * cos(phi);
-                electron_potential[e] = E_f_A;
+                new_electron_potential[e] = E_f_A;
                        // std::cout << scattering_velocity << std::endl;
                 #pragma omp critical
                 {
                // std::cout << chosen_electron << ", " << count << ", " << phonon_collision << ", " << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << exp(dt / (sqrt(electron_potential[e]) * Tr)) << std::endl;
                // std::cout << exp(dt / (sqrt(electron_potential[e] * Tr))) << std::endl;
                 chosen_electron++;
-                new_atom_potential[array_index_a/3] += excitation_energy;
+                new_atom_potential[array_index_a/3] += deltaE;
                 }
             }
         }
