@@ -59,11 +59,11 @@ int velocity_verlet_step(double time_step) {
     CASTLE_real_time += dt;
     current_time_step++;
 
-   // electron_position.swap(new_electron_position);
+    electron_position.swap(new_electron_position);
    // electron_force.swap(new_electron_force);
    // electron_velocity.swap(new_electron_velocity);
    // electron_potential.swap(new_electron_potential);
-    atom_potential.swap(new_atom_potential);
+   // atom_potential.swap(new_atom_potential);
    // atom_position.swap(new_atom_position);
     //atom_velocity.swap(new_atom_velocity);
     //atom_force.swap(new_atom_force);
@@ -142,12 +142,13 @@ void update_position(){
         i = atomic_nearest_atom_list[e][phonon_transfer_vector(gen)];
         excitation_constant = atom_potential[e] - atom_potential[i];
         if(excitation_constant < 0.0) continue;
+        
         if(phonon_transfer_chance(gen) >  exp(-1.0*dt*excitation_constant / mu_f)) {
-
+            if (excitation_constant > E_f_A) excitation_constant = E_f_A;
             #pragma omp critical
             {
-            new_atom_potential[e] -= excitation_energy;
-            new_atom_potential[i] += excitation_energy;
+            atom_potential[e] -= excitation_constant;
+            atom_potential[i] += excitation_constant;
             }
         }
     }
@@ -174,7 +175,7 @@ void update_dynamics() {
      //   EKE = 0;
         
 
-        if(current_time_step % 20 == 0) {
+        if(current_time_step % 15 == 0) {
             e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force,EPE);
          //   e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
           //  a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
@@ -246,17 +247,20 @@ void update_velocity(int array_index, double& EKE) {
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
         if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 ) {
+          double vel = sqrt((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel));
+          double theta = atan(y_vel / x_vel);
+          double phi = acos(z_vel / vel);
+          if(x_vel < 0.0) theta += M_PI;
+
           const static double sigma = 1 / 1e3;
-          double en_scale = sigma * sqrt(2*5e1/constants::m_e_r) / sqrt(2.0 * M_PI);
-            x_vel += x_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
-            y_vel += y_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
-            z_vel += z_vel * en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
+          double en_scale = sigma * sqrt(2.0*5e7 / constants::m_e_r)/sqrt(2.0 * M_PI);
+          vel += en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
         
          //   std::cout << current_time_step / (sim::equilibration_time+40000.0) << std::endl;
-            electron_potential[array_index/3] = ((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel))*0.5*constants::m_e_r;
-            electron_velocity[array_index]   = x_vel;
-            electron_velocity[array_index_y] = y_vel;
-            electron_velocity[array_index_z] = z_vel;
+            electron_potential[array_index/3] = vel*vel*0.5*constants::m_e_r;
+            electron_velocity[array_index]   = vel*cos(theta)*sin(phi);
+            electron_velocity[array_index_y] = vel*sin(theta)*sin(phi);
+            electron_velocity[array_index_z] = vel*cos(phi);
         }
     
        // EKE = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
@@ -496,9 +500,10 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
         if(count == phonon_collision) {
           //  std::cout << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << sqrt(electron_potential[e]) << ", " << Tr << ", " << dt / (sqrt(electron_potential[e]) * Tr) << std::endl;
             double scattering = scattering_chance(gen);
-            if(scattering > exp(-1.0*dt*sqrt(atom_potential[array_index_a/3]) / (sqrt(electron_potential[e]) * 27.7))) {
+            if(scattering > exp(-1.0*dt*sqrt(electron_potential[e] / atom_potential[array_index_a/3]) / 27.7)) {
                 double deltaE = electron_potential[e] - atom_potential[array_index_a/3];
-              //  if(deltaE < 0.0) std::cout << deltaE << std::endl;
+                if(deltaE < 0.0) continue;//deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0*E_f_A);
+                else if(deltaE > E_f_A) deltaE = E_f_A;
                 std::uniform_real_distribution<double> theta_distrib(0.0,2.0);
                 std::uniform_real_distribution<double> phi_distrib(0.0,1.0);
                     // electron_nearest_atom_list[e][2*a+1] = true;
@@ -507,18 +512,18 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 double theta = theta_distrib(gen)*M_PI; //atan(electron_velocity[array_index+1] / electron_velocity[array_index]);
                 double phi = phi_distrib(gen)*M_PI; //// acos(electron_velocity[array_index+2] / vel);
                        // if (electron_velocity[array_index] < 0) theta += M_PI;
-                double scattering_velocity = sqrt(2*E_f_A / constants::m_e_r);
+                double scattering_velocity = sqrt(2.0*(atom_potential[array_index_a/3]) / constants::m_e_r);
                 electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
                 electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
                 electron_velocity[array_index+2] = scattering_velocity * cos(phi);
-                electron_potential[e] = E_f_A;
+                electron_potential[e] -= deltaE;
                        // std::cout << scattering_velocity << std::endl;
                 #pragma omp critical
                 {
                // std::cout << chosen_electron << ", " << count << ", " << phonon_collision << ", " << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << exp(dt / (sqrt(electron_potential[e]) * Tr)) << std::endl;
                // std::cout << exp(dt / (sqrt(electron_potential[e] * Tr))) << std::endl;
                 chosen_electron++;
-                new_atom_potential[array_index_a/3] += deltaE;
+                atom_potential[array_index_a/3] += deltaE;
                 }
             }
         }
