@@ -88,7 +88,7 @@ void update_position(){
     std::uniform_int_distribution<> phonon_transfer_vector(1,6);
     double excitation_constant;
     double excitation_energy = mu_f;
-    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) schedule(static) reduction(+:x_flux,y_flux,z_flux)
+    #pragma omp parallel for private(i,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) schedule(static) reduction(+:x_flux,y_flux,z_flux)
     for (int e = 0; e < conduction_electrons; e++){ 
 
         array_index = 3*e;
@@ -236,7 +236,7 @@ void update_velocity(int array_index, double& EKE) {
     
         int array_index_y = array_index + 1;
         int array_index_z = array_index + 2;
-        
+        double old_vel = sqrt((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index_y]*electron_velocity[array_index_y])+(electron_velocity[array_index_z]*electron_velocity[array_index_z]));
      //   if (e == 0) std::cout << new_electron_velocity[array_index] << " " << electron_velocity[array_index] << "    " <<  electron_force[array_index]  << "    " << new_force_array[array_index]  << "    " <<  dt * 0.5  * constants::K / constants::m_e << "\n"; 
         double x_vel = electron_velocity[array_index]   + ((electron_force[array_index]   + new_electron_force[array_index])   * dt  * constants::K_A / 2); 
         double y_vel = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_electron_force[array_index_y]) * dt  * constants::K_A / 2);
@@ -246,10 +246,10 @@ void update_velocity(int array_index, double& EKE) {
         double phi = acos(z_vel / vel);
         if(x_vel < 0.0) theta += M_PI;
 
-        double V_f = sqrt(2*E_f_A / constants::m_e_r);
-        x_vel = V_f * cos(theta)*sin(phi);
-        y_vel = V_f * sin(theta)*sin(phi);
-        z_vel = V_f * cos(phi);
+       // double vel = sqrt(2*E_f_A / constants::m_e_r);
+        x_vel = old_vel * cos(theta)*sin(phi);
+        y_vel = old_vel * sin(theta)*sin(phi);
+        z_vel = old_vel * cos(phi);
 
     if(!equilibrium_step){
         double x = new_electron_position[array_index];
