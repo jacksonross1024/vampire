@@ -524,7 +524,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
                     deltaE -= atom_potential[array_index_a/3];
                     if(deltaE < 0.0) continue;
-                     else if (deltaE > E_f_A) deltaE = E_f_A;
+                   //  else if (deltaE > E_f_A) deltaE = E_f_A;
                     std::uniform_real_distribution<double> Theta_pos_distrib(0,2.0);
                     std::uniform_real_distribution<double> Phi_pos_distrib(0,1.0);
                     double theta = Theta_pos_distrib(gen)*M_PI;
