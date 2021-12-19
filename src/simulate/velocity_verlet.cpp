@@ -147,8 +147,10 @@ void update_position(){
             if (excitation_constant > E_f_A) excitation_constant = E_f_A;
             #pragma omp critical
             {
+            //std::cout << excitation_constant << std::endl;
             atom_potential[e] -= excitation_constant;
             atom_potential[i] += excitation_constant;
+          //  if(atom_potential[e] < E_f_A) std::cout << atom_potential[e] << std::endl;
             }
         }
     }
@@ -506,7 +508,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 if(deltaE > E_f_A) deltaE = E_f_A;
                 else if (deltaE < 0.0) {
                   deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0*E_f_A);
-                  std::cout << deltaE << std::endl;
+                 // std::cout << deltaE << std::endl;
                 }
                 std::uniform_real_distribution<double> theta_distrib(0.0,2.0);
                 std::uniform_real_distribution<double> phi_distrib(0.0,1.0);
@@ -516,11 +518,12 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 double theta = theta_distrib(gen)*M_PI; //atan(electron_velocity[array_index+1] / electron_velocity[array_index]);
                 double phi = phi_distrib(gen)*M_PI; //// acos(electron_velocity[array_index+2] / vel);
                        // if (electron_velocity[array_index] < 0) theta += M_PI;
-                double scattering_velocity = sqrt(2.0*(atom_potential[array_index_a/3]) / constants::m_e_r);
+                double scattering_velocity = sqrt(2.0*(electron_potential[e] - deltaE) / constants::m_e_r);
                 electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
                 electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
                 electron_velocity[array_index+2] = scattering_velocity * cos(phi);
                 electron_potential[e] -= deltaE;
+               // if(electron_potential[e] < E_f_A) std::cout << electron_potential[e]+deltaE << ", " << deltaE << ", " << atom_potential[array_index_a/3] << std::endl;
                        // std::cout << scattering_velocity << std::endl;
                 #pragma omp critical
                 {
@@ -528,6 +531,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                // std::cout << exp(dt / (sqrt(electron_potential[e] * Tr))) << std::endl;
                 chosen_electron++;
                 atom_potential[array_index_a/3] += deltaE;
+              //  std::cout << array_index_a/3 << ", " << atom_potential[array_index_a/3] << std::endl;
                 }
             }
         }
