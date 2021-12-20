@@ -1,15 +1,15 @@
 // ==============================================
 //   Coupled Atomistic and Spintronic Thermal Lattice Ensemble
 //
-//         =========       ========     =========   ============   ||           =========
-//        ||             ||        ||   ||               ||        ||          ||
-//        ||             ||        ||   ||               ||        ||          ||
-//        ||             ||        ||   ||               ||        ||          ||
-//        ||             || ====== ||   =========        ||        ||           =========
-//        ||             ||        ||           ||       ||        ||          ||
-//        ||             ||        ||           ||       ||        ||          ||
-//        ||             ||        ||           ||       ||        ||          ||
-//         =========                    =========                   =========   =========
+//  =========       ========      ========   ============   ||           =========
+// ||             ||        ||   ||               ||        ||          ||
+// ||             ||        ||   ||               ||        ||          ||
+// ||             ||        ||   ||               ||        ||          ||
+// ||             || ====== ||   =========        ||        ||           =========
+// ||             ||        ||           ||       ||        ||          ||
+// ||             ||        ||           ||       ||        ||          ||
+// ||             ||        ||           ||       ||        ||          ||
+//  =========                     ========                   =========   =========
 //
 
 //
@@ -89,7 +89,7 @@ void update_position(){
     double excitation_constant;
     double excitation_energy = mu_f;
     #pragma omp parallel for private(i,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) schedule(static) reduction(+:x_flux,y_flux,z_flux)
-    for (int e = 0; e < conduction_electrons; e++){ 
+    for (int e = 0; e < conduction_electrons; e++) { 
 
         array_index = 3*e;
         array_index_y = array_index + 1;
@@ -175,8 +175,8 @@ void update_dynamics() {
         
 
         if(current_time_step % 15 == 0) {
-            e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force,EPE);
-            e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
+            e_a_coulomb(e, array_index, e_x_force, e_y_force, e_z_force, EPE);
+            e_e_coulomb(e, array_index, e_x_force, e_y_force, e_z_force, EPE);
           //  a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         
         } else {
@@ -211,7 +211,7 @@ void update_dynamics() {
 
     MEPE += TEPE;
     MEKE += TEKE;
-    MLE += TLE;
+    MLE  += TLE;
     //MLPE += TLPE;
    // MLKE += TLKE;
 }
@@ -242,10 +242,15 @@ void update_velocity(int array_index, double& EKE) {
         double y_vel = electron_velocity[array_index_y] + ((electron_force[array_index_y] + new_electron_force[array_index_y]) * dt  * constants::K_A / 2);
         double z_vel = electron_velocity[array_index_z] + ((electron_force[array_index_z] + new_electron_force[array_index_z]) * dt  * constants::K_A / 2);
         double vel   = sqrt((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
+     // std::cout << array_index/3 << ", " << vel<< ", " << x_vel << ", " << y_vel << ", " << z_vel << std::endl;
+     // std::cout << array_index/3 << ", " << old_vel << ", " << electron_velocity[array_index] << ", " << electron_velocity[array_index_y] << ", " << electron_velocity[array_index_z] << std::endl;
+      // if(old_vel > (1.0 + sqrt(2.0*E_f_A/constants::m_e_r))) std::cout << array_index/3 << ", " << old_vel << ", " << sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index_y] * electron_velocity[array_index_y]) + (electron_velocity[array_index_z]*electron_velocity[array_index_z])) << std::endl;
+
         double theta = atan(y_vel / x_vel);
         double phi = acos(z_vel / vel);
         if(x_vel < 0.0) theta += M_PI;
-
+       // std::cout << theta << ", " << phi << std::endl;
+      //std::cout << old_vel * cos(theta) * sin(phi) << ", " << old_vel*sin(theta)*sin(phi) << ", " << old_vel*cos(phi) << std::endl;
        // double vel = sqrt(2*E_f_A / constants::m_e_r);
        
 
@@ -255,22 +260,24 @@ void update_velocity(int array_index, double& EKE) {
         double z = new_electron_position[array_index_z];
         if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 ) {
           const static double sigma = 1 / 1e3;
-          double en_scale = sigma * sqrt(2.0*5e3 / constants::m_e_r)/sqrt(2.0 * M_PI);
+          double en_scale = sigma * sqrt(2.0*5e7 / constants::m_e_r)/sqrt(2.0 * M_PI);
           old_vel += en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
     
         }   
     }
-
-    new_electron_velocity[array_index]   = old_vel * cos(theta)*sin(phi);;
-    new_electron_velocity[array_index_y] = old_vel * sin(theta)*sin(phi);;
-    new_electron_velocity[array_index_z] = old_vel * cos(phi);;
+    
+    new_electron_velocity[array_index]   = old_vel * cos(theta)*sin(phi);
+    new_electron_velocity[array_index_y] = old_vel * sin(theta)*sin(phi);
+    new_electron_velocity[array_index_z] = old_vel * cos(phi);
+    // std::cout << old_vel * cos(theta) * sin(phi) << ", " << old_vel*sin(theta)*sin(phi) << ", " << old_vel*cos(phi) << std::endl;
+   // std::cout << array_index/3 << ", " << old_vel << ", " << new_electron_velocity[array_index] << ", " << new_electron_velocity[array_index_y] << ", " << new_electron_velocity[array_index_z] << std::endl;
     EKE += old_vel*old_vel;
-     //   x_vel = new_atom_velocity[array_index]   = atom_velocity[array_index]   + ((atom_force[array_index]   + new_atom_force[array_index])   * dt  * constants::K_A / 2); 
+    //   x_vel = new_atom_velocity[array_index]   = atom_velocity[array_index]   + ((atom_force[array_index]   + new_atom_force[array_index])   * dt  * constants::K_A / 2); 
        // y_vel = new_atom_velocity[array_index_y] = atom_velocity[array_index_y] + ((atom_force[array_index_y] + new_atom_force[array_index_y]) * dt  * constants::K_A / 2);
         //z_vel = new_atom_velocity[array_index_z] = atom_velocity[array_index_z] + ((atom_force[array_index_z] + new_atom_force[array_index_z]) * dt  * constants::K_A / 2);
         //vel = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
        // LKE += vel;
-   
+    
 }
 
 void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE){
@@ -508,7 +515,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
             // }
             //double excitation_constant = -1.0 * dt / E_f_A;
             //if(current_time_step > 4000) excitation_constant = 0.1;
-               double scattering_velocity = (electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]);
+               double scattering_velocity = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]));
                // double EE = electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity;
                 // - atom_potential[array_index_a/3];
                // double excitation_energy   = deltaE;
@@ -516,18 +523,19 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 //if(deltaE > 0) scattering_velocity = sqrt(scattering_velocity) - (sqrt(2.0*deltaE/constants::m_e_r));
                 //else scattering_velocity = sqrt(scattering_velocity) + (sqrt(2.0*abs(deltaE)/constants::m_e_r));  
                 //if(scattering_velocity < 0) continue;
-                double deltaE = constants::m_e_r*0.5*scattering_velocity;
-                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(deltaE / atom_potential[array_index_a/3]) / 27.7)) {
+                //scattering_velocity = constants::m_e_r*0.5*scattering_velocity;
+                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(scattering_velocity / atom_potential[array_index_a/3]) / 27.7)) {
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
-                    deltaE -= atom_potential[array_index_a/3];
-                    if(deltaE < 0.0) continue;
-                    else if (deltaE > E_f_A) deltaE = E_f_A;
+                    double deltaE = scattering_velocity - atom_potential[array_index_a/3];
+                    if (deltaE > E_f_A) deltaE = E_f_A;
+                    else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0 * atom_potential[array_index_a/3]);
+                    
                     std::uniform_real_distribution<double> Theta_pos_distrib(0,2.0);
                     std::uniform_real_distribution<double> Phi_pos_distrib(0,1.0);
                     double theta = Theta_pos_distrib(gen)*M_PI;
                     double phi   = Phi_pos_distrib(gen) * M_PI;
                     
-                    scattering_velocity -= sqrt(2.0*deltaE/constants::m_e_r);
+                    scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)/constants::m_e_r);
                     
                     electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
                     electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
