@@ -1153,17 +1153,17 @@ void output_data() {
     // electron_position_output_down.precision(10);
     // electron_position_output_down << std::scientific;
 
-    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".csv");
-    electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
-    electron_velocity_output.precision(10);
-    electron_velocity_output << std::scientific;
+    // electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".csv");
+    // electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
+    // electron_velocity_output.precision(10);
+    // electron_velocity_output << std::scientific;
     
     mean_data.precision(10);
     mean_data << std::scientific;
     
-    int array_index, array_index_y, array_index_z;
-    double x_pos, y_pos, z_pos;
-    double x_vel, y_vel ,z_vel, velocity_length, lambda;
+    // int array_index, array_index_y, array_index_z;
+    // double x_pos, y_pos, z_pos;
+    // double x_vel, y_vel ,z_vel, velocity_length, lambda;
     // int lattice_constant = 2;
   
     // double x_lambda = 0.0;
@@ -1180,9 +1180,9 @@ void output_data() {
         //     proximity++;
         //     if(mean_radius[e] < 0.3) close_proximity++;
         // }
-        array_index   = 3*e;
-        array_index_y = array_index + 1;
-        array_index_z = array_index + 2;
+        // array_index   = 3*e;
+        // array_index_y = array_index + 1;
+        // array_index_z = array_index + 2;
 
        // x_pos = new_electron_position[array_index];
        // y_pos = new_electron_position[array_index_y]; 
@@ -1193,15 +1193,15 @@ void output_data() {
         //z_lambda += cos(4*M_PI * z_pos / lattice_constant);
         
 
-        x_vel = 1e5*electron_velocity[array_index];
-        y_vel = 1e5*electron_velocity[array_index_y];
-        z_vel = 1e5*electron_velocity[array_index_z];
-        velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
+        // x_vel = 1e5*electron_velocity[array_index];
+        // y_vel = 1e5*electron_velocity[array_index_y];
+        // z_vel = 1e5*electron_velocity[array_index_z];
+        // velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
 
-        if(sqrt(velocity_length)*dt*1e-5 > 1) speeding++;
+        // if(sqrt(velocity_length)*dt*1e-5 > 1) speeding++;
         
        // electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << electron_potential[e] << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
-        electron_velocity_output      << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << ", " << electron_potential[e]<< "\n";
+      //  electron_velocity_output      << e   << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length << ", " << electron_potential[e]<< "\n";
 
         // x_pos = new_atom_position[array_index];
         // y_pos = new_atom_position[array_index_y]; 
@@ -1215,13 +1215,13 @@ void output_data() {
     //     atomic_position_output << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
         atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
     }
-    std::cout <<"speeding: " << speeding << std::endl;//", proximity: " << proximity << ", close proxmity: " << close_proximity << std::endl;
+   // std::cout <<"speeding: " << speeding << std::endl;//", proximity: " << proximity << ", close proxmity: " << close_proximity << std::endl;
     mean_rad /= conduction_electrons;
     //lambda = (x_lambda + y_lambda + z_lambda) / (3*CASTLE_output_rate * conduction_electrons);
     std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
    
     // electron_position_output_down.close();
-    electron_velocity_output.close();
+   // electron_velocity_output.close();
     atomic_phonon_output.close();
   
     double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
