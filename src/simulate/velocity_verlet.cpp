@@ -524,16 +524,16 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 //else scattering_velocity = sqrt(scattering_velocity) + (sqrt(2.0*abs(deltaE)/constants::m_e_r));  
                 //if(scattering_velocity < 0) continue;
                 //scattering_velocity = constants::m_e_r*0.5*scattering_velocity;
-                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(scattering_velocity / atom_potential[array_index_a/3]) / 27.7)) {
+                if(scattering_chance(gen) > exp(-1.0*dt*sqrt(scattering_velocity / E_f_A) / 27.7)) {
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
                     double deltaE = scattering_velocity - atom_potential[array_index_a/3];
                     if (deltaE > E_f_A) deltaE = E_f_A;
-                    else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0 * atom_potential[array_index_a/3]);
+                    else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0 * E_f_A);
                     
-                    std::uniform_real_distribution<double> Theta_pos_distrib(0,2.0);
-                    std::uniform_real_distribution<double> Phi_pos_distrib(0,1.0);
-                    double theta = Theta_pos_distrib(gen)*M_PI;
-                    double phi   = Phi_pos_distrib(gen) * M_PI;
+                    std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
+                    std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
+                    double theta = Theta_pos_distrib(gen);
+                    double phi   = Phi_pos_distrib(gen);
                     
                     scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)/constants::m_e_r);
                     

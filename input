@@ -22,9 +22,9 @@ material:file = Co.mat
 #------------------------------------------
 sim:temperature = 300.0
 sim:time-steps-increment = 100
-sim:equilibration-time-steps = 1000
-sim:loop-time-steps = 2000000
-sim:time-step = 1e-3 !fs
+sim:equilibration-time-steps = 100
+sim:loop-time-steps = 200000
+sim:time-step = 1e-2 !fs
 
 #------------------------------------------
 # Program and integrator details
