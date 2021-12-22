@@ -160,7 +160,7 @@ void update_position(){
 void update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
-    double e_x_force,e_y_force,e_z_force,EPE, EKE;
+    double e_x_force,e_y_force,e_z_force,EPE;
     double TEPE = 0;
    // double TEKE = 0;
     TLE = 0.0;
@@ -216,7 +216,7 @@ void update_dynamics() {
        // TLKE += LKE;
     }
 
-    
+
     MEPE += TEPE;
    // MEKE += TEKE;
     MLE += TLE;
