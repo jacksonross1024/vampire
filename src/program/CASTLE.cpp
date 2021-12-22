@@ -1160,20 +1160,20 @@ void output_data() {
     // electron_position_output_down.precision(10);
     // electron_position_output_down << std::scientific;
 
-    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".csv");
-    electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length" << "\n";
-    electron_velocity_output.precision(10);
-    electron_velocity_output << std::scientific;
+    // electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".csv");
+    // electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length" << "\n";
+    // electron_velocity_output.precision(10);
+    // electron_velocity_output << std::scientific;
     
     mean_data.precision(10);
     mean_data << std::scientific;
     
-    int array_index, array_index_y, array_index_z;
-   // double x_pos, y_pos, z_pos;
-   double x_vel = 0;
-   double y_vel =0;
-   double z_vel = 0;
-   double velocity_length, lambda;
+  //   int array_index, array_index_y, array_index_z;
+  //  // double x_pos, y_pos, z_pos;
+  //  double x_vel = 0;
+  //  double y_vel =0;
+  //  double z_vel = 0;
+  //  double velocity_length, lambda;
    // int lattice_constant = 2;
   
     // double x_lambda = 0.0;
@@ -1190,9 +1190,9 @@ void output_data() {
         //     proximity++;
         //     if(mean_radius[e] < 0.3) close_proximity++;
         // }
-        array_index   = 3*e;
-        array_index_y = array_index + 1;
-        array_index_z = array_index + 2;
+        // array_index   = 3*e;
+        // array_index_y = array_index + 1;
+        // array_index_z = array_index + 2;
 
         // x_pos = new_electron_position[array_index];
         // y_pos = new_electron_position[array_index_y]; 
@@ -1203,9 +1203,9 @@ void output_data() {
         //z_lambda += cos(4*M_PI * z_pos / lattice_constant);
         
 
-        x_vel = 1e5*new_electron_velocity[array_index];
-        y_vel = 1e5*new_electron_velocity[array_index_y];
-        z_vel = 1e5*new_electron_velocity[array_index_z];
+        // x_vel = 1e5*new_electron_velocity[array_index];
+        // y_vel = 1e5*new_electron_velocity[array_index_y];
+        // z_vel = 1e5*new_electron_velocity[array_index_z];
        // velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
 
        // if(sqrt(velocity_length)*dt*1e-5 > 0.1) speeding++;
@@ -1221,8 +1221,8 @@ void output_data() {
         // y_vel = 1e5*electron_velocity[array_index_y];
         // z_vel = 1e5*electron_velocity[array_index_z];
 
-        velocity_length = sqrt((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
-        electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  std::endl;
+        // velocity_length = sqrt((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
+        // electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  std::endl;
     //     atomic_position_output << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
         atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
     }
@@ -1244,8 +1244,8 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
         << MEKE * 1e10 * constants::m_e / 2 << ", " 
         << MEPE * 1e-20 << ", " << MLE*1e-20 << ", " 
-        << (MEKE*1e-20 - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2) << ", " << (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e4) << ", "
-        << (MEKE*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e4) << ", "
+        << (MEKE*1e-20 - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2) << ", " << (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2) << ", "
+      //  << (MEKE*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e4) << ", "
       //  << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
         << mean_rad; mean_data.precision(1);
         mean_data << ", " << double(chosen_electron)  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
@@ -1256,8 +1256,8 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
         << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " 
         << MEPE * 1e-20 / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  
-        << (MEKE*1e-20 - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2) / CASTLE_output_rate << ", " << (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2) / CASTLE_output_rate << ", "
-        << ((MEKE*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2)) / CASTLE_output_rate << ", " 
+        << ((MEKE*1e-20) - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2 *CASTLE_output_rate) << ", " << ((MLE*1e-20) - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2*CASTLE_output_rate) << ", "
+     //   << ((MEKE*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2)) / CASTLE_output_rate << ", " 
        // << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
         << mean_rad;
         mean_data.precision(1);

@@ -526,7 +526,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 //scattering_velocity = constants::m_e_r*0.5*scattering_velocity;
                 if(scattering_chance(gen) > exp(-1.0*dt*sqrt(scattering_velocity / E_f_A) / 27.7)) {
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
-                    double deltaE = scattering_velocity - E_f_A; //atom_potential[array_index_a/3];
+                    double deltaE = scattering_velocity - atom_potential[array_index_a/3]; //atom_potential[array_index_a/3];
                     if (deltaE > E_f_A) deltaE = E_f_A;
                     else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0 * E_f_A);
                     
