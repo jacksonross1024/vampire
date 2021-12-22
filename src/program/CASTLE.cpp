@@ -1246,7 +1246,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       //  << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " 
         << MEPE * 1e-20 / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  
-        << ((MEPE*1e-20 - E_f*conduction_electrons) / (6.02e-23 * conduction_electrons * 2.52e2)) / CASTLE_output_rate << ", " << (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2) / CASTLE_output_rate << ", "
+        << ((MEPE*1e-20) - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2*CASTLE_output_rate) << ", " << ((MLE*1e-20) - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2 * CASTLE_output_rate) << ", "
       //  << ((MEPE*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2)) / CASTLE_output_rate << ", " 
        // << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
         << mean_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(chosen_electron) / CASTLE_output_rate << ", " << double(x_flux) / CASTLE_output_rate << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / CASTLE_output_rate  << ", " \
