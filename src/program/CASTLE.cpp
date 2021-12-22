@@ -340,7 +340,10 @@ void initialize () {
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
     std::cout << "E_f(J): " << E_f << ", TLE(J): " << TLE*1e-20 << ", TE(J): " << E_f*conduction_electrons << ", TEKE(AJ):" << TEKE*1e10*constants::m_e/2 << ", TEPE " << TEPE*1e10*constants::K << ", TEE " <<  ((TEKE*constants::m_e)/2 + (TEPE*constants::K))*1e10 << ", EE(J): " << constants::m_e*TEKE*0.5*1e10 + constants::K*1e10*std::accumulate(electron_potential.begin(), electron_potential.end(), 0) <<  std::endl;
-    mean_data.open("CASTLE/mean_data.csv");
+    std::cout << "Run title: ";
+    std::string title;
+    std::cin >> title;
+    mean_data.open("CASTLE/" + title + ".csv");
     mean_data << "time, step, mean-EKE, mean-EPE, mean-LE, Te, Tp, mean-radius, mean-inelastic-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
 
 }
@@ -1253,8 +1256,8 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
         << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " 
         << MEPE * 1e-20 / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  
-        << (MEKE*1e-20 - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2) / CASTLE_output_rate << ", " << (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e4) / CASTLE_output_rate << ", "
-        << ((MEKE*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e4)) / CASTLE_output_rate << ", " 
+        << (MEKE*1e-20 - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2) / CASTLE_output_rate << ", " << (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2) / CASTLE_output_rate << ", "
+        << ((MEKE*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2)) / CASTLE_output_rate << ", " 
        // << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
         << mean_rad;
         mean_data.precision(1);
