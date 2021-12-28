@@ -267,10 +267,11 @@ namespace CASTLE {
 
    void update_velocity(int array_index, double& EKE);
  
+   void  electron_applied_voltage(int& e, double& x_force, double& y_force, double& z_force, double& EPE);
  /*
    double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
    double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance);
-   double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force);
+  
    double reinitialize_electron_conserve_momentum(std::vector<double>& captured_electron_list);
 */
 /*

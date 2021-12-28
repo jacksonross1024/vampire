@@ -194,6 +194,8 @@ void update_dynamics() {
         TLE += atom_potential[e]; 
         //new_atom_potential[e] = 0;
 
+     //   electron_applied_voltage(e, e_x_force, e_y_force, e_z_force, EPE);
+
         new_electron_force[array_index]     = e_x_force;
         new_electron_force[array_index + 1] = e_y_force;
         new_electron_force[array_index + 2] = e_z_force;
@@ -255,6 +257,7 @@ void update_velocity(int array_index, double& EKE) {
        
 
     if(!equilibrium_step){
+
         double x = new_electron_position[array_index];
         double y = new_electron_position[array_index_y];
         double z = new_electron_position[array_index_z];
@@ -264,8 +267,7 @@ void update_velocity(int array_index, double& EKE) {
           old_vel += en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
     
         }   
-    }
-    
+    }    
     new_electron_velocity[array_index]   = old_vel * cos(theta)*sin(phi);
     new_electron_velocity[array_index_y] = old_vel * sin(theta)*sin(phi);
     new_electron_velocity[array_index_z] = old_vel * cos(phi);
@@ -526,7 +528,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 //scattering_velocity = constants::m_e_r*0.5*scattering_velocity;
                 if(scattering_chance(gen) > exp(-1.0*dt*sqrt(scattering_velocity / E_f_A) / 27.7)) {
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
-                    double deltaE = scattering_velocity - atom_potential[array_index_a/3]; //atom_potential[array_index_a/3];
+                    double deltaE = scattering_velocity - E_f_A;// atom_potential[array_index_a/3]; //atom_potential[array_index_a/3];
                     if (deltaE > E_f_A) deltaE = E_f_A;
                     else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0 * E_f_A);
                     
@@ -753,11 +755,11 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
    // if(a == 100) std::cout << size << std::endl;
 }
 
-double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force) {
+void electron_applied_voltage(int& e, double& x_force, double& y_force, double& z_force, double& EPE) {
     
-  //  x_force -= 4e-9;
-  //  new_electron_potential[array_index/3] += -4e-9;
-    return 0;//-4e-9; //-10.0 * 1e-10 / constants::e ;
+    x_force -= 4e-9;
+    new_electron_potential[e] += -4e-9;
+    EPE += -4e-9; //-10.0 * 1e-10 / constants::e ;
 }
 
 
