@@ -67,7 +67,7 @@ void standard_deviation_statistic_t::initialize(stats::magnetization_statistic_t
 // Welford's algorithm gives a running total.
 //
 //-------------------------------------------------------------------------------------------------------
-void standard_deviation_statistic_t::update(const std::vector<double>& magnetization){
+/*void standard_deviation_statistic_t::update(const std::vector<double>& magnetization){
 
    mean_counter+=1.0; // increment first, as divides by this.
    // loop over all elements
@@ -88,7 +88,7 @@ void standard_deviation_statistic_t::update(const std::vector<double>& magnetiza
 
    return;
 
-}
+} */
 
 
 
@@ -149,7 +149,7 @@ std::string standard_deviation_statistic_t::output_standard_deviation(bool heade
    return result.str();
 
 }
-
+/*
 double standard_deviation_statistic_t::get_mean_standard_deviation_length() {
 
           const double imean_counter = 1.0/mean_counter;
@@ -160,8 +160,8 @@ double standard_deviation_statistic_t::get_mean_standard_deviation_length() {
       
 
       return mean_length_stdDv;
-}
-
+} */
+/*
 std::string standard_deviation_statistic_t::output_mean_standard_deviation_length(bool header) {
 
    // result string stream
@@ -184,6 +184,6 @@ std::string standard_deviation_statistic_t::output_mean_standard_deviation_lengt
    
 return result.str();
 
-}
+} */ 
 
 } // end of namespace stats

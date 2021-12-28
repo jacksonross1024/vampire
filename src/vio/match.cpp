@@ -1309,16 +1309,16 @@ namespace vin{
         test="system-standard-deviation";
         if(word==test){
             // Set flags for calculations of standard deviation and magnetization
-            stats::calculate_system_standard_deviation=true;
+       //     stats::calculate_system_standard_deviation=true;
           //  stats::calculate_material_magnetization=true;
-            stats::calculate_system_magnetization = true;
+         //   stats::calculate_system_magnetization = true;
             output_list.push_back(999); //AJN
             return EXIT_SUCCESS;
         }
         test = "system-standard-deviation-length";
         if (word == test) {
-            stats::calculate_system_standard_deviation = true;
-            stats::calculate_system_magnetization = true;
+       //     stats::calculate_system_standard_deviation = true;
+         //   stats::calculate_system_magnetization = true;
             output_list.push_back(998); //JLRoss
             return EXIT_SUCCESS;
         }

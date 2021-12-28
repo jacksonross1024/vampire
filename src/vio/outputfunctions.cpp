@@ -265,7 +265,7 @@ namespace vout{
 
    // Output Function 999 - with Header
    void standard_deviation(std::ostream& stream, bool header){
-      stream << stats::material_standard_deviation.output_standard_deviation(header);
+    //  stream << stats::material_standard_deviation.output_standard_deviation(header);
    }
    // Output Function 22
    void phonon_temperature(std::ostream& stream, bool header){
