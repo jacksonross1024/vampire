@@ -214,6 +214,7 @@ namespace CASTLE {
    std::vector<double> new_electron_potential;
    std::vector<std::vector<int> > electron_nearest_electron_list;
    std::vector<std::vector<int> > electron_nearest_atom_list;
+   std::vector<int> atom_type;
    std::vector<double> mean_radius;
     //outputs
    

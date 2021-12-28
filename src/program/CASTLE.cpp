@@ -401,6 +401,7 @@ void initialize_lattice() {
    // atom_force.resize(lattice_atoms * 3,0);
    // new_atom_force.resize(lattice_atoms,0);
     atom_potential.resize(lattice_atoms,0);
+    atom_type.resize(lattice_atoms);
    // new_atom_potential.resize(lattice_atoms,0);
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -410,6 +411,7 @@ void initialize_lattice() {
     int array_index; //local loop index variable
     atomic_nearest_atom_list.resize(lattice_atoms);
     atomic_nearest_electron_list.resize(lattice_atoms);
+    
 
     int a_density = 100 + int(round(pow(a_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
     int e_density = 100 + int(round(pow(e_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
@@ -421,7 +423,9 @@ void initialize_lattice() {
         atomic_nearest_atom_list[a].resize(a_density,-1);
         atomic_nearest_electron_list[a].resize(e_density,-1);
         array_index = 3*a;
-
+        
+        atom_type[a] = atoms::type_array[a];
+        
        // atom_anchor_position[array_index]     = 1 + atomic_size * (a % 20);// + atom_position_distrib(gen); //lattice creation awaiting future development
         //atom_anchor_position[array_index + 1] = 1 + atomic_size * ((int(floor(a / 20))) % 20);// + atom_position_distrib(gen);
         //atom_anchor_position[array_index + 2] = 1 + atomic_size * floor(a / 400);// + atom_position_distrib(gen);

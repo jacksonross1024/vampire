@@ -467,8 +467,8 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_forc
         if(count == phonon_collision) {
           //  std::cout << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << sqrt(electron_potential[e]) << ", " << Tr << ", " << dt / (sqrt(electron_potential[e]) * Tr) << std::endl;
             double scattering = scattering_chance(gen);
-            
-            if(scattering > exp(-1.0*dt*sqrt(electron_potential[e] / E_f_A))) {
+            double scattering_constant = dt*electron_nearest_atom_list[e][atom_type[array_index_a/3]];
+            if(scattering > exp(scattering_constant*sqrt(electron_potential[e] / E_f_A))) {
                 double deltaE = electron_potential[e] - atom_potential[array_index_a/3];
                 //if(deltaE < 0.0) continue;//deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0*E_f_A);
                 if(deltaE > E_f_A) deltaE = E_f_A;
