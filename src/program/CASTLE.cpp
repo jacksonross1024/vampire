@@ -1139,10 +1139,10 @@ void output_data() {
     // Output equilibration step data
     //=========
     time_stamp = std::to_string(current_time_step);
-    std::ofstream atomic_phonon_output;
-    atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
-    atomic_phonon_output.precision(10);
-    atomic_phonon_output << std::scientific;
+    // std::ofstream atomic_phonon_output;
+    // atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
+    // atomic_phonon_output.precision(10);
+    // atomic_phonon_output << std::scientific;
 
     // std::ofstream atomic_position_output;
     // atomic_position_output.open("CASTLE/Atom_Position/" + time_stamp + ".xyz");
@@ -1156,7 +1156,7 @@ void output_data() {
     electron_position_output_down.precision(10);
     electron_position_output_down << std::scientific;
 
-    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".csv");
+    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".txt");
     electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
     electron_velocity_output.precision(10);
     electron_velocity_output << std::scientific;
@@ -1216,7 +1216,7 @@ void output_data() {
     //     velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
 
     //     atomic_position_output << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
-        atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
+      //  atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
     }
    // std::cout <<"speeding: " << speeding << std::endl;//", proximity: " << proximity << ", close proxmity: " << close_proximity << std::endl;
     mean_rad /= conduction_electrons;
@@ -1225,7 +1225,7 @@ void output_data() {
    
     electron_position_output_down.close();
     electron_velocity_output.close();
-    atomic_phonon_output.close();
+    // atomic_phonon_output.close();
   
     double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
     double nu = j / (n_f * constants::e); //drift velocity
