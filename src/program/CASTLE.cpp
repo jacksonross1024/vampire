@@ -1143,10 +1143,10 @@ void output_data() {
     // Output equilibration step data
     //=========
     time_stamp = std::to_string(current_time_step);
-    std::ofstream atomic_phonon_output;
-    atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
-    atomic_phonon_output.precision(10);
-    atomic_phonon_output << std::scientific;
+    // std::ofstream atomic_phonon_output;
+    // atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
+    // atomic_phonon_output.precision(10);
+    // atomic_phonon_output << std::scientific;
 
     // std::ofstream atomic_position_output;
     // atomic_position_output.open("CASTLE/Atom_Position/" + time_stamp + ".xyz");
@@ -1160,7 +1160,7 @@ void output_data() {
     electron_position_output_down.precision(10);
     electron_position_output_down << std::fixed;
 
-    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".csv");
+    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".txt");
     electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length" << "\n";
     electron_velocity_output.precision(10);
     electron_velocity_output << std::scientific;
@@ -1169,7 +1169,7 @@ void output_data() {
     mean_data << std::scientific;
     
      int array_index;
-     int array_index_y, array_index_z;
+    //  int array_index_y, array_index_z;
    double x_pos, y_pos, z_pos;
   //  double x_vel = 0;
   //  double y_vel =0;
@@ -1212,7 +1212,7 @@ void output_data() {
        // if(sqrt(velocity_length)*dt*1e-5 > 0.1) speeding++;
         
        electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";// electron_potential[e] << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
-         electron_velocity_output      << e   << ", " << 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) << "\n";
+     //    electron_velocity_output      << e   << ", " << 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) << "\n";
       
         // x_pos = new_atom_position[array_index];
         // y_pos = new_atom_position[array_index_y]; 
@@ -1225,7 +1225,7 @@ void output_data() {
         // velocity_length = sqrt((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
         // electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  std::endl;
     //     atomic_position_output << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
-        atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
+        electron_velocity_output << e  << ", " << 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) << "\n";
     }
    // std::cout <<"speeding: " << speeding << ", proximity: " << proximity << ", close proxmity: " << close_proximity << std::endl;
     mean_rad /= conduction_electrons;
@@ -1234,7 +1234,7 @@ void output_data() {
    
     electron_position_output_down.close();
     electron_velocity_output.close();
-    atomic_phonon_output.close(); 
+    // atomic_phonon_output.close(); 
   
     std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
     double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
