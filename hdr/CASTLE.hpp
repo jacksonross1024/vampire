@@ -48,7 +48,9 @@
 #include "constants.hpp"
 #include "errors.hpp"
 #include "stopwatch.hpp"
-
+#include "unitcell.hpp"
+#include "program.hpp" 
+#include "cells.hpp"
 
 
 namespace CASTLE {
@@ -68,6 +70,9 @@ namespace CASTLE {
     extern double lattice_depth;  //Angstroms
     extern double atomic_size;    //Angstroms
     extern double screening_depth;//Angstroms
+    extern double x_unit_size;
+    extern double y_unit_size;
+    extern double z_unit_size;
 
     //simulation variables
     extern double total_time_steps;
@@ -89,7 +94,7 @@ namespace CASTLE {
     extern double e_a_coulomb_cutoff;
     extern double e_e_neighbor_cutoff;
     extern double e_e_coulomb_cutoff;
-    //extern double a_a_neighbor_cutoff;
+    extern double a_a_neighbor_cutoff;
     // extern double a_a_coulomb_cutoff;
 
    // extern int num_cells;
@@ -161,10 +166,10 @@ namespace CASTLE {
     extern void update_position();
     extern void update_dynamics();
 
-    extern void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+    extern void e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   extern void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   extern void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
                 // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
     extern void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
@@ -177,7 +182,7 @@ namespace CASTLE {
     extern void neighbor_a_a_coulomb(const int a, const int array_index, \
                 double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
-    extern void update_velocity(int array_index, double& EKE);
+    extern void update_velocity(int& array_index, double& EKE);
  
  /*
     extern double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);

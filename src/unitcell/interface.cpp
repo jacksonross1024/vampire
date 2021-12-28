@@ -21,7 +21,7 @@
 
 // unitcell module headers
 #include "internal.hpp"
-
+#include "CASTLE.hpp" 
 namespace unitcell{
 
    //---------------------------------------------------------------------------
@@ -101,6 +101,7 @@ namespace unitcell{
             uc::internal::unit_cell_size_x=a;
             uc::internal::unit_cell_size_y=a;
             uc::internal::unit_cell_size_z=a;
+            CASTLE::x_unit_size = CASTLE::y_unit_size = CASTLE::z_unit_size = a;
             return true;
          }
          //--------------------------------------------------------------------
@@ -108,7 +109,7 @@ namespace unitcell{
          if(word==test){
             double ax=atof(value.c_str());
             vin::check_for_valid_value(ax, word, line, prefix, unit, "length", 0.1, 1.0e7,"input","0.1 Angstroms - 1 millimetre");
-            uc::internal::unit_cell_size_x=ax;
+            CASTLE::x_unit_size = uc::internal::unit_cell_size_x=ax;
             return true;
          }
          //--------------------------------------------------------------------
@@ -116,7 +117,7 @@ namespace unitcell{
          if(word==test){
             double ay=atof(value.c_str());
             vin::check_for_valid_value(ay, word, line, prefix, unit, "length", 0.1, 1.0e7,"input","0.1 Angstroms - 1 millimetre");
-            uc::internal::unit_cell_size_y=ay;
+            CASTLE::y_unit_size = uc::internal::unit_cell_size_y=ay;
             return true;
          }
          //--------------------------------------------------------------------
@@ -124,7 +125,7 @@ namespace unitcell{
          if(word==test){
             double az=atof(value.c_str());
             vin::check_for_valid_value(az, word, line, prefix, unit, "length", 0.1, 1.0e7,"input","0.1 Angstroms - 1 millimetre");
-            uc::internal::unit_cell_size_z=az;
+            CASTLE::z_unit_size = uc::internal::unit_cell_size_z=az;
             return true;
          }
       }

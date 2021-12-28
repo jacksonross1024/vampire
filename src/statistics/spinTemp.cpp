@@ -169,6 +169,8 @@ void spin_temperature_statistic_t::calculate(const std::vector<double>& sx, cons
        //reduction
         #ifdef MPICF
             MPI_Allreduce(MPI_IN_PLACE, &total_spin_temperature[0], mask_size,  MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &spin_temperature_top[0], mask_size,  MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &spin_temperature_bottom[0], mask_size,  MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         #endif
 
         //normalize to J then K. 

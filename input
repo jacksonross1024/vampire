@@ -8,14 +8,14 @@
 # Creation attributes:
 #------------------------------------------
 dimensions:unit-cell-size = 3.54 !A
-dimensions:system-size-x = 7.7 !nm
-dimensions:system-size-y = 7.7 !nm
-dimensions:system-size-z = 7.7 !nm
-
+dimensions:system-size-x = 10 !nm
+dimensions:system-size-y = 10 !nm
+dimensions:system-size-z = 10 !nm
+create:crystal-structure = fcc
 #------------------------------------------
 # Material Files:
 #------------------------------------------
-material:file = Co.mat
+material:file = GdFe.mat
 
 #------------------------------------------
 # Simulation attributes:

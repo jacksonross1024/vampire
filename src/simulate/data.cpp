@@ -158,6 +158,9 @@ namespace CASTLE {
    double lattice_depth;  //Angstroms
    double atomic_size;    //Angstroms
    double screening_depth;//Angstroms
+   double x_unit_size;
+   double y_unit_size;
+   double z_unit_size;
 
     //simulation variables
    double total_time_steps;
@@ -180,6 +183,7 @@ namespace CASTLE {
    double e_a_coulomb_cutoff;
    double e_e_neighbor_cutoff;
    double e_e_coulomb_cutoff;
+   double a_a_neighbor_cutoff;
    
 
    // int num_cells;
@@ -249,10 +253,10 @@ namespace CASTLE {
    void update_position();
    void update_dynamics();
 
-   void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   void e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
                // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
    void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
@@ -265,7 +269,7 @@ namespace CASTLE {
    void neighbor_a_a_coulomb(const int a, const int array_index, \
                 double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
-   void update_velocity(int array_index, double& EKE);
+   void update_velocity(int& array_index, double& EKE);
  
  /*
    double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
