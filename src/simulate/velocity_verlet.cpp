@@ -35,7 +35,7 @@ int velocity_verlet_step(double time_step) {
     
     TEPE = 0;
     TEKE = 0;
-    TLE  = 0;
+   // TLE  = 0;
 
    // chosen_electron = 0;
 
@@ -51,6 +51,8 @@ int velocity_verlet_step(double time_step) {
    // MLE += reinitialize_electron_conserve_momentum(captured_electron_list);
   //  std::cout << MPE/CASTLE_output_rate << ", " << TPE << ", " << MKE/CASTLE_output_rate << ", " << TKE << ", " << (MPE+MKE)/CASTLE_output_rate << ", " << TPE +TKE << ", " << std::endl;
             if (err::check) std::cout << "Output mean data" << std::endl;
+    TLE = std::accumulate(atom_potential.begin(), atom_potential.end(), 0.0);
+    MLE += TLE;
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
     
 
@@ -163,7 +165,7 @@ void update_dynamics() {
     double e_x_force,e_y_force,e_z_force,EPE;
     double TEPE = 0;
    // double TEKE = 0;
-    TLE = 0.0;
+    // TLE = 0.0;
 
     const static double sigma = 1 / 1e3;
     const static double en_scale = sigma * sqrt(2.0*5e7 / constants::m_e_r)/sqrt(2.0 * M_PI);
@@ -198,7 +200,7 @@ void update_dynamics() {
         
        // atom_potential[e] += new_atom_potential[e];
        // EPE += electron_potential[e];
-        TLE += atom_potential[e]; 
+        // TLE += atom_potential[e]; 
         //new_atom_potential[e] = 0;
 
       //  new_electron_force[array_index]     = e_x_force;
@@ -208,7 +210,7 @@ void update_dynamics() {
        // new_atom_force[array_index + 1] = a_y_force;
         //new_atom_force[array_index + 2] = a_z_force;
         
-        update_velocity(array_index, EKE);
+        if(!equilibrium_step) update_velocity(array_index, EKE);
         
         TEPE += electron_potential[e];
        // TEKE += EKE;
@@ -219,7 +221,7 @@ void update_dynamics() {
 
     MEPE += TEPE;
    // MEKE += TEKE;
-    MLE += TLE;
+   // MLE += TLE;
     //MLPE += TLPE;
    // MLKE += TLKE;
 }
@@ -228,7 +230,7 @@ void update_velocity(int array_index, double& EKE) {
         
        
         
-  int array_index_y = array_index + 1;
+        int array_index_y = array_index + 1;
         int array_index_z = array_index + 2;
         
         double x = electron_position[array_index];

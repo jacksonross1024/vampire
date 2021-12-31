@@ -382,6 +382,7 @@ void initialize_lattice() {
     E_f_A = E_f*1e20; //Angstroms
     mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
     v_f = sqrt(2 * E_f / constants::m_e); //meters
+    a_heat_capacity = 6.02e3 / (6.52e2 * lattice_atoms);
     
     lattice_output.open("CASTLE/CASTLE_Lattice.xyz");
 
@@ -468,6 +469,8 @@ void initialize_electrons() {
     mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
     v_f = sqrt(2 * E_f / constants::m_e); //meters
     Tr  = -1.0 * 27.7 / sqrt(E_f_A); // 1 / fs
+
+    e_heat_capacity = 6.02e3 / (2.52e2 * conduction_electrons);
    // std::cout << Tr << std::endl;
     TEPE = 0;
     TEKE = 0;
@@ -948,9 +951,9 @@ void initialize_velocities() {
         //if(electron_potential[e]*constants::K_A < E_f_A) vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
         //if (vel > 4e6) vel = 3.4e6 * vel_distrib(gen);
         if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
-        electron_velocity[array_index]     = vel;//cos(theta)*sin(phi)*vel; 
-        electron_velocity[array_index + 1] = 0;//sin(theta)*sin(phi)*vel;
-        electron_velocity[array_index + 2] = 0;//cos(phi)*vel;
+        electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
+        electron_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
+        electron_velocity[array_index + 2] = cos(phi)*vel;
         TEKE += vel*vel;
         
         electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << vel*1e5 << ", " << electron_potential[e] << std::endl; // ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;
@@ -1139,10 +1142,10 @@ void output_data() {
     // Output equilibration step data
     //=========
     time_stamp = std::to_string(current_time_step);
-    // std::ofstream atomic_phonon_output;
-    // atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
-    // atomic_phonon_output.precision(10);
-    // atomic_phonon_output << std::scientific;
+    std::ofstream atomic_phonon_output;
+    atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
+    atomic_phonon_output.precision(10);
+    atomic_phonon_output << std::scientific;
 
     // std::ofstream atomic_position_output;
     // atomic_position_output.open("CASTLE/Atom_Position/" + time_stamp + ".xyz");
@@ -1216,7 +1219,7 @@ void output_data() {
     //     velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
 
     //     atomic_position_output << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
-      //  atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
+       atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
     }
    // std::cout <<"speeding: " << speeding << std::endl;//", proximity: " << proximity << ", close proxmity: " << close_proximity << std::endl;
     mean_rad /= conduction_electrons;
@@ -1225,7 +1228,7 @@ void output_data() {
    
     electron_position_output_down.close();
     electron_velocity_output.close();
-    // atomic_phonon_output.close();
+    atomic_phonon_output.close();
   
     double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
     double nu = j / (n_f * constants::e); //drift velocity
@@ -1235,7 +1238,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       //  << MEKE * 1e10 * constants::m_e / 2 << ", " 
         << MEPE * 1e-20 << ", " << MLE*1e-20 << ", " 
-        << (MEPE*1e-20 - E_f*conduction_electrons) / (6.02e-23 * conduction_electrons * 2.52e2) << ", " << (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e2) << ", "
+        << MEPE*e_heat_capacity  - E_f_A*conduction_electrons*e_heat_capacity << ", " << MLE*a_heat_capacity  - E_f_A*lattice_atoms*a_heat_capacity << ", "
       //  << (MEPE*1e-20 - E_f*conduction_electrons)/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e2) << ", "
       //  << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
         << mean_rad << ", " << chosen_electron  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
@@ -1246,7 +1249,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       //  << MEKE * 1e10 * constants::m_e / (CASTLE_output_rate*2) << ", " 
         << MEPE * 1e-20 / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  
-        << ((MEPE*1e-20) - (E_f*conduction_electrons)) / (6.02e-23 * conduction_electrons * 2.52e2*CASTLE_output_rate) << ", " << ((MLE*1e-20) - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2 * CASTLE_output_rate) << ", "
+       << MEPE*e_heat_capacity/CASTLE_output_rate - E_f_A*conduction_electrons*e_heat_capacity << ", " << (MLE*a_heat_capacity/CASTLE_output_rate)  - E_f_A*lattice_atoms*a_heat_capacity << ", "
       //  << ((MEPE*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - (E_f*lattice_atoms))/(6.02e-23*lattice_atoms*6.52e2)) / CASTLE_output_rate << ", " 
       //  << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
         << mean_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(chosen_electron) / CASTLE_output_rate << ", " << double(x_flux) / CASTLE_output_rate << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / CASTLE_output_rate  << ", " \
