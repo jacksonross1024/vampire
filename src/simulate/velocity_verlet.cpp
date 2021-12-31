@@ -51,6 +51,8 @@ int velocity_verlet_step(double time_step) {
    // MLE += reinitialize_electron_conserve_momentum(captured_electron_list);
   //  std::cout << MPE/CASTLE_output_rate << ", " << TPE << ", " << MKE/CASTLE_output_rate << ", " << TKE << ", " << (MPE+MKE)/CASTLE_output_rate << ", " << TPE +TKE << ", " << std::endl;
             if (err::check) std::cout << "Output mean data" << std::endl;
+     TLE = std::accumulate(atom_potential.begin(),atom_potential.end(), 0.0);
+     MLE += TLE;
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
     
 
@@ -59,6 +61,7 @@ int velocity_verlet_step(double time_step) {
     CASTLE_real_time += dt;
     current_time_step++;
 
+   
     electron_position.swap(new_electron_position);
     electron_force.swap(new_electron_force);
     electron_velocity.swap(new_electron_velocity);
@@ -80,6 +83,7 @@ void setup_output() {
 void update_position(){
 
     int array_index,array_index_y,array_index_z, i;
+    external_interaction_list_count = 0;
     double x_pos,y_pos,z_pos;
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -88,7 +92,8 @@ void update_position(){
     std::uniform_int_distribution<> phonon_transfer_vector(1,6);
     double excitation_constant;
     double excitation_energy = mu_f;
-    #pragma omp parallel for private(i,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) schedule(static) reduction(+:x_flux,y_flux,z_flux)
+    #pragma omp parallel for private(i,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) \
+    schedule(static) reduction(+:x_flux,y_flux,z_flux, external_interaction_list_count)
     for (int e = 0; e < conduction_electrons; e++) { 
 
         array_index = 3*e;
@@ -111,6 +116,7 @@ void update_position(){
             x_pos -= 40.0;
             x_flux++;
         }
+      
 
 	    if (y_pos < 0.0) {
             y_pos += 40.0;
@@ -134,6 +140,12 @@ void update_position(){
         new_electron_position[array_index_y] = y_pos;
         new_electron_position[array_index_z] = z_pos;
 
+      if(!equilibrium_step) {
+        if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
+          external_interaction_list[e] = true;
+          external_interaction_list_count++;
+        }
+      }
       ///  new_atom_position[array_index]   = atom_position[array_index]   + (atom_velocity[array_index]   * dt) + (atom_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
        // new_atom_position[array_index_y] = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
         //new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
@@ -158,22 +170,30 @@ void update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
     double e_x_force,e_y_force,e_z_force,EPE, EKE;
-    double TEPE = 0;
-    double TEKE = 0;
-    TLE = 0.0;
+    double AKE = 0.0;
+    double TEPE = 0.0;
+    double TEKE = 0.0;
+   // TLE = 0.0;
 
+    if(!equilibrium_step){
+        
+          const static double sigma = 0.001;
+          double en_scale = 50.0 * sigma * sqrt(5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
+          AKE = en_scale* exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
+
+     //   std::cout << sigma << ", " << en_scale << ", " << AKE << ", " << -0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000) << std::endl;
+    }   
     #pragma omp parallel for private(array_index, e_x_force, e_y_force, e_z_force, EPE, EKE)\
-     schedule(static) reduction(+:TEPE,TEKE,TLE)
+     schedule(static) reduction(+:TEPE,TEKE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
-        e_x_force = 0;
-        e_y_force = 0;
-        e_z_force = 0;
+        e_x_force = 0.0;
+        e_y_force = 0.0;
+        e_z_force = 0.0;
 
-        EPE = 0;
-        EKE = 0;
-        
-
+        EPE = 0.0;
+        EKE = 0.0;
+       
         if(current_time_step % 15 == 0) {
             e_a_coulomb(e, array_index, e_x_force, e_y_force, e_z_force, EPE);
             e_e_coulomb(e, array_index, e_x_force, e_y_force, e_z_force, EPE);
@@ -191,7 +211,7 @@ void update_dynamics() {
         
        // atom_potential[e] += new_atom_potential[e];
        // EPE += electron_potential[e];
-        TLE += atom_potential[e]; 
+       
         //new_atom_potential[e] = 0;
 
      //   electron_applied_voltage(e, e_x_force, e_y_force, e_z_force, EPE);
@@ -203,7 +223,7 @@ void update_dynamics() {
        // new_atom_force[array_index + 1] = a_y_force;
         //new_atom_force[array_index + 2] = a_z_force;
         
-        update_velocity(array_index, EKE);
+        update_velocity(e, array_index, EKE, AKE);
         
         TEPE += EPE;  //electron_potential[e];
         TEKE += EKE;
@@ -218,7 +238,7 @@ void update_dynamics() {
    // MLKE += TLKE;
 }
 
-void update_velocity(int array_index, double& EKE) {
+void update_velocity(const int& e, const int& array_index, double& EKE, const double& AKE) {
         
        
         
@@ -255,19 +275,10 @@ void update_velocity(int array_index, double& EKE) {
       //std::cout << old_vel * cos(theta) * sin(phi) << ", " << old_vel*sin(theta)*sin(phi) << ", " << old_vel*cos(phi) << std::endl;
        // double vel = sqrt(2*E_f_A / constants::m_e_r);
        
-
-    if(!equilibrium_step){
-
-        double x = new_electron_position[array_index];
-        double y = new_electron_position[array_index_y];
-        double z = new_electron_position[array_index_z];
-        if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 ) {
-          const static double sigma = 1 / 1e3;
-          double en_scale = sigma * sqrt(2.0*5e7 / constants::m_e_r)/sqrt(2.0 * M_PI);
-          old_vel += en_scale* exp(-0.5*sigma*sigma*double(current_time_step - 4000)*double(current_time_step - 4000));
-    
-        }   
-    }    
+        if(!equilibrium_step && external_interaction_list[e]) {
+          old_vel += AKE;
+          external_interaction_list[e] = false;
+        }
     new_electron_velocity[array_index]   = old_vel * cos(theta)*sin(phi);
     new_electron_velocity[array_index_y] = old_vel * sin(theta)*sin(phi);
     new_electron_velocity[array_index_z] = old_vel * cos(phi);
@@ -282,7 +293,7 @@ void update_velocity(int array_index, double& EKE) {
     
 }
 
-void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE){
+void e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE){
                       //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
 
     double x_distance;
@@ -422,7 +433,7 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
     //if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
 }
 
-void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE){
+void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE){
                       //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
 
     double x_distance;
@@ -528,7 +539,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
                 //scattering_velocity = constants::m_e_r*0.5*scattering_velocity;
                 if(scattering_chance(gen) > exp(-1.0*dt*sqrt(scattering_velocity / E_f_A) / 27.7)) {
                    // std::cout << -1.0*dt*sqrt(atom_potential[array_index_a/3] / abs(electron_potential[e]*constants::K_A + constants::m_e_r*0.5*scattering_velocity)) / 27.7 << std::endl;
-                    double deltaE = scattering_velocity - E_f_A;// atom_potential[array_index_a/3]; //atom_potential[array_index_a/3];
+                    double deltaE = scattering_velocity - E_f_A;
                     if (deltaE > E_f_A) deltaE = E_f_A;
                     else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0 * E_f_A);
                     
@@ -559,7 +570,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
    // if(a == 100) std::cout << count << std::endl;
 }
 
-void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+void e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                 double& EPE) {
     
     int array_index_i;
@@ -613,7 +624,7 @@ void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& 
    // if(e == 100) std::cout << neighbor_count << std::endl;
 }
 
-void neighbor_e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+void neighbor_e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                                 double& EPE) {
     
     double x_distance,y_distance,z_distance, length, force, theta,phi, PE = 0;

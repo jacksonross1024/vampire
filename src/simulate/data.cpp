@@ -174,6 +174,8 @@ namespace CASTLE {
    double mu_r; //inverse reduced mass in reduced units
    double combined_mass; //inverse with reduced units
    double Tr; // inverse seconds
+   double a_heat_capacity;
+   double e_heat_capacity;
 
 
    double e_a_neighbor_cutoff;
@@ -185,7 +187,7 @@ namespace CASTLE {
    // int num_cells;
 
     //integration variables
-   long long int current_time_step;
+   int current_time_step;
    double CASTLE_real_time;
    
    std::vector<double> atom_anchor_position;
@@ -210,7 +212,9 @@ namespace CASTLE {
    std::vector<double> new_electron_potential;
    std::vector<std::vector<int> > electron_nearest_electron_list;
    std::vector<std::vector<int> > electron_nearest_atom_list;
+   std::vector<bool> external_interaction_list;
    std::vector<double> mean_radius;
+   int external_interaction_list_count;
     //outputs
    
    double TEPE; //Angstroms
@@ -249,15 +253,15 @@ namespace CASTLE {
    void update_position();
    void update_dynamics();
 
-   void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   void e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
                // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
-   void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+   void e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                 double& EPE);
-   void neighbor_e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+   void neighbor_e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                 double& EPE);
     
    void a_a_coulomb(const int a, const int array_index, \
@@ -265,7 +269,7 @@ namespace CASTLE {
    void neighbor_a_a_coulomb(const int a, const int array_index, \
                 double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
-   void update_velocity(int array_index, double& EKE);
+   void update_velocity(const int& e, const int& array_index, double& EKE, const double& AKE);
  
    void  electron_applied_voltage(int& e, double& x_force, double& y_force, double& z_force, double& EPE);
  /*
