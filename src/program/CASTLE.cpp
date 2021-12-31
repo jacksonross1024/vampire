@@ -491,7 +491,7 @@ void initialize_electrons() {
     int array_index = 0;
     electron_nearest_electron_list.resize(conduction_electrons);
     electron_nearest_atom_list.resize(conduction_electrons);
-    
+    external_interaction_list.resize(conduction_electrons, false);
     if (err::check) std::cout << "Prepare to set position: " << std::endl;
     for (int e = 0; e < conduction_electrons; e++) {
 

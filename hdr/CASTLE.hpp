@@ -122,6 +122,8 @@ namespace CASTLE {
     extern std::vector<double> new_electron_potential;
     extern std::vector<std::vector<int> > electron_nearest_electron_list;
     extern std::vector<std::vector<int> > electron_nearest_atom_list;
+    extern std::vector<bool> external_interaction_list;
+    extern int external_interaction_list_count;
     extern std::vector<double> mean_radius;
     //outputs
    
@@ -163,15 +165,15 @@ namespace CASTLE {
     extern void update_position();
     extern void update_dynamics();
 
-    extern void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+    extern void e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   extern void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   extern void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
                 // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
-    extern void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+    extern void e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                 double& EPE);
-    extern void neighbor_e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+    extern void neighbor_e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                 double& EPE);
     
     extern void a_a_coulomb(const int a, const int array_index, \
@@ -179,7 +181,7 @@ namespace CASTLE {
     extern void neighbor_a_a_coulomb(const int a, const int array_index, \
                 double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
-    extern void update_velocity(int array_index, double& EKE);
+    extern void update_velocity(const int& e, const int& array_index, const double& EKE);
  
  /*
     extern double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);

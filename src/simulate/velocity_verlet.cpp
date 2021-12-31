@@ -90,7 +90,9 @@ void update_position(){
     std::uniform_int_distribution<> phonon_transfer_vector(1,6);
     double excitation_constant;
     double excitation_energy = mu_f;
-    #pragma omp parallel for private(i,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) schedule(static) reduction(+:x_flux,y_flux,z_flux)
+    external_interaction_list_count = 0;
+    #pragma omp parallel for private(i,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) \
+    schedule(static) reduction(+:x_flux,y_flux,z_flux, external_interaction_list_count)
     for (int e = 0; e < conduction_electrons; e++){ 
 
         array_index = 3*e;
@@ -136,6 +138,12 @@ void update_position(){
         new_electron_position[array_index_y] = y_pos;
         new_electron_position[array_index_z] = z_pos;
 
+      
+        if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
+          external_interaction_list[e] = true;
+          external_interaction_list_count++;
+        }
+      
       ///  new_atom_position[array_index]   = atom_position[array_index]   + (atom_velocity[array_index]   * dt) + (atom_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
        // new_atom_position[array_index_y] = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
         //new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
@@ -166,13 +174,12 @@ void update_dynamics() {
     double TEPE = 0;
    // double TEKE = 0;
     // TLE = 0.0;
-
+    
     const static double sigma = 1 / 1e3;
-    const static double en_scale = sigma * sqrt(2.0*5e7 / constants::m_e_r)/sqrt(2.0 * M_PI);
+    const static double en_scale = sigma * sqrt(2.0*5e7 / (constants::m_e_r * M_PI)) / external_interaction_list_count;
     double EKE = en_scale * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000)));
 
-    #pragma omp parallel for private(array_index, EPE)\
-     schedule(static) reduction(+:TEPE,TLE)
+    #pragma omp parallel for private(array_index) schedule(static) reduction(+:TEPE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
    ///     e_x_force = 0;
@@ -210,7 +217,7 @@ void update_dynamics() {
        // new_atom_force[array_index + 1] = a_y_force;
         //new_atom_force[array_index + 2] = a_z_force;
         
-        if(!equilibrium_step) update_velocity(array_index, EKE);
+        if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
         
         TEPE += electron_potential[e];
        // TEKE += EKE;
@@ -226,37 +233,33 @@ void update_dynamics() {
    // MLKE += TLKE;
 }
 
-void update_velocity(int array_index, double& EKE) {
+void update_velocity(const int& e, const int& array_index, const double& EKE) {
         
-       
-        
-        int array_index_y = array_index + 1;
-        int array_index_z = array_index + 2;
-        
-        double x = electron_position[array_index];
-        double y = electron_position[array_index_y];
-        double z = electron_position[array_index_z];
+        //  old_vel += EKE;
+    external_interaction_list[e] = false;
+    int array_index_y = array_index + 1;
+    int array_index_z = array_index + 2;
+      
+    double x_vel = electron_velocity[array_index];//   + ((electron_force[array_index]   + new_electron_force[array_index])   * dt  * constants::K_A / 2); 
+    double y_vel = electron_velocity[array_index_y];// + ((electron_force[array_index_y] + new_electron_force[array_index_y]) * dt  * constants::K_A / 2);
+    double z_vel = electron_velocity[array_index_z];// + ((electron_force[array_index_z] + new_electron_force[array_index_z]) * dt  * constants::K_A / 2);
 
-        if(x < 22.0 && x > 14.0 && y > 14.0 && y < 22.0 && z > 14.0 && z < 22.0 ) {
-          double x_vel = electron_velocity[array_index];//   + ((electron_force[array_index]   + new_electron_force[array_index])   * dt  * constants::K_A / 2); 
-          double y_vel = electron_velocity[array_index_y];// + ((electron_force[array_index_y] + new_electron_force[array_index_y]) * dt  * constants::K_A / 2);
-          double z_vel = electron_velocity[array_index_z];// + ((electron_force[array_index_z] + new_electron_force[array_index_z]) * dt  * constants::K_A / 2);
+    double vel = sqrt((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel));
+    double theta = atan(y_vel / x_vel);
+    double phi = acos(z_vel / vel);
+    if(x_vel < 0.0) theta += M_PI;
 
-          double vel = sqrt((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel));
-          double theta = atan(y_vel / x_vel);
-          double phi = acos(z_vel / vel);
-          if(x_vel < 0.0) theta += M_PI;
-
-          vel += EKE; 
+    vel += EKE; 
          
-          electron_potential[array_index/3] = vel*vel*0.5*constants::m_e_r;
-          electron_velocity[array_index]   = vel*cos(theta)*sin(phi);
-          electron_velocity[array_index_y] = vel*sin(theta)*sin(phi);
-          electron_velocity[array_index_z] = vel*cos(phi);
-        }
+    electron_potential[e] = vel*vel*0.5*constants::m_e_r;
+
+    electron_velocity[array_index]   = vel*cos(theta)*sin(phi);
+    electron_velocity[array_index_y] = vel*sin(theta)*sin(phi);
+    electron_velocity[array_index_z] = vel*cos(phi);
+  
 }
 
-void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE){
+void e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE){
                       //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
 
     double x_distance;
@@ -396,7 +399,7 @@ void e_a_coulomb(const int e, const int& array_index, double& e_x_force, double&
     //if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
 }
 
-void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE){
+void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE){
                       //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE) {
 
     double x_distance;
@@ -524,7 +527,7 @@ void neighbor_e_a_coulomb(const int e, const int& array_index, double& e_x_force
    // if(a == 100) std::cout << count << std::endl;
 }
 
-void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+void e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                 double& EPE) {
     
     int array_index_i;
@@ -578,7 +581,7 @@ void e_e_coulomb(const int e, const int array_index, double& e_x_force, double& 
    // if(e == 100) std::cout << neighbor_count << std::endl;
 }
 
-void neighbor_e_e_coulomb(const int e, const int array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
+void neighbor_e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
                                 double& EPE) {
     
     double x_distance,y_distance,z_distance, length, force, theta,phi, PE = 0;
