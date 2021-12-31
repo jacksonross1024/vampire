@@ -176,7 +176,7 @@ void update_dynamics() {
     // TLE = 0.0;
     
     const static double sigma = 1 / 1e3;
-    const static double en_scale = sigma * sqrt(2.0*5e7 / (constants::m_e_r * M_PI)) / external_interaction_list_count;
+    const static double en_scale = sigma * sqrt(2.0*5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
     double EKE = en_scale * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000)));
 
     #pragma omp parallel for private(array_index) schedule(static) reduction(+:TEPE)
