@@ -7,15 +7,15 @@
 #------------------------------------------
 # Creation attributes:
 #------------------------------------------
-dimensions:unit-cell-size = 3.54 !A
-dimensions:system-size-x = 10 !nm
-dimensions:system-size-y = 10 !nm
-dimensions:system-size-z = 10 !nm
+dimensions:unit-cell-size = 4.07 !A
+dimensions:system-size-x = 30 !nm
+dimensions:system-size-y = 30 !nm
+dimensions:system-size-z = 16 !nm
 create:crystal-structure = fcc
 #------------------------------------------
 # Material Files:
 #------------------------------------------
-material:file = GdFe.mat
+material:file = Au.mat
 
 #------------------------------------------
 # Simulation attributes:
