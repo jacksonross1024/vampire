@@ -73,7 +73,7 @@ namespace CASTLE {
     extern double total_time_steps;
     extern double loop_time;
     extern int    CASTLE_output_rate; //output velocity and position data at this multiple
-    extern int chosen_electron;
+  
     extern double dt;
     extern double v_f; //meters
     extern double E_f; //meters
@@ -140,6 +140,8 @@ namespace CASTLE {
     extern int x_flux;
     extern int y_flux;
     extern int z_flux;
+    extern int e_a_scattering;
+    extern int e_e_scattering;
     extern std::string time_stamp;
     extern std::ofstream lattice_output;
   
@@ -165,16 +167,14 @@ namespace CASTLE {
     extern void update_position();
     extern void update_dynamics();
 
-    extern void e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+    extern void e_a_coulomb(const int& e, const int& array_index);
               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   extern void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   extern void neighbor_e_a_coulomb(const int& e, const int& array_index);
                 // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
-    extern void e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                double& EPE);
-    extern void neighbor_e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                double& EPE);
+    extern void e_e_coulomb(const int& e, const int& array_index);
+    extern void neighbor_e_e_coulomb(const int& e, const int& array_index);
     
     extern void a_a_coulomb(const int a, const int array_index, \
                 double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);

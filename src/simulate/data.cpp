@@ -163,7 +163,6 @@ namespace CASTLE {
    double total_time_steps;
    double loop_time;
    int    CASTLE_output_rate; //output velocity and position data at this multiple
-   int chosen_electron;
    double dt;
    double v_f; //meters
    double E_f; //meters
@@ -228,6 +227,8 @@ namespace CASTLE {
    int x_flux;
    int y_flux;
    int z_flux;
+   int e_a_scattering;
+   int e_e_scattering;
    std::string time_stamp;
    std::ofstream lattice_output;
   
@@ -253,16 +254,14 @@ namespace CASTLE {
    void update_position();
    void update_dynamics();
 
-   void e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
+   void e_a_coulomb(const int& e, const int& array_index);
               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, double& EPE);
-               // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
+   void neighbor_e_a_coulomb(const int& e, const int& array_index);
+                // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
-   void e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                double& EPE);
-   void neighbor_e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double& e_y_force, double& e_z_force, \
-                double& EPE);
+   void e_e_coulomb(const int& e, const int& array_index);
+   void neighbor_e_e_coulomb(const int& e, const int& array_index);
     
    void a_a_coulomb(const int a, const int array_index, \
                 double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
