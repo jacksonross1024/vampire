@@ -344,7 +344,7 @@ void initialize () {
     std::string title;
     std::cin >> title;
     mean_data.open("CASTLE/" + title + ".csv");
-    mean_data << "time, step, mean-EKE, mean-EPE, mean-LE, Te, Tp, mean-radius, mean-inelastic-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
+    mean_data << "time, step, mean-EKE, mean-EPE, mean-LE, Te, Tp, mean-radius, mean-e-a-collisions, mean-e-e-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
 
 }
 
