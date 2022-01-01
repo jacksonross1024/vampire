@@ -230,6 +230,8 @@ namespace CASTLE {
    int z_flux;
    std::string time_stamp;
    std::ofstream lattice_output;
+   int e_a_scattering;
+   int e_e_scattering;
   
    std::ofstream electron_position_output_down;
    std::ofstream electron_velocity_output;

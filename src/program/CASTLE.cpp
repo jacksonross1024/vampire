@@ -46,12 +46,12 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-      //  omp_set_dynamic(0);
-        // omp_set_num_threads(6);
+       omp_set_dynamic(0);
+        omp_set_num_threads(6);
         // std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
-             std::cout << "OpenMP capability detected. Parallelizing integration." << std::endl;// Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
+             std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() << std::endl;
         
         std::cout << "Storming CASTLE..." << std::endl;
    
@@ -484,6 +484,9 @@ void initialize_electrons() {
     MEPE = 0;
     MEKE = 0;
     MLE = 0;
+
+    e_e_scattering = 0;
+    e_a_scattering = 0;
 
     e_a_neighbor_cutoff = 100;
     e_e_neighbor_cutoff = 100;
@@ -1258,7 +1261,7 @@ void output_data() {
       //  << (MEKE*1e-20 - (E_f*conduction_electrons))/ (6.02e-23 * conduction_electrons * 2.52e2) + (MLE*1e-20 - E_f*lattice_atoms)/(6.02e-23*lattice_atoms*6.52e4) << ", "
     //    << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
         << mean_rad; mean_data.precision(1);
-        mean_data << ", " << double(chosen_electron)  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
+        mean_data << ", " << double(e_a_scattering)  << ", " << double(e_e_scattering) << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
         << std::endl;
     } else {
 
@@ -1270,7 +1273,7 @@ void output_data() {
      //   << -1* calc_lambda << ", " << calc_lambda << ", " << lambda << ", " 
         << mean_rad;
         mean_data.precision(1);
-        mean_data << ", " << std::fixed << double(chosen_electron) / CASTLE_output_rate << ", " << double(x_flux) / CASTLE_output_rate << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / CASTLE_output_rate  << ", " \
+        mean_data << ", " << std::fixed << double(e_a_scattering) / CASTLE_output_rate << ", "  << double(e_e_scattering) / CASTLE_output_rate << ", " << double(x_flux) / CASTLE_output_rate << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / CASTLE_output_rate  << ", " \
         << std::endl;
      
    // double mean_vel = sqrt(MEKE) / (CASTLE_output_rate *conduction_electrons); //Still Angstroms
@@ -1290,7 +1293,8 @@ void output_data() {
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
-    chosen_electron = 0;
+    e_a_scattering = 0;
+    e_e_scattering = 0;
     std::fill(mean_radius.begin(), mean_radius.end(), 1);
      //   electron_spin_output.close();
     CASTLE_output_data = false;
