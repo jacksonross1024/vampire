@@ -140,12 +140,13 @@ void update_position(){
         new_electron_position[array_index_y] = y_pos;
         new_electron_position[array_index_z] = z_pos;
 
-      if(!equilibrium_step) {
-        if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
-          external_interaction_list[e] = true;
-          external_interaction_list_count++;
-        }
-      }
+      // if(!equilibrium_step) {
+      //   if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
+      //     external_interaction_list[e] = true;
+      //     external_interaction_list_count++;
+      //   }
+      // }
+      if(!equilibrium_step) electron_applied_voltage(e, array_index, TEKE);
       ///  new_atom_position[array_index]   = atom_position[array_index]   + (atom_velocity[array_index]   * dt) + (atom_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
        // new_atom_position[array_index_y] = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
         //new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
@@ -172,17 +173,17 @@ void update_dynamics() {
     double e_x_force,e_y_force,e_z_force,EPE, EKE;
     double AKE = 0.0;
     double TEPE = 0.0;
-    double TEKE = 0.0;
+    // double TEKE = 0.0;
    // TLE = 0.0;
 
-    if(!equilibrium_step){
+    // if(!equilibrium_step){
         
-          const static double sigma = 0.001;
-          double en_scale = 2.0 * sigma * sqrt(5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
-          AKE = en_scale* exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
+    //       const static double sigma = 0.001;
+    //       double en_scale = 2.0 * sigma * sqrt(5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
+    //       AKE = en_scale* exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
 
-     //   std::cout << sigma << ", " << en_scale << ", " << AKE << ", " << -0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000) << std::endl;
-    }   
+    //  //   std::cout << sigma << ", " << en_scale << ", " << AKE << ", " << -0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000) << std::endl;
+    // }   
     #pragma omp parallel for private(array_index, e_x_force, e_y_force, e_z_force, EPE, EKE)\
      schedule(static) reduction(+:TEPE,TEKE)
     for (int e = 0; e < conduction_electrons; e++) {
@@ -214,7 +215,7 @@ void update_dynamics() {
        
         //new_atom_potential[e] = 0;
 
-     //   electron_applied_voltage(e, e_x_force, e_y_force, e_z_force, EPE);
+        
 
         new_electron_force[array_index]     = e_x_force;
         new_electron_force[array_index + 1] = e_y_force;
@@ -682,9 +683,10 @@ int count = 0;
       if(count == electron_collision) {
           //  std::cout << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << sqrt(electron_potential[e]) << ", " << Tr << ", " << dt / (sqrt(electron_potential[e]) * Tr) << std::endl;
           //  double scattering = scattering_chance(gen);
+        
         double e_energy = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]));
         double deltaE = e_energy - E_f_A;// atom_potential[array_index_a/3];
-          //  const static double scattering_constant = -1.0*dt / (3.0e4 * 6.242); //eV**2 to AJ**2
+          //  const static double scattering_constant = -1.0*dt / (3.0 * 6.242e4); //eV**2 to AJ**2
         if(scattering_chance(gen) > exp(-1.0*dt*deltaE*deltaE / 187260.0)) {
           double d_e_energy =  0.5*constants::m_e_r*((electron_velocity[array_index_i]*electron_velocity[array_index_i]) + (electron_velocity[array_index_i+1]*electron_velocity[array_index_i+1]) + (electron_velocity[array_index_i+2]*electron_velocity[array_index_i+2]));
           deltaE = e_energy - d_e_energy;
@@ -821,11 +823,12 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
    // if(a == 100) std::cout << size << std::endl;
 }
 
-void electron_applied_voltage(int& e, double& x_force, double& y_force, double& z_force, double& EPE) {
+void electron_applied_voltage(const int& e, const int& array_index, double& EKE) {
     
-    x_force -= 4e-9;
-    new_electron_potential[e] += -4e-9;
-    EPE += -4e-9; //-10.0 * 1e-10 / constants::e ;
+  double vel = 5e-1*dt*constants::e_A/constants::m_e_r;
+  EKE += vel*vel*0.5*constants::m_e_r;
+  electron_velocity[array_index] += vel;
+
 }
 
 

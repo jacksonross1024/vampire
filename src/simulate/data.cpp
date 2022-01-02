@@ -273,7 +273,7 @@ namespace CASTLE {
 
    void update_velocity(const int& e, const int& array_index, double& EKE, const double& AKE);
  
-   void  electron_applied_voltage(int& e, double& x_force, double& y_force, double& z_force, double& EPE);
+   void electron_applied_voltage(const int& e, const int& array_index, double& EKE);
  /*
    double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
    double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance);
