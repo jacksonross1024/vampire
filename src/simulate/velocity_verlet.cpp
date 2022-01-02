@@ -137,10 +137,10 @@ void update_position(){
         new_electron_position[array_index_z] = z_pos;
 
       
-        if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
-          external_interaction_list[e] = true;
-          external_interaction_list_count++;
-        }
+        // if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
+        //   external_interaction_list[e] = true;
+        //   external_interaction_list_count++;
+        // }
       
       ///  new_atom_position[array_index]   = atom_position[array_index]   + (atom_velocity[array_index]   * dt) + (atom_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
        // new_atom_position[array_index_y] = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
@@ -202,6 +202,7 @@ void update_dynamics() {
            // a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
            // neighbor_a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         }
+        if(!equilibrium_step) electron_applied_voltage(e, array_index);
         
        // atom_potential[e] += new_atom_potential[e];
        // EPE += electron_potential[e];
@@ -215,7 +216,7 @@ void update_dynamics() {
        // new_atom_force[array_index + 1] = a_y_force;
         //new_atom_force[array_index + 2] = a_z_force;
         
-        if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
+       // if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
         
        // TEPE += electron_potential[e];
        // TEKE += EKE;
@@ -769,11 +770,12 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
    // if(a == 100) std::cout << size << std::endl;
 }
 
-double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force) {
+void electron_applied_voltage(const int& e, const int& array_index) {
     
-  //  x_force -= 4e-9;
-  //  new_electron_potential[array_index/3] += -4e-9;
-    return 0;//-4e-9; //-10.0 * 1e-10 / constants::e ;
+  double vel = 2.50e1*dt*dt*constants::e_A/constants::m_e_r;
+  electron_potential[e] += vel*vel*0.5*constants::m_e_r;
+  electron_velocity[array_index] += vel;
+
 }
 
 

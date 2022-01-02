@@ -26,7 +26,7 @@ namespace constants{
    extern const double h;   // Plank's constant (Js/kg)
    extern const double J_au; //Joule to a.u. 
    extern const double e;     // electron charge
-   extern const double e_a;
+   extern const double e_A;
    extern const double eps_0;
    extern const double esp_0_A;
    extern const double K; //K for Coulomb's law
