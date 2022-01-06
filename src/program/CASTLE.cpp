@@ -392,7 +392,7 @@ void initialize_lattice() {
     if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog." << std::endl;
     }
-    lattice_output.open(string(directory) + "CASTLE_Lattice.xyz");
+    lattice_output.open(string(directory) + "/CASTLE_Lattice.xyz");
 
      // output lattice atoms and locations
     lattice_output << lattice_atoms << "\n"; //xyz file requires first-line for number of elements
@@ -449,7 +449,7 @@ void initialize_electrons() {
             std::cerr << "Fatal getcwd error in datalog." << std::endl;
     }
 
-    electron_position_output_down.open(string(directory) + "Electron_Position/init.xyz");
+    electron_position_output_down.open(string(directory) + "/Electron_Position/init.xyz");
     electron_position_output_down << conduction_electrons << "\n";  
     electron_position_output_down << "Initial positions for electrons" << "\n";  
 
@@ -1176,7 +1176,7 @@ void output_data() {
     // electron_hot_output.precision(10);
     // electron_hot_output << std::fixed;
 
-    electron_position_output_down.open(string(directory) + "/Electron_Positions/" + time_stamp + ".xyz");
+    electron_position_output_down.open(string(directory) + "/Electron_Position/" + time_stamp + ".xyz");
     electron_position_output_down << conduction_electrons << "\n";
     electron_position_output_down << time_stamp << "\n";
     electron_position_output_down.precision(10);
