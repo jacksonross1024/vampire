@@ -103,6 +103,11 @@ namespace sim{
    bool fermi_function= false;
 
   
+   bool applied_voltage_sim = false;
+   bool heat_pulse_sim = false;
+   double applied_voltage = 0.0;
+   double heat_pulse = 0.0;
+
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -147,6 +152,8 @@ namespace CASTLE {
    bool CASTLE_program;
    bool CASTLE_output_data; //output position and velocity data
    bool equilibrium_step;
+   bool applied_voltage_sim = false;
+   bool heat_pulse_sim = false;
 
    int lattice_atoms; //number of lattice atoms
    int conduction_electrons; //number of conduction electrons
@@ -176,11 +183,13 @@ namespace CASTLE {
    double a_heat_capacity;
    double e_heat_capacity;
 
-
    double e_a_neighbor_cutoff;
    double e_a_coulomb_cutoff;
    double e_e_neighbor_cutoff;
    double e_e_coulomb_cutoff;
+
+   double applied_voltage = 0.0;
+   double heat_pulse = 0.0;
    
 
    // int num_cells;

@@ -136,12 +136,15 @@ void update_position(){
         new_electron_position[array_index_y] = y_pos;
         new_electron_position[array_index_z] = z_pos;
 
-      
-        // if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
-        //   external_interaction_list[e] = true;
-        //   external_interaction_list_count++;
-        // }
-      
+        if(!equilibrium_step) {
+          if(heat_pulse_sim) {
+            if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
+              external_interaction_list[e] = true;
+              external_interaction_list_count++;
+            }
+          }
+          if(applied_voltage_sim) electron_applied_voltage(e, array_index);
+        }
       ///  new_atom_position[array_index]   = atom_position[array_index]   + (atom_velocity[array_index]   * dt) + (atom_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
        // new_atom_position[array_index_y] = atom_position[array_index_y] + (atom_velocity[array_index_y] * dt) + (atom_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
         //new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
@@ -151,7 +154,7 @@ void update_position(){
         excitation_constant = atom_potential[e] - atom_potential[i];
         if(excitation_constant < 0.0) continue;
         
-        if(phonon_transfer_chance(gen) >  exp(-1.0*dt*excitation_constant / mu_f)) {
+        if(phonon_transfer_chance(gen) >  exp(-1.0*dt*excitation_constant)) {
             if (excitation_constant > E_f_A) excitation_constant = E_f_A;
             #pragma omp critical
             {
@@ -168,15 +171,16 @@ void update_position(){
 void update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
-    double e_x_force,e_y_force,e_z_force,EPE;
+    double e_x_force,e_y_force,e_z_force,EPE,EKE = 0.0;
    // double TEPE = 0;
    // double TEKE = 0;
     // TLE = 0.0;
     
-    const static double sigma = 1 / 1e3;
-    const static double en_scale = 2.0 * sigma * sqrt(5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
-    double EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
-
+    if(!equilibrium_step && heat_pulse_sim) {
+      const static double sigma = 0.001;
+      const static double en_scale = heat_pulse * sigma * sqrt(5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
+      double EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
+    }
     #pragma omp parallel for private(array_index) schedule(static)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
@@ -202,7 +206,7 @@ void update_dynamics() {
            // a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
            // neighbor_a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         }
-        if(!equilibrium_step) electron_applied_voltage(e, array_index);
+        
         
        // atom_potential[e] += new_atom_potential[e];
        // EPE += electron_potential[e];
@@ -216,7 +220,7 @@ void update_dynamics() {
        // new_atom_force[array_index + 1] = a_y_force;
         //new_atom_force[array_index + 2] = a_z_force;
         
-       // if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
+        if(external_interaction_list[e] && heat_pulse_sim) update_velocity(e, array_index, EKE);
         
        // TEPE += electron_potential[e];
        // TEKE += EKE;
@@ -225,7 +229,7 @@ void update_dynamics() {
     }
 
     MEPE += std::accumulate(electron_potential.begin(), electron_potential.end(), 0.0);
-    MLE += std::accumulate(atom_potential.begin(), atom_potential.end(), 0.0);
+    MLE  += std::accumulate(atom_potential.begin(), atom_potential.end(), 0.0);
 
    // MEKE += TEKE;
    // MLE += TLE;
@@ -772,7 +776,7 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
 
 void electron_applied_voltage(const int& e, const int& array_index) {
     
-  double vel = 5e-1*dt*constants::e_A/constants::m_e_r;
+  double vel = applied_voltage*1.0e-1*dt*constants::e_A/constants::m_e_r;
   electron_potential[e] += vel*vel*0.5*constants::m_e_r;
   electron_velocity[array_index] += vel;
 

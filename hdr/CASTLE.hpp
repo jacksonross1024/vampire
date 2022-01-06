@@ -57,6 +57,8 @@ namespace CASTLE {
     extern bool CASTLE_program;
     extern bool CASTLE_output_data; //output position and velocity data
     extern bool equilibrium_step;
+    extern bool applied_voltage_sim;
+    extern bool heat_pulse_sim;
 
     extern int lattice_atoms; //number of lattice atoms
     extern int conduction_electrons; //number of conduction electrons
@@ -94,6 +96,8 @@ namespace CASTLE {
     //extern double a_a_neighbor_cutoff;
     // extern double a_a_coulomb_cutoff;
 
+    extern double applied_voltage;
+    extern double heat_pulse;
    // extern int num_cells;
 
     //integration variables

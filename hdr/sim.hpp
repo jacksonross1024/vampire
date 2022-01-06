@@ -279,6 +279,11 @@ namespace sim{
 	extern std::string output_relativistic_fermi_pressure();
 
 	
+	extern bool applied_voltage_sim;
+	extern bool heat_pulse_sim;
+	extern double applied_voltage;
+	extern double heat_pulse;
+
 	//------------------------------------------------------------------------
    // getter functions to give access to internal sim variables
    //------------------------------------------------------------------------

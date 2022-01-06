@@ -308,6 +308,12 @@ void initialize () {
     z_flux = 0;
     current_time_step = 0;
     CASTLE_real_time = 0;
+
+    applied_voltage_sim = sim::applied_voltage_sim;
+    heat_pulse_sim = sim::heat_pulse_sim;
+    applied_voltage = sim::applied_voltage;
+    heat_pulse = sim::heat_pulse;
+
     // Initialize lattice
     //========
     initialize_positions();
@@ -1158,13 +1164,14 @@ void output_data() {
     // Output equilibration step data
     //=========
     time_stamp = std::to_string(current_time_step);
-    std::ofstream atomic_phonon_output;
+    
 
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog." << std::endl;
     }
 
+    std::ofstream atomic_phonon_output;
     atomic_phonon_output.open(string(directory) + "/Atom_Energy/" + time_stamp);
     atomic_phonon_output.precision(10);
     atomic_phonon_output << std::scientific;
