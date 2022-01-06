@@ -966,9 +966,16 @@ void initialize_velocities() {
     for(int e = 0; e < conduction_electrons; e++) {
       // if(e==1000) std::cout << electron_potential[e] << std::endl;
         array_index = 3*e;
-        theta = M_PI * Theta_Vel_distrib(gen);
-        phi = M_PI * Phi_Vel_distrib(gen);
 
+        if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
+          theta = M_PI * Theta_Vel_distrib(gen);
+          phi = M_PI * Phi_Vel_distrib(gen);
+        } else {
+          double unit = sqrt((sim::CASTLE_x_vector*sim::CASTLE_x_vector)+(sim::CASTLE_y_vector*sim::CASTLE_y_vector)+(sim::CASTLE_z_vector*sim::CASTLE_z_vector));
+          theta = atan(sim::CASTLE_y_vector / sim::CASTLE_x_vector);
+          phi = acos(sim::CASTLE_z_vector / unit);
+          if(sim::CASTLE_z_vector < 0.0) theta += M_PI;
+        }
         vel = sqrt(2*E_f_A/constants::m_e_r);
         //if(electron_potential[e]*constants::K_A < E_f_A) vel = sqrt(abs(2* ((E_f_A - (electron_potential[e]*constants::K_A))/constants::m_e_r))); // m/s -> Angstroms / s -> A/fs = 1e-5
         //if (vel > 4e6) vel = 3.4e6 * vel_distrib(gen);
@@ -976,6 +983,8 @@ void initialize_velocities() {
         electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
         electron_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
         electron_velocity[array_index + 2] = cos(phi)*vel;
+
+        
         TEKE += vel*vel;
         
         electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << vel*1e5 << ", " << electron_potential[e] << std::endl; // ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;

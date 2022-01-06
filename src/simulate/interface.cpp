@@ -271,6 +271,28 @@ namespace sim{
          sim::heat_pulse = c;
          return true;
       }
+
+      test = "x_vector";
+      if(word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", 0.0, 1.0, "input", "0-1");
+         sim::CASTLE_x_vector = c;
+         return true;
+      }
+      test = "y_vector";
+      if(word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", 0.0, 1.0, "input", "0-1");
+         sim::CASTLE_y_vector = c;
+         return true;
+      }
+      test = "z_vector";
+      if(word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", 0.0, 1.0, "input", "0-1");
+         sim::CASTLE_z_vector = c;
+         return true;
+      }
       //--------------------------------------------------------------------
       // input parameter not found here
       return false;

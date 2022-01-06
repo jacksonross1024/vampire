@@ -278,11 +278,17 @@ namespace sim{
 	extern std::string output_relativistic_fermi_energy();
 	extern std::string output_relativistic_fermi_pressure();
 
-	
+	//------------------------------------------------------------------------
+	// CASTLE simulation input variables
+	//------------------------------------------------------------------------
 	extern bool applied_voltage_sim;
 	extern bool heat_pulse_sim;
 	extern double applied_voltage;
 	extern double heat_pulse;
+
+	extern double CASTLE_x_vector;
+	extern double CASTLE_y_vector;
+	extern double CASTLE_z_vector;
 
 	//------------------------------------------------------------------------
    // getter functions to give access to internal sim variables

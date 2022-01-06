@@ -108,6 +108,10 @@ namespace sim{
    double applied_voltage = 0.0;
    double heat_pulse = 0.0;
 
+   double CASTLE_x_vector = 0.0;
+	double CASTLE_y_vector = 0.0;
+	double CASTLE_z_vector = 0.0;
+
    namespace internal{
 
       //----------------------------------------------------------------------------

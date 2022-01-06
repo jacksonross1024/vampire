@@ -26,8 +26,12 @@ sim:equilibration-time-steps = 100
 sim:loop-time-steps = 400000
 sim:time-step = 1e-2 !fs
 
-sim:applied-voltage = 5.0;
-sim:heat_pulse = 2.0;
+sim:applied-voltage = 5.0
+sim:heat-pulse = 2.0
+
+sim:x_vector = 1
+sim:y_vector = 0
+sim:z_vector = 0
 
 #------------------------------------------
 # Program and integrator details
