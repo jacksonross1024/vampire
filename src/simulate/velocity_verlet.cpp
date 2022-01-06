@@ -772,7 +772,7 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
 
 void electron_applied_voltage(const int& e, const int& array_index) {
     
-  double vel = 2.50e1*dt*dt*constants::e_A/constants::m_e_r;
+  double vel = 5e-1*dt*constants::e_A/constants::m_e_r;
   electron_potential[e] += vel*vel*0.5*constants::m_e_r;
   electron_velocity[array_index] += vel;
 
