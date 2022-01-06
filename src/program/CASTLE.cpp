@@ -387,7 +387,12 @@ void initialize_lattice() {
     v_f = sqrt(2 * E_f / constants::m_e); //meters
     a_heat_capacity = 6.02e3 / (6.52e2 * lattice_atoms);
     
-    lattice_output.open("CASTLE/CASTLE_Lattice.xyz");
+
+    char directory [256];
+    if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+    }
+    lattice_output.open(string(directory) + "CASTLE_Lattice.xyz");
 
      // output lattice atoms and locations
     lattice_output << lattice_atoms << "\n"; //xyz file requires first-line for number of elements
@@ -439,7 +444,12 @@ void initialize_lattice() {
 //====================================
 void initialize_electrons() {
 
-    electron_position_output_down.open("CASTLE/Electron_Position/init.xyz");
+    char directory [256];
+    if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+    }
+
+    electron_position_output_down.open(string(directory) + "Electron_Position/init.xyz");
     electron_position_output_down << conduction_electrons << "\n";  
     electron_position_output_down << "Initial positions for electrons" << "\n";  
 
@@ -925,11 +935,16 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
 
 void initialize_velocities() {
      
-    electron_velocity_output.open("CASTLE/Electron_Velocity/init.csv");
+    
+    char directory [256];
+    if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+    }
+    electron_velocity_output.open(string(directory) + "/Electron_Velocity/init.csv");
     electron_velocity_output << "electron number, x-component, y-component, z-component, length" << std::endl;  
 
     std::ofstream atom_phonon_output;
-    atom_phonon_output.open("CASTLE/Atom_Energy/init.csv");
+    atom_phonon_output.open(string(directory) + "/Atom_Energy/init.csv");
     atom_phonon_output << "atom number, energy" << std::endl;
 
     std::srand(std::time(nullptr));
@@ -1144,23 +1159,30 @@ void output_data() {
     //=========
     time_stamp = std::to_string(current_time_step);
     std::ofstream atomic_phonon_output;
-    atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
+
+    char directory [256];
+    if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+    }
+
+    atomic_phonon_output.open(string(directory) + "/Atom_Energy/" + time_stamp);
     atomic_phonon_output.precision(10);
     atomic_phonon_output << std::scientific;
 
-    // std::ofstream atomic_position_output;
-    // atomic_position_output.open("CASTLE/Atom_Position/" + time_stamp + ".xyz");
-    // atomic_position_output << lattice_atoms << std::endl;
-    // atomic_position_output << time_stamp << std::endl;
-    // atomic_position_output << std::fixed;
+    // std::ofstream electron_hot_output;
+    // electron_hot_output.open(string(directory) + "/Hot_Electrons/" + time_stamp + ".xyz");
+    // electron_hot_output << conduction_electrons << "\n";
+    // electron_hot_output << time_stamp << "\n";
+    // electron_hot_output.precision(10);
+    // electron_hot_output << std::fixed;
 
-    electron_position_output_down.open("CASTLE/Electron_Position/" + time_stamp + ".xyz");
+    electron_position_output_down.open(string(directory) + "/Electron_Positions/" + time_stamp + ".xyz");
     electron_position_output_down << conduction_electrons << "\n";
     electron_position_output_down << time_stamp << "\n";
     electron_position_output_down.precision(10);
     electron_position_output_down << std::scientific;
 
-    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".txt");
+    electron_velocity_output.open(string(directory) + "/Electron_Velocity/" + time_stamp + ".txt");
     electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
     electron_velocity_output.precision(10);
     electron_velocity_output << std::scientific;
