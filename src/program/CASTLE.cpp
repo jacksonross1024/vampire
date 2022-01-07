@@ -1206,9 +1206,10 @@ void output_data() {
     mean_data.precision(10);
     mean_data << std::scientific;
     
-     int array_index;// array_index_y, array_index_z;
+     int array_index, array_index_y, array_index_z;
     double x_pos, y_pos, z_pos;
-    //double x_vel, y_vel ,z_vel;//velocity_length, lambda;
+    double x_vel, y_vel ,z_vel, velocity_length; 
+    // lambda;
     // int lattice_constant = 2;
   
     // double x_lambda = 0.0;
@@ -1226,28 +1227,28 @@ void output_data() {
         //     if(mean_radius[e] < 0.3) close_proximity++;
         // }
          array_index   = 3*e;
-        // array_index_y = array_index + 1;
-        // array_index_z = array_index + 2;
+        array_index_y = array_index + 1;
+        array_index_z = array_index + 2;
 
        x_pos = new_electron_position[array_index];
-       y_pos = new_electron_position[array_index+1]; 
-       z_pos = new_electron_position[array_index+2];
+       y_pos = new_electron_position[array_index_y]; 
+       z_pos = new_electron_position[array_index_z];
 
       //  x_lambda += cos(4*M_PI * x_pos / lattice_constant);
       //  y_lambda += cos(4*M_PI * y_pos / lattice_constant);
       //   z_lambda += cos(4*M_PI * z_pos / lattice_constant);
         
 
-        // x_vel = 1e5*electron_velocity[array_index];
-        // y_vel = 1e5*electron_velocity[array_index_y];
-        // z_vel = 1e5*electron_velocity[array_index_z];
-        // velocity_length = (x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel);
+        x_vel = 1e5*electron_velocity[array_index];
+        y_vel = 1e5*electron_velocity[array_index_y];
+        z_vel = 1e5*electron_velocity[array_index_z];
+        velocity_length = electron_potential[e];// 0.5*constants::m_e_r*((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
 
         // if(sqrt(velocity_length)*dt*1e-5 > 1) speeding++;
         
        electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
-       electron_velocity_output      << e   << ", " << electron_potential[e] << "\n";//electron_velocity[array_index] << ", " << electron_velocity[array_index+1] << ", " << electron_velocity[arr] << ", " << velocity_length << ", " << electron_potential[e]<< "\n";
-
+     //  electron_velocity_output      << e   << ", " << electron_potential[e] << "\n";//electron_velocity[array_index] << ", " << electron_velocity[array_index+1] << ", " << electron_velocity[arr] << ", " << velocity_length << ", " << electron_potential[e]<< "\n";
+        electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  std::endl;
         // x_pos = new_atom_position[array_index];
         // y_pos = new_atom_position[array_index_y]; 
         // z_pos = new_atom_position[array_index_z];
