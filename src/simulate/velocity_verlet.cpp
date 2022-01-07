@@ -416,14 +416,14 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index){
     int array_index_a;
   //  bool collision = false;
     int size = atomic_nearest_electron_list[e][0];
-    int count = 0;
-   // int nearest_atom_count = 1;
-            std::srand(std::time(nullptr));
-            std::random_device rd;  //Will be used to obtain a seed for the random number engine
-            std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-            std::uniform_real_distribution<double> scattering_chance(0,1);
-            std::uniform_int_distribution<> phonon_scattering_vector(1,27);
-    int phonon_collision = phonon_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
+  //   int count = 0;
+  //  // int nearest_atom_count = 1;
+  //           std::srand(std::time(nullptr));
+  //           std::random_device rd;  //Will be used to obtain a seed for the random number engine
+  //           std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+  //           std::uniform_real_distribution<double> scattering_chance(0,1);
+  //           std::uniform_int_distribution<> phonon_scattering_vector(1,27);
+  //   int phonon_collision = phonon_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
  //   if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
 
     // int count = 0;
@@ -451,7 +451,7 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index){
     //    // if(a == 100 ) std::cout << array_index_e / 3 << ", " << sqrt(((new_atom_position[array_index] - new_electron_position[array_index_e])*(new_atom_position[array_index] - new_electron_position[array_index_e])) + ((new_atom_position[array_index+1] - new_electron_position[array_index_e+1])*(new_atom_position[array_index+1] - new_electron_position[array_index_e+1]))+ ((new_atom_position[array_index+2] - new_electron_position[array_index_e+2])*(new_atom_position[array_index+2] - new_electron_position[array_index_e+2]))) << ", " << sqrt(length) << std::endl;
      //    if(a==100) std::cout << array_index_e / 3 << ", " << x_distance << ", " << y_distance << ", " << z_distance << "\n" << std::endl;
         if (length > e_a_coulomb_cutoff) continue;
-        count++;
+      //  count++;
         // count++;
         
      //  length = sqrt(length);
