@@ -171,7 +171,7 @@ void update_position(){
 void update_dynamics() {
    // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
     int array_index;
-    double e_x_force,e_y_force,e_z_force,EPE,EKE = 0.0;
+    double EKE = 0.0;
    // double TEPE = 0;
    // double TEKE = 0;
     // TLE = 0.0;
@@ -179,7 +179,7 @@ void update_dynamics() {
     if(!equilibrium_step && heat_pulse_sim) {
       const static double sigma = 0.001;
       const static double en_scale = heat_pulse * sigma * sqrt(5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
-      double EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
+      EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
     }
     #pragma omp parallel for private(array_index) schedule(static)
     for (int e = 0; e < conduction_electrons; e++) {
@@ -194,14 +194,14 @@ void update_dynamics() {
 
         if(current_time_step % 15 == 0) {
             e_a_coulomb(e, array_index);
-          //  e_e_coulomb(e, array_index);
+           e_e_coulomb(e, array_index);
           //  a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         
         } else {
           //  std::cout << e << "\n";
            // e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
             neighbor_e_a_coulomb(e, array_index);
-         //   neighbor_e_e_coulomb(e, array_index);
+           neighbor_e_e_coulomb(e, array_index);
             //e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
            // a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
            // neighbor_a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
@@ -220,7 +220,7 @@ void update_dynamics() {
        // new_atom_force[array_index + 1] = a_y_force;
         //new_atom_force[array_index + 2] = a_z_force;
         
-        if(external_interaction_list[e] && heat_pulse_sim) update_velocity(e, array_index, EKE);
+        if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
         
        // TEPE += electron_potential[e];
        // TEKE += EKE;
@@ -254,7 +254,8 @@ void update_velocity(const int& e, const int& array_index, const double& EKE) {
     if(x_vel < 0.0) theta += M_PI;
 
     vel += EKE; 
-         
+    
+    std::cout << EKE << std::endl;
     electron_potential[e] = vel*vel*0.5*constants::m_e_r;
 
     electron_velocity[array_index]   = vel*cos(theta)*sin(phi);
