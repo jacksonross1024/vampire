@@ -254,6 +254,46 @@ namespace sim{
          sim::conduction_electrons = c;
          return true;
       }
+      test = "applied-voltage";
+      if(word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "V", 0.0, 1e10, "input", "0-1e10");
+         sim::applied_voltage_sim = true;
+         sim::applied_voltage = c;
+         return true;
+      }
+
+      test = "heat-pulse";
+      if(word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "J", 0.0, 1e10, "input", "0-1e10");
+         sim::heat_pulse_sim = true;
+         sim::heat_pulse = c;
+         return true;
+      }
+
+      test = "x_vector";
+      if(word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", 0.0, 1.0, "input", "0-1; -1");
+         sim::CASTLE_x_vector = c;
+         return true;
+      }
+      test = "y_vector";
+      if(word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", 0.0, 1.0, "input", "0-1; -1");
+         sim::CASTLE_y_vector = c;
+         return true;
+      }
+      test = "z_vector";
+      if(word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", 0.0, 1.0, "input", "0-1; -1");
+         sim::CASTLE_z_vector = c;
+         return true;
+      }
+      //------------------------------------------------------------------
       //--------------------------------------------------------------------
       // input parameter not found here
       return false;

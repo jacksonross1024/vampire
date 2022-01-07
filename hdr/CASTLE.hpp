@@ -57,6 +57,9 @@ namespace CASTLE {
     extern bool CASTLE_program;
     extern bool CASTLE_output_data; //output position and velocity data
     extern bool equilibrium_step;
+    
+    extern bool applied_voltage_sim;
+    extern bool heat_pulse_sim;
 
     extern int lattice_atoms; //number of lattice atoms
     extern int conduction_electrons; //number of conduction electrons
@@ -93,6 +96,9 @@ namespace CASTLE {
     extern double e_e_coulomb_cutoff;
     //extern double a_a_neighbor_cutoff;
     // extern double a_a_coulomb_cutoff;
+
+     extern double applied_voltage;
+    extern double heat_pulse;
 
    // extern int num_cells;
 
@@ -185,7 +191,7 @@ namespace CASTLE {
 
     extern void update_velocity(const int& e, const int& array_index, double& EKE, const double& AKE);
  
-    extern void electron_applied_voltage(const int& e, const int& array_index, double& EKE);
+    extern double electron_applied_voltage(const int& e, const int& array_index);
  /*
     extern double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
     extern double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance);

@@ -102,6 +102,15 @@ namespace sim{
    bool fermi_Cv = false;
    bool fermi_function= false;
 
+   bool applied_voltage_sim = false;
+   bool heat_pulse_sim = false;
+   double applied_voltage = 0.0;
+   double heat_pulse = 0.0;
+
+   double CASTLE_x_vector = 0.0;
+	double CASTLE_y_vector = 0.0;
+	double CASTLE_z_vector = 0.0;
+
   
    namespace internal{
 
@@ -147,6 +156,8 @@ namespace CASTLE {
    bool CASTLE_program;
    bool CASTLE_output_data; //output position and velocity data
    bool equilibrium_step;
+    bool applied_voltage_sim = false;
+   bool heat_pulse_sim = false;
 
    int lattice_atoms; //number of lattice atoms
    int conduction_electrons; //number of conduction electrons
@@ -182,6 +193,9 @@ namespace CASTLE {
    double e_a_coulomb_cutoff;
    double e_e_neighbor_cutoff;
    double e_e_coulomb_cutoff;
+
+    double applied_voltage = 0.0;
+   double heat_pulse = 0.0;
    
 
    // int num_cells;
@@ -273,7 +287,7 @@ namespace CASTLE {
 
    void update_velocity(const int& e, const int& array_index, double& EKE, const double& AKE);
  
-   void electron_applied_voltage(const int& e, const int& array_index, double& EKE);
+   double electron_applied_voltage(const int& e, const int& array_index);
  /*
    double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
    double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance);
