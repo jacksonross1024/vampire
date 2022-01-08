@@ -646,7 +646,7 @@ int count = 0;
             std::uniform_real_distribution<double> scattering_chance(0,1);
             std::uniform_int_distribution<> electron_scattering_vector(1,27);
     int electron_collision = electron_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
-    std::cout << size << std::endl;
+   // std::cout << size << std::endl;
 
     for (int i = 1; i < size; i++) {
         
