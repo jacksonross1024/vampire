@@ -646,7 +646,7 @@ int count = 0;
             std::uniform_real_distribution<double> scattering_chance(0,1);
             std::uniform_int_distribution<> electron_scattering_vector(1,27);
     int electron_collision = electron_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
-   // std::cout << size << std::endl;
+   
 
     for (int i = 1; i < size; i++) {
         
@@ -686,14 +686,18 @@ int count = 0;
 
     if(length < 3.0) {
       count++;
+      
       if(count == electron_collision) {
+        
           //  std::cout << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << sqrt(electron_potential[e]) << ", " << Tr << ", " << dt / (sqrt(electron_potential[e]) * Tr) << std::endl;
           //  double scattering = scattering_chance(gen);
         
         double e_energy = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]));
         double deltaE = e_energy - E_f_A;// atom_potential[array_index_a/3];
+      //  if(e==0) std::cout << exp(-1.0*dt*deltaE*deltaE / 187260.0) << std::endl;
           //  const static double scattering_constant = -1.0*dt / (3.0 * 6.242e4); //eV**2 to AJ**2
         if(scattering_chance(gen) > exp(-1.0*dt*deltaE*deltaE / 187260.0)) {
+           
           double d_e_energy =  0.5*constants::m_e_r*((electron_velocity[array_index_i]*electron_velocity[array_index_i]) + (electron_velocity[array_index_i+1]*electron_velocity[array_index_i+1]) + (electron_velocity[array_index_i+2]*electron_velocity[array_index_i+2]));
           deltaE = e_energy - d_e_energy;
                 //if(deltaE < 0.0) continue;//deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0*E_f_A);
@@ -727,7 +731,7 @@ int count = 0;
                // std::cout << exp(dt / (sqrt(electron_potential[e] * Tr))) << std::endl;
         e_e_scattering++;
                 
-              //  std::cout << array_index_a/3 << ", " << atom_potential[array_index_a/3] << std::endl;
+             //   std::cout << e_e_scattering << std::endl;
         }
       }
     }

@@ -1173,25 +1173,30 @@ void output_data() {
     // Output equilibration step data
     //=========
     time_stamp = std::to_string(current_time_step);
+    char directory [256];
+    if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+    }
     std::ofstream atomic_phonon_output;
-    atomic_phonon_output.open("CASTLE/Atom_Energy/" + time_stamp);
+    atomic_phonon_output.open(string(directory) + "/Atom_Energy/" + time_stamp);
     atomic_phonon_output.precision(10);
     atomic_phonon_output << std::scientific;
 
-    // std::ofstream atomic_position_output;
-    // atomic_position_output.open("CASTLE/Atom_Position/" + time_stamp + ".xyz");
-    // atomic_position_output << lattice_atoms << std::endl;
-    // atomic_position_output << time_stamp << std::endl;
-    // atomic_position_output << std::fixed;
+    // std::ofstream electron_hot_output;
+    // electron_hot_output.open(string(directory) + "/Hot_Electrons/" + time_stamp + ".xyz");
+    // electron_hot_output << conduction_electrons << "\n";
+    // electron_hot_output << time_stamp << "\n";
+    // electron_hot_output.precision(10);
+    // electron_hot_output << std::fixed;
 
-    electron_position_output_down.open("CASTLE/Electron_Position/" + time_stamp + ".xyz");
+    electron_position_output_down.open(string(directory) + "/Electron_Position/" + time_stamp + ".xyz");
     electron_position_output_down << conduction_electrons << "\n";
     electron_position_output_down << time_stamp << "\n";
     electron_position_output_down.precision(10);
-    electron_position_output_down << std::fixed;
+    electron_position_output_down << std::scientific;
 
-    electron_velocity_output.open("CASTLE/Electron_Velocity/" + time_stamp + ".txt");
-    electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length" << "\n";
+    electron_velocity_output.open(string(directory) + "/Electron_Velocity/" + time_stamp + ".txt");
+    electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
     electron_velocity_output.precision(10);
     electron_velocity_output << std::scientific;
     
