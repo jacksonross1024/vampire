@@ -219,7 +219,6 @@ void update_dynamics() {
         
        // atom_potential[e] += new_atom_potential[e];
        // EPE += electron_potential[e];
-       
         //new_atom_potential[e] = 0;
 
         
@@ -453,14 +452,14 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_forc
     int array_index_a;
   //  bool collision = false;
     int size = atomic_nearest_electron_list[e][0];
-    int count = 0;
-   // int nearest_atom_count = 1;
-            std::srand(std::time(nullptr));
-            std::random_device rd;  //Will be used to obtain a seed for the random number engine
-            std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-            std::uniform_real_distribution<double> scattering_chance(0,1);
-            std::uniform_int_distribution<> phonon_scattering_vector(1,27);
-    int phonon_collision = phonon_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
+  //   int count = 0;
+  //  // int nearest_atom_count = 1;
+  //           std::srand(std::time(nullptr));
+  //           std::random_device rd;  //Will be used to obtain a seed for the random number engine
+  //           std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+  //           std::uniform_real_distribution<double> scattering_chance(0,1);
+  //           std::uniform_int_distribution<> phonon_scattering_vector(1,27);
+  //   int phonon_collision = phonon_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
  //   if(a == 100) std::cout << atomic_nearest_electron_list[a][0] << std::endl;
 
     // int count = 0;
@@ -525,7 +524,7 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_forc
         e_y_force += -1*force * sin(theta)*sin(phi);
         e_z_force += -1*force * cos(phi); */
         
-        if(length < 3.0) {
+      /*  if(length < 3.0) {
             count++;
             if(count == phonon_collision) {
             
@@ -569,7 +568,7 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index, double& e_x_forc
                     }
                 }
             }
-        }
+        } */
     }
 
     EPE += PE;
@@ -641,13 +640,13 @@ void neighbor_e_e_coulomb(const int& e, const int& array_index, double& e_x_forc
 
 int count = 0;
 
-    // std::srand(std::time(nullptr));
-    //         std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    //         std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    //         std::uniform_real_distribution<double> scattering_chance(0,1);
-    //         std::uniform_int_distribution<> electron_scattering_vector(1,27);
-    // int electron_collision = electron_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
-    //std::cout << size << std::endl;
+    std::srand(std::time(nullptr));
+            std::random_device rd;  //Will be used to obtain a seed for the random number engine
+            std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+            std::uniform_real_distribution<double> scattering_chance(0,1);
+            std::uniform_int_distribution<> electron_scattering_vector(1,27);
+    int electron_collision = electron_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
+    std::cout << size << std::endl;
 
     for (int i = 1; i < size; i++) {
         
@@ -685,7 +684,7 @@ int count = 0;
             e_y_force += force * sin(theta)*sin(phi)/ constants::m_e_r;
             e_z_force += force * cos(phi) / constants::m_e_r;
 
-  /*  if(length < 3.0) {
+    if(length < 3.0) {
       count++;
       if(count == electron_collision) {
           //  std::cout << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << sqrt(electron_potential[e]) << ", " << Tr << ", " << dt / (sqrt(electron_potential[e]) * Tr) << std::endl;
@@ -732,7 +731,7 @@ int count = 0;
         }
       }
     }
-    } */
+    } 
   }
     EPE += PE/2;
     new_electron_potential[e] += PE;
