@@ -194,14 +194,14 @@ void update_dynamics() {
 
         if(current_time_step % 15 == 0) {
             e_a_coulomb(e, array_index);
-        //   e_e_coulomb(e, array_index);
+          e_e_coulomb(e, array_index);
           //  a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         
         } else {
           //  std::cout << e << "\n";
            // e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
             neighbor_e_a_coulomb(e, array_index);
-          // neighbor_e_e_coulomb(e, array_index);
+          neighbor_e_e_coulomb(e, array_index);
             //e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
            // a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
            // neighbor_a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
