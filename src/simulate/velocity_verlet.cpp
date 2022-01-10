@@ -187,7 +187,7 @@ void update_dynamics() {
         
           const static double sigma = 0.001;
           double en_scale = heat_pulse * sigma * sqrt(5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
-          AKE = en_scale* exp(-0.5*sigma*sigma*(current_time_step - 1000)*(current_time_step - 1000));
+          AKE = en_scale* exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
       //  std::cout << AKE << std::endl;
      //   std::cout << sigma << ", " << en_scale << ", " << AKE << ", " << -0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000) << std::endl;
     }   
@@ -198,9 +198,7 @@ void update_dynamics() {
         e_x_force = 0.0;
         e_y_force = 0.0;
         e_z_force = 0.0;
-
         EPE = 0.0;
-      
        
         if(current_time_step % 15 == 0) {
             e_a_coulomb(e, array_index, e_x_force, e_y_force, e_z_force, EPE);
@@ -208,37 +206,23 @@ void update_dynamics() {
           //  a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
         
         } else {
-          //  std::cout << e << "\n";
-           // e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
+         
             neighbor_e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
             neighbor_e_e_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, EPE);
-            //e_a_coulomb(e, array_index, e_x_force,e_y_force,e_z_force, a_x_force,a_y_force,a_z_force, EPE, LPE);
-           // a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
-           // neighbor_a_a_coulomb(e, array_index, a_x_force,a_y_force,a_z_force, LPE);
+            
         }
         
-       // atom_potential[e] += new_atom_potential[e];
-       // EPE += electron_potential[e];
-        //new_atom_potential[e] = 0;
-
-        
-
         new_electron_force[array_index]     = e_x_force;
         new_electron_force[array_index + 1] = e_y_force;
         new_electron_force[array_index + 2] = e_z_force;
-     //   new_atom_force[array_index]     = a_x_force;
-       // new_atom_force[array_index + 1] = a_y_force;
-        //new_atom_force[array_index + 2] = a_z_force;
         
-        TEPE += EPE;  //electron_potential[e];
-        
-     //   TLPE += LPE;
-       // TLKE += LKE;
+        TEPE += EPE;  
     }
+
     #pragma omp parallel for private(array_index, EKE) schedule(static) reduction(+:TEKE)
     for(int e = 0; e < conduction_electrons; e++) {
       array_index = e*3;
-        EKE = 0.0;
+      EKE = 0.0;
       update_velocity(e, array_index, EKE, AKE);
       TEKE += EKE;
     }
