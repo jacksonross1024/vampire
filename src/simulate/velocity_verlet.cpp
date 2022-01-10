@@ -715,6 +715,7 @@ int count = 0;
         double phi = phi_distrib(gen); //// acos(electron_velocity[array_index+2] / vel);
                       // if (electron_velocity[array_index] < 0) theta += M_PI;
         double scattering_velocity = sqrt(2.0*e_energy/constants::m_e_r) - deltaV;
+  
         double x_vec = cos(theta)*sin(phi);
         double y_vec = sin(theta)*sin(phi);
         double z_vec = cos(phi);
@@ -728,6 +729,7 @@ int count = 0;
        // std::cout << ((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2])) << ", " << sqrt((electron_velocity[array_index_i]*electron_velocity[array_index_i]) + (electron_velocity[array_index_i+1]*electron_velocity[array_index_i+1]) + (electron_velocity[array_index_i+2]*electron_velocity[array_index_i+2])) << ", " << scattering_velocity << std::endl;
         #pragma omp critical
         {
+          if((d_e_vel + sqrt(2.0*e_energy/constants::m_e_r)) != (sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2])) - scattering_velocity)) std::cout << scattering_velocity << ", " << deltaV << ", " << d_e_vel << "," << sqrt(2.0*e_energy/constants::m_e_r) << std::endl;
       //   std::cout << sqrt(2.0*e_energy/constants::m_e_r) << ", " << d_e_vel << ", " << deltaV << ", " << sqrt(2.0*e_energy/constants::m_e_r) + d_e_vel << std::endl;
         electron_velocity[array_index_i]   = scattering_velocity * x_vec;
         electron_velocity[array_index_i+1] = scattering_velocity * y_vec;
