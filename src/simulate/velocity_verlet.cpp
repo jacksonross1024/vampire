@@ -188,7 +188,7 @@ void update_dynamics() {
           const static double sigma = 0.001;
           double en_scale = heat_pulse * sigma * sqrt(5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
           AKE = en_scale* exp(-0.5*sigma*sigma*(current_time_step - 1000)*(current_time_step - 1000));
-
+        std::cout << AKE << std::endl;
      //   std::cout << sigma << ", " << en_scale << ", " << AKE << ", " << -0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000) << std::endl;
     }   
     #pragma omp parallel for private(array_index, e_x_force, e_y_force, e_z_force, EPE, EKE)\
@@ -689,57 +689,41 @@ int count = 0;
       
       if(count == electron_collision) {
         
-          //  std::cout << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << sqrt(electron_potential[e]) << ", " << Tr << ", " << dt / (sqrt(electron_potential[e]) * Tr) << std::endl;
-          //  double scattering = scattering_chance(gen);
         
         double e_energy = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]));
         double deltaV = e_energy - E_f_A;// atom_potential[array_index_a/3];
-      //  if(e==0) std::cout << exp(-1.0*dt*deltaE*deltaE / 187260.0) << std::endl;
-          //  const static double scattering_constant = -1.0*dt / (3.0 * 6.242e4); //eV**2 to AJ**2
+      
         if(scattering_chance(gen) > exp(-1.0*dt*deltaV*deltaV / 187260.0)) {
-           
+          #pragma omp critical 
+          {
           double d_e_vel = sqrt((electron_velocity[array_index_i]*electron_velocity[array_index_i]) + (electron_velocity[array_index_i+1]*electron_velocity[array_index_i+1]) + (electron_velocity[array_index_i+2]*electron_velocity[array_index_i+2]));
           deltaV = sqrt(2.0*e_energy/constants::m_e_r) - d_e_vel;
-                //if(deltaE < 0.0) continue;//deltaE = fmax(E_f_A - atom_potential[array_index_a/3], -1.0*E_f_A);
+               
+          if(deltaV > v_f) deltaV = v_f;
+          else if (deltaV < 0.0)  deltaV = fmax(v_f - d_e_vel, -1.0*v_f);
+                 
+            std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
+            std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
+                   
+          double theta = theta_distrib(gen); 
+          double phi = phi_distrib(gen); 
+          double scattering_velocity = sqrt(2.0*e_energy/constants::m_e_r) - deltaV;
+          double x_vec = cos(theta)*sin(phi);
+          double y_vec = sin(theta)*sin(phi);
+          double z_vec = cos(phi);
+
+          electron_velocity[array_index]   = scattering_velocity * x_vec;
+          electron_velocity[array_index+1] = scattering_velocity * y_vec;
+          electron_velocity[array_index+2] = scattering_velocity * z_vec;
         
-        if(deltaV > v_f) deltaV = v_f;
-        else if (deltaV < 0.0)  deltaV = fmax(v_f - d_e_vel, -1.0*v_f);
-                 // std::cout << deltaE << std::endl;
-                
-        std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
-        std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
-                    // electron_nearest_atom_list[e][2*a+1] = true;
-                     //   collision = true;
-                       // double vel = sqrt(2*electron_potential[e]/constants::m_e_r);  // sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2]));
-        double theta = theta_distrib(gen); //atan(electron_velocity[array_index+1] / electron_velocity[array_index]);
-        double phi = phi_distrib(gen); //// acos(electron_velocity[array_index+2] / vel);
-                      // if (electron_velocity[array_index] < 0) theta += M_PI;
-        double scattering_velocity = sqrt(2.0*e_energy/constants::m_e_r) - deltaV;
-  
-        double x_vec = cos(theta)*sin(phi);
-        double y_vec = sin(theta)*sin(phi);
-        double z_vec = cos(phi);
-        electron_velocity[array_index]   = scattering_velocity * x_vec;
-        electron_velocity[array_index+1] = scattering_velocity * y_vec;
-        electron_velocity[array_index+2] = scattering_velocity * z_vec;
-        //electron_potential[e] -= deltaE;
-               // if(electron_potential[e] < E_f_A) std::cout << electron_potential[e]+deltaE << ", " << deltaE << ", " << atom_potential[array_index_a/3] << std::endl;
-                       // std::cout << scattering_velocity << std::endl;
-        scattering_velocity = -1.0*(d_e_vel + deltaV);
-       // std::cout << ((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2])) << ", " << sqrt((electron_velocity[array_index_i]*electron_velocity[array_index_i]) + (electron_velocity[array_index_i+1]*electron_velocity[array_index_i+1]) + (electron_velocity[array_index_i+2]*electron_velocity[array_index_i+2])) << ", " << scattering_velocity << std::endl;
-        #pragma omp critical
-        {
-          if((d_e_vel + sqrt(2.0*e_energy/constants::m_e_r)) != (sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2])) - scattering_velocity)) std::cout << (d_e_vel + sqrt(2.0*e_energy/constants::m_e_r)) << ", " << (sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2])) - scattering_velocity)  << std::endl;
-      //   std::cout << sqrt(2.0*e_energy/constants::m_e_r) << ", " << d_e_vel << ", " << deltaV << ", " << sqrt(2.0*e_energy/constants::m_e_r) + d_e_vel << std::endl;
-        electron_velocity[array_index_i]   = scattering_velocity * x_vec;
-        electron_velocity[array_index_i+1] = scattering_velocity * y_vec;
-        electron_velocity[array_index_i+2] = scattering_velocity * z_vec;
-       //  std::cout << sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2])) << ", " << scattering_velocity << ", " << deltaV << ", " << sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2])) + scattering_velocity << "\n" << std::endl;
-               // std::cout << chosen_electron << ", " << count << ", " << phonon_collision << ", " << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << exp(dt / (sqrt(electron_potential[e]) * Tr)) << std::endl;
-               // std::cout << exp(dt / (sqrt(electron_potential[e] * Tr))) << std::endl;
-        e_e_scattering++;
-                
-             //   std::cout << e_e_scattering << std::endl;
+          scattering_velocity = -1.0*(d_e_vel + deltaV);
+      
+          electron_velocity[array_index_i]   = scattering_velocity * x_vec;
+          electron_velocity[array_index_i+1] = scattering_velocity * y_vec;
+          electron_velocity[array_index_i+2] = scattering_velocity * z_vec;
+      
+         // std::cout << (d_e_vel + sqrt(2.0*e_energy/constants::m_e_r)) << ", " << sqrt((electron_velocity[array_index]*electron_velocity[array_index]) + (electron_velocity[array_index+1]*electron_velocity[array_index+1]) + (electron_velocity[array_index+2]*electron_velocity[array_index+2])) + sqrt((electron_velocity[array_index_i]*electron_velocity[array_index_i]) + (electron_velocity[array_index_i+1]*electron_velocity[array_index_i+1]) + (electron_velocity[array_index_i+2]*electron_velocity[array_index_i+2]))  << std::endl;
+          e_e_scattering++;
         }
       }
     }
