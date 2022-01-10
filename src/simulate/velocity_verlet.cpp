@@ -188,11 +188,11 @@ void update_dynamics() {
           const static double sigma = 0.001;
           double en_scale = heat_pulse * sigma * sqrt(5e7 / (constants::m_e_r * M_PI)) / double(external_interaction_list_count);
           AKE = en_scale* exp(-0.5*sigma*sigma*(current_time_step - 1000)*(current_time_step - 1000));
-        std::cout << AKE << std::endl;
+      //  std::cout << AKE << std::endl;
      //   std::cout << sigma << ", " << en_scale << ", " << AKE << ", " << -0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000) << std::endl;
     }   
-    #pragma omp parallel for private(array_index, e_x_force, e_y_force, e_z_force, EPE, EKE)\
-     schedule(static) reduction(+:TEPE,TEKE)
+    #pragma omp parallel for private(array_index, e_x_force, e_y_force, e_z_force, EPE)\
+     schedule(static) reduction(+:TEPE)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
         e_x_force = 0.0;
@@ -200,7 +200,7 @@ void update_dynamics() {
         e_z_force = 0.0;
 
         EPE = 0.0;
-        EKE = 0.0;
+      
        
         if(current_time_step % 15 == 0) {
             e_a_coulomb(e, array_index, e_x_force, e_y_force, e_z_force, EPE);
@@ -230,12 +230,17 @@ void update_dynamics() {
        // new_atom_force[array_index + 1] = a_y_force;
         //new_atom_force[array_index + 2] = a_z_force;
         
-        update_velocity(e, array_index, EKE, AKE);
-        
         TEPE += EPE;  //electron_potential[e];
-        TEKE += EKE;
+        
      //   TLPE += LPE;
        // TLKE += LKE;
+    }
+    #pragma omp parallel for private(array_index, EKE) schedule(static) reduction(+:TEKE)
+    for(int e = 0; e < conduction_electrons; e++) {
+      array_index = e*3;
+        EKE = 0.0;
+      update_velocity(e, array_index, EKE, AKE);
+      TEKE += EKE;
     }
 
     MEPE += TEPE;
@@ -653,8 +658,8 @@ int count = 0;
         array_index_i = electron_nearest_electron_list[e][i];
 
         x_distance = new_electron_position[array_index]   - new_electron_position[array_index_i];
-            y_distance = new_electron_position[array_index+1] - new_electron_position[array_index_i + 1];
-            z_distance = new_electron_position[array_index+2] - new_electron_position[array_index_i + 2]; 
+        y_distance = new_electron_position[array_index+1] - new_electron_position[array_index_i + 1];
+        z_distance = new_electron_position[array_index+2] - new_electron_position[array_index_i + 2]; 
     
         if (x_distance < -30)     x_distance = x_distance + 40;
         else if (x_distance > 30) x_distance = x_distance - 40;
@@ -717,7 +722,7 @@ int count = 0;
           electron_velocity[array_index+2] = scattering_velocity * z_vec;
         
           scattering_velocity = -1.0*(d_e_vel + deltaV);
-      
+          
           electron_velocity[array_index_i]   = scattering_velocity * x_vec;
           electron_velocity[array_index_i+1] = scattering_velocity * y_vec;
           electron_velocity[array_index_i+2] = scattering_velocity * z_vec;
