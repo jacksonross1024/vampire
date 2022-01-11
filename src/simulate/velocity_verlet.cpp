@@ -498,14 +498,15 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index){
                 double phi = phi_distrib(gen); //// acos(electron_velocity[array_index+2] / vel);
                        // if (electron_velocity[array_index] < 0) theta += M_PI;
                 double scattering_velocity = sqrt(2.0*(electron_potential[e] - deltaE) / constants::m_e_r);
+                #pragma omp critical
+                {
                 electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
                 electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
                 electron_velocity[array_index+2] = scattering_velocity * cos(phi);
                 electron_potential[e] -= deltaE;
                // if(electron_potential[e] < E_f_A) std::cout << electron_potential[e]+deltaE << ", " << deltaE << ", " << atom_potential[array_index_a/3] << std::endl;
                        // std::cout << scattering_velocity << std::endl;
-                #pragma omp critical
-                {
+                
                // std::cout << chosen_electron << ", " << count << ", " << phonon_collision << ", " << exp(dt / (sqrt(electron_potential[e]) * Tr)) << ", " << exp(dt / (sqrt(electron_potential[e]) * Tr)) << std::endl;
                // std::cout << exp(dt / (sqrt(electron_potential[e] * Tr))) << std::endl;
                 e_a_scattering++;
@@ -645,23 +646,18 @@ void neighbor_e_e_coulomb(const int& e, const int& array_index) {
               deltaE = electron_potential[e] - electron_potential[array_index_i/3];
               #pragma omp critical
               {
-                if(deltaE > E_f_A) {
-                  deltaE = sqrt(2.0*E_f_A/constants::m_e_r);
-                  electron_potential[e] -= 0.5*constants::m_e_r*deltaE*deltaE;
-                  electron_potential[array_index_i/3] += 0.5*constants::m_e_r*deltaE*deltaE;
-                }
-                else if (deltaE < 0.0)  {
-                  deltaE = -1.0*sqrt(2.0*abs(fmax(E_f_A - electron_potential[array_index_i/3], -1.0*E_f_A))/constants::m_e_r);
-                  electron_potential[e] += 0.5*constants::m_e_r*deltaE*deltaE;
-                  electron_potential[array_index_i/3] -= 0.5*constants::m_e_r*deltaE*deltaE;
-                }
-                double scattering_velocity = sqrt(2.0*(electron_potential[e]) / constants::m_e_r) - deltaE;
+                if(deltaE > E_f_A) deltaE = E_f_A;
+                else if (deltaE < 0.0)  deltaE = fmax(E_f_A - electron_potential[array_index_i/3], -1.0*E_f_A);
+                  
+                electron_potential[e] -= deltaE;
+                electron_potential[array_index_i/3] += deltaE;
+                double scattering_velocity = sqrt(2.0*(electron_potential[e] - deltaE) / constants::m_e_r);
                 
                 electron_velocity[array_index]   = scattering_velocity * x_vec;
                 electron_velocity[array_index+1] = scattering_velocity * y_vec;
                 electron_velocity[array_index+2] = scattering_velocity * z_vec;
               
-                scattering_velocity = -1.0*(sqrt(2.0*(electron_potential[array_index_i/3])/constants::m_e_r) + deltaE);
+                scattering_velocity = -1.0*(sqrt(2.0*(electron_potential[array_index_i/3]+deltaE)/constants::m_e_r));
               
                 e_e_scattering++;
                 
@@ -669,7 +665,7 @@ void neighbor_e_e_coulomb(const int& e, const int& array_index) {
                 electron_velocity[array_index_i+1] = scattering_velocity*y_vec;
                 electron_velocity[array_index_i+2] = scattering_velocity*z_vec;
              
-                }
+              }
             }
         }
     }
