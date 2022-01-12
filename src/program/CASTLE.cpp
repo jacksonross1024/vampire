@@ -1006,25 +1006,6 @@ void initialize_velocities() {
     electron_velocity_output.close();
 
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
-
-    // vel = sqrt(2*E_f_A / atomic_mass);
-    // for(int a = 0; a < lattice_atoms; a++) {
-    //     array_index = 3*a;
-
-    //     theta = M_PI * Theta_Vel_distrib(gen);
-    //     phi = M_PI * Phi_Vel_distrib(gen);
-
-    //     vel = sqrt(-1*atom_potential[a]*constants::K_A/atomic_mass); // m/s -> Angstroms / s -> A/fs = 1e-5
-    //     atom_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
-    //     atom_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
-    //     atom_velocity[array_index + 2] = cos(phi)*vel;
-    //     TLKE += vel*vel;
-    //     std::cout << atom_potential[a]*constants::K_A << ", " << -0.5* atom_potential[a]*constants::K_A << ", " << vel*vel*atomic_mass / 2 << ", " << atom_potential[a]*constants::K_A + vel*vel*atomic_mass / 2 <<  std::endl;
-    //     atom_velocity_output << a << ", " << 1e5*atom_velocity[array_index] << " , " << 1e5*atom_velocity[array_index + 1] << " , " << 1e5*atom_velocity[array_index + 2] << " , " << 1e5*vel << std::endl;
-    // }
-    // atom_velocity_output.close();
-
-            if (err::check) std::cout << "Atom velocity ready..." << std::endl;
 }
 
 /*

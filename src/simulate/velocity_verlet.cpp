@@ -717,7 +717,7 @@ void ee_scattering() {
       double d_e_energy = 0.5*constants::m_e_r*((new_electron_velocity[array_index_i]  *new_electron_velocity[array_index_i])   \
                                               + (new_electron_velocity[array_index_i+1]*new_electron_velocity[array_index_i+1]) \
                                               + (new_electron_velocity[array_index_i+2]*new_electron_velocity[array_index_i+2]));
-      deltaE = e_energy - deltaE;
+      deltaE = e_energy - d_e_energy;
                
       if(deltaE > E_f_A) deltaE = E_f_A;
       else if (deltaE < 0.0)  deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);         
