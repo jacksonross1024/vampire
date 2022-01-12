@@ -314,6 +314,9 @@ void initialize () {
     applied_voltage = sim::applied_voltage;
     heat_pulse = sim::heat_pulse;
 
+    ee_coupling = sim::ee_coupling;
+    ea_coupling = sim::ea_coupling;
+
     // Initialize lattice
     //========
     initialize_positions();

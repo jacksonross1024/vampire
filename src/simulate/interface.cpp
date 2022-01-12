@@ -293,6 +293,16 @@ namespace sim{
          sim::CASTLE_z_vector = c;
          return true;
       }
+      test = "e-e_coupling";
+      if(word == test) {
+         sim::ee_coupling = true;
+         return true;
+      }
+      test = "e-a_coupling";
+      if(word == test) {
+         sim::ea_coupling = true;
+         return true;
+      }
       //--------------------------------------------------------------------
       // input parameter not found here
       return false;

@@ -290,6 +290,9 @@ namespace sim{
 	extern double CASTLE_y_vector;
 	extern double CASTLE_z_vector;
 
+	extern bool ee_coupling;
+	extern bool ea_coupling;
+	
 	//------------------------------------------------------------------------
    // getter functions to give access to internal sim variables
    //------------------------------------------------------------------------

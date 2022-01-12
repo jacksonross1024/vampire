@@ -112,6 +112,10 @@ namespace sim{
 	double CASTLE_y_vector = 0.0;
 	double CASTLE_z_vector = 0.0;
 
+   bool ee_coupling = false;
+   bool ea_coupling = false;
+   
+
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -195,8 +199,8 @@ namespace CASTLE {
    double applied_voltage = 0.0;
    double heat_pulse = 0.0;
    
-
-   // int num_cells;
+   bool ee_coupling;
+   bool ea_coupling;
 
     //integration variables
    long long int current_time_step;
@@ -204,11 +208,7 @@ namespace CASTLE {
    
    std::vector<double> atom_anchor_position;
    std::vector<double> atom_position;
-   // std::vector<double> new_atom_position;
-   // std::vector<double> atom_velocity; //Angstroms
-   // std::vector<double> new_atom_velocity;
-   // std::vector<double> atom_force;   //Angstroms
-   // std::vector<double> new_atom_force;
+   
    std::vector<double> atom_potential;
    std::vector<double> new_atom_potential;
    std::vector<std::vector<int> > atomic_nearest_electron_list;
