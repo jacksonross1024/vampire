@@ -642,8 +642,10 @@ void ea_scattering() {
                                               + (new_electron_velocity[array_index+1]*new_electron_velocity[array_index+1]) \
                                               + (new_electron_velocity[array_index+2]*new_electron_velocity[array_index+2]));
     
+  //  std::cout << exp(ea_rate/sqrt(scattering_velocity)) << ", " << ea_rate << std::endl;
+
     if(scattering_chance(gen) > exp(ea_rate/sqrt(scattering_velocity))) {
-                  
+      
       double deltaE = scattering_velocity - atom_potential[atom_array];
       if (deltaE > E_f_A) deltaE = E_f_A;
       else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[atom_array], -1.0 * E_f_A);        

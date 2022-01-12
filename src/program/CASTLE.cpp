@@ -509,8 +509,8 @@ void initialize_electrons() {
     e_e_scattering = 0;
     e_a_scattering = 0;
 
-    ea_rate = -1.0*dt / 600.0;
-    ee_rate = -1.0*dt*sqrt(E_f_A) / 187260.0;
+    ea_rate = -1.0*dt*sqrt(E_f_A)/ 600.0;
+    ee_rate = -1.0*dt/ 187260.0;
 
     e_a_neighbor_cutoff = 100;
     e_e_neighbor_cutoff = 100;
