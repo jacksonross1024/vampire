@@ -27,7 +27,7 @@ sim:loop-time-steps = 1000
 sim:time-step = 1e-2 !fs 
 
 #sim:applied-voltage = 0
-sim:heat-pulse = 200.0
+sim:heat-pulse = 2.0
 
 sim:x_vector = -1;
 sim:y_vector = -1;
@@ -35,6 +35,8 @@ sim:z_vector = -1;
 
 sim:e-e_coupling
 sim:e-a_coupling
+
+sim:CASTLE-MD-rate = 100
 
 #------------------------------------------
 # Program and integrator details
