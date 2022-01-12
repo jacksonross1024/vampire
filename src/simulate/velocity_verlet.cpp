@@ -447,12 +447,12 @@ void e_e_coulomb(const int& e, const int& array_index, double& e_x_force, double
             e_z_force += force * cos(phi) * constants::m_e_r_i;
 
         if(ee_coupling) {
-      if(length < 3.0) {
-        electron_ee_scattering_list[e][count] = array_index_i;
-        count++;
-      }
-    }
+          if(length < 3.0) {
+            electron_ee_scattering_list[e][count] = array_index_i;
+            count++;
+          }
         }
+      }
     electron_nearest_electron_list[e][0] = neighbor_count;
     EPE += PE/2;
     new_electron_potential[e] += PE;
@@ -700,28 +700,30 @@ void ee_scattering() {
     std::uniform_int_distribution<> electron_scattering_vector(2,size);
     electron_collision = electron_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
 
-    
-
-
     array_index_i = electron_ee_scattering_list[e][electron_collision];
 
     if(electron_ee_scattering_list[array_index_i/3][0]) continue;
+    array_index = 3*e;
 
     double e_energy = 0.5*constants::m_e_r*((new_electron_velocity[array_index]  *new_electron_velocity[array_index])   \
                                           + (new_electron_velocity[array_index+1]*new_electron_velocity[array_index+1]) \
                                           + (new_electron_velocity[array_index+2]*new_electron_velocity[array_index+2]));
     double deltaE = e_energy - E_f_A;
       
+   // if(e == 3792) std::cout << exp(ee_rate*deltaE*deltaE) << ", " << deltaE << ", " << deltaE*deltaE << ", " << ee_rate*deltaE*deltaE << ", " << e_energy << std::endl;
+
     if(scattering_chance(gen) > exp(ee_rate*deltaE*deltaE)) {
-          
+   
       double d_e_energy = 0.5*constants::m_e_r*((new_electron_velocity[array_index_i]  *new_electron_velocity[array_index_i])   \
                                               + (new_electron_velocity[array_index_i+1]*new_electron_velocity[array_index_i+1]) \
                                               + (new_electron_velocity[array_index_i+2]*new_electron_velocity[array_index_i+2]));
       deltaE = e_energy - deltaE;
                
-      if(deltaE > E_f_A) deltaE = v_f;
+      if(deltaE > E_f_A) deltaE = E_f_A;
       else if (deltaE < 0.0)  deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);         
-           
+     // if(e == 3792) std::cout << deltaE << ", " << d_e_energy << std::endl;
+
+
       double theta = theta_distrib(gen); 
       double phi = phi_distrib(gen); 
       double scattering_velocity = sqrt(2.0*(e_energy - deltaE)*constants::m_e_r_i);
