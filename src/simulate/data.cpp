@@ -111,7 +111,9 @@ namespace sim{
 	double CASTLE_y_vector = 0.0;
 	double CASTLE_z_vector = 0.0;
 
-  
+   bool ee_coupling = false;
+   bool ea_coupling = false;
+   
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -188,6 +190,8 @@ namespace CASTLE {
    double a_heat_capacity;
    double e_heat_capacity;
 
+   bool ee_coupling;
+   bool ea_coupling;
 
    double e_a_neighbor_cutoff;
    double e_a_coulomb_cutoff;

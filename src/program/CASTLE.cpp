@@ -48,7 +48,7 @@ void create() {
     initialize();
      //  omp_set_dynamic(0);
       // omp_set_num_threads(6);
-        // std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
+    std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
              std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() - 1 << std::endl;
@@ -323,6 +323,11 @@ void initialize () {
     applied_voltage = sim::applied_voltage;
     heat_pulse = sim::heat_pulse;
 
+    ee_coupling = sim::ee_coupling;
+    ea_coupling = sim::ea_coupling;
+
+    std::cout << applied_voltage_sim << std::endl;
+
     // Initialize lattice
     //========
     initialize_positions();
@@ -509,7 +514,7 @@ void initialize_electrons() {
     e_e_coulomb_cutoff = 36;
     // a_a_neighbor_cutoff = 6;
     // a_a_coulomb_cutoff = 6;
-   std::cout << true << false << std::endl;
+  
     double phi,theta, x_pos,y_pos,z_pos; //velocity_length = 0;
     int array_index = 0;
     electron_nearest_electron_list.resize(conduction_electrons);
@@ -1259,7 +1264,7 @@ void output_data() {
          z_vel = 1e5*electron_velocity[array_index_z];
 
          velocity_length = 0.5*constants::m_e_r*((x_vel*x_vel) + (y_vel*y_vel) + (z_vel*z_vel));
-        electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  std::endl;
+        electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  "\n";
     //     atomic_position_output << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n";
     //    electron_velocity_output << e  << ", " << 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) << "\n";
         atomic_phonon_output << e << ", " << atom_potential[e] << "\n";

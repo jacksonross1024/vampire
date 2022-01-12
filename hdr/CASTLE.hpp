@@ -90,6 +90,9 @@ namespace CASTLE {
     extern double e_heat_capacity;
     extern double a_heat_capacity;
 
+    extern bool ee_coupling;
+    extern bool ea_coupling;
+
     extern double e_a_neighbor_cutoff;
     extern double e_a_coulomb_cutoff;
     extern double e_e_neighbor_cutoff;
