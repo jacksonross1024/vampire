@@ -275,21 +275,21 @@ namespace sim{
       test = "x_vector";
       if(word == test) {
          double c = atof(value.c_str());
-         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", 0.0, 1.0, "input", "0-1; -1");
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", -1.0, 1.0, "input", "0-1; -1");
          sim::CASTLE_x_vector = c;
          return true;
       }
       test = "y_vector";
       if(word == test) {
          double c = atof(value.c_str());
-         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", 0.0, 1.0, "input", "0-1; -1");
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", -1.0, 1.0, "input", "0-1; -1");
          sim::CASTLE_y_vector = c;
          return true;
       }
       test = "z_vector";
       if(word == test) {
          double c = atof(value.c_str());
-         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", 0.0, 1.0, "input", "0-1; -1");
+         vin::check_for_valid_value(c, word, line, prefix, unit, "unit-value", -1.0, 1.0, "input", "0-1; -1");
          sim::CASTLE_z_vector = c;
          return true;
       }
@@ -301,6 +301,13 @@ namespace sim{
       test = "e-a_coupling";
       if(word == test) {
          sim::ea_coupling = true;
+         return true;
+      }
+      test = "CASTLE-MD-rate";
+      if(word == test) {
+         int c = atoi(value.c_str());
+         vin::check_for_valid_int(c, word, line, prefix, 0, 10000000, "input", "0-1e10");
+         sim::CASTLE_MD_rate = c;
          return true;
       }
 

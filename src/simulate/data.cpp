@@ -114,6 +114,8 @@ namespace sim{
    bool ee_coupling = false;
    bool ea_coupling = false;
    
+   int CASTLE_MD_rate = 1;
+
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -176,6 +178,7 @@ namespace CASTLE {
    double total_time_steps;
    double loop_time;
    int    CASTLE_output_rate; //output velocity and position data at this multiple
+   int CASTLE_MD_rate;
    int chosen_electron;
    double dt;
    double v_f; //meters
@@ -192,6 +195,9 @@ namespace CASTLE {
 
    bool ee_coupling;
    bool ea_coupling;
+
+   double ee_rate;
+   double ea_rate;
 
    double e_a_neighbor_cutoff;
    double e_a_coulomb_cutoff;
@@ -230,6 +236,8 @@ namespace CASTLE {
    std::vector<double> new_electron_potential;
    std::vector<std::vector<int> > electron_nearest_electron_list;
    std::vector<std::vector<int> > electron_nearest_atom_list;
+   std::vector<std::vector<int> > electron_ee_scattering_list;
+   std::vector<std::vector<int> > electron_ea_scattering_list;
    std::vector<bool> external_interaction_list;
    std::vector<double> mean_radius;
    int external_interaction_list_count;
@@ -292,6 +300,9 @@ namespace CASTLE {
    void update_velocity(const int& e, const int& array_index, double& EKE, const double& AKE);
  
    double electron_applied_voltage(const int& e, const int& array_index);
+
+   void ea_scattering();
+   void ee_scattering();
  /*
    double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
    double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance);

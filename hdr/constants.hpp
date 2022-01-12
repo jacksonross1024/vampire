@@ -23,6 +23,7 @@ namespace constants{
    extern const double kB;  // Boltzmann constant (Joules / Kelvin)
    extern const double m_e; // electron mass (kg)
    extern const double m_e_r; //kg reduced for latter use in fs conversion
+   extern const double m_e_r_i; //inverse of m_e_r
    extern const double h;   // Plank's constant (Js/kg)
    extern const double J_au; //Joule to a.u. 
    extern const double e;     // electron charge

@@ -23,6 +23,7 @@ namespace constants{
    const double kB  = 1.380649e-23;  // Boltzmann constant (Joules / Kelvin) NIST standard Reference
    const double m_e = 9.1093837015e-31; //electron mass (kg) NIST standard reference
    const double m_e_r = 9.1093837015e-1; //kg reduced for future use in fs conversion
+   const double m_e_r_i = 1 / m_e_r;
    const double h   = 6.62607015e-34; // Plank constant (m^2 kg / s)  <or> (AJ /Hz) NIST standard reference
    const double J_au = 2.293712658357900e+17;
    const double e = 1.602176634e-19; //C
