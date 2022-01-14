@@ -516,8 +516,8 @@ void ea_scattering() {
     if(scattering_chance(gen) > exp(ea_rate/sqrt(scattering_velocity))) {
       
       double deltaE = scattering_velocity - atom_potential[atom_array];
-      if (deltaE > E_f_A) deltaE = E_f_A;
-      else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[atom_array], -1.0 * E_f_A);        
+      if (deltaE > ea_coupling_strength*E_f_A) deltaE = ea_coupling_strength*E_f_A;
+      else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[atom_array], -1.0*ea_coupling_strength * E_f_A);        
 
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
@@ -582,9 +582,9 @@ void ee_scattering() {
       double d_e_energy = electron_potential[i];
       deltaE = e_energy - d_e_energy;
                
-      if(deltaE > E_f_A) deltaE = E_f_A;
-      else if (deltaE < 0.0)  deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);         
-     
+      if(deltaE > ee_coupling_strength * E_f_A) deltaE = ee_coupling_strength * E_f_A;
+      else if (deltaE < 0.0)  deltaE = fmax(E_f_A - d_e_energy, -1.0*ee_coupling_strength * E_f_A);         
+
       double theta = theta_distrib(gen); 
       double phi = phi_distrib(gen); 
       double scattering_velocity = sqrt(2.0*(e_energy - deltaE)*constants::m_e_r_i);

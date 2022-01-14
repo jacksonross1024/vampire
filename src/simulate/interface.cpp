@@ -296,11 +296,17 @@ namespace sim{
       test = "e-e_coupling";
       if(word == test) {
          sim::ee_coupling = true;
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "AJ", -1.0, 1e10, "input", "0 - 1e10; -1");
+         sim::ee_coupling_strength = c;
          return true;
       }
       test = "e-a_coupling";
       if(word == test) {
          sim::ea_coupling = true;
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "AJ", -1.0, 1e10, "input", "0 - 1e10; -1");
+         sim::ea_coupling_strength = c;
          return true;
       }
       test = "CASTLE-MD-rate";

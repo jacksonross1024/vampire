@@ -116,6 +116,10 @@ namespace sim{
    bool ea_coupling = false;
 
    int CASTLE_MD_rate = 1;
+
+    double ee_coupling_strength = 0.0;
+   double ea_coupling_strength = 0.0;
+
    
 
    namespace internal{
@@ -206,6 +210,9 @@ namespace CASTLE {
    bool ea_coupling;
    double ee_rate;
    double ea_rate;
+    double ee_coupling_strength;
+   double ea_coupling_strength;
+
 
     //integration variables
    long long int current_time_step;

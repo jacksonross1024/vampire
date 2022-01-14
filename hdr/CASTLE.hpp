@@ -96,6 +96,9 @@ namespace CASTLE {
     extern bool ea_coupling;
     extern double ea_rate;
     extern double ee_rate;
+    extern double ee_coupling_strength;
+    extern double ea_coupling_strength;
+
 
     extern double e_a_neighbor_cutoff;
     extern double e_a_coulomb_cutoff;
