@@ -114,6 +114,8 @@ namespace sim{
 
    bool ee_coupling = false;
    bool ea_coupling = false;
+
+   int CASTLE_MD_rate = 1;
    
 
    namespace internal{
@@ -178,6 +180,7 @@ namespace CASTLE {
    double total_time_steps;
    double loop_time;
    int    CASTLE_output_rate; //output velocity and position data at this multiple
+   int CASTLE_MD_rate;
    double dt;
    double v_f; //meters
    double E_f; //meters
@@ -201,6 +204,8 @@ namespace CASTLE {
    
    bool ee_coupling;
    bool ea_coupling;
+   double ee_rate;
+   double ea_rate;
 
     //integration variables
    long long int current_time_step;
@@ -227,6 +232,8 @@ namespace CASTLE {
    std::vector<bool> external_interaction_list;
    std::vector<double> mean_radius;
    int external_interaction_list_count;
+   std::vector<std::vector<int> > electron_ee_scattering_list;
+   std::vector<std::vector<int> > electron_ea_scattering_list;
     //outputs
    
    double TEPE; //Angstroms

@@ -293,6 +293,7 @@ namespace sim{
 	extern bool ee_coupling;
 	extern bool ea_coupling;
 	
+	extern int CASTLE_MD_rate;
 	//------------------------------------------------------------------------
    // getter functions to give access to internal sim variables
    //------------------------------------------------------------------------

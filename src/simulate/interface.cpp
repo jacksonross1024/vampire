@@ -303,6 +303,12 @@ namespace sim{
          sim::ea_coupling = true;
          return true;
       }
+      test = "CASTLE-MD-rate";
+      if(word == test) {
+         int c = atoi(value.c_str());
+         vin::check_for_valid_int(c, word, line, prefix, 1, 100000, "input", "1-1e10");
+         return true;
+      }
       //--------------------------------------------------------------------
       // input parameter not found here
       return false;

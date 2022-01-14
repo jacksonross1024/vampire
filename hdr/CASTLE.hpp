@@ -39,6 +39,7 @@
 #include <random>
 //#include <filesystem>
 #include <omp.h> 
+#include <forward_list>
 
 
 #include "sim.hpp"
@@ -56,6 +57,7 @@ namespace CASTLE {
     // input and material parameters
     extern bool CASTLE_program;
     extern bool CASTLE_output_data; //output position and velocity data
+    
     extern bool equilibrium_step;
     extern bool applied_voltage_sim;
     extern bool heat_pulse_sim;
@@ -74,7 +76,8 @@ namespace CASTLE {
     //simulation variables
     extern double total_time_steps;
     extern double loop_time;
-    extern int    CASTLE_output_rate; //output velocity and position data at this multiple
+    extern int    CASTLE_output_rate; 
+    extern int CASTLE_MD_rate; //output velocity and position data at this multiple
   
     extern double dt;
     extern double v_f; //meters
@@ -91,6 +94,8 @@ namespace CASTLE {
 
     extern bool ee_coupling;
     extern bool ea_coupling;
+    extern double ea_rate;
+    extern double ee_rate;
 
     extern double e_a_neighbor_cutoff;
     extern double e_a_coulomb_cutoff;
@@ -132,6 +137,8 @@ namespace CASTLE {
     extern std::vector<bool> external_interaction_list;
     extern int external_interaction_list_count;
     extern std::vector<double> mean_radius;
+    extern std::vector<std::vector<int> > electron_ee_scattering_list;
+    extern std::vector<std::vector<int> > electron_ea_scattering_list;
     //outputs
    
     extern double TEPE; //Angstroms
@@ -191,6 +198,9 @@ namespace CASTLE {
     extern void update_velocity(const int& e, const int& array_index, const double& EKE);
  
     extern void electron_applied_voltage(const int& e, const int& array_index);
+ 
+    extern void ea_scattering();
+    extern void ee_scattering();
  /*
     extern double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
     extern double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance);
