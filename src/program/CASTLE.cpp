@@ -326,6 +326,9 @@ void initialize () {
     ee_coupling = sim::ee_coupling;
     ea_coupling = sim::ea_coupling;
 
+    ee_coupling_strength = sim::ee_coupling_strength;
+    ea_coupling_strength = sim::ea_coupling_strength;
+
     CASTLE_MD_rate = sim::CASTLE_MD_rate;
 
     //std::cout << applied_voltage_sim << std::endl;

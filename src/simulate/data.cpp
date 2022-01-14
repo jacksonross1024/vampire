@@ -116,6 +116,9 @@ namespace sim{
    
    int CASTLE_MD_rate = 1;
 
+   double ee_coupling_strength = 0.0;
+   double ea_coupling_strength = 0.0;
+
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -198,6 +201,9 @@ namespace CASTLE {
 
    double ee_rate;
    double ea_rate;
+
+   double ee_coupling_strength;
+   double ea_coupling_strength;
 
    double e_a_neighbor_cutoff;
    double e_a_coulomb_cutoff;

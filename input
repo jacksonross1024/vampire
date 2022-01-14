@@ -22,19 +22,19 @@ material:file = Co.mat
 #------------------------------------------
 sim:temperature = 300.0
 sim:time-steps-increment = 100
-sim:equilibration-time-steps = 100
+sim:equilibration-time-steps = 1
 sim:loop-time-steps = 100000
 sim:time-step = 1e-2 !fs 
 
 #sim:applied-voltage = 0
-sim:heat-pulse = 6.0
+sim:heat-pulse = 6000.0
 
 sim:x_vector = -1;
 sim:y_vector = -1;
 sim:z_vector = -1;
 
-sim:e-e_coupling
-sim:e-a_coupling
+sim:e-e_coupling = 1
+sim:e-a_coupling = 1
 
 sim:CASTLE-MD-rate = 10
 

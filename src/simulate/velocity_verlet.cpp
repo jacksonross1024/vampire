@@ -169,20 +169,18 @@ void update_position(){
 }
 
 void update_dynamics() {
-   // double applied_electronic_field = {0.0, 0.0, 1.0, 1.0}; //x, y, z, strength
+  
     int array_index;
     double e_x_force,e_y_force,e_z_force,EPE, EKE;
     double AKE = 0.0;
-  //  double TEPE = 0.0;
-    // double TEKE = 0.0;
-   // TLE = 0.0;
-
+ 
     if(!equilibrium_step && heat_pulse_sim){
-        
+          
           const static double sigma = 0.001;
           double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / double(external_interaction_list_count);
           AKE = en_scale* exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
-      //std::cout << en_scale << ", " << en_scale*external_interaction_list_count << std::endl;
+          mean_data << AKE * external_interaction_list_count << ", ";
+      
        }   
     #pragma omp parallel for private(array_index, e_x_force, e_y_force, e_z_force)\
      schedule(static)
@@ -241,13 +239,13 @@ void update_velocity(const int& e, const int& array_index, double& EKE, const do
       
         if(!equilibrium_step && external_interaction_list[e]) {
           old_vel += AKE;
-          electron_potential[e] += AKE*AKE*0.5*constants::m_e_r;
+          electron_potential[e] = old_vel*old_vel*0.5*constants::m_e_r;
           external_interaction_list[e] = false;
         }
 
-    new_electron_velocity[array_index]   = old_vel * cos(theta)*sin(phi);
-    new_electron_velocity[array_index_y] = old_vel * sin(theta)*sin(phi);
-    new_electron_velocity[array_index_z] = old_vel * cos(phi);
+    new_electron_velocity[array_index]   = old_vel*cos(theta)*sin(phi);
+    new_electron_velocity[array_index_y] = old_vel*sin(theta)*sin(phi);
+    new_electron_velocity[array_index_z] = old_vel*cos(phi);
    
    // EKE += old_vel*old_vel;
    
@@ -614,8 +612,8 @@ void ea_scattering() {
     if(scattering_chance(gen) > exp(ea_rate/sqrt(scattering_velocity))) {
       
       double deltaE = scattering_velocity - atom_potential[atom_array];
-      if (deltaE > E_f_A) deltaE = E_f_A;
-      else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[atom_array], -1.0 * E_f_A);        
+      if (deltaE > ea_coupling_strength*E_f_A) deltaE = ea_coupling_strength*E_f_A;
+      else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[atom_array], -1.0*ea_coupling_strength * E_f_A);        
 
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
@@ -681,8 +679,8 @@ void ee_scattering() {
       double d_e_energy = electron_potential[i];
       deltaE = e_energy - d_e_energy;
                
-      if(deltaE > E_f_A) deltaE = E_f_A;
-      else if (deltaE < 0.0)  deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);         
+      if(deltaE > ee_coupling_strength * E_f_A) deltaE =ee_coupling_strength * E_f_A;
+      else if (deltaE < 0.0)  deltaE = fmax(E_f_A - d_e_energy, -1.0*ee_coupling_strength * E_f_A);         
 
       double theta = theta_distrib(gen); 
       double phi = phi_distrib(gen); 
