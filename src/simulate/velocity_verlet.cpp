@@ -179,7 +179,7 @@ void update_dynamics() {
           const static double sigma = 0.001;
           double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / double(external_interaction_list_count);
           AKE = en_scale* exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
-          mean_data << AKE * external_interaction_list_count << ", ";
+       //   mean_data << AKE * external_interaction_list_count << ", ";
       
        }   
     #pragma omp parallel for private(array_index, e_x_force, e_y_force, e_z_force)\
