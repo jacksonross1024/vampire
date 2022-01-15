@@ -1201,13 +1201,13 @@ void output_data() {
     double nu = j / (n_f * constants::e); //drift velocity
     double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
     double gamma = M_PI*M_PI*n_f*constants::kB*constants::kB*0.5 / E_f; // J / K**2
-    double alpha = 0.025e20; //J
+    double alpha = 0.025e20*6.02e-23*lattice_atoms; //AJ/K
     double Td = 450;
    
     if(!current_time_step) {
     double e_specific_heat = gamma * 1e-20*(MEKE - E_f_A*conduction_electrons) / constants::kB; //gamma * Te = gamma * kB * deltaU; J/K
     double Tl = (MLE - E_f_A*lattice_atoms)*1e-20/ constants::kB;
-    double a_specific_heat = alpha / (10 + exp(-0.16*(Tl - 0.078*Td))); 
+    double a_specific_heat = alpha / (1.0 + exp(-0.16*(Tl - 0.078*Td))); 
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
         << MEKE*1e-20 << ", " 
