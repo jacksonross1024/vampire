@@ -596,7 +596,7 @@ void ee_scattering() {
     double deltaE = e_energy - E_f_A;
     
 
-  if(scattering_chance(gen) > exp(ee_rate*deltaE*deltaE)) {
+  if(scattering_chance(gen) > exp(ee_rate*exp(deltaE))) {
     int electron_collision = electron_ee_scattering_list[e][2];
     size = electron_ee_scattering_list[e][1];
     double d_e_energy;
