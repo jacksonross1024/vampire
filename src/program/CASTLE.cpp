@@ -391,8 +391,8 @@ void initialize_lattice() {
     atomic_nearest_electron_list.resize(lattice_atoms);
 
     for (int a = 0; a < lattice_atoms; ++a) {  
-        atomic_nearest_atom_list[a].resize(40,-1);
-        atomic_nearest_electron_list[a].resize(0.4*conduction_electrons,-1);
+        atomic_nearest_atom_list[a].resize(40,0);
+        atomic_nearest_electron_list[a].resize(0.4*conduction_electrons,0);
         array_index = 3*a;
 
         atom_anchor_position[array_index]     = 1 + atomic_size * (a % 20);// + atom_position_distrib(gen); //lattice creation awaiting future development
@@ -756,7 +756,7 @@ void initialize_atomic_interactions() {
       
                // if (err::check)  std::cout << "Calculating atomic interactions" << std::endl;
 
-        neighbor_count = 1;
+        neighbor_count = 2;
 
         for (int i = 0; i < lattice_atoms; i++) {
             if (i == e) continue; //no self repulsion
@@ -785,7 +785,7 @@ void initialize_atomic_interactions() {
             neighbor_count++;
        
         }
-        atomic_nearest_atom_list[e][0] = neighbor_count; 
+        atomic_nearest_atom_list[e][1] = neighbor_count; 
        // if(e / 1000 ==0) std::cout << "e-e count: " << neighbor_count << std::endl;
                 if(err::check) if(e ==0) std::cout << "Calculating conduction-lattice repulsion" << std::endl;
 
@@ -831,45 +831,7 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
             atomic_nearest_electron_list[e][nearest_electron_count] = array_index_a;
             nearest_electron_count++;
 
-        /*    if (length > e_a_coulomb_cutoff) continue;
-
-            length = sqrt(length);
-            
-           // if(length < 0.11) length = 0.11;
-
-            if(length < 2.1) {
-                electron_nearest_atom_list[e][nearest_atom_count] = a;
-                nearest_atom_count++;
-             //   electron_nearest_atom_list[e][nearest_electron_count*2 - 1] = a;
-               // electron_nearest_atom_list[e][nearest_electron_count*2] = false;
-            }
-
-            force = -1*(1/(length * length) - 8*150*exp(-8*length));
-                        //q*k*k * exp(-15(A**-1) * length (A));
-          //  std::cout << force << std::endl;
-            PE = 150*exp(-8*length) - (1 / length);
-           //  if(abs(PE) > 1) std::cout << PE << ", " << length << std::endl;
-            TEPE += PE;
-         //   TLPE += PE/2;
-            near_PE += PE;
-            electron_potential[e] += PE;
-           // atom_potential[e] += PE;
-            phi   = acos(z_distance / length);
-            theta = atanl(y_distance / x_distance);
-            if (x_distance < 0) theta += M_PI;
-
-           //  negative_PE += PE;
-            electron_force[array_index]    =0;// += force * cos(theta)*sin(phi) * mu_r;
-            electron_force[array_index + 1] =0;//+= force * sin(theta)*sin(phi) * mu_r;
-            electron_force[array_index + 2] =0;//+= force * cos(phi) * mu_r; */
-
-           // atom_force[array_index]     += force * cos(theta)*sin(phi) * combined_mass;
-         //   atom_force[array_index + 1] += force * sin(theta)*sin(phi) * combined_mass;
-            //atom_force[array_index + 2] += force * cos(phi) * combined_mass;
-
-          // if(a == 0 && e < 10) std::cout << a << ", " << force * cos(theta)*sin(phi) * combined_mass << ", " << force * sin(theta)*sin(phi) * combined_mass << ", " << force * cos(phi) * combined_mass  << std::endl; // x superarray component
-           // if(a==0 && e < 10) std::cout << a << ", " << atom_force[array_index] << ", " << atom_force[array_index+1] << ", " << atom_force[array_index+2]  << std::endl; // x superarray component
-
+     
         }
     //    std::cout << nearest_atom_count << std::endl;
       //  if(e == 1000) std::cout << "near: " << near_PE << ", long: " << long_PE << ", distant: " << distant_PE << std::endl; 

@@ -126,28 +126,50 @@ void update_position(){
         }
     }
     const static double aa_rate = -1.0*dt/mu_f;
-    
+    std::forward_list<int> scattering_reset_list;
     
     for(int e = 0; e < conduction_electrons; e++) {
+
+      if(atomic_nearest_atom_list[e][0]) continue;
+
       double max_dif = 0.0;
-      int size = atomic_nearest_atom_list[e][0];
-      int a = atomic_nearest_atom_list[e][1];
-      for(int i = 1; i < size; i++) {
-        
+      int size = atomic_nearest_atom_list[e][1];
+      int a = atomic_nearest_atom_list[e][2];
+
+      for(int i = 2; i < size; i++) {
+
+        if(atomic_nearest_atom_list[atomic_nearest_atom_list[e][i]][0]) continue;
+
         excitation_constant = atom_potential[e] - atom_potential[atomic_nearest_atom_list[e][i]];
+
         if(excitation_constant > max_dif) {
           max_dif = excitation_constant;
           a = atomic_nearest_atom_list[e][i];
         }
       }
+
+      if(excitation_constant < 0.0) continue;
+   //   if(excitation_constant > 0.0) std::cout << excitation_constant << ", " << a << ", " << e << std::endl;
       if(phonon_transfer_chance(gen) >  exp(aa_rate*excitation_constant)) {
         if (excitation_constant > E_f_A) excitation_constant = E_f_A;
            
         atom_potential[e] -= excitation_constant;
         atom_potential[a] += excitation_constant;  
+
+        atomic_nearest_atom_list[e][0] = 1;
+        atomic_nearest_atom_list[a][0] = 1;
+        scattering_reset_list.push_front(e);
+        scattering_reset_list.push_front(a);
       }
     }
-    
+
+  int count = 0;
+  while(!scattering_reset_list.empty()) {
+    atomic_nearest_atom_list[scattering_reset_list.front()][0] = 0;
+    scattering_reset_list.pop_front();
+    count++;
+  }
+  //if(count>0)  std::cout << count << std::endl;
 }
 
 void update_dynamics() {
