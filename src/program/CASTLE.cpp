@@ -1200,13 +1200,13 @@ void output_data() {
     double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
     double nu = j / (n_f * constants::e); //drift velocity
     double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
-    double gamma = M_PI*M_PI*n_f*constants::kB*constants::kB*0.5 / E_f; // J / K**2
-    double alpha = 0.025e20*6.02e-23*lattice_atoms; //AJ/K
+    double gamma = M_PI*M_PI*n_f*constants::kB*constants::kB_A*0.5 / E_f_A; // J / K**2
+    double alpha = 2.5*6.02e-5*lattice_atoms; //AJ/K
     double Td = 450;
    
     if(!current_time_step) {
-    double e_specific_heat = gamma * 1e-20*(MEKE - E_f_A*conduction_electrons) / constants::kB; //gamma * Te = gamma * kB * deltaU; J/K
-    double Tl = (MLE - E_f_A*lattice_atoms)*1e-20/ constants::kB;
+    double e_specific_heat = gamma *(MEKE - E_f_A*conduction_electrons) / constants::kB_A; //gamma * Te = gamma * kB * deltaU; J/K
+    double Tl = (MLE - E_f_A*lattice_atoms)/ constants::kB_A;
     double a_specific_heat = alpha / (1.0 + exp(-0.16*(Tl - 0.078*Td))); 
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
@@ -1218,14 +1218,14 @@ void output_data() {
         mean_data << ", " << double(e_a_scattering)  << ", " << double(e_e_scattering) << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
         << std::endl;
     } else {
-      double e_specific_heat = gamma *1e-20*(MEKE/CASTLE_output_rate - E_f_A*conduction_electrons) / constants::kB; //gamma * Te = gamma * kB * deltaU; J/K
-    double Tl = (MLE/CASTLE_output_rate - E_f_A*lattice_atoms)*1e-20/ constants::kB;
+    double e_specific_heat = gamma *(MEKE/double(CASTLE_output_rate) - E_f_A*conduction_electrons) / constants::kB_A; //gamma * Te = gamma * kB * deltaU; J/K
+    double Tl = (MLE/CASTLE_output_rate - E_f_A*lattice_atoms)/ constants::kB_A;
     double a_specific_heat = alpha / (10 + exp(-0.16*(Tl - 0.078*Td))); 
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
         << MEKE * 1e-20  / CASTLE_output_rate << ", " 
         << MLE*1e-20 / CASTLE_output_rate << ", "  
-        << (MEKE/CASTLE_output_rate  - E_f_A*conduction_electrons)/e_specific_heat << ", " << (MLE/CASTLE_output_rate  - E_f_A*lattice_atoms) / a_specific_heat << ", "
+        << (MEKE/ double(CASTLE_output_rate)  - E_f_A*conduction_electrons)/e_specific_heat << ", " << (MLE/CASTLE_output_rate  - E_f_A*lattice_atoms) / a_specific_heat << ", "
         << mean_ea_rad << ", " << mean_ee_rad;
         mean_data.precision(1);
         mean_data << ", " << std::fixed << double(e_a_scattering) / CASTLE_output_rate << ", "  << double(e_e_scattering) / CASTLE_output_rate << ", " << double(x_flux) / CASTLE_output_rate << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / CASTLE_output_rate \

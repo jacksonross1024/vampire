@@ -92,7 +92,7 @@ void update_position(){
     std::uniform_int_distribution<> phonon_transfer_vector(1,6);
     double excitation_constant;
     //double EKE = 0.0;
-    #pragma omp parallel for private(i,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) \
+    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) \
     schedule(static) reduction(+:x_flux,y_flux,z_flux, external_interaction_list_count, TEKE)
     for (int e = 0; e < conduction_electrons; e++) { 
 
@@ -153,19 +153,22 @@ void update_position(){
         //new_atom_position[array_index_z] = atom_position[array_index_z] + (atom_velocity[array_index_z] * dt) + (atom_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
         
       //   std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index_y] << ", " << atom_force[array_index_z]  << std::endl; // x superarray component
-        i = atomic_nearest_atom_list[e][phonon_transfer_vector(gen)];
-        excitation_constant = atom_potential[e] - atom_potential[i];
-        if(excitation_constant < 0.0) continue;
         
-        if(phonon_transfer_chance(gen) >  exp(-1.0*dt*excitation_constant / mu_f)) {
-            if(excitation_constant > E_f_A) excitation_constant = E_f_A;
-            #pragma omp critical(aa_update)
-            {
-            atom_potential[e] -= excitation_constant;
-            atom_potential[i] += excitation_constant;
-            }
-        }
     }
+  const static double aa_rate = -1.0*dt / mu_f;
+  for(int e = 0; e < conduction_electrons; e++) {
+    i = atomic_nearest_atom_list[e][phonon_transfer_vector(gen)];
+    excitation_constant = atom_potential[e] - atom_potential[i];
+    if(excitation_constant < 0.0) continue;
+        
+    if(phonon_transfer_chance(gen) >  exp(aa_rate*excitation_constant)) {
+          
+      if(excitation_constant > E_f_A) excitation_constant = E_f_A;
+           
+        atom_potential[e] -= excitation_constant;
+        atom_potential[i] += excitation_constant;
+       }
+  }
 }
 
 void update_dynamics() {
@@ -679,7 +682,7 @@ void ee_scattering() {
       double d_e_energy = electron_potential[i];
       deltaE = e_energy - d_e_energy;
                
-      if(deltaE > ee_coupling_strength * E_f_A) deltaE =ee_coupling_strength * E_f_A;
+      if(deltaE > ee_coupling_strength * E_f_A) deltaE = ee_coupling_strength * E_f_A;
       else if (deltaE < 0.0)  deltaE = fmax(E_f_A - d_e_energy, -1.0*ee_coupling_strength * E_f_A);         
 
       double theta = theta_distrib(gen); 

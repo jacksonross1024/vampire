@@ -28,6 +28,7 @@ namespace constants{
   
    // derived constants
    const double J_au = 2.293712658357900e+17; //Joules in a.u.
+   const double kB_A = 1.380649e-3; // Boltzmann constant (AJoules / K)
    const double e_A = 16.02176634; //AC  (Angstrom Coulombs)
    const double m_e_r = 9.1093837015e-1; //kg reduced for future use in fs conversion
    const double m_e_r_i = 1 / m_e_r; //inverse reduced e- mass
