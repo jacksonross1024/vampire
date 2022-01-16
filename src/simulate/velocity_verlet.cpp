@@ -127,9 +127,9 @@ void update_position(){
     }
     const static double aa_rate = -1.0*dt/mu_f;
     
-    double max_dif = 0.0;
+    
     for(int e = 0; e < conduction_electrons; e++) {
-
+      double max_dif = 0.0;
       int size = atomic_nearest_atom_list[e][0];
       int a = atomic_nearest_atom_list[e][1];
       for(int i = 1; i < size; i++) {
