@@ -519,7 +519,7 @@ void ea_scattering() {
       
       double deltaE = scattering_velocity - atom_potential[atom_array];
       if (deltaE > ea_coupling_strength*E_f_A) deltaE = ea_coupling_strength*E_f_A;
-      else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[atom_array], -1.0*ea_coupling_strength * E_f_A);        
+      else if(deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[atom_array], -1.0 * E_f_A);        
 
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
