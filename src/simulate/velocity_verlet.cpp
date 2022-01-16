@@ -125,19 +125,21 @@ void update_position(){
           if(applied_voltage_sim) electron_applied_voltage(e, array_index);
         }
       
+
+    }
+    const static double aa_rate = -1.0*dt/mu_f;
+    for(int e = 0; e < conduction_electrons; e++) {
        i = atomic_nearest_atom_list[e][phonon_transfer_vector(gen)];
         excitation_constant = atom_potential[e] - atom_potential[i];
         if(excitation_constant < 0.0) continue;
         
-        if(phonon_transfer_chance(gen) >  exp(-1.0*dt*excitation_constant)) {
+        if(phonon_transfer_chance(gen) >  exp(aa_rate*excitation_constant)) {
             if (excitation_constant > E_f_A) excitation_constant = E_f_A;
-            #pragma omp critical
-            {
-            //std::cout << excitation_constant << std::endl;
+           
             atom_potential[e] -= excitation_constant;
             atom_potential[i] += excitation_constant;
-          //  if(atom_potential[e] < E_f_A) std::cout << atom_potential[e] << std::endl;
-            }
+         
+            
         }
     }
     

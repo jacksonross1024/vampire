@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        omp_set_dynamic(0);
-        omp_set_num_threads(6);
+     //   omp_set_dynamic(0);
+      //  omp_set_num_threads(6);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -1148,7 +1148,7 @@ void output_data() {
     // Output equilibration step data
     //=========
 
-    if(!(current_time_step % (CASTLE_output_rate * CASTLE_MD_rate))) {
+    if((current_time_step % (CASTLE_output_rate * CASTLE_MD_rate)) == 0) {
       time_stamp = std::to_string(current_time_step);
     
       char directory [256];
