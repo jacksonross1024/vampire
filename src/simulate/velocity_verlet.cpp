@@ -581,38 +581,45 @@ void ee_scattering() {
     std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
 
   std::forward_list<int> scattering_reset_list;
-  int electron_collision;
+  
   int array_index;
-  int i;
   int size;
+  int i;
   for(int e = 0; e < conduction_electrons; e++) {
     
     if(electron_ee_scattering_list[e][0]) {
       scattering_reset_list.push_front(e);
       continue;
     }
-
-    size = electron_ee_scattering_list[e][1];
-    std::uniform_int_distribution<> electron_scattering_vector(2,size);
-    electron_collision = electron_scattering_vector(gen);//atomic_nearest_electron_list[e][phonon_scattering_vector(gen)];
-
-    i = electron_ee_scattering_list[e][electron_collision];
-
-    if(electron_ee_scattering_list[i][0]) {
-      scattering_reset_list.push_front(i);
-      continue;
-    }
    
     double e_energy = electron_potential[e];
     double deltaE = e_energy - E_f_A;
-      
-    if(scattering_chance(gen) > exp(ee_rate*deltaE*deltaE)) {
+    
+
+  if(scattering_chance(gen) > exp(ee_rate*deltaE*deltaE)) {
+    int electron_collision = electron_ee_scattering_list[e][2];
+    size = electron_ee_scattering_list[e][1];
+    double d_e_energy;
+    deltaE = 0.0;
+    for(int ee = 2; ee < size; ee++) {
+      i = electron_ee_scattering_list[e][ee];
+      d_e_energy = electron_potential[i];    
+
+      if(electron_ee_scattering_list[i][0]) {
+        scattering_reset_list.push_front(i);
+        continue;
+      }
+
+      if((e_energy - d_e_energy) > deltaE) {
+        deltaE = e_energy - d_e_energy;
+        electron_collision = i;
+      }
+    }
+
       array_index = 3*e;
-      double d_e_energy = electron_potential[i];
-      deltaE = e_energy - d_e_energy;
                
       if(deltaE > ee_coupling_strength * E_f_A) deltaE = ee_coupling_strength * E_f_A;
-      else if (deltaE < 0.0)  deltaE = fmax(E_f_A - d_e_energy, -1.0*ee_coupling_strength * E_f_A);         
+    //  else if (deltaE < 0.0)  deltaE = fmax(E_f_A - electron_potential[electron_collision], -1.0*ee_coupling_strength * E_f_A);         
 
     //  std::cout << deltaE << ", " << e_energy << ", " << d_e_energy << ", " << e_energy + d_e_energy;
 
@@ -628,21 +635,21 @@ void ee_scattering() {
       electron_velocity[array_index+1] = scattering_velocity * y_vec;
       electron_velocity[array_index+2] = scattering_velocity * z_vec;
         
-      scattering_velocity = -1.0*sqrt(2.0*(d_e_energy + deltaE)*constants::m_e_r_i);
+      scattering_velocity = -1.0*sqrt(2.0*(electron_potential[electron_collision] + deltaE)*constants::m_e_r_i);
           
-      electron_potential[i]  += deltaE;
-      electron_velocity[3*i]   = scattering_velocity * x_vec;
-      electron_velocity[3*i+1] = scattering_velocity * y_vec;
-      electron_velocity[3*i+2] = scattering_velocity * z_vec;
+      electron_potential[electron_collision]  += deltaE;
+      electron_velocity[3*electron_collision]   = scattering_velocity * x_vec;
+      electron_velocity[3*electron_collision+1] = scattering_velocity * y_vec;
+      electron_velocity[3*electron_collision+2] = scattering_velocity * z_vec;
   
       e_e_scattering++;
 
     //  std::cout << ", " << electron_potential[e] + electron_potential[i] << "\n" << std::endl;
 
       electron_ee_scattering_list[e][0] = 1;
-      electron_ee_scattering_list[i][0] = 1;
+      electron_ee_scattering_list[electron_collision][0] = 1;
       scattering_reset_list.push_front(e);
-      scattering_reset_list.push_front(i);
+      scattering_reset_list.push_front(electron_collision);
     }
   }
 
