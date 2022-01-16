@@ -587,6 +587,8 @@ void ee_scattering() {
       if(deltaE > ee_coupling_strength * E_f_A) deltaE = ee_coupling_strength * E_f_A;
       else if (deltaE < 0.0)  deltaE = fmax(E_f_A - d_e_energy, -1.0*ee_coupling_strength * E_f_A);         
 
+      std::cout << deltaE << ", " << e_energy << ", " << d_e_energy << ", " << e_energy + d_e_energy;
+
       double theta = theta_distrib(gen); 
       double phi = phi_distrib(gen); 
       double scattering_velocity = sqrt(2.0*(e_energy - deltaE)*constants::m_e_r_i);
@@ -607,6 +609,8 @@ void ee_scattering() {
       electron_velocity[3*i+2] = scattering_velocity * z_vec;
   
       e_e_scattering++;
+
+      std::cout << ", " << electron_potential[e] + electron_potential[i] << "\n" << std::endl;
 
       electron_ee_scattering_list[e][0] = 1;
       electron_ee_scattering_list[i][0] = 1;
