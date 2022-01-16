@@ -233,30 +233,7 @@ for(int a = 0; a < 1500; a++) {
     equilibrium_step = false;
    // CASTLE_output_rate = 100;
     total_time_steps = sim::loop_time;
-   // dt = 1e-3;
-    //double x,y,z;
-    //int c = 0;
- /*   for(int a = 0; a < lattice_atoms; a++) {
-        x = atom_position[3*a];
-        y = atom_position[3*a+1];
-        z = atom_position[3*a+2];
-        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22)) {
-            atomic_phonon_energy[a] *= 2;
-            c++;
-        }
-    }  
-      for(int a = 0; a < conduction_electrons; a++) {
-        x = electron_position[3*a];
-        y = electron_position[3*a+1];
-        z = electron_position[3*a+2];
-        if((x < 22 && x > 14) && (y > 14 && y < 22) && (z > 14 && z < 22)) {
-            electron_velocity[3*a]   *= 2;// 0.333333333333*sqrt(2*E_f_A/constants::m_e_r);
-            electron_velocity[3*a+1] *= 2;//0.333333333333*sqrt(2*E_f_A/constants::m_e_r);
-            electron_velocity[3*a+2] *= 2;//0.333333333333*sqrt(2*E_f_A/constants::m_e_r);
-            c++;
-        }
-    }  */
-   // std::cout << c << std::endl;
+   
     //========
     // Run averaging step
     //========
@@ -264,22 +241,6 @@ for(int a = 0; a < 1500; a++) {
 
     std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed. Step-time: " << castle_watch.elapsed_seconds() / total_time_steps << std::endl;
     
-/*      castle_watch.start();
-    equilibrium_step = false;
-    CASTLE_output_rate = 1;
-    total_time_steps = sim::loop_time;
-    //dt = 1e-20;
-   // double x,y,z;
-    //int c = 0;
-  
-
-    sim::integrate(total_time_steps);
-    //========
-    // Output data
-    //========
-
-     std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed." << std::endl;
-*/
     mean_data.close();
        
 }
@@ -789,13 +750,9 @@ void initialize_atomic_interactions() {
 
     int array_index, array_index_i, neighbor_count;
     double x,y,z, x_distance,y_distance,z_distance, length, force;
-    double theta,phi, PE = 0;
+    double theta,phi;
     for (int e = 0; e < lattice_atoms; e++) {
         array_index = 3*e;
-
-        x = atom_position[array_index];
-        y = atom_position[array_index + 1];
-        z = atom_position[array_index + 2];
       
                // if (err::check)  std::cout << "Calculating atomic interactions" << std::endl;
 
@@ -822,24 +779,11 @@ void initialize_atomic_interactions() {
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
            
             if(length > 6) continue;
-          //  length = sqrt(length);
+       
 
             atomic_nearest_atom_list[e][neighbor_count] = i;
             neighbor_count++;
-           // force = -2000*(length - 2);
-           // PE = 1000*(length - 2)*(length - 2);
-        //   if(e == 0) std::cout << force << ", " << length <<  std::endl;
-          //  atom_potential[e] += PE;
-           // TLPE += PE/2;
-            //phi   = acos(z_distance / length);
-           // theta = atanl(y_distance / x_distance);
-           // if (x_distance < 0) theta += M_PI
-          //  atom_force[array_index]     += force * cos(theta)*sin(phi) / atomic_mass;
-            //atom_force[array_index + 1] += force * sin(theta)*sin(phi) / atomic_mass;
-            //atom_force[array_index + 2] += force * cos(phi) / atomic_mass;
-            // if(e == 0) std::cout << e << ", " << force * cos(theta)*sin(phi) / atomic_mass << ", " << force * sin(theta)*sin(phi) / atomic_mass << ", " << force * cos(phi) / atomic_mass  << std::endl; // x superarray component
-          //  if(e==0 ) std::cout << e << ", " << atom_force[array_index] << ", " << atom_force[array_index+1] << ", " << atom_force[array_index+2]  << std::endl; // x superarray component
-
+       
         }
         atomic_nearest_atom_list[e][0] = neighbor_count; 
        // if(e / 1000 ==0) std::cout << "e-e count: " << neighbor_count << std::endl;

@@ -72,7 +72,7 @@ void update_position(){
     double excitation_constant;
     double excitation_energy = mu_f;
     external_interaction_list_count = 0;
-    #pragma omp parallel for private(i,array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos, excitation_constant) \
+    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) \
     schedule(static) reduction(+:x_flux,y_flux,z_flux, external_interaction_list_count)
     for (int e = 0; e < conduction_electrons; e++){ 
 
@@ -124,23 +124,28 @@ void update_position(){
           }
           if(applied_voltage_sim) electron_applied_voltage(e, array_index);
         }
-      
-
     }
     const static double aa_rate = -1.0*dt/mu_f;
+    
+    double max_dif = 0.0;
     for(int e = 0; e < conduction_electrons; e++) {
-       i = atomic_nearest_atom_list[e][phonon_transfer_vector(gen)];
-        excitation_constant = atom_potential[e] - atom_potential[i];
-        if(excitation_constant < 0.0) continue;
+
+      int size = atomic_nearest_atom_list[e][0];
+      int a = atomic_nearest_atom_list[e][1];
+      for(int i = 1; i < size; i++) {
         
-        if(phonon_transfer_chance(gen) >  exp(aa_rate*excitation_constant)) {
-            if (excitation_constant > E_f_A) excitation_constant = E_f_A;
-           
-            atom_potential[e] -= excitation_constant;
-            atom_potential[i] += excitation_constant;
-         
-            
+        excitation_constant = atom_potential[e] - atom_potential[atomic_nearest_atom_list[e][i]];
+        if(excitation_constant > max_dif) {
+          max_dif = excitation_constant;
+          a = atomic_nearest_atom_list[e][i];
         }
+      }
+      if(phonon_transfer_chance(gen) >  exp(aa_rate*excitation_constant)) {
+        if (excitation_constant > E_f_A) excitation_constant = E_f_A;
+           
+        atom_potential[e] -= excitation_constant;
+        atom_potential[a] += excitation_constant;  
+      }
     }
     
 }
