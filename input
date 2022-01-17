@@ -28,10 +28,10 @@ sim:time-step = 1e-2 !fs
 
 #sim:applied-voltage = 0.05
 sim:heat-pulse = 2.0
-sim:e-e_coupling = 100
-sim:e-a_coupling = 1
+sim:e-e_coupling = 1
+sim:e-a_coupling = 100
 
-sim:CASTLE-MD-rate = 10;
+sim:CASTLE-MD-rate = 1;
 
 sim:x_vector = -1
 sim:y_vector = -1
