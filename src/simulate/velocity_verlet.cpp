@@ -179,7 +179,7 @@ void update_dynamics() {
    
     if(!equilibrium_step && heat_pulse_sim) {
       const static double sigma = 0.001;
-      double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / double(conduction_electrons);
+      double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / double(external_interaction_list_count);
       EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
    // std::cout << en_scale << ", " << en_scale*external_interaction_list_count << std::endl;
     }
