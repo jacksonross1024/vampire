@@ -564,9 +564,10 @@ void ea_scattering() {
       scattering_reset_list.push_front(atom_array);
     }
   }
-  while(!scattering_reset_list.empty()) {
-    electron_ea_scattering_list[scattering_reset_list.front()][0] = 0;
-    scattering_reset_list.pop_front();
+
+  #pragma omp parallel for num_threads(2)
+  for(int a = 0; a < lattice_atoms; a++) {
+    electron_ea_scattering_list[a][0] = 0;
   }
 }
 
@@ -588,7 +589,7 @@ void ee_scattering() {
   for(int e = 0; e < conduction_electrons; e++) {
     
     if(electron_ee_scattering_list[e][0]) {
-      scattering_reset_list.push_front(e);
+    //  scattering_reset_list.push_front(e);
       continue;
     }
    
@@ -599,24 +600,27 @@ void ee_scattering() {
   if(scattering_chance(gen) > exp(ee_rate*deltaE*deltaE)) {
     int electron_collision = electron_ee_scattering_list[e][2];
     size = electron_ee_scattering_list[e][1];
+    std::uniform_int_distribution<> electron_collision_vector(2,size);
+    electron_collision = electron_ee_scattering_list[e][electron_collision_vector(gen)];
+
     double d_e_energy = electron_potential[electron_collision];
    // deltaE = 0.0;
-    for(int ee = 2; ee < size; ee++) {
-      i = electron_ee_scattering_list[e][ee];  
+    // for(int ee = 2; ee < size; ee++) {
+    //   i = electron_ee_scattering_list[e][ee];  
 
-      if(electron_ee_scattering_list[i][0]) {
-        scattering_reset_list.push_front(i);
+      if(electron_ee_scattering_list[electron_collision][0]) {
+      //  scattering_reset_list.push_front(i);
         continue;
       }
 
-      if(d_e_energy > electron_potential[i]) {
-         d_e_energy = electron_potential[i];
-        electron_collision = i;
-      }
-    }
-
+    //   if(d_e_energy > electron_potential[i]) {
+    //      d_e_energy = electron_potential[i];
+    //     electron_collision = i;
+    //   }
+    // }
+    
       array_index = 3*e;
-    deltaE *= 0.5;
+      deltaE *= 0.5;
 
       double theta = theta_distrib(gen); 
       double phi = phi_distrib(gen); 
@@ -641,16 +645,15 @@ void ee_scattering() {
 
     //  std::cout << ", " << electron_potential[e] + electron_potential[i] << "\n" << std::endl;
 
-      electron_ee_scattering_list[e][0] = 1;
-      electron_ee_scattering_list[electron_collision][0] = 1;
-      scattering_reset_list.push_front(e);
-      scattering_reset_list.push_front(electron_collision);
+     electron_ee_scattering_list[e][0] = 1;
+     electron_ee_scattering_list[electron_collision][0] = 1;
+     // scattering_reset_list.push_front(e);
+     // scattering_reset_list.push_front(electron_collision);
     }
   }
-
-  while(!scattering_reset_list.empty()) {
-    electron_ee_scattering_list[scattering_reset_list.front()][0] = 0;
-    scattering_reset_list.pop_front();
+  #pragma omp parallel for num_threads(2)
+  for(int e =0; e< conduction_electrons; e++) {
+    electron_ee_scattering_list[e][0] = 0;
   }
 }
 
