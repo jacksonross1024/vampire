@@ -116,12 +116,12 @@ void update_position(){
         new_electron_position[array_index_z] = z_pos;
 
         if(!equilibrium_step) {
-          if(heat_pulse_sim) {
-            if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
-              external_interaction_list[e] = true;
-              external_interaction_list_count++;
-            }
-          }
+          // if(heat_pulse_sim) {
+          //   if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
+          //     external_interaction_list[e] = true;
+          //     external_interaction_list_count++;
+          //   }
+          // }
           if(applied_voltage_sim) electron_applied_voltage(e, array_index);
         }
     }
@@ -179,7 +179,7 @@ void update_dynamics() {
    
     if(!equilibrium_step && heat_pulse_sim) {
       const static double sigma = 0.001;
-      double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / double(external_interaction_list_count);
+      double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / double(conduction_electrons);
       EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
    // std::cout << en_scale << ", " << en_scale*external_interaction_list_count << std::endl;
     }
@@ -203,7 +203,8 @@ void update_dynamics() {
     #pragma omp parallel for private(array_index) schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
       array_index = 3*e;
-        if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
+       // if(external_interaction_list[e]) 
+        update_velocity(e, array_index, EKE);
     }
 
     ea_scattering();
@@ -217,7 +218,7 @@ void update_dynamics() {
 void update_velocity(const int& e, const int& array_index, const double& EKE) {
         
         //  old_vel += EKE;
-    external_interaction_list[e] = false;
+   // external_interaction_list[e] = false;
     int array_index_y = array_index + 1;
     int array_index_z = array_index + 2;
       
@@ -596,33 +597,28 @@ void ee_scattering() {
     double deltaE = e_energy - E_f_A;
     
 
-  if(scattering_chance(gen) > exp(ee_rate*exp(deltaE))) {
+  if(scattering_chance(gen) > exp(ee_rate*deltaE*deltaE)) {
     int electron_collision = electron_ee_scattering_list[e][2];
     size = electron_ee_scattering_list[e][1];
-    double d_e_energy;
-    deltaE = 0.0;
+    double d_e_energy = electron_potential[electron_collision];
+   // deltaE = 0.0;
     for(int ee = 2; ee < size; ee++) {
-      i = electron_ee_scattering_list[e][ee];
-      d_e_energy = electron_potential[i];    
+      i = electron_ee_scattering_list[e][ee];  
 
       if(electron_ee_scattering_list[i][0]) {
         scattering_reset_list.push_front(i);
         continue;
       }
 
-      if((e_energy - d_e_energy) > deltaE) {
-        deltaE = e_energy - d_e_energy;
+      if(d_e_energy > electron_potential[i]) {
+         d_e_energy = electron_potential[i];
         electron_collision = i;
       }
     }
 
       array_index = 3*e;
-               
-      if(deltaE > ee_coupling_strength * E_f_A) deltaE = ee_coupling_strength * E_f_A;
-    //  else if (deltaE < 0.0)  deltaE = fmax(E_f_A - electron_potential[electron_collision], -1.0*ee_coupling_strength * E_f_A);         
-
-    //  std::cout << deltaE << ", " << e_energy << ", " << d_e_energy << ", " << e_energy + d_e_energy;
-
+    deltaE *= 0.5;
+    
       double theta = theta_distrib(gen); 
       double phi = phi_distrib(gen); 
       double scattering_velocity = sqrt(2.0*(e_energy - deltaE)*constants::m_e_r_i);
@@ -635,7 +631,7 @@ void ee_scattering() {
       electron_velocity[array_index+1] = scattering_velocity * y_vec;
       electron_velocity[array_index+2] = scattering_velocity * z_vec;
         
-      scattering_velocity = -1.0*sqrt(2.0*(electron_potential[electron_collision] + deltaE)*constants::m_e_r_i);
+      scattering_velocity = -1.0*sqrt(2.0*(d_e_energy + deltaE)*constants::m_e_r_i);
           
       electron_potential[electron_collision]  += deltaE;
       electron_velocity[3*electron_collision]   = scattering_velocity * x_vec;
