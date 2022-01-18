@@ -586,6 +586,7 @@ void ee_scattering() {
   int array_index;
   int size;
   int i;
+  double scattering_prob;
   for(int e = 0; e < conduction_electrons; e++) {
     
     if(electron_ee_scattering_list[e][0]) {
@@ -596,8 +597,10 @@ void ee_scattering() {
     double e_energy = electron_potential[e];
     double deltaE = e_energy - E_f_A;
     
-
-  if(scattering_chance(gen) > exp(ee_rate*deltaE*deltaE)) {
+  if(deltaE < 8.0) scattering_prob = 8.0;
+  else scattering_prob = deltaE*deltaE;
+  
+  if(scattering_chance(gen) > exp(ee_rate*scattering_prob)) {
     int electron_collision = electron_ee_scattering_list[e][2];
     size = electron_ee_scattering_list[e][1];
     std::uniform_int_distribution<> electron_collision_vector(2,size);
