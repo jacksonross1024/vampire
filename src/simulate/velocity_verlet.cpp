@@ -143,19 +143,20 @@ void update_position(){
 
         excitation_constant = atom_potential[e] - atom_potential[atomic_nearest_atom_list[e][i]];
 
-        if(excitation_constant > max_dif) {
+        if(abs(excitation_constant) > abs(max_dif)) {
           max_dif = excitation_constant;
           a = atomic_nearest_atom_list[e][i];
         }
       }
 
-      if(excitation_constant < 0.0) continue;
+      //if(excitation_constant < 0.0) continue;
    //   if(excitation_constant > 0.0) std::cout << excitation_constant << ", " << a << ", " << e << std::endl;
-      if(phonon_transfer_chance(gen) >  exp(aa_rate*excitation_constant)) {
-        if (excitation_constant > E_f_A) excitation_constant = E_f_A;
+      if(phonon_transfer_chance(gen) >  exp(aa_rate*max_dif*max_dif)) {
+        if (max_dif > E_f_A) max_dif = E_f_A;
+        else if (max_dif < 0.0) max_dif = fmax(E_f_A - atom_potential[a], -1.0*E_f_A);
            
-        atom_potential[e] -= excitation_constant;
-        atom_potential[a] += excitation_constant;  
+        atom_potential[e] -= max_dif;
+        atom_potential[a] += max_dif;  
 
         atomic_nearest_atom_list[e][0] = 1;
         atomic_nearest_atom_list[a][0] = 1;
@@ -163,10 +164,10 @@ void update_position(){
         // scattering_reset_list.push_front(a);
       }
     }
-  #pragma omp parallel for schedule(dynamic)
-  for(int e = 0; e < conduction_electrons; e++) {
-    atomic_nearest_atom_list[e][0] = 0;
-  }
+  // #pragma omp parallel for schedule(dynamic)
+  // for(int e = 0; e < conduction_electrons; e++) {
+  //   atomic_nearest_atom_list[e][0] = 0;
+  // }
 
   // int count = 0;
   // while(!scattering_reset_list.empty()) {
@@ -592,16 +593,13 @@ void ee_scattering() {
   double deltaE;
   for(int e = 0; e < conduction_electrons; e++) {
     
-    if(electron_ee_scattering_list[e][0]) {
-    //  scattering_reset_list.push_front(e);
-      continue;
-    }
+    if(electron_ee_scattering_list[e][0]) continue;
    
     e_energy = electron_potential[e];
     deltaE = e_energy - E_f_A;
     
-  if(deltaE < 8.0) scattering_prob = 8.0;
-  else scattering_prob = deltaE*deltaE;
+    if(deltaE < 8.0) scattering_prob = 8.0;
+    else scattering_prob = deltaE*deltaE;
 
   if(scattering_chance(gen) > exp(ee_rate*scattering_prob)) {
    
@@ -613,6 +611,9 @@ void ee_scattering() {
   
     if(electron_ee_scattering_list[electron_collision][0])  continue;
     
+    if(deltaE > ee_coupling_strength*E_f_A) deltaE = ee_coupling_strength*E_f_A;
+    else if(deltaE < 0.0) deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);
+
       array_index = 3*e;
       deltaE *= 0.5;
 
@@ -650,6 +651,7 @@ void ee_scattering() {
   for(int e = 0; e< conduction_electrons; e++) {
     electron_ee_scattering_list[e][0] = 0;
     electron_ea_scattering_list[e][0] = 0;
+    atomic_nearest_atom_list[e][0] = 0;
   }
 } 
 
