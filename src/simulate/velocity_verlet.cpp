@@ -565,7 +565,7 @@ void ea_scattering() {
     }
   }
 
-  #pragma omp parallel for num_threads(2)
+  #pragma omp parallel for schedule(static)
   for(int a = 0; a < lattice_atoms; a++) {
     electron_ea_scattering_list[a][0] = 0;
   }
@@ -599,7 +599,7 @@ void ee_scattering() {
     
   if(deltaE < 8.0) scattering_prob = 8.0;
   else scattering_prob = deltaE*deltaE;
-  
+
   if(scattering_chance(gen) > exp(ee_rate*scattering_prob)) {
     int electron_collision = electron_ee_scattering_list[e][2];
     size = electron_ee_scattering_list[e][1];
@@ -654,11 +654,11 @@ void ee_scattering() {
      // scattering_reset_list.push_front(electron_collision);
     }
   }
-  #pragma omp parallel for num_threads(2)
+  #pragma omp parallel for schedule(static) 
   for(int e =0; e< conduction_electrons; e++) {
     electron_ee_scattering_list[e][0] = 0;
   }
-}
+} 
 
 } //end CASTLE namespace
 
