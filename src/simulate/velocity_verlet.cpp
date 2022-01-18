@@ -216,7 +216,7 @@ void update_dynamics() {
     ea_scattering();
     ee_scattering();
 
-    MEPE += std::accumulate(electron_potential.begin(), electron_potential.end(), 0.0);
+    MEKE += std::accumulate(electron_potential.begin(), electron_potential.end(), 0.0);
     MLE  += std::accumulate(atom_potential.begin(), atom_potential.end(), 0.0);
     // MEKE += TEKE;
     // MLE += TLE;
