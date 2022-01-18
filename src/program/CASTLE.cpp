@@ -403,7 +403,7 @@ void initialize_lattice() {
         atom_position[array_index+1] = atom_anchor_position[array_index+1] + atom_position_distrib(gen);
         atom_position[array_index+2] = atom_anchor_position[array_index+2] + atom_position_distrib(gen);
 
-        TLE += new_atom_potential[a] = atom_potential[a] = E_f_A;// 146*(1.01 - atom_position_distrib(gen));
+        TLE += atom_potential[a] = E_f_A;// 146*(1.01 - atom_position_distrib(gen));
 
         lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
@@ -890,6 +890,7 @@ void initialize_velocities() {
         electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << vel*1e5 << ", " << electron_potential[e] << std::endl; // ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;
         atom_phonon_output << e << ", " << atom_potential[e] << std::endl;
     }
+    TEKE *= 0.5*constants::m_e_r;
     electron_velocity_output.close();
 
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
@@ -1135,21 +1136,21 @@ void output_data() {
     
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << MEPE * 1e-20 << ", " << MLE*1e-20 << ", " 
-      << MEPE*e_heat_capacity  - E_f_A*conduction_electrons*e_heat_capacity << ", " << MLE*a_heat_capacity  - E_f_A*lattice_atoms*a_heat_capacity << ", "
+      << MEKE * 1e-20 << ", " << MLE*1e-20 << ", " 
+      << MEKE*e_heat_capacity  - E_f_A*conduction_electrons*e_heat_capacity << ", " << MLE*a_heat_capacity  - E_f_A*lattice_atoms*a_heat_capacity << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << e_a_scattering << ", " << e_e_scattering  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
     }
     else {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << MEPE * 1e-20 / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  
-      << MEPE*e_heat_capacity/CASTLE_output_rate - E_f_A*conduction_electrons*e_heat_capacity << ", " << (MLE*a_heat_capacity/CASTLE_output_rate)  - E_f_A*lattice_atoms*a_heat_capacity << ", "
+      << MEKE * 1e-20 / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  
+      << MEKE*e_heat_capacity/CASTLE_output_rate - E_f_A*conduction_electrons*e_heat_capacity << ", " << (MLE*a_heat_capacity/CASTLE_output_rate)  - E_f_A*lattice_atoms*a_heat_capacity << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering) / CASTLE_output_rate << ", " << double(e_e_scattering) / CASTLE_output_rate << ", " << double(x_flux) / CASTLE_output_rate << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / CASTLE_output_rate  << ", " \
       << std::endl;
     }
     MEKE = 0;
-    MEPE = 0;
+    
     MLE = 0;
    
     x_flux = 0;
