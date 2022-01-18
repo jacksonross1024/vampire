@@ -143,17 +143,17 @@ void update_position(){
 
         excitation_constant = atom_potential[e] - atom_potential[atomic_nearest_atom_list[e][i]];
 
-        if(abs(excitation_constant) > abs(max_dif)) {
+        if(excitation_constant > max_dif) {
           max_dif = excitation_constant;
           a = atomic_nearest_atom_list[e][i];
         }
       }
 
-      //if(excitation_constant < 0.0) continue;
+      if(excitation_constant < 0.0) continue;
    //   if(excitation_constant > 0.0) std::cout << excitation_constant << ", " << a << ", " << e << std::endl;
       if(phonon_transfer_chance(gen) >  exp(aa_rate*max_dif*max_dif)) {
         if (max_dif > E_f_A) max_dif = E_f_A;
-        else if (max_dif < 0.0) max_dif = fmax(E_f_A - atom_potential[a], -1.0*E_f_A);
+       // else if (max_dif < 0.0) max_dif = fmax(E_f_A - atom_potential[a], -1.0*E_f_A);
            
         atom_potential[e] -= max_dif;
         atom_potential[a] += max_dif;  
