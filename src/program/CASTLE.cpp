@@ -454,7 +454,7 @@ void initialize_electrons() {
     n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
     E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.6666666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
     mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
-    v_f = sqrt(2 * E_f / constants::m_e); //meters
+    v_f = sqrt(2 * E_f / constants::m_e); //A/fs
     Tr  = -1.0 * 27.7 / sqrt(E_f_A); // 1 / fs
 
     e_heat_capacity = 6.02e3 / (2.52e2 * conduction_electrons);
@@ -1068,13 +1068,6 @@ void output_data() {
       atomic_phonon_output.precision(10);
       atomic_phonon_output << std::scientific;
 
-    // std::ofstream electron_hot_output;
-    // electron_hot_output.open(string(directory) + "/Hot_Electrons/" + time_stamp + ".xyz");
-    // electron_hot_output << conduction_electrons << "\n";
-    // electron_hot_output << time_stamp << "\n";
-    // electron_hot_output.precision(10);
-    // electron_hot_output << std::fixed;
-
       electron_position_output_down.open(string(directory) + "/Electron_Position/" + time_stamp + ".xyz");
       electron_position_output_down << conduction_electrons << "\n";
       electron_position_output_down << time_stamp << "\n";
@@ -1089,7 +1082,10 @@ void output_data() {
     int array_index, array_index_y, array_index_z;
     double x_pos, y_pos, z_pos;
     double x_vel, y_vel ,z_vel, velocity_length; 
-    
+    std::forward_list<int> hot_e_list;
+    std::forward_list<int> hot_a_list;
+    int hot_electrons = 0;
+    int hot_atoms = 0;
     for(int e = 0; e < conduction_electrons; e++) {
       array_index   = 3*e;
       array_index_y = array_index + 1;
@@ -1103,17 +1099,53 @@ void output_data() {
       y_vel = 1e5*electron_velocity[array_index_y];
       z_vel = 1e5*electron_velocity[array_index_z];
       velocity_length = electron_potential[e];
+      if(velocity_length > E_f_A) {
+        hot_e_list.push_front(e);
+        hot_electrons++;
+      }
 
       electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
       electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  "\n";
       atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
+
+      if(atom_potential[e] > E_f_A) {
+        hot_a_list.push_front(e);
+        hot_atoms++;
+      }
     }
   
     electron_position_output_down.close();
     electron_velocity_output.close();
     atomic_phonon_output.close();
+  if(hot_electrons > 0) {
+    std::ofstream electron_hot_output;
+    electron_hot_output.open(string(directory) + "/Hot_Electrons/" + time_stamp + ".xyz");
+    electron_hot_output << hot_electrons << "\n";
+    electron_hot_output << time_stamp << "\n";
+    electron_hot_output.precision(10);
+    electron_hot_output << std::fixed;
+
+    std::ofstream atom_hot_output;
+    atom_hot_output.open(string(directory) + "/Hot_Atoms/" + time_stamp + ".xyz");
+    atom_hot_output << hot_atoms << "\n";
+    atom_hot_output << time_stamp << "\n";
+    atom_hot_output.precision(10);
+    atom_hot_output << std::fixed;
+    for(int e = 0; e < hot_electrons; e++) {
+      array_index = 3*hot_e_list.front();
+      hot_e_list.pop_front();
+      electron_hot_output << "H" << ", " << new_electron_position[array_index] << ", " << new_electron_position[array_index+1] << ", " << new_electron_position[array_index+2] << "\n";
     }  
 
+    for(int e = 0; e < hot_atoms; e++) {
+      array_index = 3*hot_a_list.front();
+      hot_a_list.pop_front();
+      electron_hot_output << "H" << ", " << atom_position[array_index] << ", " << atom_position[array_index+1] << ", " << atom_position[array_index+2] << "\n";
+    }  
+    electron_hot_output.close();
+    atom_hot_output.close();
+  }
+}
     double mean_ea_rad = 0.0;
     double mean_ee_rad = 0.0;
 
@@ -1122,7 +1154,7 @@ void output_data() {
       mean_ea_rad += sqrt(mean_radius[2*e]);
       mean_ee_rad += sqrt(mean_radius[2*e + 1]);
     }
-
+    
     mean_ea_rad /= conduction_electrons;
     mean_ee_rad /= conduction_electrons;
     std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
