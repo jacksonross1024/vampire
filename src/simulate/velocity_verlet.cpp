@@ -149,10 +149,10 @@ void update_position(){
         }
       }
 
-      if(excitation_constant < 0.0) continue;
+   //   if(excitation_constant < 0.0) continue;
    //   if(excitation_constant > 0.0) std::cout << excitation_constant << ", " << a << ", " << e << std::endl;
       if(phonon_transfer_chance(gen) >  exp(aa_rate*max_dif*max_dif)) {
-        if (max_dif > E_f_A) max_dif = E_f_A;
+        max_dif = 0.5*(atom_potential[e] - E_f_A);
        // else if (max_dif < 0.0) max_dif = fmax(E_f_A - atom_potential[a], -1.0*E_f_A);
            
         atom_potential[e] -= max_dif;
@@ -187,7 +187,7 @@ void update_dynamics() {
       const static double sigma = 0.001;
       double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / double(external_interaction_list_count);
       EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
-      TEKE += 0.5*constants::m_e_r * double(external_interaction_list_count)*EKE * double(external_interaction_list_count)*EKE;
+     // TEKE += 0.5*constants::m_e_r * double(external_interaction_list_count)*EKE * double(external_interaction_list_count)*EKE;
     
     }
     #pragma omp parallel for private(array_index) schedule(static)
@@ -216,8 +216,13 @@ void update_dynamics() {
     ea_scattering();
     ee_scattering();
 
-    MEKE += std::accumulate(electron_potential.begin(), electron_potential.end(), 0.0);
-    MLE  += std::accumulate(atom_potential.begin(), atom_potential.end(), 0.0);
+    #pragma omp parallel for reduction(+:MEKE,MLE) schedule(static)
+    for(int e = 0; e < conduction_electrons; e++) {
+      MEKE += electron_potential[e];
+      MLE  += atom_potential[e];
+    }
+   // MEKE += std::accumulate(electron_potential.begin(), electron_potential.end(), 0.0);
+ //   MLE  += std::accumulate(atom_potential.begin(), atom_potential.end(), 0.0);
     // MEKE += TEKE;
     // MLE += TLE;
 }
@@ -304,7 +309,7 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index){
     
     double length;
   //  double force,  phi,theta, PE = 0;
-    int array_index_a;
+    //int array_index_a;
   //  bool collision = false;
     int size = atomic_nearest_electron_list[e][0];
     int count = 2;
@@ -312,7 +317,7 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index){
    
     for (int a = 1; a < size; a++) {
       
-        array_index_a = atomic_nearest_electron_list[e][a];
+        int array_index_a = atomic_nearest_electron_list[e][a];
         
         x_distance = new_electron_position[array_index]     - atom_position[array_index_a];
         y_distance = new_electron_position[array_index + 1] - atom_position[array_index_a + 1];
@@ -587,7 +592,7 @@ void ee_scattering() {
   
   int array_index;
   int size;
-  int i, electron_collision;
+  int electron_collision;
   double scattering_prob;
   double e_energy;
   double deltaE;

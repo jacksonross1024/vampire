@@ -701,8 +701,7 @@ void initialize_forces() {
 void initialize_electron_interactions() {
 
     int array_index, array_index_i, neighbor_count = 1;
-    double x,y,z, x_distance,y_distance,z_distance, length, force;
-    double theta,phi, PE;
+    double x_distance,y_distance,z_distance, length;
     
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;
@@ -763,7 +762,7 @@ void initialize_atomic_interactions() {
 
             array_index_i = i*3;
 
-            x_distance = atom_position[array_index] - atom_position[array_index_i];
+            x_distance = atom_position[array_index]     - atom_position[array_index_i];
             y_distance = atom_position[array_index + 1] - atom_position[array_index_i + 1];
             z_distance = atom_position[array_index + 2] - atom_position[array_index_i + 2];
 
@@ -778,7 +777,7 @@ void initialize_atomic_interactions() {
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
            
-            if(length > 6) continue;
+            if(length > 9) continue;
        
 
             atomic_nearest_atom_list[e][neighbor_count] = i;
