@@ -457,7 +457,7 @@ void initialize_electrons() {
     v_f = sqrt(2 * E_f / constants::m_e); //A/fs
     Tr  = -1.0 * 27.7 / sqrt(E_f_A); // 1 / fs
 
-    e_heat_capacity = 6.02e3 / (2.52e2 * conduction_electrons);
+    e_heat_capacity = 2.0*6.02e3*E_f_A / (M_PI*M_PI* conduction_electrons);
    // std::cout << Tr << std::endl;
     TEPE = 0;
     TEKE = 0;
@@ -1148,10 +1148,13 @@ void output_data() {
     double mean_ea_rad = 0.0;
     double mean_ee_rad = 0.0;
 
-    #pragma omp parallel for schedule(static) reduction(+:mean_ee_rad, mean_ea_rad) num_threads(2)
+    #pragma omp parallel for reduction(+:mean_ee_rad, mean_ea_rad)
     for (int e = 0; e < conduction_electrons; e++) {
       mean_ea_rad += sqrt(mean_radius[2*e]);
       mean_ee_rad += sqrt(mean_radius[2*e + 1]);
+
+      mean_radius[2*e] = 1.0;
+      mean_radius[2*e + 1] = 1.0;
     }
     
     mean_ea_rad /= conduction_electrons;
@@ -1189,7 +1192,7 @@ void output_data() {
     z_flux = 0;
     e_a_scattering = 0;
     e_e_scattering = 0;
-    std::fill(mean_radius.begin(), mean_radius.end(), 1);
+  //  std::fill(mean_radius.begin(), mean_radius.end(), 1);
      //   electron_spin_output.close();
     CASTLE_output_data = false;
 }

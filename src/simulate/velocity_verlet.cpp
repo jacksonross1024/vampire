@@ -62,7 +62,7 @@ void setup_output() {
 
 void update_position(){
 
-    int array_index,array_index_y,array_index_z, i;
+    int array_index,array_index_y,array_index_z;
     double x_pos,y_pos,z_pos;
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -70,7 +70,6 @@ void update_position(){
     std::uniform_real_distribution<double> phonon_transfer_chance(0,1);
     std::uniform_int_distribution<> phonon_transfer_vector(1,6);
     double excitation_constant;
-    double excitation_energy = mu_f;
     external_interaction_list_count = 0;
     #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) \
     schedule(static) reduction(+:x_flux,y_flux,z_flux, external_interaction_list_count)
@@ -164,18 +163,6 @@ void update_position(){
         // scattering_reset_list.push_front(a);
       }
     }
-  // #pragma omp parallel for schedule(dynamic)
-  // for(int e = 0; e < conduction_electrons; e++) {
-  //   atomic_nearest_atom_list[e][0] = 0;
-  // }
-
-  // int count = 0;
-  // while(!scattering_reset_list.empty()) {
-  //   atomic_nearest_atom_list[scattering_reset_list.front()][0] = 0;
-  //   scattering_reset_list.pop_front();
-  //   count++;
-  // }
-  //if(count>0)  std::cout << count << std::endl;
 }
 
 void update_dynamics() {
@@ -221,10 +208,6 @@ void update_dynamics() {
       MEKE += electron_potential[e];
       MLE  += atom_potential[e];
     }
-   // MEKE += std::accumulate(electron_potential.begin(), electron_potential.end(), 0.0);
- //   MLE  += std::accumulate(atom_potential.begin(), atom_potential.end(), 0.0);
-    // MEKE += TEKE;
-    // MLE += TLE;
 }
 
 void update_velocity(const int& e, const int& array_index, const double& EKE) {
@@ -534,7 +517,6 @@ void ea_scattering() {
             
             std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
             std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
-    
  
   int array_index;
   int atom_array;
@@ -616,9 +598,6 @@ void ee_scattering() {
   
     if(electron_ee_scattering_list[electron_collision][0])  continue;
     
-   // if(deltaE > ee_coupling_strength*E_f_A) deltaE = ee_coupling_strength*E_f_A;
-   // else if(deltaE < 0.0) deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);
-
       array_index = 3*e;
       deltaE *= 0.5;
 
