@@ -1140,7 +1140,7 @@ void output_data() {
     for(int e = 0; e < hot_atoms; e++) {
       array_index = 3*hot_a_list.front();
       hot_a_list.pop_front();
-      electron_hot_output << "H" << ", " << atom_position[array_index] << ", " << atom_position[array_index+1] << ", " << atom_position[array_index+2] << "\n";
+      atom_hot_output << "H" << ", " << atom_position[array_index] << ", " << atom_position[array_index+1] << ", " << atom_position[array_index+2] << "\n";
     }  
     electron_hot_output.close();
     atom_hot_output.close();
