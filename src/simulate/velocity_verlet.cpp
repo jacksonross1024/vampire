@@ -545,7 +545,7 @@ void ea_scattering() {
       array_index = 3*e;
       double deltaE = 0.5*(scattering_velocity - E_f_A);
       
-      if(scattering_velocity < atom_potential[atom_array]) deltaE = fmax(E_f_A - atom_potential[atom_array], -1.0 * E_f_A);   
+      if(scattering_velocity < atom_potential[atom_array]) deltaE = 0.5*(E_f_A - atom_potential[atom_array]);
 
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
@@ -577,7 +577,7 @@ void ee_scattering() {
     std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
     std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
 
-  std::forward_list<int> scattering_reset_list;
+// std::forward_list<int> scattering_reset_list;
   
   int array_index;
   int size;
@@ -601,10 +601,8 @@ void ee_scattering() {
     std::uniform_int_distribution<> electron_collision_vector(2,size);
     electron_collision = electron_ee_scattering_list[e][electron_collision_vector(gen)];
 
-    double d_e_energy = electron_potential[electron_collision];
-  
     if(electron_ee_scattering_list[electron_collision][0])  continue;
-    
+     double d_e_energy = electron_potential[electron_collision];
       array_index = 3*e;
       deltaE *= 0.5;
 
