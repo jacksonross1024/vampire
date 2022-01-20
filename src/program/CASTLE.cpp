@@ -465,7 +465,7 @@ void initialize_electrons() {
     e_a_scattering = 0;
     e_e_scattering = 0;
 
-    ea_rate = -1.0*dt*sqrt(E_f_A)/ 600.0;
+    ea_rate = -1.0*dt/600.0;
     ee_rate = -1.0*dt/ 187260.0;
     
 
