@@ -543,7 +543,7 @@ void ea_scattering() {
 
     if(scattering_chance(gen) > exp(ea_rate*sqrt(atom_potential[atom_array] / scattering_velocity))) {
       array_index = 3*e;
-      double deltaE = 0.5*(scattering_velocity - E_f_A);
+      double deltaE = scattering_velocity - E_f_A;
       
       if(scattering_velocity < atom_potential[atom_array]) deltaE = 0.5*(E_f_A - atom_potential[atom_array]);
 
@@ -561,8 +561,8 @@ void ea_scattering() {
       electron_ee_scattering_list[e][0] = 1;
       e_a_scattering++;
 
-      TEKE -= deltaE;
-      TLE += deltaE;
+   //   TEKE -= deltaE;
+     // TLE += deltaE;
     }
   }
 }
