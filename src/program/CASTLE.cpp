@@ -457,7 +457,7 @@ void initialize_electrons() {
     v_f = sqrt(2 * E_f / constants::m_e); //A/fs
     Tr  = -1.0 * 27.7 / sqrt(E_f_A); // 1 / fs
 
-    e_heat_capacity = 2.0*6.02e3*E_f_A / (M_PI*M_PI* conduction_electrons);
+    e_heat_capacity = 6.02e3 / (2.52e2 * conduction_electrons);
    // std::cout << Tr << std::endl;
     TEPE = 0;
     TEKE = 0;
@@ -466,7 +466,7 @@ void initialize_electrons() {
     e_e_scattering = 0;
 
     ea_rate = -1.0*dt/600.0;
-    ee_rate = -1.0*dt/ 187260.0;
+    ee_rate = -1.0*dt/187260.0;
     
 
     MEPE = 0;
