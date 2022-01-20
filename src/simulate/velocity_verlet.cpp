@@ -121,7 +121,7 @@ void update_position(){
             z_pos = atom_position[array_index_z];
             if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
               const static double sigma = 0.001;
-              const static double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / 50.0;
+              const static double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / 2.0;
               double EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
               atom_potential[e] += 0.5*constants::m_e_r*EKE*EKE;
             //   external_interaction_list[e] = true;
