@@ -541,7 +541,7 @@ void ea_scattering() {
     
     scattering_velocity = electron_potential[e];
 
-    if(scattering_chance(gen) > exp(ea_rate*sqrt(atom_potential[atom_array] / scattering_velocity))) {
+    if(scattering_chance(gen) > exp(ea_rate*sqrt(E_f_A / scattering_velocity))) {
       array_index = 3*e;
       double deltaE = scattering_velocity - E_f_A;
       
