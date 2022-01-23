@@ -180,6 +180,10 @@ namespace CASTLE {
    double atomic_size;    //Angstroms
    double screening_depth;//Angstroms
 
+   double x_unit_size;
+   double y_unit_size;
+   double z_unit_size;
+   
     //simulation variables
    double total_time_steps;
    double loop_time;
@@ -202,6 +206,7 @@ namespace CASTLE {
    double e_a_coulomb_cutoff;
    double e_e_neighbor_cutoff;
    double e_e_coulomb_cutoff;
+   double a_a_neighbor_cutoff;
 
    double applied_voltage = 0.0;
    double heat_pulse = 0.0;
@@ -210,7 +215,7 @@ namespace CASTLE {
    bool ea_coupling;
    double ee_rate;
    double ea_rate;
-    double ee_coupling_strength;
+   double ee_coupling_strength;
    double ea_coupling_strength;
 
 

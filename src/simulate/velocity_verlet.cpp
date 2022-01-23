@@ -68,7 +68,7 @@ void update_position(){
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<double> phonon_transfer_chance(0,1);
-    std::uniform_int_distribution<> phonon_transfer_vector(1,6);
+   // std::uniform_int_distribution<> phonon_transfer_vector(1,6);
     double excitation_constant;
     external_interaction_list_count = 0;
     #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) \
@@ -83,32 +83,14 @@ void update_position(){
         y_pos = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt);// + (electron_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
         z_pos = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt);// + (electron_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
         
-      if (x_pos < 0.0) {
-            x_pos += 40.0;
-            x_flux--;
-        }
-        else if (x_pos > 40.0) {
-            x_pos -= 40.0;
-            x_flux++;
-        }
+        if (x_pos < 0.0) {x_pos += lattice_width; x_flux--;}
+        else if (x_pos > lattice_width) {x_pos -= lattice_width; x_flux++;}
 
-	    if (y_pos < 0.0) {
-            y_pos += 40.0;
-            y_flux--;
-        }
-        else if (y_pos > 40.0) {
-            y_pos -= 40.0;
-            y_flux++;
-        }
+        if (y_pos < 0.0) {y_pos += lattice_depth; y_flux--;}
+        else if (y_pos > lattice_depth) {y_pos -= lattice_depth; y_flux++;}
 
-	    if (z_pos < 0.0) {
-            z_pos += 40.0;
-            z_flux--;
-        }
-        else if (z_pos > 40.0) {
-            z_pos -= 40.0;
-            z_flux++;
-        }
+        if (z_pos < 0.0) {z_pos += lattice_height; z_flux--;}
+        else if (z_pos > lattice_height) {z_pos -= lattice_height; z_flux++;}
 
         new_electron_position[array_index]   = x_pos;
         new_electron_position[array_index_y] = y_pos;
@@ -155,19 +137,14 @@ void update_position(){
         }
       }
 
-   //   if(excitation_constant < 0.0) continue;
-   //   if(excitation_constant > 0.0) std::cout << excitation_constant << ", " << a << ", " << e << std::endl;
       if(phonon_transfer_chance(gen) >  exp(aa_rate*max_dif*max_dif)) {
         max_dif = 0.5*(atom_potential[e] - E_f_A);
-       // else if (max_dif < 0.0) max_dif = fmax(E_f_A - atom_potential[a], -1.0*E_f_A);
            
         atom_potential[e] -= max_dif;
         atom_potential[a] += max_dif;  
 
         atomic_nearest_atom_list[e][0] = 1;
         atomic_nearest_atom_list[a][0] = 1;
-        // scattering_reset_list.push_front(e);
-        // scattering_reset_list.push_front(a);
       }
     }
 }
@@ -181,8 +158,6 @@ void update_dynamics() {
       const static double sigma = 0.001;
       double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / double(external_interaction_list_count);
       EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
-     // TEKE += 0.5*constants::m_e_r * double(external_interaction_list_count)*EKE * double(external_interaction_list_count)*EKE;
-    
     }
     #pragma omp parallel for private(array_index) schedule(static)
     for (int e = 0; e < conduction_electrons; e++) {
@@ -190,14 +165,11 @@ void update_dynamics() {
 
         if(current_time_step % 15 == 0) {
           e_a_coulomb(e, array_index);
-          e_e_coulomb(e, array_index);
-         
-        
+          e_e_coulomb(e, array_index); 
         } else {
          
           neighbor_e_a_coulomb(e, array_index);
-          neighbor_e_e_coulomb(e, array_index);
-          
+          neighbor_e_e_coulomb(e, array_index);   
         }
     }    
         
@@ -207,8 +179,8 @@ void update_dynamics() {
       if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
     }
 
-    ea_scattering();
-    ee_scattering();
+    if(ea_scattering) ea_scattering();
+    if(ee_scattering) ee_scattering();
 
     #pragma omp parallel for reduction(+:MEKE,MLE) schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
@@ -261,12 +233,14 @@ void e_a_coulomb(const int& e, const int& array_index){
         y_distance = new_electron_position[array_index + 1] - atom_position[array_index_a + 1];
         z_distance = new_electron_position[array_index + 2] - atom_position[array_index_a + 2]; 
        
-      if (x_distance < -30.0)     x_distance = x_distance + 40.0;
-      else if (x_distance > 30.0) x_distance = x_distance - 40.0;
-      if (y_distance < -30.0)     y_distance = y_distance + 40.0;
-      else if (y_distance > 30.0) y_distance = y_distance - 40.0;
-      if (z_distance <  -30.0)    z_distance = z_distance + 40.0;
-      else if (z_distance > 30.0) z_distance = z_distance - 40.0;  
+        if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
+        else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
+
+        if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
+        else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
+
+        if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
+        else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
 
       length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
         
@@ -313,12 +287,14 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index){
         y_distance = new_electron_position[array_index + 1] - atom_position[array_index_a + 1];
         z_distance = new_electron_position[array_index + 2] - atom_position[array_index_a + 2]; 
       
-         if (x_distance < -30.0)    x_distance += 40.0;
-        else if (x_distance > 30.0) x_distance -= 40.0;
-        if (y_distance < -30.0)     y_distance += 40.0;
-        else if (y_distance > 30.0) y_distance -= 40.0;
-        if (z_distance <  -30.0)    z_distance += 40.0;
-        else if (z_distance > 30.0) z_distance -= 40.0;  
+        if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
+        else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
+
+        if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
+        else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
+
+        if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
+        else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
 
       length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
    
@@ -352,12 +328,14 @@ void e_e_coulomb(const int& e, const int& array_index) {
             y_distance = new_electron_position[array_index+1] - new_electron_position[array_index_i + 1];
             z_distance = new_electron_position[array_index+2] - new_electron_position[array_index_i + 2]; 
 
-            if (x_distance < -30)     x_distance = x_distance + 40;
-            else if (x_distance > 30) x_distance = x_distance - 40;
-            if (y_distance < -30)     y_distance = y_distance + 40;
-            else if (y_distance > 30) y_distance = y_distance - 40;
-            if (z_distance <  -30)    z_distance = z_distance + 40;
-            else if (z_distance > 30) z_distance = z_distance - 40;
+            if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
+            else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
+
+            if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
+            else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
+
+            if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
+            else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
             
@@ -395,12 +373,14 @@ void neighbor_e_e_coulomb(const int& e, const int& array_index) {
         y_distance = new_electron_position[array_index+1] - new_electron_position[array_index_i + 1];
         z_distance = new_electron_position[array_index+2] - new_electron_position[array_index_i + 2]; 
     
-        if (x_distance < -30)     x_distance = x_distance + 40;
-        else if (x_distance > 30) x_distance = x_distance - 40;
-        if (y_distance < -30)     y_distance = y_distance + 40;
-        else if (y_distance > 30) y_distance = y_distance - 40;
-        if (z_distance <  -30)    z_distance = z_distance + 40;
-        else if (z_distance > 30) z_distance = z_distance - 40;
+        if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
+        else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
+
+        if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
+        else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
+
+        if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
+        else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
         
         length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
         if (length > e_e_coulomb_cutoff) continue; 
@@ -577,8 +557,6 @@ void ee_scattering() {
     std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
     std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
 
-// std::forward_list<int> scattering_reset_list;
-  
   int array_index;
   int size;
   int electron_collision;

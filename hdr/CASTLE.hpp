@@ -73,6 +73,10 @@ namespace CASTLE {
     extern double atomic_size;    //Angstroms
     extern double screening_depth;//Angstroms
 
+    extern double x_unit_size;
+    extern double y_unit_size;
+    extern double z_unit_size;
+
     //simulation variables
     extern double total_time_steps;
     extern double loop_time;
@@ -104,6 +108,7 @@ namespace CASTLE {
     extern double e_a_coulomb_cutoff;
     extern double e_e_neighbor_cutoff;
     extern double e_e_coulomb_cutoff;
+    extern double a_a_neighbor_cutoff;
     //extern double a_a_neighbor_cutoff;
     // extern double a_a_coulomb_cutoff;
 

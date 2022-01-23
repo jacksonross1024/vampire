@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-     //   omp_set_dynamic(0);
-      //  omp_set_num_threads(6);
+        omp_set_dynamic(0);
+        omp_set_num_threads(6);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -258,13 +258,13 @@ void initialize () {
        //=========
     // Grab simulation variables from VAMPIRE
     //=========
-    conduction_electrons = 20*20*20;  //sim::conduction_electrons;
+    conduction_electrons = atoms::num_atoms;
     CASTLE_output_rate = sim::partial_time;
     dt = mp::dt_SI * 1e15;//-4; //reducd seconds (e10 scale factor), femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
     CASTLE_MD_rate = sim::CASTLE_MD_rate;
-    std::cout << dt << ", " << CASTLE_output_rate << std::endl;
+  //  std::cout << dt << ", " << CASTLE_output_rate << std::endl;
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
@@ -341,11 +341,11 @@ void initialize_lattice() {
     
     atomic_size = 2; // sim::atomic_size; //Angst diameter. 
     screening_depth = 0.875; //sim::screening_depth; //Angstroms 
-    lattice_atoms = 20 * 20 * 20; //Better lattice creation will come from VAMPIRE in future
+    lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
  
-    lattice_height = 40; //A
-    lattice_width  = 40; // A
-    lattice_depth  = 40; // A
+    lattice_height = cs::system_dimensions[0] + x_unit_size; //A
+    lattice_width  = cs::system_dimensions[1] + y_unit_size; // A
+    lattice_depth  = cs::system_dimensions[2] + z_unit_size; // A
 
     TLE = 0;
 
@@ -361,6 +361,11 @@ void initialize_lattice() {
     v_f = sqrt(2 * E_f / constants::m_e); //meters
     a_heat_capacity = 6.02e3 / (6.52e2 * lattice_atoms);
     
+    e_a_neighbor_cutoff = 100;
+    e_e_neighbor_cutoff = 100;
+    e_a_coulomb_cutoff = 9;
+    e_e_coulomb_cutoff = 9;
+    a_a_neighbor_cutoff = 12;
 
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
@@ -368,19 +373,19 @@ void initialize_lattice() {
     }
     lattice_output.open(string(directory) + "/CASTLE_Lattice.xyz");
 
-     // output lattice atoms and locations
+    // output lattice atoms and locations
     lattice_output << lattice_atoms << "\n"; //xyz file requires first-line for number of elements
     lattice_output << " dynamic lattice" "\n"; //comment line
     
     atom_anchor_position.resize(lattice_atoms*3,0);
     atom_position.resize(lattice_atoms * 3, 0);
-   // new_atom_position.resize(lattice_atoms * 3, 0);
+    // new_atom_position.resize(lattice_atoms * 3, 0);
     //atom_velocity.resize(lattice_atoms * 3,0);
     //new_atom_velocity.resize(lattice_atoms * 3,0);
-   // atom_force.resize(lattice_atoms * 3,0);
-   // new_atom_force.resize(lattice_atoms,0);
+    // atom_force.resize(lattice_atoms * 3,0);
+    // new_atom_force.resize(lattice_atoms,0);
     atom_potential.resize(lattice_atoms,0);
-    new_atom_potential.resize(lattice_atoms,0);
+    //new_atom_potential.resize(lattice_atoms,0);
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -390,22 +395,29 @@ void initialize_lattice() {
     atomic_nearest_atom_list.resize(lattice_atoms);
     atomic_nearest_electron_list.resize(lattice_atoms);
 
+    int a_density = 100 + int(round(pow(a_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
+    int e_density = 200 + int(round(pow(e_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
+
     for (int a = 0; a < lattice_atoms; ++a) {  
-        atomic_nearest_atom_list[a].resize(40,0);
-        atomic_nearest_electron_list[a].resize(0.4*conduction_electrons,0);
+        atomic_nearest_atom_list[a].resize(a_density,0);
+        atomic_nearest_electron_list[a].resize(e_density,0);
         array_index = 3*a;
 
-        atom_anchor_position[array_index]     = 1 + atomic_size * (a % 20);// + atom_position_distrib(gen); //lattice creation awaiting future development
-        atom_anchor_position[array_index + 1] = 1 + atomic_size * ((int(floor(a / 20))) % 20);// + atom_position_distrib(gen);
-        atom_anchor_position[array_index + 2] = 1 + atomic_size * floor(a / 400);// + atom_position_distrib(gen);
+        atom_anchor_position[array_index]     = atoms::x_coord_array[a] + 0.5*x_unit_size;
+        atom_anchor_position[array_index + 1] = atoms::y_coord_array[a] + 0.5*y_unit_size;
+        atom_anchor_position[array_index + 2] = atoms::z_coord_array[a] + 0.5*z_unit_size;
         
-        atom_position[array_index]   = atom_anchor_position[array_index]   + atom_position_distrib(gen);
-        atom_position[array_index+1] = atom_anchor_position[array_index+1] + atom_position_distrib(gen);
-        atom_position[array_index+2] = atom_anchor_position[array_index+2] + atom_position_distrib(gen);
+        atom_position[array_index]   = atom_anchor_position[array_index];//   + atom_position_distrib(gen);
+        atom_position[array_index+1] = atom_anchor_position[array_index+1];// + atom_position_distrib(gen);
+        atom_position[array_index+2] = atom_anchor_position[array_index+2];// + atom_position_distrib(gen);
 
         TLE += atom_potential[a] = E_f_A;// 146*(1.01 - atom_position_distrib(gen));
 
-        lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
+       // lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
+    }
+    for(int a = 0; a < lattice_atoms; a++) {
+      array_index = a*3;
+       lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
   //  new_atom_potential = atom_potential;
     lattice_output.close(); 
@@ -436,12 +448,12 @@ void initialize_electrons() {
     electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
     new_electron_position.resize(conduction_electrons * 3);
     electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
-    new_electron_velocity.resize(conduction_electrons * 3); //Angstroms
-    electron_force.resize(conduction_electrons * 3, 0); //current and future arrays
-    new_electron_force.resize(conduction_electrons * 3);
+    //new_electron_velocity.resize(conduction_electrons * 3); //Angstroms
+    //  electron_force.resize(conduction_electrons * 3, 0); //current and future arrays
+    // new_electron_force.resize(conduction_electrons * 3);
 
     electron_potential.resize(conduction_electrons, 0);
-    new_electron_potential.resize(conduction_electrons, 0);
+    //new_electron_potential.resize(conduction_electrons, 0);
     mean_radius.resize(conduction_electrons*2,1);
 
     std::srand(std::time(nullptr));
@@ -505,21 +517,26 @@ void initialize_electrons() {
 
         electron_potential[e] = E_f_A;
         
-        if (x_pos < 0) x_pos += 40;
-        else if (x_pos > 40) x_pos -= 40;
+        if (x_pos < 0.0) x_pos += lattice_width;
+        else if (x_pos > lattice_width) x_pos -= lattice_width;
 
-        if (y_pos < 0) y_pos += 40;
-        else if (y_pos > 40) y_pos -= 40;
+        if (y_pos < 0.0) y_pos += lattice_depth;
+        else if (y_pos > lattice_depth) y_pos -= lattice_depth;
 
-        if (z_pos < 0) z_pos += 40;
-        else if (z_pos > 40) z_pos -= 40;
+        if (z_pos < 0.0) z_pos += lattice_height;
+        else if (z_pos > lattice_height) z_pos -= lattice_height;
+            
             
         electron_position[array_index]     = x_pos;
         electron_position[array_index + 1] = y_pos;
         electron_position[array_index + 2] = z_pos;
 
-        electron_position_output_down << "H" << "    " << x_pos << "    " << y_pos << "    " << z_pos << "\n";    
     }
+
+    for(int e = 0; e < conduction_electrons; e++) {
+       electron_position_output_down << "H" << "    " << electron_position[array_index]  << "    " << electron_position[array_index + 1] << "    " <<  electron_position[array_index + 2]  << "\n";    
+    }
+    
     electron_position_output_down.close(); 
   
 }
@@ -718,14 +735,14 @@ void initialize_electron_interactions() {
             z_distance = electron_position[array_index + 2] - electron_position[array_index_i + 2];
 
             
-            if (x_distance < -30)     x_distance = x_distance + 40;
-            else if (x_distance > 30) x_distance = x_distance - 40;
+            if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
+            else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
 
-            if (y_distance < -30)     y_distance = y_distance + 40;
-            else if (y_distance > 30) y_distance = y_distance - 40;
+            if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
+            else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
 
-            if (z_distance <  -30)    z_distance = z_distance + 40;
-            else if (z_distance > 30) z_distance = z_distance - 40;
+            if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
+            else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
           //  if(length < 400) distant_PE += 1 / sqrt(length);
@@ -766,14 +783,14 @@ void initialize_atomic_interactions() {
             y_distance = atom_position[array_index + 1] - atom_position[array_index_i + 1];
             z_distance = atom_position[array_index + 2] - atom_position[array_index_i + 2];
 
-            if (x_distance < -30)     x_distance = x_distance + 40;
-            else if (x_distance > 30) x_distance = x_distance - 40;
+            if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
+            else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
 
-            if (y_distance < -30)     y_distance = y_distance + 40;
-            else if (y_distance > 30) y_distance = y_distance - 40;
+            if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
+            else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
 
-            if (z_distance <  -30)    z_distance = z_distance + 40;
-            else if (z_distance > 30) z_distance = z_distance - 40;
+            if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
+            else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
            
@@ -814,12 +831,14 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
             y_distance = electron_position[array_index + 1] - atom_position[array_index_a+1];
             z_distance = electron_position[array_index + 2] - atom_position[array_index_a+2]; 
 
-            if (x_distance < -30)     x_distance = x_distance + 40;
-            else if (x_distance > 30) x_distance = x_distance - 40;
-            if (y_distance < -30)     y_distance = y_distance + 40;
-            else if (y_distance > 30) y_distance = y_distance - 40;
-            if (z_distance <  -30)    z_distance = z_distance + 40;
-            else if (z_distance > 30) z_distance = z_distance - 40; 
+            if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
+            else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
+
+            if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
+            else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
+
+            if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
+            else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
          //   if(length < 400) distant_PE += 150*exp(-8*sqrt(length)) - (1 / sqrt(length));
@@ -863,6 +882,7 @@ void initialize_velocities() {
     int array_index;
     TEKE = 0;
     // TLKE = 0;
+    vel = sqrt(2*E_f_A/constants::m_e_r);
     for(int e = 0; e < conduction_electrons; e++) {
       // if(e==1000) std::cout << electron_potential[e] << std::endl;
         array_index = 3*e;
@@ -876,22 +896,23 @@ void initialize_velocities() {
           phi = acos(sim::CASTLE_z_vector / unit);
           if(sim::CASTLE_z_vector < 0.0) theta += M_PI;
         }
-        vel = sqrt(2*E_f_A/constants::m_e_r);
       
-        if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
+            if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
         electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
         electron_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
         electron_velocity[array_index + 2] = cos(phi)*vel;
 
-        
-        TEKE += vel*vel;
-        
-        electron_velocity_output << e << ", " << 1e5*electron_velocity[array_index] << " , " << 1e5*electron_velocity[array_index + 1] << " , " << 1e5*electron_velocity[array_index + 2] << " , " << vel*1e5 << ", " << electron_potential[e] << std::endl; // ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;
-        atom_phonon_output << e << ", " << atom_potential[e] << std::endl;
+        TEKE += vel*vel;   
+    }
+
+    for(int e = 0; e < conduction_electrons; e++) {
+      array_index = 3*e;
+      electron_velocity_output << e << ", " << electron_potential[e] << std::endl; // ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;
+      atom_phonon_output << e << ", " << atom_potential[e] << std::endl;
     }
     TEKE *= 0.5*constants::m_e_r;
     electron_velocity_output.close();
-
+    atom_phonon_output.close();
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 }
 
@@ -1098,52 +1119,50 @@ void output_data() {
       y_vel = 1e5*electron_velocity[array_index_y];
       z_vel = 1e5*electron_velocity[array_index_z];
       velocity_length = electron_potential[e];
-      if(velocity_length > E_f_A) {
-        hot_e_list.push_front(e);
-        hot_electrons++;
-      }
+      // if(velocity_length > E_f_A) {
+      //   hot_e_list.push_front(e);
+      //   hot_electrons++;
+      // }
 
       electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
       electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  "\n";
       atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
 
-      if(atom_potential[e] > E_f_A) {
-        hot_a_list.push_front(e);
-        hot_atoms++;
-      }
+      // if(atom_potential[e] > E_f_A) {
+      //   hot_a_list.push_front(e);
+      //   hot_atoms++;
+      // }
     }
   
     electron_position_output_down.close();
     electron_velocity_output.close();
     atomic_phonon_output.close();
-  if(hot_electrons > 0) {
-    std::ofstream electron_hot_output;
-    electron_hot_output.open(string(directory) + "/Hot_Electrons/" + time_stamp + ".xyz");
-    electron_hot_output << hot_electrons << "\n";
-    electron_hot_output << time_stamp << "\n";
-    electron_hot_output.precision(10);
-    electron_hot_output << std::fixed;
-
-    std::ofstream atom_hot_output;
-    atom_hot_output.open(string(directory) + "/Hot_Atoms/" + time_stamp + ".xyz");
-    atom_hot_output << hot_atoms << "\n";
-    atom_hot_output << time_stamp << "\n";
-    atom_hot_output.precision(10);
-    atom_hot_output << std::fixed;
-    for(int e = 0; e < hot_electrons; e++) {
-      array_index = 3*hot_e_list.front();
-      hot_e_list.pop_front();
-      electron_hot_output << "H" << ", " << new_electron_position[array_index] << ", " << new_electron_position[array_index+1] << ", " << new_electron_position[array_index+2] << "\n";
-    }  
-
-    for(int e = 0; e < hot_atoms; e++) {
-      array_index = 3*hot_a_list.front();
-      hot_a_list.pop_front();
-      atom_hot_output << "H" << ", " << atom_position[array_index] << ", " << atom_position[array_index+1] << ", " << atom_position[array_index+2] << "\n";
-    }  
-    electron_hot_output.close();
-    atom_hot_output.close();
-  }
+  // if(hot_electrons > 0) {
+  //   std::ofstream electron_hot_output;
+  //   electron_hot_output.open(string(directory) + "/Hot_Electrons/" + time_stamp + ".xyz");
+  //   electron_hot_output << hot_electrons << "\n";
+  //   electron_hot_output << time_stamp << "\n";
+  //   electron_hot_output.precision(10);
+  //   electron_hot_output << std::fixed;
+  //   std::ofstream atom_hot_output;
+  //   atom_hot_output.open(string(directory) + "/Hot_Atoms/" + time_stamp + ".xyz");
+  //   atom_hot_output << hot_atoms << "\n";
+  //   atom_hot_output << time_stamp << "\n";
+  //   atom_hot_output.precision(10);
+  //   atom_hot_output << std::fixed;
+  //   for(int e = 0; e < hot_electrons; e++) {
+  //     array_index = 3*hot_e_list.front();
+  //     hot_e_list.pop_front();
+  //     electron_hot_output << "H" << ", " << new_electron_position[array_index] << ", " << new_electron_position[array_index+1] << ", " << new_electron_position[array_index+2] << "\n";
+  //   }  
+  //   for(int e = 0; e < hot_atoms; e++) {
+  //     array_index = 3*hot_a_list.front();
+  //     hot_a_list.pop_front();
+  //     atom_hot_output << "H" << ", " << atom_position[array_index] << ", " << atom_position[array_index+1] << ", " << atom_position[array_index+2] << "\n";
+  //   }  
+  //   electron_hot_output.close();
+  //   atom_hot_output.close();
+  // }
 }
     double mean_ea_rad = 0.0;
     double mean_ee_rad = 0.0;
