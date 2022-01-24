@@ -179,8 +179,8 @@ void update_dynamics() {
       if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
     }
 
-    if(ea_scattering) ea_scattering();
-    if(ee_scattering) ee_scattering();
+    if(ea_coupling) ea_scattering();
+    if(ee_coupling) ee_scattering();
 
     #pragma omp parallel for reduction(+:MEKE,MLE) schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
