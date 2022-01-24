@@ -183,7 +183,7 @@ namespace CASTLE {
    double x_unit_size;
    double y_unit_size;
    double z_unit_size;
-   
+
     //simulation variables
    double total_time_steps;
    double loop_time;
@@ -211,8 +211,8 @@ namespace CASTLE {
    double applied_voltage = 0.0;
    double heat_pulse = 0.0;
    
-   bool ee_coupling;
-   bool ea_coupling;
+   bool ee_coupling = false;
+   bool ea_coupling = false;
    double ee_rate;
    double ea_rate;
    double ee_coupling_strength;
