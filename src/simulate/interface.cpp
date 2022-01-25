@@ -313,6 +313,7 @@ namespace sim{
       if(word == test) {
          int c = atoi(value.c_str());
          vin::check_for_valid_int(c, word, line, prefix, 1, 100000, "input", "1-1e10");
+         sim:CASTLE_MD_rate = c;
          return true;
       }
       //--------------------------------------------------------------------
