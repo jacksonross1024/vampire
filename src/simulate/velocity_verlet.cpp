@@ -176,8 +176,7 @@ void update_dynamics() {
     #pragma omp parallel for private(array_index) schedule(dynamic)
     for(int e = 0; e < conduction_electrons; e++) {
       array_index = 3*e;
-      // if(external_interaction_list[e])
-       update_velocity(e, array_index, EKE);
+      if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
     }
 
     if(ea_coupling) ea_scattering();
@@ -193,7 +192,7 @@ void update_dynamics() {
 void update_velocity(const int& e, const int& array_index, const double& EKE) {
         
         //  old_vel += EKE;
-    // external_interaction_list[e] = false;
+    external_interaction_list[e] = false;
     int array_index_y = array_index + 1;
     int array_index_z = array_index + 2;
       
