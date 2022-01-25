@@ -98,9 +98,9 @@ void update_position(){
 
         if(!equilibrium_step) {
           if(heat_pulse_sim) {
-            x_pos = atom_position[array_index];
-            y_pos = atom_position[array_index_y];
-            z_pos = atom_position[array_index_z];
+            // x_pos = atom_position[array_index];
+            // y_pos = atom_position[array_index_y];
+            // z_pos = atom_position[array_index_z];
             if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
               // const static double sigma = 0.001;
               // const static double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / 2.0;
@@ -176,7 +176,8 @@ void update_dynamics() {
     #pragma omp parallel for private(array_index) schedule(dynamic)
     for(int e = 0; e < conduction_electrons; e++) {
       array_index = 3*e;
-      if(external_interaction_list[e]) update_velocity(e, array_index, EKE);
+      // if(external_interaction_list[e])
+       update_velocity(e, array_index, EKE);
     }
 
     if(ea_coupling) ea_scattering();
@@ -192,7 +193,7 @@ void update_dynamics() {
 void update_velocity(const int& e, const int& array_index, const double& EKE) {
         
         //  old_vel += EKE;
-    external_interaction_list[e] = false;
+    // external_interaction_list[e] = false;
     int array_index_y = array_index + 1;
     int array_index_z = array_index + 2;
       
