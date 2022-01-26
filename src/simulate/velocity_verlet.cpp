@@ -138,7 +138,7 @@ void update_position(){
       }
 
       if(phonon_transfer_chance(gen) >  exp(aa_rate*max_dif*max_dif)) {
-        max_dif = 0.5*(atom_potential[e] - E_f_A);
+        if(max_dif > E_f_A) max_dif = E_f_A;
            
         atom_potential[e] -= max_dif;
         atom_potential[a] += max_dif;  
@@ -522,11 +522,12 @@ void ea_scattering() {
     
     scattering_velocity = electron_potential[e];
 
-    if(scattering_chance(gen) > exp(ea_rate*sqrt(E_f_A / scattering_velocity))) {
+    if(scattering_chance(gen) > exp(ea_rate/ sqrt(scattering_velocity))) {
       array_index = 3*e;
-      double deltaE = scattering_velocity - E_f_A;
+      double deltaE = scattering_velocity - atom_potential[atom_array];
       
-      if(scattering_velocity < atom_potential[atom_array]) deltaE = 0.5*(E_f_A - atom_potential[atom_array]);
+      if(deltaE > ea_coupling_strength*E_f_A) deltaE = ea_coupling_strength*E_f_A;
+      else if (deltaE < 0.0) deltaE = fmax(E_f_A - atom_potential[atom_array], -1.0*E_f_A);
 
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
@@ -581,7 +582,11 @@ void ee_scattering() {
     electron_collision = electron_ee_scattering_list[e][electron_collision_vector(gen)];
 
     if(electron_ee_scattering_list[electron_collision][0])  continue;
-     double d_e_energy = electron_potential[electron_collision];
+     
+    double d_e_energy = electron_potential[electron_collision];
+    if(deltaE > ee_coupling_strength*E_f_A) deltaE = ee_coupling_strength*E_f_A;
+    else if(deltaE < 0.0) deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);
+
       array_index = 3*e;
       deltaE *= 0.5;
 
