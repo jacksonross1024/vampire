@@ -583,8 +583,8 @@ void ee_scattering() {
     if(electron_ee_scattering_list[electron_collision][0])  continue;
      
     double d_e_energy = electron_potential[electron_collision];
-    if(deltaE > ee_coupling_strength*E_f_A) deltaE = ee_coupling_strength*E_f_A;
-    else if(deltaE < 0.0) deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);
+   // if(deltaE > ee_coupling_strength*E_f_A) deltaE = ee_coupling_strength*E_f_A;
+   // else if(deltaE < 0.0) deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);
 
       array_index = 3*e;
       deltaE *= 0.5;
