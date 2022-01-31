@@ -586,9 +586,9 @@ void ee_scattering() {
     double d_e_energy = electron_potential[electron_collision];
    // if(deltaE > ee_coupling_strength*E_f_A) deltaE = ee_coupling_strength*E_f_A;
    // else if(deltaE < 0.0) deltaE = fmax(E_f_A - d_e_energy, -1.0*E_f_A);
-    deltaE = 0.5*(e_energy - d_e_energy);
+   // deltaE = 0.5*(e_energy - E_f_A);
       array_index = 3*e;
-    //  deltaE *= 0.5;
+      deltaE *= 0.5;
 
       double theta = theta_distrib(gen); 
       double phi = phi_distrib(gen); 
