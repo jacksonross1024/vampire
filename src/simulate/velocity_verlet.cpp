@@ -136,12 +136,12 @@ void update_position(){
           a = atomic_nearest_atom_list[e][i];
         }
       }
-
-      if(phonon_transfer_chance(gen) >  exp(aa_rate*max_dif*max_dif)) {
-        if(max_dif > E_f_A) max_dif = E_f_A;
-           
-        atom_potential[e] -= max_dif;
-        atom_potential[a] += max_dif;  
+      excitation_constant = atom_potential[e] - E_f_A;
+      if(phonon_transfer_chance(gen) >  exp(aa_rate*excitation_constant*excitation_constant)) {
+        //if(max_dif > E_f_A) max_dif = E_f_A;
+        excitation_constant *= 0.5;
+        atom_potential[e] -= excitation_constant;
+        atom_potential[a] += excitation_constant;  
 
         atomic_nearest_atom_list[e][0] = 1;
         atomic_nearest_atom_list[a][0] = 1;
