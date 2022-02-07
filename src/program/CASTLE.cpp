@@ -405,6 +405,7 @@ void initialize_lattice() {
     int a_density = 200 + int(round(pow(a_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
     int e_density = 200 + int(round(pow(e_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
 
+    #pragma omp parallel for schedule(static) 
     for (int a = 0; a < lattice_atoms; ++a) {  
         atomic_nearest_atom_list[a].resize(a_density,0);
         atomic_nearest_electron_list[a].resize(e_density,0);
@@ -414,19 +415,17 @@ void initialize_lattice() {
         atom_anchor_position[array_index + 1] = atoms::y_coord_array[a] + 0.5*y_unit_size;
         atom_anchor_position[array_index + 2] = atoms::z_coord_array[a] + 0.5*z_unit_size;
         
-        atom_position[array_index]   = atom_anchor_position[array_index];//   + atom_position_distrib(gen);
-        atom_position[array_index+1] = atom_anchor_position[array_index+1];// + atom_position_distrib(gen);
-        atom_position[array_index+2] = atom_anchor_position[array_index+2];// + atom_position_distrib(gen);
+        atom_position[array_index]   = atom_anchor_position[array_index];
+        atom_position[array_index+1] = atom_anchor_position[array_index+1];
+        atom_position[array_index+2] = atom_anchor_position[array_index+2];
 
-        TLE += atom_potential[a] = E_f_A;// 146*(1.01 - atom_position_distrib(gen));
-
-       // lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
+        atom_potential[a] = E_f_A;
     }
+
     for(int a = 0; a < lattice_atoms; a++) {
       array_index = a*3;
-       lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
+      lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
     }
-  //  new_atom_potential = atom_potential;
     lattice_output.close(); 
 }
 
@@ -497,30 +496,35 @@ void initialize_electrons() {
     e_a_coulomb_cutoff = 9;
     e_e_coulomb_cutoff = 9;
     
-   std::cout << true << false << std::endl;
-    double phi,theta, x_pos,y_pos,z_pos; //velocity_length = 0;
-    int array_index = 0;
+ //  std::cout << true << false << std::endl;
+    //double phi,theta, x_pos,y_pos,z_pos; //velocity_length = 0;
+  //  int array_index = 0;
     electron_nearest_electron_list.resize(conduction_electrons);
     electron_nearest_atom_list.resize(conduction_electrons);
     external_interaction_list.resize(conduction_electrons, false);
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
+    int e_density = 200 + int(round(pow(e_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
+    int ee_density = e_density / 4;
+
+    #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
-        electron_nearest_electron_list[e].resize(conduction_electrons * 0.4, -1);
-        electron_nearest_atom_list[e].resize(conduction_electrons*0.1, 0);
-        electron_ee_scattering_list[e].resize(conduction_electrons*0.1,0);
-        electron_ea_scattering_list[e].resize(conduction_electrons*0.1,0);
-        array_index = 3*e;
+        electron_nearest_electron_list[e].resize(e_density, -1);
+        electron_nearest_atom_list[e].resize(ee_density, 0);
+        electron_ee_scattering_list[e].resize(ee_density,0);
+        electron_ea_scattering_list[e].resize(ee_density,0);
+        int array_index = 3*e;
 
-        theta = M_PI*Theta_pos_distrib(gen);
-        phi = M_PI*Phi_pos_distrib(gen);
+        double theta = M_PI*Theta_pos_distrib(gen);
+        double phi = M_PI*Phi_pos_distrib(gen);
         screening_depth =0.875* radius_mod(gen);
+
         //initialize and output electron posititons
-        x_pos = atom_anchor_position[3*e]   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
-        y_pos = atom_anchor_position[3*e+1] + sin(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Sets on radius of screening depth from nucleus
-        z_pos = atom_anchor_position[3*e+2] + cos(phi)*screening_depth;//*radius_mod(gen);
+        double x_pos = atom_anchor_position[3*e]   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
+        double y_pos = atom_anchor_position[3*e+1] + sin(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Sets on radius of screening depth from nucleus
+        double z_pos = atom_anchor_position[3*e+2] + cos(phi)*screening_depth;//*radius_mod(gen);
 
         electron_potential[e] = E_f_A;
         
@@ -533,15 +537,15 @@ void initialize_electrons() {
         if (z_pos < 0.0) z_pos += lattice_height;
         else if (z_pos > lattice_height) z_pos -= lattice_height;
             
-            
         electron_position[array_index]     = x_pos;
         electron_position[array_index + 1] = y_pos;
         electron_position[array_index + 2] = z_pos;
-
     }
 
+    int array_index;
     for(int e = 0; e < conduction_electrons; e++) {
-       electron_position_output_down << "H" << "    " << electron_position[array_index]  << "    " << electron_position[array_index + 1] << "    " <<  electron_position[array_index + 2]  << "\n";    
+      array_index = 3*e;
+      electron_position_output_down << "H" << "    " << electron_position[array_index]  << "    " << electron_position[array_index + 1] << "    " <<  electron_position[array_index + 2]  << "\n";    
     }
     
     electron_position_output_down.close(); 
@@ -724,11 +728,11 @@ void initialize_forces() {
 
 void initialize_electron_interactions() {
 
-    int array_index, array_index_i, neighbor_count = 1;
-    double x_distance,y_distance,z_distance, length;
-    
+    #pragma omp parallel for schedule(static)
     for (int e = 0; e < conduction_electrons; e++) {
-        array_index = 3*e;
+      int array_index, array_index_i, neighbor_count = 1;
+      double x_distance,y_distance,z_distance, length;
+      array_index = 3*e;
       
                 if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
 
@@ -752,32 +756,24 @@ void initialize_electron_interactions() {
             else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
-          //  if(length < 400) distant_PE += 1 / sqrt(length);
 
             if (length > e_e_neighbor_cutoff) continue;
 
-          //  long_PE += 1 / sqrt(length);
             electron_nearest_electron_list[e][neighbor_count] = array_index_i;
             neighbor_count++;
-
-       
         }
         electron_nearest_electron_list[e][0] = neighbor_count;
-      //  if(e == 1000) std::cout << "near: " << near_PE << ", long: " << long_PE << ", distant: " << distant_PE << std::endl; 
-    //    std::cout << electron_potential[e] << std::endl;
-               // if(err::check) if(e ==0) std::cout << "Calculating conduction-lattice repulsion" << std::endl;
-    }
-}
+     }
+  }
 
 void initialize_atomic_interactions() {
 
-    int array_index, array_index_i, neighbor_count;
-    double x,y,z, x_distance,y_distance,z_distance, length, force;
-    double theta,phi;
+    #pragma omp paralle for schedule(static)
     for (int e = 0; e < lattice_atoms; e++) {
-        array_index = 3*e;
-      
-               // if (err::check)  std::cout << "Calculating atomic interactions" << std::endl;
+
+      int array_index, array_index_i, neighbor_count;
+      double x_distance,y_distance,z_distance, length;
+      array_index = 3*e;
 
         neighbor_count = 2;
 
@@ -803,36 +799,30 @@ void initialize_atomic_interactions() {
            
             if(length > a_a_neighbor_cutoff) continue;
        
-
             atomic_nearest_atom_list[e][neighbor_count] = i;
-            neighbor_count++;
-       
+            neighbor_count++;      
         }
         atomic_nearest_atom_list[e][1] = neighbor_count; 
-       // if(e / 1000 ==0) std::cout << "e-e count: " << neighbor_count << std::endl;
+    
                 if(err::check) if(e ==0) std::cout << "Calculating conduction-lattice repulsion" << std::endl;
-
-       //  std::cout << ". e-e repulsion: " << positive_PE << ". net force: " << (positive_PE + negative_PE)*constants::K_A << ", count: " << neighbor_count <<  std::endl;
     }
 
 }
 
 void initialize_electron_atom_interactions() { //we'll need a more developed algorithmn for #electrons != #atoms
-    int array_index, array_index_a, nearest_electron_count, nearest_atom_count;
-    double x,y,z, x_distance,y_distance,z_distance, length, force;
-    double theta,phi, PE;
     
-    double r_min;
+
+    #pragma omp parallel for schedule(static)
     for (int e = 0; e < conduction_electrons; e++) {
 
-        array_index = 3*e;
-        // nearest_atom_count = 1;
-        nearest_electron_count = 1;
-        //nearest_atom_count = 1;
-        r_min = 1;
+      int array_index, array_index_a;
+      double x_distance,y_distance,z_distance, length;
 
+      array_index = 3*e;
+      int nearest_electron_count = 1;
+      
         for (int a = 0; a < lattice_atoms; a++) {
-
+            
             array_index_a = 3*a;
             x_distance = electron_position[array_index]     - atom_position[array_index_a];
             y_distance = electron_position[array_index + 1] - atom_position[array_index_a+1];
@@ -848,20 +838,13 @@ void initialize_electron_atom_interactions() { //we'll need a more developed alg
             else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
-         //   if(length < 400) distant_PE += 150*exp(-8*sqrt(length)) - (1 / sqrt(length));
-
+      
             if(length > e_a_neighbor_cutoff) continue;
-
-         //   long_PE += 150*exp(-8*sqrt(length)) - (1 / sqrt(length));
+       
             atomic_nearest_electron_list[e][nearest_electron_count] = array_index_a;
             nearest_electron_count++;
-
-     
         }
-    //    std::cout << nearest_atom_count << std::endl;
-      //  if(e == 1000) std::cout << "near: " << near_PE << ", long: " << long_PE << ", distant: " << distant_PE << std::endl; 
         atomic_nearest_electron_list[e][0] = nearest_electron_count;
-       // electron_nearest_atom_list[e][0] = nearest_atom_count;
     }
 }
 
@@ -885,13 +868,15 @@ void initialize_velocities() {
     std::uniform_real_distribution<double> Theta_Vel_distrib(0,2);
     std::uniform_real_distribution<double> Phi_Vel_distrib(0,1);
     std::normal_distribution<double> vel_distrib(1.0,0.05);
-    double phi,theta, vel; //A/fS
-    int array_index;
+    
     TEKE = 0;
     // TLKE = 0;
-    vel = sqrt(2*E_f_A/constants::m_e_r);
+   double vel = sqrt(2*E_f_A/constants::m_e_r);
+
+    #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
-      // if(e==1000) std::cout << electron_potential[e] << std::endl;
+      double phi,theta; //A/fS
+      int array_index;
         array_index = 3*e;
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
@@ -907,17 +892,14 @@ void initialize_velocities() {
             if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
         electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
         electron_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
-        electron_velocity[array_index + 2] = cos(phi)*vel;
-
-        TEKE += vel*vel;   
+        electron_velocity[array_index + 2] = cos(phi)*vel; 
     }
 
     for(int e = 0; e < conduction_electrons; e++) {
-      array_index = 3*e;
       electron_velocity_output << e << ", " << electron_potential[e] << std::endl; // ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;
       atom_phonon_output << e << ", " << atom_potential[e] << std::endl;
     }
-    TEKE *= 0.5*constants::m_e_r;
+
     electron_velocity_output.close();
     atom_phonon_output.close();
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
@@ -1113,6 +1095,7 @@ void output_data() {
     std::forward_list<int> hot_a_list;
     int hot_electrons = 0;
     int hot_atoms = 0;
+
     for(int e = 0; e < conduction_electrons; e++) {
       array_index   = 3*e;
       array_index_y = array_index + 1;
@@ -1195,7 +1178,6 @@ void output_data() {
     double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
 
 
-    
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", " 
@@ -1213,9 +1195,6 @@ void output_data() {
       << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(a_a_scattering_count) / CASTLE_output_rate << ", " << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;
     }
-    MEKE = 0;
-    
-    MLE = 0;
    
     x_flux = 0;
     y_flux = 0;
@@ -1223,9 +1202,7 @@ void output_data() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
     a_a_scattering_count = 0;
-  //  std::fill(mean_radius.begin(), mean_radius.end(), 1);
-     //   electron_spin_output.close();
-    CASTLE_output_data = false;
+
 }
 
 

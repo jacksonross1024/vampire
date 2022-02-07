@@ -122,12 +122,14 @@ void update_position(){
         }
     }
    // std::cout << count << std::endl;
-    const static double aa_rate = -1.0*dt/1800.0;
-    double scattering_prob;
+    
     // std::forward_list<int> scattering_reset_list;
     
+    #pragma omp parallel for schedule(static) reduction(+:a_a_scattering_count)
     for(int e = 0; e < conduction_electrons; e++) {
       
+      const static double aa_rate = -1.0*dt/1800.0;
+      double scattering_prob;
       if(atomic_nearest_atom_list[e][0]) continue;
 
       int size = atomic_nearest_atom_list[e][1];
@@ -154,13 +156,17 @@ void update_position(){
 
         //if(max_dif > E_f_A) max_dif = E_f_A;
         excitation_constant *= 0.5;
+
+        #pragma omp critical 
+        {
         atom_potential[e] -= excitation_constant;
         atom_potential[a] += excitation_constant;  
 
         atomic_nearest_atom_list[e][0] = 1;
         atomic_nearest_atom_list[a][0] = 1;
-
+        }
         a_a_scattering_count++;
+        
       }
     }
 
@@ -534,14 +540,16 @@ void ea_scattering() {
             std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
             std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
  
-  int array_index;
-  int atom_array;
-  int size;
-  double scattering_velocity;
-  double lattice_energy;
+  
 
+  #pragma omp parallel for schedule(guided) reduction(+:e_a_scattering_count)
   for(int e = 0; e < conduction_electrons; e++) {
 
+    int array_index;
+    int atom_array;
+    int size;
+    double scattering_velocity;
+    double lattice_energy;
     size = electron_ea_scattering_list[e][1];
 
     std::uniform_int_distribution<> phonon_scattering_vector(2,size);
@@ -567,10 +575,15 @@ void ea_scattering() {
       electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi);     
-      atom_potential[atom_array] += deltaE;
       
+      #pragma omp atomic
+      atom_potential[atom_array] += deltaE;
+
+      #pragma omp atomic write
       electron_ea_scattering_list[atom_array][0] = 1;
+
       electron_ee_scattering_list[e][0] = 1;
+
       e_a_scattering_count++;
     }
   }
@@ -586,14 +599,16 @@ void ee_scattering() {
     std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
     std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
 
-  int array_index;
-  int size;
-  int electron_collision;
-  double scattering_prob;
-  double e_energy;
-  double deltaE;
+  #pragma omp parallel for reduction(+:e_e_scattering_count) schedule(guided)
   for(int e = 0; e < conduction_electrons; e++) {
     
+    int array_index;
+    int size;
+    int electron_collision;
+    double scattering_prob;
+    double e_energy;
+    double deltaE;
+
     if(electron_ee_scattering_list[e][0]) continue;
    
     e_energy = electron_potential[e];
@@ -622,6 +637,8 @@ void ee_scattering() {
         double y_vec = sin(theta)*sin(phi);
         double z_vec = cos(phi);
 
+        #pragma omp critical
+        {
         electron_potential[e] -= deltaE;
         electron_velocity[array_index]   = scattering_velocity * x_vec;
         electron_velocity[array_index+1] = scattering_velocity * y_vec;
@@ -629,6 +646,7 @@ void ee_scattering() {
         
         scattering_velocity = -1.0*sqrt(2.0*(d_e_energy + deltaE)*constants::m_e_r_i);
           
+        
         electron_potential[electron_collision]  += deltaE;
         electron_velocity[3*electron_collision]   = scattering_velocity * x_vec;
         electron_velocity[3*electron_collision+1] = scattering_velocity * y_vec;
@@ -638,6 +656,7 @@ void ee_scattering() {
 
         electron_ee_scattering_list[e][0] = 1;
         electron_ee_scattering_list[electron_collision][0] = 1;
+        }
     }
   }
 
