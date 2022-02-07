@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-       // omp_set_dynamic(0);
-        //omp_set_num_threads(6);
+        // omp_set_dynamic(0);
+        // omp_set_num_threads(1);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -251,7 +251,7 @@ for(int a = 0; a < 1500; a++) {
 void initialize () {
        
             if (err::check) std::cout << "Initializing CASTLE..."  << std::endl;
-  //  namespace fs = std::filesystem; {
+ 
       
      // filesystem::remove_all("CASTLE/Electron_Position");
     //========
@@ -260,11 +260,11 @@ void initialize () {
     //=========
     conduction_electrons = atoms::num_atoms;
     CASTLE_output_rate = sim::partial_time;
-    dt = mp::dt_SI * 1e15;//-4; //reducd seconds (e10 scale factor), femptoSeconds
+    dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
     temperature = 300; //sim::temperature;
     total_time_steps = sim::equilibration_time; //100
     CASTLE_MD_rate = sim::CASTLE_MD_rate;
-  //  std::cout << dt << ", " << CASTLE_output_rate << std::endl;
+  
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
@@ -280,7 +280,12 @@ void initialize () {
     ea_coupling = sim::ea_coupling;
 
     ee_coupling_strength = sim::ee_coupling_strength;
-    ea_coupling_strength = sim::ea_coupling_strength;
+    ea_coupling_strength = sim::ea_coupling_strength;0;
+
+    TTMe = 0.0;
+    TTMp = 0.0;
+    d_TTMe = 0.0;
+    d_TTMp = 0.0;
 
     // Initialize lattice
     //========
@@ -361,11 +366,11 @@ void initialize_lattice() {
     v_f = sqrt(2 * E_f / constants::m_e); //meters
     a_heat_capacity = 6.02e3 / (6.52e2 * lattice_atoms);
     
-    e_a_neighbor_cutoff = 100;
-    e_e_neighbor_cutoff = 100;
-    e_a_coulomb_cutoff = 9;
-    e_e_coulomb_cutoff = 9;
-    a_a_neighbor_cutoff = 12;
+    e_a_neighbor_cutoff = 100.0;
+    e_e_neighbor_cutoff = 100.0;
+    e_a_coulomb_cutoff = 9.0;
+    e_e_coulomb_cutoff = 9.0;
+    a_a_neighbor_cutoff = 36.0;
 
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
@@ -391,11 +396,13 @@ void initialize_lattice() {
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::normal_distribution<double> atom_position_distrib(0.0,0.005);
     
+    a_a_scattering_count = 0;
+
     int array_index; //local loop index variable
     atomic_nearest_atom_list.resize(lattice_atoms);
     atomic_nearest_electron_list.resize(lattice_atoms);
 
-    int a_density = 100 + int(round(pow(a_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
+    int a_density = 200 + int(round(pow(a_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
     int e_density = 200 + int(round(pow(e_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
 
     for (int a = 0; a < lattice_atoms; ++a) {  
@@ -474,8 +481,8 @@ void initialize_electrons() {
     TEPE = 0;
     TEKE = 0;
 
-    e_a_scattering = 0;
-    e_e_scattering = 0;
+    e_a_scattering_count = 0;
+    e_e_scattering_count = 0;
 
     ea_rate = -1.0*dt*sqrt(E_f_A)/600.0;
     ee_rate = -1.0*dt/187260.0;
@@ -794,7 +801,7 @@ void initialize_atomic_interactions() {
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
            
-            if(length > 9) continue;
+            if(length > a_a_neighbor_cutoff) continue;
        
 
             atomic_nearest_atom_list[e][neighbor_count] = i;
@@ -1186,20 +1193,24 @@ void output_data() {
     double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
     double nu = j / (n_f * constants::e); //drift velocity
     double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
+
+
     
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << MEKE * 1e-20 << ", " << MLE*1e-20 << ", " 
-      << MEKE*e_heat_capacity  - E_f_A*conduction_electrons*e_heat_capacity << ", " << MLE*a_heat_capacity  - E_f_A*lattice_atoms*a_heat_capacity << ", "
-      << mean_ea_rad << ", " << mean_ee_rad << ", " << e_a_scattering << ", " << e_e_scattering  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
+      << TEKE * 1e-20 << ", " << TLE*1e-20 << ", " 
+      << TEKE*e_heat_capacity  - E_f_A*conduction_electrons*e_heat_capacity << ", " << TLE*a_heat_capacity  - E_f_A*lattice_atoms*a_heat_capacity << ", "
+      << TTMe << ", " << TTMp << ", "
+      << mean_ea_rad << ", " << mean_ee_rad << ", " << a_a_scattering_count << ", " << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
     }
     else {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << MEKE * 1e-20 / CASTLE_output_rate << ", " << MLE*1e-20 / CASTLE_output_rate << ", "  
-      << MEKE*e_heat_capacity/CASTLE_output_rate - E_f_A*conduction_electrons*e_heat_capacity << ", " << (MLE*a_heat_capacity/CASTLE_output_rate)  - E_f_A*lattice_atoms*a_heat_capacity << ", "
-      << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering) / CASTLE_output_rate << ", " << double(e_e_scattering) / CASTLE_output_rate << ", " << double(x_flux) / CASTLE_output_rate << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / CASTLE_output_rate  << ", " \
+      << TEKE * 1e-20 << ", " << TLE*1e-20 << ", "  
+      << TEKE*e_heat_capacity - E_f_A*conduction_electrons*e_heat_capacity << ", " << TLE*a_heat_capacity  - E_f_A*lattice_atoms*a_heat_capacity << ", "
+      << TTMe << ", " << TTMp << ", "
+      << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(a_a_scattering_count) / CASTLE_output_rate << ", " << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;
     }
     MEKE = 0;
@@ -1209,8 +1220,9 @@ void output_data() {
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
-    e_a_scattering = 0;
-    e_e_scattering = 0;
+    e_a_scattering_count = 0;
+    e_e_scattering_count = 0;
+    a_a_scattering_count = 0;
   //  std::fill(mean_radius.begin(), mean_radius.end(), 1);
      //   electron_spin_output.close();
     CASTLE_output_data = false;

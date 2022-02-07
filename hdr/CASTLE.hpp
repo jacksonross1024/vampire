@@ -162,8 +162,15 @@ namespace CASTLE {
     extern int x_flux;
     extern int y_flux;
     extern int z_flux;
-    extern int e_a_scattering;
-    extern int e_e_scattering;
+    extern int e_a_scattering_count;
+    extern int e_e_scattering_count;
+    extern int a_a_scattering_count;
+
+    extern double TTMe;
+    extern double d_TTMe;
+    extern double TTMp;
+    extern double d_TTMp;
+    
     extern std::string time_stamp;
     extern std::ofstream lattice_output;
   
