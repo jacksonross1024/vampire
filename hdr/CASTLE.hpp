@@ -95,6 +95,8 @@ namespace CASTLE {
     extern double Tr; // inverse seconds
     extern double a_heat_capacity;
     extern double e_heat_capacity;
+    extern double phonon_energy;
+    extern double new_phonon_energy;
 
     extern bool ee_coupling;
     extern bool ea_coupling;

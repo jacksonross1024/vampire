@@ -553,14 +553,14 @@ void ea_scattering() {
     size = electron_ea_scattering_list[e][1];
 
     std::uniform_int_distribution<> phonon_scattering_vector(2,size);
-
+ 
     atom_array = electron_ea_scattering_list[e][phonon_scattering_vector(gen)];
     if(electron_ea_scattering_list[atom_array][0]) continue;
     
     lattice_energy = atom_potential[atom_array];
     scattering_velocity = electron_potential[e];
 
-    if(scattering_chance(gen) > exp(ea_rate/sqrt(scattering_velocity))) {
+    if(scattering_chance(gen) > exp(ea_rate*scattering_velocity / phonon_energy)) {
       
       array_index = 3*e;
       double deltaE = 0.5*(scattering_velocity - E_f_A);
@@ -612,31 +612,30 @@ void ee_scattering() {
     if(electron_ee_scattering_list[e][0]) continue;
    
     e_energy = electron_potential[e];
-    deltaE = e_energy - E_f_A;
     
-    if(deltaE < 8.0) scattering_prob = 8.0;
-    else scattering_prob = deltaE*deltaE;
+    
+    // if(deltaE < 8.0) scattering_prob = 8.0;
+    // else scattering_prob = deltaE*deltaE;
+    size = electron_ee_scattering_list[e][1];
+    std::uniform_int_distribution<> electron_collision_vector(2,size);
+    electron_collision = electron_ee_scattering_list[e][electron_collision_vector(gen)];
 
-    if(scattering_chance(gen) > exp(ee_rate*scattering_prob)) {
-   
-      size = electron_ee_scattering_list[e][1];
-      std::uniform_int_distribution<> electron_collision_vector(2,size);
-      electron_collision = electron_ee_scattering_list[e][electron_collision_vector(gen)];
-
-      if(electron_ee_scattering_list[electron_collision][0])  continue;
+    if(electron_ee_scattering_list[electron_collision][0])  continue;
      
-        double d_e_energy = electron_potential[electron_collision];
+    double d_e_energy = electron_potential[electron_collision];
+    deltaE = 0.5*(e_energy - d_e_energy);
+    if(scattering_chance(gen) > exp(ee_rate*deltaE/E_f_A)) {
 
+      //  deltaE *= 0.5;
         array_index = 3*e;
-        deltaE *= 0.5;
 
         double theta = theta_distrib(gen); 
         double phi = phi_distrib(gen); 
         double scattering_velocity = sqrt(2.0*(e_energy - deltaE)*constants::m_e_r_i);
         double x_vec = cos(theta)*sin(phi);
         double z_vec = cos(phi);
-
         double y_vec = sin(theta)*sin(phi);
+
      //   #pragma omp critical
         {
         electron_potential[e] -= deltaE;
@@ -646,7 +645,6 @@ void ee_scattering() {
         
         scattering_velocity = -1.0*sqrt(2.0*(d_e_energy + deltaE)*constants::m_e_r_i);
           
-        
         electron_potential[electron_collision]  += deltaE;
         electron_velocity[3*electron_collision]   = scattering_velocity * x_vec;
         electron_velocity[3*electron_collision+1] = scattering_velocity * y_vec;

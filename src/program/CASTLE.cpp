@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        // omp_set_dynamic(0);
-        // omp_set_num_threads(1);
+         omp_set_dynamic(0);
+         omp_set_num_threads(10);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -483,7 +483,7 @@ void initialize_electrons() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
 
-    ea_rate = -1.0*dt*sqrt(E_f_A)/600.0;
+    ea_rate = -1.0*dt/600.0;
     ee_rate = -1.0*dt/187260.0;
     
 
