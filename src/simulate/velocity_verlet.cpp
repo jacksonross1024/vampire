@@ -72,6 +72,7 @@ void update_position(){
     std::uniform_real_distribution<double> phonon_transfer_chance(0,1);
   //  int count = 0;
     double excitation_constant;
+    double pump, particle_heat;
    // external_interaction_list_count = 0;
     #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) \
     schedule(static) reduction(+:x_flux,y_flux,z_flux)
@@ -109,13 +110,12 @@ void update_position(){
             // z_pos = atom_position[array_index_z];
 
            // if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
-              // const static double sigma = 0.001;
-              // const static double en_scale = heat_pulse * sigma * sqrt(5e7 * constants::m_e_r_i / M_PI) / double(lattice_atoms);
-              // double EKE = en_scale * exp(-0.5*sigma*sigma*(current_time_step - 4000)*(current_time_step - 4000));
-              // double vel = sqrt(2.0*atom_potential[e]*constants::m_e_r_i);
-              // vel += EKE;
-              // atom_potential[e] = 0.5*constants::m_e_r*vel*vel;
-             // count++;
+              const static double sigma = 0.001;
+              pump = heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000))); // AJ/fs
+              particle_heat = pump * dt / double(conduction_electrons); // AJ / particle
+         
+              atom_potential[e] += particle_heat;
+             
             
           
           if(applied_voltage_sim) electron_applied_voltage(e, array_index);
@@ -125,7 +125,7 @@ void update_position(){
     
     // std::forward_list<int> scattering_reset_list;
     
-    #pragma omp parallel for schedule(static) reduction(+:a_a_scattering_count)
+  //  #pragma omp parallel for schedule(static) reduction(+:a_a_scattering_count)
     for(int e = 0; e < conduction_electrons; e++) {
       
       const static double aa_rate = -1.0*dt/1800.0;
@@ -157,7 +157,7 @@ void update_position(){
         //if(max_dif > E_f_A) max_dif = E_f_A;
         excitation_constant *= 0.5;
 
-        #pragma omp critical 
+      //  #pragma omp critical 
         {
         atom_potential[e] -= excitation_constant;
         atom_potential[a] += excitation_constant;  
@@ -542,7 +542,7 @@ void ea_scattering() {
  
   
 
-  #pragma omp parallel for schedule(guided) reduction(+:e_a_scattering_count)
+ // #pragma omp parallel for schedule(guided) reduction(+:e_a_scattering_count)
   for(int e = 0; e < conduction_electrons; e++) {
 
     int array_index;
@@ -576,10 +576,10 @@ void ea_scattering() {
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi);     
       
-      #pragma omp atomic
+    //  #pragma omp atomic
       atom_potential[atom_array] += deltaE;
 
-      #pragma omp atomic write
+    //  #pragma omp atomic write
       electron_ea_scattering_list[atom_array][0] = 1;
 
       electron_ee_scattering_list[e][0] = 1;
@@ -599,7 +599,7 @@ void ee_scattering() {
     std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
     std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
 
-  #pragma omp parallel for reduction(+:e_e_scattering_count) schedule(guided)
+ // #pragma omp parallel for reduction(+:e_e_scattering_count) schedule(guided)
   for(int e = 0; e < conduction_electrons; e++) {
     
     int array_index;
@@ -634,10 +634,10 @@ void ee_scattering() {
         double phi = phi_distrib(gen); 
         double scattering_velocity = sqrt(2.0*(e_energy - deltaE)*constants::m_e_r_i);
         double x_vec = cos(theta)*sin(phi);
-        double y_vec = sin(theta)*sin(phi);
         double z_vec = cos(phi);
 
-        #pragma omp critical
+        double y_vec = sin(theta)*sin(phi);
+     //   #pragma omp critical
         {
         electron_potential[e] -= deltaE;
         electron_velocity[array_index]   = scattering_velocity * x_vec;
