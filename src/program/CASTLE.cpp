@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-         omp_set_dynamic(0);
-         omp_set_num_threads(10);
+        // omp_set_dynamic(0);
+        // omp_set_num_threads(10);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -423,7 +423,7 @@ void initialize_lattice() {
         atom_position[array_index+1] = atom_anchor_position[array_index+1];
         atom_position[array_index+2] = atom_anchor_position[array_index+2];
 
-        atom_potential[a] = E_f_A;
+        atom_potential[a] = 2.0*E_f_A;
     }
 
     for(int a = 0; a < lattice_atoms; a++) {
@@ -488,7 +488,7 @@ void initialize_electrons() {
     e_e_scattering_count = 0;
 
     ea_rate = -1.0*dt/600.0;
-    ee_rate = -1.0*dt/187260.0;
+    ee_rate = -1.0*dt/1800.0;
     
 
     MEPE = 0;
@@ -530,7 +530,7 @@ void initialize_electrons() {
         double y_pos = atom_anchor_position[3*e+1] + sin(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Sets on radius of screening depth from nucleus
         double z_pos = atom_anchor_position[3*e+2] + cos(phi)*screening_depth;//*radius_mod(gen);
 
-        electron_potential[e] = E_f_A;
+        electron_potential[e] = 2.0*E_f_A;
         
         if (x_pos < 0.0) x_pos += lattice_width;
         else if (x_pos > lattice_width) x_pos -= lattice_width;
@@ -875,7 +875,7 @@ void initialize_velocities() {
     
     TEKE = 0;
     // TLKE = 0;
-   double vel = sqrt(2*E_f_A/constants::m_e_r);
+   double vel = sqrt(4*E_f_A/constants::m_e_r);
 
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {

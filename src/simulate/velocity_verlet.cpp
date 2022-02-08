@@ -104,11 +104,11 @@ void update_position(){
             // y_pos = atom_position[array_index_y];
             // z_pos = atom_position[array_index_z];
            // if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
-              const static double sigma = 0.001;
-              pump = heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000))); // AJ/fs
-              particle_heat = pump * dt / double(conduction_electrons); // AJ / particle
+              // const static double sigma = 0.001;
+              // pump = heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000))); // AJ/fs
+              // particle_heat = pump * dt / double(conduction_electrons); // AJ / particle
          
-              atom_potential[e] += particle_heat;
+              // atom_potential[e] += particle_heat;
           
           if(applied_voltage_sim) electron_applied_voltage(e, array_index);
         }
@@ -156,20 +156,23 @@ void update_dynamics() {
         }
     }    
  
-    #pragma omp parallel for private(array_index) schedule(static)
-    for(int e = 0; e < conduction_electrons; e++) {
-      array_index = 3*e;
-      update_velocity(e, array_index, particle_heat);
-    }
+    // #pragma omp parallel for private(array_index) schedule(static)
+    // for(int e = 0; e < conduction_electrons; e++) {
+    //   array_index = 3*e;
+    //   update_velocity(e, array_index, particle_heat);
+    // }
 
     aa_scattering();
     if(ea_coupling) ea_scattering();
     if(ee_coupling) ee_scattering();
 
-    #pragma omp parallel for reduction(+:TEKE,TLE) schedule(static)
+    #pragma omp parallel for reduction(+:TEKE,TLE) schedule(dynamic)
     for(int e = 0; e < conduction_electrons; e++) {
       TEKE += electron_potential[e];
       TLE  += atom_potential[e];
+      electron_ee_scattering_list[e][0] = 0;
+      electron_ea_scattering_list[e][0] = 0;
+      atomic_nearest_atom_list[e][0] = 0;
     }
 }
 
@@ -485,10 +488,10 @@ void aa_scattering() {
     std::uniform_real_distribution<double> phonon_transfer_chance(0,1);
   int a;
   double deltaE;
+   double scattering_prob;
+  const static double aa_rate = -1.0*dt/1800.0;
     for(int e = 0; e < conduction_electrons; e++) {
       
-      const static double aa_rate = -1.0*dt/1800.0;
-      double scattering_prob;
       if(atomic_nearest_atom_list[e][0]) continue;
 
       int size = atomic_nearest_atom_list[e][1];
@@ -510,10 +513,11 @@ void aa_scattering() {
       a = atomic_nearest_atom_list[e][atom_collision_vector(gen)];
       if(atomic_nearest_atom_list[a][0]) continue;
 
-      deltaE = 0.5*(atom_potential[e] - atom_potential[a]);
-      if(phonon_transfer_chance(gen) > exp(aa_rate*abs(deltaE)/E_f_A)) {
+      deltaE = (atom_potential[e] - E_f_A);
+      if(phonon_transfer_chance(gen) > exp(aa_rate*deltaE)) {
 
-        deltaE = 0.5*(atom_potential[e] - E_f_A);
+        deltaE *= 0.5;
+      //  deltaE = 0.5*(atom_potential[e] - atom_potential[a]);
         atom_potential[e] -= deltaE;
         atom_potential[a] += deltaE;  
 
@@ -555,11 +559,12 @@ void ea_scattering() {
     scattering_velocity = electron_potential[e];
     double deltaE = 0.5*(scattering_velocity - lattice_energy);
       
-    //if(scattering_velocity < lattice_energy) deltaE = 0.5*(E_f_A - lattice_energy);
-    if(scattering_chance(gen) > exp(ea_rate*abs(deltaE)/E_f_A )) {
+    if(scattering_chance(gen) > exp(ea_rate*deltaE )) {
       
+      if (scattering_velocity > lattice_energy) deltaE = 0.5*(scattering_velocity - lattice_energy);
+      else  deltaE = 0.5*(E_f_A - lattice_energy);
       array_index = 3*e;
-      deltaE = 0.5*(scattering_velocity - E_f_A);
+      //deltaE = 0.5*(scattering_velocity - E_f_A);
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
       scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)*constants::m_e_r_i);
@@ -616,13 +621,13 @@ void ee_scattering() {
     if(electron_ee_scattering_list[electron_collision][0])  continue;
      
     double d_e_energy = electron_potential[electron_collision];
-    deltaE = 0.5*(e_energy - d_e_energy);
+    deltaE = (e_energy - E_f_A);
 
-    if(scattering_chance(gen) > exp(ee_rate*abs(deltaE)/E_f_A)) {
+    if(scattering_chance(gen) > exp(ee_rate*deltaE)) {
 
-      //  deltaE *= 0.5;
+        deltaE *= 0.5;
         array_index = 3*e;
-        deltaE = 0.5*(e_energy - E_f_A);
+        //deltaE = 0.5*(e_energy - d_e_energy);
 
         double theta = theta_distrib(gen); 
         double phi = phi_distrib(gen); 
@@ -633,7 +638,7 @@ void ee_scattering() {
         double z_vec = cos(phi);
 
      //   #pragma omp critical
-        {
+        
         electron_potential[e] -= deltaE;
         electron_velocity[array_index]   = scattering_velocity * x_vec;
         electron_velocity[array_index+1] = scattering_velocity * y_vec;
@@ -650,15 +655,8 @@ void ee_scattering() {
 
         electron_ee_scattering_list[e][0] = 1;
         electron_ee_scattering_list[electron_collision][0] = 1;
-        }
+        
     }
-  }
-
-  #pragma omp parallel for schedule(dynamic) 
-  for(int e = 0; e< conduction_electrons; e++) {
-    electron_ee_scattering_list[e][0] = 0;
-    electron_ea_scattering_list[e][0] = 0;
-    atomic_nearest_atom_list[e][0] = 0;
   }
 } 
 
