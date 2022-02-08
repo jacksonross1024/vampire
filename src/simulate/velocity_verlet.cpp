@@ -144,18 +144,18 @@ void update_position(){
       //   }
       // }
 
-      excitation_constant = atom_potential[e] - E_f_A;
-      if(excitation_constant < 8.0) scattering_prob = 8.0;
-      else scattering_prob = excitation_constant*excitation_constant;
+     // excitation_constant = atom_potential[e] - E_f_A;
+      // if(excitation_constant < 8.0) scattering_prob = 8.0;
+      // else scattering_prob = excitation_constant*excitation_constant;
+      std::uniform_int_distribution<> atom_collision_vector(2,size);
+      a = atomic_nearest_atom_list[e][atom_collision_vector(gen)];
+      if(atomic_nearest_atom_list[a][0]) continue;
 
-      if(phonon_transfer_chance(gen) >  exp(aa_rate*scattering_prob)) {
-
-        std::uniform_int_distribution<> atom_collision_vector(2,size);
-        a = atomic_nearest_atom_list[e][atom_collision_vector(gen)];
-        if(atomic_nearest_atom_list[a][0]) continue;
+      excitation_constant = 0.5*(atom_potential[e] - atom_potential[a]);
+      if(phonon_transfer_chance(gen) > exp(aa_rate*abs(excitation_constant)/E_f_A)) {
 
         //if(max_dif > E_f_A) max_dif = E_f_A;
-        excitation_constant *= 0.5;
+       // excitation_constant *= 0.5;
 
       //  #pragma omp critical 
         {
@@ -559,14 +559,13 @@ void ea_scattering() {
     
     lattice_energy = atom_potential[atom_array];
     scattering_velocity = electron_potential[e];
-
-    if(scattering_chance(gen) > exp(ea_rate*scattering_velocity / phonon_energy)) {
+    double deltaE = 0.5*(scattering_velocity - lattice_energy);
+      
+    //if(scattering_velocity < lattice_energy) deltaE = 0.5*(E_f_A - lattice_energy);
+    if(scattering_chance(gen) > exp(ea_rate*abs(deltaE)/E_f_A )) {
       
       array_index = 3*e;
-      double deltaE = 0.5*(scattering_velocity - E_f_A);
       
-      if(scattering_velocity < lattice_energy) deltaE = 0.5*(E_f_A - lattice_energy);
-
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
       scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)*constants::m_e_r_i);
