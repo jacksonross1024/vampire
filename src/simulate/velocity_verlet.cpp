@@ -66,12 +66,7 @@ void update_position(){
 
     int array_index,array_index_y,array_index_z;
     double x_pos,y_pos,z_pos;
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<double> phonon_transfer_chance(0,1);
-  //  int count = 0;
-    double excitation_constant;
+
     double pump, particle_heat;
    // external_interaction_list_count = 0;
     #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) \
@@ -108,68 +103,19 @@ void update_position(){
             // x_pos = atom_position[array_index];
             // y_pos = atom_position[array_index_y];
             // z_pos = atom_position[array_index_z];
-
            // if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
               const static double sigma = 0.001;
               pump = heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000))); // AJ/fs
               particle_heat = pump * dt / double(conduction_electrons); // AJ / particle
          
               atom_potential[e] += particle_heat;
-             
-            
           
           if(applied_voltage_sim) electron_applied_voltage(e, array_index);
         }
     }
    // std::cout << count << std::endl;
-    
     // std::forward_list<int> scattering_reset_list;
-    
   //  #pragma omp parallel for schedule(static) reduction(+:a_a_scattering_count)
-    for(int e = 0; e < conduction_electrons; e++) {
-      
-      const static double aa_rate = -1.0*dt/1800.0;
-      double scattering_prob;
-      if(atomic_nearest_atom_list[e][0]) continue;
-
-      int size = atomic_nearest_atom_list[e][1];
-      int a = atomic_nearest_atom_list[e][2];
-      double max_dif = 0.0;
-      // for(int i = 2; i < size; i++) {
-      //   if(atomic_nearest_atom_list[i][0]) continue;         
-      //   excitation_constant = atom_potential[e] - atom_potential[atomic_nearest_atom_list[e][i]];
-      //   if(excitation_constant > max_dif) {
-      //     max_dif = excitation_constant;
-      //     a = atomic_nearest_atom_list[e][i];
-      //   }
-      // }
-
-     // excitation_constant = atom_potential[e] - E_f_A;
-      // if(excitation_constant < 8.0) scattering_prob = 8.0;
-      // else scattering_prob = excitation_constant*excitation_constant;
-      std::uniform_int_distribution<> atom_collision_vector(2,size);
-      a = atomic_nearest_atom_list[e][atom_collision_vector(gen)];
-      if(atomic_nearest_atom_list[a][0]) continue;
-
-      excitation_constant = 0.5*(atom_potential[e] - atom_potential[a]);
-      if(phonon_transfer_chance(gen) > exp(aa_rate*abs(excitation_constant)/E_f_A)) {
-
-        //if(max_dif > E_f_A) max_dif = E_f_A;
-       // excitation_constant *= 0.5;
-
-      //  #pragma omp critical 
-        {
-        atom_potential[e] -= excitation_constant;
-        atom_potential[a] += excitation_constant;  
-
-        atomic_nearest_atom_list[e][0] = 1;
-        atomic_nearest_atom_list[a][0] = 1;
-        }
-        a_a_scattering_count++;
-        
-      }
-    }
-
     // #pragma omp parallel for schedule(dynamic) 
     // for(int e = 0; e< conduction_electrons; e++) {
     //   //electron_ee_scattering_list[e][0] = 0;
@@ -216,6 +162,7 @@ void update_dynamics() {
       update_velocity(e, array_index, particle_heat);
     }
 
+    aa_scattering();
     if(ea_coupling) ea_scattering();
     if(ee_coupling) ee_scattering();
 
@@ -531,6 +478,53 @@ void electron_applied_voltage(const int& e, const int& array_index) {
 
 }
 
+void aa_scattering() {
+   std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_real_distribution<double> phonon_transfer_chance(0,1);
+  int a;
+  double deltaE;
+    for(int e = 0; e < conduction_electrons; e++) {
+      
+      const static double aa_rate = -1.0*dt/1800.0;
+      double scattering_prob;
+      if(atomic_nearest_atom_list[e][0]) continue;
+
+      int size = atomic_nearest_atom_list[e][1];
+      int a = atomic_nearest_atom_list[e][2];
+      // double max_dif = 0.0;
+      // for(int i = 2; i < size; i++) {
+      //   if(atomic_nearest_atom_list[i][0]) continue;         
+      //   excitation_constant = atom_potential[e] - atom_potential[atomic_nearest_atom_list[e][i]];
+      //   if(excitation_constant > max_dif) {
+      //     max_dif = excitation_constant;
+      //     a = atomic_nearest_atom_list[e][i];
+      //   }
+      // }
+     // excitation_constant = atom_potential[e] - E_f_A;
+      // if(excitation_constant < 8.0) scattering_prob = 8.0;
+      // else scattering_prob = excitation_constant*excitation_constant;
+      
+      std::uniform_int_distribution<> atom_collision_vector(2,size);
+      a = atomic_nearest_atom_list[e][atom_collision_vector(gen)];
+      if(atomic_nearest_atom_list[a][0]) continue;
+
+      deltaE = 0.5*(atom_potential[e] - atom_potential[a]);
+      if(phonon_transfer_chance(gen) > exp(aa_rate*abs(deltaE)/E_f_A)) {
+
+        deltaE = 0.5*(atom_potential[e] - E_f_A);
+        atom_potential[e] -= deltaE;
+        atom_potential[a] += deltaE;  
+
+        atomic_nearest_atom_list[e][0] = 1;
+        atomic_nearest_atom_list[a][0] = 1;
+        
+        a_a_scattering_count++;
+      }
+    }
+}
+
 void ea_scattering() {
             std::srand(std::time(nullptr));
             std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -565,7 +559,7 @@ void ea_scattering() {
     if(scattering_chance(gen) > exp(ea_rate*abs(deltaE)/E_f_A )) {
       
       array_index = 3*e;
-      
+      deltaE = 0.5*(scattering_velocity - E_f_A);
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
       scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)*constants::m_e_r_i);
@@ -623,17 +617,20 @@ void ee_scattering() {
      
     double d_e_energy = electron_potential[electron_collision];
     deltaE = 0.5*(e_energy - d_e_energy);
-    if(scattering_chance(gen) > exp(ee_rate*deltaE/E_f_A)) {
+
+    if(scattering_chance(gen) > exp(ee_rate*abs(deltaE)/E_f_A)) {
 
       //  deltaE *= 0.5;
         array_index = 3*e;
+        deltaE = 0.5*(e_energy - E_f_A);
 
         double theta = theta_distrib(gen); 
         double phi = phi_distrib(gen); 
         double scattering_velocity = sqrt(2.0*(e_energy - deltaE)*constants::m_e_r_i);
+
         double x_vec = cos(theta)*sin(phi);
-        double z_vec = cos(phi);
         double y_vec = sin(theta)*sin(phi);
+        double z_vec = cos(phi);
 
      //   #pragma omp critical
         {

@@ -248,6 +248,7 @@ namespace CASTLE {
    int external_interaction_list_count;
    std::vector<std::vector<int> > electron_ee_scattering_list;
    std::vector<std::vector<int> > electron_ea_scattering_list;
+   std::vector<double> phonon_distribution;
     //outputs
    
    double TEPE; //Angstroms
@@ -313,6 +314,10 @@ namespace CASTLE {
    void update_velocity(const int& e, const int& array_index, const double& EKE);
  
    void electron_applied_voltage(const int& e, const int& array_index);
+
+   void aa_scattering();
+   void ea_scattering();
+   void ee_scattering();
  /*
    double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
    double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance);
@@ -326,5 +331,8 @@ namespace CASTLE {
    long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list);
 
 */
+   double B_E_distrib(const double& eps);
+   void create_phonon_distribution();
+   double return_phonon_distribution();
 
 }

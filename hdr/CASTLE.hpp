@@ -149,6 +149,8 @@ namespace CASTLE {
     extern std::vector<double> mean_radius;
     extern std::vector<std::vector<int> > electron_ee_scattering_list;
     extern std::vector<std::vector<int> > electron_ea_scattering_list;
+
+    extern std::vector<double> phonon_distribution;
     //outputs
    
     extern double TEPE; //Angstroms
@@ -216,6 +218,7 @@ namespace CASTLE {
  
     extern void electron_applied_voltage(const int& e, const int& array_index);
  
+    extern void aa_scattering();
     extern void ea_scattering();
     extern void ee_scattering();
  /*
@@ -224,6 +227,10 @@ namespace CASTLE {
     
     extern double reinitialize_electron_conserve_momentum(std::vector<double>& captured_electron_list);
 */
+
+    extern double B_E_distrib(const double& eps);
+    extern void create_phonon_distribution();
+    extern double return_phonon_distribution();
 }
 
 

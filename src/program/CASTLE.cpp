@@ -395,8 +395,12 @@ void initialize_lattice() {
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::normal_distribution<double> atom_position_distrib(0.0,0.005);
-    
+    phonon_distribution.resize(2*lattice_atoms, 0.0);
+    phonon_energy = 1.0;
+    new_phonon_energy = 0.0;
     a_a_scattering_count = 0;
+
+    create_phonon_distribution();
 
     int array_index; //local loop index variable
     atomic_nearest_atom_list.resize(lattice_atoms);
@@ -471,7 +475,7 @@ void initialize_electrons() {
    
     n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
     E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.6666666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
-    mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //meters
+    mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
     v_f = sqrt(2 * E_f / constants::m_e); //A/fs
     Tr  = -1.0 * 27.7 / sqrt(E_f_A); // 1 / fs
 
@@ -904,6 +908,38 @@ void initialize_velocities() {
     atom_phonon_output.close();
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 }
+
+double B_E_disrtib(const double& eps) {
+
+  if(phonon_energy == 0) return 0.0;
+  else return 1.0/ (exp(eps / phonon_energy) - 1.0);
+}
+
+void create_phonon_distribution() {
+
+  std::ofstream p_distrib;
+  p_distrib.open("P_distrib");
+  
+  const double step_size = 2.0*mu_f / double(2.0*lattice_atoms);
+  double eps_variable = 0.0;
+ 
+  for( int a = 0; a < lattice_atoms; a++) {
+    phonon_distribution[a] = B_E_disrtib(eps_variable);
+
+    p_distrib << eps_variable << ", " << phonon_distribution[a] << "\n";
+    eps_variable += step_size;
+  }
+}
+
+double return_phonon_distribution() {
+    std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> phonon_selection(0,lattice_atoms);
+
+    return phonon_distribution[phonon_selection(gen)];
+}
+
 
 /*
 double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z) {
