@@ -491,9 +491,10 @@ void aa_scattering() {
   int a;
   double deltaE;
    double scattering_prob;
+   int b = 1;
   const static double aa_rate = -1.0*dt/1800.0;
     for(int e = 0; e < conduction_electrons; e++) {
-      
+      b++;
       if(atomic_nearest_atom_list[e][0]) continue;
 
       // double max_dif = 0.0;
@@ -510,6 +511,7 @@ void aa_scattering() {
       // else scattering_prob = excitation_constant*excitation_constant;
       
       deltaE = (atom_potential[e] - E_f_A);
+
       if(deltaE < 8.0) scattering_prob = 8.0;
       else scattering_prob = deltaE*deltaE;
 
