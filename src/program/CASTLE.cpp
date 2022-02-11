@@ -423,7 +423,7 @@ void initialize_lattice() {
         atom_position[array_index+1] = atom_anchor_position[array_index+1];
         atom_position[array_index+2] = atom_anchor_position[array_index+2];
 
-        atom_potential[a] = 2.0*E_f_A;
+        atom_potential[a] = E_f_A;
     }
 
     for(int a = 0; a < lattice_atoms; a++) {
@@ -487,9 +487,8 @@ void initialize_electrons() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
 
-    ea_rate = -1.0*dt/600.0;
-    ee_rate = -1.0*dt/1800.0;
-    
+    ea_rate = -1.0*dt*sqrt(E_f_A)/600.0;
+    ee_rate = -1.0*dt/180000.0;
 
     MEPE = 0;
     MEKE = 0;
@@ -500,9 +499,6 @@ void initialize_electrons() {
     e_a_coulomb_cutoff = 9;
     e_e_coulomb_cutoff = 9;
     
- //  std::cout << true << false << std::endl;
-    //double phi,theta, x_pos,y_pos,z_pos; //velocity_length = 0;
-  //  int array_index = 0;
     electron_nearest_electron_list.resize(conduction_electrons);
     electron_nearest_atom_list.resize(conduction_electrons);
     external_interaction_list.resize(conduction_electrons, false);
@@ -530,7 +526,7 @@ void initialize_electrons() {
         double y_pos = atom_anchor_position[3*e+1] + sin(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Sets on radius of screening depth from nucleus
         double z_pos = atom_anchor_position[3*e+2] + cos(phi)*screening_depth;//*radius_mod(gen);
 
-        electron_potential[e] = 2.0*E_f_A;
+        electron_potential[e] = E_f_A;
         
         if (x_pos < 0.0) x_pos += lattice_width;
         else if (x_pos > lattice_width) x_pos -= lattice_width;
@@ -875,7 +871,7 @@ void initialize_velocities() {
     
     TEKE = 0;
     // TLKE = 0;
-   double vel = sqrt(4*E_f_A/constants::m_e_r);
+   double vel = sqrt(2*E_f_A/constants::m_e_r);
 
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
@@ -1217,7 +1213,7 @@ void output_data() {
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", " 
-      << TEKE*e_heat_capacity  - E_f_A*conduction_electrons*e_heat_capacity << ", " << TLE*a_heat_capacity  - E_f_A*lattice_atoms*a_heat_capacity << ", "
+      << TEKE*e_heat_capacity  - E_f_A*conduction_electrons*e_heat_capacity << ", " << TLE*e_heat_capacity  - E_f_A*lattice_atoms*e_heat_capacity << ", "
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << a_a_scattering_count << ", " << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
@@ -1226,7 +1222,7 @@ void output_data() {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", "  
-      << TEKE*e_heat_capacity - E_f_A*conduction_electrons*e_heat_capacity << ", " << TLE*a_heat_capacity  - E_f_A*lattice_atoms*a_heat_capacity << ", "
+      << TEKE*e_heat_capacity - E_f_A*conduction_electrons*e_heat_capacity << ", " << TLE*e_heat_capacity  - E_f_A*lattice_atoms*e_heat_capacity << ", "
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(a_a_scattering_count) / CASTLE_output_rate << ", " << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;

@@ -94,24 +94,24 @@ void update_position(){
         new_electron_position[array_index_y] = y_pos;
         new_electron_position[array_index_z] = z_pos;
 
-        if(!equilibrium_step) {
-          // if(heat_pulse_sim) {
-          //   if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
-          //     external_interaction_list[e] = true;
-          //     external_interaction_list_count++;
-          //   }
-            // x_pos = atom_position[array_index];
-            // y_pos = atom_position[array_index_y];
-            // z_pos = atom_position[array_index_z];
-           // if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
-              // const static double sigma = 0.001;
-              // pump = heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000))); // AJ/fs
-              // particle_heat = pump * dt / double(conduction_electrons); // AJ / particle
+        // if(!equilibrium_step) {
+        //   // if(heat_pulse_sim) {
+        //   //   if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
+        //   //     external_interaction_list[e] = true;
+        //   //     external_interaction_list_count++;
+        //   //   }
+        //     // x_pos = atom_position[array_index];
+        //     // y_pos = atom_position[array_index_y];
+        //     // z_pos = atom_position[array_index_z];
+        //    // if(x_pos < 22.0 && x_pos > 14.0 && y_pos > 14.0 && y_pos < 22.0 && z_pos > 14.0 && z_pos < 22.0 ) {
+        //       // const static double sigma = 0.001;
+        //       // pump = heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000))); // AJ/fs
+        //       // particle_heat = pump * dt / double(conduction_electrons); // AJ / particle
          
-              // atom_potential[e] += particle_heat;
+        //       // atom_potential[e] += particle_heat;
           
-          if(applied_voltage_sim) electron_applied_voltage(e, array_index);
-        }
+        //   if(applied_voltage_sim) electron_applied_voltage(e, array_index);
+        // }
     }
    // std::cout << count << std::endl;
     // std::forward_list<int> scattering_reset_list;
@@ -133,7 +133,7 @@ void update_dynamics() {
      
       const static double sigma = 0.001;
       pump = heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000))); // AJ/fs
-      particle_heat = pump * dt / double(conduction_electrons); // AJ / particle
+      particle_heat = pump*dt/ double(conduction_electrons); // AJ / particle
           
       TTMe = d_TTMe;
       TTMp = d_TTMp;
@@ -156,11 +156,11 @@ void update_dynamics() {
         }
     }    
  
-    // #pragma omp parallel for private(array_index) schedule(static)
-    // for(int e = 0; e < conduction_electrons; e++) {
-    //   array_index = 3*e;
-    //   update_velocity(e, array_index, particle_heat);
-    // }
+    #pragma omp parallel for private(array_index) schedule(static)
+    for(int e = 0; e < conduction_electrons; e++) {
+      array_index = 3*e;
+      update_velocity(e, array_index, particle_heat);
+    }
 
     aa_scattering();
     if(ea_coupling) ea_scattering();
@@ -486,6 +486,8 @@ void aa_scattering() {
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<double> phonon_transfer_chance(0,1);
+    std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
+
   int a;
   double deltaE;
    double scattering_prob;
@@ -494,8 +496,6 @@ void aa_scattering() {
       
       if(atomic_nearest_atom_list[e][0]) continue;
 
-      int size = atomic_nearest_atom_list[e][1];
-      int a = atomic_nearest_atom_list[e][2];
       // double max_dif = 0.0;
       // for(int i = 2; i < size; i++) {
       //   if(atomic_nearest_atom_list[i][0]) continue;         
@@ -509,15 +509,19 @@ void aa_scattering() {
       // if(excitation_constant < 8.0) scattering_prob = 8.0;
       // else scattering_prob = excitation_constant*excitation_constant;
       
-      std::uniform_int_distribution<> atom_collision_vector(2,size);
-      a = atomic_nearest_atom_list[e][atom_collision_vector(gen)];
-      if(atomic_nearest_atom_list[a][0]) continue;
-
       deltaE = (atom_potential[e] - E_f_A);
-      if(phonon_transfer_chance(gen) > exp(aa_rate*deltaE)) {
+      if(deltaE < 8.0) scattering_prob = 8.0;
+      else scattering_prob = deltaE*deltaE;
 
-        deltaE *= 0.5;
-      //  deltaE = 0.5*(atom_potential[e] - atom_potential[a]);
+      if(phonon_transfer_chance(gen) > exp(aa_rate*scattering_prob)) {
+        
+        int size = atomic_nearest_atom_list[e][1];
+        int a = atomic_nearest_atom_list[e][2];
+        std::uniform_int_distribution<> atom_collision_vector(2,size);
+        a = atomic_nearest_atom_list[e][atom_collision_vector(gen)];
+        if(atomic_nearest_atom_list[a][0]) continue;
+
+        deltaE *= energy_coupling(gen);
         atom_potential[e] -= deltaE;
         atom_potential[a] += deltaE;  
 
@@ -537,17 +541,15 @@ void ea_scattering() {
             
             std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
             std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
- 
-  
+            std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
 
- // #pragma omp parallel for schedule(guided) reduction(+:e_a_scattering_count)
   for(int e = 0; e < conduction_electrons; e++) {
 
     int array_index;
     int atom_array;
     int size;
     double scattering_velocity;
-    double lattice_energy;
+    double lattice_energy, deltaE;
     size = electron_ea_scattering_list[e][1];
 
     std::uniform_int_distribution<> phonon_scattering_vector(2,size);
@@ -557,12 +559,13 @@ void ea_scattering() {
     
     lattice_energy = atom_potential[atom_array];
     scattering_velocity = electron_potential[e];
-    double deltaE = 0.5*(scattering_velocity - lattice_energy);
+
+   // double deltaE = 0.5*(scattering_velocity - lattice_energy);
+    if (scattering_velocity > lattice_energy) deltaE = energy_coupling(gen)*(scattering_velocity - E_f_A);
+    else  deltaE = energy_coupling(gen)*(E_f_A - lattice_energy);
+
+    if(scattering_chance(gen) > exp(ea_rate / sqrt(scattering_velocity))) {
       
-    if(scattering_chance(gen) > exp(ea_rate*deltaE )) {
-      
-      if (scattering_velocity > lattice_energy) deltaE = 0.5*(scattering_velocity - lattice_energy);
-      else  deltaE = 0.5*(E_f_A - lattice_energy);
       array_index = 3*e;
       //deltaE = 0.5*(scattering_velocity - E_f_A);
       double theta = Theta_pos_distrib(gen);
@@ -596,7 +599,7 @@ void ee_scattering() {
    
     std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
     std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
-
+    std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
  // #pragma omp parallel for reduction(+:e_e_scattering_count) schedule(guided)
   for(int e = 0; e < conduction_electrons; e++) {
     
@@ -611,21 +614,21 @@ void ee_scattering() {
    
     e_energy = electron_potential[e];
     
-    
-    // if(deltaE < 8.0) scattering_prob = 8.0;
-    // else scattering_prob = deltaE*deltaE;
-    size = electron_ee_scattering_list[e][1];
+     deltaE = (e_energy - E_f_A);
+    if(deltaE < 8.0) scattering_prob = 8.0;
+    else scattering_prob = deltaE*deltaE;
+   
+    if(scattering_chance(gen) > exp(ee_rate*scattering_prob)) {
+
+      size = electron_ee_scattering_list[e][1];
     std::uniform_int_distribution<> electron_collision_vector(2,size);
     electron_collision = electron_ee_scattering_list[e][electron_collision_vector(gen)];
 
     if(electron_ee_scattering_list[electron_collision][0])  continue;
      
     double d_e_energy = electron_potential[electron_collision];
-    deltaE = (e_energy - E_f_A);
-
-    if(scattering_chance(gen) > exp(ee_rate*deltaE)) {
-
-        deltaE *= 0.5;
+       
+        deltaE *= energy_coupling(gen);
         array_index = 3*e;
         //deltaE = 0.5*(e_energy - d_e_energy);
 
