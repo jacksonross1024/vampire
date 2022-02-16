@@ -254,6 +254,7 @@ namespace CASTLE {
    double TEPE; //Angstroms
    double TEKE; //Angstroms
    double TLE;
+   double Tp;
     
    double MEPE; //meters
    double MEKE; //meters

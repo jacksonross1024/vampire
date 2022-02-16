@@ -352,7 +352,8 @@ void initialize_lattice() {
     lattice_width  = cs::system_dimensions[1] + y_unit_size; // A
     lattice_depth  = cs::system_dimensions[2] + z_unit_size; // A
 
-    TLE = 0;
+    TLE = 0.0;
+    Tp = 0.0;
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
 
@@ -916,8 +917,8 @@ void create_phonon_distribution() {
   std::ofstream p_distrib;
   p_distrib.open("P_distrib");
   
-  const double step_size = 2.0*mu_f / double(2.0*lattice_atoms);
-  double eps_variable = 0.0;
+  const double step_size = mu_f / double(lattice_atoms);
+  double eps_variable = 0.45867514;
  
   for( int a = 0; a < lattice_atoms; a++) {
     phonon_distribution[a] = B_E_disrtib(eps_variable);
@@ -1222,7 +1223,7 @@ void output_data() {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", "  
-      << TEKE*e_heat_capacity - E_f_A*conduction_electrons*e_heat_capacity << ", " << TLE*e_heat_capacity  - E_f_A*lattice_atoms*e_heat_capacity << ", "
+      << TEKE*e_heat_capacity - E_f_A*conduction_electrons*e_heat_capacity << ", " << Tp << ", "
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(a_a_scattering_count) / CASTLE_output_rate << ", " << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;

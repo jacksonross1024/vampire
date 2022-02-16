@@ -131,8 +131,8 @@ void update_dynamics() {
     double particle_heat = 0.0;
     if(!equilibrium_step && heat_pulse_sim) {
      
-      const static double sigma = 0.001;
-      pump = heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000))); // AJ/fs
+      const static double sigma = dt * 0.1;
+      pump = dt*heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))); // AJ/fs
       particle_heat = pump*dt/ double(conduction_electrons); // AJ / particle
           
       TTMe = d_TTMe;
@@ -174,6 +174,8 @@ void update_dynamics() {
       electron_ea_scattering_list[e][0] = 0;
       atomic_nearest_atom_list[e][0] = 0;
     }
+
+    Tp = TLE*e_heat_capacity  - E_f_A*lattice_atoms*e_heat_capacity;
 }
 
 void update_velocity(const int& e, const int& array_index, const double& EKE) {
@@ -559,14 +561,14 @@ void ea_scattering() {
     atom_array = electron_ea_scattering_list[e][phonon_scattering_vector(gen)];
     if(electron_ea_scattering_list[atom_array][0]) continue;
     
-    lattice_energy = atom_potential[atom_array];
+    lattice_energy = atom_potential[atom_array]
     scattering_velocity = electron_potential[e];
 
    // double deltaE = 0.5*(scattering_velocity - lattice_energy);
     if (scattering_velocity > lattice_energy) deltaE = energy_coupling(gen)*(scattering_velocity - E_f_A);
     else  deltaE = energy_coupling(gen)*(E_f_A - lattice_energy);
 
-    if(scattering_chance(gen) > exp(ea_rate / sqrt(scattering_velocity))) {
+    if(scattering_chance(gen) > exp(ea_rate *sqrt(lattice_energy)/ sqrt(scattering_velocity))) {
       
       array_index = 3*e;
       //deltaE = 0.5*(scattering_velocity - E_f_A);
