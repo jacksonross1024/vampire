@@ -201,8 +201,11 @@ namespace CASTLE {
    double Tr; // inverse seconds
    double a_heat_capacity;
    double e_heat_capacity;
+   double a_heat_capacity_i;
+   double e_heat_capacity_i;
    double phonon_energy;
    double new_phonon_energy;
+   double zero_pt_lattice_e;
 
    double e_a_neighbor_cutoff;
    double e_a_coulomb_cutoff;

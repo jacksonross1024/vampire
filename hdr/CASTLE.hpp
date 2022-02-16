@@ -93,8 +93,11 @@ namespace CASTLE {
     extern double mu_r; //inverse reduced mass in reduced units
     extern double combined_mass; //inverse with reduced units
     extern double Tr; // inverse seconds
-    extern double a_heat_capacity;
-    extern double e_heat_capacity;
+    extern double a_heat_capacity; // AJ/K/mol -> AJ/K
+    extern double e_heat_capacity; // AJ/K/mol -> AJ/K
+    extern double a_heat_capacity_i; // K/AJ
+    extern double e_heat_capacity_i; // K/AJ
+    extern double zero_pt_lattice_e;
     extern double phonon_energy;
     extern double new_phonon_energy;
 

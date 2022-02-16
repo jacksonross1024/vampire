@@ -352,9 +352,7 @@ void initialize_lattice() {
     lattice_width  = cs::system_dimensions[1] + y_unit_size; // A
     lattice_depth  = cs::system_dimensions[2] + z_unit_size; // A
 
-    TLE = 0.0;
-    Tp = 0.0;
-
+    
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
 
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
@@ -365,8 +363,13 @@ void initialize_lattice() {
     E_f_A = E_f*1e20; //Angstroms
     mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
     v_f = sqrt(2 * E_f / constants::m_e); //meters
-    a_heat_capacity = 6.02e3 / (6.52e2 * lattice_atoms);
-    
+    a_heat_capacity_i = 6.02e3 / (6.52e2 * lattice_atoms);
+    a_heat_capacity = 1.0 / a_heat_capacity_i;
+
+    zero_pt_lattice_e = lattice_atoms*E_f_A;
+    Tp = sim::temperature;
+    TLE = Tp*a_heat_capacity + zero_pt_lattice_e;
+
     e_a_neighbor_cutoff = 100.0;
     e_e_neighbor_cutoff = 100.0;
     e_a_coulomb_cutoff = 9.0;
@@ -400,8 +403,8 @@ void initialize_lattice() {
     phonon_energy = 1.0;
     new_phonon_energy = 0.0;
     a_a_scattering_count = 0;
-
-    create_phonon_distribution();
+    
+   // create_phonon_distribution();
 
     int array_index; //local loop index variable
     atomic_nearest_atom_list.resize(lattice_atoms);
@@ -429,7 +432,7 @@ void initialize_lattice() {
 
     for(int a = 0; a < lattice_atoms; a++) {
       array_index = a*3;
-      lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "\n";  
+      lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "  " << a << "   " << return_phonon_distribution() << "\n";  
     }
     lattice_output.close(); 
 }
@@ -438,7 +441,7 @@ void initialize_lattice() {
 // Function call to initialize basic electron structures
 //      Will set up lattice and conduction electrons and velocites
 //      Any additional features, e.g. spin, will need to be added here through function calls
-//====================================
+//====================================./
 void initialize_electrons() {
 
     char directory [256];
@@ -480,7 +483,8 @@ void initialize_electrons() {
     v_f = sqrt(2 * E_f / constants::m_e); //A/fs
     Tr  = -1.0 * 27.7 / sqrt(E_f_A); // 1 / fs
 
-    e_heat_capacity = 6.02e3 / (2.52e2 * conduction_electrons);
+    e_heat_capacity_i = 6.02e3 / (2.52e2 * conduction_electrons);
+    e_heat_capacity = 1.0 / e_heat_capacity_i;
    // std::cout << Tr << std::endl;
     TEPE = 0;
     TEKE = 0;
@@ -870,8 +874,8 @@ void initialize_velocities() {
     std::uniform_real_distribution<double> Phi_Vel_distrib(0,1);
     std::normal_distribution<double> vel_distrib(1.0,0.05);
     
-    TEKE = 0;
-    // TLKE = 0;
+    TEKE = E_f_A * conduction_electrons;
+    
    double vel = sqrt(2*E_f_A/constants::m_e_r);
 
     #pragma omp parallel for schedule(static)
@@ -898,7 +902,7 @@ void initialize_velocities() {
 
     for(int e = 0; e < conduction_electrons; e++) {
       electron_velocity_output << e << ", " << electron_potential[e] << std::endl; // ", " << 1e10*constants::K*electron_potential[e] << ", " << 1e10*vel*vel*constants::m_e*0.5 << ", " << 1e10*(electron_potential[e]*constants::K + vel*vel*constants::m_e*0.5) << std::endl;
-      atom_phonon_output << e << ", " << atom_potential[e] << std::endl;
+    //  atom_phonon_output << e << ", " << atom_potential[e] << std::endl;
     }
 
     electron_velocity_output.close();
@@ -921,7 +925,7 @@ void create_phonon_distribution() {
   double eps_variable = 0.45867514;
  
   for( int a = 0; a < lattice_atoms; a++) {
-    phonon_distribution[a] = B_E_disrtib(eps_variable);
+    //phonon_distribution[a] = B_E_disrtib(eps_variable);
 
     p_distrib << eps_variable << ", " << phonon_distribution[a] << "\n";
     eps_variable += step_size;
@@ -934,7 +938,11 @@ double return_phonon_distribution() {
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> phonon_selection(0,lattice_atoms);
 
-    return phonon_distribution[phonon_selection(gen)];
+    double lattice_energy = Tp * a_heat_capacity / zero_pt_lattice_e;
+    int chosen = phonon_selection(gen);
+    if (!chosen) phonon_energy = (5.0*lattice_energy*E_f_A) + E_f_A;
+    else phonon_energy = E_f_A + (lattice_energy*E_f_A*log((1.0/chosen)+1));
+    return phonon_energy;
 }
 
 
@@ -1149,7 +1157,7 @@ void output_data() {
 
       electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
       electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  "\n";
-      atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
+      atomic_phonon_output << e << ", " << return_phonon_distribution() << "\n";
 
       // if(atom_potential[e] > E_f_A) {
       //   hot_a_list.push_front(e);
@@ -1192,14 +1200,14 @@ void output_data() {
 
     #pragma omp parallel for reduction(+:mean_ee_rad, mean_ea_rad)
     for (int e = 0; e < conduction_electrons; e++) {
-      mean_ea_rad += sqrt(mean_radius[2*e]);
+     // mean_ea_rad += sqrt(mean_radius[2*e]);
       mean_ee_rad += sqrt(mean_radius[2*e + 1]);
 
-      mean_radius[2*e] = 1.0;
+     // mean_radius[2*e] = 1.0;
       mean_radius[2*e + 1] = 1.0;
     }
     
-    mean_ea_rad /= conduction_electrons;
+  //  mean_ea_rad /= conduction_electrons;
     mean_ee_rad /= conduction_electrons;
     std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
 
@@ -1214,7 +1222,7 @@ void output_data() {
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", " 
-      << TEKE*e_heat_capacity  - E_f_A*conduction_electrons*e_heat_capacity << ", " << TLE*e_heat_capacity  - E_f_A*lattice_atoms*e_heat_capacity << ", "
+      << TEKE*e_heat_capacity_i  - E_f_A*conduction_electrons*e_heat_capacity_i << ", " << TLE*a_heat_capacity_i  - E_f_A*lattice_atoms*a_heat_capacity_i << ", "
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << a_a_scattering_count << ", " << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
@@ -1223,7 +1231,7 @@ void output_data() {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", "  
-      << TEKE*e_heat_capacity - E_f_A*conduction_electrons*e_heat_capacity << ", " << Tp << ", "
+      << TEKE*e_heat_capacity_i - E_f_A*conduction_electrons*e_heat_capacity_i << ", " << Tp << ", "
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(a_a_scattering_count) / CASTLE_output_rate << ", " << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;

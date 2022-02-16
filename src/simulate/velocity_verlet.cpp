@@ -33,8 +33,8 @@ namespace CASTLE {
 
 int velocity_verlet_step(double time_step) {
     
-    TEKE = 0.0;
-    TLE = 0.0;
+  //  TEKE = 0.0;
+  //  TLE = 0.0;
             if (err::check) std::cout << "Updating new electron position." << std::endl;
     update_position();
 
@@ -67,10 +67,9 @@ void update_position(){
     int array_index,array_index_y,array_index_z;
     double x_pos,y_pos,z_pos;
 
-    double pump, particle_heat;
+  //  double pump, particle_heat;
    // external_interaction_list_count = 0;
-    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) \
-    schedule(static) reduction(+:x_flux,y_flux,z_flux)
+    #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) schedule(static) reduction(+:x_flux,y_flux,z_flux)
     for (int e = 0; e < conduction_electrons; e++){ 
 
         array_index = 3*e;
@@ -132,15 +131,16 @@ void update_dynamics() {
     if(!equilibrium_step && heat_pulse_sim) {
      
       const static double sigma = dt * 0.1;
-      pump = dt*heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))); // AJ/fs
+      pump = heat_pulse * sigma * 7.5e5 * exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))); // AJ/fs
       particle_heat = pump*dt/ double(conduction_electrons); // AJ / particle
-          
+      TEKE += pump*dt;
+
       TTMe = d_TTMe;
       TTMp = d_TTMp;
 
-      if(TTMe > 1.0)  d_TTMe = ((2.15e-1*(TTMp - TTMe)+pump)*dt*e_heat_capacity)      + TTMe;
-      else            d_TTMe = ((2.15e-1*(TTMp - TTMe)+pump)*dt*e_heat_capacity)      + TTMe;
-                      d_TTMp = ( 2.15e-1*(TTMe - TTMp)      *dt*a_heat_capacity)      + TTMp;
+      if(TTMe > 1.0)  d_TTMe = ((2.15e-1*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
+      else            d_TTMe = ((2.15e-1*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
+                      d_TTMp = ( 2.15e-1*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
     }
 
     #pragma omp parallel for private(array_index) schedule(static)
@@ -148,10 +148,10 @@ void update_dynamics() {
         array_index = 3*e;        
 
         if(current_time_step % 15 == 0) {
-          e_a_coulomb(e, array_index);
+         // e_a_coulomb(e, array_index);
           e_e_coulomb(e, array_index); 
         } else {
-          neighbor_e_a_coulomb(e, array_index);
+        //  neighbor_e_a_coulomb(e, array_index);
           neighbor_e_e_coulomb(e, array_index);   
         }
     }    
@@ -162,20 +162,20 @@ void update_dynamics() {
       update_velocity(e, array_index, particle_heat);
     }
 
-    aa_scattering();
+  //  aa_scattering();
     if(ea_coupling) ea_scattering();
     if(ee_coupling) ee_scattering();
 
-    #pragma omp parallel for reduction(+:TEKE,TLE) schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic)
     for(int e = 0; e < conduction_electrons; e++) {
-      TEKE += electron_potential[e];
-      TLE  += atom_potential[e];
+     // TEKE += electron_potential[e];
+    //  TLE  += atom_potential[e];
       electron_ee_scattering_list[e][0] = 0;
-      electron_ea_scattering_list[e][0] = 0;
-      atomic_nearest_atom_list[e][0] = 0;
+     // electron_ea_scattering_list[e][0] = 0;
+    //  atomic_nearest_atom_list[e][0] = 0;
     }
 
-    Tp = TLE*e_heat_capacity  - E_f_A*lattice_atoms*e_heat_capacity;
+    Tp = a_heat_capacity_i*(TLE  - E_f_A*lattice_atoms);
 }
 
 void update_velocity(const int& e, const int& array_index, const double& EKE) {
@@ -231,7 +231,7 @@ void e_a_coulomb(const int& e, const int& array_index){
         if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
         else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
 
-      length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
+        length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance); //Angstroms
         
         if(length > e_a_neighbor_cutoff) continue;
 
@@ -248,14 +248,13 @@ void e_a_coulomb(const int& e, const int& array_index){
         }
   }
 
-  atomic_nearest_electron_list[e][0] = nearest_electron_count;
-  electron_ea_scattering_list[e][1] = count;
+ atomic_nearest_electron_list[e][0] = nearest_electron_count;
+ electron_ea_scattering_list[e][1] = count;
  
 }
 
 void neighbor_e_a_coulomb(const int& e, const int& array_index){
                      
-
     double x_distance;
     double y_distance;
     double z_distance;
@@ -296,7 +295,7 @@ void neighbor_e_a_coulomb(const int& e, const int& array_index){
         count++;
       }
     }
-    electron_ea_scattering_list[e][1] = count;
+   electron_ea_scattering_list[e][1] = count;
 }
 
 void e_e_coulomb(const int& e, const int& array_index) {
@@ -542,34 +541,24 @@ void ea_scattering() {
             std::random_device rd;  //Will be used to obtain a seed for the random number engine
             std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
             std::uniform_real_distribution<double> scattering_chance(0,1);
-            
+       //     std::uniform_int_distribution<> phonon_selection(0, lattice_atoms);
             std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
             std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
             std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
-
+  #pragma omp parallel for reduction(+:e_a_scattering_count)
   for(int e = 0; e < conduction_electrons; e++) {
 
     int array_index;
-    int atom_array;
-    int size;
     double scattering_velocity;
     double lattice_energy, deltaE;
-    size = electron_ea_scattering_list[e][1];
 
-    std::uniform_int_distribution<> phonon_scattering_vector(2,size);
- 
-    atom_array = electron_ea_scattering_list[e][phonon_scattering_vector(gen)];
-    if(electron_ea_scattering_list[atom_array][0]) continue;
-    
-    lattice_energy = atom_potential[atom_array]
     scattering_velocity = electron_potential[e];
 
-   // double deltaE = 0.5*(scattering_velocity - lattice_energy);
-    if (scattering_velocity > lattice_energy) deltaE = energy_coupling(gen)*(scattering_velocity - E_f_A);
-    else  deltaE = energy_coupling(gen)*(E_f_A - lattice_energy);
-
-    if(scattering_chance(gen) > exp(ea_rate *sqrt(lattice_energy)/ sqrt(scattering_velocity))) {
+    if(scattering_chance(gen) > exp(ea_rate / sqrt(scattering_velocity))) {
       
+      lattice_energy = return_phonon_distribution();
+      if (scattering_velocity > lattice_energy) deltaE = energy_coupling(gen)*(scattering_velocity - E_f_A);
+      else  deltaE = energy_coupling(gen)*(E_f_A - lattice_energy);
       array_index = 3*e;
       //deltaE = 0.5*(scattering_velocity - E_f_A);
       double theta = Theta_pos_distrib(gen);
@@ -577,16 +566,17 @@ void ea_scattering() {
       scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)*constants::m_e_r_i);
 
       electron_potential[e] -= deltaE;
+
+      #pragma omp atomic update
+      TEKE -= deltaE;
+
+      #pragma omp atomic update
+      TLE += deltaE;
+
       electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi);     
       
-    //  #pragma omp atomic
-      atom_potential[atom_array] += deltaE;
-
-    //  #pragma omp atomic write
-      electron_ea_scattering_list[atom_array][0] = 1;
-
       electron_ee_scattering_list[e][0] = 1;
 
       e_a_scattering_count++;
