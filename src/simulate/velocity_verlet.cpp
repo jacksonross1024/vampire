@@ -67,8 +67,6 @@ void update_position(){
     int array_index,array_index_y,array_index_z;
     double x_pos,y_pos,z_pos;
 
-  //  double pump, particle_heat;
-   // external_interaction_list_count = 0;
     #pragma omp parallel for private(array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) schedule(static) reduction(+:x_flux,y_flux,z_flux)
     for (int e = 0; e < conduction_electrons; e++){ 
 
@@ -106,9 +104,7 @@ void update_position(){
         //       // const static double sigma = 0.001;
         //       // pump = heat_pulse * sigma * 7.5e6 * exp(-0.5*sigma*sigma*double((current_time_step - 4000)*(current_time_step - 4000))); // AJ/fs
         //       // particle_heat = pump * dt / double(conduction_electrons); // AJ / particle
-         
         //       // atom_potential[e] += particle_heat;
-          
         //   if(applied_voltage_sim) electron_applied_voltage(e, array_index);
         // }
     }
@@ -143,7 +139,7 @@ void update_dynamics() {
                       d_TTMp = ( 2.15e-1*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
     }
 
-    #pragma omp parallel for private(array_index) schedule(dynamic, 20)
+    #pragma omp parallel for private(array_index) schedule(guided)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;        
 
@@ -551,12 +547,12 @@ void ea_scattering(const int& e, const int& array_index) {
     if(scattering_chance(gen) > exp(ea_rate / sqrt(scattering_velocity))) {
       
       double lattice_energy = return_phonon_distribution();
-      double deltaEe = scattering_velocity - (TEKE / conduction_electrons);
-      double deltaEp = lattice_energy - (TLE / lattice_atoms);
-      double deltaE = (deltaEe - deltaEp);
+      double deltaEe = scattering_velocity - E_f_A;
+      double deltaEp = lattice_energy - E_f_A;
+      double deltaE = energy_coupling(gen)*deltaEe;
+      if (deltaEp > deltaE) deltaE = energy_coupling(gen)*deltaEp;
       
-     // array_index = 3*e;
-      //deltaE = 0.5*(scattering_velocity - E_f_A);
+
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
       scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)*constants::m_e_r_i);
@@ -604,19 +600,19 @@ void ee_scattering() {
    
     e_energy = electron_potential[e];
     
-     deltaE = (e_energy - E_f_A);
+    deltaE = (e_energy - E_f_A);
     if(deltaE < 8.0) scattering_prob = 8.0;
     else scattering_prob = deltaE*deltaE;
    
     if(scattering_chance(gen) > exp(ee_rate*scattering_prob)) {
 
       size = electron_ee_scattering_list[e][1];
-    std::uniform_int_distribution<> electron_collision_vector(2,size);
-    electron_collision = electron_ee_scattering_list[e][electron_collision_vector(gen)];
+      std::uniform_int_distribution<> electron_collision_vector(2,size);
+      electron_collision = electron_ee_scattering_list[e][electron_collision_vector(gen)];
 
-    if(electron_ee_scattering_list[electron_collision][0])  continue;
+      if(electron_ee_scattering_list[electron_collision][0])  continue;
      
-    double d_e_energy = electron_potential[electron_collision];
+      double d_e_energy = electron_potential[electron_collision];
        
         deltaE *= energy_coupling(gen);
         array_index = 3*e;

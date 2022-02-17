@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-         omp_set_dynamic(0);
-         omp_set_num_threads(6);
+        // omp_set_dynamic(0);
+       //  omp_set_num_threads(4);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -1157,9 +1157,9 @@ void output_data() {
 
       electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
       electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  "\n";
-      velocity_length = return_phonon_distribution();
-      atomic_phonon_output << e << ", " << velocity_length << "\n";
-      TPE += velocity_length;
+     // velocity_length = return_phonon_distribution();
+      //atomic_phonon_output << e << ", " << velocity_length << "\n";
+      //TPE += velocity_length;
       // if(atom_potential[e] > E_f_A) {
       //   hot_a_list.push_front(e);
       //   hot_atoms++;
