@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        // omp_set_dynamic(0);
-        // omp_set_num_threads(10);
+         omp_set_dynamic(0);
+         omp_set_num_threads(6);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -936,7 +936,7 @@ double return_phonon_distribution() {
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<> phonon_selection(0,lattice_atoms);
+    std::uniform_int_distribution<> phonon_selection(0,100);
 
     double lattice_energy = Tp * a_heat_capacity / zero_pt_lattice_e;
     int chosen = phonon_selection(gen);
@@ -1100,7 +1100,7 @@ double e_p_scattering(int e, int a, const double& x_distance, const double& y_di
 } 
 */
 void output_data() {
-        
+        double TPE = 0.0;
     //=========
     // Output equilibration step data
     //=========
@@ -1132,10 +1132,10 @@ void output_data() {
     int array_index, array_index_y, array_index_z;
     double x_pos, y_pos, z_pos;
     double x_vel, y_vel ,z_vel, velocity_length; 
-    std::forward_list<int> hot_e_list;
-    std::forward_list<int> hot_a_list;
-    int hot_electrons = 0;
-    int hot_atoms = 0;
+    // std::forward_list<int> hot_e_list;
+    // std::forward_list<int> hot_a_list;
+    // int hot_electrons = 0;
+    // int hot_atoms = 0;
 
     for(int e = 0; e < conduction_electrons; e++) {
       array_index   = 3*e;
@@ -1157,8 +1157,9 @@ void output_data() {
 
       electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
       electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  "\n";
-      atomic_phonon_output << e << ", " << return_phonon_distribution() << "\n";
-
+      velocity_length = return_phonon_distribution();
+      atomic_phonon_output << e << ", " << velocity_length << "\n";
+      TPE += velocity_length;
       // if(atom_potential[e] > E_f_A) {
       //   hot_a_list.push_front(e);
       //   hot_atoms++;
@@ -1198,17 +1199,15 @@ void output_data() {
     double mean_ea_rad = 0.0;
     double mean_ee_rad = 0.0;
 
-    #pragma omp parallel for reduction(+:mean_ee_rad, mean_ea_rad)
-    for (int e = 0; e < conduction_electrons; e++) {
-     // mean_ea_rad += sqrt(mean_radius[2*e]);
-      mean_ee_rad += sqrt(mean_radius[2*e + 1]);
-
-     // mean_radius[2*e] = 1.0;
-      mean_radius[2*e + 1] = 1.0;
-    }
-    
+    // #pragma omp parallel for reduction(+:mean_ee_rad, mean_ea_rad)
+    // for (int e = 0; e < conduction_electrons; e++) {
+    //  // mean_ea_rad += sqrt(mean_radius[2*e]);
+    //   mean_ee_rad += sqrt(mean_radius[2*e + 1]);
+    //  // mean_radius[2*e] = 1.0;
+    //   mean_radius[2*e + 1] = 1.0;
+    // }
   //  mean_ea_rad /= conduction_electrons;
-    mean_ee_rad /= conduction_electrons;
+  //  mean_ee_rad /= conduction_electrons;
     std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
 
     mean_data.precision(10);
@@ -1222,7 +1221,7 @@ void output_data() {
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", " 
-      << TEKE*e_heat_capacity_i  - E_f_A*conduction_electrons*e_heat_capacity_i << ", " << TLE*a_heat_capacity_i  - E_f_A*lattice_atoms*a_heat_capacity_i << ", "
+      << TEKE*e_heat_capacity_i  - E_f_A*conduction_electrons*e_heat_capacity_i << ", " << TLE*a_heat_capacity_i  - E_f_A*lattice_atoms*a_heat_capacity_i << ", "  \
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << a_a_scattering_count << ", " << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
@@ -1231,7 +1230,7 @@ void output_data() {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", "  
-      << TEKE*e_heat_capacity_i - E_f_A*conduction_electrons*e_heat_capacity_i << ", " << Tp << ", "
+      << TEKE*e_heat_capacity_i - E_f_A*conduction_electrons*e_heat_capacity_i << ", " << Tp  << ", "
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(a_a_scattering_count) / CASTLE_output_rate << ", " << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;

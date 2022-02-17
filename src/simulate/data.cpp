@@ -320,7 +320,7 @@ namespace CASTLE {
    void electron_applied_voltage(const int& e, const int& array_index);
 
    void aa_scattering();
-   void ea_scattering();
+   void ea_scattering(const int& e, const int& array_index);
    void ee_scattering();
  /*
    double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);

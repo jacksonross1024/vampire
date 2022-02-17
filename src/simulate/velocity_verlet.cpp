@@ -143,7 +143,7 @@ void update_dynamics() {
                       d_TTMp = ( 2.15e-1*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
     }
 
-    #pragma omp parallel for private(array_index) schedule(static)
+    #pragma omp parallel for private(array_index) schedule(dynamic, 20)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;        
 
@@ -154,17 +154,13 @@ void update_dynamics() {
         //  neighbor_e_a_coulomb(e, array_index);
           neighbor_e_e_coulomb(e, array_index);   
         }
+        update_velocity(e, array_index, particle_heat);
+       // if(ea_coupling) 
+        ea_scattering(e, array_index);
     }    
- 
-    #pragma omp parallel for private(array_index) schedule(static)
-    for(int e = 0; e < conduction_electrons; e++) {
-      array_index = 3*e;
-      update_velocity(e, array_index, particle_heat);
-    }
-
-  //  aa_scattering();
-    if(ea_coupling) ea_scattering();
-    if(ee_coupling) ee_scattering();
+    
+   // if(ee_coupling)
+    ee_scattering();
 
     #pragma omp parallel for schedule(dynamic)
     for(int e = 0; e < conduction_electrons; e++) {
@@ -332,7 +328,7 @@ void e_e_coulomb(const int& e, const int& array_index) {
             
             if(length > e_e_coulomb_cutoff) continue;
 
-            if(mean_radius[2*e + 1] > length) mean_radius[2*e + 1] = length;
+           // if(mean_radius[2*e + 1] > length) mean_radius[2*e + 1] = length;
             if(ee_coupling) {
                 electron_ee_scattering_list[e][count] = i;
                 count++;
@@ -371,7 +367,7 @@ void neighbor_e_e_coulomb(const int& e, const int& array_index) {
         length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
         if (length > e_e_coulomb_cutoff) continue; 
         
-        if(mean_radius[2*e + 1] > length) mean_radius[2*e + 1] = length;
+       // if(mean_radius[2*e + 1] > length) mean_radius[2*e + 1] = length;
   
         if(ee_coupling) {
           electron_ee_scattering_list[e][count] = array_index_i/3;
@@ -536,7 +532,7 @@ void aa_scattering() {
     }
 }
 
-void ea_scattering() {
+void ea_scattering(const int& e, const int& array_index) {
             std::srand(std::time(nullptr));
             std::random_device rd;  //Will be used to obtain a seed for the random number engine
             std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -545,21 +541,21 @@ void ea_scattering() {
             std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
             std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
             std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
-  #pragma omp parallel for reduction(+:e_a_scattering_count)
-  for(int e = 0; e < conduction_electrons; e++) {
 
-    int array_index;
-    double scattering_velocity;
-    double lattice_energy, deltaE;
+   // int array_index;
+  //  double scattering_velocity;
+    //double lattice_energy, deltaE;
 
-    scattering_velocity = electron_potential[e];
+    double scattering_velocity = electron_potential[e];
 
     if(scattering_chance(gen) > exp(ea_rate / sqrt(scattering_velocity))) {
       
-      lattice_energy = return_phonon_distribution();
-      if (scattering_velocity > lattice_energy) deltaE = energy_coupling(gen)*(scattering_velocity - E_f_A);
-      else  deltaE = energy_coupling(gen)*(E_f_A - lattice_energy);
-      array_index = 3*e;
+      double lattice_energy = return_phonon_distribution();
+      double deltaEe = scattering_velocity - (TEKE / conduction_electrons);
+      double deltaEp = lattice_energy - (TLE / lattice_atoms);
+      double deltaE = (deltaEe - deltaEp);
+      
+     // array_index = 3*e;
       //deltaE = 0.5*(scattering_velocity - E_f_A);
       double theta = Theta_pos_distrib(gen);
       double phi   = Phi_pos_distrib(gen);
@@ -579,9 +575,9 @@ void ea_scattering() {
       
       electron_ee_scattering_list[e][0] = 1;
 
+      #pragma omp atomic update
       e_a_scattering_count++;
     }
-  }
 }
 
 void ee_scattering() {

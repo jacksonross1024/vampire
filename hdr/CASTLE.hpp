@@ -222,7 +222,7 @@ namespace CASTLE {
     extern void electron_applied_voltage(const int& e, const int& array_index);
  
     extern void aa_scattering();
-    extern void ea_scattering();
+    extern void ea_scattering(const int& e, const int& array_index);
     extern void ee_scattering();
  /*
     extern double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
