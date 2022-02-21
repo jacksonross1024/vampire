@@ -252,6 +252,10 @@ namespace CASTLE {
    std::vector<std::vector<int> > electron_ee_scattering_list;
    std::vector<std::vector<int> > electron_ea_scattering_list;
    std::vector<double> phonon_distribution;
+
+   MTRand_closed uniform_random;
+   MTRand_int32 int_random;
+
     //outputs
    
    double TEPE; //Angstroms
@@ -335,7 +339,7 @@ namespace CASTLE {
    long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list);
 
 */
-   double B_E_distrib(const double& eps);
+   double B_E_distrib();
    void create_phonon_distribution();
    double return_phonon_distribution();
 

@@ -287,6 +287,8 @@ void initialize () {
     d_TTMe = 0.0;
     d_TTMp = 0.0;
 
+    uniform_random.seed(100);
+    int_random.seed(100);
     // Initialize lattice
     //========
     initialize_positions();
@@ -492,7 +494,7 @@ void initialize_electrons() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
 
-    ea_rate = -1.0*dt*sqrt(E_f_A)/600.0;
+    ea_rate = -1.0*dt/600.0;
     ee_rate = -1.0*dt/180000.0;
 
     MEPE = 0;
@@ -876,7 +878,7 @@ void initialize_velocities() {
     
     TEKE = E_f_A * conduction_electrons;
     
-   double vel = sqrt(2*E_f_A/constants::m_e_r);
+   double vel = sqrt(2.0*E_f_A/constants::m_e_r);
 
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
@@ -910,10 +912,13 @@ void initialize_velocities() {
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 }
 
-double B_E_disrtib(const double& eps) {
+double B_E_distrib() {
 
-  if(phonon_energy == 0) return 0.0;
-  else return 1.0/ (exp(eps / phonon_energy) - 1.0);
+  double lattice_energy = (Tp*a_heat_capacity - zero_pt_lattice_e) / E_f_A;
+  return (E_f_A + (E_f_A* (1.0*lattice_energy*lattice_energy*lattice_energy*lattice_energy) \
+                        + (0.9*lattice_energy*lattice_energy*lattice_energy)));
+
+      // polynomial fit to the <omega**2> integration of the phonon BE distribution from 0 to 2 e/E_f
 }
 
 void create_phonon_distribution() {

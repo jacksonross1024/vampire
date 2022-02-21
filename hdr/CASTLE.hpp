@@ -49,6 +49,7 @@
 #include "constants.hpp"
 #include "errors.hpp"
 #include "stopwatch.hpp"
+#include "random.hpp"
 
 
 
@@ -154,6 +155,8 @@ namespace CASTLE {
     extern std::vector<std::vector<int> > electron_ea_scattering_list;
 
     extern std::vector<double> phonon_distribution;
+    extern MTRand_closed uniform_random;
+    extern MTRand_int32 int_random;
     //outputs
    
     extern double TEPE; //Angstroms
@@ -231,7 +234,7 @@ namespace CASTLE {
     extern double reinitialize_electron_conserve_momentum(std::vector<double>& captured_electron_list);
 */
 
-    extern double B_E_distrib(const double& eps);
+    extern double B_E_distrib();
     extern void create_phonon_distribution();
     extern double return_phonon_distribution();
 }

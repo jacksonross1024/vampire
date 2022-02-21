@@ -44,8 +44,6 @@ int velocity_verlet_step(double time_step) {
     
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
     
-
-  
     //reset integration
     CASTLE_real_time += dt;
     current_time_step++;
@@ -158,7 +156,7 @@ void update_dynamics() {
    // if(ee_coupling)
     ee_scattering();
 
-    #pragma omp parallel for schedule(dynamic)
+    //#pragma omp parallel for schedule(dynamic)
     for(int e = 0; e < conduction_electrons; e++) {
      // TEKE += electron_potential[e];
     //  TLE  += atom_potential[e];
@@ -529,32 +527,32 @@ void aa_scattering() {
 }
 
 void ea_scattering(const int& e, const int& array_index) {
-            std::srand(std::time(nullptr));
-            std::random_device rd;  //Will be used to obtain a seed for the random number engine
-            std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-            std::uniform_real_distribution<double> scattering_chance(0,1);
+           // std::srand(std::time(nullptr));
+           /// std::random_device rd;  //Will be used to obtain a seed for the random number engine
+           // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+         //   std::uniform_real_distribution<double> scattering_chance(0,1);
        //     std::uniform_int_distribution<> phonon_selection(0, lattice_atoms);
-            std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
-            std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
-            std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
+          //  std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
+           // std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
+            //std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
 
    // int array_index;
   //  double scattering_velocity;
     //double lattice_energy, deltaE;
 
     double scattering_velocity = electron_potential[e];
+    double lattice_energy = B_E_distrib();
 
-    if(scattering_chance(gen) > exp(ea_rate / sqrt(scattering_velocity))) {
+    if(uniform_random() > exp(ea_rate * lattice_energy / scattering_velocity)) {
       
-      double lattice_energy = return_phonon_distribution();
       double deltaEe = scattering_velocity - E_f_A;
       double deltaEp = lattice_energy - E_f_A;
-      double deltaE = energy_coupling(gen)*deltaEe;
-      if (deltaEp > deltaE) deltaE = energy_coupling(gen)*deltaEp;
+      double deltaE = 0.5*deltaEe;
+      if (deltaEp > deltaE) deltaE = 0.5*deltaEp;
       
 
-      double theta = Theta_pos_distrib(gen);
-      double phi   = Phi_pos_distrib(gen);
+      double theta = uniform_random() * 2.0 * M_PI;//Theta_pos_distrib(gen);
+      double phi   = uniform_random() * M_PI; //Phi_pos_distrib(gen);
       scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)*constants::m_e_r_i);
 
       electron_potential[e] -= deltaE;
@@ -578,14 +576,14 @@ void ea_scattering(const int& e, const int& array_index) {
 
 void ee_scattering() {
 
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<double> scattering_chance(0,1);
+    // std::srand(std::time(nullptr));
+    // std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    // //std::uniform_real_distribution<double> scattering_chance(0,1);
    
-    std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
-    std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
-    std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
+    // std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
+    // std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
+    // std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
  // #pragma omp parallel for reduction(+:e_e_scattering_count) schedule(guided)
   for(int e = 0; e < conduction_electrons; e++) {
     
@@ -604,22 +602,23 @@ void ee_scattering() {
     if(deltaE < 8.0) scattering_prob = 8.0;
     else scattering_prob = deltaE*deltaE;
    
-    if(scattering_chance(gen) > exp(ee_rate*scattering_prob)) {
+    if(uniform_random() > exp(ee_rate*scattering_prob)) {
 
-      size = electron_ee_scattering_list[e][1];
-      std::uniform_int_distribution<> electron_collision_vector(2,size);
-      electron_collision = electron_ee_scattering_list[e][electron_collision_vector(gen)];
+      size = electron_ee_scattering_list[e][1] - 2;
+      //std::uniform_int_distribution<> electron_collision_vector(2,size);
+      electron_collision = 2 + (int_random() % size);
+      electron_collision = electron_ee_scattering_list[e][electron_collision];
 
       if(electron_ee_scattering_list[electron_collision][0])  continue;
      
       double d_e_energy = electron_potential[electron_collision];
        
-        deltaE *= energy_coupling(gen);
+        deltaE *= 0.5;
         array_index = 3*e;
         //deltaE = 0.5*(e_energy - d_e_energy);
 
-        double theta = theta_distrib(gen); 
-        double phi = phi_distrib(gen); 
+        double theta = uniform_random()*2.0*M_PI; //theta_distrib(gen); 
+        double phi = uniform_random()*M_PI; //phi_distrib(gen); 
         double scattering_velocity = sqrt(2.0*(e_energy - deltaE)*constants::m_e_r_i);
 
         double x_vec = cos(theta)*sin(phi);
