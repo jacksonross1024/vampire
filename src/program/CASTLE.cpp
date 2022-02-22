@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-        // omp_set_dynamic(0);
-       //  omp_set_num_threads(4);
+       // omp_set_dynamic(0);
+      //  omp_set_num_threads(1);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -287,8 +287,8 @@ void initialize () {
     d_TTMe = 0.0;
     d_TTMp = 0.0;
 
-    uniform_random.seed(100);
-    int_random.seed(100);
+    uniform_random.seed(2137082040);
+    int_random.seed(2137082040);
     // Initialize lattice
     //========
     initialize_positions();

@@ -22,7 +22,7 @@ material:file = Co.mat
 # Simulation attributes:
 #------------------------------------------
 sim:temperature = 0.0
-sim:time-steps-increment = 10
+sim:time-steps-increment = 100
 sim:equilibration-time-steps = 1
 sim:loop-time-steps = 30000
 sim:time-step = 1e-1 !fs

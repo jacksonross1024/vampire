@@ -150,13 +150,14 @@ void update_dynamics() {
         }
         update_velocity(e, array_index, particle_heat);
        // if(ea_coupling) 
-        ea_scattering(e, array_index);
+      
     }    
-    
+    //int e;
    // if(ee_coupling)
-    ee_scattering();
+    
+   ee_scattering();
 
-    //#pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic) num_threads(2)
     for(int e = 0; e < conduction_electrons; e++) {
      // TEKE += electron_potential[e];
     //  TLE  += atom_potential[e];
@@ -539,7 +540,8 @@ void ea_scattering(const int& e, const int& array_index) {
    // int array_index;
   //  double scattering_velocity;
     //double lattice_energy, deltaE;
-
+  //for(int e = 0; e < conduction_electrons; e++) {
+   // int array_index = 3*e;
     double scattering_velocity = electron_potential[e];
     double lattice_energy = B_E_distrib();
 
@@ -548,8 +550,7 @@ void ea_scattering(const int& e, const int& array_index) {
       double deltaEe = scattering_velocity - E_f_A;
       double deltaEp = lattice_energy - E_f_A;
       double deltaE = 0.5*deltaEe;
-      if (deltaEp > deltaE) deltaE = 0.5*deltaEp;
-      
+      if (deltaEp > deltaE) deltaE = -0.5*deltaEp;
 
       double theta = uniform_random() * 2.0 * M_PI;//Theta_pos_distrib(gen);
       double phi   = uniform_random() * M_PI; //Phi_pos_distrib(gen);
@@ -557,10 +558,10 @@ void ea_scattering(const int& e, const int& array_index) {
 
       electron_potential[e] -= deltaE;
 
-      #pragma omp atomic update
+     #pragma omp atomic update
       TEKE -= deltaE;
 
-      #pragma omp atomic update
+     #pragma omp atomic update
       TLE += deltaE;
 
       electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
@@ -572,6 +573,7 @@ void ea_scattering(const int& e, const int& array_index) {
       #pragma omp atomic update
       e_a_scattering_count++;
     }
+  
 }
 
 void ee_scattering() {
@@ -592,13 +594,13 @@ void ee_scattering() {
     int electron_collision;
     double scattering_prob;
     double e_energy;
-    double deltaE;
+    
 
     if(electron_ee_scattering_list[e][0]) continue;
    
     e_energy = electron_potential[e];
     
-    deltaE = (e_energy - E_f_A);
+    double deltaE = (e_energy - E_f_A);
     if(deltaE < 8.0) scattering_prob = 8.0;
     else scattering_prob = deltaE*deltaE;
    
@@ -606,7 +608,9 @@ void ee_scattering() {
 
       size = electron_ee_scattering_list[e][1] - 2;
       //std::uniform_int_distribution<> electron_collision_vector(2,size);
+      if(size < 3) continue;
       electron_collision = 2 + (int_random() % size);
+      //if(electron_collision >= size) std::cout << size << ", " << electron_collision << std::endl;
       electron_collision = electron_ee_scattering_list[e][electron_collision];
 
       if(electron_ee_scattering_list[electron_collision][0])  continue;
