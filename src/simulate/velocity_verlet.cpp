@@ -150,14 +150,14 @@ void update_dynamics() {
         }
         update_velocity(e, array_index, particle_heat);
        // if(ea_coupling) 
-      
+        ea_scattering(e, array_index);
     }    
     //int e;
    // if(ee_coupling)
     
    ee_scattering();
 
-    #pragma omp parallel for schedule(dynamic) num_threads(2)
+    #pragma omp parallel for schedule(dynamic) //num_threads(2)
     for(int e = 0; e < conduction_electrons; e++) {
      // TEKE += electron_potential[e];
     //  TLE  += atom_potential[e];
@@ -166,7 +166,8 @@ void update_dynamics() {
     //  atomic_nearest_atom_list[e][0] = 0;
     }
 
-    Tp = a_heat_capacity_i*(TLE  - E_f_A*lattice_atoms);
+    Tp = a_heat_capacity_i*(TLE  - zero_pt_lattice_e);
+   // std::cout << B_E_distrib() << std::endl;
 }
 
 void update_velocity(const int& e, const int& array_index, const double& EKE) {
@@ -543,15 +544,15 @@ void ea_scattering(const int& e, const int& array_index) {
   //for(int e = 0; e < conduction_electrons; e++) {
    // int array_index = 3*e;
     double scattering_velocity = electron_potential[e];
-    double lattice_energy = B_E_distrib();
-
+    double lattice_energy = B_E_distrib();//((Tp * a_heat_capacity) + zero_pt_lattice_e)/ lattice_atoms; //B_E_distrib();
+    //std::cout << lattice_energy << ", " << scattering_velocity<< std::endl;
     if(uniform_random() > exp(ea_rate * lattice_energy / scattering_velocity)) {
       
       double deltaEe = scattering_velocity - E_f_A;
       double deltaEp = lattice_energy - E_f_A;
       double deltaE = 0.5*deltaEe;
       if (deltaEp > deltaE) deltaE = -0.5*deltaEp;
-
+     // if(abs(deltaE) > E_f_A) std::cout << scattering_velocity << ", " << lattice_energy << ", " << deltaE << std::endl;
       double theta = uniform_random() * 2.0 * M_PI;//Theta_pos_distrib(gen);
       double phi   = uniform_random() * M_PI; //Phi_pos_distrib(gen);
       scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)*constants::m_e_r_i);

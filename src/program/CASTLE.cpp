@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-       // omp_set_dynamic(0);
-      //  omp_set_num_threads(1);
+       // omp_set_dynamic(1);
+        omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -914,10 +914,10 @@ void initialize_velocities() {
 
 double B_E_distrib() {
 
-  double lattice_energy = (Tp*a_heat_capacity - zero_pt_lattice_e) / E_f_A;
-  return (E_f_A + (E_f_A* (1.0*lattice_energy*lattice_energy*lattice_energy*lattice_energy) \
+  double lattice_energy = Tp*a_heat_capacity/ E_f_A/lattice_atoms;
+  lattice_energy = E_f_A + (E_f_A*((lattice_energy*lattice_energy*lattice_energy*lattice_energy) \
                         + (0.9*lattice_energy*lattice_energy*lattice_energy)));
-
+  return lattice_energy;
       // polynomial fit to the <omega**2> integration of the phonon BE distribution from 0 to 2 e/E_f
 }
 
