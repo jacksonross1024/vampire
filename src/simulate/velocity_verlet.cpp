@@ -547,22 +547,23 @@ void ea_scattering(const int& e, const int& array_index) {
     double scattering_velocity = electron_potential[e];
     double lattice_energy = B_E_distrib();//((Tp * a_heat_capacity) + zero_pt_lattice_e)/ lattice_atoms; //B_E_distrib();
     //std::cout << lattice_energy << ", " << scattering_velocity<< std::endl;
-    if(uniform_random() > exp(ea_rate * lattice_energy / scattering_velocity)) {
-      
-      double deltaE = 0.5*e_heat_capacity*(Te - Tp);
-      
+    double deltaE = ea_rate * lattice_energy / scattering_velocity;
+    if(uniform_random() > exp(deltaE)) {
+      deltaE *= E_f_A;
+     // double deltaE = 0.5*e_heat_capacity*(Te - Tp);
+    //  std::cout << deltaE << ", " << scattering_velocity << ", " << lattice_energy << std::endl;
      // if(abs(deltaE) > E_f_A) std::cout << scattering_velocity << ", " << lattice_energy << ", " << deltaE << std::endl;
       double theta = uniform_random() * 2.0 * M_PI;//Theta_pos_distrib(gen);
       double phi   = uniform_random() * M_PI; //Phi_pos_distrib(gen);
-      scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)*constants::m_e_r_i);
+      scattering_velocity = sqrt(2.0*(scattering_velocity + deltaE)*constants::m_e_r_i);
 
-      electron_potential[e] -= deltaE;
-
-     #pragma omp atomic update
-      TEKE -= deltaE;
+      electron_potential[e] += deltaE;
 
      #pragma omp atomic update
-      TLE += deltaE;
+      TEKE += deltaE;
+
+     #pragma omp atomic update
+      TLE -= deltaE;
 
       electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
