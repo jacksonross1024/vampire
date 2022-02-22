@@ -167,6 +167,7 @@ void update_dynamics() {
     }
 
     Tp = a_heat_capacity_i*(TLE  - zero_pt_lattice_e);
+    Te = e_heat_capacity_i*(TEKE - zero_pt_lattice_e);
    // std::cout << B_E_distrib() << std::endl;
 }
 
@@ -548,10 +549,8 @@ void ea_scattering(const int& e, const int& array_index) {
     //std::cout << lattice_energy << ", " << scattering_velocity<< std::endl;
     if(uniform_random() > exp(ea_rate * lattice_energy / scattering_velocity)) {
       
-      double deltaEe = scattering_velocity - E_f_A;
-      double deltaEp = lattice_energy - E_f_A;
-      double deltaE = 0.5*deltaEe;
-      if (deltaEp > deltaE) deltaE = -0.5*deltaEp;
+      double deltaE = 0.5*e_heat_capacity*(Te - Tp);
+      
      // if(abs(deltaE) > E_f_A) std::cout << scattering_velocity << ", " << lattice_energy << ", " << deltaE << std::endl;
       double theta = uniform_random() * 2.0 * M_PI;//Theta_pos_distrib(gen);
       double phi   = uniform_random() * M_PI; //Phi_pos_distrib(gen);

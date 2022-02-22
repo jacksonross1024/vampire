@@ -369,7 +369,7 @@ void initialize_lattice() {
     a_heat_capacity = 1.0 / a_heat_capacity_i;
 
     zero_pt_lattice_e = lattice_atoms*E_f_A;
-    Tp = sim::temperature;
+    Te = Tp = sim::temperature;
     TLE = Tp*a_heat_capacity + zero_pt_lattice_e;
 
     e_a_neighbor_cutoff = 100.0;

@@ -163,6 +163,7 @@ namespace CASTLE {
     extern double TEKE; //Angstroms
     extern double TLE; //Angstroms
     extern double Tp;
+    extern double Te;
     
     extern double MEPE; //meters
     extern double MEKE; //meters
