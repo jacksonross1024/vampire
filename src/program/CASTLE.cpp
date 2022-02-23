@@ -365,10 +365,10 @@ void initialize_lattice() {
     E_f_A = E_f*1e20; //Angstroms
     mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
     v_f = sqrt(2 * E_f / constants::m_e); //meters
-    a_heat_capacity_i = 6.02e3 / (6.52e2 * lattice_atoms);
+    a_heat_capacity_i = 6.02e3 / (2.52e2 * lattice_atoms);
     a_heat_capacity = 1.0 / a_heat_capacity_i;
-    a_specific_heat = 6.52e2 / 6.02e3;
-    a_specific_heat_i = 6.02e3 / 6.52e2;
+    a_specific_heat = 2.52e2 / 6.02e3;
+    a_specific_heat_i = 6.02e3 / 2.52e2;
 
     zero_pt_lattice_e = lattice_atoms*E_f_A;
     Te = Tp = sim::temperature;
@@ -1148,24 +1148,24 @@ void output_data() {
     // int hot_atoms = 0;
 
     for(int e = 0; e < conduction_electrons; e++) {
-      array_index   = 3*e;
-      array_index_y = array_index + 1;
-      array_index_z = array_index + 2;
+      // array_index   = 3*e;
+      // array_index_y = array_index + 1;
+      // array_index_z = array_index + 2;
 
-      x_pos = new_electron_position[array_index];
-      y_pos = new_electron_position[array_index_y]; 
-      z_pos = new_electron_position[array_index_z];
+      // x_pos = new_electron_position[array_index];
+      // y_pos = new_electron_position[array_index_y]; 
+      // z_pos = new_electron_position[array_index_z];
 
       x_vel = 1e5*electron_velocity[array_index];
-      y_vel = 1e5*electron_velocity[array_index_y];
-      z_vel = 1e5*electron_velocity[array_index_z];
+      y_vel = 1e5*electron_velocity[array_index+1];
+      z_vel = 1e5*electron_velocity[array_index+2];
       velocity_length = electron_potential[e];
       // if(velocity_length > E_f_A) {
       //   hot_e_list.push_front(e);
       //   hot_electrons++;
       // }
 
-      electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
+   //   electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
       electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  "\n";
      // velocity_length = return_phonon_distribution();
       //atomic_phonon_output << e << ", " << velocity_length << "\n";

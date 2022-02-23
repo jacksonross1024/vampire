@@ -137,7 +137,7 @@ void update_dynamics() {
                       d_TTMp = ( 2.15e-1*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
     }
 
-    #pragma omp parallel for private(array_index) schedule(guided)
+    #pragma omp parallel for private(array_index) schedule(dynamic)
     for (int e = 0; e < conduction_electrons; e++) {
         array_index = 3*e;        
 
@@ -532,13 +532,12 @@ void aa_scattering() {
 void ea_scattering(const int& e, const int& array_index) {
            // std::srand(std::time(nullptr));
            /// std::random_device rd;  //Will be used to obtain a seed for the random number engine
-           // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+           // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd();
          //   std::uniform_real_distribution<double> scattering_chance(0,1);
        //     std::uniform_int_distribution<> phonon_selection(0, lattice_atoms);
           //  std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
            // std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
             //std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
-
    // int array_index;
   //  double scattering_velocity;
     //double lattice_energy, deltaE;
@@ -549,9 +548,10 @@ void ea_scattering(const int& e, const int& array_index) {
     double deltaE = ea_rate * lattice_energy / scattering_velocity;
     if(uniform_random() > exp(deltaE)) {
       
-      deltaE = (deltaE*a_specific_heat_i*e_specific_heat/ea_rate);
-      if(deltaE > 1.0) deltaE = (lattice_energy - E_f_A);
-      else deltaE = (E_f_A - scattering_velocity);
+      deltaE = E_f_A - scattering_velocity;
+      //(deltaE*a_specific_heat_i*e_specific_heat/ea_rate);
+      if(Tp > Te) deltaE = lattice_energy - E_f_A;
+     // else deltaE = (E_f_A - scattering_velocity);
      // double deltaE = 0.5*e_heat_capacity*(Te - Tp);
     //  std::cout << deltaE << ", " << scattering_velocity << ", " << lattice_energy << std::endl;
      // if(abs(deltaE) > E_f_A) std::cout << scattering_velocity << ", " << lattice_energy << ", " << deltaE << std::endl;
@@ -585,7 +585,6 @@ void ee_scattering() {
     // std::random_device rd;  //Will be used to obtain a seed for the random number engine
     // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     // //std::uniform_real_distribution<double> scattering_chance(0,1);
-   
     // std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
     // std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
     // std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
