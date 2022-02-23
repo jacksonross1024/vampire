@@ -367,8 +367,8 @@ void initialize_lattice() {
     v_f = sqrt(2 * E_f / constants::m_e); //meters
     a_heat_capacity_i = 6.02e3 / (6.52e2 * lattice_atoms);
     a_heat_capacity = 1.0 / a_heat_capacity_i;
-    e_specific_heat = 6.52e2 / 6.02e3;
-    e_specific_heat_i = 6.02e3 / 6.52e2;
+    a_specific_heat = 6.52e2 / 6.02e3;
+    a_specific_heat_i = 6.02e3 / 6.52e2;
 
     zero_pt_lattice_e = lattice_atoms*E_f_A;
     Te = Tp = sim::temperature;
