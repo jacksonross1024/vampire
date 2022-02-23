@@ -98,6 +98,10 @@ namespace CASTLE {
     extern double e_heat_capacity; // AJ/K/mol -> AJ/K
     extern double a_heat_capacity_i; // K/AJ
     extern double e_heat_capacity_i; // K/AJ
+    extern double a_specific_heat; //AJ/K/particle
+    extern double e_specific_heat;
+    extern double a_specific_heat_i;
+    extern double e_specific_heat_i;
     extern double zero_pt_lattice_e;
     extern double phonon_energy;
     extern double new_phonon_energy;

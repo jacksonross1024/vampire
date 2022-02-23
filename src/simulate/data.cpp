@@ -203,6 +203,10 @@ namespace CASTLE {
    double e_heat_capacity;
    double a_heat_capacity_i;
    double e_heat_capacity_i;
+   double a_specific_heat; //AJ/K/particle
+   double e_specific_heat;
+   double a_specific_heat_i;
+   double e_specific_heat_i;
    double phonon_energy;
    double new_phonon_energy;
    double zero_pt_lattice_e;
