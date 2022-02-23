@@ -365,10 +365,10 @@ void initialize_lattice() {
     E_f_A = E_f*1e20; //Angstroms
     mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
     v_f = sqrt(2 * E_f / constants::m_e); //meters
-    a_heat_capacity_i = 6.02e3 / (2.52e2 * lattice_atoms);
+    a_heat_capacity_i = 6.02e3 / (6.52e2 * lattice_atoms);
     a_heat_capacity = 1.0 / a_heat_capacity_i;
-    a_specific_heat = 2.52e2 / 6.02e3;
-    a_specific_heat_i = 6.02e3 / 2.52e2;
+    a_specific_heat = 6.52e2 / 6.02e3;
+    a_specific_heat_i = 6.02e3 / 6.52e2;
 
     zero_pt_lattice_e = lattice_atoms*E_f_A;
     Te = Tp = sim::temperature;
@@ -499,7 +499,7 @@ void initialize_electrons() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
 
-    ea_rate = -1.0*dt/600.0;
+    ea_rate = -1.0*dt/1200.0;
     ee_rate = -1.0*dt/180000.0;
 
     MEPE = 0;
