@@ -548,7 +548,7 @@ void ea_scattering(const int& e, const int& array_index) {
     double deltaE = ea_rate * lattice_energy / scattering_velocity;
     if(uniform_random() > exp(deltaE)) {
       
-      deltaE = lattice_energy*a_specific_heat*e_specific_heat / scattering_velocity;
+      deltaE = lattice_energy*a_specific_heat*e_specific_heat_i / scattering_velocity;
       if(deltaE > 1.0) deltaE = 0.5*(E_f_A - scattering_velocity);
       //(deltaE*a_specific_heat_i*e_specific_heat/ea_rate);
       else deltaE = 0.5*(lattice_energy - E_f_A);
