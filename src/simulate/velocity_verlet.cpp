@@ -544,19 +544,15 @@ void ea_scattering(const int& e, const int& array_index) {
   //for(int e = 0; e < conduction_electrons; e++) {
    // int array_index = 3*e;
     double scattering_velocity = electron_potential[e];
-    double lattice_energy = B_E_distrib(); //Tp *a_heat_capacity/ lattice_atoms;// << ", " << scattering_velocity<< std::endl;
+    double lattice_energy = Tp *a_specific_heat;
     double deltaE = lattice_energy / scattering_velocity;
     if(uniform_random() > exp(ea_rate*deltaE)) {
       
-      deltaE = 1.0 - (deltaE*a_specific_heat_i*e_specific_heat);
+      deltaE = 1.0 - (deltaE);
       if(deltaE > 0.0) deltaE *= E_f_A - scattering_velocity;
-      //(deltaE*a_specific_heat_i*e_specific_heat/ea_rate);
       else if (deltaE > -1.0) deltaE *= lattice_energy - E_f_A;
       else deltaE = lattice_energy - E_f_A;
-     // else deltaE = (E_f_A - scattering_velocity);
-     // double deltaE = 0.5*e_heat_capacity*(Te - Tp);
-    //  std::cout << deltaE << ", " << scattering_velocity << ", " << lattice_energy << std::endl;
-     // if(abs(deltaE) > E_f_A) std::cout << scattering_velocity << ", " << lattice_energy << ", " << deltaE << std::endl;
+     
       double theta = uniform_random() * 2.0 * M_PI;//Theta_pos_distrib(gen);
       double phi   = uniform_random() * M_PI; //Phi_pos_distrib(gen);
       scattering_velocity = sqrt(2.0*(scattering_velocity + deltaE)*constants::m_e_r_i);
