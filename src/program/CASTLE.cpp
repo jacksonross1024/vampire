@@ -494,7 +494,7 @@ void initialize_electrons() {
     e_specific_heat_i = 6.02e3 / 2.52e2;
    // std::cout << Tr << std::endl;
     TEPE = 0;
-    TEKE = 0;
+    TEKE = 0; 
 
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
@@ -1231,7 +1231,7 @@ void output_data() {
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", " 
-      << TEKE*e_heat_capacity_i  - E_f_A*conduction_electrons*e_heat_capacity_i << ", " << TLE*a_heat_capacity_i  - E_f_A*lattice_atoms*a_heat_capacity_i << ", "  \
+      << sqrt(TEKE*e_heat_capacity_i - E_f_A*conduction_electrons*e_heat_capacity_i) << ", " << TLE*a_heat_capacity_i  - E_f_A*lattice_atoms*a_heat_capacity_i << ", "  \
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << a_a_scattering_count << ", " << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
@@ -1240,7 +1240,7 @@ void output_data() {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << TEKE * 1e-20 << ", " << TLE*1e-20 << ", "  
-      << TEKE*e_heat_capacity_i - E_f_A*conduction_electrons*e_heat_capacity_i << ", " << Tp  << ", "
+      << sqrt(TEKE*e_heat_capacity_i- E_f_A*conduction_electrons*e_heat_capacity_i) << ", " << Tp  << ", "
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(a_a_scattering_count) / CASTLE_output_rate << ", " << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;
