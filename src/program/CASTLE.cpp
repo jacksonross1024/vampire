@@ -499,7 +499,7 @@ void initialize_electrons() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
 
-    ea_rate = -1.0*dt/1200.0;
+    ea_rate = -1.0*dt/600.0;
     ee_rate = -1.0*dt/180000.0;
 
     MEPE = 0;
