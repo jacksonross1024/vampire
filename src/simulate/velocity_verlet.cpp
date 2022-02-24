@@ -132,9 +132,9 @@ void update_dynamics() {
       TTMe = d_TTMe;
       TTMp = d_TTMp;
 
-      if(TTMe > 1.0)  d_TTMe = ((2.15e-1*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
-      else            d_TTMe = ((2.15e-1*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
-                      d_TTMp = ( 2.15e-1*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
+      if(TTMe > 1.0)  d_TTMe = ((2.15*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i / TTMe)      + TTMe;
+      else            d_TTMe = ((2.15*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
+                      d_TTMp = ( 2.15*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
     }
 
     #pragma omp parallel for private(array_index) schedule(dynamic)
