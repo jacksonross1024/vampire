@@ -544,11 +544,11 @@ void ea_scattering(const int& e, const int& array_index) {
   //for(int e = 0; e < conduction_electrons; e++) {
    // int array_index = 3*e;
     double scattering_velocity = electron_potential[e];
-    double lattice_energy = Tp *a_specific_heat;
+    double lattice_energy = B_E_distrib();
     double deltaE = lattice_energy / scattering_velocity;
     if(uniform_random() > exp(ea_rate*deltaE)) {
+      deltaE = 1.0 - (Tp *a_specific_heat / (scattering_velocity - E_f_A));
       
-      deltaE = 1.0 - (deltaE);
       if(deltaE > 0.0) deltaE *= E_f_A - scattering_velocity;
       else if (deltaE > -1.0) deltaE *= lattice_energy - E_f_A;
       else deltaE = lattice_energy - E_f_A;
