@@ -530,29 +530,13 @@ void aa_scattering() {
 }
 
 void ea_scattering(const int& e, const int& array_index) {
-           // std::srand(std::time(nullptr));
-           /// std::random_device rd;  //Will be used to obtain a seed for the random number engine
-           // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd();
-         //   std::uniform_real_distribution<double> scattering_chance(0,1);
-       //     std::uniform_int_distribution<> phonon_selection(0, lattice_atoms);
-          //  std::uniform_real_distribution<double> Theta_pos_distrib(0.0,2.0*M_PI);
-           // std::uniform_real_distribution<double> Phi_pos_distrib(0.0,M_PI);
-            //std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
-   // int array_index;
-  //  double scattering_velocity;
-    //double lattice_energy, deltaE;
-  //for(int e = 0; e < conduction_electrons; e++) {
-   // int array_index = 3*e;
+  
     double scattering_velocity = electron_potential[e];
-    double lattice_energy = B_E_distrib();
+    double lattice_energy = return_phonon_distribution();
     double deltaE = lattice_energy / scattering_velocity;
     if(uniform_random() > exp(ea_rate*deltaE)) {
-      deltaE = 1.0 - (Tp / sqrt(e_specific_heat_i*(scattering_velocity - E_f_A)));
+ 
       
-      if(deltaE > 0.0) deltaE *= E_f_A - scattering_velocity;
-      else if (deltaE > -1.0) deltaE *= lattice_energy - E_f_A;
-      else deltaE = lattice_energy - E_f_A;
-     
       double theta = uniform_random() * 2.0 * M_PI;//Theta_pos_distrib(gen);
       double phi   = uniform_random() * M_PI; //Phi_pos_distrib(gen);
       scattering_velocity = sqrt(2.0*(scattering_velocity + deltaE)*constants::m_e_r_i);
@@ -579,14 +563,6 @@ void ea_scattering(const int& e, const int& array_index) {
 
 void ee_scattering() {
 
-    // std::srand(std::time(nullptr));
-    // std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    // //std::uniform_real_distribution<double> scattering_chance(0,1);
-    // std::uniform_real_distribution<double> theta_distrib(0.0,2.0*M_PI);
-    // std::uniform_real_distribution<double> phi_distrib(0.0,M_PI);
-    // std::uniform_real_distribution<double> energy_coupling(0.5, 0.15);
- // #pragma omp parallel for reduction(+:e_e_scattering_count) schedule(guided)
   for(int e = 0; e < conduction_electrons; e++) {
     
     int array_index;
@@ -595,7 +571,6 @@ void ee_scattering() {
     double scattering_prob;
     double e_energy;
     
-
     if(electron_ee_scattering_list[e][0]) continue;
    
     e_energy = electron_potential[e];
