@@ -239,7 +239,7 @@ namespace CASTLE {
     extern double reinitialize_electron_conserve_momentum(std::vector<double>& captured_electron_list);
 */
 
-    extern double B_E_distrib();
+    extern double B_E_distrib(const double& epsilon);
     extern void create_phonon_distribution();
     extern double return_phonon_distribution();
 }

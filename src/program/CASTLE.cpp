@@ -289,6 +289,8 @@ void initialize () {
 
     uniform_random.seed(2137082040);
     int_random.seed(2137082040);
+
+
     // Initialize lattice
     //========
     initialize_positions();
@@ -439,6 +441,9 @@ void initialize_lattice() {
       lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "  " << a << "   " << return_phonon_distribution() << "\n";  
     }
     lattice_output.close(); 
+
+    Tp = 300.0;
+    create_phonon_distribution();
 }
 
 //====================================
@@ -499,7 +504,7 @@ void initialize_electrons() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
 
-    ea_rate = -1.0*dt/600.0;
+    ea_rate = -1.0*dt/1200.0;
     ee_rate = -1.0*dt/180000.0;
 
     MEPE = 0;
@@ -917,13 +922,11 @@ void initialize_velocities() {
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 }
 
-double B_E_distrib() {
+double B_E_distrib(const double& epsilon) {
 
-  double lattice_energy = Tp*a_specific_heat/ E_f_A;
-  lattice_energy = E_f_A + (E_f_A*((lattice_energy*lattice_energy*lattice_energy*lattice_energy) \
-                        + (0.9*lattice_energy*lattice_energy*lattice_energy)));
-  return lattice_energy;
-      // polynomial fit to the <omega**2> integration of the phonon BE distribution from 0 to 2 e/E_f
+  const double beta = Tp*a_specific_heat/ E_f_A;
+  
+  return (sqrt(2.0 / M_PI)*epsilon*epsilon*exp(-0.5*epsilon*epsilon / (beta*beta)) / (beta*beta*beta));
 }
 
 void create_phonon_distribution() {
@@ -931,28 +934,25 @@ void create_phonon_distribution() {
   std::ofstream p_distrib;
   p_distrib.open("P_distrib");
   
-  const double step_size = mu_f / double(lattice_atoms);
-  double eps_variable = 0.45867514;
+  const double step_size = 2.0*E_f_A / double(conduction_electrons);
  
-  for( int a = 0; a < lattice_atoms; a++) {
+  int count = 0;
+  while(count < conduction_electrons) {
     //phonon_distribution[a] = B_E_disrtib(eps_variable);
-
-    p_distrib << eps_variable << ", " << phonon_distribution[a] << "\n";
-    eps_variable += step_size;
+    double epsilon = step_size * (int_random() % conduction_electrons);
+  //  std::cout << B_E_distrib(epsilon) << Tp << std::endl;
+    if(uniform_random() < B_E_distrib(epsilon)) {
+      atom_potential[count] = epsilon + E_f_A;
+      p_distrib << count << ", " << atom_potential[count] << "\n";
+      count++;
+    }
+    
   }
+  p_distrib.close();
 }
 
 double return_phonon_distribution() {
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<> phonon_selection(0,100);
-
-    double lattice_energy = Tp * a_heat_capacity / zero_pt_lattice_e;
-    int chosen = phonon_selection(gen);
-    if (!chosen) phonon_energy = (5.0*lattice_energy*E_f_A) + E_f_A;
-    else phonon_energy = E_f_A + (lattice_energy*E_f_A*log((1.0/chosen)+1));
-    return phonon_energy;
+    return atom_potential[int_random() % lattice_atoms];
 }
 
 

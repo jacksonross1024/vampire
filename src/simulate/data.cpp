@@ -344,7 +344,7 @@ namespace CASTLE {
    long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list);
 
 */
-   double B_E_distrib();
+   double B_E_distrib(const double& epsilon);
    void create_phonon_distribution();
    double return_phonon_distribution();
 
