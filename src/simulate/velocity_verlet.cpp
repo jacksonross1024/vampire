@@ -150,7 +150,7 @@ void update_dynamics() {
         }
         update_velocity(e, array_index, particle_heat);
        // if(ea_coupling) 
-        ea_scattering(e, array_index);
+        //ea_scattering(e, array_index);
     }    
     //int e;
    // if(ee_coupling)
@@ -532,7 +532,7 @@ void aa_scattering() {
 void ea_scattering(const int& e, const int& array_index) {
   
     double scattering_velocity = electron_potential[e];
-    double lattice_energy = return_phonon_distribution();
+    double lattice_energy = return_phonon_distribution(atom_potential);
     double deltaE = lattice_energy / scattering_velocity;
     if(uniform_random() > exp(ea_rate*deltaE)) {
  

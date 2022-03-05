@@ -246,7 +246,7 @@ namespace CASTLE {
    std::vector<double> new_electron_velocity;
    std::vector<double> electron_force;   //Angstroms
    std::vector<double> new_electron_force;
-   std::vector<double> electron_potential; //A-1
+   std::vector<double> electron_potential; //A
    std::vector<double> new_electron_potential;
    std::vector<std::vector<int> > electron_nearest_electron_list;
    std::vector<std::vector<int> > electron_nearest_atom_list;
@@ -345,7 +345,8 @@ namespace CASTLE {
 
 */
    double B_E_distrib(const double& epsilon);
-   void create_phonon_distribution();
-   double return_phonon_distribution();
+   void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
+   void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
+   double return_phonon_distribution(const std::vector<double>& distribution);
 
 }
