@@ -150,7 +150,7 @@ void update_dynamics() {
         }
         update_velocity(e, array_index, particle_heat);
        // if(ea_coupling) 
-        //ea_scattering(e, array_index);
+        ea_scattering(e, array_index);
     }    
     //int e;
    // if(ee_coupling)
@@ -169,6 +169,7 @@ void update_dynamics() {
     Tp = a_heat_capacity_i*(TLE  - zero_pt_lattice_e);
     Te = e_heat_capacity_i*(TEKE - zero_pt_lattice_e);
    // std::cout << B_E_distrib() << std::endl;
+    create_phonon_distribution(atom_potential, Tp*e_specific_heat / E_f_A);
 }
 
 void update_velocity(const int& e, const int& array_index, const double& EKE) {
@@ -536,7 +537,7 @@ void ea_scattering(const int& e, const int& array_index) {
     double deltaE = lattice_energy / scattering_velocity;
     if(uniform_random() > exp(ea_rate*deltaE)) {
  
-      
+      deltaE = fmax(1.0 - deltaE, -1.0)*E_f_A;
       double theta = uniform_random() * 2.0 * M_PI;//Theta_pos_distrib(gen);
       double phi   = uniform_random() * M_PI; //Phi_pos_distrib(gen);
       scattering_velocity = sqrt(2.0*(scattering_velocity + deltaE)*constants::m_e_r_i);

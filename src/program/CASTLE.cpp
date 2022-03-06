@@ -952,7 +952,7 @@ void create_phonon_distribution(const std::string& name, std::vector<double>& di
 
   std::ofstream distrib;
   distrib.open(name);
-  
+  distrib.precision(10);
   const double step_size = 2.0 / double(conduction_electrons);
  
   int count = 0;
