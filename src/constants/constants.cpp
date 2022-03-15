@@ -21,6 +21,7 @@ namespace constants{
    // fundamental constants
    const double muB = 9.27400999e-24; // Bohr Magneton (Joules / Tesla)
    const double kB  = 1.380649e-23;  // Boltzmann constant (Joules / Kelvin) NIST standard Reference
+   const double kB_r = 1.380649e-3;
    const double m_e = 9.1093837015e-31; //electron mass (kg) NIST standard reference
    const double m_e_r = 9.1093837015e-1; //kg reduced for future use in fs conversion
    const double m_e_r_i = 1 / m_e_r;
