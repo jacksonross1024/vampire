@@ -268,7 +268,7 @@ void initialize () {
   
     applied_voltage_sim = sim::applied_voltage_sim;
     heat_pulse_sim = sim::heat_pulse_sim;
-    applied_voltage = sim::applied_voltage;
+    applied_voltage = sim::applied_voltage; //V/m
 
     ee_coupling = sim::ee_coupling;
     ea_coupling = sim::ea_coupling;

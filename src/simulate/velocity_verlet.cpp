@@ -109,14 +109,12 @@ void update_dynamics() {
   
     int array_index;
     double pump = 0.0; // AJ / fs
-    double particle_heat = 0.0;
-    if(!equilibrium_step && heat_pulse_sim) {
-     
+    double external_potential = 0.0;
+    if(!equilibrium_step) {
+     if(heat_pulse_sim) {
       const static double sigma = dt * 0.1;
       pump = heat_pulse * sigma * 7.5e5 * exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))); // AJ/fs/nm**3
-      particle_heat = 1e27*pump*dt/ n_f; // AJ / particle
-      
-      //TEKE += pump*dt;
+      external_potential = 1e27*pump*dt/ n_f; // AJ / particle
 
       TTMe = d_TTMe;
       TTMp = d_TTMp;
@@ -124,6 +122,11 @@ void update_dynamics() {
         d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i) + TTMe;
      // else            d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
         d_TTMp = ( G*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
+      }
+      if(applied_voltage_sim) {
+        external_potential = 1e10*applied_voltage*constants::e*lattice_width;
+        TEKE += external_potential*conduction_electrons;
+      }
     }
 
     #pragma omp parallel for private(array_index) schedule(dynamic)
@@ -137,9 +140,10 @@ void update_dynamics() {
         //  neighbor_e_a_coulomb(e, array_index);
           neighbor_e_e_coulomb(e, array_index);   
         }
-        update_velocity(e, array_index, particle_heat);
+        //electron_thermal_field(e, array_index, external_potential);
+        electron_applied_voltage(e, array_index, external_potential);
        // if(ea_coupling) 
-      ea_scattering(e, array_index);
+        ea_scattering(e, array_index);
     }    
  
    // if(ee_coupling)
@@ -164,7 +168,7 @@ void update_dynamics() {
    // else         Te = e_heat_capacity_i*(TEKE - zero_pt_lattice_e);
 }
 
-void update_velocity(const int& e, const int& array_index, const double& EKE) {
+void electron_thermal_field(const int& e, const int& array_index, const double& EKE) {
         
         //  old_vel += EKE;
    // external_interaction_list[e] = false;
@@ -457,10 +461,10 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
    // if(a == 100) std::cout << size << std::endl;
 }
 
-void electron_applied_voltage(const int& e, const int& array_index) {
+void electron_applied_voltage(const int& e, const int& array_index, const double& external_potential) {
     
-  double vel = applied_voltage*1.0e-1*dt*constants::e_A/constants::m_e_r;
-  electron_potential[e] += vel*vel*0.5*constants::m_e_r;
+  double vel = 0.5e-20*dt*applied_voltage*constants::e*constants::m_e_i; //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
+  electron_potential[e] += external_potential;
   electron_velocity[array_index] += vel;
 
 }
