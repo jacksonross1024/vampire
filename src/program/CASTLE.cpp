@@ -302,7 +302,7 @@ void initialize () {
     a_heat_capacity = 1e-27*a_specific_heat * n_f; //AJ/K/particle [] AJ/K/nm**3
     a_heat_capacity_i = 1.0 / a_heat_capacity;
 
-    e_specific_heat = constants::kB_r*3.0/2.0; // gamma; //AJ/K**2/e- 
+    e_specific_heat = constants::kB_r*3.0/10.0; // gamma; //AJ/K**2/e- 
     e_specific_heat_i = 1.0 / e_specific_heat;
     e_heat_capacity = 1e-27*e_specific_heat * n_f; //AJ/K**2/e- -> [e-/m**3] -> AJ/K**2/nm**3
     e_heat_capacity_i = 1.0 / e_heat_capacity;
@@ -346,7 +346,7 @@ void initialize () {
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
-    std::cout << "E_f(J): " << E_f << ", TLE(J): " << TLE*1e-20 << ", TE(J): " << E_f*conduction_electrons << ", TEKE(AJ):" << TEKE*1e-20 << std::endl;
+    std::cout << "E_f(J): " << E_f << ", G(AJ/K/fs/nm**3): " << G << ", Ce@300K (AJ/K/nm**3): " << e_heat_capacity << ", Cl(AJ/K/nm**3): " << a_heat_capacity << ", Tau@300K(fs): " << tau <<  std::endl;
     
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
@@ -847,12 +847,12 @@ void initialize_velocities() {
     atom_phonon_output.open(string(directory) + "/Atom_Energy/init.csv");
     atom_phonon_output << "atom number, energy" << std::endl;
     
-   // TEKE = Te*Te*e_heat_capacity + (E_f_A * conduction_electrons);
+
     const std::string n = "Init_E_distrib";
-    //std::cout <<  constants::kB_r*Te / E_f_A << std::endl;
     create_phonon_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
     const std::string na = "P_distrib";
     create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
+
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
       double phi,theta; //A/fS

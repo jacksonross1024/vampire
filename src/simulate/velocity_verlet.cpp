@@ -111,16 +111,16 @@ void update_dynamics() {
     double pump = 0.0; // AJ / fs
     double external_potential = 0.0;
     if(!equilibrium_step) {
-     if(heat_pulse_sim) {
-      const static double sigma = dt * 0.1;
-      pump = heat_pulse * sigma * 7.5e5 * exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))); // AJ/fs/nm**3
-      external_potential = 1e27*pump*dt/ n_f; // AJ / particle
+      if(heat_pulse_sim) {
+        const static double sigma = dt * 0.1;
+        pump = heat_pulse * sigma * 7.5e5 * exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))); // AJ/fs/nm**3
+        external_potential = 1e27*pump*dt/ n_f; // AJ / particle
 
-      TTMe = d_TTMe;
-      TTMp = d_TTMp;
-//AJ/fs/K -> g(T-T)=C/t
+        TTMe = d_TTMe;
+        TTMp = d_TTMp;
+          //AJ/fs/K -> g(T-T)=C/t
         d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i) + TTMe;
-     // else            d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
+        // else            d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
         d_TTMp = ( G*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
       }
       if(applied_voltage_sim) {
@@ -165,7 +165,7 @@ void update_dynamics() {
     
     Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
     Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f/conduction_electrons) + (e_heat_capacity_i*pump*dt);
-   // else         Te = e_heat_capacity_i*(TEKE - zero_pt_lattice_e);
+   
 }
 
 void electron_thermal_field(const int& e, const int& array_index, const double& EKE) {
@@ -463,10 +463,9 @@ void neighbor_a_a_coulomb(const int a, const int array_index, \
 
 void electron_applied_voltage(const int& e, const int& array_index, const double& external_potential) {
     
-  double vel = 0.5e-20*dt*applied_voltage*constants::e*constants::m_e_i; //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
+  double vel = 5e10*dt*applied_voltage*constants::e*constants::m_e_r_i; //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
   electron_potential[e] += external_potential;
   electron_velocity[array_index] += vel;
-
 }
 
 void aa_scattering() {
@@ -511,9 +510,9 @@ void ea_scattering(const int& e, const int& array_index) {
     
     double scattering_velocity = electron_potential[e];
     double lattice_energy = atom_potential[atom_collision];
-    double deltaE = sqrt(e_specific_heat*Te/(scattering_velocity-E_f_A));
+    double deltaE ;//= sqrt(e_specific_heat*Te/(scattering_velocity-E_f_A));
   
-    if(omp_uniform_random[omp_get_thread_num()]() > exp(ea_rate*E_f_A*E_f_A/(scattering_velocity*scattering_velocity))) {
+    if(omp_uniform_random[omp_get_thread_num()]() > exp(ea_rate)) {
       //std::cout << deltaE << ", " << scattering_velocity << ", " << lattice_energy << std::endl;
       if(Te > Tp) deltaE = (scattering_velocity - E_f_A)*(1.0-(Tp/Te));
       else deltaE = (E_f_A-lattice_energy)*(1.0-(Te/Tp));
