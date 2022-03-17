@@ -1,0 +1,54 @@
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+dimensions:unit-cell-size = 3.54 !A
+dimensions:system-size-x = 4.5 !nm
+dimensions:system-size-y = 4.5 !nm
+dimensions:system-size-z = 4.5 !nm
+
+create:crystal-structure = fcc
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:file = Co.mat
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+sim:temperature = 300.0
+sim:time-steps-increment = 10
+sim:equilibration-time-steps = 1
+sim:loop-time-steps = 20000
+sim:time-step = 1e-1 !fs
+
+#sim:applied-voltage = 0.05
+sim:heat-pulse = 2e1 #mJ/cm**2
+sim:e-e_coupling = 1.16865898e6
+sim:e-a_coupling = 3
+sim:two-temperature-electron-phonon-coupling=1.06e18
+sim:CASTLE-MD-rate = 100
+
+sim:x_vector = -1
+sim:y_vector = -1
+sim:z_vector = -1
+
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program = CASTLE
+sim:integrator = velocity-verlet
+
+#------------------------------------------
+# data output
+#------------------------------------------
+output:real-time
+output:magnetisation
+
+screen:time-steps
+screen:magnetisation-length

@@ -161,6 +161,8 @@ namespace CASTLE {
     extern std::vector<double> phonon_distribution;
     extern MTRand_closed uniform_random;
     extern MTRand_int32 int_random;
+    extern std::vector<MTRand_closed> omp_uniform_random;
+    extern std::vector<MTRand_int32> omp_int_random;
     //outputs
    
     extern double TEPE; //Angstroms
@@ -185,6 +187,7 @@ namespace CASTLE {
     extern double d_TTMe;
     extern double TTMp;
     extern double d_TTMp;
+    extern double G;
     
     extern std::string time_stamp;
     extern std::ofstream lattice_output;
@@ -227,7 +230,7 @@ namespace CASTLE {
 
     extern void update_velocity(const int& e, const int& array_index, const double& EKE);
  
-    extern void electron_applied_voltage(const int& e, const int& array_index);
+    extern void electron_applied_voltage(const int& e, const int& array_index, const double& external_potential);
  
     extern void aa_scattering();
     extern void ea_scattering(const int& e, const int& array_index);

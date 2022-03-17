@@ -261,10 +261,15 @@ void initialize () {
     conduction_electrons = atoms::num_atoms;
     CASTLE_output_rate = sim::partial_time;
     dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
-    Tp = Te = temperature = 300; //sim::temperature;
+    TTMe = TTMp = d_TTMe = d_TTMp = Tp = Te = sim::temperature;
     total_time_steps = sim::equilibration_time; //100
     CASTLE_MD_rate = sim::CASTLE_MD_rate;
-  
+
+    lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
+ 
+    lattice_height = cs::system_dimensions[0] + x_unit_size; //A
+    lattice_width  = cs::system_dimensions[1] + y_unit_size; // A
+    lattice_depth  = cs::system_dimensions[2] + z_unit_size; // A
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
@@ -282,14 +287,45 @@ void initialize () {
     ee_coupling_strength = sim::ee_coupling_strength;
     ea_coupling_strength = sim::ea_coupling_strength;//0;
 
-    TTMe = 0.0;
-    TTMp = 0.0;
-    d_TTMe = 0.0;
-    d_TTMp = 0.0;
+    n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
+    E_f = constants::h * constants::h * powl(3 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
+    E_f_A = E_f*1e20; //Angstroms
+    mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
+    v_f = sqrt(2 * E_f / constants::m_e); //meters
+    
+    a_specific_heat = 25.0 / 6.02e3; //AJ/K/a-
+    a_specific_heat_i = 1.0 / a_specific_heat;
+    a_heat_capacity = 1e-27*a_specific_heat*n_f; //AJ/K/a- -> AJ/K/nm**3
+    a_heat_capacity_i =1.0 / a_heat_capacity;
+
+    e_specific_heat = 15.0*M_PI*M_PI*constants::kB_r*constants::kB_r / 2.0 / E_f_A; //AJ/K**2/e-
+    e_specific_heat_i = 1.0 / e_specific_heat;
+    e_heat_capacity = 1e-27*e_specific_heat*n_f; // AJ/K**2/e- -> AJ/K**2/nm**3
+    e_heat_capacity_i = 1.0 / e_heat_capacity;
+
+    e_a_scattering_count = 0;
+    e_e_scattering_count = 0;
+
+    atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
+    heat_pulse = 1e-4*sim::heat_pulse/dt/lattice_height; // mJ/cm**2 -> [e17/e14/e1] AJ/fs/nm**3
+    G = 1e-22*sim::TTG; //J/s/K/m**3 [e20/e15/e27] AJ/fs/K/nm**3
+    //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
+    
+    const static double tau = e_heat_capacity*sim::ea_coupling_strength/G; //fs/K
+    ea_rate = -1.0*dt/tau; // K fs/fs
+    ee_rate = -1.0*dt/sim::ee_coupling_strength;
 
     uniform_random.seed(2137082040);
     int_random.seed(2137082040);
 
+    std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> seed_gen(0, int(pow(2,32)));
+    for(int i = 0; i < omp_get_num_threads(); i++) {
+      omp_uniform_random[i].seed(seed_gen(gen));
+      omp_int_random[i].seed(seed_gen(gen));
+    }
 
     // Initialize lattice
     //========
@@ -318,7 +354,7 @@ void initialize () {
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
-    std::cout << "E_f(J): " << E_f << ", TLE(J): " << TLE*1e-20 << ", TE(J): " << E_f*conduction_electrons << ", TEKE(AJ):" << TEKE*1e10*constants::m_e/2 << ", TEPE " << TEPE*1e10*constants::K << ", TEE " <<  ((TEKE*constants::m_e)/2 + (TEPE*constants::K))*1e10 << ", EE(J): " << constants::m_e*TEKE*0.5*1e10 + constants::K*1e10*std::accumulate(electron_potential.begin(), electron_potential.end(), 0) <<  std::endl;
+    std::cout << "E_f(J): " << E_f << ", G(AJ/K/fs/nm**3): " << G << ", Ce@300K (AJ/K**2/nm**3): " << e_heat_capacity*Te << ", Cl(AJ/K/nm**3): " << a_heat_capacity << ", Tau@300K(fs/K): " << tau*Te <<  std::endl;
     
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
@@ -350,11 +386,7 @@ void initialize_lattice() {
     
     atomic_size = 2; // sim::atomic_size; //Angst diameter. 
     screening_depth = 0.875; //sim::screening_depth; //Angstroms 
-    lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
- 
-    lattice_height = cs::system_dimensions[0] + x_unit_size; //A
-    lattice_width  = cs::system_dimensions[1] + y_unit_size; // A
-    lattice_depth  = cs::system_dimensions[2] + z_unit_size; // A
+    
 
     
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
@@ -362,19 +394,7 @@ void initialize_lattice() {
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
 
-    n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
-    E_f = constants::h * constants::h * powl(3 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
-    E_f_A = E_f*1e20; //Angstroms
-    mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
-    v_f = sqrt(2 * E_f / constants::m_e); //meters
-    a_heat_capacity_i = 6.02e3 / (6.52e2 * lattice_atoms);
-    a_heat_capacity = 1.0 / a_heat_capacity_i;
-    a_specific_heat = 6.52e2 / 6.02e3;
-    a_specific_heat_i = 6.02e3 / 6.52e2;
-
-    zero_pt_lattice_e = lattice_atoms*E_f_A;
-    Te = Tp = 300.0;//sim::temperature;
-    TLE = Tp*a_heat_capacity + zero_pt_lattice_e;
+   
 
     e_a_neighbor_cutoff = 100.0;
     e_e_neighbor_cutoff = 100.0;
@@ -401,10 +421,7 @@ void initialize_lattice() {
     // new_atom_force.resize(lattice_atoms,0);
     atom_potential.resize(lattice_atoms,0);
     //new_atom_potential.resize(lattice_atoms,0);
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::normal_distribution<double> atom_position_distrib(0.0,0.005);
+
     phonon_distribution.resize(2*lattice_atoms, 0.0);
     phonon_energy = 1.0;
     new_phonon_energy = 0.0;
@@ -479,38 +496,7 @@ void initialize_electrons() {
     electron_potential.resize(conduction_electrons, 0);
     //new_electron_potential.resize(conduction_electrons, 0);
     mean_radius.resize(conduction_electrons*2,1);
-
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<double> Theta_pos_distrib(0,2);
-    std::uniform_real_distribution<double> Phi_pos_distrib(0,1);
-    std::normal_distribution<double> radius_mod(1, 0.1);
    
-    n_f = 1e10*1e20 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / m**3
-    E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.6666666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
-    mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
-    v_f = sqrt(2 * E_f / constants::m_e); //A/fs
-    Tr  = -1.0 * 27.7 / sqrt(E_f_A); // 1 / fs
-
-    e_heat_capacity_i = 6.02e3 / (2.52e2 * conduction_electrons);
-    e_heat_capacity = 1.0 / e_heat_capacity_i;
-
-    e_specific_heat = 2.52e2 / 6.02e3;
-    e_specific_heat_i = 6.02e3 / 2.52e2;
-   // std::cout << Tr << std::endl;
-    TEPE = 0;
-    TEKE = 0; 
-
-    e_a_scattering_count = 0;
-    e_e_scattering_count = 0;
-
-    ea_rate = -1.0*dt/1200.0;
-    ee_rate = -1.0*dt/180000.0;
-
-    MEPE = 0;
-    MEKE = 0;
-    MLE = 0;
 
     e_a_neighbor_cutoff = 100;
     e_e_neighbor_cutoff = 100;
@@ -535,9 +521,9 @@ void initialize_electrons() {
         electron_ea_scattering_list[e].resize(ee_density,0);
         int array_index = 3*e;
 
-        double theta = M_PI*Theta_pos_distrib(gen);
-        double phi = M_PI*Phi_pos_distrib(gen);
-        screening_depth =0.875* radius_mod(gen);
+        double theta = 2.0*M_PI*uniform_random();
+        double phi = M_PI*uniform_random();
+        screening_depth =0.875;//* radius_mod(gen);
 
         //initialize and output electron posititons
         double x_pos = atom_anchor_position[3*e]   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
@@ -880,17 +866,13 @@ void initialize_velocities() {
     atom_phonon_output.open(string(directory) + "/Atom_Energy/init.csv");
     atom_phonon_output << "atom number, energy" << std::endl;
 
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<double> Theta_Vel_distrib(0,2);
-    std::uniform_real_distribution<double> Phi_Vel_distrib(0,1);
-    std::normal_distribution<double> vel_distrib(1.0,0.05);
     
     TEKE = Te*e_heat_capacity + (E_f_A * conduction_electrons);
-    const std::string name = "Init_E_distrib";
-    create_phonon_distribution(name, electron_potential, Te*e_specific_heat / E_f_A);
-   
+    const std::string n = "Init_E_distrib";
+    create_phonon_distribution(n, electron_potential, Te*constants::kB_r / E_f_A);
+    const std::string na = "Init_P_distrib";
+    create_phonon_distribution(na, atom_potential, Te*constants::kB_r / E_f_A);
+
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
       double phi,theta; //A/fS
@@ -898,8 +880,8 @@ void initialize_velocities() {
         array_index = 3*e;
         double vel = sqrt(2.0*return_phonon_distribution(electron_potential)*constants::m_e_r_i);
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
-          theta = M_PI * Theta_Vel_distrib(gen);
-          phi = M_PI * Phi_Vel_distrib(gen);
+          theta = 2.0*M_PI *omp_uniform_random[omp_get_thread_num()]();
+          phi = M_PI * omp_uniform_random[omp_get_thread_num()]();
         } else {
           double unit = sqrt((sim::CASTLE_x_vector*sim::CASTLE_x_vector)+(sim::CASTLE_y_vector*sim::CASTLE_y_vector)+(sim::CASTLE_z_vector*sim::CASTLE_z_vector));
           theta = atan(sim::CASTLE_y_vector / sim::CASTLE_x_vector);
@@ -931,18 +913,18 @@ double B_E_distrib(const double& epsilon) {
 }
 void create_phonon_distribution(std::vector<double>& distribution, const double& beta) {
 
-  const double step_size = 2.0 / double(conduction_electrons);
+  const double step_size = 1.0 / double(conduction_electrons);
   int count = 0;
 
   while(count < conduction_electrons) {
-    if(beta == 0.0) {
+    if(beta < 0.0001) {
       distribution[count] = E_f_A;
       count++;
       continue;
     }
-    double epsilon = step_size * (int_random() % conduction_electrons);
-    if(uniform_random() < (sqrt(2.0 / M_PI)*epsilon*epsilon*exp(-0.5*epsilon*epsilon / (beta*beta)) / (beta*beta*beta))) {
-      distribution[count] = epsilon + E_f_A;
+    double epsilon = step_size * (omp_int_random[omp_get_thread_num()]() % conduction_electrons);
+    if(omp_uniform_random[omp_get_thread_num()]() < ((M_PI / 16.0)*epsilon*epsilon*exp(-0.5*epsilon / beta) / pow(beta, 1.5))) {
+      distribution[count] = (E_f_A*epsilon) + E_f_A;
       count++;
     }
   }
@@ -953,20 +935,18 @@ void create_phonon_distribution(const std::string& name, std::vector<double>& di
   std::ofstream distrib;
   distrib.open(name);
   distrib.precision(10);
-  const double step_size = 2.0 / double(conduction_electrons);
+  const double step_size = 1.0 / double(conduction_electrons);
  
   int count = 0;
   while(count < conduction_electrons) {
-    if(beta == 0.0) {
+    if(beta < 0.0001) {
       distribution[count] = E_f_A;
       count++;
       continue;
     }
-    double epsilon = step_size * double(int_random() % conduction_electrons);
-    double prob = uniform_random();
-    double MB = sqrt(2.0 / M_PI)*epsilon*epsilon*exp(-0.5*epsilon*epsilon / (beta*beta)) / (beta*beta*beta);
-    if(prob < MB) {
-      distribution[count] = epsilon + E_f_A;
+    double epsilon = step_size * double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
+    if(omp_uniform_random[omp_get_thread_num()]() < ((M_PI / 16.0)*epsilon*epsilon*exp(-0.5*epsilon / beta) / pow(beta, 1.5))) {
+      distribution[count] = epsilon*E_f_A + E_f_A;
       distrib << count << ", " << distribution[count] << "\n";
       count++;
     }
@@ -1133,7 +1113,6 @@ double e_p_scattering(int e, int a, const double& x_distance, const double& y_di
 } 
 */
 void output_data() {
-        double TPE = 0.0;
     //=========
     // Output equilibration step data
     //=========
@@ -1151,60 +1130,44 @@ void output_data() {
       atomic_phonon_output.precision(10);
       atomic_phonon_output << std::scientific;
 
-      electron_position_output_down.open(string(directory) + "/Electron_Position/" + time_stamp + ".xyz");
-      electron_position_output_down << conduction_electrons << "\n";
-      electron_position_output_down << time_stamp << "\n";
-      electron_position_output_down.precision(10);
-      electron_position_output_down << std::scientific;
+      // electron_position_output_down.open(string(directory) + "/Electron_Position/" + time_stamp + ".xyz");
+      // electron_position_output_down << conduction_electrons << "\n";
+      // electron_position_output_down << time_stamp << "\n";
+      // electron_position_output_down.precision(10);
+      // electron_position_output_down << std::scientific;
 
       electron_velocity_output.open(string(directory) + "/Electron_Velocity/" + time_stamp + ".txt");
       electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
       electron_velocity_output.precision(10);
       electron_velocity_output << std::scientific;
-    
-    int array_index; //array_index_y, array_index_z;
-    double x_pos, y_pos, z_pos;
-    double x_vel, y_vel ,z_vel, velocity_length; 
-    // std::forward_list<int> hot_e_list;
-    // std::forward_list<int> hot_a_list;
-    // int hot_electrons = 0;
-    // int hot_atoms = 0;
+
 
     for(int e = 0; e < conduction_electrons; e++) {
-       array_index   = 3*e;
+     //  array_index   = 3*e;
       // array_index_y = array_index + 1;
       // array_index_z = array_index + 2;
-
       // x_pos = new_electron_position[array_index];
       // y_pos = new_electron_position[array_index_y]; 
       // z_pos = new_electron_position[array_index_z];
-
-      x_vel = 1e5*electron_velocity[array_index];
-      y_vel = 1e5*electron_velocity[array_index+1];
-      z_vel = 1e5*electron_velocity[array_index+2];
-      velocity_length = electron_potential[e];
+    //  x_vel = 1e5*electron_velocity[array_index];
+     // y_vel = 1e5*electron_velocity[array_index+1];
+      //z_vel = 1e5*electron_velocity[array_index+2];
+    //  velocity_length = electron_potential[e];
       // if(velocity_length > E_f_A) {
       //   hot_e_list.push_front(e);
       //   hot_electrons++;
       // }
-
    //   electron_position_output_down << "H" << ", " << x_pos << ", " << y_pos << ", " << z_pos << "\n"; //<< ", " << mean_radius[2*e] << ", " << mean_radius[2*e+1] << "\n";
-      electron_velocity_output << e << ", " << x_vel << ", " << y_vel << ", " << z_vel << ", " << velocity_length <<  "\n";
-     // velocity_length = return_phonon_distribution();
-      //atomic_phonon_output << e << ", " << velocity_length << "\n";
-      //TPE += velocity_length;
-      // if(atom_potential[e] > E_f_A) {
-      //   hot_a_list.push_front(e);
-      //   hot_atoms++;
-      // }
+      electron_velocity_output << e << ", "  << electron_potential[e] <<  "\n";
+      atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
     }
   
-    electron_position_output_down.close();
+ //   electron_position_output_down.close();
     electron_velocity_output.close();
     atomic_phonon_output.close();
-
-    const std::string name = "E_distrib";
-    create_phonon_distribution(name, electron_potential, Te*e_specific_heat / E_f_A);
+    std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
+    //const std::string name = "E_distrib";
+  //  create_phonon_distribution(name, electron_potential, Te*e_specific_heat / E_f_A);
   // if(hot_electrons > 0) {
   //   std::ofstream electron_hot_output;
   //   electron_hot_output.open(string(directory) + "/Hot_Electrons/" + time_stamp + ".xyz");
@@ -1244,7 +1207,7 @@ void output_data() {
     // }
   //  mean_ea_rad /= conduction_electrons;
   //  mean_ee_rad /= conduction_electrons;
-    std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
+    
 
     mean_data.precision(10);
     mean_data << std::scientific;
@@ -1256,8 +1219,8 @@ void output_data() {
 
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << TEKE * 1e-20 << ", " << TLE*1e-20 << ", " 
-      << Te << ", " << TLE*a_heat_capacity_i  - E_f_A*lattice_atoms*a_heat_capacity_i << ", "  \
+      << Te*Te*e_heat_capacity* 1e-20 << ", " << Tp*a_heat_capacity*1e-20 << ", " 
+      << Te << ", " << Tp << ", "  \
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << a_a_scattering_count << ", " << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
@@ -1265,7 +1228,7 @@ void output_data() {
     else {
 
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << TEKE * 1e-20 << ", " << TLE*1e-20 << ", "  
+      << Te*Te*e_heat_capacity* 1e-20 << ", " << Tp*a_heat_capacity* 1e-20 << ", "  
       << Te << ", " << Tp << ", "
       << TTMe << ", " << TTMp << ", "
       << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(a_a_scattering_count) / CASTLE_output_rate << ", " << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
@@ -1278,7 +1241,6 @@ void output_data() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
     a_a_scattering_count = 0;
-
 }
 
 
