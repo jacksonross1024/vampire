@@ -302,7 +302,7 @@ void initialize () {
     a_heat_capacity = 1e-27*a_specific_heat * n_f; //AJ/K/particle [] AJ/K/nm**3
     a_heat_capacity_i = 1.0 / a_heat_capacity;
 
-    e_specific_heat = constants::kB_r*3.0/10.0; // gamma; //AJ/K**2/e- 
+    e_specific_heat = constants::kB_r*3.0/2.0; // gamma; //AJ/K**2/e- 
     e_specific_heat_i = 1.0 / e_specific_heat;
     e_heat_capacity = 1e-27*e_specific_heat * n_f; //AJ/K**2/e- -> [e-/m**3] -> AJ/K**2/nm**3
     e_heat_capacity_i = 1.0 / e_heat_capacity;

@@ -140,21 +140,21 @@ void update_dynamics() {
         //  neighbor_e_a_coulomb(e, array_index);
           neighbor_e_e_coulomb(e, array_index);   
         }
-        //electron_thermal_field(e, array_index, external_potential);
-        electron_applied_voltage(e, array_index, external_potential);
+        electron_thermal_field(e, array_index, external_potential);
+        //electron_applied_voltage(e, array_index, external_potential);
        // if(ea_coupling) 
         ea_scattering(e, array_index);
     }    
  
    // if(ee_coupling)
-  #pragma omp parallel sections 
-  {
-    #pragma omp section
-      ee_scattering();
+  // #pragma omp parallel sections 
+  // {
+  //   #pragma omp section
+  //     ee_scattering();
     
-    #pragma omp section
-      aa_scattering();
-  }
+  //   #pragma omp section
+  //     aa_scattering();
+  // }
 
         if (err::check) std::cout << "reset scattering." << std::endl;
     for(int e = 0; e < conduction_electrons; e++) {
