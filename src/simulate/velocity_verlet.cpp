@@ -487,7 +487,7 @@ void aa_scattering() {
      // excitation_constant = atom_potential[e] - E_f_A;
       // if(excitation_constant < 8.0) scattering_prob = 8.0;
       // else scattering_prob = excitation_constant*excitation_constant;
-      double deltaE = (atom_potential[e] - E_f_A);
+      double deltaE = (atom_potential[e] - E_f_A - constants::kB_r*Tp);
 
       double scattering_prob;
       if(deltaE < 8.0) scattering_prob = 8.0;
@@ -520,10 +520,10 @@ void ea_scattering(const int& e, const int& array_index) {
     double lattice_energy = atom_potential[atom_collision];
     double deltaE;
   
-    if(omp_uniform_random[omp_get_thread_num()]() > exp(ea_rate*E_f_A/(scattering_velocity*Te))) {
+    if(omp_uniform_random[omp_get_thread_num()]() > exp(ea_rate/Te)){//*E_f_A/(scattering_velocity*Te))) {
       
-      if(Te > Tp) deltaE = (scattering_velocity - E_f_A)*(1.0-(Tp/Te));
-      else deltaE = (E_f_A-lattice_energy)*(1.0-(Te/Tp));
+      if(Te > Tp) deltaE = (scattering_velocity - E_f_A - Te*constants::kB_r)*(1.0-(Tp/Te));
+      else deltaE = (Te*constants::kB_r + E_f_A - lattice_energy)*(1.0-(Te/Tp));
      
       double theta = omp_uniform_random[omp_get_thread_num()]() * 2.0 * M_PI;
       double phi   = omp_uniform_random[omp_get_thread_num()]() * M_PI; 
@@ -559,7 +559,7 @@ void ee_scattering() {
     double scattering_prob;
   
     double e_energy = electron_potential[e];
-    double deltaE = e_energy - E_f_A;
+    double deltaE = e_energy - E_f_A - constants::kB_r*Te;
     if(deltaE < 8.0) scattering_prob = 8.0;
     else scattering_prob = deltaE*deltaE;
    

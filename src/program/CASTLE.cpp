@@ -460,8 +460,8 @@ void initialize_lattice() {
     lattice_output.close(); 
 
    // Tp = 300.0;
-    const std::string name = "P_distrib";
-    create_phonon_distribution(name, atom_potential, Tp*a_specific_heat / E_f_A);
+  //  const std::string name = "P_distrib";
+  //  create_phonon_distribution(name, atom_potential, Tp*a_specific_heat / E_f_A);
 }
 
 //====================================
@@ -914,6 +914,7 @@ double B_E_distrib(const double& epsilon) {
 void create_phonon_distribution(std::vector<double>& distribution, const double& beta) {
 
   const double step_size = 1.0 / double(conduction_electrons);
+  const double offset = -beta*3.0;
   int count = 0;
 
   while(count < conduction_electrons) {
@@ -922,9 +923,9 @@ void create_phonon_distribution(std::vector<double>& distribution, const double&
       count++;
       continue;
     }
-    double epsilon = step_size * (omp_int_random[omp_get_thread_num()]() % conduction_electrons);
-    if(omp_uniform_random[omp_get_thread_num()]() < ((M_PI / 16.0)*epsilon*epsilon*exp(-0.5*epsilon / beta) / pow(beta, 1.5))) {
-      distribution[count] = (E_f_A*epsilon) + E_f_A;
+    double epsilon = (step_size*(omp_int_random[omp_get_thread_num()]() % conduction_electrons)) - offset;
+    if(omp_uniform_random[omp_get_thread_num()]() < ((M_PI / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
+      distribution[count] = E_f_A*epsilon;
       count++;
     }
   }
@@ -936,17 +937,23 @@ void create_phonon_distribution(const std::string& name, std::vector<double>& di
   distrib.open(name);
   distrib.precision(10);
   const double step_size = 1.0 / double(conduction_electrons);
- 
+  const double offset  = beta*3.0;
   int count = 0;
+
+  std::cout << step_size << ", " << offset << std::endl;
   while(count < conduction_electrons) {
-    if(beta < 0.0001) {
+    if(beta == 0) {
       distribution[count] = E_f_A;
       count++;
       continue;
     }
-    double epsilon = step_size * double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
-    if(omp_uniform_random[omp_get_thread_num()]() < ((M_PI / 16.0)*epsilon*epsilon*exp(-0.5*epsilon / beta) / pow(beta, 1.5))) {
-      distribution[count] = epsilon*E_f_A + E_f_A;
+    double electron = double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
+    double epsilon = (step_size *electron)  - offset;
+   // std::cout << epsilon << ", " << step_size *electron << ", " << step_size *electron + offset << ", " << electron << ", " << offset << std::endl;
+    //if(epsilon < 0.0) std::cout << epsilon << ", " << ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta)) << std::endl;
+    if(omp_uniform_random[omp_get_thread_num()]() < ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
+      
+      distribution[count] = E_f_A*(epsilon + 1.0);
       distrib << count << ", " << distribution[count] << "\n";
       count++;
     }
