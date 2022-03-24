@@ -163,6 +163,7 @@ namespace CASTLE {
     extern MTRand_int32 int_random;
     extern std::vector<MTRand_closed> omp_uniform_random;
     extern std::vector<MTRand_int32> omp_int_random;
+   // extern std::vector<MTRand> omp_gaussian_random;
     //outputs
    
     extern double TEPE; //Angstroms
@@ -230,7 +231,7 @@ namespace CASTLE {
 
     extern void electron_thermal_field(const int& e, const int& array_index, const double& EKE);
  
-    extern void electron_applied_voltage(const int& e, const int& array_index, const double& external_potential);
+    extern double electron_applied_voltage(const int& e, const int& array_index, const double& external_potential);
  
     extern void aa_scattering();
     extern void ea_scattering(const int& e, const int& array_index);

@@ -27,6 +27,7 @@ namespace constants{
    const double m_e_r = 9.1093837015e-1; //kg reduced for future use in fs**2 conversion
    const double m_e_r_i = 1 / m_e_r;
    const double h   = 6.62607015e-34; // Plank constant (m^2 kg / s)  <or> (AJ /Hz) NIST standard reference
+   const double hbar_r = 1.0545718e1; //Js ->[e20e15] AJ fs
    const double J_au = 2.293712658357900e+17;
    const double e = 1.602176634e-19; //C
    const double e_A = 16.02176634; //AC  (Angstrom Coulombs)

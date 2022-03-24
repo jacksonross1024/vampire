@@ -27,6 +27,7 @@ namespace constants{
    extern const double m_e_r; //kg reduced for latter use in fs conversion
    extern const double m_e_r_i;
    extern const double h;   // Plank's constant (Js/kg)
+   extern const double hbar_r; //reduced Plank's constant AJfs
    extern const double J_au; //Joule to a.u. 
    extern const double e;     // electron charge
    extern const double e_A;
@@ -34,6 +35,7 @@ namespace constants{
    extern const double esp_0_A;
    extern const double K; //K for Coulomb's law
    extern const double K_A;
+
 } // end of exchange namespace
 
 #endif //CONSTANTS_H_
