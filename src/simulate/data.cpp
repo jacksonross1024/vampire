@@ -329,7 +329,7 @@ namespace CASTLE {
 
    void electron_thermal_field(const int& e, const int& array_index, const double& EKE);
  
-   double electron_applied_voltage(const int& e, const int& array_index, const double& external_potential);
+   double electron_applied_voltage(const int& e, const int& array_index, double& external_potential);
 
    void aa_scattering();
    void ea_scattering(const int& e, const int& array_index);

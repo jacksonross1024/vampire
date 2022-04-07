@@ -47,7 +47,7 @@ void create() {
 
     initialize();
        // omp_set_dynamic(1);
-        //omp_set_num_threads(8);
+        omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -268,7 +268,7 @@ void initialize () {
   
     applied_voltage_sim = sim::applied_voltage_sim;
     heat_pulse_sim = sim::heat_pulse_sim;
-    applied_voltage = sim::applied_voltage; //V/m
+     //V/m
 
     ee_coupling = sim::ee_coupling;
     ea_coupling = sim::ea_coupling;
@@ -290,7 +290,7 @@ void initialize () {
 
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
-
+    applied_voltage = sqrt(1.60218e-19*2.0*sim::applied_voltage/constants::eps_0/(1e-30*lattice_width * lattice_height * lattice_depth)); //eV -> V/m
     n_f = 1e30 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
     E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
     E_f_A = E_f*1e20; //Angstroms
@@ -307,8 +307,8 @@ void initialize () {
     e_heat_capacity = 1e-27*e_specific_heat * n_f; //AJ/K**2/e- -> [e-/m**3] -> AJ/K**2/nm**3
     e_heat_capacity_i = 1.0 / e_heat_capacity;
 
-    ea_coupling_strength = sim::ea_coupling_strength*1.6022e-2*1.6022e-2/(constants::hbar_r*constants::hbar_r); // meV**2 -> 1/fs**2
-    phonon_energy = sqrt(sim::ea_coupling_strength/0.084)*1.6022e-2;
+    ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/(constants::hbar_r*constants::hbar_r); // meV**2 -> 1/fs**2
+    phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.084)*constants::eV_to_AJ;
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
     heat_pulse = 1e-4*sim::heat_pulse/dt/lattice_height; // mJ/cm**2 -> [e17/e14/e1] AJ/fs/nm**3
@@ -318,12 +318,8 @@ void initialize () {
     
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
     
-    ea_rate = -1e27*dt*3.0/tau/n_f/2.0; //-1.0*dt*6.0*G/(1e-27*M_PI*M_PI*constants::m_e*n_f*sim::ea_coupling_strength*sim::ea_coupling_strength); //1/K/fs
-    ee_rate = -1.0*dt/sim::ee_coupling_strength;
-   
-    std::cout << "G: " << 1e-22*sim::TTG << ", Ce/tau: " << G << ", Ce(Te)@300K: " << e_heat_capacity << " << tau: " << tau << ", ea_rate: " << ea_rate  << ", hbarOmega: " << phonon_energy << std::endl;
-
-    
+    ea_rate = -1e30*dt*3.0/tau/n_f/2.0;
+    ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //fs**-1 AJ**-2
 
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -353,7 +349,7 @@ void initialize () {
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
-    std::cout << "E_f(J): " << E_f << ", G(AJ/K/fs/nm**3): " << G << ", Ce@300K (AJ/K/nm**3): " << e_heat_capacity << ", Cl(AJ/K/nm**3): " << a_heat_capacity << ", Tau@300K(fs): " << tau <<  std::endl;
+    std::cout << "E_f(J): " << E_f << ", G(AJ/K/fs/nm**3): " << G << ", Ce@300K (AJ/K/nm**3): " << e_heat_capacity << ", Cl(AJ/K/nm**3): " << a_heat_capacity << ", Tau_ea@300K(fs): " << tau <<  ", Tau_ee: " << ee_rate << ", E_field(V/m): " << applied_voltage << std::endl;
     
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
@@ -498,9 +494,9 @@ void initialize_electrons() {
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    int e_density = 900 + int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
+    int e_density = 1100 + int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
     int ee_density = e_density;
-    std::cout << e_density << ", " << (pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30) + 900 << std::endl;
+    std::cout << e_density << ", " << (pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30) + 1100 << std::endl;
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
@@ -918,6 +914,7 @@ void create_phonon_distribution(std::vector<double>& distribution, const double&
     double electron = double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
     double epsilon = (step_size *electron)  - offset;
     if(omp_uniform_random[omp_get_thread_num()]() < ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
+      if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Tp) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Tp) << ", " << epsilon << ", " << beta  << std::endl;
       distribution[count] = E_f_A*(epsilon + 1.0);
       count++;
     }
@@ -948,7 +945,7 @@ void create_phonon_distribution(const std::string& name, std::vector<double>& di
     double electron = double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
     double epsilon = (step_size *electron)  - offset;
     if(omp_uniform_random[omp_get_thread_num()]() < ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
-      
+      if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Te) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Te) << ", " << epsilon << ", " << beta  << std::endl;
       distribution[count] = E_f_A*(epsilon + 1.0);
       distrib << count << ", " << distribution[count] << "\n";
       count++;
@@ -1144,7 +1141,7 @@ void output_data() {
       // electron_position_output_down.precision(10);
       // electron_position_output_down << std::scientific;
 
-      electron_velocity_output.open(string(directory) + "/Electron_Velocity/" + time_stamp + ".txt");
+      electron_velocity_output.open(string(directory) + "/Electron_Velocity/" + time_stamp + ".csv");
       electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
       electron_velocity_output.precision(10);
       electron_velocity_output << std::scientific;

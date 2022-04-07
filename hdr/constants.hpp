@@ -29,10 +29,11 @@ namespace constants{
    extern const double h;   // Plank's constant (Js/kg)
    extern const double hbar_r; //reduced Plank's constant AJfs
    extern const double J_au; //Joule to a.u. 
+   extern const double eV_to_AJ; //AJ/eV
    extern const double e;     // electron charge
    extern const double e_A;
    extern const double eps_0;
-   extern const double esp_0_A;
+   extern const double eps_0_A;
    extern const double K; //K for Coulomb's law
    extern const double K_A;
 

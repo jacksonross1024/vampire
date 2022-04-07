@@ -257,7 +257,7 @@ namespace sim{
       test = "applied-voltage";
       if(word == test) {
          double c = atof(value.c_str());
-         vin::check_for_valid_value(c, word, line, prefix, unit, "V", 0.0, 1e10, "input", "0-1e10");
+         vin::check_for_valid_value(c, word, line, prefix, unit, "V", 0.0, 1e20, "input", "0-1e10");
          sim::applied_voltage_sim = true;
          sim::applied_voltage = c;
          return true;
