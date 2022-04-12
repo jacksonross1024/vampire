@@ -1,7 +1,7 @@
 #!/bin/bash
 
-T0 = 300
-T1 = 1240
+T0 = 600
+T1 = 1000
 kB = 1.38e-3
 e  = 105.59
 n  = 8788.0
@@ -27,12 +27,14 @@ set boxwidth w
 set style fill solid 0.8 noborder
 set xrange [1.0-3.0*t1:1.2]
 set yrange [0:0.8]
+#set auto x
+#set auto y
 set title "Classical Electron Gas, 20 mJ/cm^2"
 set key top right notitle
 
 
-p  "charge_transfer/Electron_Velocity/2000.csv" u (bin($2/e +1.0,w)-1.0):(100.0/n) smooth freq w boxes lc rgb "#20547C" title "60 fs",\
-"charge_transfer/Electron_Velocity/6000.csv" u (bin($2/e +1.0,w)-1.0):(100.0/n) smooth freq w boxes lc rgb "#785F3D" title "80 fs",\
+p  "3G/Electron_Velocity/1000.csv" u (bin($2/e,w)):(100.0/n) smooth freq w boxes lc rgb "#20547C" title "100 fs",\
+"3G/Electron_Velocity/6000.csv" u (bin($2/e,w)):(100.0/n) smooth freq w boxes lc rgb "#785F3D" title "600 fs",\
 "" u (1.0-(3*t0)+$1*w):(mb_S(-3*t0+$1*w, t0)) w l lw 2 title sprintf("MB %.0fK", T0),\
 "" u (1.0-(3*t1)+$1*w):(mb_S(-3*t1+$1*w, t1)) w l lw 2 title sprintf("MB %.0fK", T1),\
 

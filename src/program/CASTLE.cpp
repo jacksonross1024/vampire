@@ -242,7 +242,7 @@ for(int a = 0; a < 1500; a++) {
     std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed. Step-time: " << castle_watch.elapsed_seconds() / total_time_steps << std::endl;
     
     mean_data.close();
-       
+    temp_data.close();
 }
 
 //====================================
@@ -263,6 +263,7 @@ void initialize () {
     CASTLE_output_rate = sim::partial_time;
     dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
     TTMe = TTMp = d_TTMe = d_TTMp = Tp = Te = sim::temperature;
+    //Te = 1300.0;
     total_time_steps = sim::equilibration_time; //100
     CASTLE_MD_rate = sim::CASTLE_MD_rate;
   
@@ -311,14 +312,13 @@ void initialize () {
     phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.084)*constants::eV_to_AJ;
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
-    heat_pulse = 1e-4*sim::heat_pulse/dt/lattice_height; // mJ/cm**2 -> [e17/e14/e1] AJ/fs/nm**3
+    power_density = 1e1*sim::heat_pulse; // mJ/cm**2 -> [e17/e14/e2(fs)] AJ/fs/nm**2
     
     const static double tau = 1.0 /(M_PI*constants::hbar_r*ea_coupling_strength); //AJ**-1 fs
     G = e_heat_capacity/tau; //J/s/K/m**3 [e20/e15/e27] AJ/fs/K/nm**3
     
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    
-    ea_rate = -1e30*dt*3.0/tau/n_f/2.0;
+    ea_rate = -1.0e-1*dt / tau;
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //fs**-1 AJ**-2
 
     std::srand(std::time(nullptr));
@@ -356,6 +356,7 @@ void initialize () {
             std::cerr << "Fatal getcwd error in datalog." << std::endl;
     }
     
+    temp_data.open(string(directory) + "/temp_data.csv");
     mean_data.open(string(directory) + "/mean_data.csv");
     mean_data << "time, step, mean-EKE, mean-LE, mean-Te, mean-Tp,  mean-radius, mean-e-a-collisions, mean-e-e-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
 
@@ -861,7 +862,7 @@ void initialize_velocities() {
       double phi,theta; //A/fS
       int array_index;
       array_index = 3*e;
-      double vel = electron_potential[e];
+      double vel = electron_potential[omp_int_random[omp_get_thread_num()]() % conduction_electrons];
        // if(vel < E_f_A) std::cout << vel << std::endl;
       vel = sqrt(2.0*vel*constants::m_e_r_i);
 
@@ -894,7 +895,7 @@ void initialize_velocities() {
 
 double M_B_distrib(const double& epsilon, const double& beta) {
 
-  return ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta));
+  return (exp(epsilon / beta) / (beta*(exp(epsilon / beta) + 1.0)*(exp(epsilon / beta) + 1.0)));
   
 }
 
@@ -914,7 +915,7 @@ void create_phonon_distribution(std::vector<double>& distribution, const double&
     double electron = double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
     double epsilon = (step_size *electron)  - offset;
     if(omp_uniform_random[omp_get_thread_num()]() < ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
-      if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Tp) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Tp) << ", " << epsilon << ", " << beta  << std::endl;
+   //  if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Tp) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Tp) << ", " << epsilon << ", " << beta  << std::endl;
       distribution[count] = E_f_A*(epsilon + 1.0);
       count++;
     }
@@ -945,7 +946,7 @@ void create_phonon_distribution(const std::string& name, std::vector<double>& di
     double electron = double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
     double epsilon = (step_size *electron)  - offset;
     if(omp_uniform_random[omp_get_thread_num()]() < ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
-      if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Te) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Te) << ", " << epsilon << ", " << beta  << std::endl;
+     // if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Te) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Te) << ", " << epsilon << ", " << beta  << std::endl;
       distribution[count] = E_f_A*(epsilon + 1.0);
       distrib << count << ", " << distribution[count] << "\n";
       count++;
@@ -1146,31 +1147,78 @@ void output_data() {
       electron_velocity_output.precision(10);
       electron_velocity_output << std::scientific;
     
+      std::ofstream temp_map_list [8];
+     
+     
+      double tempMap[8];
+      for(int i = 0; i < 8; i++) {
+         tempMap[i] = 0.0;
+         temp_map_list[i].open(string(directory) + "/Temp_Map" + std::to_string(i) + "/" + time_stamp);
+      //electron_temperature_map.precision(10);
+     // electron_temperature_map << std::scientific;
+      }
     double  velocity_length; 
-    double x_vel, y_vel, z_vel;
-    int array_index;
+    double x_vel, y_vel, z_vel, x_pos, y_pos, z_pos;
+    int array_index, array_index_y, array_index_z;
+
     for(int e = 0; e < conduction_electrons; e++) {
       array_index   = 3*e;
-      // array_index_y = array_index + 1;
-      // array_index_z = array_index + 2;
-      // x_pos = new_electron_position[array_index];
-      // y_pos = new_electron_position[array_index_y]; 
-      // z_pos = new_electron_position[array_index_z];
+      array_index_y = array_index + 1;
+      array_index_z = array_index + 2;
+      x_pos = electron_position[array_index];
+      y_pos = electron_position[array_index_y]; 
+      z_pos = electron_position[array_index_z];
        x_vel = 1e5*electron_velocity[array_index];
        y_vel = 1e5*electron_velocity[array_index+1];
        z_vel = 1e5*electron_velocity[array_index+2];
-      //  count[int(w*floor((velocity_length / E_f_A / w)))] ++;
-      // if(velocity_length > E_f_A) {
-      //   hot_e_list.push_front(e);
-      //   hot_electrons++;
-      // }
       velocity_length = electron_potential[e];
+      if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {
+        tempMap[0] += velocity_length;
+        temp_map_list[0] << e << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << velocity_length << "\n";
+      }
+      if(x_pos > lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+        tempMap[1] += velocity_length;
+        temp_map_list[1] << e << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << velocity_length << "\n";
+      }
+      if(x_pos < lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+        tempMap[2] += velocity_length;
+        temp_map_list[2] << e << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << velocity_length << "\n";
+      }
+      if(x_pos > lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+        tempMap[3] += velocity_length;
+        temp_map_list[3] << e << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << velocity_length << "\n";
+      }
+      if(x_pos < lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+        tempMap[4] += velocity_length;
+        temp_map_list[4] << e << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << velocity_length << "\n";
+      }
+      if(x_pos > lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+        tempMap[5] += velocity_length;
+        temp_map_list[5] << e << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << velocity_length << "\n";
+      }
+      if(x_pos < lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+        tempMap[6] += velocity_length;
+        temp_map_list[6] << e << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << velocity_length << "\n";
+      }
+      if(x_pos > lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+        tempMap[7] += velocity_length;
+        temp_map_list[7] << e << ", " << x_pos << ", " << y_pos << ", " << z_pos << ", " << velocity_length << "\n";
+      }
+
       electron_velocity_output << e << ", " << velocity_length << ", " << x_vel << ", " << y_vel << ", " << z_vel << "\n";
       atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
     }
     // electron_position_output_down.close();
     electron_velocity_output.close();
     atomic_phonon_output.close();
+    
+    for(int i = 0; i < 8; i++) {
+      temp_map_list[i].close();
+      tempMap[i] = sqrt(1.5*e_heat_capacity_i*1e-30*(tempMap[i] - (E_f_A*8.0/double(conduction_electrons)))* n_f*300.0*8.0/double(conduction_electrons));
+    }
+    temp_data << current_time_step << ", " << tempMap[0] << ", " << tempMap[1] << ", " << tempMap[2] << ", " << tempMap[3] << ", "\
+              << tempMap[4] << ", " << tempMap[5] << ", " << tempMap[6] << ", " << tempMap[7] << std::endl;
+  
       std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
     // for(int e = 0; e < conduction_electrons; e++) {
     //   atomic_phonon_output_hist << w*double(e)<< ", " << double(count[e]) / double(conduction_electrons) << "\n";

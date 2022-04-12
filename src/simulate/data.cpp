@@ -218,7 +218,7 @@ namespace CASTLE {
    double a_a_neighbor_cutoff;
 
    double applied_voltage = 0.0;
-   double heat_pulse = 0.0;
+   double power_density = 0.0;
    
    bool ee_coupling = false;
    bool ea_coupling = false;
@@ -294,6 +294,7 @@ namespace CASTLE {
    std::ofstream electron_position_output_down;
    std::ofstream electron_velocity_output;
    std::ofstream mean_data;
+   std::ofstream temp_data;
     
     //control functions
    void initialize();
@@ -348,6 +349,7 @@ namespace CASTLE {
 
 */
    double B_E_distrib(const double& epsilon);
+   double M_B_distrib(const double& epsilon, const double& beta);
    void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
    void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
    double return_phonon_distribution(const std::vector<double>& distribution);

@@ -123,7 +123,7 @@ namespace CASTLE {
     // extern double a_a_coulomb_cutoff;
 
     extern double applied_voltage;
-    extern double heat_pulse;
+    extern double power_density;
    // extern int num_cells;
 
     //integration variables
@@ -196,6 +196,7 @@ namespace CASTLE {
     extern std::ofstream electron_position_output_down;
     extern std::ofstream electron_velocity_output;
     extern std::ofstream mean_data;
+    extern std::ofstream temp_data;
     
     //control functions
     extern void initialize();
@@ -242,7 +243,7 @@ namespace CASTLE {
     
     extern double reinitialize_electron_conserve_momentum(std::vector<double>& captured_electron_list);
 */
-
+    extern double M_B_distrib(const double& epsilon, const double& beta);
     extern double B_E_distrib(const double& epsilon);
     extern void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
     extern void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);

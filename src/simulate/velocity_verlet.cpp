@@ -110,20 +110,28 @@ void update_position(){
 void update_dynamics() {
   
     int array_index;
+    const static double photon_energy = sim::applied_voltage*constants::eV_to_AJ; //AJ/hv
+    //AJ/fs/nm**2 -> [1e-3volume(A**3)/(AJ/hv)] hv/fs 
+    const static double photon_rate = 1e-2*power_density*lattice_width*lattice_depth/photon_energy; //hv/fs
+    double photons_at_dt = 0.0; //hv*dt
     double pump = 0.0; // AJ / fs
-    double external_potential = 0.0;
+    double external_potential = 0.0; //AJ/e-
+    const static double sigma = dt * 0.1;
+    
+   // std::cout << "power density: " << power_density << ", "<< photon_energy << ", " << photon_rate << ", ";
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
-        const static double sigma = dt * 0.1;
-        pump = heat_pulse * sigma * 7.5e5 * exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))); // AJ/fs/nm**3
-        external_potential = 1e27*pump*dt/ n_f; // AJ / particle
-
+        //hv(dt)/fs
+        photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))))); // AJ/fs/nm**3
+        pump = 1e-3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
+        external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
+      //  std::cout << exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))) << ", " << photons_at_dt << ", " << pump << std::endl;
         TTMe = d_TTMe;
         TTMp = d_TTMp;
           //AJ/fs/K -> g(T-T)=C/t
-        d_TTMe = ((1e-22*sim::TTG*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i*300.0/TTMe) + TTMe;
+        d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i*300.0/TTMe) + TTMe;
         // else            d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
-        d_TTMp = ( 1e-22*sim::TTG*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
+        d_TTMp = ( G*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
       }
     }
 
@@ -132,30 +140,33 @@ void update_dynamics() {
         array_index = 3*e;        
 
         if(current_time_step % 15 == 0) {
-         // e_a_coulomb(e, array_index);
+          //e_a_coulomb(e, array_index);
           e_e_coulomb(e, array_index); 
         } else {
-        //  neighbor_e_a_coulomb(e, array_index);
+          //neighbor_e_a_coulomb(e, array_index);
           neighbor_e_e_coulomb(e, array_index);   
         }
-       electron_thermal_field(e, array_index, external_potential);
-       // if(int_random() % conduction_electrons < 320) electron_applied_voltage(e, array_index, external_potential);
-       // if(ea_coupling) 
+       if((int_random() % conduction_electrons) <  \
+                        photons_at_dt )//photon_per_second_int(round(sigma*exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt))))))) \
+                        electron_thermal_field(e, array_index, external_potential);
+        // if(int_random() % conduction_electrons < 320) 
+        //if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
+        // if(ea_coupling) 
         ea_scattering(e, array_index);
     } 
-   // TEKE += external_potential;
+    //TEKE += external_potential;
    
  //  if(ee_coupling)
-  #pragma omp parallel sections 
-  {
-    #pragma omp section
-    create_phonon_distribution(atom_potential, constants::kB_r*Tp/E_f_A);
+  //#pragma omp parallel sections 
+ // {
+   // #pragma omp section
+   // create_phonon_distribution(atom_potential, constants::kB_r*Tp/E_f_A);
      // 
     
-    #pragma omp section
+  //  #pragma omp section
     ee_scattering();
       //aa_scattering();
-  }
+ // }
   Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
   Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt*300.0/Te);
   
@@ -164,9 +175,7 @@ void update_dynamics() {
       electron_ee_scattering_list[e][0] = 0;
      // atomic_nearest_atom_list[e][0] = 0;
     //  atomic_nearest_atom_list[e][0] = 0;
-    }
-    
-    
+    }   
 }
 
 void electron_thermal_field(const int& e, const int& array_index, const double& EKE) {
@@ -176,22 +185,26 @@ void electron_thermal_field(const int& e, const int& array_index, const double& 
     // int array_index_y = array_index + 1;
     // int array_index_z = array_index + 2;
       
-    double x_vel = electron_velocity[array_index];//   + ((electron_force[array_index]   + new_electron_force[array_index])   * dt  * constants::K_A / 2); 
-    double y_vel = electron_velocity[array_index+1];// + ((electron_force[array_index_y] + new_electron_force[array_index_y]) * dt  * constants::K_A / 2);
-    double z_vel = electron_velocity[array_index+2];// + ((electron_force[array_index_z] + new_electron_force[array_index_z]) * dt  * constants::K_A / 2);
+   // double x_vel = electron_velocity[array_index];//   + ((electron_force[array_index]   + new_electron_force[array_index])   * dt  * constants::K_A / 2); 
+    //double y_vel = electron_velocity[array_index+1];// + ((electron_force[array_index_y] + new_electron_force[array_index_y]) * dt  * constants::K_A / 2);
+    //double z_vel = electron_velocity[array_index+2];// + ((electron_force[array_index_z] + new_electron_force[array_index_z]) * dt  * constants::K_A / 2);
 
-    double vel = sqrt((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel));
-    double theta = atan(y_vel / x_vel);
-    double phi = acos(z_vel / vel);
-    if(x_vel < 0.0) theta += M_PI;
-    
+ //   double vel = sqrt((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel));
+  //  double theta = atan(y_vel / x_vel);
+   // double phi = acos(z_vel / vel);
+    //if(x_vel < 0.0) theta += M_PI;
+    double theta = omp_uniform_random[omp_get_thread_num()]() * 2.0 * M_PI;
+    double phi   = omp_uniform_random[omp_get_thread_num()]() * M_PI; 
+
     electron_potential[e] += EKE;
     
-    vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);
+    double vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);
 
     electron_velocity[array_index]   = vel*cos(theta)*sin(phi);
     electron_velocity[array_index+1] = vel*sin(theta)*sin(phi);
     electron_velocity[array_index+2] = vel*cos(phi);
+
+    electron_ee_scattering_list[e][0] = 1;
 }
 
 void e_a_coulomb(const int& e, const int& array_index){
@@ -471,15 +484,16 @@ double electron_applied_voltage(const int& e, const int& array_index, double& ex
   
   //const static double k = 1e-10*2.0*M_PI*sim::applied_voltage*1.60218e-19/(constants::h*3.08e10);
   const static double w = 1e-15*2.0*M_PI*sim::applied_voltage*1.60218e-19/constants::h;
-  double E_field = applied_voltage*sin(w*current_time_step)*exp(-0.5*dt * 0.1*dt * 0.1*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt))));
+  //double E_field = applied_voltage*sin(w*current_time_step)*exp(-0.5*dt * 0.1*dt * 0.1*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt))));
+  double E_field = applied_voltage;
   double vel = 5e-11*dt*E_field*constants::e_A*constants::m_e_r_i; //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
   
-  if((vel * electron_velocity[array_index]) > 0.0) {
+ // if((vel * electron_velocity[array_index]) > 0.0) {
     electron_velocity[array_index] += vel;
     double val = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) - electron_potential[e];
     external_potential += val;
     electron_potential[e] = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2]));
-  }
+ // }
   return 0.0;
 }
 
@@ -524,20 +538,15 @@ void aa_scattering() {
 void ea_scattering(const int& e, const int& array_index) {
 
     double scattering_velocity = electron_potential[e];
-    double deltaE =  sqrt(phonon_energy*(E_f_A+(constants::kB_r*Te)));
-    double scattering_const = ((constants::kB_r*Te)+E_f_A)/((scattering_velocity)*(scattering_velocity+phonon_energy));//abs(scattering_velocity - E_f_A - constants::kB_r*Tp)/(scattering_velocity + E_f_A + constants::kB_r*Tp);
+    double scattering_const = M_B_distrib((scattering_velocity - E_f_A - 1.0*constants::kB_r*Te)/E_f_A - 0.1, constants::kB_r*Te/E_f_A);
+    double deltaE = sqrt(phonon_energy*(E_f_A+ constants::kB_r*Te));
  
     if(omp_uniform_random[omp_get_thread_num()]() > exp(ea_rate*scattering_const)) {
      
-      deltaE = fmin( scattering_velocity - E_f_A + (3.0*constants::kB_r*Te), deltaE);
-     
-    //  else {
-    //    deltaE = -1.0*fmin(E_f_A - (3.0*constants::kB_r*Te) - scattering_velocity , deltaE);
-    //  }
+      //deltaE = fmin(abs(scattering_velocity - E_f_A + 0.0*constants::kB_r*Te), deltaE);
+      if(scattering_velocity < (E_f_A + constants::kB_r*Te)) deltaE *= -1.0;
       if(Tp > Te) deltaE *= -1.0;
-      if(scattering_velocity < E_f_A + (1.0*constants::kB_r*Te)) deltaE *= -1.0;
-    // if( scattering_velocity - deltaE - E_f_A + (3.0*constants::kB_r*Te) < 0.0)  std::cout << "ea DeltaE: " << deltaE << " > " << (scattering_velocity - E_f_A + (3.0*constants::kB_r*Te)) << "; " << scattering_velocity - deltaE << " < " << E_f_A - (3.0*constants::kB_r*Te) << std::endl;
-     
+
       double theta = omp_uniform_random[omp_get_thread_num()]() * 2.0 * M_PI;
       double phi   = omp_uniform_random[omp_get_thread_num()]() * M_PI; 
       scattering_velocity = sqrt(2.0*(scattering_velocity - deltaE)*constants::m_e_r_i);
