@@ -47,7 +47,7 @@ void create() {
 
     initialize();
        // omp_set_dynamic(1);
-        omp_set_num_threads(8);
+        //omp_set_num_threads(8);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -853,16 +853,16 @@ void initialize_velocities() {
     
 
     const std::string n = "Init_E_distrib";
-    create_phonon_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
+    create_fermi_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
     const std::string na = "P_distrib";
     create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
 
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
       double phi,theta; //A/fS
-      int array_index;
-      array_index = 3*e;
-      double vel = electron_potential[omp_int_random[omp_get_thread_num()]() % conduction_electrons];
+      
+      int array_index = 3*e;
+      double vel = electron_potential[e];
        // if(vel < E_f_A) std::cout << vel << std::endl;
       vel = sqrt(2.0*vel*constants::m_e_r_i);
 
@@ -955,8 +955,40 @@ void create_phonon_distribution(const std::string& name, std::vector<double>& di
   distrib.close();
 }
 
-double return_phonon_distribution(const std::vector<double>& distribution) {
-    return E_f_A + E_f_A*sqrt(Tp*e_specific_heat* 3.0/2.0/E_f_A);
+void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double& beta) {
+
+  char directory [256];
+      if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+      }
+  std::ofstream distrib;
+  distrib.open(string(directory) +"/"+ name);
+  distrib.precision(20);
+
+  const double step_size = 1.0 / double(conduction_electrons);
+  const double offset  = E_f_A + 8.0*constants::kB_r*Te;
+  int count = 0;
+
+ // std::cout << step_size << ", " << offset << std::endl;
+  while(count < conduction_electrons) {
+    // if(beta == 0) {
+    //   distribution[count] = E_f_A;
+    //   count++;
+    //   continue;
+    // }
+   // double electron = double(count);//double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
+    //double epsilon = step_size *electron*offset/E_f_A;
+  //  if(omp_uniform_random[omp_get_thread_num()]() < (1.0/(exp(epsilon/beta) + 1.0))) {
+      distribution[count] = count*(E_f_A + 4.0*constants::kB_r*Te)/double(conduction_electrons);
+      distrib << count << ", " << distribution[count] << "\n";
+      count++;
+ //   }
+  }
+  distrib.close();
+}
+
+double return_phonon_distribution(const double& epsilon, const double& beta ) {
+    return (1.0/(exp((epsilon-E_f_A)/beta) + 1.0));
 }
 
 

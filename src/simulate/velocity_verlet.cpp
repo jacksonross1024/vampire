@@ -123,7 +123,7 @@ void update_dynamics() {
       if(heat_pulse_sim) {
         //hv(dt)/fs
         photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))))); // AJ/fs/nm**3
-        pump = 1e-3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
+        pump = 1e3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
         external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
       //  std::cout << exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))) << ", " << photons_at_dt << ", " << pump << std::endl;
         TTMe = d_TTMe;
@@ -146,15 +146,13 @@ void update_dynamics() {
           //neighbor_e_a_coulomb(e, array_index);
           neighbor_e_e_coulomb(e, array_index);   
         }
-       if((int_random() % conduction_electrons) <  \
-                        photons_at_dt )//photon_per_second_int(round(sigma*exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt))))))) \
-                        electron_thermal_field(e, array_index, external_potential);
+      if((int_random() % conduction_electrons) < photons_at_dt && (return_phonon_distribution(E_f_A + 25.0, constants::kB_r*Te) < 1.0)) electron_thermal_field(e, array_index, external_potential);
         // if(int_random() % conduction_electrons < 320) 
         //if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
         // if(ea_coupling) 
-        ea_scattering(e, array_index);
+      //  ea_scattering(e, array_index);
     } 
-    //TEKE += external_potential;
+    TEKE += external_potential;
    
  //  if(ee_coupling)
   //#pragma omp parallel sections 
@@ -168,7 +166,7 @@ void update_dynamics() {
       //aa_scattering();
  // }
   Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
-  Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt*300.0/Te);
+  Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) ;//+ (e_heat_capacity_i*pump*dt*300.0/Te);
   
         if (err::check) std::cout << "reset scattering." << std::endl;
     for(int e = 0; e < conduction_electrons; e++) {
@@ -586,17 +584,19 @@ void ee_scattering() {
     if(electron_ee_scattering_list[electron_collision][0])  continue;
     
     double scattering_prob;
-  
     double e_energy = electron_potential[e];
+    double d_e_energy = electron_potential[electron_collision];
+    double deltaE = omp_uniform_random[omp_get_thread_num()]()*(e_energy - d_e_energy);
+    double thermal_factor = return_phonon_distribution((e_energy + deltaE)/E_f_A, constants::kB_r*Te/E_f_A) - return_phonon_distribution((d_e_energy - deltaE)/E_f_A, constants::kB_r*Te/E_f_A);
    // if(e_energy < E_f_A - (3.0*constants::kB_r*Te)) std::cout << e_energy << ", " << E_f_A - 3.0*constants::kB_r*Te << "< " << e << std::endl;
-    double deltaE = e_energy - E_f_A + (3.0*constants::kB_r*Te);
-  
-    if(omp_uniform_random[omp_get_thread_num()]() > exp(ee_rate*deltaE*deltaE)) {
+    if(abs(thermal_factor) > 0.001) {
+      std::cout << e_energy << ", " << d_e_energy << ", " << deltaE << ", " << abs(thermal_factor) << ", " << return_phonon_distribution(e_energy + deltaE, constants::kB_r*Te) << ", " << return_phonon_distribution(d_e_energy - deltaE, constants::kB_r*Te) << std::endl;
+    //if(omp_uniform_random[omp_get_thread_num()]() > exp(ee_rate*deltaE*deltaE)) {
 
-      double d_e_energy = electron_potential[electron_collision];
+    
       //if(deltaE < 0.0) std::cout << "ee DeltaE: " << deltaE << " > " << 0.5*(e_energy - E_f_A + 3.0*constants::kB_r*Te) << "; " << e_energy - deltaE << " < " << E_f_A - 3.0*constants::kB_r*Te << std::endl;
       
-      deltaE *= 0.5 - (0.5*exp(-8.0*constants::kB_r*Te/abs(deltaE)));
+   //   deltaE *= 0.5 - (0.5*exp(-8.0*constants::kB_r*Te/abs(deltaE)));
       
         
         int array_index = 3*e;
@@ -626,6 +626,7 @@ void ee_scattering() {
         electron_ee_scattering_list[electron_collision][0] = 1;
     }
   }
+  
   if (err::check) std::cout << "ee_scattering done." << std::endl;
 } 
 

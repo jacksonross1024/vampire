@@ -352,6 +352,6 @@ namespace CASTLE {
    double M_B_distrib(const double& epsilon, const double& beta);
    void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
    void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
-   double return_phonon_distribution(const std::vector<double>& distribution);
-
+   void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
+   double return_phonon_distribution(const double& epsilon, const double& beta);
 }

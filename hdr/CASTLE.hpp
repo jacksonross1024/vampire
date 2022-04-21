@@ -247,7 +247,8 @@ namespace CASTLE {
     extern double B_E_distrib(const double& epsilon);
     extern void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
     extern void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
-    extern double return_phonon_distribution(const std::vector<double>& distribution);
+    extern void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
+    extern double return_phonon_distribution(const double& epsilon, const double& beta);
 }
 
 
