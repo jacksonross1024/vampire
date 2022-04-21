@@ -117,7 +117,7 @@ void update_dynamics() {
     double pump = 0.0; // AJ / fs
     double external_potential = 0.0; //AJ/e-
     const static double sigma = dt * 0.1;
-    
+    int count = 0;
    // std::cout << "power density: " << power_density << ", "<< photon_energy << ", " << photon_rate << ", ";
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
@@ -146,13 +146,23 @@ void update_dynamics() {
           //neighbor_e_a_coulomb(e, array_index);
           neighbor_e_e_coulomb(e, array_index);   
         }
-      if((int_random() % conduction_electrons) < photons_at_dt && (return_phonon_distribution(E_f_A + 25.0, constants::kB_r*Te) < 1.0)) electron_thermal_field(e, array_index, external_potential);
+      if( (photons_at_dt > count) \
+      && (return_phonon_distribution((electron_potential[e] + 25.0 - E_f_A)/E_f_A, constants::kB_r*Te)/E_f_A < 1.0) \
+      && electron_ea_scattering_list[e][0] != 1) {
+        
+        electron_thermal_field(e, array_index, external_potential);
+        
+        #pragma omp atomic
+        count++;
+        electron_ee_scattering_list[e][0] = 1;
+        electron_ea_scattering_list[e][0] = 1;
+      }
         // if(int_random() % conduction_electrons < 320) 
         //if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
         // if(ea_coupling) 
       //  ea_scattering(e, array_index);
     } 
-    TEKE += external_potential;
+   // TEKE += external_potential;
    
  //  if(ee_coupling)
   //#pragma omp parallel sections 
@@ -166,7 +176,7 @@ void update_dynamics() {
       //aa_scattering();
  // }
   Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
-  Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) ;//+ (e_heat_capacity_i*pump*dt*300.0/Te);
+  Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt*300.0/Te);
   
         if (err::check) std::cout << "reset scattering." << std::endl;
     for(int e = 0; e < conduction_electrons; e++) {
@@ -586,11 +596,11 @@ void ee_scattering() {
     double scattering_prob;
     double e_energy = electron_potential[e];
     double d_e_energy = electron_potential[electron_collision];
-    double deltaE = omp_uniform_random[omp_get_thread_num()]()*(e_energy - d_e_energy);
-    double thermal_factor = return_phonon_distribution((e_energy + deltaE)/E_f_A, constants::kB_r*Te/E_f_A) - return_phonon_distribution((d_e_energy - deltaE)/E_f_A, constants::kB_r*Te/E_f_A);
+    double deltaE = 0.5*(e_energy - d_e_energy);
+   // double thermal_factor =  - ;
    // if(e_energy < E_f_A - (3.0*constants::kB_r*Te)) std::cout << e_energy << ", " << E_f_A - 3.0*constants::kB_r*Te << "< " << e << std::endl;
-    if(abs(thermal_factor) > omp_uniform_random[omp_get_thread_num()]()) {
-      std::cout << e_energy << ", " << d_e_energy << ", " << deltaE << ", " << abs(thermal_factor) << ", " << return_phonon_distribution(e_energy + deltaE, constants::kB_r*Te) << ", " << return_phonon_distribution(d_e_energy - deltaE, constants::kB_r*Te) << std::endl;
+    if((return_phonon_distribution((e_energy - deltaE - E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < omp_uniform_random[omp_get_thread_num()]()) && omp_uniform_random[omp_get_thread_num()]() > return_phonon_distribution((d_e_energy + deltaE - E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)) {
+     if(deltaE > 10.0) std::cout << e_energy << ", " << d_e_energy << ", " << deltaE  << ", " << return_phonon_distribution((e_energy - deltaE - E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) << ", " << return_phonon_distribution((d_e_energy + deltaE - E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) << std::endl;
     //if(omp_uniform_random[omp_get_thread_num()]() > exp(ee_rate*deltaE*deltaE)) {
 
     

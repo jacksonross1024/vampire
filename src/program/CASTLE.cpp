@@ -972,26 +972,27 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   int subCount = 0;
   int count = 0;
  // std::cout << step_size << ", " << offset << std::endl;
-  for(count = 0; count < conduction_electrons; count++) {
-
+  for(count = 0; count < 2*conduction_electrons; count++) {
+      if(subCount == conduction_electrons) break;
    // double electron = double(count);//double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
       double epsilon = step_size *count + min;
   //  if(omp_uniform_random[omp_get_thread_num()]() < ) {
-      double occupancy = int(round(step_size*0.2/(exp((epsilon-E_f_A)/beta) + 1.0)));
+      if (uniform_random() < 1.0/(exp((epsilon-E_f_A)/beta) + 1.0)) {
    //   std::cout << occupancy << ", " << epsilon << std::endl;
      // int atoms = int(round(1.0/occupancy));
       // subCount += atoms;
     //  if(subCount > lattice_atoms) break;
-      distribution[count] = epsilon;
-      distrib << count << ", " << distribution[count] << "\n";
-       
+      distribution[subCount] = epsilon;
+      distrib << subCount << ", " << distribution[count] << "\n";
+      subCount++;
+      }
   }
  // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
 
 double return_phonon_distribution(const double& epsilon, const double& beta ) {
-    return (1.0/(exp((epsilon-E_f_A)/beta) + 1.0));
+    return (1.0/(exp(epsilon/beta) + 1.0));
 }
 
 

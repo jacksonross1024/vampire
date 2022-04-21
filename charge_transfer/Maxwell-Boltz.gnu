@@ -4,9 +4,9 @@ T0 = 600
 T1 = 1000
 kB = 1.38e-3
 eV_AJ = 1.60218e-3
-e  = 75.12
+e  = 75.1195
 n  = 5273
-w  = 0.5/n
+w  = 1.0/n
 t0 = T0*kB/e
 t1 = T1*kB/e
 
@@ -26,14 +26,14 @@ set ylabel "probablity"
 set xlabel "e/E_f"
 set boxwidth w
 set style fill solid 0.8 noborder
-set xrange [0:1.2]
-set auto y
+set xrange [1-8*t1:1.2]
+set yrange [0:2]
 #set auto x
 #set auto y
 set title "Classical Electron Gas, 20 mJ/cm^2"
 set key top right notitle
 
-p  "Electron_Velocity/10800.csv" u (bin($2/e,w)):(0.1) smooth freq w boxes lc rgb "#20547C" title "100 fs",\
+p  "Electron_Velocity/6000.csv" u (bin($2/e,w)):(0.1) smooth freq w boxes lc rgb "#20547C" title "100 fs",\
 "" u ($1*w + 8*t0):(FD($1*w - 1 + 8*t0, t0)) w l lw 2 title sprintf("MB %.0fK", T0),\
 "" u ($1*w + 8*t1):(FD($1*w - 1 + 8*t1, t1)) w l lw 2 title sprintf("MB %.0fK", T1),\
 
