@@ -589,7 +589,7 @@ void ee_scattering() {
     double deltaE = omp_uniform_random[omp_get_thread_num()]()*(e_energy - d_e_energy);
     double thermal_factor = return_phonon_distribution((e_energy + deltaE)/E_f_A, constants::kB_r*Te/E_f_A) - return_phonon_distribution((d_e_energy - deltaE)/E_f_A, constants::kB_r*Te/E_f_A);
    // if(e_energy < E_f_A - (3.0*constants::kB_r*Te)) std::cout << e_energy << ", " << E_f_A - 3.0*constants::kB_r*Te << "< " << e << std::endl;
-    if(abs(thermal_factor) > 0.001) {
+    if(abs(thermal_factor) > omp_uniform_random[omp_get_thread_num()]()) {
       std::cout << e_energy << ", " << d_e_energy << ", " << deltaE << ", " << abs(thermal_factor) << ", " << return_phonon_distribution(e_energy + deltaE, constants::kB_r*Te) << ", " << return_phonon_distribution(d_e_energy - deltaE, constants::kB_r*Te) << std::endl;
     //if(omp_uniform_random[omp_get_thread_num()]() > exp(ee_rate*deltaE*deltaE)) {
 

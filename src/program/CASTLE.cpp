@@ -258,7 +258,7 @@ void initialize () {
        //=========
     // Grab simulation variables from VAMPIRE
     //=========
-    conduction_electrons = atoms::num_atoms;
+    conduction_electrons = int(round(0.6*double(atoms::num_atoms)));
     lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
     CASTLE_output_rate = sim::partial_time;
     dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
@@ -708,10 +708,10 @@ void initialize_forces() {
     initialize_electron_interactions();
     if (err::check)  std::cout << "Electron interactions" << std::endl;
 
-    initialize_atomic_interactions();
+   // initialize_atomic_interactions();
     if (err::check)  std::cout << "Atomic interactions" << std::endl;
 
-    initialize_electron_atom_interactions();
+   // initialize_electron_atom_interactions();
     if (err::check)  std::cout << "Atomic electron interactions" << std::endl;
 }
 
@@ -853,16 +853,16 @@ void initialize_velocities() {
     
 
     const std::string n = "Init_E_distrib";
-    create_fermi_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
-    const std::string na = "P_distrib";
-    create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
+   create_fermi_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
+  //  const std::string na = "P_distrib";
+    //create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
 
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
       double phi,theta; //A/fS
       
       int array_index = 3*e;
-      double vel = electron_potential[e];
+      double vel = electron_potential[omp_int_random[omp_get_thread_num()]() % conduction_electrons];
        // if(vel < E_f_A) std::cout << vel << std::endl;
       vel = sqrt(2.0*vel*constants::m_e_r_i);
 
@@ -965,25 +965,28 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   distrib.open(string(directory) +"/"+ name);
   distrib.precision(20);
 
-  const double step_size = 1.0 / double(conduction_electrons);
-  const double offset  = E_f_A + 8.0*constants::kB_r*Te;
+  double step_size = 1.0 / double(conduction_electrons);
+  const double max  = E_f_A + 8.0*constants::kB_r*Te;
+  const double min = E_f_A - 3.0*constants::eV_to_AJ;
+  step_size *= max-min;
+  int subCount = 0;
   int count = 0;
-
  // std::cout << step_size << ", " << offset << std::endl;
-  while(count < conduction_electrons) {
-    // if(beta == 0) {
-    //   distribution[count] = E_f_A;
-    //   count++;
-    //   continue;
-    // }
+  for(count = 0; count < conduction_electrons; count++) {
+
    // double electron = double(count);//double(omp_int_random[omp_get_thread_num()]() % conduction_electrons);
-    //double epsilon = step_size *electron*offset/E_f_A;
-  //  if(omp_uniform_random[omp_get_thread_num()]() < (1.0/(exp(epsilon/beta) + 1.0))) {
-      distribution[count] = count*(E_f_A + 4.0*constants::kB_r*Te)/double(conduction_electrons);
+      double epsilon = step_size *count + min;
+  //  if(omp_uniform_random[omp_get_thread_num()]() < ) {
+      double occupancy = int(round(step_size*0.2/(exp((epsilon-E_f_A)/beta) + 1.0)));
+   //   std::cout << occupancy << ", " << epsilon << std::endl;
+     // int atoms = int(round(1.0/occupancy));
+      // subCount += atoms;
+    //  if(subCount > lattice_atoms) break;
+      distribution[count] = epsilon;
       distrib << count << ", " << distribution[count] << "\n";
-      count++;
- //   }
+       
   }
+ // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
 
