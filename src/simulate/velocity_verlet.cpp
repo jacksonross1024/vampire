@@ -120,19 +120,19 @@ void update_dynamics() {
     double external_potential = 0.0; //AJ/e-
     const static double sigma = dt * 0.1;
     int count = 0;
-   // std::cout << "power density: " << power_density << ", "<< photon_energy << ", " << photon_rate << ", ";
+   
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
         photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - ((40.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((40.0 / dt)+sim::equilibration_time)))))); // AJ/fs/nm**3
-       // pump = 1e3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
-      //  external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
-      //  std::cout << exp(-0.5*sigma*sigma*((double(current_time_step) - (40.0 / dt))*(double(current_time_step) - (40.0 / dt)))) << ", " << photons_at_dt << ", " << pump << std::endl;
+        pump = 1e3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
+        external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
+     
         TTMe = d_TTMe;
         TTMp = d_TTMp;
           //AJ/fs/K -> g(T-T)=C/t
         d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i*300.0/TTMe) + TTMe;
-        // else            d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i)      + TTMe;
+       
         d_TTMp = ( G*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
       }
     }
@@ -142,41 +142,31 @@ void update_dynamics() {
         array_index = 3*e;        
 
         if(current_time_step % 10 == 0) {
-          //e_a_coulomb(e, array_index);
+        
          e_e_coulomb(e, array_index); 
         } else {
-          //neighbor_e_a_coulomb(e, array_index);
+        
           neighbor_e_e_coulomb(e, array_index);   
         }
-      // if( (photons_at_dt > count) && (omp_int_random[omp_get_thread_num()]() % conduction_electrons < photons_at_dt) \
-      // && (return_phonon_distribution((electron_potential[e] + 25.0 - E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < 1.0) \
-      // && electron_ea_scattering_list[e][0] != 1) {
+      if( (photons_at_dt > count) && (omp_int_random[omp_get_thread_num()]() % conduction_electrons < photons_at_dt) \
+      && (return_phonon_distribution((electron_potential[e] + 25.0 - E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < 1.0) \
+      && electron_ea_scattering_list[e][0] != 1) {
         
-      //   electron_thermal_field(e, array_index, external_potential);
+        electron_thermal_field(e, array_index, external_potential);
         
-      //   #pragma omp atomic
-      //   count++;
-      // }
-        //if(int_random() % conduction_electrons < 320) 
-       if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
-      //  if(ea_coupling) 
-       if(!equilibrium_step) ea_scattering(e, array_index);
+        #pragma omp atomic
+        count++;
+      }
+
+      //  if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
+      if(!equilibrium_step) ea_scattering(e, array_index);
    } 
-   TEKE += external_potential;
+  //  TEKE += external_potential;
    
- //  if(ee_coupling)
-  //#pragma omp parallel sections 
- // {
-   // #pragma omp section
-   // create_phonon_distribution(atom_potential, constants::kB_r*Tp/E_f_A);
-     // 
-    
-  //  #pragma omp section
     ee_scattering();
-      //aa_scattering();
- // }
+
   Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
-  if(Te > 1.0) Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te);// + (e_heat_capacity_i*pump*dt*300.0/Te);
+  if(Te > 1.0) Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt*300.0/Te);
   else         Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons)    + (e_heat_capacity_i*pump*dt*300.0);
         if (err::check) std::cout << "reset scattering." << std::endl;
     
@@ -338,10 +328,6 @@ void e_e_coulomb(const int& e, const int& array_index) {
             electron_nearest_electron_list[e][neighbor_count] = array_index_i;
             neighbor_count++;
             
-            // if(neighbor_count > 1361) {
-            //   std::cout << neighbor_count << ", " << e << std::endl; 
-            //   break;
-            // }
             if(length > e_e_coulomb_cutoff) continue;
 
             electron_ee_scattering_list[e][count] = array_index_i/3;
@@ -388,10 +374,6 @@ void neighbor_e_e_coulomb(const int& e, const int& array_index) {
         electron_ee_scattering_list[e][count] = array_index_i/3;
         count++;
 
-        // if(count > 1361) {
-        //       std::cout << count << " > " << 502 << ", " << size << ", " << e << ", " << length << std::endl;
-        //       break;
-        // }
     }
     electron_ee_scattering_list[e][1] = count;
   // if(count >= electron_ee_scattering_list[e].size() - 1)  electron_ee_scattering_list[e][1] = 0;
@@ -498,7 +480,7 @@ double electron_applied_voltage(const int& e, const int& array_index, double& ex
  
 
   double DoS1 = electron_nearest_electron_list[e][0] - 1.0;
-if(e_energy + deltaE > 0.98*E_f_A) {
+if(e_energy + deltaE > 0.9817*E_f_A) {
   for (int i = 1; i < electron_nearest_electron_list[e][0]; i++) {
     if((electron_potential[electron_nearest_electron_list[e][i]] < e_energy + fmax(1.2*deltaE, 0.8*deltaE)) \
     && (electron_potential[electron_nearest_electron_list[e][i]] > e_energy + fmin(0.8*deltaE, 1.2*deltaE))) {
@@ -558,7 +540,7 @@ void ea_scattering(const int& e, const int& array_index) {
     double scattering_velocity = electron_potential[e];
     //double scattering_const = M_B_distrib((scattering_velocity - E_f_A - 1.0*constants::kB_r*Te)/E_f_A - 0.1, constants::kB_r*Te/E_f_A);
     double deltaE = sqrt(phonon_energy*E_f_A);
- 
+  
     if(omp_uniform_random[omp_get_thread_num()]() > exp(ea_rate/scattering_velocity)) {
      
       //deltaE = fmin(abs(scattering_velocity - E_f_A + 0.0*constants::kB_r*Te), deltaE);
@@ -577,7 +559,7 @@ void ea_scattering(const int& e, const int& array_index) {
       }
       if(DoS1 < DoS2) deltaE *= -1.0;
       if(Tp < Te) deltaE *= -1.0;
-      if(scattering_velocity + deltaE < 0.98*E_f_A) deltaE = 0.0;
+      if(scattering_velocity + deltaE < 0.9817*E_f_A) deltaE = 0.0;
 
       double unit_vec = sqrt(2.0*scattering_velocity*constants::m_e_r_i);
       double theta = atan(electron_velocity[array_index+1] / electron_velocity[array_index]) + (0.10*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
@@ -587,11 +569,16 @@ void ea_scattering(const int& e, const int& array_index) {
       scattering_velocity = sqrt(2.0*(scattering_velocity + deltaE)*constants::m_e_r_i);
      
       electron_potential[e] += deltaE;
-      
+    if(electron_potential[e] > 0.99*E_f_A) {  
       electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi);     
-      
+    }
+    else {
+      electron_velocity[array_index]   = 0.0;//scattering_velocity * cos(theta)*sin(phi);
+      electron_velocity[array_index+1] = 0.0;//scattering_velocity * sin(theta)*sin(phi);
+      electron_velocity[array_index+2] = 0.0;//scattering_velocity * cos(phi);  
+    }  
       electron_ee_scattering_list[e][0] = 1;
 
     //  std::cout << TEKE << ", " << TLE << ", " << e_a_scattering_count << std::endl;
@@ -624,28 +611,21 @@ void ee_scattering() {
     double e_energy = electron_potential[e];
     double d_e_energy = electron_potential[electron_collision];
     double deltaE = uniform_random()*(e_energy - d_e_energy);
-    if(e_energy > d_e_energy) {
-      if(uniform_random() < 0.5*exp(deltaE/-25.0)) {
-        deltaE *= -1.0;
-      }
-    }
-    else {
-      if(uniform_random() < 0.5*exp(deltaE/25.0)) {
-        deltaE *= -1.0;
-      }
-    }
-    double DoS1 = size = electron_nearest_electron_list[e][0] - 1;
-    double DoS2 =  electron_nearest_electron_list[electron_collision][0] - 1;
+  
+    if(uniform_random() < 0.5*exp(abs(deltaE)/(-25.0))) deltaE *= -1.0;
  
-    if((e_energy - deltaE < 0.98*E_f_A) || (d_e_energy + deltaE < 0.98*E_f_A)) DoS2 = 0.0;
+    double DoS1 = electron_nearest_electron_list[e][0] - 1;
+    double DoS2 = electron_nearest_electron_list[electron_collision][0] - 1;
+ 
+    if((e_energy - deltaE < 0.9817*E_f_A) || (d_e_energy + deltaE < 0.9817*E_f_A)) DoS2 = 0.0;
     else {
       #pragma omp sections 
       {
         #pragma omp section 
         {
-      for (int i = 1; i < size + 1; i++) {
-        if((electron_potential[electron_nearest_electron_list[e][i]] < e_energy - 0.8*deltaE) \
-        && (electron_potential[electron_nearest_electron_list[e][i]] > e_energy - 1.2*deltaE)) {
+      for (int i = 1; i < electron_nearest_electron_list[e][0]; i++) {
+        if((electron_potential[electron_nearest_electron_list[e][i]] < (e_energy - fmin(0.8*deltaE, 1.2*deltaE))) \
+        && (electron_potential[electron_nearest_electron_list[e][i]] > (e_energy - fmax(0.8*deltaE, 1.2*deltaE)))) {
           DoS1 -= 1.0;
         }
       }
@@ -653,8 +633,8 @@ void ee_scattering() {
         #pragma omp section 
         {
       for (int i = 1; i < electron_nearest_electron_list[electron_collision][0]; i++) {
-        if((electron_potential[electron_nearest_electron_list[electron_collision][i]] < d_e_energy + 1.2*deltaE) \
-        && (electron_potential[electron_nearest_electron_list[electron_collision][i]] > d_e_energy - 0.8*deltaE)) {
+        if((electron_potential[electron_nearest_electron_list[electron_collision][i]] < (d_e_energy + fmax(0.8*deltaE, 1.2*deltaE))) \
+        && (electron_potential[electron_nearest_electron_list[electron_collision][i]] > (d_e_energy + fmin(0.8*deltaE, 1.2*deltaE)))) {
           DoS2 -= 1.0;
         }
       }
@@ -664,40 +644,59 @@ void ee_scattering() {
 
    if(omp_uniform_random[omp_get_thread_num()]() > exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
       
-        int array_index = 3*e;
-      //  double scattering_velocity = sqrt(2.0*e_energy*constants::m_e_r_i);
-        double unit_vec = sqrt(2.0*e_energy*constants::m_e_r_i);
-        double theta = atan(electron_velocity[array_index+1] / electron_velocity[array_index]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
-        double phi   = acos(electron_velocity[array_index+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
-        if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
+      int array_index;
+      double unit_vec, theta, phi, scattering_velocity;
+      electron_potential[e] -= deltaE;
+      if(electron_potential[e] > 0.99*E_f_A) {
+        if(electron_velocity[array_index] == 0.0 && electron_velocity[array_index] == 0.0 && electron_velocity[array_index] == 0.0) {
+          theta = 2.0*M_PI*omp_uniform_random[omp_get_thread_num()]();
+          phi = M_PI * omp_uniform_random[omp_get_thread_num()]();
+        }
+        else {
+          unit_vec = sqrt(2.0*d_e_energy*constants::m_e_r_i);
+          theta = atan(electron_velocity[array_index+1] / electron_velocity[array_index]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+          phi   = acos(electron_velocity[array_index+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+          if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
+        }
+        scattering_velocity = sqrt(2.0*electron_potential[electron_collision]*constants::m_e_r_i);
 
-        double scattering_velocity = sqrt(2.0*(e_energy - deltaE)*constants::m_e_r_i);
-        // double x_vec = cos(theta)*sin(phi);
-        // double y_vec = sin(theta)*sin(phi);
-        // double z_vec = cos(phi);
-
-        electron_potential[e] -= deltaE;
         electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
         electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
         electron_velocity[array_index+2] = scattering_velocity * cos(phi);
-        
-        scattering_velocity = sqrt(2.0*(d_e_energy + deltaE)*constants::m_e_r_i);
-         unit_vec = sqrt(2.0*d_e_energy*constants::m_e_r_i);
-         theta = atan(electron_velocity[3*electron_collision+1] / electron_velocity[3*electron_collision]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
-         phi   = acos(electron_velocity[3*electron_collision+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
-        if(electron_velocity[3*electron_collision+2] < 0.0) theta += M_PI;
+      }
+      else {
+        electron_velocity[array_index]   = 0.0;//scattering_velocity * cos(theta)*sin(phi);
+        electron_velocity[array_index+1] = 0.0;//scattering_velocity * sin(theta)*sin(phi);
+        electron_velocity[array_index+2] = 0.0;//scattering_velocity * cos(phi);
+      } 
 
-        electron_potential[electron_collision]   += deltaE;
+      electron_potential[electron_collision]   += deltaE;
+      if(electron_potential[electron_collision] > 0.99*E_f_A) {
+        if(electron_velocity[3*electron_collision] == 0.0 && electron_velocity[3*electron_collision+1] == 0.0 && electron_velocity[3*electron_collision+2] == 0.0) {
+          theta = 2.0*M_PI*omp_uniform_random[omp_get_thread_num()]();
+          phi = M_PI * omp_uniform_random[omp_get_thread_num()]();
+        }
+        else {
+          unit_vec = sqrt(2.0*d_e_energy*constants::m_e_r_i);
+          theta = atan(electron_velocity[3*electron_collision+1] / electron_velocity[3*electron_collision]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+          phi   = acos(electron_velocity[3*electron_collision+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+          if(electron_velocity[3*electron_collision+2] < 0.0) theta += M_PI;
+        }
+        scattering_velocity = sqrt(2.0*electron_potential[electron_collision]*constants::m_e_r_i);
         electron_velocity[3*electron_collision]   = scattering_velocity * cos(theta)*sin(phi);
         electron_velocity[3*electron_collision+1] = scattering_velocity * sin(theta)*sin(phi);
         electron_velocity[3*electron_collision+2] = scattering_velocity * cos(phi);
-  
+      }
+      else {
+        electron_velocity[3*electron_collision]   = 0.0;//scattering_velocity * cos(theta)*sin(phi);
+        electron_velocity[3*electron_collision+1] = 0.0;//scattering_velocity * sin(theta)*sin(phi);
+        electron_velocity[3*electron_collision+2] = 0.0;//scattering_velocity * cos(phi);
+      } 
  
-        e_e_scattering_count++;
+      e_e_scattering_count++;
+      electron_ee_scattering_list[e][0] = 1;
+      electron_ee_scattering_list[electron_collision][0] = 1;
 
-        electron_ee_scattering_list[e][0] = 1;
-        electron_ee_scattering_list[electron_collision][0] = 1;
-     // }
     }
   }
   

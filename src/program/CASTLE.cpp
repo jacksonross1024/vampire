@@ -47,7 +47,7 @@ void create() {
 
     initialize();
        // omp_set_dynamic(1);
-        //omp_set_num_threads(8);
+        omp_set_num_threads(4);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -258,7 +258,7 @@ void initialize () {
        //=========
     // Grab simulation variables from VAMPIRE
     //=========
-    conduction_electrons = atoms::num_atoms;//int(round(0.6*double(atoms::num_atoms)));
+    conduction_electrons = 2*atoms::num_atoms;//int(round(0.6*double(atoms::num_atoms)));
     lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
     CASTLE_output_rate = sim::partial_time;
     dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
@@ -292,10 +292,10 @@ void initialize () {
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
     applied_voltage = sqrt(1.60218e-19*2.0*sim::applied_voltage/constants::eps_0/(1e-30*lattice_width * lattice_height * lattice_depth)); //eV -> V/m
-    n_f = 1.0e30 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
-    E_f = constants::h * constants::h * pow(3 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
+    n_f = 0.5 * 1.0e30 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
+    E_f = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
     E_f_A = E_f*1e20; //Angstroms
-    mu_f = 1e20*5 * E_f / (3 * conduction_electrons);//Fermi-level //Angstroms
+    mu_f = 1e20*5 * E_f / (3.0 * conduction_electrons);//Fermi-level //Angstroms
     v_f = sqrt(2 * E_f / constants::m_e); //meters
 
     a_specific_heat = 25.0 /6.02e3; // //sim::TTCl; //J/K/mol -> [e20/Na] AJ/K/e-   
@@ -318,7 +318,7 @@ void initialize () {
     G = e_heat_capacity/tau; //J/s/K/m**3 [e20/e15/e27] AJ/fs/K/nm**3
     
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -1.0*dt*E_f_A / tau;
+    ea_rate = -1.5*dt*E_f_A / tau;
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     std::srand(std::time(nullptr));
@@ -495,9 +495,9 @@ void initialize_electrons() {
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    int e_density = 500 + int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
+    int e_density = 500 + int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     int ee_density = e_density;
-    std::cout << e_density << ", " << (pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30) + 500 << std::endl;
+    std::cout << e_density << ", " << (pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 2.0*n_f * 1e-30) + 500 << std::endl;
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
@@ -869,9 +869,9 @@ void initialize_velocities() {
       double phi,theta; //A/fS
       
       int array_index = 3*e;
-      double vel = electron_potential[omp_int_random[omp_get_thread_num()]() % conduction_electrons];
+      double energy = electron_potential[omp_int_random[omp_get_thread_num()]() % conduction_electrons];
        // if(vel < E_f_A) std::cout << vel << std::endl;
-      vel = sqrt(2.0*vel*constants::m_e_r_i);
+      double vel = sqrt(2.0*energy*constants::m_e_r_i);
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
           theta = 2.0*M_PI*omp_uniform_random[omp_get_thread_num()]();
@@ -891,9 +891,16 @@ void initialize_velocities() {
 
     for(int e = 0; e < conduction_electrons; e++) {
       int array_index = 3*e;
-      double vel = 0.5*constants::m_e_r*(electron_velocity[array_index]*electron_velocity[array_index] + electron_velocity[array_index+1]*electron_velocity[array_index+1] + electron_velocity[array_index+2]*electron_velocity[array_index+2]);
-      electron_velocity_output << e << ", " << vel << ", " << electron_velocity[array_index] << ", " << electron_velocity[array_index+1] << ", " << electron_velocity[array_index+2] << std::endl; 
-      electron_potential[e] = vel;
+      double energy = 0.5*constants::m_e_r*(electron_velocity[array_index]*electron_velocity[array_index] + electron_velocity[array_index+1]*electron_velocity[array_index+1] + electron_velocity[array_index+2]*electron_velocity[array_index+2]);
+      electron_potential[e] = energy;
+      if(energy > 0.99*E_f_A ) {
+        electron_velocity_output << e << ", " << energy << ", " << electron_velocity[array_index] << ", " << electron_velocity[array_index+1] << ", " << electron_velocity[array_index+2] << "\n"; 
+       
+      }
+      else {
+        electron_velocity[array_index] = electron_velocity[array_index+1] = electron_velocity[array_index+2] = 0.0;
+        electron_velocity_output << e << ", " << energy << ", " << electron_velocity[array_index] << ", " << electron_velocity[array_index+1] << ", " << electron_velocity[array_index+2] << "\n"; 
+      }
     }
 
     electron_velocity_output.close();
@@ -973,9 +980,9 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   distrib.open(string(directory) +"/"+ name);
   distrib.precision(20);
 
-  double step_size = 1.0 / double(conduction_electrons);
+  double step_size = 8.0 / double(conduction_electrons);
   const double max  = E_f_A + 3.0*constants::kB_r*Te;
-  const double min = E_f_A - 3.0*constants::kB_r*Te;
+  const double min = E_f_A - 8.0*constants::kB_r*Te;
   step_size *= (max-min);
  // else step_size = 1.0;
 
@@ -993,7 +1000,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
     while(count < conduction_electrons) { 
 
       double epsilon = max - step_size*energy_step;
-      int occupation = int(round(0.5*step_size*conduction_electrons*(return_phonon_distribution((epsilon-E_f_A)/E_f_A, beta)+return_phonon_distribution((epsilon - step_size - E_f_A)/E_f_A, beta))));
+      int occupation = int(round(0.25*step_size*conduction_electrons*(return_phonon_distribution((epsilon-E_f_A)/E_f_A, beta)+return_phonon_distribution((epsilon - step_size - E_f_A)/E_f_A, beta))));
    // std::cout << occupation << ", " << epsilon*E_f_A << std::endl;
       for (int o = 0; o < occupation; o++) {
         distribution[count] = epsilon - step_size*0.5;
@@ -1182,11 +1189,10 @@ void output_data() {
             std::cerr << "Fatal getcwd error in datalog." << std::endl;
       }
 
-      std::ofstream atomic_phonon_output;
-      atomic_phonon_output.open(string(directory) + "/Atom_Energy/" + time_stamp);
-      atomic_phonon_output.precision(10);
-      atomic_phonon_output << std::scientific;
-
+      // std::ofstream atomic_phonon_output;
+      // atomic_phonon_output.open(string(directory) + "/Atom_Energy/" + time_stamp);
+      // atomic_phonon_output.precision(10);
+      // atomic_phonon_output << std::scientific;
       // std::ofstream atomic_phonon_output_hist;
       // atomic_phonon_output_hist.open(string(directory) + "/Atom_Energy/" + time_stamp + ".hist");
       // atomic_phonon_output_hist.precision(10);
@@ -1204,13 +1210,10 @@ void output_data() {
     
       std::ofstream temp_map_list [8];
      
-     
       double tempMap[8];
       for(int i = 0; i < 8; i++) {
          tempMap[i] = 0.0;
          temp_map_list[i].open(string(directory) + "/Temp_Map" + std::to_string(i) + "/" + time_stamp);
-      //electron_temperature_map.precision(10);
-     // electron_temperature_map << std::scientific;
       }
     double  velocity_length; 
     double x_vel, y_vel, z_vel, x_pos, y_pos, z_pos;
@@ -1224,8 +1227,8 @@ void output_data() {
       y_pos = electron_position[array_index_y]; 
       z_pos = electron_position[array_index_z];
        x_vel = 1e5*electron_velocity[array_index];
-       y_vel = 1e5*electron_velocity[array_index+1];
-       z_vel = 1e5*electron_velocity[array_index+2];
+       y_vel = 1e5*electron_velocity[array_index_y];
+       z_vel = 1e5*electron_velocity[array_index_z];
       velocity_length = electron_potential[e];
       if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {
         tempMap[0] += velocity_length;
@@ -1261,11 +1264,11 @@ void output_data() {
       }
 
       electron_velocity_output << e << ", " << velocity_length << ", " << x_vel << ", " << y_vel << ", " << z_vel << "\n";
-      if(e < lattice_atoms) atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
+      //if(e < lattice_atoms) atomic_phonon_output << e << ", " << atom_potential[e] << "\n";
     }
     // electron_position_output_down.close();
     electron_velocity_output.close();
-    atomic_phonon_output.close();
+   // atomic_phonon_output.close();
     
     for(int i = 0; i < 8; i++) {
       temp_map_list[i].close();
@@ -1308,8 +1311,6 @@ void output_data() {
   //   atom_hot_output.close();
   // }
   } 
-    double mean_ea_rad = 0.0;
-    double mean_ee_rad = 0.0;
 
     // #pragma omp parallel for reduction(+:mean_ee_rad, mean_ea_rad)
     // for (int e = 0; e < conduction_electrons; e++) {
@@ -1333,7 +1334,7 @@ void output_data() {
       << Te*Te*e_heat_capacity * 1e-20/300.0 << ", " << Tp*a_heat_capacity*1e-20 << ", " 
       << Te << ", " << Tp << ", "  \
       << TTMe << ", " << TTMp << ", "
-      << mean_ea_rad << ", " << mean_ee_rad << ", " << a_a_scattering_count << ", " << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
+      << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << I << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
     }
 
@@ -1342,7 +1343,7 @@ void output_data() {
       << Te*Te*e_heat_capacity * 1e-20/300.0 << ", " << Tp*a_heat_capacity*1e-20 << ", "  
       << Te << ", " << Tp << ", " //<< TEKE << ", " << TLE << ", " 
       << TTMe << ", " << TTMp << ", "
-      << mean_ea_rad << ", " << mean_ee_rad << ", " << std::fixed; mean_data.precision(1); mean_data << double(a_a_scattering_count) / CASTLE_output_rate << ", " << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
+      << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << I << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;
     }
    
