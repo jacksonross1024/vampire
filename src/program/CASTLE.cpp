@@ -318,7 +318,7 @@ void initialize () {
     G = e_heat_capacity/tau; //J/s/K/m**3 [e20/e15/e27] AJ/fs/K/nm**3
     
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -1.5*dt*E_f_A / tau;
+    ea_rate = -1.0*dt*E_f_A / tau;
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     std::srand(std::time(nullptr));
@@ -383,67 +383,67 @@ void initialize_lattice() {
     atomic_size = 2; // sim::atomic_size; //Angst diameter. 
     screening_depth = 0.875; //sim::screening_depth; //Angstroms 
 
-    e_a_neighbor_cutoff = 100.0;
-    e_e_neighbor_cutoff = 100.0;
-    e_a_coulomb_cutoff = 9.0;
-    e_e_coulomb_cutoff = 9.0;
-    a_a_neighbor_cutoff = 36.0;
+    // e_a_neighbor_cutoff = 100.0;
+    // e_e_neighbor_cutoff = 100.0;
+    // e_a_coulomb_cutoff = 9.0;
+    // e_e_coulomb_cutoff = 9.0;
+    // a_a_neighbor_cutoff = 36.0;
 
-    char directory [256];
-    if(getcwd(directory, sizeof(directory)) == NULL){
-            std::cerr << "Fatal getcwd error in datalog." << std::endl;
-    }
-    lattice_output.open(string(directory) + "/CASTLE_Lattice.xyz");
+    // char directory [256];
+    // if(getcwd(directory, sizeof(directory)) == NULL){
+    //         std::cerr << "Fatal getcwd error in datalog." << std::endl;
+    // }
+    // lattice_output.open(string(directory) + "/CASTLE_Lattice.xyz");
 
-    // output lattice atoms and locations
-    lattice_output << lattice_atoms << "\n"; //xyz file requires first-line for number of elements
-    lattice_output << " dynamic lattice" "\n"; //comment line
+    // // output lattice atoms and locations
+    // lattice_output << lattice_atoms << "\n"; //xyz file requires first-line for number of elements
+    // lattice_output << " dynamic lattice" "\n"; //comment line
     
     atom_anchor_position.resize(lattice_atoms*3,0);
-    atom_position.resize(lattice_atoms * 3, 0);
+   // atom_position.resize(lattice_atoms * 3, 0);
     // new_atom_position.resize(lattice_atoms * 3, 0);
     //atom_velocity.resize(lattice_atoms * 3,0);
     //new_atom_velocity.resize(lattice_atoms * 3,0);
     // atom_force.resize(lattice_atoms * 3,0);
     // new_atom_force.resize(lattice_atoms,0);
-    atom_potential.resize(lattice_atoms,0);
+   // atom_potential.resize(lattice_atoms,0);
     //new_atom_potential.resize(lattice_atoms,0);
-    phonon_distribution.resize(2*lattice_atoms, 0.0);
+   // phonon_distribution.resize(2*lattice_atoms, 0.0);
     
-    new_phonon_energy = 0.0;
-    a_a_scattering_count = 0;
+   // new_phonon_energy = 0.0;
+   // a_a_scattering_count = 0;
     
    // create_phonon_distribution();
 
     int array_index; //local loop index variable
-    atomic_nearest_atom_list.resize(lattice_atoms);
-    atomic_nearest_electron_list.resize(lattice_atoms);
+  //  atomic_nearest_atom_list.resize(lattice_atoms);
+   // atomic_nearest_electron_list.resize(lattice_atoms);
 
-    int a_density = 200 + int(round(pow(a_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
-    int e_density = 200 + int(round(pow(e_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
+    // int a_density = 200 + int(round(pow(a_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
+    // int e_density = 200 + int(round(pow(e_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
 
     #pragma omp parallel for schedule(static) 
     for (int a = 0; a < lattice_atoms; ++a) {  
-        atomic_nearest_atom_list[a].resize(a_density);
-        atomic_nearest_electron_list[a].resize(e_density);
+      //  atomic_nearest_atom_list[a].resize(a_density);
+      //  atomic_nearest_electron_list[a].resize(e_density);
         array_index = 3*a;
 
         atom_anchor_position[array_index]     = atoms::x_coord_array[a] + 0.5*x_unit_size;
         atom_anchor_position[array_index + 1] = atoms::y_coord_array[a] + 0.5*y_unit_size;
         atom_anchor_position[array_index + 2] = atoms::z_coord_array[a] + 0.5*z_unit_size;
         
-        atom_position[array_index]   = atom_anchor_position[array_index];
-        atom_position[array_index+1] = atom_anchor_position[array_index+1];
-        atom_position[array_index+2] = atom_anchor_position[array_index+2];
+       // atom_position[array_index]   = atom_anchor_position[array_index];
+      //  atom_position[array_index+1] = atom_anchor_position[array_index+1];
+       // atom_position[array_index+2] = atom_anchor_position[array_index+2];
 
       //  atom_potential[a] = E_f_A;
     }
 
-    for(int a = 0; a < lattice_atoms; a++) {
-      array_index = a*3;
-      lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "  " << a << "\n";  
-    }
-    lattice_output.close(); 
+    // for(int a = 0; a < lattice_atoms; a++) {
+    //   array_index = a*3;
+    // //  lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "  " << a << "\n";  
+    // }
+    // lattice_output.close(); 
 
    // Tp = 300.0;
    
@@ -471,7 +471,7 @@ void initialize_electrons() {
     //      Arrays in super array format to take advantage of caching
     //========
     electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
-    new_electron_position.resize(conduction_electrons * 3);
+   // new_electron_position.resize(conduction_electrons * 3);
     electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
     //new_electron_velocity.resize(conduction_electrons * 3); //Angstroms
     //  electron_force.resize(conduction_electrons * 3, 0); //current and future arrays
@@ -479,7 +479,7 @@ void initialize_electrons() {
 
     electron_potential.resize(conduction_electrons, 0);
     //new_electron_potential.resize(conduction_electrons, 0);
-    mean_radius.resize(conduction_electrons*2,1);
+   // mean_radius.resize(conduction_electrons*2,1);
   
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
@@ -490,21 +490,21 @@ void initialize_electrons() {
     e_e_coulomb_cutoff = 9.0;
     
     electron_nearest_electron_list.resize(conduction_electrons);
-    electron_nearest_atom_list.resize(conduction_electrons);
-    external_interaction_list.resize(conduction_electrons, false);
+   // electron_nearest_atom_list.resize(conduction_electrons);
+   // external_interaction_list.resize(conduction_electrons, false);
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
     int e_density = 500 + int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    int ee_density = e_density;
-    std::cout << e_density << ", " << (pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 2.0*n_f * 1e-30) + 500 << std::endl;
+    int ee_density = 500 + int(round(pow(e_e_coulomb_cutoff, 1.5)*1.25*M_PI * 2.0*n_f * 1e-30));;
+    std::cout << e_density << ", " << ee_density << ", " << (pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 2.0*n_f * 1e-30) + 500 << std::endl;
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
         electron_nearest_electron_list[e].resize(e_density);
-        electron_nearest_atom_list[e].resize(ee_density);
+        //electron_nearest_atom_list[e].resize(ee_density);
         electron_ee_scattering_list[e].resize(ee_density);
-        electron_ea_scattering_list[e].resize(ee_density);
+        electron_ea_scattering_list[e].resize(2);
         int array_index = 3*e;
 
         double theta = 2.0*M_PI*omp_uniform_random[omp_get_thread_num()]();
@@ -719,14 +719,15 @@ void initialize_electron_interactions() {
 
     #pragma omp parallel for schedule(static)
     for (int e = 0; e < conduction_electrons; e++) {
-      int array_index, array_index_i, neighbor_count = 1;
+      int array_index_i;
+      int neighbor_count = 1;
       double x_distance,y_distance,z_distance, length;
-      array_index = 3*e;
+      int array_index = 3*e;
       int count = 2;
       
                 if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
 
-        neighbor_count = 1;
+
         for (int i = 0; i < conduction_electrons; i++) {
             if (i == e) continue; //no self repulsion
 
@@ -749,7 +750,7 @@ void initialize_electron_interactions() {
 
             if (length > e_e_neighbor_cutoff) continue;
 
-            electron_nearest_electron_list[e][neighbor_count] = array_index_i;
+            electron_nearest_electron_list[e][neighbor_count] = array_index_i/3;
             neighbor_count++;
 
              if(length > e_e_coulomb_cutoff) continue;
@@ -1325,16 +1326,16 @@ void output_data() {
     mean_data.precision(10);
     mean_data << std::scientific;
 
-    double j = x_flux * constants::e * 1e20 / (1600 * CASTLE_output_rate * dt); //current density
-    double nu = j / (n_f * constants::e); //drift velocity
-    double I = n_f * 1600 * 1e-20 * nu * constants::e; //current
+   // double j =  1e20 / (lattice_height*lattice_depth*CASTLE_output_rate*dt); //current density
+   // double nu = j; //drift velocity
+    double I = double(x_flux) * constants::e * 1e15 / double(CASTLE_output_rate) / dt; //current
 
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << Te*Te*e_heat_capacity * 1e-20/300.0 << ", " << Tp*a_heat_capacity*1e-20 << ", " 
       << Te << ", " << Tp << ", "  \
-      << TTMe << ", " << TTMp << ", "
-      << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << I << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
+      << TTMe << ", " << TTMp << ", " << I << ", "
+      << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
     }
 
@@ -1342,8 +1343,8 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << Te*Te*e_heat_capacity * 1e-20/300.0 << ", " << Tp*a_heat_capacity*1e-20 << ", "  
       << Te << ", " << Tp << ", " //<< TEKE << ", " << TLE << ", " 
-      << TTMe << ", " << TTMp << ", "
-      << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << I << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
+      << TTMe << ", " << TTMp << ", " <<  I << ", "
+      << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;
     }
    
@@ -1352,7 +1353,7 @@ void output_data() {
     z_flux = 0;
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
-    a_a_scattering_count = 0;
+   // a_a_scattering_count = 0;
 }
 
 
