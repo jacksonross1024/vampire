@@ -382,71 +382,18 @@ void initialize_lattice() {
     
     atomic_size = 2; // sim::atomic_size; //Angst diameter. 
     screening_depth = 0.875; //sim::screening_depth; //Angstroms 
-
-    // e_a_neighbor_cutoff = 100.0;
-    // e_e_neighbor_cutoff = 100.0;
-    // e_a_coulomb_cutoff = 9.0;
-    // e_e_coulomb_cutoff = 9.0;
-    // a_a_neighbor_cutoff = 36.0;
-
-    // char directory [256];
-    // if(getcwd(directory, sizeof(directory)) == NULL){
-    //         std::cerr << "Fatal getcwd error in datalog." << std::endl;
-    // }
-    // lattice_output.open(string(directory) + "/CASTLE_Lattice.xyz");
-
-    // // output lattice atoms and locations
-    // lattice_output << lattice_atoms << "\n"; //xyz file requires first-line for number of elements
-    // lattice_output << " dynamic lattice" "\n"; //comment line
     
     atom_anchor_position.resize(lattice_atoms*3,0);
-   // atom_position.resize(lattice_atoms * 3, 0);
-    // new_atom_position.resize(lattice_atoms * 3, 0);
-    //atom_velocity.resize(lattice_atoms * 3,0);
-    //new_atom_velocity.resize(lattice_atoms * 3,0);
-    // atom_force.resize(lattice_atoms * 3,0);
-    // new_atom_force.resize(lattice_atoms,0);
-   // atom_potential.resize(lattice_atoms,0);
-    //new_atom_potential.resize(lattice_atoms,0);
-   // phonon_distribution.resize(2*lattice_atoms, 0.0);
-    
-   // new_phonon_energy = 0.0;
-   // a_a_scattering_count = 0;
-    
-   // create_phonon_distribution();
-
-    int array_index; //local loop index variable
-  //  atomic_nearest_atom_list.resize(lattice_atoms);
-   // atomic_nearest_electron_list.resize(lattice_atoms);
-
-    // int a_density = 200 + int(round(pow(a_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
-    // int e_density = 200 + int(round(pow(e_a_neighbor_cutoff, 1.5)*1.25*M_PI * n_f * 1e-30));
-
+ 
     #pragma omp parallel for schedule(static) 
     for (int a = 0; a < lattice_atoms; ++a) {  
-      //  atomic_nearest_atom_list[a].resize(a_density);
-      //  atomic_nearest_electron_list[a].resize(e_density);
-        array_index = 3*a;
+        int array_index = 3*a;
 
         atom_anchor_position[array_index]     = atoms::x_coord_array[a] + 0.5*x_unit_size;
         atom_anchor_position[array_index + 1] = atoms::y_coord_array[a] + 0.5*y_unit_size;
         atom_anchor_position[array_index + 2] = atoms::z_coord_array[a] + 0.5*z_unit_size;
         
-       // atom_position[array_index]   = atom_anchor_position[array_index];
-      //  atom_position[array_index+1] = atom_anchor_position[array_index+1];
-       // atom_position[array_index+2] = atom_anchor_position[array_index+2];
-
-      //  atom_potential[a] = E_f_A;
     }
-
-    // for(int a = 0; a < lattice_atoms; a++) {
-    //   array_index = a*3;
-    // //  lattice_output << "Ni" << "     " << atom_position[array_index] << "     " << atom_position[array_index + 1] << "   " << atom_position[array_index + 2] << "  " << a << "\n";  
-    // }
-    // lattice_output.close(); 
-
-   // Tp = 300.0;
-   
 }
 
 //====================================
@@ -491,11 +438,12 @@ void initialize_electrons() {
   
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
+
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
     int e_density = 500    +int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     int ee_density = 500   +int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     int ee_scattering = 500+int(round(pow(e_e_coulomb_cutoff,    1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    std::cout << e_density << ", " << ee_density << std::endl;
+    std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
