@@ -207,15 +207,12 @@ namespace CASTLE {
    double e_specific_heat;
    double a_specific_heat_i;
    double e_specific_heat_i;
-   double phonon_energy;
-   double new_phonon_energy;
    double zero_pt_lattice_e;
+   double phonon_energy;
 
-   double e_a_neighbor_cutoff;
-   double e_a_coulomb_cutoff;
+   double e_e_integration_cutoff;
    double e_e_neighbor_cutoff;
    double e_e_coulomb_cutoff;
-   double a_a_neighbor_cutoff;
 
    double applied_voltage = 0.0;
    double power_density = 0.0;
@@ -234,28 +231,17 @@ namespace CASTLE {
    
    std::vector<double> atom_anchor_position;
    std::vector<double> atom_position;
-   
-   std::vector<double> atom_potential;
-   std::vector<double> new_atom_potential;
-   std::vector<std::vector<int> > atomic_nearest_electron_list;
-   std::vector<std::vector<int> > atomic_nearest_atom_list;
 
    std::vector<double> electron_position; //Angstroms
-   std::vector<double> new_electron_position;
    std::vector<double> electron_velocity; //Angstroms
-   std::vector<double> new_electron_velocity;
-   std::vector<double> electron_force;   //Angstroms
-   std::vector<double> new_electron_force;
    std::vector<double> electron_potential; //A
-   std::vector<double> new_electron_potential;
+   std::vector<bool> electron_transport_list;
+   std::vector<std::vector<int> > electron_integration_list;
    std::vector<std::vector<int> > electron_nearest_electron_list;
    std::vector<std::vector<int> > electron_nearest_atom_list;
-   std::vector<bool> external_interaction_list;
-   std::vector<double> mean_radius;
-   int external_interaction_list_count;
    std::vector<std::vector<int> > electron_ee_scattering_list;
    std::vector<std::vector<int> > electron_ea_scattering_list;
-   std::vector<double> phonon_distribution;
+   std::vector<std::vector<int> > temp_Map;
 
    MTRand_closed uniform_random;
    MTRand_int32 int_random;
@@ -279,7 +265,6 @@ namespace CASTLE {
    int z_flux;
    int e_a_scattering_count;
    int e_e_scattering_count;
-   int a_a_scattering_count;
 
    double TTMe;
    double d_TTMe;
@@ -314,40 +299,28 @@ namespace CASTLE {
    void update_position();
    void update_dynamics();
 
-   void e_a_coulomb(const int& e, const int& array_index);
-              //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
+   // void e_a_coulomb(const int& e, const int& array_index);
+   //            //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
    
-   void neighbor_e_a_coulomb(const int& e, const int& array_index);
-                // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
+   // void neighbor_e_a_coulomb(const int& e, const int& array_index);
+   //              // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
-   void e_e_coulomb(const int& e, const int& array_index);
-   void neighbor_e_e_coulomb(const int& e, const int& array_index);
-    
-   void a_a_coulomb(const int a, const int array_index, \
-                double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
-   void neighbor_a_a_coulomb(const int a, const int array_index, \
-                double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
+   void e_e_coulomb(const int e, const int array_index);
+   void neighbor_e_e_coulomb(const int e, const int array_index);
+   
+   // void a_a_coulomb(const int a, const int array_index, \
+   //              double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
+   // void neighbor_a_a_coulomb(const int a, const int array_index, \
+   //              double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
-   void electron_thermal_field(const int& e, const int& array_index, const double& EKE);
+   void electron_thermal_field(const int e, const int array_index, const double EKE);
  
-   double electron_applied_voltage(const int& e, const int& array_index, double& external_potential);
+   double electron_applied_voltage(const int e, const int array_index, double& external_potential);
 
-   void aa_scattering();
-   void ea_scattering(const int& e, const int& array_index);
+   // void aa_scattering();
+   void ea_scattering(const int e, const int array_index);
    void ee_scattering();
- /*
-   double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z);
-   double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance);
-   double electron_applied_voltage(int array_index, double& x_force, double& y_force, double& z_force);
-   double reinitialize_electron_conserve_momentum(std::vector<double>& captured_electron_list);
-*/
-/*
-   long double e_a_scattering(int e, int a, const long double& l_x, const long double& l_y, const long double& l_z);
-   long double e_p_scattering(int e, int a, const long double& x_distance, const long double& y_distance, const long double& z_distance);
-   long double electron_applied_voltage(int array_index, long double& x_force, long double& y_force, long double& z_force);
-   long double reinitialize_electron_conserve_momentum(std::vector<long double>& captured_electron_list);
 
-*/
    double B_E_distrib(const double& epsilon);
    double M_B_distrib(const double& epsilon, const double& beta);
    void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
