@@ -46,8 +46,8 @@ void create() {
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
 
     initialize();
-       // omp_set_dynamic(1);
-        omp_set_num_threads(6);
+        omp_set_dynamic(0);
+       omp_set_num_threads(6);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -321,13 +321,17 @@ void initialize () {
     ea_rate = -1.0*dt*E_f_A / tau;
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
+    std::vector<MTRand_closed> omp_uniform_random(8);
+    std::vector<MTRand_int32> omp_int_random(8);
+   // std::cout << omp_get_num_threads() << std::endl;
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<> seed_gen(0, int(pow(2,32)));
-    for(int i = 0; i < omp_get_num_threads(); i++) {
-      omp_uniform_random[i].seed(seed_gen(gen));
-      omp_int_random[i].seed(seed_gen(gen));
+    std::uniform_int_distribution<> seed_gen(0, int(pow(2,32) - 1));
+    for(int i = 0; i < 8; i++) {
+     // std::cout << omp_get_num_threads() << std::endl;
+      omp_uniform_random[i].seed(i);
+      omp_int_random[i].seed(i);
     }
 
     // Initialize lattice
@@ -379,10 +383,6 @@ void initialize_positions() {
 
 
 void initialize_lattice() {
-    
-    atomic_size = 2; // sim::atomic_size; //Angst diameter. 
-    screening_depth = 0.875; //sim::screening_depth; //Angstroms 
-    
     atom_anchor_position.resize(lattice_atoms*3,0);
  
     #pragma omp parallel for schedule(static) 
@@ -420,7 +420,7 @@ void initialize_electrons() {
     electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
     electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
     electron_potential.resize(conduction_electrons, 0);
-
+    temp_Map.resize(8);
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
         temp_Map[i].resize(int(double(conduction_electrons)/8.0), 0);
@@ -779,16 +779,16 @@ void initialize_electron_interactions() {
 void initialize_velocities() {
      
     
-    char directory [256];
-    if(getcwd(directory, sizeof(directory)) == NULL){
-            std::cerr << "Fatal getcwd error in datalog." << std::endl;
-    }
-    electron_velocity_output.open(string(directory) + "/Electron_Velocity/init.csv");
-    electron_velocity_output << "electron number, x-component, y-component, z-component, length" << std::endl;  
+    // char directory [256];
+    // if(getcwd(directory, sizeof(directory)) == NULL){
+    //         std::cerr << "Fatal getcwd error in datalog." << std::endl;
+    // }
+    // electron_velocity_output.open(string(directory) + "/Electron_Velocity/init.csv");
+    // electron_velocity_output << "electron number, x-component, y-component, z-component, length" << std::endl;  
 
-    std::ofstream atom_phonon_output;
-    atom_phonon_output.open(string(directory) + "/Atom_Energy/init.csv");
-    atom_phonon_output << "atom number, energy" << std::endl;
+    // std::ofstream atom_phonon_output;
+    // atom_phonon_output.open(string(directory) + "/Atom_Energy/init.csv");
+    // atom_phonon_output << "atom number, energy" << std::endl;
     
 
     const std::string n = "Init_E_distrib";

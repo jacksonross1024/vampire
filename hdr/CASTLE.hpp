@@ -138,6 +138,7 @@ namespace CASTLE {
     extern std::vector<std::vector<int> > electron_ee_scattering_list;
     extern std::vector<std::vector<int> > electron_ea_scattering_list;
     extern std::vector<std::vector<int> > temp_Map;
+    
     extern MTRand_closed uniform_random;
     extern MTRand_int32 int_random;
     extern std::vector<MTRand_closed> omp_uniform_random;

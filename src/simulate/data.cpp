@@ -245,8 +245,8 @@ namespace CASTLE {
 
    MTRand_closed uniform_random;
    MTRand_int32 int_random;
-   std::vector<MTRand_closed> omp_uniform_random(omp_get_num_threads());
-   std::vector<MTRand_int32> omp_int_random(omp_get_num_threads());
+   std::vector<MTRand_closed> omp_uniform_random;
+   std::vector<MTRand_int32> omp_int_random;
    //std::vector<MTRand> omp_gaussian_random(omp_get_num_threads());
     //outputs
    
