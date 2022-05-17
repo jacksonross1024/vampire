@@ -142,8 +142,8 @@ void update_dynamics() {
     for (int e = 0; e < conduction_electrons; e++) {
       array_index = 3*e;        
 
-      if(current_time_step % 20 == 0) e_e_coulomb(e, array_index); 
-      else if (current_time_step % 10 == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index); 
+      if(current_time_step % full_int_var == 0) e_e_coulomb(e, array_index); 
+      else if (current_time_step % half_int_var == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index); 
       else if(electron_transport_list[e]) neighbor_e_e_coulomb(e, array_index);
       
       if((photons_at_dt > count) && (omp_int_random[omp_get_thread_num()]() % conduction_electrons < photons_at_dt) \
@@ -160,7 +160,7 @@ void update_dynamics() {
       if(!equilibrium_step && electron_transport_list[e]) ea_scattering(e, array_index);
    } 
   //  TEKE += external_potential;
-   
+      if(err::check) std::cout << " nearest neighbor complete. ee prep" << std::endl;
     ee_scattering();
 
   Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
@@ -310,25 +310,29 @@ void e_e_coulomb(const int e, const int array_index) {
             y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
             z_distance = electron_position[array_index+2] - electron_position[array_index_i + 2]; 
 
-            if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
-            else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
+            if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance = x_distance + lattice_width;
+            else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance = x_distance - lattice_width;
 
-            if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
-            else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
+            if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance = y_distance + lattice_depth;
+            else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance = y_distance - lattice_depth;
 
-            if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
-            else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
+            if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
+            else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
             
             if(length > e_e_integration_cutoff) continue;
             electron_integration_list[e][integration_count] = array_index_i;
             integration_count++;
+              if(integration_count >= electron_integration_list[e].size()) std::cout << e << ", " << integration_count << " > " << electron_integration_list[e].size() << std::endl;
+              break;
 
             if (length > e_e_neighbor_cutoff) continue;
             electron_nearest_electron_list[e][neighbor_count] = array_index_i/3;
             neighbor_count++;
-            
+              if(neighbor_count >= electron_nearest_electron_list[e].size()) std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << std::endl;
+              break;
+
             if(length > e_e_coulomb_cutoff) continue;
             electron_ee_scattering_list[e][scattering_count] = array_index_i/3;
             scattering_count++;
@@ -356,20 +360,22 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
         z_distance = electron_position[array_index+2] - electron_position[array_index_i + 2]; 
     
-        if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
-        else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
+        if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance = x_distance + lattice_width;
+        else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance = x_distance - lattice_width;
 
-        if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
-        else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
+        if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance = y_distance + lattice_depth;
+        else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance = y_distance - lattice_depth;
 
-        if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
-        else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
+        if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
+        else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
         
         length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
         
-        if(length < e_e_neighbor_cutoff) continue;
+        if(length > e_e_neighbor_cutoff) continue;
         electron_nearest_electron_list[e][neighbor_count] = array_index_i/3;
         neighbor_count++;
+          if(neighbor_count >= electron_nearest_electron_list[e].size()) std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << std::endl;
+            break;
 
         if (length > e_e_coulomb_cutoff) continue; 
         electron_ee_scattering_list[e][scattering_count] = array_index_i/3;

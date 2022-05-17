@@ -189,6 +189,10 @@ namespace CASTLE {
    double loop_time;
    int    CASTLE_output_rate; //output velocity and position data at this multiple
    int CASTLE_MD_rate;
+
+   int full_int_var;
+   int half_int_var;
+   double boundary_conditions_cutoff;
    double dt;
    double v_f; //meters
    double E_f; //meters

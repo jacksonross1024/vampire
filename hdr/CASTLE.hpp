@@ -55,7 +55,7 @@
 
 namespace CASTLE {
 
-    // input and material parameters
+    // input variables
     extern bool CASTLE_program;
     extern bool CASTLE_output_data; //output position and velocity data
     
@@ -84,6 +84,9 @@ namespace CASTLE {
     extern int    CASTLE_output_rate; 
     extern int CASTLE_MD_rate; //output velocity and position data at this multiple
   
+    extern int full_int_var;
+    extern int half_int_var;
+    extern double boundary_conditions_cutoff;
     extern double dt;
     extern double v_f; //meters
     extern double E_f; //meters

@@ -281,6 +281,10 @@ void initialize () {
     lattice_width  = cs::system_dimensions[1] + y_unit_size; // A
     lattice_depth  = cs::system_dimensions[2] + z_unit_size; // A
 
+    if( lattice_height < 26 || lattice_depth < 26 || lattice_width < 26) {
+      std::cerr << "Lattice dimension Error: castle must be 4.5x4.5x4.5 nm^3 minimum" << std::endl;
+    }
+
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
@@ -428,10 +432,19 @@ void initialize_electrons() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
 
-    e_e_integration_cutoff = 1849.0;
-    e_e_neighbor_cutoff = 169.0;
+    e_e_neighbor_cutoff = 10.0;
+    e_e_integration_cutoff = e_e_neighbor_cutoff + round(v_f*dt*((fmin(fmin(lattice_depth, lattice_height), lattice_width) - 2.0*e_e_neighbor_cutoff) / (dt*2.0*v_f) ) - 1.0);
+    if(e_e_integration_cutoff > 0.5*fmin(fmin(lattice_depth, lattice_height), lattice_width)) std::cerr << "EE integration cutoff " << std::endl;
+    e_e_integration_cutoff = fmin(e_e_integration_cutoff, 40);
+    
+    half_int_var =  (e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    full_int_var = 2*half_int_var;
+    boundary_conditions_cutoff = e_e_integration_cutoff;
+    e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
+    e_e_integration_cutoff *= e_e_integration_cutoff;
     e_e_coulomb_cutoff = 9.0;
     
+    std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     electron_transport_list.resize(conduction_electrons, false);
     electron_integration_list.resize(conduction_electrons);
     electron_nearest_electron_list.resize(conduction_electrons);
@@ -440,9 +453,9 @@ void initialize_electrons() {
     electron_ea_scattering_list.resize(conduction_electrons);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    int e_density = 500    +int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    int ee_density = 500   +int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    int ee_scattering = 500+int(round(pow(e_e_coulomb_cutoff,    1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    int e_density =   200+int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    int ee_density =  200+int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    int ee_scattering= 20+int(round(pow(e_e_coulomb_cutoff,    1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
@@ -665,14 +678,14 @@ void initialize_electron_interactions() {
             y_distance = electron_position[array_index + 1] - electron_position[array_index_i + 1];
             z_distance = electron_position[array_index + 2] - electron_position[array_index_i + 2];
             
-            if (x_distance < (10.0 - lattice_width))       x_distance = x_distance + lattice_width;
-            else if (x_distance > (lattice_width - 10.0))  x_distance = x_distance - lattice_width;
+            if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance = x_distance + lattice_width;
+            else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance = x_distance - lattice_width;
 
-            if (y_distance < (10.0 - lattice_depth))       y_distance = y_distance + lattice_depth;
-            else if (y_distance > (lattice_depth - 10.0))  y_distance = y_distance - lattice_depth;
+            if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance = y_distance + lattice_depth;
+            else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance = y_distance - lattice_depth;
 
-            if (z_distance <  (10.0 - lattice_height))     z_distance = z_distance + lattice_height;
-            else if (z_distance > (lattice_height - 10.0)) z_distance = z_distance - lattice_height;
+            if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
+            else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
 
             length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
 
