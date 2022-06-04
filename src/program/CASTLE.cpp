@@ -47,7 +47,7 @@ void create() {
 
     initialize();
         omp_set_dynamic(0);
-       omp_set_num_threads(6);
+       omp_set_num_threads(4);
         std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
         #pragma omp parallel 
             #pragma omp critical
@@ -242,7 +242,7 @@ for(int a = 0; a < 1500; a++) {
     std::cout << "Averaging complete. " << castle_watch.elapsed_seconds() << " [s] elapsed. Step-time: " << castle_watch.elapsed_seconds() / total_time_steps << std::endl;
     
     mean_data.close();
-    temp_data.close();
+    //temp_data.close();
 }
 
 //====================================
@@ -364,7 +364,7 @@ void initialize () {
             std::cerr << "Fatal getcwd error in datalog." << std::endl;
     }
     
-    temp_data.open(string(directory) + "/temp_data.csv");
+   // temp_data.open(string(directory) + "/temp_data.csv");
     mean_data.open(string(directory) + "/mean_data.csv");
     mean_data << "time, step, mean-EKE, mean-LE, mean-Te, mean-Tp,  mean-radius, mean-e-a-collisions, mean-e-e-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
 
@@ -427,19 +427,22 @@ void initialize_electrons() {
     temp_Map.resize(8);
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
-        temp_Map[i].resize(int(double(conduction_electrons)/8.0), 0);
+        temp_Map[i].resize(round(conduction_electrons*0.3)+10, 0);
+        // std::cout << temp_Map[i][0] << std::endl;
+        // std::cout << temp_Map[i][round(conduction_electrons*0.3)-1] << std::endl;
     }
+    //std::cout << temp_Map[7][3335] << std::endl;
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
 
     e_e_neighbor_cutoff = 10.0;
     e_e_integration_cutoff = e_e_neighbor_cutoff + round(v_f*dt*((fmin(fmin(lattice_depth, lattice_height), lattice_width) - 2.0*e_e_neighbor_cutoff) / (dt*2.0*v_f) ) - 1.0);
     if(e_e_integration_cutoff > 0.5*fmin(fmin(lattice_depth, lattice_height), lattice_width)) std::cerr << "EE integration cutoff " << std::endl;
-    e_e_integration_cutoff = fmin(e_e_integration_cutoff, 40);
+    e_e_integration_cutoff = fmin(e_e_integration_cutoff, 40.0);
     
     half_int_var =  (e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 2*half_int_var;
-    boundary_conditions_cutoff = e_e_integration_cutoff;
+    boundary_conditions_cutoff = e_e_integration_cutoff - 2;
     e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff *= e_e_integration_cutoff;
     e_e_coulomb_cutoff = 9.0;
@@ -453,16 +456,16 @@ void initialize_electrons() {
     electron_ea_scattering_list.resize(conduction_electrons);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    int e_density =   200+int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    int ee_density =  200+int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    int ee_scattering= 20+int(round(pow(e_e_coulomb_cutoff,    1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    int e_density =   2*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    int ee_density =  8*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    int ee_scattering= 20+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
         electron_integration_list[e].resize(e_density);
         electron_nearest_electron_list[e].resize(ee_density);
-        electron_ee_scattering_list[e].resize(ee_scattering);
+        electron_ee_scattering_list[e].resize(ee_scattering, 0);
         electron_ea_scattering_list[e].resize(2);
 
         int array_index = 3*e;
@@ -697,7 +700,10 @@ void initialize_electron_interactions() {
             electron_nearest_electron_list[e][neighbor_count] = array_index_i/3;
             neighbor_count++;
 
-            if(length > e_e_coulomb_cutoff) continue;
+            if(length > e_e_coulomb_cutoff) {
+              
+              continue; }
+              //std::cout << e << ", " << i << ", " << length << std::endl;
             electron_ee_scattering_list[e][scattering_count] = array_index_i/3;
             scattering_count++;
         }
@@ -1139,69 +1145,77 @@ void output_data() {
       // electron_position_output_down.precision(10);
       // electron_position_output_down << std::scientific;
 
-      electron_velocity_output.open(string(directory) + "/Electron_Velocity/" + time_stamp + ".csv");
-      electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
-      electron_velocity_output.precision(10);
-      electron_velocity_output << std::scientific;
+      // electron_velocity_output.open(string(directory) + "/Electron_Velocity/" + time_stamp + ".csv");
+      // electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
+      // electron_velocity_output.precision(10);
+      // electron_velocity_output << std::scientific;
   
-      std::ofstream temp_map_list [8];
+      std::vector<std::ofstream> temp_map_list;
+      temp_map_list.resize(8);
       for(int i = 0; i < 8; i++) {
         temp_map_list[i].open(string(directory) + "/Temp_Map" + std::to_string(i) + "/" + time_stamp);
+      // std::cout << temp_Map[i][0] << std::endl;
+      //   std::cout << temp_Map[i][round(conduction_electrons*0.3)-1] << std::endl;
       }
-
-    const static double step_size = 8.0*((8.0*constants::kB_r*Te) - ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
+    
+    const static double step_size = 8.0*((8.0*constants::kB_r*300.0) - ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
 
     #pragma omp parallel for
     for(int e = 0; e < conduction_electrons; e++) {
-      int array_index   = 3*e;
+      int array_index = 3*e;
 
       double x_pos = electron_position[array_index];
       double y_pos = electron_position[array_index+1]; 
       double z_pos = electron_position[array_index+2];
 
       double velocity_length = electron_potential[e];
+      int hist = int(fmin(conduction_electrons*0.3, fmax(0.0, floor((velocity_length - 0.9817*E_f_A)/step_size))));
 
-      if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {
-        #pragma omp atomic
-        temp_Map[0][int(floor((velocity_length - 0.9817*E_f_A)/step_size))] ++;
+      if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
+        #pragma omp atomic update
+        temp_Map[0][hist]++;
       }
-      if(x_pos > lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
-        #pragma omp atomic
-        temp_Map[1][int(floor((velocity_length - 0.9817*E_f_A)/step_size))] ++;
+      if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+         #pragma omp atomic update
+        temp_Map[1][hist]++;
       }
-      if(x_pos < lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
-        #pragma omp atomic
-        temp_Map[2][int(floor((velocity_length - 0.9817*E_f_A)/step_size))] ++;
+      if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+         #pragma omp atomic update
+        temp_Map[2][hist]++;
       }
       if(x_pos > lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
-        #pragma omp atomic
-        temp_Map[3][int(floor((velocity_length - 0.9817*E_f_A)/step_size))] ++;
+         #pragma omp atomic update
+        temp_Map[3][hist]++;
       }
       if(x_pos < lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-        #pragma omp atomic
-        temp_Map[4][int(floor((velocity_length - 0.9817*E_f_A)/step_size))] ++;
+         #pragma omp atomic update
+        temp_Map[4][hist]++;
       }
-      if(x_pos > lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-        #pragma omp atomic
-        temp_Map[5][int(floor((velocity_length - 0.9817*E_f_A)/step_size))] ++;
+      if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+        #pragma omp atomic update
+        temp_Map[5][hist]++;
       }
-      if(x_pos < lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-        #pragma omp atomic
-        temp_Map[6][int(floor((velocity_length - 0.9817*E_f_A)/step_size))] ++;
+      if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+         #pragma omp atomic update
+        temp_Map[6][hist]++;
       }
-      if(x_pos > lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-        #pragma omp atomic
-        temp_Map[7][int(floor((velocity_length - 0.9817*E_f_A)/step_size))] ++;
+      if(x_pos > (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+         #pragma omp atomic update
+        temp_Map[7][hist]++; 
       }    
-    }
-
-  #pragma omp parallel 
-  {
-    for(int i = 0; i < (conduction_electrons / 8.0); i++) {
+    }  
+// std::cout << "histograms made" << std::endl;
+    #pragma omp parallel num_threads(8)
+    {
+    //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
+    for(int i = 0; i < conduction_electrons *0.2; i++) {
       temp_map_list[omp_get_thread_num()] << i << ", " << temp_Map[omp_get_thread_num()][i] << "\n";
       temp_Map[omp_get_thread_num()][i] = 0;
     }
-  }
+    temp_map_list[omp_get_thread_num()].close();
+    }
+
+
       std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
 }
     mean_data.precision(10);

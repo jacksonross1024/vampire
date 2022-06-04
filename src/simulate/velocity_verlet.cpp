@@ -168,7 +168,7 @@ void update_dynamics() {
   else         Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons)    + (e_heat_capacity_i*pump*dt*300.0);
         if (err::check) std::cout << "reset scattering." << std::endl;
     
-    #pragma vectorize
+  
     for(int e = 0; e < conduction_electrons; e++) {
       electron_ee_scattering_list[e][0] = 0;
     }   
@@ -198,7 +198,7 @@ void electron_thermal_field(const int e, const int array_index, const double EKE
     electron_velocity[array_index+1] = vel*sin(theta)*sin(phi);
     electron_velocity[array_index+2] = vel*cos(phi);
 
-    electron_ee_scattering_list[e][0] = 1;
+  //  electron_ee_scattering_list[e][0] = 1;
     electron_ea_scattering_list[e][0] = 1;
 }
 /*
@@ -295,20 +295,20 @@ void electron_thermal_field(const int e, const int array_index, const double EKE
 */
 void e_e_coulomb(const int e, const int array_index) {
     
-    int array_index_i;
-    double x_distance,y_distance,z_distance,length;
+   // int array_index_i;
+   // double x_distance,y_distance,z_distance,length;
     int integration_count = 1;
     int neighbor_count = 1;
     int scattering_count = 2;
-
+  //if(omp_get_thread_num() == 1) std::cout << e << std::endl;
         for (int i = 0; i < conduction_electrons; i++) {
             if (i == e) continue; //no self repulsion
            
-            array_index_i = 3*i;
+            int array_index_i = 3*i;
 
-            x_distance = electron_position[array_index]   - electron_position[array_index_i];
-            y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
-            z_distance = electron_position[array_index+2] - electron_position[array_index_i + 2]; 
+            double x_distance = electron_position[array_index]   - electron_position[array_index_i];
+            double y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
+            double z_distance = electron_position[array_index+2] - electron_position[array_index_i + 2]; 
 
             if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance = x_distance + lattice_width;
             else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance = x_distance - lattice_width;
@@ -319,21 +319,24 @@ void e_e_coulomb(const int e, const int array_index) {
             if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
             else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
 
-            length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
+            double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
             
             if(length > e_e_integration_cutoff) continue;
             electron_integration_list[e][integration_count] = array_index_i;
             integration_count++;
-              if(integration_count >= electron_integration_list[e].size()) std::cout << e << ", " << integration_count << " > " << electron_integration_list[e].size() << std::endl;
-              break;
+              if(integration_count >= electron_integration_list[e].size() - 2) {std::cout << e << ", " << integration_count << " > " << electron_integration_list[e].size() << ", " << length << std::endl;
+              break; }
 
             if (length > e_e_neighbor_cutoff) continue;
             electron_nearest_electron_list[e][neighbor_count] = array_index_i/3;
             neighbor_count++;
-              if(neighbor_count >= electron_nearest_electron_list[e].size()) std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << std::endl;
-              break;
+          //   std::cout << e << ", " << i << ", " << length << std::endl;
+    
+              if(neighbor_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << std::endl;
+              break; }
 
             if(length > e_e_coulomb_cutoff) continue;
+           //  std::cout << e << ", " << i << ", " << length << std::endl;
             electron_ee_scattering_list[e][scattering_count] = array_index_i/3;
             scattering_count++;
       
@@ -351,10 +354,10 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
     int array_index_i;
     int neighbor_count = 1;
     int scattering_count = 2;
-
+ //if(omp_get_thread_num() == 1) std::cout << e << ", neighbor" << std::endl;
     for (int i = 1; i < size; i++) {
         
-        array_index_i = 3*electron_integration_list[e][i];
+        array_index_i = electron_integration_list[e][i];
 
         x_distance = electron_position[array_index]   - electron_position[array_index_i];
         y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
@@ -374,12 +377,15 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         if(length > e_e_neighbor_cutoff) continue;
         electron_nearest_electron_list[e][neighbor_count] = array_index_i/3;
         neighbor_count++;
-          if(neighbor_count >= electron_nearest_electron_list[e].size()) std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << std::endl;
-            break;
+       //  std::cout << e << ", " << i << ", " << length << std::endl;
+    
+          if(neighbor_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
+            break; }
 
         if (length > e_e_coulomb_cutoff) continue; 
         electron_ee_scattering_list[e][scattering_count] = array_index_i/3;
         scattering_count++;
+      //   std::cout << e << ", " << i << ", " << length << std::endl;
     }
 
     electron_nearest_electron_list[e][0] = neighbor_count;
@@ -581,7 +587,7 @@ void ea_scattering(const int e, const int array_index) {
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi); 
     
-      electron_ee_scattering_list[e][0] = 1;
+     // electron_ee_scattering_list[e][0] = 1;
 
       #pragma omp critical 
       {
@@ -598,17 +604,25 @@ void ee_scattering() {
 
   for(int e = 0; e < conduction_electrons; e++) {
     
+   // if(electron_transport_list[e]) std::cout << e << ", transport: " << electron_transport_list[e];
     if(!electron_transport_list[e]) continue;
-    if(electron_ee_scattering_list[e][0]) continue;
-
+  //  if(!electron_ee_scattering_list[e][0]) std::cout << ", scattered: " << electron_ee_scattering_list[e][0];
+    if(electron_ee_scattering_list[e][0]) {
+    //  std::cout << e << ", scattered: " << electron_ee_scattering_list[e][0] << std::endl;
+      continue;
+    }
     int size = electron_ee_scattering_list[e][1] - 2;
-    if(size < 3) continue;
-
+    if(size < 3) {
+     // std::cout << e << ", " << size << std::endl;
+      continue;
+    }
     int electron_collision = 2 + (int_random() % size);
     electron_collision = electron_ee_scattering_list[e][electron_collision];
   
-    if(electron_ee_scattering_list[electron_collision][0])  continue;
-    
+    if(electron_ee_scattering_list[electron_collision][0])  {
+     // std::cout << e << ", scattered pair: " << electron_ee_scattering_list[electron_collision][0] << std::endl;
+      continue;
+    }
     electron_ee_scattering_list[e][0] = 1;
     electron_ee_scattering_list[electron_collision][0] = 1;
 
@@ -645,6 +659,7 @@ void ee_scattering() {
       }
     }
     }
+  //std::cout  << ", RTA: " << exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE))) << std::endl;
 
    if(uniform_random() > exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
       int array_index = 3*e;
