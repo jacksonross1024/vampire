@@ -680,8 +680,8 @@ void ee_scattering() {
       electron_velocity[array_index+2] = scattering_velocity * cos(phi);
       
       electron_potential[electron_collision]   += deltaE;
-      if(electron_potential[electron_collision] > 0.99*E_f_A) electron_transport_list[e] = true;
-      else electron_transport_list[e] = false;
+      if(electron_potential[electron_collision] > 0.99*E_f_A) electron_transport_list[electron_collision] = true;
+      else electron_transport_list[electron_collision] = false;
 
       unit_vec = sqrt(2.0*d_e_energy*constants::m_e_r_i);
       theta = atan(electron_velocity[3*electron_collision+1] / electron_velocity[3*electron_collision]) + (0.1*M_PI*uniform_random() - 0.05*M_PI);

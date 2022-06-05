@@ -1158,7 +1158,7 @@ void output_data() {
       //   std::cout << temp_Map[i][round(conduction_electrons*0.3)-1] << std::endl;
       }
     
-    const static double step_size = 8.0*((8.0*constants::kB_r*300.0) - ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
+    const static double step_size = 8.0*E_f_A / double(conduction_electrons);
 
     #pragma omp parallel for
     for(int e = 0; e < conduction_electrons; e++) {
