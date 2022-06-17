@@ -228,6 +228,15 @@ namespace CASTLE {
    double ee_coupling_strength;
    double ea_coupling_strength;
 
+   int x_omp_cells;// = int(floor(lattice_width / 15.0));
+  int y_omp_cells;// = int(floor(lattice_depth / 15.0));
+  int z_omp_cells;// = int(floor(lattice_height/ 15.0));
+
+  int total_cells;// = x_omp_cells*y_omp_cells*z_omp_cells;
+
+  double x_step_size;// = lattice_width / double(x_omp_cells);
+  double y_step_size;// = lattice_depth / double(y_omp_cells);
+  double z_step_size;// = lattice_height/ double(z_omp_cells);
 
     //integration variables
    long long int current_time_step;
@@ -245,6 +254,10 @@ namespace CASTLE {
    std::vector<std::vector<int> > electron_nearest_atom_list;
    std::vector<std::vector<int> > electron_ee_scattering_list;
    std::vector<std::vector<int> > electron_ea_scattering_list;
+   std::vector<std::vector<int> > cell_lattice_coordinate;
+   std::vector<std::vector<int > > cell_integration_lists;
+   std::vector<std::vector< int > > cell_nearest_neighbor_list;
+   std::vector<std::vector < std::vector <int > > > lattice_cell_coordinate;
    std::vector<std::vector<int> > temp_Map;
 
    MTRand_closed uniform_random;
@@ -296,6 +309,7 @@ namespace CASTLE {
    void initialize_atomic_interactions();
    void initialize_electron_atom_interactions();
    void initialize_velocities();
+   void initialize_cell_omp();
    void create();
    void output_data();
 

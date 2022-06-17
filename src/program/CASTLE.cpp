@@ -346,19 +346,25 @@ void initialize () {
     //========
     // initialize electrons: lattice and conduction bands, velocity, spin, etc.
     //=======
-    initialize_forces();
+   // initialize_forces();
             if (err::check) std::cout << "Electrons ready..." << std::endl;
     //=======
     // Calls forces set up
     //=======
             if (err::check) std::cout << "Forces ready..." << std::endl;
 
-    initialize_velocities();
+   initialize_velocities();
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
-    std::cout << "E_f(J): " << E_f <<  ", v_F(A/fs): " << v_f << ", G(AJ/K/fs/nm**3): " << G << ", Ce@300K (AJ/K/nm**3): " << e_heat_capacity << ", Cl(AJ/K/nm**3): " << a_heat_capacity << ", Tau_ea@300K(fs): " << tau <<  ", Tau_ee(fs): " << 1.0/ee_rate << ", E_field(V/m): " << applied_voltage << std::endl;
+    std::cout << "E_f(AJ): " << E_f_A <<  ", v_F(A/fs): " << v_f << ", G(AJ/K/fs/nm**3): " << G << ", Tau_ea@300K(fs): " << tau <<  ", E_field(V/m): " << applied_voltage << std::endl;
+   
+   
+   
+     initialize_cell_omp(); 
+  // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
     
+  std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << 4.0*double(conduction_electrons) / double(total_cells) << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog." << std::endl;
@@ -370,6 +376,204 @@ void initialize () {
 
 }
 
+
+void initialize_cell_omp() {
+
+  //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
+  // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
+  
+  x_omp_cells = int(floor(lattice_width / 15.0));
+  y_omp_cells = int(floor(lattice_depth / 15.0));
+  z_omp_cells = int(floor(lattice_height/ 15.0));
+
+  total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
+
+  x_step_size = lattice_width / double(x_omp_cells);
+  y_step_size = lattice_depth / double(y_omp_cells);
+  z_step_size = lattice_height/ double(z_omp_cells);
+  boundary_conditions_cutoff = fmax(x_step_size, fmax(y_step_size, z_step_size));
+  cell_integration_lists.resize(total_cells);
+
+  for(int i=0; i < total_cells; i++) {
+    cell_integration_lists[i].resize(int(4.0*double(conduction_electrons) / double(total_cells)), 1);
+  }
+  
+  lattice_cell_coordinate.resize(x_omp_cells);
+  cell_lattice_coordinate.resize(total_cells);
+  for(int c = 0; c < total_cells; c++) {
+    cell_lattice_coordinate[c].resize(3 , 0);
+  }
+  int cell_count = 0;
+      std::cout << "cell integration arrays generated." << std::endl;
+
+  //omp lattice coordinates map
+  for(int i =0; i < x_omp_cells; i++) {
+    lattice_cell_coordinate[i].resize(y_omp_cells);
+    for(int k = 0; k < y_omp_cells; k++) {
+      lattice_cell_coordinate[i][k].resize(z_omp_cells);
+      for(int j = 0; j < z_omp_cells; j++) {
+        lattice_cell_coordinate[i][k][j] = cell_count;
+        cell_lattice_coordinate[cell_count][0] = i;
+        cell_lattice_coordinate[cell_count][1] = k;
+        cell_lattice_coordinate[cell_count][2] = j;
+        cell_count++;
+      }
+    }
+  }
+    std::cout << "lattice coordinate arrays initiated." << std::endl;
+  std::vector<bool> cell_wait_list;
+  cell_wait_list.resize(total_cells, false);
+  //lattice cell division
+  int current_lattice_current_end;
+ // #pragma omp parallel for schedule(static) private(current_lattice_current_end)
+  for(int e = 0; e < conduction_electrons; e++) {
+    int array_index = 3*e;
+    int x_cell = int(floor(electron_position[array_index] / x_step_size));
+      //if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
+
+    int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
+      //if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position[array_index+1] << ", " << y_step_size << ", " << floor(electron_position[array_index+1] / y_step_size) << std::endl;
+    
+    int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
+      //if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
+    
+    int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell]; 
+
+    #pragma omp atomic read
+    current_lattice_current_end = cell_integration_lists[omp_cell][0];
+
+    #pragma omp atomic write
+    cell_integration_lists[omp_cell][current_lattice_current_end] = e;
+
+    #pragma omp atomic update
+    cell_integration_lists[omp_cell][0]++;
+
+  
+          if(current_lattice_current_end >= cell_integration_lists[omp_cell].size()) std::cout << \
+            omp_cell << ", " << current_lattice_current_end << ", " << cell_integration_lists[omp_cell].size() << ", " << e << std::endl;
+      
+  }
+
+  //nearest neighbor omp cell integration
+      //standard fast method is the nearest neighbor list breakdown for scattering
+  
+  
+  //OpenMP integration
+ 
+  std::cout << "cell integration arrays initiated." << std::endl;
+
+  cell_nearest_neighbor_list.resize(total_cells);
+
+std::cout << "are they though?" << std::endl;
+  //spiral lattice integration
+  for(int c = 0; c < total_cells; c++) {
+    cell_nearest_neighbor_list[c].resize(27); //avoid self interaction
+    int x_cell = cell_lattice_coordinate[c][0];
+    int y_cell = cell_lattice_coordinate[c][1];
+    int z_cell = cell_lattice_coordinate[c][2];
+   // cell_nearest_neighbor_list[c][0] = c;
+      //if(c == 0) std::cout << "starting spiral for cell 0" << std::endl;
+   
+    for(int s = 0; s < 27; s++) {
+    //  if(s == 14) continue;
+         // if(s == 0) std::cout << "nn 1 for spiral 0. Expecting <4,4,4>" << std::endl;
+
+      int cell_spiral_xmod = x_cell + (s % 3) - 1;
+      if(cell_spiral_xmod < 0) cell_spiral_xmod = x_omp_cells - 1;
+      else if (cell_spiral_xmod > x_omp_cells-1) cell_spiral_xmod = 0;
+         // if(s == 0) std::cout << "<" << cell_spiral_xmod;
+
+      int cell_spiral_ymod = y_cell + (int(floor(s / 3)) % 3) -1;
+      if(cell_spiral_ymod < 0) cell_spiral_ymod = y_omp_cells - 1;
+      else if (cell_spiral_ymod > y_omp_cells-1) cell_spiral_ymod = 0;
+         // if(s == 0) std::cout << "," << cell_spiral_ymod;
+
+      int cell_spiral_zmod = z_cell + int(floor(s / 9)) - 1;
+      if(cell_spiral_zmod < 0) cell_spiral_zmod = z_omp_cells - 1;
+      else if (cell_spiral_zmod > z_omp_cells-1) cell_spiral_zmod = 0;
+         // if(s == 0) std::cout << "," << cell_spiral_zmod << ">" << std::endl;
+    
+      cell_nearest_neighbor_list[c][s] = lattice_cell_coordinate[cell_spiral_xmod][cell_spiral_ymod][cell_spiral_zmod];
+
+      //if(s == 13) std::cout << cell_nearest_neighbor_list[c][s] << ", " << c << ", " << x_cell << ", " << y_cell << ", " << z_cell << std::endl;
+   
+    }
+  }
+    std::cout << "spiral integration coordiantes initialized." << std::endl;
+
+
+    #pragma omp parallel for 
+    for(int electron = 0; electron < conduction_electrons; electron++) {
+      int array_index = 3*electron;
+      int x_cell = int(floor(electron_position[array_index] / x_step_size));
+      //if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
+
+      int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
+      //if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position[array_index+1] << ", " << y_step_size << ", " << floor(electron_position[array_index+1] / y_step_size) << std::endl;
+    
+      int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
+      //if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
+    
+      int c = lattice_cell_coordinate[x_cell][y_cell][z_cell];
+
+      int ee_scattering_count = 2;
+      int ee_dos_count = 1;
+      int ee_integration_count = 1;
+      for(int s = 0; s < 27; s++) {
+        int cell = cell_nearest_neighbor_list[c][s];
+
+        int size = cell_integration_lists[cell][0];
+       // if(electron == 0) std::cout << size << ", " << cell << ", " << omp_get_thread_num() << std::endl;
+
+        for(int i = 1; i < size; i++) {
+            int array_index_i = 3*cell_integration_lists[cell][i];
+            if (array_index_i == array_index) continue; //no self repulsion
+
+            double x_distance = electron_position[array_index]   - electron_position[array_index_i];
+            double y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
+            double z_distance = electron_position[array_index+2] - electron_position[array_index_i + 2]; 
+
+            if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance = x_distance + lattice_width;
+            else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance = x_distance - lattice_width;
+
+            if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance = y_distance + lattice_depth;
+            else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance = y_distance - lattice_depth;
+
+            if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
+            else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
+
+            double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
+            
+            if(length > e_e_integration_cutoff) continue;
+            electron_integration_list[electron][ee_integration_count] = array_index_i;
+            ee_integration_count++;
+              if(ee_integration_count >= electron_integration_list[electron].size() - 3) {std::cout << electron << ", " << ee_integration_count << " > " << electron_integration_list[electron].size() << ", " << length << std::endl;
+              break; }
+
+            if (length > e_e_neighbor_cutoff) continue;
+            electron_nearest_electron_list[electron][ee_dos_count] = array_index_i/3;
+            ee_dos_count++;
+
+              if(ee_dos_count >= electron_nearest_electron_list[electron].size() - 3) {std::cout << electron << ", " << ee_dos_count << " > " << electron_nearest_electron_list[electron].size() << ", " << length << std::endl;
+              break; }
+
+            if(length > e_e_coulomb_cutoff) continue;
+            electron_ee_scattering_list[electron][ee_scattering_count] = array_index_i/3;
+              //  if(electron==0)  std::cout << ee_scattering_count << ", " << length << ", " << cell << ", " << array_index_i/3 << std::endl;
+            
+               //  if(ee_scattering_count >= electron_ee_scattering_list[e].size() - 3) {std::cout << e << ", " << ee_scattering_count << " > " << electron_ee_scattering_list[e].size() << ", " << length << std::endl;
+                // break; }
+            ee_scattering_count++;
+        }
+      }
+      electron_integration_list[electron][0] = ee_integration_count;
+      electron_nearest_electron_list[electron][0] = ee_dos_count;
+      electron_ee_scattering_list[electron][1] = ee_scattering_count;
+  //   std::cout << ee_integration_count << std::endl;
+  }
+    std::cout << "nearest neighbor integration list complete." << std::endl;
+
+}
 //====================================
 // Creates and outputs atomic lattice
 //      Currently static lattice
@@ -411,7 +615,6 @@ void initialize_electrons() {
     // if(getcwd(directory, sizeof(directory)) == NULL){
     //         std::cerr << "Fatal getcwd error in datalog." << std::endl;
     // }
-
     // electron_position_output_down.open(string(directory) + "/Electron_Position_Init.xyz");
     // electron_position_output_down << conduction_electrons << "\n";  
     // electron_position_output_down << "Initial positions for electrons" << "\n";  
@@ -436,18 +639,15 @@ void initialize_electrons() {
     e_e_scattering_count = 0;
 
     e_e_neighbor_cutoff = 10.0;
-    e_e_integration_cutoff = e_e_neighbor_cutoff + round(v_f*dt*((fmin(fmin(lattice_depth, lattice_height), lattice_width) - 2.0*e_e_neighbor_cutoff) / (dt*2.0*v_f) ) - 1.0);
-    if(e_e_integration_cutoff > 0.5*fmin(fmin(lattice_depth, lattice_height), lattice_width)) std::cerr << "EE integration cutoff " << std::endl;
-    e_e_integration_cutoff = fmin(e_e_integration_cutoff, 40.0);
     
-    half_int_var =  (e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
-    full_int_var = 2*half_int_var;
-    boundary_conditions_cutoff = e_e_integration_cutoff - 2;
+    half_int_var =  5;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    full_int_var = 10;//2*half_int_var;
+    boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
     e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff *= e_e_integration_cutoff;
+    e_e_integration_cutoff = 18.0*18.0;
     e_e_coulomb_cutoff = 9.0;
     
-    std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
+   // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     electron_transport_list.resize(conduction_electrons, false);
     electron_integration_list.resize(conduction_electrons);
     electron_nearest_electron_list.resize(conduction_electrons);
@@ -457,7 +657,7 @@ void initialize_electrons() {
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
     int e_density =   2*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    int ee_density =  8*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    int ee_density =  5*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     int ee_scattering= 20+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
     #pragma omp parallel for schedule(static) 
@@ -650,7 +850,7 @@ double reinitialize_electron_conserve_momentum(std::vector<double>& captured_ele
 */
 void initialize_forces() {
 
-    initialize_electron_interactions();
+   // initialize_electron_interactions();
     if (err::check)  std::cout << "Electron interactions" << std::endl;
 
    // initialize_atomic_interactions();
@@ -814,14 +1014,17 @@ void initialize_velocities() {
    create_fermi_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
   //  const std::string na = "P_distrib";
     //create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
-
-    #pragma omp parallel for schedule(guided)
+    int count = 0;
+    #pragma omp parallel for schedule(guided) reduction(+:count)
     for(int e = 0; e < conduction_electrons; e++) {
       double phi,theta; //A/fS
       
       int array_index = 3*e;
       double energy = electron_potential[omp_int_random[omp_get_thread_num()]() % conduction_electrons];
-      if(energy > 0.99*E_f_A ) electron_transport_list[e] = true;
+      if(energy > 0.99*E_f_A ) {
+        electron_transport_list[e] = true;
+        count++;
+      }
       double vel = sqrt(2.0*energy*constants::m_e_r_i);
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
@@ -839,7 +1042,7 @@ void initialize_velocities() {
         electron_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
         electron_velocity[array_index + 2] = cos(phi)*vel; 
     }
-
+    std::cout << count << std::endl;
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
       int array_index = 3*e;

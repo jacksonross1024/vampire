@@ -119,6 +119,16 @@ namespace CASTLE {
     extern double e_e_integration_cutoff;
     extern double e_e_neighbor_cutoff;
     extern double e_e_coulomb_cutoff;
+
+    extern int x_omp_cells;// = int(floor(lattice_width / 15.0));
+    extern int y_omp_cells;// = int(floor(lattice_depth / 15.0));
+    extern int z_omp_cells;// = int(floor(lattice_height/ 15.0));
+
+    extern int total_cells;// = x_omp_cells*y_omp_cells*z_omp_cells;
+
+    extern double x_step_size;// = lattice_width / double(x_omp_cells);
+    extern double y_step_size;// = lattice_depth / double(y_omp_cells);
+    extern double z_step_size;// = lattice_height/ double(z_omp_cells);
  
     extern double applied_voltage;
     extern double power_density;
@@ -140,6 +150,10 @@ namespace CASTLE {
     extern std::vector<std::vector<int> > electron_nearest_atom_list;
     extern std::vector<std::vector<int> > electron_ee_scattering_list;
     extern std::vector<std::vector<int> > electron_ea_scattering_list;
+    extern std::vector<std::vector<int> > cell_lattice_coordinate;
+    extern std::vector<std::vector<int> > cell_integration_lists;
+    extern std::vector<std::vector< int > > cell_nearest_neighbor_list;
+    extern std::vector<std::vector<std::vector<int> > > lattice_cell_coordinate;
     extern std::vector<std::vector<int> > temp_Map;
     
     extern MTRand_closed uniform_random;
@@ -189,6 +203,7 @@ namespace CASTLE {
     extern void initialize_atomic_interactions();
     extern void initialize_electron_atom_interactions();
     extern void initialize_velocities();
+    extern void initialize_cell_omp();
     extern void create();
     extern void output_data();
 
