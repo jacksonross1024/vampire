@@ -502,7 +502,44 @@ std::cout << "are they though?" << std::endl;
     std::cout << "spiral integration coordiantes initialized." << std::endl;
 
 
-    #pragma omp parallel for 
+    std::cout << "Initiating checkerboard omp parallelisation scheme" << std::endl;
+
+    int max_x_threads = x_omp_cells / 2;
+    int max_y_threads = y_omp_cells / 2;
+    int max_z_threads = z_omp_cells / 2;
+
+    int max_total_threads = max_x_threads + max_y_threads + max_z_threads;
+    int omp_threads = fmin(omp_get_num_threads(), max_total_threads);
+    int cells_per_thread = total_cells / omp_threads;
+    std::vector<std::vector<int> > lattice_cells_per_omp;
+    lattice_cells_per_omp.resize(omp_threads);
+    int assigned_x = 0;
+    int assigned_y = 0;
+    int assigned_z = 0;
+
+    for(int t=0;t<omp_get_num_threads();t++){
+      lattice_cells_per_omp[t].resize(cells_per_thread, 0 );
+    }
+    for(int t = 0; t < omp_threads; t++) {
+      
+    }
+    int omp_checkerboard_scheme = 0;
+    if(omp_threads == max_x_threads) omp_checkerboard_scheme = 1;
+    if(omp_threads == max_y_threads) omp_checkerboard_scheme = 2;
+    
+    switch (omp_checkerboard_scheme)
+    {
+    case omp_checkerboard_scheme==1:
+      
+      int initial = lattice_cell_coordinate[omp_get_thread_num() - 1][0][0];
+      for(int t = 0; t < cells_per_thread; t++) {
+        lattice_cells_per_omp[t] = lattice_cell_coordinate[omp_get_thread_num() - 1][t % y_omp_cells][floor(t/z_omp_celss)]
+      }
+      break;
+    
+    default:
+      break;
+    }
     for(int electron = 0; electron < conduction_electrons; electron++) {
       int array_index = 3*electron;
       int x_cell = int(floor(electron_position[array_index] / x_step_size));
