@@ -35,12 +35,12 @@ namespace CASTLE {
 int velocity_verlet_step(double time_step) {
     TEKE = 0.0;
     TLE  = 0.0;
-            if (err::check) std::cout << "Updating new electron position." << std::endl;
+            //std::cout << "Updating new electron position." << std::endl;
     update_position();
 
-            if (err::check) std::cout << "Forces, spins, and velocities update..." << std::endl;
+          //  std::cout << "Forces, spins, and velocities update..." << std::endl;
     update_dynamics();
-          if (err::check) std::cout << "Output mean data" << std::endl;
+         // std::cout << "Output mean data" << std::endl;
     
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
     
@@ -61,29 +61,42 @@ void setup_output() {
 
 void update_position(){
 
-    int array_index,array_index_y,array_index_z;
-    double x_pos,y_pos,z_pos;    
-
     if(current_time_step % full_int_var == 0) {
-      #pragma vector always
+      old_cell_integration_lists.swap(cell_integration_lists);
+      //#pragma vector always
       for(int c = 0; c < total_cells; c++) {
         cell_integration_lists[c][0] = 1;
       }
     }
+    std::cout << "Reset old cells." << std::endl;
    // std::cout << current_time_step << std::endl;
+     omp_set_dynamic(0);
+       omp_set_num_threads(25);
+  #pragma omp parallel reduction(+:x_flux,y_flux,z_flux)
+  {
+  for (int l = 0 ; l < cells_per_thread; l++) {
+    int cell = lattice_cells_per_omp[omp_get_thread_num()][l];
+    int size = old_cell_integration_lists[cell][0];
     
-    #pragma omp parallel for private( array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) schedule(guided) reduction(+:x_flux,y_flux,z_flux)
-    for (int e = 0; e < conduction_electrons; e++){ 
-        if(!electron_transport_list[e]) continue;
-
-        array_index = 3*e;
-        array_index_y = array_index + 1;
-        array_index_z = array_index + 2;
-    
-        x_pos = electron_position[array_index]   + (electron_velocity[array_index]   * dt);// + (electron_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
-        y_pos = electron_position[array_index_y] + (electron_velocity[array_index_y] * dt);// + (electron_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
-        z_pos = electron_position[array_index_z] + (electron_velocity[array_index_z] * dt);// + (electron_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
+    if(current_time_step % full_int_var == 0 && l % (y_omp_cells * z_omp_cells)== 0) {
+      #pragma omp barrier
+    }
+    //#pragma omp for private( array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) schedule(guided) reduction(+:x_flux,y_flux,z_flux)
+    for (int e = 1; e < size; e++) { 
+      int electron = old_cell_integration_lists[cell][e];
+      int array_index = 3*electron;
+      int array_index_y = array_index + 1;
+      int array_index_z = array_index + 2;
+  
+      double x_pos = electron_position[array_index];
+      double y_pos = electron_position[array_index_y];
+      double z_pos = electron_position[array_index_z];
         
+      if(electron_transport_list[electron]) {
+
+        x_pos += (electron_velocity[array_index]   * dt);// + (electron_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
+        y_pos += (electron_velocity[array_index_y] * dt);// + (electron_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
+        z_pos += (electron_velocity[array_index_z] * dt);// + (electron_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
      //   std::cout << electron_position[array_index] << ", " << electron_position[array_index_y] << ", " << electron_position[array_index_z] << ", " << electron_velocity[array_index] << ", " << electron_velocity[array_index_y] << ", " << electron_velocity[array_index_z] << std::endl;
         
         if (x_pos < 0.0) {x_pos += lattice_width; x_flux--;}
@@ -98,7 +111,8 @@ void update_position(){
         electron_position[array_index]   = x_pos;
         electron_position[array_index_y] = y_pos;
         electron_position[array_index_z] = z_pos;
-      
+      }
+
       if(current_time_step % full_int_var == 0) {
          //lattice cell division
 
@@ -112,16 +126,26 @@ void update_position(){
         //  if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
         //  std::cout << x_cell << ", " << y_cell << ", " << z_cell << std::endl;
           int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
+
+          if (omp_cell != cell) {
+            #pragma omp critical 
+            {
+            cell_integration_lists[omp_cell][cell_integration_lists[omp_cell][0]] = electron;
+            cell_integration_lists[omp_cell][0]++;
+            }
+          } else {
+            cell_integration_lists[cell][cell_integration_lists[cell][0]] = electron;
+            cell_integration_lists[cell][0]++;
+            if(cell_integration_lists[cell][0] >= cell_integration_lists[cell].size() - 1) std::cerr << "too big? " << cell_integration_lists[cell][0] << " > " << cell_integration_lists[cell].size() << std::endl;
+           }
          // if(omp_cell > total_cells - 1 || omp_cell < 0) std::cerr << omp_cell << std::endl;
-          #pragma omp atomic write
-          cell_integration_lists[omp_cell][cell_integration_lists[omp_cell][0]] = e;
+         
 
-          #pragma omp atomic update
-          cell_integration_lists[omp_cell][0]++;
-
-        //  std::cout << cell_integration_lists[omp_cell][0] << std::endl;
+         // if(omp_get_thread_num() == 0) std::cout << e << std::endl;
       }
     }
+  }
+}
 }
 
 void update_dynamics() {
@@ -151,7 +175,8 @@ void update_dynamics() {
         d_TTMp = ( G*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
       }
     }
-
+      omp_set_dynamic(0);
+       omp_set_num_threads(8);
     #pragma omp parallel for private(array_index) schedule(dynamic, 10) 
     for (int e = 0; e < conduction_electrons; e++) {
       array_index = 3*e;        
@@ -630,19 +655,29 @@ void ea_scattering(const int e, const int array_index) {
 
 void ee_scattering() {
          if (err::check) std::cout << "ee_scattering." << std::endl;
+  omp_set_dynamic(0);
+       omp_set_num_threads(25);
+#pragma omp parallel reduction(+:e_e_scattering_count)
+{
+for(int l = 0; l < cells_per_thread; l++) {
+  int cell = lattice_cells_per_omp[omp_get_thread_num()][l];
+  int size = cell_integration_lists[cell][0];
+    if(l % (y_omp_cells*z_omp_cells) == 0) {
+      #pragma omp barrier 
+    }
+  for(int e = 1; e < size; e++) {
+    int electron = cell_integration_lists[cell][e];
 
-#pragma omp parallel for schedule(dynamic, 10)
-for(int electron = 0; electron < conduction_electrons; electron++) {
-  
     if(!electron_transport_list[electron]) continue;
-    int size = electron_ee_scattering_list[electron][1] - 2;
+    int c_size = electron_ee_scattering_list[electron][1] - 2;
 
-    if(size < 3) continue;
-    int electron_collision = 2 + (int_random() % size);
+    if(c_size < 3) continue;
+    int electron_collision = 2 + (int_random() % c_size);
     electron_collision = electron_ee_scattering_list[electron][electron_collision];
 
+    if(electron_ee_scattering_list[electron][0] == 1 || electron_ee_scattering_list[electron_collision][0] == 1) continue;
 
-    int array_index = 3*electron;
+    
     electron_ee_scattering_list[electron][0] = 1;
     electron_ee_scattering_list[electron_collision][0] = 1;
 
@@ -674,9 +709,7 @@ for(int electron = 0; electron < conduction_electrons; electron++) {
     }
 
    if(uniform_random() > exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
-
-    #pragma omp critical 
-    {
+      int array_index = 3*electron;
       electron_potential[electron] -= deltaE;
       if(electron_potential[electron] > 0.99*E_f_A) electron_transport_list[electron] = true;
       else electron_transport_list[electron] = false;
@@ -709,12 +742,13 @@ for(int electron = 0; electron < conduction_electrons; electron++) {
       
     
       e_e_scattering_count++;
-    }
+    
       }
     }
   
   if (err::check) std::cout << "ee_scattering done." << std::endl;
 } 
-
+}
+}
 } //end CASTLE namespace
 

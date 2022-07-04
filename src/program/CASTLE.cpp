@@ -44,15 +44,17 @@ void create() {
     // Initialize the lattice, electrons, and starting forces
     //========
             if (err::check) std::cout << "Prepare to initialize..." << std::endl;
-
-    initialize();
-        omp_set_dynamic(0);
-       omp_set_num_threads(4);
-        std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
-        #pragma omp parallel 
+       omp_set_dynamic(0);
+       omp_set_num_threads(25);
+      #pragma omp parallel 
             #pragma omp critical
              std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() - 1 << std::endl;
         
+    initialize();
+    
+    
+        std::cout << "CASTLE build time[s]: " << castle_watch.elapsed_seconds() << std::endl;
+  
         std::cout << "Storming CASTLE..." << std::endl;
    
  /*   double x,y,z,r,r_min, d_x,d_y,d_z, p_x,p_y,p_z, d_p_x,d_p_y,d_p_z, p, force, f_x,f_y,f_z, d_f_x,d_f_y,d_f_z, theta, phi, potential;
@@ -364,7 +366,7 @@ void initialize () {
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
     
-  std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << 4.0*double(conduction_electrons) / double(total_cells) << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
+  std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << 8.0*double(conduction_electrons) / double(total_cells) << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog." << std::endl;
@@ -393,9 +395,11 @@ void initialize_cell_omp() {
   z_step_size = lattice_height/ double(z_omp_cells);
   boundary_conditions_cutoff = fmax(x_step_size, fmax(y_step_size, z_step_size));
   cell_integration_lists.resize(total_cells);
+  old_cell_integration_lists.resize(total_cells);
 
   for(int i=0; i < total_cells; i++) {
-    cell_integration_lists[i].resize(int(4.0*double(conduction_electrons) / double(total_cells)), 1);
+    cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), 1);
+    old_cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), 1);
   }
   
   lattice_cell_coordinate.resize(x_omp_cells);
@@ -404,7 +408,7 @@ void initialize_cell_omp() {
     cell_lattice_coordinate[c].resize(3 , 0);
   }
   int cell_count = 0;
-      std::cout << "cell integration arrays generated." << std::endl;
+ //     std::cout << "cell integration arrays generated." << std::endl;
 
   //omp lattice coordinates map
   for(int i =0; i < x_omp_cells; i++) {
@@ -420,9 +424,8 @@ void initialize_cell_omp() {
       }
     }
   }
-    std::cout << "lattice coordinate arrays initiated." << std::endl;
-  std::vector<bool> cell_wait_list;
-  cell_wait_list.resize(total_cells, false);
+  //  std::cout << "lattice coordinate arrays initiated." << std::endl;
+ 
   //lattice cell division
   int current_lattice_current_end;
  // #pragma omp parallel for schedule(static) private(current_lattice_current_end)
@@ -439,15 +442,14 @@ void initialize_cell_omp() {
     
     int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell]; 
 
-    #pragma omp atomic read
+
     current_lattice_current_end = cell_integration_lists[omp_cell][0];
 
-    #pragma omp atomic write
     cell_integration_lists[omp_cell][current_lattice_current_end] = e;
-
-    #pragma omp atomic update
+    old_cell_integration_lists[omp_cell][current_lattice_current_end] = e;
+  
     cell_integration_lists[omp_cell][0]++;
-
+    old_cell_integration_lists[omp_cell][0]++;
   
           if(current_lattice_current_end >= cell_integration_lists[omp_cell].size()) std::cout << \
             omp_cell << ", " << current_lattice_current_end << ", " << cell_integration_lists[omp_cell].size() << ", " << e << std::endl;
@@ -460,11 +462,11 @@ void initialize_cell_omp() {
   
   //OpenMP integration
  
-  std::cout << "cell integration arrays initiated." << std::endl;
+ // std::cout << "cell integration arrays initiated." << std::endl;
 
   cell_nearest_neighbor_list.resize(total_cells);
-
-std::cout << "are they though?" << std::endl;
+  
+//std::cout << "are they though?" << std::endl;
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
     cell_nearest_neighbor_list[c].resize(27); //avoid self interaction
@@ -499,47 +501,72 @@ std::cout << "are they though?" << std::endl;
    
     }
   }
-    std::cout << "spiral integration coordiantes initialized." << std::endl;
+   // std::cout << "spiral integration coordiantes initialized." << std::endl;
 
+      omp_set_dynamic(0);
+       omp_set_num_threads(25);
 
-    std::cout << "Initiating checkerboard omp parallelisation scheme" << std::endl;
+   // std::cout << "Initiating checkerboard omp parallelisation scheme" << std::endl;
 
     int max_x_threads = x_omp_cells / 2;
     int max_y_threads = y_omp_cells / 2;
     int max_z_threads = z_omp_cells / 2;
 
-    int max_total_threads = max_x_threads + max_y_threads + max_z_threads;
-    int omp_threads = fmin(omp_get_num_threads(), max_total_threads);
-    int cells_per_thread = total_cells / omp_threads;
-    std::vector<std::vector<int> > lattice_cells_per_omp;
+    int max_total_threads = max_x_threads * max_y_threads * max_z_threads;
+    int omp_threads = fmin(omp_get_max_threads(), max_total_threads);
+   // omp_set_num_threads(omp_threads);
+    cells_per_thread = total_cells / omp_threads;
+    //std::cout << "thread count " << omp_get_max_threads() << std::endl;
     lattice_cells_per_omp.resize(omp_threads);
     int assigned_x = 0;
     int assigned_y = 0;
     int assigned_z = 0;
 
-    for(int t=0;t<omp_get_num_threads();t++){
+    for(int t=0;t< omp_threads;t++){
       lattice_cells_per_omp[t].resize(cells_per_thread, 0 );
-    }
-    for(int t = 0; t < omp_threads; t++) {
-      
     }
     int omp_checkerboard_scheme = 0;
     if(omp_threads == max_x_threads) omp_checkerboard_scheme = 1;
     if(omp_threads == max_y_threads) omp_checkerboard_scheme = 2;
     
-    switch (omp_checkerboard_scheme)
-    {
-    case omp_checkerboard_scheme==1:
-      
-      int initial = lattice_cell_coordinate[omp_get_thread_num() - 1][0][0];
-      for(int t = 0; t < cells_per_thread; t++) {
-        lattice_cells_per_omp[t] = lattice_cell_coordinate[omp_get_thread_num() - 1][t % y_omp_cells][floor(t/z_omp_celss)]
-      }
-      break;
+   // std::cout << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << ", " <<  cells_per_thread << ", " << max_x_threads << ", " << max_y_threads << ", " << max_z_threads << std::endl;
     
-    default:
-      break;
+    #pragma omp parallel 
+    {
+    for(int l = 0; l < cells_per_thread; l++) {
+      lattice_cells_per_omp[omp_get_thread_num()][l] = lattice_cell_coordinate[(omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))][floor(omp_get_thread_num()*2/x_omp_cells)*2 + l%2][int(floor(l/2)) % z_omp_cells];
+     // if(omp_get_thread_num() == 1) std::cout << omp_get_thread_num()*2 + floor(l/(2*cells_per_thread)) << ", " << l%y_omp_cells << ", " << floor(l/y_omp_cells) << std::endl;
     }
+    }
+    for(int l = 0; l < 25; l++) {
+      for (int e = 0; e < cells_per_thread; e++) {
+          int cell = lattice_cells_per_omp[l][e];
+          for(int k = 0; k < 25; k++) {
+            for (int j = 0; j < cells_per_thread; j++) {
+              if(l == k && e == j) continue;
+              if(cell == lattice_cells_per_omp[k][j]) {
+                std::cout << "double counting of cells" << std::endl;
+                std::cout << cell << " at" << l << ", " << e << "; " << lattice_cells_per_omp[k][j] << " at " << k << ", " << j << std::endl;
+              }
+            }
+          }
+      }
+    }
+    // switch (omp_checkerboard_scheme)
+    // {
+    // case omp_checkerboard_scheme==1:    
+    //   int initial = lattice_cell_coordinate[omp_get_thread_num() - 1][0][0];
+    //   for(int t = 0; t < cells_per_thread; t++) {
+    //     lattice_cells_per_omp[t] = lattice_cell_coordinate[omp_get_thread_num() - 1][t % y_omp_cells][floor(t/z_omp_celss)]
+    //   }
+    //   break;
+    
+    // default:
+    //   break;
+    // }
+      omp_set_dynamic(0);
+       omp_set_num_threads(8);
+    #pragma omp paralell for 
     for(int electron = 0; electron < conduction_electrons; electron++) {
       int array_index = 3*electron;
       int x_cell = int(floor(electron_position[array_index] / x_step_size));
@@ -608,6 +635,7 @@ std::cout << "are they though?" << std::endl;
       electron_ee_scattering_list[electron][1] = ee_scattering_count;
   //   std::cout << ee_integration_count << std::endl;
   }
+    
     std::cout << "nearest neighbor integration list complete." << std::endl;
 
 }
@@ -629,7 +657,8 @@ void initialize_positions() {
 
 void initialize_lattice() {
     atom_anchor_position.resize(lattice_atoms*3,0);
- 
+      omp_set_dynamic(0);
+       omp_set_num_threads(8);
     #pragma omp parallel for schedule(static) 
     for (int a = 0; a < lattice_atoms; ++a) {  
         int array_index = 3*a;
@@ -696,7 +725,9 @@ void initialize_electrons() {
     int e_density =   2*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     int ee_density =  5*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     int ee_scattering= 20+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
+//std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
+      omp_set_dynamic(0);
+       omp_set_num_threads(8);
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
@@ -898,7 +929,8 @@ void initialize_forces() {
 }
 
 void initialize_electron_interactions() {
-
+  omp_set_dynamic(0);
+       omp_set_num_threads(8);
     #pragma omp parallel for schedule(static)
     for (int e = 0; e < conduction_electrons; e++) {
       int array_index_i;
@@ -1052,6 +1084,8 @@ void initialize_velocities() {
   //  const std::string na = "P_distrib";
     //create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
     int count = 0;
+      omp_set_dynamic(0);
+       omp_set_num_threads(8);
     #pragma omp parallel for schedule(guided) reduction(+:count)
     for(int e = 0; e < conduction_electrons; e++) {
       double phi,theta; //A/fS
@@ -1079,7 +1113,10 @@ void initialize_velocities() {
         electron_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
         electron_velocity[array_index + 2] = cos(phi)*vel; 
     }
-    std::cout << count << std::endl;
+   // std::cout << count << std::endl;
+
+     omp_set_dynamic(0);
+       omp_set_num_threads(8);
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
       int array_index = 3*e;
@@ -1162,7 +1199,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   distrib.open(string(directory) +"/"+ name);
   distrib.precision(20);
 
-  double step_size = 8.0 / double(conduction_electrons);
+  double step_size = 4.0 / double(conduction_electrons);
   const double max  = E_f_A + 3.0*constants::kB_r*Te;
   const double min = E_f_A - 8.0*constants::kB_r*Te;
   step_size *= (max-min);
@@ -1399,7 +1436,8 @@ void output_data() {
       }
     
     const static double step_size = 8.0*E_f_A / double(conduction_electrons);
-
+  omp_set_dynamic(0);
+       omp_set_num_threads(8);
     #pragma omp parallel for
     for(int e = 0; e < conduction_electrons; e++) {
       int array_index = 3*e;
@@ -1445,6 +1483,8 @@ void output_data() {
       }    
     }  
 // std::cout << "histograms made" << std::endl;
+  omp_set_dynamic(0);
+       omp_set_num_threads(8);
     #pragma omp parallel num_threads(8)
     {
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;

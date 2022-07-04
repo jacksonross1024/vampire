@@ -241,7 +241,7 @@ namespace CASTLE {
     //integration variables
    long long int current_time_step;
    double CASTLE_real_time;
-   
+   int cells_per_thread;
    std::vector<double> atom_anchor_position;
    std::vector<double> atom_position;
 
@@ -256,9 +256,11 @@ namespace CASTLE {
    std::vector<std::vector<int> > electron_ea_scattering_list;
    std::vector<std::vector<int> > cell_lattice_coordinate;
    std::vector<std::vector<int > > cell_integration_lists;
+   std::vector<std::vector<int> > old_cell_integration_lists;
    std::vector<std::vector< int > > cell_nearest_neighbor_list;
    std::vector<std::vector < std::vector <int > > > lattice_cell_coordinate;
    std::vector<std::vector<int> > temp_Map;
+   std::vector<std::vector<int> > lattice_cells_per_omp;
 
    MTRand_closed uniform_random;
    MTRand_int32 int_random;
