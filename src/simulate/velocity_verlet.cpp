@@ -176,7 +176,7 @@ void update_dynamics() {
       }
     }
       omp_set_dynamic(0);
-       omp_set_num_threads(8);
+       omp_set_num_threads(25);
     #pragma omp parallel for private(array_index) schedule(dynamic, 10) 
     for (int e = 0; e < conduction_electrons; e++) {
       array_index = 3*e;        

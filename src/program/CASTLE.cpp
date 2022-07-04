@@ -565,7 +565,7 @@ void initialize_cell_omp() {
     //   break;
     // }
       omp_set_dynamic(0);
-       omp_set_num_threads(8);
+       omp_set_num_threads(25);
     #pragma omp paralell for 
     for(int electron = 0; electron < conduction_electrons; electron++) {
       int array_index = 3*electron;
@@ -658,7 +658,7 @@ void initialize_positions() {
 void initialize_lattice() {
     atom_anchor_position.resize(lattice_atoms*3,0);
       omp_set_dynamic(0);
-       omp_set_num_threads(8);
+       omp_set_num_threads(25);
     #pragma omp parallel for schedule(static) 
     for (int a = 0; a < lattice_atoms; ++a) {  
         int array_index = 3*a;
@@ -727,7 +727,7 @@ void initialize_electrons() {
     int ee_scattering= 20+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
 //std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       omp_set_dynamic(0);
-       omp_set_num_threads(8);
+       omp_set_num_threads(25);
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
@@ -930,7 +930,7 @@ void initialize_forces() {
 
 void initialize_electron_interactions() {
   omp_set_dynamic(0);
-       omp_set_num_threads(8);
+       omp_set_num_threads(25);
     #pragma omp parallel for schedule(static)
     for (int e = 0; e < conduction_electrons; e++) {
       int array_index_i;
@@ -1085,7 +1085,7 @@ void initialize_velocities() {
     //create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
     int count = 0;
       omp_set_dynamic(0);
-       omp_set_num_threads(8);
+       omp_set_num_threads(25);
     #pragma omp parallel for schedule(guided) reduction(+:count)
     for(int e = 0; e < conduction_electrons; e++) {
       double phi,theta; //A/fS
@@ -1116,7 +1116,7 @@ void initialize_velocities() {
    // std::cout << count << std::endl;
 
      omp_set_dynamic(0);
-       omp_set_num_threads(8);
+       omp_set_num_threads(25);
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
       int array_index = 3*e;
@@ -1437,7 +1437,7 @@ void output_data() {
     
     const static double step_size = 8.0*E_f_A / double(conduction_electrons);
   omp_set_dynamic(0);
-       omp_set_num_threads(8);
+       omp_set_num_threads(25);
     #pragma omp parallel for
     for(int e = 0; e < conduction_electrons; e++) {
       int array_index = 3*e;
