@@ -68,7 +68,7 @@ void update_position(){
         cell_integration_lists[c][0] = 1;
       }
     }
-    std::cout << "Reset old cells." << std::endl;
+   // std::cout << "Reset old cells." << std::endl;
    // std::cout << current_time_step << std::endl;
      omp_set_dynamic(0);
        omp_set_num_threads(25);
