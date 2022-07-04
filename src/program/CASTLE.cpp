@@ -732,7 +732,7 @@ void initialize_electrons() {
     for (int e = 0; e < conduction_electrons; e++) {
 
         electron_integration_list[e].resize(e_density);
-        electron_nearest_electron_list[e].resize(ee_density);
+        electron_nearest_electron_list[e].resize(e_density);
         electron_ee_scattering_list[e].resize(ee_scattering, 0);
         electron_ea_scattering_list[e].resize(2);
 
