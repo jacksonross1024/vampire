@@ -8,9 +8,9 @@
 # Creation attributes:
 #------------------------------------------
 dimensions:unit-cell-size = 3.54 !A
-dimensions:system-size-x = 4.5 !nm
-dimensions:system-size-y = 4.5 !nm
-dimensions:system-size-z = 4.5 !nm
+dimensions:system-size-x = 15 !nm
+dimensions:system-size-y = 15 !nm
+dimensions:system-size-z = 15 !nm
 
 create:crystal-structure = fcc
 #------------------------------------------
@@ -23,14 +23,15 @@ material:file = Co.mat
 #------------------------------------------
 sim:temperature = 300.0
 sim:time-steps-increment = 100
-sim:equilibration-time-steps = 1
-sim:loop-time-steps = 0
+sim:equilibration-time-steps = 1000
+sim:loop-time-steps = 1000
 sim:time-step = 1e-1 !fs
 
-sim:applied-voltage = 2.222222e-9
+sim:applied-voltage = 1.6
+sim:fluence= 2
 #sim:heat-pulse = 2.0
-sim:e-e_coupling = 1.16865898e6
-sim:e-a_coupling = 2
+sim:e-e_coupling = 1e-4
+sim:e-a_coupling = 49.6
 sim:two-temperature-electron-phonon-coupling=1.06e18
 
 sim:CASTLE-MD-rate = 100;
