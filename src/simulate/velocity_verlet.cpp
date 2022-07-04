@@ -63,7 +63,7 @@ void update_position(){
 
     if(current_time_step % full_int_var == 0) {
       old_cell_integration_lists.swap(cell_integration_lists);
-      //#pragma vector always
+      #pragma simd
       for(int c = 0; c < total_cells; c++) {
         cell_integration_lists[c][0] = 1;
       }
@@ -208,7 +208,7 @@ void update_dynamics() {
   else         Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons)    + (e_heat_capacity_i*pump*dt*300.0);
         if (err::check) std::cout << "reset scattering." << std::endl;
     
-    #pragma vector always
+    #pragma simd
     for(int e = 0; e < conduction_electrons; e++) {
       electron_ee_scattering_list[e][0] = 0;
     }   
