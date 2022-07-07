@@ -242,8 +242,8 @@ namespace CASTLE {
    long long int current_time_step;
    double CASTLE_real_time;
    int cells_per_thread;
-   std::vector<double> atom_anchor_position;
-   std::vector<double> atom_position;
+  // std::vector<double> atom_anchor_position;
+  // std::vector<double> atom_position;
 
    std::vector<double> electron_position; //Angstroms
    std::vector<double> electron_velocity; //Angstroms

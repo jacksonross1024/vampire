@@ -327,14 +327,14 @@ void initialize () {
     ea_rate = -1.0*dt*E_f_A / tau;
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
-    std::vector<MTRand_closed> omp_uniform_random(8);
-    std::vector<MTRand_int32> omp_int_random(8);
+    std::vector<MTRand_closed> omp_uniform_random(omp_get_max_threads());
+    std::vector<MTRand_int32> omp_int_random(omp_get_max_threads());
    // std::cout << omp_get_num_threads() << std::endl;
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> seed_gen(0, int(pow(2,32) - 1));
-    for(int i = 0; i < 8; i++) {
+    for(int i = 0; i < omp_get_max_threads(); i++) {
      // std::cout << omp_get_num_threads() << std::endl;
       omp_uniform_random[i].seed(i);
       omp_int_random[i].seed(i);
@@ -560,7 +560,6 @@ void initialize_cell_omp() {
     //     lattice_cells_per_omp[t] = lattice_cell_coordinate[omp_get_thread_num() - 1][t % y_omp_cells][floor(t/z_omp_celss)]
     //   }
     //   break;
-    
     // default:
     //   break;
     // }
@@ -645,7 +644,7 @@ void initialize_cell_omp() {
 //====================================
 void initialize_positions() {
 
-    initialize_lattice();
+   // initialize_lattice();
 
      if (err::check)  std::cout << "Lattice" << std::endl;
 
@@ -656,18 +655,18 @@ void initialize_positions() {
 
 
 void initialize_lattice() {
-    atom_anchor_position.resize(lattice_atoms*3,0);
-      omp_set_dynamic(0);
-       omp_set_num_threads(25);
-    #pragma omp parallel for schedule(static) 
-    for (int a = 0; a < lattice_atoms; ++a) {  
-        int array_index = 3*a;
+    // atom_anchor_position.resize(lattice_atoms*3,0);
+    //   omp_set_dynamic(0);
+    //    omp_set_num_threads(25);
+    // #pragma omp parallel for schedule(static) 
+    // for (int a = 0; a < lattice_atoms; ++a) {  
+    //     int array_index = 3*a;
 
-        atom_anchor_position[array_index]     = atoms::x_coord_array[a] + 0.5*x_unit_size;
-        atom_anchor_position[array_index + 1] = atoms::y_coord_array[a] + 0.5*y_unit_size;
-        atom_anchor_position[array_index + 2] = atoms::z_coord_array[a] + 0.5*z_unit_size;
+    //     atom_anchor_position[array_index]     = atoms::x_coord_array[a] + 0.5*x_unit_size;
+    //     atom_anchor_position[array_index + 1] = atoms::y_coord_array[a] + 0.5*y_unit_size;
+    //     atom_anchor_position[array_index + 2] = atoms::z_coord_array[a] + 0.5*z_unit_size;
         
-    }
+    // }
 }
 
 //====================================
@@ -696,7 +695,7 @@ void initialize_electrons() {
     temp_Map.resize(8);
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
-        temp_Map[i].resize(round(conduction_electrons*0.3)+10, 0);
+        temp_Map[i].resize(round(conduction_electrons*0.1)+10, 0);
         // std::cout << temp_Map[i][0] << std::endl;
         // std::cout << temp_Map[i][round(conduction_electrons*0.3)-1] << std::endl;
     }
@@ -737,13 +736,13 @@ void initialize_electrons() {
         electron_ea_scattering_list[e].resize(2);
 
         int array_index = 3*e;
-
+        electron_position[array_index]     = atoms::x_coord_array[e%lattice_atoms] + 0.5*x_unit_size;
+        electron_position[array_index + 1] = atoms::y_coord_array[e%lattice_atoms] + 0.5*y_unit_size;
+        electron_position[array_index + 2] = atoms::z_coord_array[e%lattice_atoms] + 0.5*z_unit_size;
         //initialize and output electron posititons
-        electron_position[array_index] = atom_anchor_position[3*(e%lattice_atoms)];//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
-        electron_position[array_index + 1] = atom_anchor_position[3*(e%lattice_atoms)+1];// + sin(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Sets on radius of screening depth from nucleus
-        electron_position[array_index + 2] = atom_anchor_position[3*(e%lattice_atoms)+2];// + cos(phi)*screening_depth;//*radius_mod(gen);
+      //  = atom_anchor_position[3*(e%lattice_atoms)];//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
+       // electron_position[array_index + 2] = atom_anchor_position[3*(e%lattice_atoms)+2];// + cos(phi)*screening_depth;//*radius_mod(gen);
     }
-
     // int array_index;
     // for(int e = 0; e < conduction_electrons; e++) {
     //   array_index = 3*e;
@@ -751,7 +750,7 @@ void initialize_electrons() {
     // }
     
     // electron_position_output_down.close(); 
-  
+
 }
 /*
 double reinitialize_electron_conserve_momentum(std::vector<double>& captured_electron_list) {
@@ -918,7 +917,7 @@ double reinitialize_electron_conserve_momentum(std::vector<double>& captured_ele
 */
 void initialize_forces() {
 
-   // initialize_electron_interactions();
+    initialize_electron_interactions();
     if (err::check)  std::cout << "Electron interactions" << std::endl;
 
    // initialize_atomic_interactions();
@@ -1073,7 +1072,6 @@ void initialize_velocities() {
     // }
     // electron_velocity_output.open(string(directory) + "/Electron_Velocity/init.csv");
     // electron_velocity_output << "electron number, x-component, y-component, z-component, length" << std::endl;  
-
     // std::ofstream atom_phonon_output;
     // atom_phonon_output.open(string(directory) + "/Atom_Energy/init.csv");
     // atom_phonon_output << "atom number, energy" << std::endl;
@@ -1421,7 +1419,6 @@ void output_data() {
       // electron_position_output_down << time_stamp << "\n";
       // electron_position_output_down.precision(10);
       // electron_position_output_down << std::scientific;
-
       // electron_velocity_output.open(string(directory) + "/Electron_Velocity/" + time_stamp + ".csv");
       // electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
       // electron_velocity_output.precision(10);
@@ -1447,7 +1444,7 @@ void output_data() {
       double z_pos = electron_position[array_index+2];
 
       double velocity_length = electron_potential[e];
-      int hist = int(fmin(conduction_electrons*0.3, fmax(0.0, floor((velocity_length - 0.9817*E_f_A)/step_size))));
+      int hist = int(fmin(conduction_electrons*0.1, fmax(0.0, floor((velocity_length - 0.9817*E_f_A)/step_size))));
 
       if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
         #pragma omp atomic update
@@ -1488,7 +1485,7 @@ void output_data() {
     #pragma omp parallel num_threads(8)
     {
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
-    for(int i = 0; i < conduction_electrons *0.2; i++) {
+    for(int i = 0; i < conduction_electrons *0.1; i++) {
       temp_map_list[omp_get_thread_num()] << i << ", " << temp_Map[omp_get_thread_num()][i] << "\n";
       temp_Map[omp_get_thread_num()][i] = 0;
     }
