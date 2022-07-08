@@ -47,8 +47,6 @@ int velocity_verlet_step(double time_step) {
     //reset integration
     CASTLE_real_time += dt;
     current_time_step++;
-
-   // electron_position.swap(electron_position);
    
     return EXIT_SUCCESS;
 }
@@ -68,10 +66,9 @@ void update_position(){
         cell_integration_lists[c][0] = 1;
       }
     }
-   // std::cout << "Reset old cells." << std::endl;
-   // std::cout << current_time_step << std::endl;
-     omp_set_dynamic(0);
-       omp_set_num_threads(25);
+
+    omp_set_dynamic(0);
+    omp_set_num_threads(25);
   #pragma omp parallel reduction(+:x_flux,y_flux,z_flux)
   {
   for (int l = 0 ; l < cells_per_thread; l++) {
@@ -80,8 +77,8 @@ void update_position(){
     
     if(current_time_step % full_int_var == 0 && l % (y_omp_cells * z_omp_cells)== 0) {
       #pragma omp barrier
-  }
-    //#pragma omp for private( array_index,array_index_y,array_index_z, x_pos,y_pos,z_pos) schedule(guided) reduction(+:x_flux,y_flux,z_flux)
+    }
+    
   for (int e = 1; e < size; e++) { 
       int electron = old_cell_integration_lists[cell][e];
       int array_index = 3*electron;
@@ -97,7 +94,6 @@ void update_position(){
         x_pos += (electron_velocity[array_index]   * dt);// + (electron_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
         y_pos += (electron_velocity[array_index_y] * dt);// + (electron_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
         z_pos += (electron_velocity[array_index_z] * dt);// + (electron_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
-     //   std::cout << electron_position[array_index] << ", " << electron_position[array_index_y] << ", " << electron_position[array_index_z] << ", " << electron_velocity[array_index] << ", " << electron_velocity[array_index_y] << ", " << electron_velocity[array_index_z] << std::endl;
         
         if (x_pos < 0.0) {x_pos += lattice_width; x_flux--;}
         else if (x_pos > lattice_width) {x_pos -= lattice_width; x_flux++;}
@@ -138,14 +134,10 @@ void update_position(){
             cell_integration_lists[cell][0]++;
             if(cell_integration_lists[cell][0] >= cell_integration_lists[cell].size() - 1) std::cerr << "too big? " << cell_integration_lists[cell][0] << " > " << cell_integration_lists[cell].size() << std::endl;
            }
-         // if(omp_cell > total_cells - 1 || omp_cell < 0) std::cerr << omp_cell << std::endl;
-         
-
-         // if(omp_get_thread_num() == 0) std::cout << e << std::endl;
       }
     }
   }
-}
+  }
 }
 
 void update_dynamics() {
@@ -163,7 +155,7 @@ void update_dynamics() {
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
-        photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - ((40.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((40.0 / dt)+sim::equilibration_time)))))); // AJ/fs/nm**3
+        photons_at_dt = round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - ((40.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((40.0 / dt)+sim::equilibration_time))))); // AJ/fs/nm**3
         pump = 1e3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
         external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
      
@@ -227,12 +219,12 @@ void electron_thermal_field(const int e, const int array_index, const double EKE
   //  double theta = atan(y_vel / x_vel);
    // double phi = acos(z_vel / vel);
     //if(x_vel < 0.0) theta += M_PI;
-    double theta = omp_uniform_random[omp_get_thread_num()]() * 2.0 * M_PI;
-    double phi   = omp_uniform_random[omp_get_thread_num()]() * M_PI; 
+    const double theta = omp_uniform_random[omp_get_thread_num()]() * 2.0 * M_PI;
+    const double phi   = omp_uniform_random[omp_get_thread_num()]() * M_PI; 
 
     electron_potential[e] += EKE;
     
-    double vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);
+    const double vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);
         if(electron_potential[e] < 0.9817*E_f_A) std::cout << electron_potential[e] << ", " << EKE << ", " << vel << std::endl;
     electron_velocity[array_index]   = vel*cos(theta)*sin(phi);
     electron_velocity[array_index+1] = vel*sin(theta)*sin(phi);
@@ -335,18 +327,18 @@ void electron_thermal_field(const int e, const int array_index, const double EKE
 */
 void e_e_coulomb(const int e, const int array_index) {
 
-    int x_cell = int(floor(electron_position[array_index] / x_step_size));
+    const int x_cell = int(floor(electron_position[array_index] / x_step_size));
       //if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
 
-    int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
+    const int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
       //if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position[array_index+1] << ", " << y_step_size << ", " << floor(electron_position[array_index+1] / y_step_size) << std::endl;
     
-    int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
+    const int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
       //if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
     //std::cout << x_cell << ", " << y_cell << ", " << z_cell << ", " << electron_position[array_index] << ", " << electron_position[array_index+1] << electron_position[array_index+2]  << std::endl;
 
   ///  std::cout << lattice_cell_coordinate[0][0][0] << std::endl;
-    int cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
+    const int cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
     double x_distance, y_distance, z_distance, length;
     int ee_dos_count = 1;
     int ee_integration_count = 1;
@@ -405,7 +397,7 @@ void e_e_coulomb(const int e, const int array_index) {
 void neighbor_e_e_coulomb(const int e, const int array_index) {
     
     double x_distance,y_distance,z_distance, length;
-    int size = electron_integration_list[e][0];
+    const int size = electron_integration_list[e][0];
     int array_index_i;
     int neighbor_count = 1;
     int scattering_count = 2;
@@ -608,7 +600,7 @@ void ea_scattering(const int e, const int array_index) {
   
     if(omp_uniform_random[omp_get_thread_num()]() > exp(ea_rate/scattering_velocity)) {
      
-      int size = electron_nearest_electron_list[e][0];
+      const int size = electron_nearest_electron_list[e][0];
       int DoS1 = size - 1;
       int DoS2 = size - 1;
       for (int i = 1; i < size ; i++) {
@@ -630,9 +622,9 @@ void ea_scattering(const int e, const int array_index) {
       if(electron_potential[e] > 0.99*E_f_A) electron_transport_list[e] = true;
       else electron_transport_list[e] = false;
 
-      double unit_vec = sqrt(2.0*scattering_velocity*constants::m_e_r_i);
+      const double unit_vec = sqrt(2.0*scattering_velocity*constants::m_e_r_i);
       double theta = atan(electron_velocity[array_index+1] / electron_velocity[array_index]) + (0.10*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
-      double phi   = acos(electron_velocity[array_index+2] / unit_vec) + (0.10*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);    
+      const double phi   = acos(electron_velocity[array_index+2] / unit_vec) + (0.10*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);    
       if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
 
       scattering_velocity = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);
@@ -664,13 +656,13 @@ for(int l = 0; l < cells_per_thread; l++) {
       #pragma omp barrier 
     }
   for(int e = 1; e < size; e++) {
-    int electron = cell_integration_lists[cell][e];
+    const int electron = cell_integration_lists[cell][e];
 
     if(!electron_transport_list[electron]) continue;
-    int c_size = electron_ee_scattering_list[electron][1] - 2;
+    const int c_size = electron_ee_scattering_list[electron][1] - 2;
 
     if(c_size < 3) continue;
-    int electron_collision = 2 + (int_random() % c_size);
+    int electron_collision = 2 + (omp_int_random[omp_get_thread_num()]() % c_size);
     electron_collision = electron_ee_scattering_list[electron][electron_collision];
 
     if(electron_ee_scattering_list[electron][0] == 1 || electron_ee_scattering_list[electron_collision][0] == 1) continue;
@@ -679,8 +671,8 @@ for(int l = 0; l < cells_per_thread; l++) {
     electron_ee_scattering_list[electron][0] = 1;
     electron_ee_scattering_list[electron_collision][0] = 1;
 
-    double e_energy = electron_potential[electron];
-    double d_e_energy = electron_potential[electron_collision];
+    const double e_energy = electron_potential[electron];
+    const double d_e_energy = electron_potential[electron_collision];
     double deltaE = omp_uniform_random[omp_get_thread_num()]()*(e_energy - d_e_energy);
   
     if(omp_uniform_random[omp_get_thread_num()]()< 0.5*exp(abs(deltaE)/(-25.0))) deltaE *= -1.0;
@@ -707,14 +699,14 @@ for(int l = 0; l < cells_per_thread; l++) {
     }
 
    if(omp_uniform_random[omp_get_thread_num()]()> exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
-      int array_index = 3*electron;
+      const int array_index = 3*electron;
       electron_potential[electron] -= deltaE;
       if(electron_potential[electron] > 0.99*E_f_A) electron_transport_list[electron] = true;
       else electron_transport_list[electron] = false;
 
       double unit_vec = sqrt(2.0*e_energy*constants::m_e_r_i);
-      double theta = atan(electron_velocity[array_index+1] / electron_velocity[array_index]) + (0.1*M_PI*uniform_random() - 0.05*M_PI);
-      double phi   = acos(electron_velocity[array_index+2] / unit_vec) + (0.1*M_PI*uniform_random() - 0.05*M_PI);
+      double theta = atan(electron_velocity[array_index+1] / electron_velocity[array_index]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+      double phi   = acos(electron_velocity[array_index+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]()- 0.05*M_PI);
         if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
         
       double scattering_velocity = sqrt(2.0*electron_potential[electron]*constants::m_e_r_i);
@@ -728,8 +720,8 @@ for(int l = 0; l < cells_per_thread; l++) {
       else electron_transport_list[electron_collision] = false;
 
       unit_vec = sqrt(2.0*d_e_energy*constants::m_e_r_i);
-      theta = atan(electron_velocity[3*electron_collision+1] / electron_velocity[3*electron_collision]) + (0.1*M_PI*uniform_random() - 0.05*M_PI);
-      phi   = acos(electron_velocity[3*electron_collision+2] / unit_vec) + (0.1*M_PI*uniform_random() - 0.05*M_PI);
+      theta = atan(electron_velocity[3*electron_collision+1] / electron_velocity[3*electron_collision]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+      phi   = acos(electron_velocity[3*electron_collision+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
         if(electron_velocity[3*electron_collision+2] < 0.0) theta += M_PI;
       
       scattering_velocity = sqrt(2.0*electron_potential[electron_collision]*constants::m_e_r_i);

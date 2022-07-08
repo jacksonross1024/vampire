@@ -47,8 +47,7 @@ void create() {
        omp_set_dynamic(0);
        omp_set_num_threads(25);
       #pragma omp parallel 
-            #pragma omp critical
-             std::cout << "OpenMP capability detected. Parallelizing integration. Thread " << omp_get_thread_num() <<  " of threads: " << omp_get_num_threads() - 1 << std::endl;
+            if(omp_get_thread_num() == 24) std::cout << "OpenMP capability detected. Parallelizing integration for " << omp_get_thread_num() <<  " threads" << std::endl;
         
     initialize();
     
@@ -1432,52 +1431,60 @@ void output_data() {
       //   std::cout << temp_Map[i][round(conduction_electrons*0.3)-1] << std::endl;
       }
     
-    const static double step_size = 8.0*E_f_A / double(conduction_electrons);
+    const static double step_size = 40.0*E_f_A / double(conduction_electrons);
   omp_set_dynamic(0);
-       omp_set_num_threads(25);
-    #pragma omp parallel for
-    for(int e = 0; e < conduction_electrons; e++) {
-      int array_index = 3*e;
+       omp_set_num_threads(8);
 
-      double x_pos = electron_position[array_index];
-      double y_pos = electron_position[array_index+1]; 
-      double z_pos = electron_position[array_index+2];
+    #pragma omp parallel
+    {
+    const int cell = omp_get_thread_num();
+    const int size = cell_integration_lists[cell][0];
 
-      double velocity_length = electron_potential[e];
-      int hist = int(fmin(conduction_electrons*0.1, fmax(0.0, floor((velocity_length - 0.9817*E_f_A)/step_size))));
+    #pragma omp critical 
+    std::cout << "data processing omp histograms; cell: " << cell << "; " << size << "; step size: " << step_size << std::endl;
 
-      if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
-        #pragma omp atomic update
-        temp_Map[0][hist]++;
-      }
-      if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
-         #pragma omp atomic update
-        temp_Map[1][hist]++;
-      }
-      if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
-         #pragma omp atomic update
-        temp_Map[2][hist]++;
-      }
-      if(x_pos > lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
-         #pragma omp atomic update
-        temp_Map[3][hist]++;
-      }
-      if(x_pos < lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-         #pragma omp atomic update
-        temp_Map[4][hist]++;
-      }
-      if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-        #pragma omp atomic update
-        temp_Map[5][hist]++;
-      }
-      if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-         #pragma omp atomic update
-        temp_Map[6][hist]++;
-      }
-      if(x_pos > (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-         #pragma omp atomic update
-        temp_Map[7][hist]++; 
-      }    
+    for(int e = 1; e < size; e++) {
+      const int electron = cell_integration_lists[cell][e];
+      const int array_index = 3*electron;
+
+      const double velocity_length = electron_potential[electron];
+      const int hist = int(fmin(conduction_electrons*0.01, fmax(0.0, floor((velocity_length - 0.9817*E_f_A)/step_size))));
+      temp_Map[omp_get_thread_num()][hist]++;
+      
+     // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
+           // double x_pos = electron_position[array_index];
+      // double y_pos = electron_position[array_index+1]; 
+      // double z_pos = electron_position[array_index+2];
+     // }
+      // if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+      //    #pragma omp atomic update
+      //   temp_Map[1][hist]++;
+      // }
+      // if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+      //    #pragma omp atomic update
+      //   temp_Map[2][hist]++;
+      // }
+      // if(x_pos > lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+      //    #pragma omp atomic update
+      //   temp_Map[3][hist]++;
+      // }
+      // if(x_pos < lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+      //    #pragma omp atomic update
+      //   temp_Map[4][hist]++;
+      // }
+      // if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+      //   #pragma omp atomic update
+      //   temp_Map[5][hist]++;
+      // }
+      // if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+      //    #pragma omp atomic update
+      //   temp_Map[6][hist]++;
+      // }
+      // if(x_pos > (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+      //    #pragma omp atomic update
+      //   temp_Map[7][hist]++; 
+      // }    
+    }
     }  
 // std::cout << "histograms made" << std::endl;
   omp_set_dynamic(0);
@@ -1485,7 +1492,7 @@ void output_data() {
     #pragma omp parallel num_threads(8)
     {
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
-    for(int i = 0; i < conduction_electrons *0.1; i++) {
+    for(int i = 0; i < cell_integration_lists[omp_get_thread_num()][0]; i++) {
       temp_map_list[omp_get_thread_num()] << i << ", " << temp_Map[omp_get_thread_num()][i] << "\n";
       temp_Map[omp_get_thread_num()][i] = 0;
     }
@@ -1498,7 +1505,7 @@ void output_data() {
     mean_data.precision(10);
     mean_data << std::scientific;
 
-    double I = double(x_flux) * constants::e * 1e15 / double(CASTLE_output_rate) / dt; //current
+    const double I = double(x_flux) * constants::e * 1e15 / double(CASTLE_output_rate) / dt; //current
 
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
