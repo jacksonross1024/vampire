@@ -72,18 +72,18 @@ void update_position(){
   #pragma omp parallel reduction(+:x_flux,y_flux,z_flux)
   {
   for (int l = 0 ; l < cells_per_thread; l++) {
-    int cell = lattice_cells_per_omp[omp_get_thread_num()][l];
-    int size = old_cell_integration_lists[cell][0];
+    const int cell = lattice_cells_per_omp[omp_get_thread_num()][l];
+    const int size = old_cell_integration_lists[cell][0];
     
     if(current_time_step % full_int_var == 0 && l % (y_omp_cells * z_omp_cells)== 0) {
       #pragma omp barrier
     }
     
   for (int e = 1; e < size; e++) { 
-      int electron = old_cell_integration_lists[cell][e];
-      int array_index = 3*electron;
-      int array_index_y = array_index + 1;
-      int array_index_z = array_index + 2;
+      const int electron = old_cell_integration_lists[cell][e];
+      const int array_index = 3*electron;
+      const int array_index_y = array_index + 1;
+      const int array_index_z = array_index + 2;
   
       double x_pos = electron_position[array_index];
       double y_pos = electron_position[array_index_y];
@@ -112,16 +112,16 @@ void update_position(){
       if(current_time_step % full_int_var == 0) {
          //lattice cell division
 
-          int x_cell = int(floor(x_pos / x_step_size));
+          const int x_cell = int(floor(x_pos / x_step_size));
         //  if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
 
-          int y_cell = int(floor(y_pos / y_step_size));
+          const int y_cell = int(floor(y_pos / y_step_size));
          // if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position[array_index+1] << ", " << y_step_size << ", " << floor(electron_position[array_index+1] / y_step_size) << std::endl;
     
-          int z_cell = int(floor(z_pos / z_step_size));
+          const int z_cell = int(floor(z_pos / z_step_size));
         //  if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
         //  std::cout << x_cell << ", " << y_cell << ", " << z_cell << std::endl;
-          int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
+          const int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
 
           if (omp_cell != cell) {
             #pragma omp critical 
@@ -327,18 +327,23 @@ void electron_thermal_field(const int e, const int array_index, const double EKE
 */
 void e_e_coulomb(const int e, const int array_index) {
 
-    const int x_cell = int(floor(electron_position[array_index] / x_step_size));
+     int x_cell = int(floor(electron_position[array_index] / x_step_size));
       //if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
 
-    const int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
+     int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
       //if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position[array_index+1] << ", " << y_step_size << ", " << floor(electron_position[array_index+1] / y_step_size) << std::endl;
     
-    const int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
+     int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
       //if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
     //std::cout << x_cell << ", " << y_cell << ", " << z_cell << ", " << electron_position[array_index] << ", " << electron_position[array_index+1] << electron_position[array_index+2]  << std::endl;
-
+      if(x_cell >= x_omp_cells || y_cell >= y_omp_cells || z_cell >= z_omp_cells) {std::cout << "cell sorting for ee integration exceeds bounds" << \
+      x_cell << ", " << y_cell << ", " << z_cell << std::endl;
+      x_cell --;
+      y_cell --;
+      z_cell --; }
   ///  std::cout << lattice_cell_coordinate[0][0][0] << std::endl;
     const int cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
+      
     double x_distance, y_distance, z_distance, length;
     int ee_dos_count = 1;
     int ee_integration_count = 1;
@@ -432,6 +437,8 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         if (length > e_e_coulomb_cutoff) continue; 
         electron_ee_scattering_list[e][scattering_count] = array_index_i/3;
         scattering_count++;
+        if(scattering_count >= electron_ee_scattering_list[e].size() - 1) {std::cout << e << ", " << scattering_count << " > " << electron_ee_scattering_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
+            break; }
       //   std::cout << e << ", " << i << ", " << length << std::endl;
     }
 

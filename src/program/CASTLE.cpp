@@ -429,17 +429,17 @@ void initialize_cell_omp() {
   int current_lattice_current_end;
  // #pragma omp parallel for schedule(static) private(current_lattice_current_end)
   for(int e = 0; e < conduction_electrons; e++) {
-    int array_index = 3*e;
-    int x_cell = int(floor(electron_position[array_index] / x_step_size));
+    const int array_index = 3*e;
+    const int x_cell = int(floor(electron_position[array_index] / x_step_size));
       //if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
 
-    int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
+    const int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
       //if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position[array_index+1] << ", " << y_step_size << ", " << floor(electron_position[array_index+1] / y_step_size) << std::endl;
     
-    int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
+    const int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
       //if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
     
-    int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell]; 
+    const int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell]; 
 
 
     current_lattice_current_end = cell_integration_lists[omp_cell][0];
@@ -469,9 +469,9 @@ void initialize_cell_omp() {
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
     cell_nearest_neighbor_list[c].resize(27); //avoid self interaction
-    int x_cell = cell_lattice_coordinate[c][0];
-    int y_cell = cell_lattice_coordinate[c][1];
-    int z_cell = cell_lattice_coordinate[c][2];
+    const int x_cell = cell_lattice_coordinate[c][0];
+    const int y_cell = cell_lattice_coordinate[c][1];
+    const int z_cell = cell_lattice_coordinate[c][2];
    // cell_nearest_neighbor_list[c][0] = c;
       //if(c == 0) std::cout << "starting spiral for cell 0" << std::endl;
    
@@ -517,9 +517,6 @@ void initialize_cell_omp() {
     cells_per_thread = total_cells / omp_threads;
     //std::cout << "thread count " << omp_get_max_threads() << std::endl;
     lattice_cells_per_omp.resize(omp_threads);
-    int assigned_x = 0;
-    int assigned_y = 0;
-    int assigned_z = 0;
 
     for(int t=0;t< omp_threads;t++){
       lattice_cells_per_omp[t].resize(cells_per_thread, 0 );
@@ -566,29 +563,29 @@ void initialize_cell_omp() {
        omp_set_num_threads(25);
     #pragma omp paralell for 
     for(int electron = 0; electron < conduction_electrons; electron++) {
-      int array_index = 3*electron;
-      int x_cell = int(floor(electron_position[array_index] / x_step_size));
+      const int array_index = 3*electron;
+      const int x_cell = int(floor(electron_position[array_index] / x_step_size));
       //if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
 
-      int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
+      const int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
       //if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position[array_index+1] << ", " << y_step_size << ", " << floor(electron_position[array_index+1] / y_step_size) << std::endl;
     
-      int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
+      const int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
       //if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
     
-      int c = lattice_cell_coordinate[x_cell][y_cell][z_cell];
+      const int c = lattice_cell_coordinate[x_cell][y_cell][z_cell];
 
       int ee_scattering_count = 2;
       int ee_dos_count = 1;
       int ee_integration_count = 1;
       for(int s = 0; s < 27; s++) {
-        int cell = cell_nearest_neighbor_list[c][s];
+        const int cell = cell_nearest_neighbor_list[c][s];
 
-        int size = cell_integration_lists[cell][0];
+        const int size = cell_integration_lists[cell][0];
        // if(electron == 0) std::cout << size << ", " << cell << ", " << omp_get_thread_num() << std::endl;
 
         for(int i = 1; i < size; i++) {
-            int array_index_i = 3*cell_integration_lists[cell][i];
+            const int array_index_i = 3*cell_integration_lists[cell][i];
             if (array_index_i == array_index) continue; //no self repulsion
 
             double x_distance = electron_position[array_index]   - electron_position[array_index_i];
@@ -604,7 +601,7 @@ void initialize_cell_omp() {
             if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
             else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
 
-            double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
+            const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
             
             if(length > e_e_integration_cutoff) continue;
             electron_integration_list[electron][ee_integration_count] = array_index_i;
@@ -660,7 +657,6 @@ void initialize_lattice() {
     // #pragma omp parallel for schedule(static) 
     // for (int a = 0; a < lattice_atoms; ++a) {  
     //     int array_index = 3*a;
-
     //     atom_anchor_position[array_index]     = atoms::x_coord_array[a] + 0.5*x_unit_size;
     //     atom_anchor_position[array_index + 1] = atoms::y_coord_array[a] + 0.5*y_unit_size;
     //     atom_anchor_position[array_index + 2] = atoms::z_coord_array[a] + 0.5*z_unit_size;
@@ -720,9 +716,9 @@ void initialize_electrons() {
     electron_ea_scattering_list.resize(conduction_electrons);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    int e_density =   2*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    int ee_density =  5*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-    int ee_scattering= 20+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    const int e_density =   2*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    const int ee_density =  5*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
+    const int ee_scattering= 50+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
 //std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       omp_set_dynamic(0);
        omp_set_num_threads(25);
@@ -734,7 +730,7 @@ void initialize_electrons() {
         electron_ee_scattering_list[e].resize(ee_scattering, 0);
         electron_ea_scattering_list[e].resize(2);
 
-        int array_index = 3*e;
+        const int array_index = 3*e;
         electron_position[array_index]     = atoms::x_coord_array[e%lattice_atoms] + 0.5*x_unit_size;
         electron_position[array_index + 1] = atoms::y_coord_array[e%lattice_atoms] + 0.5*y_unit_size;
         electron_position[array_index + 2] = atoms::z_coord_array[e%lattice_atoms] + 0.5*z_unit_size;
@@ -1080,26 +1076,26 @@ void initialize_velocities() {
    create_fermi_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
   //  const std::string na = "P_distrib";
     //create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
-    int count = 0;
+   
       omp_set_dynamic(0);
        omp_set_num_threads(25);
-    #pragma omp parallel for schedule(guided) reduction(+:count)
+    #pragma omp parallel for schedule(guided) 
     for(int e = 0; e < conduction_electrons; e++) {
       double phi,theta; //A/fS
       
-      int array_index = 3*e;
-      double energy = electron_potential[omp_int_random[omp_get_thread_num()]() % conduction_electrons];
+      const int array_index = 3*e;
+      const double energy = electron_potential[omp_int_random[omp_get_thread_num()]() % conduction_electrons];
       if(energy > 0.99*E_f_A ) {
         electron_transport_list[e] = true;
-        count++;
+       
       }
-      double vel = sqrt(2.0*energy*constants::m_e_r_i);
+      const double vel = sqrt(2.0*energy*constants::m_e_r_i);
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
           theta = 2.0*M_PI*omp_uniform_random[omp_get_thread_num()]();
           phi = M_PI * omp_uniform_random[omp_get_thread_num()]();
         } else {
-          double unit = sqrt((sim::CASTLE_x_vector*sim::CASTLE_x_vector)+(sim::CASTLE_y_vector*sim::CASTLE_y_vector)+(sim::CASTLE_z_vector*sim::CASTLE_z_vector));
+          const double unit = sqrt((sim::CASTLE_x_vector*sim::CASTLE_x_vector)+(sim::CASTLE_y_vector*sim::CASTLE_y_vector)+(sim::CASTLE_z_vector*sim::CASTLE_z_vector));
           theta = atan(sim::CASTLE_y_vector / sim::CASTLE_x_vector);
           phi = acos(sim::CASTLE_z_vector / unit);
           if(sim::CASTLE_z_vector < 0.0) theta += M_PI;
@@ -1116,8 +1112,8 @@ void initialize_velocities() {
        omp_set_num_threads(25);
     #pragma omp parallel for schedule(static)
     for(int e = 0; e < conduction_electrons; e++) {
-      int array_index = 3*e;
-      double energy = 0.5*constants::m_e_r*(electron_velocity[array_index]*electron_velocity[array_index] + electron_velocity[array_index+1]*electron_velocity[array_index+1] + electron_velocity[array_index+2]*electron_velocity[array_index+2]);
+      const int array_index = 3*e;
+      const double energy = 0.5*constants::m_e_r*(electron_velocity[array_index]*electron_velocity[array_index] + electron_velocity[array_index+1]*electron_velocity[array_index+1] + electron_velocity[array_index+2]*electron_velocity[array_index+2]);
       electron_potential[e] = energy;
     }
     
@@ -1222,6 +1218,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
         distribution[count] = epsilon - step_size*0.5;
         distrib << count << ", " << distribution[count] << "\n";
         count++;
+        if( count == conduction_electrons) break;
       }
     
       energy_step++;
@@ -1447,8 +1444,8 @@ void output_data() {
       const int electron = cell_integration_lists[cell][e];
       const int array_index = 3*electron;
 
-      const double velocity_length = electron_potential[electron];
-      const int hist = int(fmin(conduction_electrons*0.01, fmax(0.0, floor((velocity_length - 0.9817*E_f_A)/step_size))));
+      //const double velocity_length = ;
+      const int hist = int(fmin(conduction_electrons*0.01, fmax(0.0, floor((electron_potential[electron] - 0.9817*E_f_A)/step_size))));
       temp_Map[omp_get_thread_num()][hist]++;
       
      // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
@@ -1492,7 +1489,7 @@ void output_data() {
     #pragma omp parallel num_threads(8)
     {
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
-    for(int i = 0; i < cell_integration_lists[omp_get_thread_num()][0]; i++) {
+    for(int i = 1; i < cell_integration_lists[omp_get_thread_num()][0]; i++) {
       temp_map_list[omp_get_thread_num()] << i << ", " << temp_Map[omp_get_thread_num()][i] << "\n";
       temp_Map[omp_get_thread_num()][i] = 0;
     }
