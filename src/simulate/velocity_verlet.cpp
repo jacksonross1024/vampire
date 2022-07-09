@@ -91,9 +91,9 @@ void update_position(){
         
       if(electron_transport_list[electron]) {
 
-        x_pos += (electron_velocity[array_index]   * dt);// + (electron_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
-        y_pos += (electron_velocity[array_index_y] * dt);// + (electron_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
-        z_pos += (electron_velocity[array_index_z] * dt);// + (electron_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
+        x_pos += electron_velocity[array_index]   * dt;// + (electron_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
+        y_pos += electron_velocity[array_index_y] * dt;// + (electron_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
+        z_pos += electron_velocity[array_index_z] * dt;// + (electron_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
         
         if (x_pos < 0.0) {x_pos += lattice_width; x_flux--;}
         else if (x_pos > lattice_width) {x_pos -= lattice_width; x_flux++;}
@@ -434,6 +434,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         electron_ee_scattering_list[e][scattering_count] = array_index_i/3;
         scattering_count++;
         if(scattering_count >= electron_ee_scattering_list[e].size() - 1) {std::cout << e << ", " << scattering_count << " > " << electron_ee_scattering_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
+            std::cout << x_distance << ", " << y_distance << ", " << z_distance << std::endl;
             break; }
       //   std::cout << e << ", " << i << ", " << length << std::endl;
     }

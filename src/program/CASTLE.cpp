@@ -702,7 +702,7 @@ void initialize_electrons() {
     
     half_int_var =  5;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 10;//2*half_int_var;
-    boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
+ //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
     e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 18.0*18.0;
     e_e_coulomb_cutoff = 9.0;
@@ -1059,7 +1059,6 @@ void initialize_electron_interactions() {
 // }
 */
 void initialize_velocities() {
-     
     
     // char directory [256];
     // if(getcwd(directory, sizeof(directory)) == NULL){
@@ -1070,7 +1069,6 @@ void initialize_velocities() {
     // std::ofstream atom_phonon_output;
     // atom_phonon_output.open(string(directory) + "/Atom_Energy/init.csv");
     // atom_phonon_output << "atom number, energy" << std::endl;
-    
 
     const std::string n = "Init_E_distrib";
    create_fermi_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
@@ -1085,10 +1083,8 @@ void initialize_velocities() {
       
       const int array_index = 3*e;
       const double energy = electron_potential[omp_int_random[omp_get_thread_num()]() % conduction_electrons];
-      if(energy > 0.99*E_f_A ) {
-        electron_transport_list[e] = true;
-       
-      }
+      if(energy > 0.99*E_f_A ) electron_transport_list[e] = true;
+      
       const double vel = sqrt(2.0*energy*constants::m_e_r_i);
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
