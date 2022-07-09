@@ -1437,8 +1437,8 @@ void output_data() {
     const int cell = omp_get_thread_num();
     const int size = cell_integration_lists[cell][0];
 
-    #pragma omp critical 
-    std::cout << "data processing omp histograms; cell: " << cell << "; " << size << "; step size: " << step_size << std::endl;
+   // #pragma omp critical 
+   // std::cout << "data processing omp histograms; cell: " << cell << "; " << size << "; step size: " << step_size << std::endl;
 
     for(int e = 1; e < size; e++) {
       const int electron = cell_integration_lists[cell][e];
