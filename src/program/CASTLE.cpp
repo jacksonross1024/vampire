@@ -326,14 +326,15 @@ void initialize () {
     ea_rate = -1.0*dt*E_f_A / tau;
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
-    std::vector<MTRand_closed> omp_uniform_random(omp_get_max_threads());
-    std::vector<MTRand_int32> omp_int_random(omp_get_max_threads());
+    omp_set_num_threads(25);
+    std::vector<MTRand_closed> omp_uniform_random(25);
+    std::vector<MTRand_int32> omp_int_random(25);
    // std::cout << omp_get_num_threads() << std::endl;
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> seed_gen(0, int(pow(2,32) - 1));
-    for(int i = 0; i < omp_get_max_threads(); i++) {
+    for(int i = 0; i < 25; i++) {
      // std::cout << omp_get_num_threads() << std::endl;
       omp_uniform_random[i].seed(i);
       omp_int_random[i].seed(i);
@@ -1485,7 +1486,7 @@ void output_data() {
     #pragma omp parallel num_threads(8)
     {
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
-    for(int i = 1; i < cell_integration_lists[omp_get_thread_num()][0]; i++) {
+    for(int i = 0; i < cell_integration_lists[omp_get_thread_num()][0] - 1 ; i++) {
       temp_map_list[omp_get_thread_num()] << i << ", " << temp_Map[omp_get_thread_num()][i] << "\n";
       temp_Map[omp_get_thread_num()][i] = 0;
     }

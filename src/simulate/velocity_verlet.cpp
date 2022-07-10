@@ -112,15 +112,21 @@ void update_position(){
       if(current_time_step % full_int_var == 0) {
          //lattice cell division
 
-          const int x_cell = int(floor(x_pos / x_step_size));
+           int x_cell = int(floor(x_pos / x_step_size));
         //  if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
 
-          const int y_cell = int(floor(y_pos / y_step_size));
+           int y_cell = int(floor(y_pos / y_step_size));
          // if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position[array_index+1] << ", " << y_step_size << ", " << floor(electron_position[array_index+1] / y_step_size) << std::endl;
     
-          const int z_cell = int(floor(z_pos / z_step_size));
+           int z_cell = int(floor(z_pos / z_step_size));
         //  if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
         //  std::cout << x_cell << ", " << y_cell << ", " << z_cell << std::endl;
+           if(x_cell >= x_omp_cells || y_cell >= y_omp_cells || z_cell >= z_omp_cells) {std::cout << "cell sorting for ee integration exceeds bounds" << \
+      x_cell << ", " << y_cell << ", " << z_cell << std::endl;
+      x_cell --;
+      y_cell --;
+      z_cell --; }
+          
           const int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
 
           if (omp_cell != cell) {
