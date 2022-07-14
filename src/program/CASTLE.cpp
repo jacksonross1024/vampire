@@ -1438,8 +1438,8 @@ void output_data() {
    // std::cout << "data processing omp histograms; cell: " << cell << "; " << size << "; step size: " << step_size << std::endl;
 
     for(int e = 1; e < cell_integration_lists[omp_get_thread_num()][0]; e++) {
-     // const int electron = cell_integration_lists[omp_get_thread_num()][e];
-      const int array_index = 3*cell_integration_lists[omp_get_thread_num()][e];
+      const int electron = cell_integration_lists[omp_get_thread_num()][e];
+      const int array_index = 3*electron;
 
       //const double velocity_length = ;
       const int hist = int(fmin(conduction_electrons*0.01, fmax(0.0, floor((electron_potential[electron] - 0.9817*E_f_A)/step_size))));
