@@ -726,10 +726,10 @@ void initialize_electrons() {
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
-        electron_integration_list[e].resize(e_density);
-        electron_nearest_electron_list[e].resize(e_density);
+        electron_integration_list[e].resize(e_density,0);
+        electron_nearest_electron_list[e].resize(e_density,0);
         electron_ee_scattering_list[e].resize(ee_scattering, 0);
-        electron_ea_scattering_list[e].resize(2);
+        electron_ea_scattering_list[e].resize(2,0);
 
         const int array_index = 3*e;
         electron_position[array_index]     = atoms::x_coord_array[e%lattice_atoms] + 0.5*x_unit_size;
@@ -1431,15 +1431,15 @@ void output_data() {
 
     #pragma omp parallel
     {
-    const int cell = omp_get_thread_num();
-    const int size = cell_integration_lists[cell][0];
+   // const int cell = omp_get_thread_num();
+    //const int size = cell_integration_lists[cell][0];
 
    // #pragma omp critical 
    // std::cout << "data processing omp histograms; cell: " << cell << "; " << size << "; step size: " << step_size << std::endl;
 
-    for(int e = 1; e < size; e++) {
-      const int electron = cell_integration_lists[cell][e];
-      const int array_index = 3*electron;
+    for(int e = 1; e < cell_integration_lists[omp_get_thread_num()][0]; e++) {
+     // const int electron = cell_integration_lists[omp_get_thread_num()][e];
+      const int array_index = 3*cell_integration_lists[omp_get_thread_num()][e];
 
       //const double velocity_length = ;
       const int hist = int(fmin(conduction_electrons*0.01, fmax(0.0, floor((electron_potential[electron] - 0.9817*E_f_A)/step_size))));

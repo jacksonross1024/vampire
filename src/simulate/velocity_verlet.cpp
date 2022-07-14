@@ -148,7 +148,7 @@ void update_position(){
 
 void update_dynamics() {
   
-    int array_index;
+  //  int array_index;
     const static double photon_energy = sim::applied_voltage*constants::eV_to_AJ; //AJ/hv
     //AJ/fs/nm**2 -> [1e-3volume(A**3)/(AJ/hv)] hv/fs 
     const static double photon_rate = 1e-2*power_density*lattice_width*lattice_depth/photon_energy; //hv/fs
@@ -175,9 +175,9 @@ void update_dynamics() {
     }
       omp_set_dynamic(0);
        omp_set_num_threads(25);
-    #pragma omp parallel for private(array_index) schedule(dynamic, 10) 
+    #pragma omp parallel for schedule(dynamic, 10) 
     for (int e = 0; e < conduction_electrons; e++) {
-      array_index = 3*e;        
+      const int array_index = 3*e;        
       
       if(current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
       else if (current_time_step % half_int_var == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index); 
@@ -204,6 +204,7 @@ void update_dynamics() {
   Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
   if(Te > 1.0) Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt*300.0/Te);
   else         Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons)    + (e_heat_capacity_i*pump*dt*300.0);
+        
         if (err::check) std::cout << "reset scattering." << std::endl;
     
     #pragma simd
@@ -347,6 +348,12 @@ void e_e_coulomb(const int e, const int array_index) {
       x_cell --;
       y_cell --;
       z_cell --; }
+
+      if(x_cell < 0 || y_cell < 0 || z_cell < 0) {std::cout << "cell sorting for ee integration less than zero" << \
+      x_cell << ", " << y_cell << ", " << z_cell << std::endl;
+      x_cell = 0;
+      y_cell = 0;
+      z_cell = 0; }
   ///  std::cout << lattice_cell_coordinate[0][0][0] << std::endl;
     const int cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
     int ee_dos_count = 1;
@@ -391,7 +398,7 @@ void e_e_coulomb(const int e, const int array_index) {
 
         if (length > e_e_coulomb_cutoff) continue; 
         electron_ee_scattering_list[e][ee_scattering_list] = array_index_i/3;
-        if(ee_scattering_list >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << ee_scattering_list << " > " << electron_ee_scattering_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
+        if(ee_scattering_list >= electron_ee_scattering_list[e].size() - 2) {std::cout << e << ", " << ee_scattering_list << " > " << electron_ee_scattering_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
             break; }
         ee_scattering_list++;
       //   std::cout << e << ", " << i << ", " << length << std::endl;
