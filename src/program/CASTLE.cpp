@@ -369,7 +369,7 @@ void initialize () {
   std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << 8.0*double(conduction_electrons) / double(total_cells) << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
-            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+            std::cerr << "Fatal getcwd error in datalog. data" << std::endl;
     }
     
    // temp_data.open(string(directory) + "/temp_data.csv");
@@ -1183,7 +1183,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
 
   char directory [256];
       if(getcwd(directory, sizeof(directory)) == NULL){
-            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+            std::cerr << "Fatal getcwd error in datalog. fermi dist" << std::endl;
       }
   std::ofstream distrib;
   distrib.open(string(directory) +"/"+ name);
@@ -1396,7 +1396,7 @@ void output_data() {
     
       char directory [256];
       if(getcwd(directory, sizeof(directory)) == NULL){
-            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+            std::cerr << "Fatal getcwd error in datalog. time stamps" << std::endl;
       }
 
       // std::ofstream atomic_phonon_output;
@@ -1436,7 +1436,7 @@ void output_data() {
 
    // #pragma omp critical 
    // std::cout << "data processing omp histograms; cell: " << cell << "; " << size << "; step size: " << step_size << std::endl;
-
+    
     for(int e = 1; e < cell_integration_lists[omp_get_thread_num()][0]; e++) {
       const int electron = cell_integration_lists[omp_get_thread_num()][e];
       const int array_index = 3*electron;
@@ -1486,7 +1486,7 @@ void output_data() {
     #pragma omp parallel num_threads(8)
     {
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
-    for(int i = 0; i < cell_integration_lists[omp_get_thread_num()][0] - 1 ; i++) {
+    for(int i = 0; i < cell_integration_lists[omp_get_thread_num()][0]; i++) {
       temp_map_list[omp_get_thread_num()] << i << ", " << temp_Map[omp_get_thread_num()][i] << "\n";
       temp_Map[omp_get_thread_num()][i] = 0;
     }

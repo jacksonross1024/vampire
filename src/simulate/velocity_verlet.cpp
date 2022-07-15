@@ -185,7 +185,6 @@ void update_dynamics() {
       //replace neighbor ee with step delayed approximation for ee scattering inside DoS calculations for scattering
 
       if((photons_at_dt > count) && (omp_int_random[omp_get_thread_num()]() % conduction_electrons < photons_at_dt) \
-      && (return_phonon_distribution((electron_potential[e] + 25.0 - E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < 1.0) \
       && electron_ea_scattering_list[e][0] != 1) {
         
         electron_thermal_field(e, array_index, external_potential);
