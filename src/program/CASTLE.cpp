@@ -380,7 +380,10 @@ void initialize () {
 
 
 void initialize_cell_omp() {
+double test = sqrt(-1.0)* sqrt(-1.0);
 
+if (test != test) std::cout << "test passed " << test << std::endl;
+else std::cout << "test failed " << test << std::endl;
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
@@ -442,6 +445,9 @@ void initialize_cell_omp() {
     
     const int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell]; 
 
+    if(x_cell != x_cell || y_cell != y_cell || z_cell != z_cell) std::cout << x_cell << ", " << y_cell << ", " << z_cell << ", " <<\
+    int(floor(electron_position[array_index] / x_step_size)) << ", " << int(floor(electron_position[array_index+1] / y_step_size)) << ", " << \
+    int(floor(electron_position[array_index+2] / z_step_size)) << std::endl;
 
     current_lattice_current_end = cell_integration_lists[omp_cell][0];
 
@@ -603,7 +609,9 @@ void initialize_cell_omp() {
             else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
 
             const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
-            
+                  if (length != length) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+        electron_position[array_index] << ", " << electron_position[array_index_i] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index_i + 1] << ", " <<\
+        electron_position[array_index+2] << ", " <<  electron_position[array_index_i + 2] << std::endl;
             if(length > e_e_integration_cutoff) continue;
             electron_integration_list[electron][ee_integration_count] = array_index_i;
             ee_integration_count++;
