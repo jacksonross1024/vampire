@@ -380,7 +380,7 @@ void e_e_coulomb(const int e, const int array_index) {
         else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
         
         const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
-            if (isnan(length)) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+            if (!std::isfinite(length)) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
         electron_position[array_index] << ", " << electron_position[array_index_i] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index_i + 1] << ", " <<\
         electron_position[array_index+2] << ", " <<  electron_position[array_index_i + 2] << std::endl;
         
@@ -437,7 +437,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         
         const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
         
-        if (isnan(length)) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+        if (!std::isfinite(length)) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
         electron_position[array_index] << ", " << electron_position[array_index_i] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index_i + 1] << ", " <<\
         electron_position[array_index+2] << ", " <<  electron_position[array_index_i + 2] << std::endl;
         
@@ -697,10 +697,10 @@ for(int l = 0; l < cells_per_thread; l++) {
     const double e_energy = electron_potential[electron];
     const double d_e_energy = electron_potential[electron_collision];
     double deltaE = omp_uniform_random[omp_get_thread_num()]()*(e_energy - d_e_energy);
-      if (isnan(deltaE)) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
+      if (!std::isfinite(deltaE)) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
     
     if(omp_uniform_random[omp_get_thread_num()]()< 0.5*exp(abs(deltaE)/(-25.0))) deltaE *= -1.0;
-      if (isnan(deltaE)) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
+      if (!std::isfinite(deltaE)) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
     double DoS1 = electron_nearest_electron_list[electron][0] - 1;
     double DoS2 = electron_nearest_electron_list[electron_collision][0] - 1;
  
@@ -734,7 +734,7 @@ for(int l = 0; l < cells_per_thread; l++) {
         if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
         
       double scattering_velocity = sqrt(2.0*electron_potential[electron]*constants::m_e_r_i);
-          if (isnan(scattering_velocity)) std::cout << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] <<  std::endl;
+          if (!std::isfinite(scattering_velocity)) std::cout << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] <<  std::endl;
       electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi);
@@ -749,7 +749,7 @@ for(int l = 0; l < cells_per_thread; l++) {
         if(electron_velocity[3*electron_collision+2] < 0.0) theta += M_PI;
       
       scattering_velocity = sqrt(2.0*electron_potential[electron_collision]*constants::m_e_r_i);
-          if (isnan(scattering_velocity)) std::cout << scattering_velocity << ", " << deltaE << ", " << d_e_energy <<   ", " << electron_potential[electron_collision] <<  std::endl;
+          if (!std::isfinite(scattering_velocity)) std::cout << scattering_velocity << ", " << deltaE << ", " << d_e_energy <<   ", " << electron_potential[electron_collision] <<  std::endl;
       electron_velocity[3*electron_collision]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[3*electron_collision+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[3*electron_collision+2] = scattering_velocity * cos(phi);
