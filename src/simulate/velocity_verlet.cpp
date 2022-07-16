@@ -82,19 +82,25 @@ void update_position(){
   for (int e = 1; e < size; e++) { 
       const int electron = old_cell_integration_lists[cell][e];
       const int array_index = 3*electron;
-      const int array_index_y = array_index + 1;
-      const int array_index_z = array_index + 2;
+    //  const int array_index_y = array_index + 1;
+     // const int array_index_z = array_index + 2;
   
       double x_pos = electron_position[array_index];
-      double y_pos = electron_position[array_index_y];
-      double z_pos = electron_position[array_index_z];
-        
+      double y_pos = electron_position[array_index+1];
+      double z_pos = electron_position[array_index+2];
+    
+      if (x_pos != x_pos || y_pos != y_pos || z_pos != z_pos) std::cout << "access pos " << x_pos << ", " << y_pos << ", " << z_pos << ", " << \
+      electron_position[array_index] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index+2] << ", " << electron << ", " << array_index << std::endl;
+      
       if(electron_transport_list[electron]) {
 
         x_pos += electron_velocity[array_index]   * dt;// + (electron_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
-        y_pos += electron_velocity[array_index_y] * dt;// + (electron_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
-        z_pos += electron_velocity[array_index_z] * dt;// + (electron_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
+        y_pos += electron_velocity[array_index+1] * dt;// + (electron_force[array_index_y] * dt * dt * constants::K_A / 2); // y superarray component
+        z_pos += electron_velocity[array_index+2] * dt;// + (electron_force[array_index_z] * dt * dt * constants::K_A / 2); // z superarray component
         
+        if (x_pos != x_pos || y_pos != y_pos || z_pos != z_pos) std::cout << "update pos " << x_pos << ", " << y_pos << ", " << z_pos << ", " << \
+      electron_position[array_index] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index+2] << ", " << electron << ", " << array_index << ", " << dt << std::endl;
+      
         if (x_pos < 0.0) {x_pos += lattice_width; x_flux--;}
         else if (x_pos > lattice_width) {x_pos -= lattice_width; x_flux++;}
 
@@ -104,9 +110,12 @@ void update_position(){
         if (z_pos < 0.0) {z_pos += lattice_height; z_flux--;}
         else if (z_pos > lattice_height) {z_pos -= lattice_height; z_flux++;}
 
+           if (x_pos != x_pos || y_pos != y_pos || z_pos != z_pos) std::cout << "periodic boundary " << x_pos << ", " << y_pos << ", " << z_pos << ", " << \
+      electron_position[array_index] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index+2] << ", " << electron << ", " << array_index << ", " << dt << std::endl;
+      
         electron_position[array_index]   = x_pos;
-        electron_position[array_index_y] = y_pos;
-        electron_position[array_index_z] = z_pos;
+        electron_position[array_index+1] = y_pos;
+        electron_position[array_index+2] = z_pos;
       }
 
       if(current_time_step % full_int_var == 0) {
@@ -734,11 +743,11 @@ for(int l = 0; l < cells_per_thread; l++) {
         if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
         
       double scattering_velocity = sqrt(2.0*electron_potential[electron]*constants::m_e_r_i);
-          if (electron_potential[electron] != electron_potential[electron]) std::cout << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] <<  std::endl;
+          if (electron_potential[electron] != electron_potential[electron] || scattering_velocity != scattering_velocity) std::cout << "electron " << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] <<  std::endl;
       electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi);
-      
+        if (electron_velocity[array_index] != electron_velocity[array_index] || electron_velocity[array_index+1] != electron_velocity[array_index+1] || electron_velocity[array_index+2] != electron_velocity[array_index+2]) std::cout << "velocity adjust " << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] <<  std::endl;
       electron_potential[electron_collision]   += deltaE;
       if(electron_potential[electron_collision] > 0.99*E_f_A) electron_transport_list[electron_collision] = true;
       else electron_transport_list[electron_collision] = false;
@@ -749,11 +758,11 @@ for(int l = 0; l < cells_per_thread; l++) {
         if(electron_velocity[3*electron_collision+2] < 0.0) theta += M_PI;
       
       scattering_velocity = sqrt(2.0*electron_potential[electron_collision]*constants::m_e_r_i);
-          if (electron_potential[electron_collision] != electron_potential[electron_collision]) std::cout << scattering_velocity << ", " << deltaE << ", " << d_e_energy <<   ", " << electron_potential[electron_collision] <<  std::endl;
+          if (electron_potential[electron_collision] != electron_potential[electron_collision] || scattering_velocity != scattering_velocity) std::cout << "electron collision" << scattering_velocity << ", " << deltaE << ", " << d_e_energy <<   ", " << electron_potential[electron_collision] <<  std::endl;
       electron_velocity[3*electron_collision]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[3*electron_collision+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[3*electron_collision+2] = scattering_velocity * cos(phi);
-      
+        if (electron_velocity[3*electron_collision] != electron_velocity[3*electron_collision] || electron_velocity[3*electron_collision+1] != electron_velocity[3*electron_collision+1] || electron_velocity[3*electron_collision+2] != electron_velocity[3*electron_collision+2]) std::cout << "collision adjust " << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] <<  std::endl;
       e_e_scattering_count++;
       }
     }
