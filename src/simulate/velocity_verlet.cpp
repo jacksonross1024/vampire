@@ -75,7 +75,7 @@ void update_position(){
     const int cell = lattice_cells_per_omp[omp_get_thread_num()][l];
     const int size = old_cell_integration_lists[cell][0];
     
-    if(current_time_step % full_int_var == 0 && l % (y_omp_cells * z_omp_cells)== 0) {
+    if((current_time_step % full_int_var) == 0 && (l % (y_omp_cells * z_omp_cells))== 0) {
       #pragma omp barrier
     }
     
@@ -135,7 +135,11 @@ void update_position(){
       x_cell --;
       y_cell --;
       z_cell --; }
-          
+          if(x_cell < 0 || y_cell < 0 || z_cell < 0) {std::cout << "cell sorting for ee integration less than zero" << \
+      x_cell << ", " << y_cell << ", " << z_cell << std::endl;
+      x_cell = 0;
+      y_cell = 0;
+      z_cell = 0; }
           const int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
 
           if (omp_cell != cell) {
@@ -414,10 +418,11 @@ void e_e_coulomb(const int e, const int array_index) {
         ee_scattering_list++;
       //   std::cout << e << ", " << i << ", " << length << std::endl;
     }
+    }
     electron_integration_list[e][0] = ee_integration_count;
     electron_nearest_electron_list[e][0] = ee_dos_count;
     electron_ee_scattering_list[e][1] = ee_scattering_list;
-    }
+    
   }
 
 
@@ -699,7 +704,6 @@ for(int l = 0; l < cells_per_thread; l++) {
 
     if(electron_ee_scattering_list[electron][0] == 1 || electron_ee_scattering_list[electron_collision][0] == 1) continue;
 
-    
     electron_ee_scattering_list[electron][0] = 1;
     electron_ee_scattering_list[electron_collision][0] = 1;
 
