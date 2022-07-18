@@ -786,18 +786,21 @@ for(int l = 0; l < cells_per_thread; l++) {
       else electron_transport_list[electron] = false;
 
       double unit_vec = sqrt(2.0*e_energy*constants::m_e_r_i);
-      double theta = atan(electron_velocity[array_index+1] / electron_velocity[array_index]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+      double theta = atan2(electron_velocity[array_index+1] , electron_velocity[array_index]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+        if(electron_velocity[array_index+1] == electron_velocity[array_index] == 0.0) theta = M_PI;
       double phi   = acos(electron_velocity[array_index+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]()- 0.05*M_PI);
-        if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
+       // if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
         
       double scattering_velocity = sqrt(2.0*electron_potential[electron]*constants::m_e_r_i);
           if (electron_potential[electron] != electron_potential[electron] || scattering_velocity != scattering_velocity) std::cout << "electron " << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] <<  std::endl;
+      
       electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi);
+
         if (electron_velocity[array_index] != electron_velocity[array_index] || electron_velocity[array_index+1] != electron_velocity[array_index+1] || electron_velocity[array_index+2] != electron_velocity[array_index+2]) {
           std::cout << "velocity adjust " << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] << 
-          ", " << electron_velocity[array_index] << ", " << electron_velocity[array_index+1] << ", " << electron_velocity[array_index+2]  << 
+          atan2(electron_velocity[array_index+1] , electron_velocity[array_index]) << ", " << (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI) << 
           ", " <<  cos(theta)*sin(phi) << ", " << sin(theta)*sin(phi) << ", " << cos(phi) << ", " << theta << ", " << phi << std::endl; }
 
       electron_potential[electron_collision]   += deltaE;
@@ -805,18 +808,19 @@ for(int l = 0; l < cells_per_thread; l++) {
       else electron_transport_list[electron_collision] = false;
 
       unit_vec = sqrt(2.0*d_e_energy*constants::m_e_r_i);
-      theta = atan(electron_velocity[3*electron_collision+1] / electron_velocity[3*electron_collision]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+      theta = atan2(electron_velocity[3*electron_collision+1] , electron_velocity[3*electron_collision]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+        if(electron_velocity[3*electron_collision+1] == electron_velocity[3*electron_collision] == 0.0) theta = M_PI;
       phi   = acos(electron_velocity[3*electron_collision+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
-        if(electron_velocity[3*electron_collision+2] < 0.0) theta += M_PI;
+       // if(electron_velocity[3*electron_collision+2] < 0.0) theta += M_PI;
       
       scattering_velocity = sqrt(2.0*electron_potential[electron_collision]*constants::m_e_r_i);
           if (electron_potential[electron_collision] != electron_potential[electron_collision] || scattering_velocity != scattering_velocity) std::cout << "electron collision" << scattering_velocity << ", " << deltaE << ", " << d_e_energy <<   ", " << electron_potential[electron_collision] <<  std::endl;
       electron_velocity[3*electron_collision]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[3*electron_collision+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[3*electron_collision+2] = scattering_velocity * cos(phi);
+      
         if (electron_velocity[3*electron_collision] != electron_velocity[3*electron_collision] || electron_velocity[3*electron_collision+1] != electron_velocity[3*electron_collision+1] || electron_velocity[3*electron_collision+2] != electron_velocity[3*electron_collision+2]) {
           std::cout << "collision adjust " << scattering_velocity << ", " << deltaE << ", " << d_e_energy <<  ", " << electron_potential[electron_collision] <<  
-          ", " << electron_velocity[3*electron_collision] << ", " << electron_velocity[3*electron_collision+1] << ", " << electron_velocity[3*electron_collision+2] <<
            ", " <<  cos(theta)*sin(phi) << ", " << sin(theta)*sin(phi) << ", " << cos(phi) << ", " << theta << ", " << phi << std::endl; }
       e_e_scattering_count++;
       }
