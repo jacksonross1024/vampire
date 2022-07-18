@@ -141,9 +141,12 @@ void update_position(){
       z_cell = 0; }
           const int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
           
-          if (abs(x_cell - cell_lattice_coordinate[cell][0]) > 1 ||\
-              abs(y_cell - cell_lattice_coordinate[cell][1]) > 1 ||\
-              abs(z_cell - cell_lattice_coordinate[cell][2]) > 1) {
+          if ((abs(x_cell - cell_lattice_coordinate[cell][0]) > 1 &&\
+              abs(x_cell - cell_lattice_coordinate[cell][0]) <= 8) ||
+             (abs(y_cell - cell_lattice_coordinate[cell][1]) > 1  &&\
+              abs(y_cell - cell_lattice_coordinate[cell][1]) <= 8) ||\
+             (abs(z_cell - cell_lattice_coordinate[cell][2]) > 1  &&\
+              abs(z_cell - cell_lattice_coordinate[cell][2]) <= 8) ) {
             #pragma omp critical(halo)
             {
             escaping_electrons[escaping_electrons[0]] = electron;
@@ -723,7 +726,8 @@ void ee_scattering() {
          if (err::check) std::cout << "ee_scattering." << std::endl;
   omp_set_dynamic(0);
        omp_set_num_threads(25);
-#pragma omp parallel reduction(+:e_e_scattering_count)
+double m = 0.0;
+#pragma omp parallel reduction(+:e_e_scattering_count) reduction(max:m)
 {
 for(int l = 0; l < cells_per_thread; l++) {
   const int cell = lattice_cells_per_omp[omp_get_thread_num()][l];
@@ -751,9 +755,9 @@ for(int l = 0; l < cells_per_thread; l++) {
     double deltaE = omp_uniform_random[omp_get_thread_num()]()*(e_energy - d_e_energy);
       if (deltaE != deltaE) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
     
-    if(omp_uniform_random[omp_get_thread_num()]()< 0.5*exp(abs(deltaE)/(-25.0))) deltaE *= -1.0;
+    if(omp_uniform_random[omp_get_thread_num()]()< 0.5*exp(abs(deltaE)/(-2.0))) deltaE *= -1.0;
       if (deltaE != deltaE) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
-    
+
     double DoS1 = electron_nearest_electron_list[electron][0] - 1;
     double DoS2 = electron_nearest_electron_list[electron_collision][0] - 1;
  
@@ -774,6 +778,8 @@ for(int l = 0; l < cells_per_thread; l++) {
       }
 
    if(omp_uniform_random[omp_get_thread_num()]()> exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
+        if (abs(deltaE) > m) m = abs(deltaE);
+
       const int array_index = 3*electron;
       electron_potential[electron] -= deltaE;
       if(electron_potential[electron] > 0.99*E_f_A) electron_transport_list[electron] = true;
@@ -812,6 +818,7 @@ for(int l = 0; l < cells_per_thread; l++) {
   if (err::check) std::cout << "ee_scattering done." << std::endl;
 } 
 }
+std::cout << "max: " << m << std::endl;
 }
 } //end CASTLE namespace
 
