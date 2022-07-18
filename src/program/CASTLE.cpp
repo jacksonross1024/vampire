@@ -404,7 +404,8 @@ else std::cout << "test failed " << test << std::endl;
     cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), 1);
     old_cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), 1);
   }
-  
+
+  escaping_electrons.resize( int(160.0*double(conduction_electrons) / double(total_cells)), 1);
   lattice_cell_coordinate.resize(x_omp_cells);
   cell_lattice_coordinate.resize(total_cells);
   for(int c = 0; c < total_cells; c++) {
@@ -1445,7 +1446,7 @@ void output_data() {
    // #pragma omp critical 
    // std::cout << "data processing omp histograms; cell: " << cell << "; " << size << "; step size: " << step_size << std::endl;
     
-    for(int e = 1; e < cell_integration_lists[omp_get_thread_num()][0]; e++) {
+    for(int e = 1; e < old_cell_integration_lists[omp_get_thread_num()][0]; e++) {
       const int electron = cell_integration_lists[omp_get_thread_num()][e];
       const int array_index = 3*electron;
 

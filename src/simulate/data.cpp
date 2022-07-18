@@ -261,6 +261,7 @@ namespace CASTLE {
    std::vector<std::vector < std::vector <int > > > lattice_cell_coordinate;
    std::vector<std::vector<int> > temp_Map;
    std::vector<std::vector<int> > lattice_cells_per_omp;
+   std::vector<int> escaping_electrons;
 
    MTRand_closed uniform_random;
    MTRand_int32 int_random;
