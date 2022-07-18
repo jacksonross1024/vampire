@@ -795,7 +795,11 @@ for(int l = 0; l < cells_per_thread; l++) {
       electron_velocity[array_index]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi);
-        if (electron_velocity[array_index] != electron_velocity[array_index] || electron_velocity[array_index+1] != electron_velocity[array_index+1] || electron_velocity[array_index+2] != electron_velocity[array_index+2]) std::cout << "velocity adjust " << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] <<  std::endl;
+        if (electron_velocity[array_index] != electron_velocity[array_index] || electron_velocity[array_index+1] != electron_velocity[array_index+1] || electron_velocity[array_index+2] != electron_velocity[array_index+2]) {
+          std::cout << "velocity adjust " << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] << 
+          ", " << electron_velocity[array_index] << ", " << electron_velocity[array_index+1] << ", " << electron_velocity[array_index+2]  << 
+          ", " <<  cos(theta)*sin(phi) << ", " << sin(theta)*sin(phi) << ", " << cos(phi) << ", " << theta << ", " << phi << std::endl; }
+
       electron_potential[electron_collision]   += deltaE;
       if(electron_potential[electron_collision] > 0.99*E_f_A) electron_transport_list[electron_collision] = true;
       else electron_transport_list[electron_collision] = false;
@@ -810,7 +814,10 @@ for(int l = 0; l < cells_per_thread; l++) {
       electron_velocity[3*electron_collision]   = scattering_velocity * cos(theta)*sin(phi);
       electron_velocity[3*electron_collision+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[3*electron_collision+2] = scattering_velocity * cos(phi);
-        if (electron_velocity[3*electron_collision] != electron_velocity[3*electron_collision] || electron_velocity[3*electron_collision+1] != electron_velocity[3*electron_collision+1] || electron_velocity[3*electron_collision+2] != electron_velocity[3*electron_collision+2]) std::cout << "collision adjust " << scattering_velocity << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential[electron] <<  std::endl;
+        if (electron_velocity[3*electron_collision] != electron_velocity[3*electron_collision] || electron_velocity[3*electron_collision+1] != electron_velocity[3*electron_collision+1] || electron_velocity[3*electron_collision+2] != electron_velocity[3*electron_collision+2]) {
+          std::cout << "collision adjust " << scattering_velocity << ", " << deltaE << ", " << d_e_energy <<  ", " << electron_potential[electron_collision] <<  
+          ", " << electron_velocity[3*electron_collision] << ", " << electron_velocity[3*electron_collision+1] << ", " << electron_velocity[3*electron_collision+2] <<
+           ", " <<  cos(theta)*sin(phi) << ", " << sin(theta)*sin(phi) << ", " << cos(phi) << ", " << theta << ", " << phi << std::endl; }
       e_e_scattering_count++;
       }
     }
