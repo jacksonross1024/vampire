@@ -1503,7 +1503,7 @@ void output_data() {
     #pragma omp parallel sections 
     {
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
-    #pragma section
+    #pragma omp section
     {
     #pragma omp parallel num_threads(8)
     for(int i = 0; i < cell_integration_lists[omp_get_thread_num()][0]; i++) {
@@ -1512,7 +1512,7 @@ void output_data() {
     }
     temp_map_list[omp_get_thread_num()].close();
     }
-    #pragma section num_threads(1)
+    #pragma omp section 
     {
       std::ofstream E_vel;
       E_vel.open("velocity/"+time_stamp);
