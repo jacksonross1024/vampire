@@ -1503,8 +1503,9 @@ void output_data() {
     #pragma omp parallel sections 
     {
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
-    #pragma section num_threads(8)
+    #pragma section
     {
+    #pragma omp parallel num_threads(8)
     for(int i = 0; i < cell_integration_lists[omp_get_thread_num()][0]; i++) {
       temp_map_list[omp_get_thread_num()] << i << ", " << temp_Map[omp_get_thread_num()][i] << "\n";
       temp_Map[omp_get_thread_num()][i] = 0;
