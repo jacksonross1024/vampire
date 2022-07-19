@@ -1116,7 +1116,8 @@ void initialize_velocities() {
         electron_velocity[array_index + 2] = cos(phi)*vel; 
     }
    // std::cout << count << std::endl;
-
+      std::ofstream Init_E_vel;
+      Init_E_vel.open("Init_E_vel");
      omp_set_dynamic(0);
        omp_set_num_threads(25);
     #pragma omp parallel for schedule(static)
@@ -1124,6 +1125,10 @@ void initialize_velocities() {
       const int array_index = 3*e;
       const double energy = 0.5*constants::m_e_r*(electron_velocity[array_index]*electron_velocity[array_index] + electron_velocity[array_index+1]*electron_velocity[array_index+1] + electron_velocity[array_index+2]*electron_velocity[array_index+2]);
       electron_potential[e] = energy;
+    }
+
+    for(int e = 0; e < conduction_electrons; e++) {
+      Init_E_vel << e << ", " << electron_potential[e] << ", " << electron_velocity[3*e] << ", " << electron_velocity[3*e+1] << ", " << electron_velocity[3*e+2] << std::endl;
     }
     
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
@@ -1511,7 +1516,7 @@ void output_data() {
     mean_data.precision(10);
     mean_data << std::scientific;
 
-    const double I = double(x_flux) * constants::e * 1e15 / double(CASTLE_output_rate) / dt; //current
+    const double I = double(x_flux) * constants::e * 1e35 / double(CASTLE_output_rate) / dt / (lattice_height*lattice_depth); //current density/m**2
 
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
