@@ -401,15 +401,18 @@ else std::cout << "test failed " << test << std::endl;
   old_cell_integration_lists.resize(total_cells);
 
   for(int i=0; i < total_cells; i++) {
-    cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), 1);
-    old_cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), 1);
+    cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), NAN);
+    old_cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), NAN);
+    cell_integration_lists[i][0] = 1;
+    old_cell_integration_lists[i][0] = 1;
   }
 
-  escaping_electrons.resize( int(160.0*double(conduction_electrons) / double(total_cells)), 1);
+  escaping_electrons.resize( int(160.0*double(conduction_electrons) / double(total_cells)), NAN);
+  escaping_electrons[0] = 1;
   lattice_cell_coordinate.resize(x_omp_cells);
   cell_lattice_coordinate.resize(total_cells);
   for(int c = 0; c < total_cells; c++) {
-    cell_lattice_coordinate[c].resize(3 , 0);
+    cell_lattice_coordinate[c].resize(3 , NAN);
   }
   int cell_count = 0;
  //     std::cout << "cell integration arrays generated." << std::endl;
@@ -476,7 +479,7 @@ else std::cout << "test failed " << test << std::endl;
 //std::cout << "are they though?" << std::endl;
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
-    cell_nearest_neighbor_list[c].resize(27); //avoid self interaction
+    cell_nearest_neighbor_list[c].resize(27, NAN); //avoid self interaction
     const int x_cell = cell_lattice_coordinate[c][0];
     const int y_cell = cell_lattice_coordinate[c][1];
     const int z_cell = cell_lattice_coordinate[c][2];
@@ -527,7 +530,7 @@ else std::cout << "test failed " << test << std::endl;
     lattice_cells_per_omp.resize(omp_threads);
 
     for(int t=0;t< omp_threads;t++){
-      lattice_cells_per_omp[t].resize(cells_per_thread, 0 );
+      lattice_cells_per_omp[t].resize(cells_per_thread, NAN );
     }
     int omp_checkerboard_scheme = 0;
     if(omp_threads == max_x_threads) omp_checkerboard_scheme = 1;
@@ -694,13 +697,13 @@ void initialize_electrons() {
     // Initialize arrays for holding electron variables
     //      Arrays in super array format to take advantage of caching
     //========
-    electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
-    electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
-    electron_potential.resize(conduction_electrons, 0);
+    electron_position.resize(conduction_electrons * 3, NAN); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
+    electron_velocity.resize(conduction_electrons * 3, NAN); //Angstroms
+    electron_potential.resize(conduction_electrons, NAN);
     temp_Map.resize(8);
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
-        temp_Map[i].resize(round(conduction_electrons*0.1)+10, 0);
+        temp_Map[i].resize(round(conduction_electrons*0.1)+10, NAN);
         // std::cout << temp_Map[i][0] << std::endl;
         // std::cout << temp_Map[i][round(conduction_electrons*0.3)-1] << std::endl;
     }
@@ -735,9 +738,9 @@ void initialize_electrons() {
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
-        electron_integration_list[e].resize(e_density,0);
-        electron_nearest_electron_list[e].resize(e_density,0);
-        electron_ee_scattering_list[e].resize(ee_scattering, 0);
+        electron_integration_list[e].resize(e_density,NAN);
+        electron_nearest_electron_list[e].resize(e_density,NAN);
+        electron_ee_scattering_list[e].resize(ee_scattering, NAN);
         electron_ea_scattering_list[e].resize(2,0);
 
         const int array_index = 3*e;
@@ -1102,9 +1105,9 @@ void initialize_velocities() {
           phi = M_PI * omp_uniform_random[omp_get_thread_num()]();
         } else {
           const double unit = sqrt((sim::CASTLE_x_vector*sim::CASTLE_x_vector)+(sim::CASTLE_y_vector*sim::CASTLE_y_vector)+(sim::CASTLE_z_vector*sim::CASTLE_z_vector));
-          theta = atan(sim::CASTLE_y_vector / sim::CASTLE_x_vector);
+          theta = atan2(sim::CASTLE_y_vector , sim::CASTLE_x_vector);
           phi = acos(sim::CASTLE_z_vector / unit);
-          if(sim::CASTLE_z_vector < 0.0) theta += M_PI;
+         // if(sim::CASTLE_z_vector < 0.0) theta += M_PI;
         }
       
             if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
