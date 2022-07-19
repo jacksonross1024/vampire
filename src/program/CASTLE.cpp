@@ -710,7 +710,7 @@ void initialize_electrons() {
     //std::cout << temp_Map[7][3335] << std::endl;
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
-
+    ee_scattering_angle = sim::ee_scattering_angle;
     e_e_neighbor_cutoff = 10.0;
     
     half_int_var =  5;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);

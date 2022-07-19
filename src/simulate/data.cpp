@@ -102,7 +102,7 @@ namespace sim{
    bool fermi_Cv = false;
    bool fermi_function= false;
 
-  
+   //CASTLE Input
    bool applied_voltage_sim = false;
    bool heat_pulse_sim = false;
    double applied_voltage = 0.0;
@@ -117,9 +117,9 @@ namespace sim{
 
    int CASTLE_MD_rate = 1;
 
-    double ee_coupling_strength = 0.0;
+   double ee_coupling_strength = 0.0;
    double ea_coupling_strength = 0.0;
-
+   double ee_scattering_angle = 0.1;
    
 
    namespace internal{
@@ -227,6 +227,7 @@ namespace CASTLE {
    double ea_rate;
    double ee_coupling_strength;
    double ea_coupling_strength;
+   double ee_scattering_angle;
 
    int x_omp_cells;// = int(floor(lattice_width / 15.0));
   int y_omp_cells;// = int(floor(lattice_depth / 15.0));

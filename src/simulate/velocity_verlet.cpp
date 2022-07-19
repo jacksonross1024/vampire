@@ -786,9 +786,9 @@ for(int l = 0; l < cells_per_thread; l++) {
       else electron_transport_list[electron] = false;
 
       double unit_vec = sqrt(2.0*e_energy*constants::m_e_r_i);
-      double theta = atan2(electron_velocity[array_index+1] , electron_velocity[array_index]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+      double theta = atan2(electron_velocity[array_index+1] , electron_velocity[array_index]) + (2*ee_scattering_angle*M_PI*omp_uniform_random[omp_get_thread_num()]() - ee_scattering_angle*M_PI);
        // if(electron_velocity[array_index+1] == electron_velocity[array_index] == 0.0) theta = M_PI;
-      double phi   = acos(electron_velocity[array_index+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]()- 0.05*M_PI);
+      double phi   = acos(electron_velocity[array_index+2] / unit_vec) + (2*ee_scattering_angle*M_PI*omp_uniform_random[omp_get_thread_num()]() - ee_scattering_angle*M_PI);
        // if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
         
       double scattering_velocity = sqrt(2.0*electron_potential[electron]*constants::m_e_r_i);
@@ -808,9 +808,9 @@ for(int l = 0; l < cells_per_thread; l++) {
       else electron_transport_list[electron_collision] = false;
 
       unit_vec = sqrt(2.0*d_e_energy*constants::m_e_r_i);
-      theta = atan2(electron_velocity[3*electron_collision+1] , electron_velocity[3*electron_collision]) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+      theta = atan2(electron_velocity[3*electron_collision+1] , electron_velocity[3*electron_collision]) + (2*ee_scattering_angle*M_PI*omp_uniform_random[omp_get_thread_num()]() - ee_scattering_angle*M_PI);
        // if(electron_velocity[3*electron_collision+1] == electron_velocity[3*electron_collision] == 0.0) theta = M_PI;
-      phi   = acos(electron_velocity[3*electron_collision+2] / unit_vec) + (0.1*M_PI*omp_uniform_random[omp_get_thread_num()]() - 0.05*M_PI);
+      phi   = acos(electron_velocity[3*electron_collision+2] / unit_vec) + (2*ee_scattering_angle*M_PI*omp_uniform_random[omp_get_thread_num()]() - ee_scattering_angle*M_PI);
        // if(electron_velocity[3*electron_collision+2] < 0.0) theta += M_PI;
       
       scattering_velocity = sqrt(2.0*electron_potential[electron_collision]*constants::m_e_r_i);

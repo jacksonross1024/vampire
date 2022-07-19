@@ -316,6 +316,13 @@ namespace sim{
          sim::CASTLE_MD_rate = c;
          return true;
       }
+      test = "ee-scattering-angle";
+      if(word == test) {
+         double a = atof(value.c_str());
+         vin::check_for_valid_value(a, word, line, prefix, unit, "radian", 0.0, M_PI, "input", "0 to M_PI, default = 0.1");
+         sim::ee_scattering_angle = a;
+         return true;
+      }
       //--------------------------------------------------------------------
       // input parameter not found here
       return false;
