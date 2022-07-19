@@ -776,7 +776,7 @@ for(int l = 0; l < cells_per_thread; l++) {
           DoS2 -= 1.0;
         }
       }
-
+    if(e%10000 == 0 ) std::cout << deltaE << ", " << e_energy << ", " << d_e_energy << ", " << DoS1 << ", " << DoS2 << std::endl; 
    if(omp_uniform_random[omp_get_thread_num()]()> exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
         if (abs(deltaE) > m) m = abs(deltaE);
 
