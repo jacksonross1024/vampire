@@ -1500,41 +1500,32 @@ void output_data() {
 // std::cout << "histograms made" << std::endl;
   omp_set_dynamic(0);
        omp_set_num_threads(10);
-    #pragma omp parallel sections 
-    {
+   
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
-    #pragma omp section
-    {
-    #pragma omp parallel num_threads(8)
-    for(int i = 0; i < cell_integration_lists[omp_get_thread_num()][0]; i++) {
-      temp_map_list[omp_get_thread_num()] << i << ", " << temp_Map[omp_get_thread_num()][i] << "\n";
-      temp_Map[omp_get_thread_num()][i] = 0;
+  for(int c = 0; c < 8; c++) {
+    for(int i = 0; i < cell_integration_lists[c][0]; i++) {
+      temp_map_list[c] << i << ", " << temp_Map[c][i] << "\n";
+      temp_Map[c][i] = 0;
     }
-    temp_map_list[omp_get_thread_num()].close();
-    }
-    #pragma omp section 
-    {
-      std::ofstream E_vel;
-      E_vel.open("velocity/"+time_stamp);
-      for(int e = 0; e<conduction_electrons; e++) {
-        E_vel <<  e << ", " << electron_potential[e] << ", " << electron_velocity[3*e] << ", " << electron_velocity[3*e+1] << ", " << electron_velocity[3*e+2] << "\n";
-      }
-      E_vel.close();
-    }
-    #pragma omp section 
-    {
-      std::ofstream E_pos;
-      E_pos.open("position/"+time_stamp);
-      for(int e = 0; e<conduction_electrons; e++) {
-        E_pos <<  e << ", " << electron_potential[e] << ", " << electron_position[3*e] << ", " << electron_position[3*e+1] << ", " << electron_position[3*e+2] << "\n";
-      }
-      E_pos.close();
-    }
-    }
+    temp_map_list[c].close();
+  }
+      // std::ofstream E_vel;
+      // E_vel.open("velocity/"+time_stamp);
+      // for(int e = 0; e<conduction_electrons; e++) {
+      //   E_vel <<  e << ", " << electron_potential[e] << ", " << electron_velocity[3*e] << ", " << electron_velocity[3*e+1] << ", " << electron_velocity[3*e+2] << "\n";
+      // }
+      // E_vel.close();
+  
+      // std::ofstream E_pos;
+      // E_pos.open("position/"+time_stamp);
+      // for(int e = 0; e<conduction_electrons; e++) {
+      //   E_pos <<  e << ", " << electron_potential[e] << ", " << electron_position[3*e] << ", " << electron_position[3*e+1] << ", " << electron_position[3*e+2] << "\n";
+      // }
+      // E_pos.close();
 
 
       std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
-}
+    }
     mean_data.precision(10);
     mean_data << std::scientific;
 
