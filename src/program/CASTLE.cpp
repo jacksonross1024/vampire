@@ -1500,14 +1500,26 @@ void output_data() {
 // std::cout << "histograms made" << std::endl;
   omp_set_dynamic(0);
        omp_set_num_threads(8);
-    #pragma omp parallel num_threads(8)
+    #pragma omp parallel sections 
     {
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
+    #pragma section num_threads(8)
+    {
     for(int i = 0; i < cell_integration_lists[omp_get_thread_num()][0]; i++) {
       temp_map_list[omp_get_thread_num()] << i << ", " << temp_Map[omp_get_thread_num()][i] << "\n";
       temp_Map[omp_get_thread_num()][i] = 0;
     }
     temp_map_list[omp_get_thread_num()].close();
+    }
+    #pragma section num_threads(1)
+    {
+      std::ofstream E_vel;
+      E_vel.open("velocity/"+time_stamp);
+      for(int e = 0; e<conduction_electrons; e++) {
+        E_vel <<  e << ", " << electron_potential[e] << ", " << electron_velocity[3*e] << ", " << electron_velocity[3*e+1] << ", " << electron_velocity[3*e+2] << "\n";
+      }
+      E_vel.close();
+    }
     }
 
 

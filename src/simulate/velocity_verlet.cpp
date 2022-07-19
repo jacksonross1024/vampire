@@ -755,7 +755,7 @@ for(int l = 0; l < cells_per_thread; l++) {
     double deltaE = omp_uniform_random[omp_get_thread_num()]()*(e_energy - d_e_energy);
       if (deltaE != deltaE) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
     
-    if(omp_uniform_random[omp_get_thread_num()]()< 0.5*exp(abs(deltaE)/(-2.0))) deltaE *= -1.0;
+    if(omp_uniform_random[omp_get_thread_num()]()< 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
       if (deltaE != deltaE) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
 
     double DoS1 = electron_nearest_electron_list[electron][0] - 1;
