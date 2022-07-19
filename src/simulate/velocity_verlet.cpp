@@ -464,7 +464,7 @@ void e_e_coulomb(const int e, const int array_index) {
     electron_integration_list[e][0] = ee_integration_count;
     electron_nearest_electron_list[e][0] = ee_dos_count;
     electron_ee_scattering_list[e][1] = ee_scattering_list;
-    if(e % 100000 == 0 ) std::cout << ee_integration_count << ", " << ee_dos_count << ", " << ee_scattering_list << std::endl;
+   // if(e % 100000 == 0 ) std::cout << ee_integration_count << ", " << ee_dos_count << ", " << ee_scattering_list << std::endl;
   }
 
 
@@ -829,7 +829,7 @@ for(int l = 0; l < cells_per_thread; l++) {
   if (err::check) std::cout << "ee_scattering done." << std::endl;
 } 
 }
-std::cout << "max: " << m << std::endl;
+//std::cout << "max: " << m << std::endl;
 }
 } //end CASTLE namespace
 
