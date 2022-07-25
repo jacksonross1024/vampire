@@ -401,18 +401,18 @@ else std::cout << "test failed " << test << std::endl;
   old_cell_integration_lists.resize(total_cells);
 
   for(int i=0; i < total_cells; i++) {
-    cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), NAN);
-    old_cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)), NAN);
+    cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)));
+    old_cell_integration_lists[i].resize(int(8.0*double(conduction_electrons) / double(total_cells)));
     cell_integration_lists[i][0] = 1;
     old_cell_integration_lists[i][0] = 1;
   }
 
-  escaping_electrons.resize( int(160.0*double(conduction_electrons) / double(total_cells)), NAN);
+  escaping_electrons.resize( int(double(conduction_electrons) / double(total_cells)));
   escaping_electrons[0] = 1;
   lattice_cell_coordinate.resize(x_omp_cells);
   cell_lattice_coordinate.resize(total_cells);
   for(int c = 0; c < total_cells; c++) {
-    cell_lattice_coordinate[c].resize(3 , NAN);
+    cell_lattice_coordinate[c].resize(3);
   }
   int cell_count = 0;
  //     std::cout << "cell integration arrays generated." << std::endl;
@@ -434,7 +434,7 @@ else std::cout << "test failed " << test << std::endl;
   //  std::cout << "lattice coordinate arrays initiated." << std::endl;
  
   //lattice cell division
-  int current_lattice_current_end;
+  //int current_lattice_current_end;
  // #pragma omp parallel for schedule(static) private(current_lattice_current_end)
   for(int e = 0; e < conduction_electrons; e++) {
     const int array_index = 3*e;
@@ -453,7 +453,7 @@ else std::cout << "test failed " << test << std::endl;
     int(floor(electron_position[array_index] / x_step_size)) << ", " << int(floor(electron_position[array_index+1] / y_step_size)) << ", " << \
     int(floor(electron_position[array_index+2] / z_step_size)) << std::endl;
 
-    current_lattice_current_end = cell_integration_lists[omp_cell][0];
+    int current_lattice_current_end = cell_integration_lists[omp_cell][0];
 
     cell_integration_lists[omp_cell][current_lattice_current_end] = e;
     old_cell_integration_lists[omp_cell][current_lattice_current_end] = e;
@@ -465,21 +465,12 @@ else std::cout << "test failed " << test << std::endl;
             omp_cell << ", " << current_lattice_current_end << ", " << cell_integration_lists[omp_cell].size() << ", " << e << std::endl;
       
   }
-
-  //nearest neighbor omp cell integration
-      //standard fast method is the nearest neighbor list breakdown for scattering
-  
-  
-  //OpenMP integration
- 
- // std::cout << "cell integration arrays initiated." << std::endl;
-
   cell_nearest_neighbor_list.resize(total_cells);
   
 //std::cout << "are they though?" << std::endl;
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
-    cell_nearest_neighbor_list[c].resize(27, NAN); //avoid self interaction
+    cell_nearest_neighbor_list[c].resize(27); 
     const int x_cell = cell_lattice_coordinate[c][0];
     const int y_cell = cell_lattice_coordinate[c][1];
     const int z_cell = cell_lattice_coordinate[c][2];
@@ -526,18 +517,18 @@ else std::cout << "test failed " << test << std::endl;
     int omp_threads = fmin(omp_get_max_threads(), max_total_threads);
    // omp_set_num_threads(omp_threads);
     cells_per_thread = total_cells / omp_threads;
-    //std::cout << "thread count " << omp_get_max_threads() << std::endl;
+    std::cout << "thread count " << omp_threads << ", " << cells_per_thread <<  std::endl;
     lattice_cells_per_omp.resize(omp_threads);
 
-    for(int t=0;t< omp_threads;t++){
-      lattice_cells_per_omp[t].resize(cells_per_thread, NAN );
+    for(int t=0; t< omp_threads;t++){
+      lattice_cells_per_omp[t].resize(cells_per_thread);
     }
-    int omp_checkerboard_scheme = 0;
-    if(omp_threads == max_x_threads) omp_checkerboard_scheme = 1;
-    if(omp_threads == max_y_threads) omp_checkerboard_scheme = 2;
-    
+    // int omp_checkerboard_scheme = 0;
+    // if(omp_threads == max_x_threads) omp_checkerboard_scheme = 1;
+    // if(omp_threads == max_y_threads) omp_checkerboard_scheme = 2;
    // std::cout << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << ", " <<  cells_per_thread << ", " << max_x_threads << ", " << max_y_threads << ", " << max_z_threads << std::endl;
-    
+    omp_set_dynamic(0);
+       omp_set_num_threads(25);
     #pragma omp parallel 
     {
     for(int l = 0; l < cells_per_thread; l++) {
@@ -545,10 +536,10 @@ else std::cout << "test failed " << test << std::endl;
      // if(omp_get_thread_num() == 1) std::cout << omp_get_thread_num()*2 + floor(l/(2*cells_per_thread)) << ", " << l%y_omp_cells << ", " << floor(l/y_omp_cells) << std::endl;
     }
     }
-    for(int l = 0; l < 25; l++) {
+    for(int l = 0; l < omp_threads; l++) {
       for (int e = 0; e < cells_per_thread; e++) {
           int cell = lattice_cells_per_omp[l][e];
-          for(int k = 0; k < 25; k++) {
+          for(int k = 0; k < omp_threads; k++) {
             for (int j = 0; j < cells_per_thread; j++) {
               if(l == k && e == j) continue;
               if(cell == lattice_cells_per_omp[k][j]) {
@@ -570,9 +561,12 @@ else std::cout << "test failed " << test << std::endl;
     // default:
     //   break;
     // }
-      omp_set_dynamic(0);
+  /*    omp_set_dynamic(0);
        omp_set_num_threads(25);
-    #pragma omp paralell for 
+    #pragma omp paralell
+    {
+      int cell = 
+      for( int e = 1; e < size; e++) {
     for(int electron = 0; electron < conduction_electrons; electron++) {
       const int array_index = 3*electron;
       const int x_cell = int(floor(electron_position[array_index] / x_step_size));
@@ -645,8 +639,8 @@ else std::cout << "test failed " << test << std::endl;
   }
     
     std::cout << "nearest neighbor integration list complete." << std::endl;
-
-}
+*/
+} 
 //====================================
 // Creates and outputs atomic lattice
 //      Currently static lattice
@@ -697,13 +691,13 @@ void initialize_electrons() {
     // Initialize arrays for holding electron variables
     //      Arrays in super array format to take advantage of caching
     //========
-    electron_position.resize(conduction_electrons * 3, NAN); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
-    electron_velocity.resize(conduction_electrons * 3, NAN); //Angstroms
-    electron_potential.resize(conduction_electrons, NAN);
+    electron_position.resize(conduction_electrons * 3); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
+    electron_velocity.resize(conduction_electrons * 3); //Angstroms
+    electron_potential.resize(conduction_electrons);
     temp_Map.resize(8);
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
-        temp_Map[i].resize(round(conduction_electrons*0.1)+10, NAN);
+        temp_Map[i].resize(round(conduction_electrons*0.1)+10);
         // std::cout << temp_Map[i][0] << std::endl;
         // std::cout << temp_Map[i][round(conduction_electrons*0.3)-1] << std::endl;
     }
@@ -738,9 +732,9 @@ void initialize_electrons() {
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
-        electron_integration_list[e].resize(e_density,NAN);
-        electron_nearest_electron_list[e].resize(e_density,NAN);
-        electron_ee_scattering_list[e].resize(ee_scattering, NAN);
+        electron_integration_list[e].resize(e_density);
+        electron_nearest_electron_list[e].resize(e_density);
+        electron_ee_scattering_list[e].resize(ee_scattering);
         electron_ea_scattering_list[e].resize(2,0);
 
         const int array_index = 3*e;
@@ -1090,7 +1084,10 @@ void initialize_velocities() {
    
       omp_set_dynamic(0);
        omp_set_num_threads(25);
-    #pragma omp parallel for schedule(guided) 
+       p_x = 0.0;
+       p_y = 0.0;
+       p_z = 0.0;
+    #pragma omp parallel for schedule(guided) reduction(+:p_x,p_y,p_z)
     for(int e = 0; e < conduction_electrons; e++) {
       double phi,theta; //A/fS
       
@@ -1109,11 +1106,16 @@ void initialize_velocities() {
           phi = acos(sim::CASTLE_z_vector / unit);
          // if(sim::CASTLE_z_vector < 0.0) theta += M_PI;
         }
+
       
             if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
         electron_velocity[array_index]     = cos(theta)*sin(phi)*vel; 
         electron_velocity[array_index + 1] = sin(theta)*sin(phi)*vel;
         electron_velocity[array_index + 2] = cos(phi)*vel; 
+
+        p_x += electron_velocity[array_index];
+        p_y += electron_velocity[array_index+1] ;
+        p_z += electron_velocity[array_index+2] ;
     }
    // std::cout << count << std::endl;
       std::ofstream Init_E_vel;
@@ -1503,7 +1505,7 @@ void output_data() {
    
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
   for(int c = 0; c < 8; c++) {
-    for(int i = 0; i < cell_integration_lists[c][0]; i++) {
+    for(int i = 0; i < old_cell_integration_lists[c][0]; i++) {
       temp_map_list[c] << i << ", " << temp_Map[c][i] << "\n";
       temp_Map[c][i] = 0;
     }
@@ -1544,7 +1546,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << Te*Te*e_heat_capacity * 1e-20/300.0 << ", " << Tp*a_heat_capacity*1e-20 << ", "  
       << Te << ", " << Tp << ", " //<< TEKE << ", " << TLE << ", " 
-      << TTMe << ", " << TTMp << ", " <<  I << ", "
+      << TTMe << ", " << TTMp << ", " <<  I << ", " << p_x << ", " << p_y << ", " << p_z << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;
     }

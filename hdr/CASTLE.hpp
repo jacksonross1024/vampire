@@ -178,6 +178,9 @@ namespace CASTLE {
     extern int x_flux;
     extern int y_flux;
     extern int z_flux;
+    extern double p_x;
+    extern double p_y;
+    extern double p_z;
     extern int e_a_scattering_count;
     extern int e_e_scattering_count;
 

@@ -319,7 +319,7 @@ namespace sim{
       test = "ee-scattering-angle";
       if(word == test) {
          double a = atof(value.c_str());
-         vin::check_for_valid_value(a, word, line, prefix, unit, "radian", 0.0, M_PI, "input", "0 to M_PI, default = 0.1");
+         vin::check_for_valid_value(a, word, line, prefix, unit, "2pi radian", 0.0, 1.0, "input", "0 to 1.0, default = 0.1");
          sim::ee_scattering_angle = a;
          return true;
       }

@@ -284,6 +284,9 @@ namespace CASTLE {
    int x_flux;
    int y_flux;
    int z_flux;
+   double p_x;
+   double p_y;
+   double p_z;
    int e_a_scattering_count;
    int e_e_scattering_count;
 
