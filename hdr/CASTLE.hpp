@@ -240,6 +240,8 @@ namespace CASTLE {
     extern void ea_scattering(const int e, const int array_index);
     extern void ee_scattering();
 
+    extern int ee_inelastic(const int electron, const int electron_collision, const double deltaE);
+    extern int ee_elestic(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
     extern double M_B_distrib(const double& epsilon, const double& beta);
     extern double B_E_distrib(const double& epsilon);
     extern void create_phonon_distribution(std::vector<double>& distribution, const double& beta);

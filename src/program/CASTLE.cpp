@@ -1114,8 +1114,8 @@ void initialize_velocities() {
         electron_velocity[array_index + 2] = cos(phi)*vel; 
 
         p_x += electron_velocity[array_index];
-        p_y += electron_velocity[array_index+1] ;
-        p_z += electron_velocity[array_index+2] ;
+        p_y += electron_velocity[array_index+1];
+        p_z += electron_velocity[array_index+2];
     }
    // std::cout << count << std::endl;
       std::ofstream Init_E_vel;
