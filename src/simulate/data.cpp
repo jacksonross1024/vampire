@@ -163,6 +163,7 @@ namespace sim{
 namespace CASTLE {
 
      // input and material parameters
+   int  omp_threads = 1;
    bool CASTLE_program;
    bool CASTLE_output_data; //output position and velocity data
    bool equilibrium_step;
@@ -266,8 +267,8 @@ namespace CASTLE {
 
    MTRand_closed uniform_random;
    MTRand_int32 int_random;
-   std::vector<MTRand_closed> omp_uniform_random;
-   std::vector<MTRand_int32> omp_int_random;
+    std::vector<MTRand_closed> omp_uniform_random(25);
+    std::vector<MTRand_int32> omp_int_random(25);
    //std::vector<MTRand> omp_gaussian_random(omp_get_num_threads());
     //outputs
    

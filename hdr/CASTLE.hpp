@@ -56,6 +56,7 @@
 namespace CASTLE {
 
     // input variables
+    extern int  omp_threads;
     extern bool CASTLE_program;
     extern bool CASTLE_output_data; //output position and velocity data
     
