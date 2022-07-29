@@ -1109,6 +1109,7 @@ void initialize_velocities() {
         } else {
           const double unit = sqrt((sim::CASTLE_x_vector*sim::CASTLE_x_vector)+(sim::CASTLE_y_vector*sim::CASTLE_y_vector)+(sim::CASTLE_z_vector*sim::CASTLE_z_vector));
           theta = atan2(sim::CASTLE_y_vector , sim::CASTLE_x_vector);
+            if(sim::CASTLE_y_vector == sim::CASTLE_x_vector == 0.0) theta = 0.0;
           phi = acos(sim::CASTLE_z_vector / unit);
          // if(sim::CASTLE_z_vector < 0.0) theta += M_PI;
         }
@@ -1506,30 +1507,28 @@ void output_data() {
     }
     }  
 // std::cout << "histograms made" << std::endl;
-  omp_set_dynamic(0);
-       omp_set_num_threads(10);
+
    
     //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
   for(int c = 0; c < 8; c++) {
-    for(int i = 0; i < old_cell_integration_lists.at(c).at(0); i++) {
+    for(int i = 0; i < old_cell_integration_lists.at(c).at(0)-1; i++) {
       temp_map_list.at(c) << i << ", " << temp_Map.at(c).at(i) << "\n";
       temp_Map.at(c).at(i) = 0;
     }
     temp_map_list.at(c).close();
   }
-      // std::ofstream E_vel;
-      // E_vel.open("velocity/"+time_stamp);
-      // for(int e = 0; e<conduction_electrons; e++) {
-      //   E_vel <<  e << ", " << electron_potential.at(e) << ", " << electron_velocity.at(3*e) << ", " << electron_velocity.at(3*e+1) << ", " << electron_velocity.at(3*e+2) << "\n";
-      // }
-      // E_vel.close();
-  
-      // std::ofstream E_pos;
-      // E_pos.open("position/"+time_stamp);
-      // for(int e = 0; e<conduction_electrons; e++) {
-      //   E_pos <<  e << ", " << electron_potential.at(e) << ", " << electron_position.at(3*e) << ", " << electron_position.at(3*e+1) << ", " << electron_position.at(3*e+2) << "\n";
-      // }
-      // E_pos.close();
+      std::ofstream E_vel;
+      E_vel.open("velocity/"+time_stamp);
+      for(int e = 0; e<conduction_electrons; e++) {
+        E_vel <<  e << ", " << electron_potential.at(e) << ", " << electron_velocity.at(3*e) << ", " << electron_velocity.at(3*e+1) << ", " << electron_velocity.at(3*e+2) << "\n";
+      }
+      E_vel.close();
+      std::ofstream E_pos;
+      E_pos.open("position/"+time_stamp);
+      for(int e = 0; e<conduction_electrons; e++) {
+        E_pos <<  e << ", " << electron_potential.at(e) << ", " << electron_position.at(3*e) << ", " << electron_position.at(3*e+1) << ", " << electron_position.at(3*e+2) << "\n";
+      }
+      E_pos.close();
 
 
       std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 

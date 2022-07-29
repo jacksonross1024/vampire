@@ -821,16 +821,18 @@ int ee_inelastic(const int electron, const int electron_collision, const double 
     
       const int array_index = 3*electron;
       const int array_index_i = 3*electron_collision;
-      const double theta = 4.0*M_PI*(omp_uniform_random.at(omp_get_thread_num())() - 0.5);
-      const double phi = 2.0*M_PI*(omp_uniform_random.at(omp_get_thread_num())() - 0.5);
-      
+       double theta = 2.0*M_PI*omp_uniform_random.at(omp_get_thread_num())();
+       double phi = M_PI*omp_uniform_random.at(omp_get_thread_num())();
+
       const double v_1 = sqrt(2.0*constants::m_e_r_i*electron_potential.at(electron));
-      const double v_2 = -1.0*sqrt(2.0*constants::m_e_r_i*electron_potential.at(electron_collision));
+      const double v_2 = sqrt(2.0*constants::m_e_r_i*electron_potential.at(electron_collision));
 
       electron_velocity.at(array_index)   = v_1*cos(theta)*sin(phi);
       electron_velocity.at(array_index+1) = v_1*sin(theta)*sin(phi);
       electron_velocity.at(array_index+2) = v_1*cos(phi);
 
+       theta = 2.0*M_PI*omp_uniform_random.at(omp_get_thread_num())();
+        phi = M_PI*omp_uniform_random.at(omp_get_thread_num())();
       electron_velocity.at(array_index_i)   = v_2*cos(theta)*sin(phi);
       electron_velocity.at(array_index_i+1) = v_2*sin(theta)*sin(phi);
       electron_velocity.at(array_index_i+2) = v_2*cos(phi);
