@@ -469,7 +469,8 @@ else std::cout << "test failed " << test << std::endl;
       
   }
   cell_nearest_neighbor_list.resize(total_cells);
-  
+  std::vector<int> spiral_cell_counter;
+  spiral_cell_counter.resize(total_cells, 0);
 //std::cout << "are they though?" << std::endl;
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
@@ -498,13 +499,20 @@ else std::cout << "test failed " << test << std::endl;
       if(cell_spiral_zmod < 0) cell_spiral_zmod = z_omp_cells - 1;
       else if (cell_spiral_zmod > z_omp_cells-1) cell_spiral_zmod = 0;
          // if(s == 0) std::cout << "," << cell_spiral_zmod << ">" << std::endl;
-    
-      cell_nearest_neighbor_list.at(c).at(s) = lattice_cell_coordinate.at(cell_spiral_xmod).at(cell_spiral_ymod).at(cell_spiral_zmod);
 
+      int cell = lattice_cell_coordinate.at(cell_spiral_xmod).at(cell_spiral_ymod).at(cell_spiral_zmod);
+      cell_nearest_neighbor_list.at(c).at(s) = cell;
+      spiral_cell_counter[cell]++;
       //if(s == 13) std::cout << cell_nearest_neighbor_list.at(c).at(s) << ", " << c << ", " << x_cell << ", " << y_cell << ", " << z_cell << std::endl;
    
     }
   }
+
+  for(int c = 0; c < total_cells; c++) {
+    if(spiral_cell_counter[c] != 27) std::cout << "spiral cell error on cell " << c << " with " << spiral_cell_counter[c] << std::endl;
+  }
+  
+  
    // std::cout << "spiral integration coordiantes initialized." << std::endl;
 
       omp_set_dynamic(0);
