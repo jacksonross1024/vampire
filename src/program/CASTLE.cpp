@@ -38,7 +38,7 @@ void create() {
 
     stopwatch_t castle_watch;
     castle_watch.start();
-     omp_threads = 25;
+     omp_threads = 32;
     equilibrium_step = true;
     //========
     // Initialize the lattice, electrons, and starting forces
@@ -47,7 +47,7 @@ void create() {
        omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
       #pragma omp parallel 
-            if(omp_get_thread_num() == 24) std::cout << "OpenMP capability detected. Parallelizing integration for " << omp_get_thread_num() <<  " threads" << std::endl;
+            if(omp_get_thread_num() == omp_threads-1) std::cout << "OpenMP capability detected. Parallelizing integration for " << omp_get_thread_num() +1<<  " threads" << std::endl;
         
     initialize();
     
@@ -278,9 +278,9 @@ void initialize () {
     //========
     // Initialzie variables used by all functions
     //========
-    lattice_height = cs::system_dimensions[0] + x_unit_size; //A
-    lattice_width  = cs::system_dimensions[1] + y_unit_size; // A
-    lattice_depth  = cs::system_dimensions[2] + z_unit_size; // A
+    lattice_width = cs::system_dimensions[0] + x_unit_size; //A
+    lattice_depth  = cs::system_dimensions[1] + y_unit_size; // A
+    lattice_height  = cs::system_dimensions[2] + z_unit_size; // A
 
     if( lattice_height < 26 || lattice_depth < 26 || lattice_width < 26) {
       std::cerr << "Lattice dimension Error: castle must be 4.5x4.5x4.5 nm^3 minimum" << std::endl;
@@ -369,7 +369,7 @@ void initialize () {
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
     
-  std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << 8.0*double(conduction_electrons) / double(total_cells) << ", maximum integration list size: " << electron_integration_list.at(0).size() << std::endl;
+  std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists.at(0).size() << ", maximum integration list size: " << electron_integration_list.at(0).size() << std::endl;
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog. data" << std::endl;
@@ -418,10 +418,10 @@ else std::cout << "test failed " << test << std::endl;
     cell_lattice_coordinate.at(c).resize(3);
   }
   int cell_count = 0;
- //     std::cout << "cell integration arrays generated." << std::endl;
+      std::cout << "cell integration arrays generated." << std::endl;
 
   //omp lattice coordinates map
-  for(int i =0; i < x_omp_cells; i++) {
+  for(int i = 0; i < x_omp_cells; i++) {
     lattice_cell_coordinate.at(i).resize(y_omp_cells);
     for(int k = 0; k < y_omp_cells; k++) {
       lattice_cell_coordinate.at(i).at(k).resize(z_omp_cells);
@@ -434,28 +434,40 @@ else std::cout << "test failed " << test << std::endl;
       }
     }
   }
-  //  std::cout << "lattice coordinate arrays initiated." << std::endl;
+    std::cout << "lattice coordinate arrays initiated." << std::endl;
  
   //lattice cell division
   //int current_lattice_current_end;
  // #pragma omp parallel for schedule(static) private(current_lattice_current_end)
   for(int e = 0; e < conduction_electrons; e++) {
     const int array_index = 3*e;
-    const int x_cell = int(floor(electron_position.at(array_index) / x_step_size));
+     int x_cell = int(floor(electron_position.at(array_index) / x_step_size));
       //if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position.at(array_index) << ", " << x_step_size << ", " << floor(electron_position.at(array_index) / x_step_size) << std::endl;
 
-    const int y_cell = int(floor(electron_position.at(array_index+1) / y_step_size));
+     int y_cell = int(floor(electron_position.at(array_index+1) / y_step_size));
       //if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position.at(array_index+1) << ", " << y_step_size << ", " << floor(electron_position.at(array_index+1) / y_step_size) << std::endl;
     
-    const int z_cell = int(floor(electron_position.at(array_index+2) / z_step_size));
+     int z_cell = int(floor(electron_position.at(array_index+2) / z_step_size));
       //if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position.at(array_index+2) << ", " << z_step_size << ", " << floor(electron_position.at(array_index+2) / z_step_size) << std::endl;
     
-    const int omp_cell = lattice_cell_coordinate.at(x_cell).at(y_cell).at(z_cell); 
+   
 
+    
     if(x_cell != x_cell || y_cell != y_cell || z_cell != z_cell) std::cout << x_cell << ", " << y_cell << ", " << z_cell << ", " <<\
     int(floor(electron_position.at(array_index) / x_step_size)) << ", " << int(floor(electron_position.at(array_index+1) / y_step_size)) << ", " << \
     int(floor(electron_position.at(array_index+2) / z_step_size)) << std::endl;
 
+       if(x_cell >= x_omp_cells || y_cell >= y_omp_cells || z_cell >= z_omp_cells) {std::cout << "cell sorting for ee integration exceeds bounds " << \
+      x_cell << ", " << y_cell << ", " << z_cell << std::endl;
+      x_cell --;
+      y_cell --;
+      z_cell --; }
+          if(x_cell < 0 || y_cell < 0 || z_cell < 0) {std::cout << "cell sorting for ee integration less than zero " << \
+      x_cell << ", " << y_cell << ", " << z_cell << std::endl;
+      x_cell = 0;
+      y_cell = 0;
+      z_cell = 0; }
+     const int omp_cell = lattice_cell_coordinate.at(x_cell).at(y_cell).at(z_cell); 
     int current_lattice_current_end = cell_integration_lists.at(omp_cell).at(0);
 
     cell_integration_lists.at(omp_cell).at(current_lattice_current_end) = e;
@@ -471,7 +483,7 @@ else std::cout << "test failed " << test << std::endl;
   cell_nearest_neighbor_list.resize(total_cells);
   std::vector<int> spiral_cell_counter;
   spiral_cell_counter.resize(total_cells, 0);
-//std::cout << "are they though?" << std::endl;
+  std::cout << "electrons in cells" << std::endl;
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
     cell_nearest_neighbor_list.at(c).resize(27); 
@@ -513,12 +525,12 @@ else std::cout << "test failed " << test << std::endl;
   }
   
   
-   // std::cout << "spiral integration coordiantes initialized." << std::endl;
+    std::cout << "spiral integration coordiantes initialized." << std::endl;
 
       omp_set_dynamic(0);
-       omp_set_num_threads(omp_threads);
+      omp_set_num_threads(omp_threads);
 
-   // std::cout << "Initiating checkerboard omp parallelisation scheme" << std::endl;
+  
 
     int max_x_threads = x_omp_cells / 2;
     int max_y_threads = y_omp_cells / 2;
@@ -528,7 +540,7 @@ else std::cout << "test failed " << test << std::endl;
     int omp_threads = fmin(omp_get_max_threads(), max_total_threads);
    // omp_set_num_threads(omp_threads);
     cells_per_thread = total_cells / omp_threads;
-    std::cout << "thread count " << omp_threads << ", " << cells_per_thread <<  std::endl;
+    std::cout << "thread count " << omp_threads << ", " << cells_per_thread << ", " << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << std::endl;
     lattice_cells_per_omp.resize(omp_threads);
 
     for(int t=0; t< omp_threads;t++){
@@ -540,10 +552,12 @@ else std::cout << "test failed " << test << std::endl;
    // std::cout << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << ", " <<  cells_per_thread << ", " << max_x_threads << ", " << max_y_threads << ", " << max_z_threads << std::endl;
     omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
-    #pragma omp parallel 
+    #pragma omp parallel
     {
     for(int l = 0; l < cells_per_thread; l++) {
-      lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at(floor(omp_get_thread_num()*2/x_omp_cells)*2 + l%2).at(int(floor(l/2)) % z_omp_cells);
+      // #pragma omp critical
+      // std::cout << omp_get_thread_num() << ", " << (omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells) << ", " << (int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%(y_omp_cells)) + int(floor(l/(z_omp_cells/2)))%2 << ", " << 4*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)) << std::endl;
+      lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)));
      // if(omp_get_thread_num() == 1) std::cout << omp_get_thread_num()*2 + floor(l/(2*cells_per_thread)) << ", " << l%y_omp_cells << ", " << floor(l/y_omp_cells) << std::endl;
     }
     }
@@ -555,12 +569,13 @@ else std::cout << "test failed " << test << std::endl;
               if(l == k && e == j) continue;
               if(cell == lattice_cells_per_omp.at(k).at(j)) {
                 std::cout << "double counting of cells" << std::endl;
-                std::cout << cell << " at" << l << ", " << e << "; " << lattice_cells_per_omp.at(k).at(j) << " at " << k << ", " << j << std::endl;
+                std::cout << cell << " at " << l << ", " << e << "; " << lattice_cells_per_omp.at(k).at(j) << " at " << k << ", " << j << std::endl;
               }
             }
           }
       }
     }
+      std::cout << " checkerboard omp parallelisation scheme tested" << std::endl;
     // switch (omp_checkerboard_scheme)
     // {
     // case omp_checkerboard_scheme==1:    
@@ -716,12 +731,12 @@ void initialize_electrons() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 10.0;
+    e_e_neighbor_cutoff = 100.0;
     
     half_int_var =  5;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 10;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
-    e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
+   // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 18.0*18.0;
     e_e_coulomb_cutoff = 9.0;
     
@@ -737,7 +752,7 @@ void initialize_electrons() {
     const int e_density =   2*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     const int ee_density =  5*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
     const int ee_scattering= 50+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 2.0*n_f * 1e-30));
-//std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
+std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
     #pragma omp parallel for schedule(static) 

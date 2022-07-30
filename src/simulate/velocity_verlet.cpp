@@ -82,7 +82,7 @@ void update_position(){
     const int size = old_cell_integration_lists.at(cell).at(0);
    // cell_integration_lists.at(cell).at(0) = 1;
 
-    if((current_time_step % half_int_var) == 0 && (l % z_omp_cells )== 0) {
+    if((current_time_step % half_int_var) == 0 && (l % (z_omp_cells/2 ))== 0) {
       #pragma omp barrier
     }
     
@@ -150,11 +150,11 @@ void update_position(){
           const int omp_cell = lattice_cell_coordinate.at(x_cell).at(y_cell).at(z_cell);
           
           if ((abs(x_cell - cell_lattice_coordinate.at(cell).at(0)) > 1 &&\
-              abs(x_cell - cell_lattice_coordinate.at(cell).at(0)) <= 8) ||
+              abs(x_cell - cell_lattice_coordinate.at(cell).at(0)) <= 6) ||
              (abs(y_cell - cell_lattice_coordinate.at(cell).at(1)) > 1  &&\
-              abs(y_cell - cell_lattice_coordinate.at(cell).at(1)) <= 8) ||\
+              abs(y_cell - cell_lattice_coordinate.at(cell).at(1)) <= 6) ||\
              (abs(z_cell - cell_lattice_coordinate.at(cell).at(2)) > 1  &&\
-              abs(z_cell - cell_lattice_coordinate.at(cell).at(2)) <= 8) ) {
+              abs(z_cell - cell_lattice_coordinate.at(cell).at(2)) <= 12) ) {
             #pragma omp critical(halo)
             {
             escaping_electrons.at(escaping_electrons.at(0)) = electron;
@@ -744,7 +744,7 @@ void ee_scattering() {
     const int cell = lattice_cells_per_omp.at(omp_get_thread_num()).at(l);
     const int size = cell_integration_lists.at(cell).at(0);
  
-    if(l % z_omp_cells == 0) {
+    if(l % (z_omp_cells/2) == 0) {
       #pragma omp barrier 
     }
     for(int e = 1; e < size; e++) {
