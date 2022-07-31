@@ -561,19 +561,17 @@ else std::cout << "test failed " << test << std::endl;
      // if(omp_get_thread_num() == 1) std::cout << omp_get_thread_num()*2 + floor(l/(2*cells_per_thread)) << ", " << l%y_omp_cells << ", " << floor(l/y_omp_cells) << std::endl;
     }
     }
+    std::vector<int> cell_check;
+    cell_check.resize(total_cells, 0);
+
     for(int l = 0; l < omp_threads; l++) {
       for (int e = 0; e < cells_per_thread; e++) {
-          int cell = lattice_cells_per_omp.at(l).at(e);
-          for(int k = 0; k < omp_threads; k++) {
-            for (int j = 0; j < cells_per_thread; j++) {
-              if(l == k && e == j) continue;
-              if(cell == lattice_cells_per_omp.at(k).at(j)) {
-                std::cout << "double counting of cells" << std::endl;
-                std::cout << cell << " at " << l << ", " << e << "; " << lattice_cells_per_omp.at(k).at(j) << " at " << k << ", " << j << std::endl;
-              }
-            }
-          }
+          cell_check[lattice_cells_per_omp.at(l).at(e)]++;
       }
+    }
+    for(int c = 0; c < total_cells-1; c++) {
+      if(cell_check[c] == cell_check[c+1] == 1 ) continue;
+      std::cout << "unintegrated cell: " << cell_check[c] << ", " << cell_check[c+1] << std::endl;
     }
       std::cout << " checkerboard omp parallelisation scheme tested" << std::endl;
     // switch (omp_checkerboard_scheme)
@@ -723,7 +721,7 @@ void initialize_electrons() {
     temp_Map.resize(8);
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
-        temp_Map.at(i).resize(round(conduction_electrons*0.1)+10);
+        temp_Map.at(i).resize(round(conduction_electrons*0.1)+10,0);
         // std::cout << temp_Map.at(i).at(0) << std::endl;
         // std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
     }
