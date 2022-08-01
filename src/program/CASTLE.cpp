@@ -38,7 +38,7 @@ void create() {
 
     stopwatch_t castle_watch;
     castle_watch.start();
-     omp_threads = 32;
+     omp_threads = 1;
     equilibrium_step = true;
     //========
     // Initialize the lattice, electrons, and starting forces
@@ -537,7 +537,7 @@ else std::cout << "test failed " << test << std::endl;
     int max_z_threads = z_omp_cells / 2;
 
     int max_total_threads = max_x_threads * max_y_threads * max_z_threads;
-    int omp_threads = fmin(omp_get_max_threads(), max_total_threads);
+    
    // omp_set_num_threads(omp_threads);
     cells_per_thread = total_cells / omp_threads;
     std::cout << "thread count " << omp_threads << ", " << cells_per_thread << ", " << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << std::endl;
@@ -552,14 +552,20 @@ else std::cout << "test failed " << test << std::endl;
    // std::cout << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << ", " <<  cells_per_thread << ", " << max_x_threads << ", " << max_y_threads << ", " << max_z_threads << std::endl;
     omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
-    #pragma omp parallel
-    {
-    for(int l = 0; l < cells_per_thread; l++) {
+    // #pragma omp parallel
+    // {
+    // for(int l = 0; l < cells_per_thread; l++) {
+    //   // #pragma omp critical
+    //    std::cout << omp_get_thread_num() << ", " << (omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells) << ", " << (int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%(y_omp_cells)) + int(floor(l/(z_omp_cells/2)))%2 << ", " << 4*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)) << std::endl;
+    //   lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)));
+    //  // if(omp_get_thread_num() == 1) std::cout << omp_get_thread_num()*2 + floor(l/(2*cells_per_thread)) << ", " << l%y_omp_cells << ", " << floor(l/y_omp_cells) << std::endl;
+    // }
+    // }
+     for(int l = 0; l < cells_per_thread; l++) {
       // #pragma omp critical
       // std::cout << omp_get_thread_num() << ", " << (omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells) << ", " << (int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%(y_omp_cells)) + int(floor(l/(z_omp_cells/2)))%2 << ", " << 4*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)) << std::endl;
-      lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)));
+      lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = l;//lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)));
      // if(omp_get_thread_num() == 1) std::cout << omp_get_thread_num()*2 + floor(l/(2*cells_per_thread)) << ", " << l%y_omp_cells << ", " << floor(l/y_omp_cells) << std::endl;
-    }
     }
     std::vector<int> cell_check;
     cell_check.resize(total_cells, 0);
