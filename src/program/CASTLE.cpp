@@ -699,7 +699,7 @@ void initialize_lattice() {
 // Function call to initialize basic electron structures
 //      Will set up lattice and conduction electrons and velocites
 //      Any additional features, e.g. spin, will need to be added here through function calls
-//====================================./
+//====================================
 void initialize_electrons() {
 
     // char directory .at(omp_threads6);
@@ -1279,8 +1279,9 @@ double return_phonon_distribution(const double epsilon, const double beta)
 }
 
 
+
+
 /*
-double e_a_scattering(int e, int a, const double& l_x, const double& l_y, const double& l_z) {
 
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -1438,7 +1439,7 @@ void output_data() {
     // Output equilibration step data
     //=========
 
-    if((current_time_step % (CASTLE_output_rate * CASTLE_MD_rate)) == 0) {
+ /*   if((current_time_step % (CASTLE_output_rate * CASTLE_MD_rate)) == 0) {
       time_stamp = std::to_string(current_time_step);
     
       char directory [256];
@@ -1551,9 +1552,9 @@ void output_data() {
       }
       E_pos.close();
 
-
+ */
       std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
-    }
+    
     mean_data.precision(10);
     mean_data << std::scientific;
 
