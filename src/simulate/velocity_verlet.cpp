@@ -108,11 +108,9 @@ void update_position(){
         x_pos += electron_velocity.at(array_index)   * dt;// + (electron_force.at(array_index)   * dt * dt * constants::K_A / 2); // x superarray component
         y_pos += electron_velocity.at(array_index+1) * dt;// + (electron_force.at(array_index_y) * dt * dt * constants::K_A / 2); // y superarray component
         z_pos += electron_velocity.at(array_index+2) * dt;// + (electron_force.at(array_index_z) * dt * dt * constants::K_A / 2); // z superarray component
-        
-    
 
         if (x_pos != x_pos || y_pos != y_pos || z_pos != z_pos) std::cout << "update pos " << x_pos << ", " << y_pos << ", " << z_pos << ", " << \
-      electron_position.at(array_index) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index+2) << ", " << electron << ", " << array_index << ", " << dt << std::endl;
+         electron_position.at(array_index) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index+2) << ", " << electron << ", " << array_index << ", " << dt << std::endl;
       
         if (x_pos < 0.0) {x_pos += lattice_width; x_flux--;}
         else if (x_pos > lattice_width) {x_pos -= lattice_width; x_flux++;}
@@ -129,8 +127,10 @@ void update_position(){
         electron_position.at(array_index)   = x_pos;
         electron_position.at(array_index+1) = y_pos;
         electron_position.at(array_index+2) = z_pos;
+        }
       }
-
+    }
+    }
       if(current_time_step % half_int_var == 0) {
 
            int x_cell = int(floor(x_pos / x_step_size));
@@ -174,9 +174,9 @@ void update_position(){
             if(cell_integration_lists.at(cell).at(0) >= cell_integration_lists.at(cell).size() - 1) std::cerr << "too big? " << cell_integration_lists.at(cell).at(0) << " > " << cell_integration_lists.at(cell).size() << std::endl;
            }
       }
-    }
-  }
-  }
+}
+  
+  
 
   if(current_time_step % half_int_var == 0) {
     const unsigned int size = escaping_electrons.at(0);
@@ -266,7 +266,7 @@ void update_dynamics() {
        std::cout << current_time_step << "; integration and ea scattering updated " << std::endl;
     ee_scattering();
        std::cout << current_time_step << "; ee scattering updated " << std::endl;
-       
+
   Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
   if(Te > 1.0) Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt*300.0/Te);
   else         Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons)    + (e_heat_capacity_i*pump*dt*300.0);
