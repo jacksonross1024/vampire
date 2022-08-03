@@ -128,9 +128,7 @@ void update_position(){
         electron_position.at(array_index+1) = y_pos;
         electron_position.at(array_index+2) = z_pos;
         }
-      }
-    }
-    }
+    
       if(current_time_step % half_int_var == 0) {
 
            int x_cell = int(floor(x_pos / x_step_size));
@@ -156,7 +154,7 @@ void update_position(){
              (abs(y_cell - cell_lattice_coordinate.at(cell).at(1)) > 1  &&\
               abs(y_cell - cell_lattice_coordinate.at(cell).at(1)) <= (y_omp_cells-2)) ||\
              (abs(z_cell - cell_lattice_coordinate.at(cell).at(2)) > 1  &&\
-              abs(z_cell - cell_lattice_coordinate.at(cell).at(2)) <= (z_omp_cells-2) ) {
+              abs(z_cell - cell_lattice_coordinate.at(cell).at(2)) <= (z_omp_cells-2) )) {
             #pragma omp critical(halo)
             {
             escaping_electrons.at(escaping_electrons.at(0)) = electron;
@@ -174,11 +172,10 @@ void update_position(){
             if(cell_integration_lists.at(cell).at(0) >= cell_integration_lists.at(cell).size() - 1) std::cerr << "too big? " << cell_integration_lists.at(cell).at(0) << " > " << cell_integration_lists.at(cell).size() << std::endl;
            }
       }
-}
-  
-  
-
-  if(current_time_step % half_int_var == 0) {
+    }
+  }
+  }
+      if(current_time_step % half_int_var == 0) {
     const unsigned int size = escaping_electrons.at(0);
    // std::cout << "escaping electrons " << size-1 << ", " << escaping_electrons.size() << std::endl;
     
