@@ -404,8 +404,8 @@ else std::cout << "test failed " << test << std::endl;
   old_cell_integration_lists.resize(total_cells);
 
   for(int i=0; i < total_cells; i++) {
-    cell_integration_lists.at(i).resize(int(8.0*double(conduction_electrons) / double(total_cells)));
-    old_cell_integration_lists.at(i).resize(int(8.0*double(conduction_electrons) / double(total_cells)));
+    cell_integration_lists.at(i).resize(int(8.0*double(conduction_electrons) / double(total_cells)), 0);
+    old_cell_integration_lists.at(i).resize(int(8.0*double(conduction_electrons) / double(total_cells)), 0);
     cell_integration_lists.at(i).at(0) = 1;
     old_cell_integration_lists.at(i).at(0) = 1;
   }
