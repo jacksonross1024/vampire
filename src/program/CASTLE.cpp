@@ -38,7 +38,7 @@ void create() {
 
     stopwatch_t castle_watch;
     castle_watch.start();
-     omp_threads = 1;
+     omp_threads = 32;
     equilibrium_step = true;
     //========
     // Initialize the lattice, electrons, and starting forces
@@ -308,7 +308,7 @@ void initialize () {
     a_heat_capacity = 1e-27*a_specific_heat * n_f; //AJ/K/particle .at() AJ/K/nm**3
     a_heat_capacity_i = 1.0 / a_heat_capacity;
 
-    e_specific_heat = constants::kB_r*3.0/10.0; // gamma; //AJ/K**2/e- 
+    e_specific_heat = constants::kB_r*3.0/1.0; // gamma; //AJ/K**2/e- 
     e_specific_heat_i = 1.0 / e_specific_heat;
     e_heat_capacity = 1e-27*e_specific_heat * n_f; //AJ/K**2/e- -> .at(e-/m**3) -> AJ/K**2/nm**3
     e_heat_capacity_i = 1.0 / e_heat_capacity;
@@ -552,21 +552,16 @@ else std::cout << "test failed " << test << std::endl;
    // std::cout << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << ", " <<  cells_per_thread << ", " << max_x_threads << ", " << max_y_threads << ", " << max_z_threads << std::endl;
     omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
-    // #pragma omp parallel
-    // {
-    // for(int l = 0; l < cells_per_thread; l++) {
-    //   // #pragma omp critical
-    //    std::cout << omp_get_thread_num() << ", " << (omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells) << ", " << (int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%(y_omp_cells)) + int(floor(l/(z_omp_cells/2)))%2 << ", " << 4*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)) << std::endl;
-    //   lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)));
-    //  // if(omp_get_thread_num() == 1) std::cout << omp_get_thread_num()*2 + floor(l/(2*cells_per_thread)) << ", " << l%y_omp_cells << ", " << floor(l/y_omp_cells) << std::endl;
-    // }
-    // }
-     for(int l = 0; l < cells_per_thread; l++) {
+    #pragma omp parallel
+    {
+    for(int l = 0; l < cells_per_thread; l++) {
       // #pragma omp critical
       // std::cout << omp_get_thread_num() << ", " << (omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells) << ", " << (int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%(y_omp_cells)) + int(floor(l/(z_omp_cells/2)))%2 << ", " << 4*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)) << std::endl;
-      lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = l;//lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)));
-     // if(omp_get_thread_num() == 1) std::cout << omp_get_thread_num()*2 + floor(l/(2*cells_per_thread)) << ", " << l%y_omp_cells << ", " << floor(l/y_omp_cells) << std::endl;
+      lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)));
+      //lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = l;  
     }
+    }
+
     std::vector<int> cell_check;
     cell_check.resize(total_cells, 0);
 
@@ -579,6 +574,33 @@ else std::cout << "test failed " << test << std::endl;
       if(cell_check[c] == cell_check[c+1] == 1 ) continue;
       std::cout << "unintegrated cell: " << cell_check[c] << ", " << cell_check[c+1] << std::endl;
     }
+
+        omp_set_dynamic(0);
+       omp_set_num_threads(omp_threads);
+   
+  std::vector<int> x_comp;
+  std::vector<int> y_comp;
+  std::vector<int> z_comp;
+  x_comp.resize(omp_threads);
+  y_comp.resize(omp_threads);
+  z_comp.resize(omp_threads);
+
+  for (int c = 0; c < cells_per_thread; c++) {
+    for(int l = 0; l < omp_threads; l++) {
+      int current_cell = lattice_cells_per_omp.at(l).at(c);
+      int current_x = cell_lattice_coordinate.at(current_cell).at(0);
+      int current_y = cell_lattice_coordinate.at(current_cell).at(1);
+      int current_z = cell_lattice_coordinate.at(current_cell).at(2);
+
+      x_comp[l] = current_x;
+      y_comp[l] = current_y;
+      z_comp[l] = current_z;
+    }
+    for(int l = 0; l < omp_threads-1; l++) {
+      if(abs(x_comp[l] - x_comp[l+1]) < 1 && abs(y_comp[l] - y_comp[l+1]) < 1) std::cout << x_comp[l] << ", " << x_comp[l+1] << ", " << y_comp[l] << ", " << y_comp[l+1] << ", " << l << ", " << l+1 << std::endl;
+      if(abs(z_comp[l] - z_comp[l+1]) < 1 && y_comp[l] == y_comp[l+1] && x_comp[l] == x_comp[l+1]) std::cout <<  z_comp[l] << ", " <<  z_comp[l+1] << ", " << l << ", " << l+1 << std::endl;
+    }
+  }
       std::cout << " checkerboard omp parallelisation scheme tested" << std::endl;
     // switch (omp_checkerboard_scheme)
     // {
@@ -1445,7 +1467,7 @@ void output_data() {
     // Output equilibration step data
     //=========
 
- /*   if((current_time_step % (CASTLE_output_rate * CASTLE_MD_rate)) == 0) {
+    if((current_time_step % (CASTLE_output_rate * CASTLE_MD_rate)) == 0) {
       time_stamp = std::to_string(current_time_step);
     
       char directory [256];
@@ -1492,11 +1514,11 @@ void output_data() {
    // std::cout << "data processing omp histograms; cell: " << cell << "; " << size << "; step size: " << step_size << std::endl;
     
     for(int e = 1; e < old_cell_integration_lists.at(omp_get_thread_num()).at(0); e++) {
-      const int electron = cell_integration_lists.at(omp_get_thread_num()).at(e);
-      const int array_index = 3*electron;
+      const unsigned int electron = cell_integration_lists.at(omp_get_thread_num()).at(e);
+      const unsigned int array_index = 3*electron;
 
       //const double velocity_length = ;
-      const int hist = int(fmin(conduction_electrons*0.01, fmax(0.0, floor((electron_potential.at(electron) - 0.9817*E_f_A)/step_size))));
+      const unsigned int hist = int(fmin(conduction_electrons*0.01, fmax(0.0, floor((electron_potential.at(electron) - 0.9817*E_f_A)/step_size))));
       temp_Map.at(omp_get_thread_num()).at(hist)++;
       
      // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
@@ -1545,22 +1567,21 @@ void output_data() {
     }
     temp_map_list.at(c).close();
   }
-      std::ofstream E_vel;
-      E_vel.open("velocity/"+time_stamp);
-      for(int e = 0; e<conduction_electrons; e++) {
-        E_vel <<  e << ", " << electron_potential.at(e) << ", " << electron_velocity.at(3*e) << ", " << electron_velocity.at(3*e+1) << ", " << electron_velocity.at(3*e+2) << "\n";
-      }
-      E_vel.close();
-      std::ofstream E_pos;
-      E_pos.open("position/"+time_stamp);
-      for(int e = 0; e<conduction_electrons; e++) {
-        E_pos <<  e << ", " << electron_potential.at(e) << ", " << electron_position.at(3*e) << ", " << electron_position.at(3*e+1) << ", " << electron_position.at(3*e+2) << "\n";
-      }
-      E_pos.close();
+      // std::ofstream E_vel;
+      // E_vel.open("velocity/"+time_stamp);
+      // for(int e = 0; e<conduction_electrons; e++) {
+      //   E_vel <<  e << ", " << electron_potential.at(e) << ", " << electron_velocity.at(3*e) << ", " << electron_velocity.at(3*e+1) << ", " << electron_velocity.at(3*e+2) << "\n";
+      // }
+      // E_vel.close();
+      // std::ofstream E_pos;
+      // E_pos.open("position/"+time_stamp);
+      // for(int e = 0; e<conduction_electrons; e++) {
+      //   E_pos <<  e << ", " << electron_potential.at(e) << ", " << electron_position.at(3*e) << ", " << electron_position.at(3*e+1) << ", " << electron_position.at(3*e+2) << "\n";
+      // }
+      // E_pos.close();
 
- */
       std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
-    
+    }
     mean_data.precision(10);
     mean_data << std::scientific;
 
