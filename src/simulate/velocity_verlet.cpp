@@ -39,15 +39,15 @@ int velocity_verlet_step(double time_step) {
      p_x = 0.0;
        p_y = 0.0;
        p_z = 0.0;
-     //       std::cout << "Updating new electron position." << std::endl;
+          //  std::cout << "Updating new electron position." << std::endl;
     update_position();
 
-        //   std::cout << current_time_step << "; positions updated " << std::endl;
+          std::cout << current_time_step << "; positions updated " << std::endl;
     update_dynamics();
         //  std::cout << "Output mean data" << std::endl;
     
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
-      //     std::cout << current_time_step << "; output updated " << std::endl;
+          std::cout << current_time_step << "; output updated " << std::endl;
     //reset integration
     CASTLE_real_time += dt;
     current_time_step++;
@@ -260,9 +260,9 @@ void update_dynamics() {
    } 
   //  TEKE += external_potential;
       // std::cout << " nearest neighbor complete. ee step" << std::endl;
-    //  std::cout << current_time_step << "; integration and ea scattering updated " << std::endl;
+     std::cout << current_time_step << "; integration and ea scattering updated " << std::endl;
     ee_scattering();
-   //    std::cout << current_time_step << "; ee scattering updated " << std::endl;
+      std::cout << current_time_step << "; ee scattering updated " << std::endl;
 
   Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
   if(Te > 1.0) Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt*300.0/Te);
