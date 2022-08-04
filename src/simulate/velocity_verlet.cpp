@@ -422,6 +422,7 @@ void e_e_coulomb(const int e, const int array_index) {
     unsigned int ee_dos_count = 1;
     unsigned int ee_integration_count = 1;
     unsigned int ee_scattering_list = 2;
+   
     for(int s = 0; s < 27; s++) {
       const int int_cell = cell_nearest_neighbor_list.at(cell).at(s);
       const int size = cell_integration_lists.at(int_cell).at(0);
@@ -445,6 +446,9 @@ void e_e_coulomb(const int e, const int array_index) {
         else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance -= lattice_height;
         
         const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
+            
+        if(length == 0.0) continue;
+       
             if (length != length) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
         electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
         electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << std::endl;
@@ -481,6 +485,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
     const unsigned int size = electron_integration_list.at(e).at(0);
     unsigned int neighbor_count = 1;
     unsigned int scattering_count = 2;
+ 
    // std::cout << size << std::endl;
     for (int i = 1; i < size; i++) {
         
@@ -500,6 +505,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
         
         const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
+        if(length == 0.0) continue;
         
         if (length != length) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
         electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
@@ -740,21 +746,18 @@ void ee_scattering() {
   for(int l = 0; l < cells_per_thread; l++) {
     const unsigned int cell = lattice_cells_per_omp.at(omp_get_thread_num()).at(l);
     const unsigned int size = cell_integration_lists.at(cell).at(0);
- 
-    // if( (l % ((z_omp_cells/2)-1) ) == 0 || (l % (z_omp_cells/2)) == 0) {
-    //   #pragma omp barrier
-    // }
+    if(size >= cell_integration_lists.at(cell).size()) std::cout << size << ", " << cell_integration_lists.at(cell).at(0) << ", " << cell << ", " << lattice_cells_per_omp.at(omp_get_thread_num()).at(l) << std::endl;
     
     for(int e = 1; e < size; e++) {
       const unsigned int electron = cell_integration_lists.at(cell).at(e);
-      if (electron_ee_scattering_list.at(electron).at(0)) continue;
+      if (electron_ee_scattering_list.at(electron).at(0) == 1) continue;
  
-      const  int c_size = electron_ee_scattering_list.at(electron).at(1) - 2;
+      const uint32_t c_size = electron_ee_scattering_list.at(electron).at(1) - 2;
 
       if(c_size <= 3) continue;
       unsigned int electron_collision;
       int found = 0;
-      for(int a = 0; a < c_size; a++) {
+      for(uint32_t a = 0; a < c_size; a++) {
         electron_collision = 2 + ((omp_int_random.at(omp_get_thread_num())()) % c_size);
 
             if(electron_collision >= electron_ee_scattering_list.at(electron).at(1)) std::cout << "random collision error " << electron_collision << ", " << electron_ee_scattering_list.at(electron).at(0) << std::endl;
@@ -863,7 +866,7 @@ int ee_inelastic(const int electron, const int electron_collision, const double 
     return 2;
 }
 
-double ee_elestic(const int electron, const int electron_collision, const double e_energy, const double d_e_energy) {
+int ee_elestic(const int electron, const int electron_collision, const double e_energy, const double d_e_energy) {
    const unsigned int array_index = 3*electron;
    const unsigned int array_index_i = 3*electron_collision;
     
@@ -871,27 +874,42 @@ double ee_elestic(const int electron, const int electron_collision, const double
     double y_distance = electron_position.at(array_index+1)- electron_position.at(array_index_i+1);
     double z_distance = electron_position.at(array_index+2)- electron_position.at(array_index_i+2); 
 
-    if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance = x_distance + lattice_width;
-    else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance = x_distance - lattice_width;
-
-    if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance = y_distance + lattice_depth;
-    else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance = y_distance - lattice_depth;
-    
-    if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
-    else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
-        
-    const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
-            if (length != length) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+//    if(x_distance == y_distance == z_distance == 0) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
             electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
-            electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << std::endl;
+            electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << ", " << boundary_conditions_cutoff << ", " << lattice_depth << ", " << lattice_width << ", " << lattice_height << std::endl;
+
+    if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance += lattice_width;
+    else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance -= lattice_width;
+
+    if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance += lattice_depth;
+    else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance -= lattice_depth;
+    
+    if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance += lattice_height;
+    else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance -= lattice_height;
+        
+   // if(x_distance ==  y_distance == z_distance == 0) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+            electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
+            electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << ", " << boundary_conditions_cutoff << ", " << lattice_depth << ", " << lattice_width << ", " << lattice_height << std::endl;
+            
+    const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
+
+    if(length == 0.0) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+            electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
+            electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << ", " << boundary_conditions_cutoff << ", " << lattice_depth << ", " << lattice_width << ", " << lattice_height << std::endl;
+
+          if (x_distance != x_distance || y_distance != y_distance ||  z_distance != z_distance) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+            electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
+            electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << ", " << boundary_conditions_cutoff << ", " << lattice_depth << ", " << lattice_width << ", " << lattice_height << std::endl;
 
     const double v_x_dot_product = ((electron_velocity.at(array_index)  - electron_velocity.at(array_index_i)   )*x_distance\
-                                             + (electron_velocity.at(array_index+1)- electron_velocity.at(array_index_i+1) )*y_distance\
-                                             + (electron_velocity.at(array_index+2)- electron_velocity.at(array_index_i+2) )*z_distance) /length;
-      if(v_x_dot_product != v_x_dot_product) std::cout << electron_velocity.at(array_index)  << ", " <<  electron_velocity.at(array_index_i) << ", " << x_distance << ", " <<\
+                                  + (electron_velocity.at(array_index+1)- electron_velocity.at(array_index_i+1) )*y_distance\
+                                  + (electron_velocity.at(array_index+2)- electron_velocity.at(array_index_i+2) )*z_distance) /length;
+
+      if(v_x_dot_product != v_x_dot_product) std::cout << "dot product " << v_x_dot_product << ", " << electron_velocity.at(array_index)  << ", " <<  electron_velocity.at(array_index_i) << ", " << x_distance << ", " <<\
                                              electron_velocity.at(array_index+1) << ", " << electron_velocity.at(array_index_i+1) << ", " << y_distance << ", " << \
-                                             electron_velocity.at(array_index+2) << ", " << electron_velocity.at(array_index_i+2) << ", " << z_distance << ", " << length;
-      if(v_x_dot_product == 0.0) return 0.0;
+                                             electron_velocity.at(array_index+2) << ", " << electron_velocity.at(array_index_i+2) << ", " << z_distance << ", " << length << std::endl;
+
+      if(v_x_dot_product == 0.0) return 0;
     const double normalised_dot_product = v_x_dot_product;///sqrt(length*v_x_dot_product*v_x_dot_product);
     //if(v_x_dot_product/sqrt(length*v_x_dot_product*v_x_dot_product) > 1.0) std::cout << " normalised dot product " << v_x_dot_product/sqrt(length*v_x_dot_product*v_x_dot_product);
 
@@ -934,7 +952,7 @@ double ee_elestic(const int electron, const int electron_collision, const double
           std::cout << "elastic DoS < 0 " << DoS1 << ", " <<  electron_nearest_electron_list.at(electron).at(0) << ", " << DoS2 << ", " << electron_nearest_electron_list.at(electron_collision).at(0) <<std::endl;
          
         }
-      if(omp_uniform_random.at(omp_get_thread_num())()> exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
+      if(omp_uniform_random.at(omp_get_thread_num())() > exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
        
         electron_potential.at(electron) -= deltaE;
         electron_potential.at(electron_collision)   += deltaE;
@@ -950,53 +968,9 @@ double ee_elestic(const int electron, const int electron_collision, const double
         electron_velocity.at(array_index)  -= x_distance*normalised_dot_product;
         electron_velocity.at(array_index+1)-= y_distance*normalised_dot_product;
         electron_velocity.at(array_index+2)-= z_distance*normalised_dot_product; 
-        return 2.0;
-    //std::cout.precision(10);
-    //i//f(sqrt(p_x*p_x + p_y*p_y + p_z*p_z) != sqrt(d_p_x*d_p_x + d_p_y*d_p_y + d_p_z*d_p_z)) {std::cout << "bigger problem " << sqrt(p_x*p_x + p_y*p_y + p_z*p_z) << ", " << sqrt(d_p_x*d_p_x + d_p_y*d_p_y + d_p_z*d_p_z) << ", " << v_1 << ", " << v_2 << ", " << d_v_1 << ", " << d_v_2 << std::endl; return 0;}
-    // if(p_x != (electron_velocity.at(array_index)  + electron_velocity.at(array_index_i)))   std::cout << "x momentum not conserved " << p_x << ", " << (electron_velocity.at(array_index)   + electron_velocity.at(array_index_i))   << ", " << electron_velocity.at(array_index)   << ", " << electron_velocity.at(array_index_i)   <<  std::endl;
-    //  if(p_y != (electron_velocity.at(array_index+1)+ electron_velocity.at(array_index_i+1))) std::cout << "y momentum not conserved " << p_y << ", " << (electron_velocity.at(array_index+1) + electron_velocity.at(array_index_i+1)) << ", " << electron_velocity.at(array_index+1) << ", " << electron_velocity.at(array_index_i+1) << std::endl;
-    // if(p_z != (electron_velocity.at(array_index+2)+ electron_velocity.at(array_index_i+2))) std::cout << "z momentum not conserved " << p_z << ", " << (electron_velocity.at(array_index+2) + electron_velocity.at(array_index_i+2)) << ", " << electron_velocity.at(array_index+2) << ", " << electron_velocity.at(array_index_i+2) << std::endl;
-   // const double E_1 = e_energy + d_e_energy;
-    // const double E_2 = (0.5*constants::m_e_r*(electron_velocity.at(array_index)  *electron_velocity.at(array_index)  + electron_velocity.at(array_index+1)  *electron_velocity.at(array_index+1)  + electron_velocity.at(array_index+2)  *electron_velocity.at(array_index+2)) + \
-        0.5*constants::m_e_r*(electron_velocity.at(array_index_i)*electron_velocity.at(array_index_i)+ electron_velocity.at(array_index_i+1)*electron_velocity.at(array_index_i+1)+ electron_velocity.at(array_index_i+2)*electron_velocity.at(array_index_i+2) ));
-    // std::cout.precision(10);
-    //   if(E_1 != E_2 ) {
-      //  std::cout << e_energy << ", " << d_e_energy << ", " << E_1 << ", " << deltaE << ", " << E_2 << ", " <<  \
-        0.5*constants::m_e_r*(electron_velocity.at(array_index)  *electron_velocity.at(array_index)  + electron_velocity.at(array_index+1)  *electron_velocity.at(array_index+1)  + electron_velocity.at(array_index+2)  *electron_velocity.at(array_index+2)) << ", " << \
-        0.5*constants::m_e_r*(electron_velocity.at(array_index_i)*electron_velocity.at(array_index_i)+ electron_velocity.at(array_index_i+1)*electron_velocity.at(array_index_i+1)+ electron_velocity.at(array_index_i+2)*electron_velocity.at(array_index_i+2) ) << std::endl; }
-    //  if( (d_e_energy+deltaE) != 0.5*constants::m_e_r*(electron_velocity.at(array_index_i)*electron_velocity.at(array_index_i) + electron_velocity.at(array_index_i+1)*electron_velocity.at(array_index_i+1) + electron_velocity.at(array_index_i+2)*electron_velocity.at(array_index_i+2)))\
-        std::cout << "total momentum not conserved " << d_e_energy+deltaE << ", " << 0.5*constants::m_e_r*(electron_velocity.at(array_index_i)*electron_velocity.at(array_index_i) + electron_velocity.at(array_index_i+1)*electron_velocity.at(array_index_i+1) + electron_velocity.at(array_index_i+2)*electron_velocity.at(array_index_i+2)) << ", " <<\
-        e_energy+deltaE << ", " << 0.5*constants::m_e_r*(electron_velocity.at(array_index)*electron_velocity.at(array_index) + electron_velocity.at(array_index+1)*electron_velocity.at(array_index+1) + electron_velocity.at(array_index+2)*electron_velocity.at(array_index+2)) << ", " <<\
-         theta_1 << ", " << phi_1 << ", " << atan2(electron_velocity.at(array_index+1), electron_velocity.at(array_index)) << ", " << acos(electron_velocity.at(array_index+2) / sqrt(2.0*constants::m_e_r_i*electron_potential.at(electron))) << std::endl;
-    //  if ( (0.5*constants::m_e_r*(electron_velocity.at(array_index_i)*electron_velocity.at(array_index_i) + electron_velocity.at(array_index_i+1)*electron_velocity.at(array_index_i+1) + electron_velocity.at(array_index_i+2)*electron_velocity.at(array_index_i+2))\
-      + 0.5*constants::m_e_r*(electron_velocity.at(array_index)*electron_velocity.at(array_index) + electron_velocity.at(array_index+1)*electron_velocity.at(array_index+1) + electron_velocity.at(array_index+2)*electron_velocity.at(array_index+2))) != (electron_potential.at(electron)+electron_potential.at(electron_collision))) {\
-        std::cout << "energy not conserved " << e_energy + d_e_energy << ", " << electron_potential.at(electron)+electron_potential.at(electron_collision) << ", " \
-                                             << e_energy << ", " << d_e_energy << ", " << electron_potential.at(electron) << ", " << electron_potential.at(electron_collision) << std::endl; }
-    //  if (electron_potential.at(electron) != electron_potential.at(electron) || v_1 != v_1) std::cout << "electron " << v_1 << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential.at(electron) <<  std::endl;
-    //  if(p_x != (electron_velocity.at(array_index)+electron_velocity.at(array_index_i)) || p_y != (electron_velocity.at(array_index+1)+electron_velocity.at(array_index_i+1)) || p_z != (electron_velocity.at(array_index+2)+electron_velocity.at(array_index_i+2))) {\
-        std::cout << "momentum adjust " << p_x << ", " << (electron_velocity.at(array_index)+electron_velocity.at(array_index_i)) << ", " <<  p_y << ", " <<  electron_velocity.at(array_index+1)+electron_velocity.at(array_index_i+1) << ", " << p_z << ", " << electron_velocity.at(array_index+2)+electron_velocity.at(array_index_i+2) <<\
-        ", " << d_p_x << ", " << d_p_y << ", " << d_p_z << std::endl;
-    //s  if (v_1 != v_1 || v_2 != v_2 || d_v_2 != d_v_2 || theta_1 != theta_1 || theta_2 != theta_2 || phi_1 != phi_1 || phi_2 != phi_2) {\
-          std::cout << "velocity adjust " << v_1 << ", " << deltaE << ", " << e_energy <<  ", " << electron_potential.at(electron) << ", " << \
-          v_2 << ", " << d_e_energy << ", " << electron_potential.at(electron_collision) << \
-          ", " <<  theta_1 << ", " << phi_1 << ", " << theta_2 << ", " << phi_2 << ", " << d_v_2 << ", " << \
-           std::endl; }
-    // if (electron_velocity.at(array_index_i) != electron_velocity.at(array_index_i) || electron_velocity.at(array_index_i+1) != electron_velocity.at(array_index_i+1) || electron_velocity.at(array_index_i+2) != electron_velocity.at(array_index_i+2)) {\
-          std::cout << "collision adjust " << v_2 << ", " << deltaE << ", " << d_e_energy <<  ", " << electron_potential.at(electron_collision) <<  \
-           ", " <<  cos(theta_2)*sin(phi_2) << ", " << sin(theta_2)*sin(phi_2) << ", " << cos(phi_2) << ", " << theta_2 << ", " << phi_2 << std::endl; }
-      // unit_vec = sqrt(2.0*d_e_energy*constants::m_e_r_i);
-      // theta = atan2(electron_velocity.at(3*electron_collision+1) , electron_velocity.at(3*electron_collision)) + (2*ee_scattering_angle*M_PI*omp_uniform_random.at(omp_get_thread_num())() - ee_scattering_angle*M_PI);
-      //  // if(electron_velocity.at(3*electron_collision+1) == electron_velocity.at(3*electron_collision) == 0.0) theta = M_PI;
-      // phi   = acos(electron_velocity.at(3*electron_collision+2) / unit_vec) + (2*ee_scattering_angle*M_PI*omp_uniform_random.at(omp_get_thread_num())() - ee_scattering_angle*M_PI);
-      //  // if(electron_velocity.at(3*electron_collision+2) < 0.0) theta += M_PI;
-      // scattering_velocity = sqrt(2.0*electron_potential.at(electron_collision)*constants::m_e_r_i);
-      //     if (electron_potential.at(electron_collision) != electron_potential.at(electron_collision) || scattering_velocity != scattering_velocity) std::cout << "electron collision" << scattering_velocity << ", " << deltaE << ", " << d_e_energy <<   ", " << electron_potential.at(electron_collision) <<  std::endl;
-      // electron_velocity.at(3*electron_collision)   = scattering_velocity * cos(theta)*sin(phi);
-      // electron_velocity.at(3*electron_collision+1) = scattering_velocity * sin(theta)*sin(phi);
-      // electron_velocity.at(3*electron_collision+2) = scattering_velocity * cos(phi);
-     // e_e_scattering_count++; */
+        return 2;
       }
-     return 0.0;
+     return 0;
 }
    
 } //end CASTLE namespace

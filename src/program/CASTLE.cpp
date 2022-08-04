@@ -1141,13 +1141,14 @@ void initialize_velocities() {
        p_y = 0.0;
        p_z = 0.0;
        int count = 1;
+       uint32_t total_electrons = conduction_electrons;
     #pragma omp parallel for schedule(guided) reduction(+:p_x,p_y,p_z)
-    for(int e = 0; e < conduction_electrons; e++) {
+    for(int e = 0; e < total_electrons; e++) {
       double phi,theta; //A/fS
       
-      const int array_index = 3*e;
+      const unsigned int array_index = 3*e;
    
-      const double energy = electron_potential.at(omp_int_random.at(omp_get_thread_num())() % conduction_electrons);
+      const double energy = electron_potential.at(omp_int_random.at(omp_get_thread_num())() % total_electrons);
       if(energy > 0.99*E_f_A ) electron_transport_list.at(e) = true;
       
       const double vel = sqrt(2.0*energy*constants::m_e_r_i);
@@ -1163,6 +1164,7 @@ void initialize_velocities() {
          // if(sim::CASTLE_z_vector < 0.0) theta += M_PI;
         }
 
+          if(theta != theta || phi != phi || vel != vel) std::cout << theta << ", " << phi << ", " << vel << ", " << energy << std::endl;
       
             if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
         electron_velocity.at(array_index)     = cos(theta)*sin(phi)*vel; 
@@ -1492,14 +1494,30 @@ void output_data() {
       // electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
       // electron_velocity_output.precision(10);
       // electron_velocity_output << std::scientific;
-  
-      std::vector<std::ofstream> temp_map_list;
-      temp_map_list.resize(8);
-      for(int i = 0; i < 8; i++) {
-        temp_map_list.at(i).open(string(directory) + "/Temp_Map" + std::to_string(i) + "/" + time_stamp);
-      // std::cout << temp_Map.at(i).at(0) << std::endl;
-      //   std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
-      }
+      // //std::vector<std::ofstream> temp_map_list;
+      // //temp_map_list.resize(8);
+      // for(int i = 0; i < 8; i++) {
+      //   temp_map_list.at(i).open(string(directory) + "/Temp_Map" + std::to_string(i) + "/" + time_stamp);
+      // // std::cout << temp_Map.at(i).at(0) << std::endl;
+      // //   std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
+      // }
+  std::ofstream temp_map_0;
+  std::ofstream temp_map_1;
+  std::ofstream temp_map_2;
+  std::ofstream temp_map_3;
+  std::ofstream temp_map_4;
+  std::ofstream temp_map_5;
+  std::ofstream temp_map_6;
+  std::ofstream temp_map_7;
+    
+    temp_map_0.open(string(directory) + "/Temp_Map0" + "/" + time_stamp);
+    temp_map_1.open(string(directory) + "/Temp_Map1" + "/" + time_stamp);
+    temp_map_2.open(string(directory) + "/Temp_Map2" + "/" + time_stamp);
+    temp_map_3.open(string(directory) + "/Temp_Map3" + "/" + time_stamp);
+    temp_map_4.open(string(directory) + "/Temp_Map4" + "/" + time_stamp);
+    temp_map_5.open(string(directory) + "/Temp_Map5" + "/" + time_stamp);
+    temp_map_6.open(string(directory) + "/Temp_Map6" + "/" + time_stamp);
+    temp_map_7.open(string(directory) + "/Temp_Map7" + "/" + time_stamp);
     
     const static double step_size = 40.0*E_f_A / double(conduction_electrons);
   omp_set_dynamic(0);
@@ -1507,18 +1525,12 @@ void output_data() {
 
     #pragma omp parallel
     {
-   // const int cell = omp_get_thread_num();
-    //const int size = cell_integration_lists.at(cell).at(0);
-
-   // #pragma omp critical 
-   // std::cout << "data processing omp histograms; cell: " << cell << "; " << size << "; step size: " << step_size << std::endl;
-    
     for(int e = 1; e < old_cell_integration_lists.at(omp_get_thread_num()).at(0); e++) {
       const unsigned int electron = cell_integration_lists.at(omp_get_thread_num()).at(e);
       const unsigned int array_index = 3*electron;
 
       //const double velocity_length = ;
-      const unsigned int hist = int(fmin(conduction_electrons*0.01, fmax(0.0, floor((electron_potential.at(electron) - 0.9817*E_f_A)/step_size))));
+      const unsigned int hist = int(std::min(conduction_electrons*0.01, std::max(0.0, floor((electron_potential.at(electron) - 0.9817*E_f_A)/step_size))));
       temp_Map.at(omp_get_thread_num()).at(hist)++;
       
      // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
@@ -1556,17 +1568,54 @@ void output_data() {
       // }    
     }
     }  
-// std::cout << "histograms made" << std::endl;
 
-   
-    //  std::cout << omp_get_thread_num() << " of " << omp_get_num_threads() << std::endl;
-  for(int c = 0; c < 8; c++) {
-    for(int i = 0; i < old_cell_integration_lists.at(c).at(0)-1; i++) {
-      temp_map_list.at(c) << i << ", " << temp_Map.at(c).at(i) << "\n";
-      temp_Map.at(c).at(i) = 0;
+    for(int i = 0; i < old_cell_integration_lists.at(0).at(0)-1; i++) {
+      temp_map_0 << i << ", " << temp_Map.at(0).at(i) << "\n";
+      temp_Map.at(0).at(i) = 0;
     }
-    temp_map_list.at(c).close();
-  }
+    temp_map_0.close();
+
+    for(int i = 0; i < old_cell_integration_lists.at(1).at(0)-1; i++) {
+      temp_map_1 << i << ", " << temp_Map.at(1).at(i) << "\n";
+      temp_Map.at(1).at(i) = 0;
+    }
+    temp_map_1.close();
+
+    for(int i = 0; i < old_cell_integration_lists.at(2).at(0)-1; i++) {
+      temp_map_2 << i << ", " << temp_Map.at(2).at(i) << "\n";
+      temp_Map.at(2).at(i) = 0;
+    }
+    temp_map_2.close();
+    
+    for(int i = 0; i < old_cell_integration_lists.at(3).at(0)-1; i++) {
+      temp_map_3 << i << ", " << temp_Map.at(3).at(i) << "\n";
+      temp_Map.at(3).at(i) = 0;
+    }
+    temp_map_3.close();
+    
+    for(int i = 0; i < old_cell_integration_lists.at(4).at(0)-1; i++) {
+      temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
+      temp_Map.at(4).at(i) = 0;
+    }
+    temp_map_4.close();
+
+    for(int i = 0; i < old_cell_integration_lists.at(5).at(0)-1; i++) {
+      temp_map_5<< i << ", " << temp_Map.at(5).at(i) << "\n";
+      temp_Map.at(5).at(i) = 0;
+    }
+    temp_map_5.close();
+
+    for(int i = 0; i < old_cell_integration_lists.at(6).at(0)-1; i++) {
+      temp_map_6 << i << ", " << temp_Map.at(6).at(i) << "\n";
+      temp_Map.at(6).at(i) = 0;
+    }
+    temp_map_6.close();
+
+    for(int i = 0; i < old_cell_integration_lists.at(7).at(0)-1; i++) {
+      temp_map_7 << i << ", " << temp_Map.at(7).at(i) << "\n";
+      temp_Map.at(7).at(i) = 0;
+    }
+    temp_map_7.close();
       // std::ofstream E_vel;
       // E_vel.open("velocity/"+time_stamp);
       // for(int e = 0; e<conduction_electrons; e++) {

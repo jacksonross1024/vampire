@@ -150,7 +150,7 @@ namespace CASTLE {
     extern std::vector<std::vector<unsigned int> > electron_integration_list;
     extern std::vector<std::vector<unsigned int> > electron_nearest_electron_list;
     extern std::vector<std::vector<unsigned int> > electron_nearest_atom_list;
-    extern std::vector<std::vector<unsigned int> > electron_ee_scattering_list;
+    extern std::vector<std::vector<uint32_t> > electron_ee_scattering_list;
     extern std::vector<std::vector<unsigned int> > electron_ea_scattering_list;
     extern std::vector<std::vector< int> > cell_lattice_coordinate;
     extern std::vector<std::vector<unsigned int> > cell_integration_lists;
@@ -237,12 +237,10 @@ namespace CASTLE {
  
     extern double electron_applied_voltage(const int e, const int array_index, double& external_potential);
  
-    // extern void aa_scattering();
     extern void ea_scattering(const int e, const int array_index);
     extern void ee_scattering();
-
     extern int ee_inelastic(const int electron, const int electron_collision, const double deltaE);
-    extern double ee_elestic(const int electron, const int electron_collision,  const double e_energy, const double d_e_energy);
+    extern int ee_elestic(const int electron, const int electron_collision,  const double e_energy, const double d_e_energy);
     extern double M_B_distrib(const double& epsilon, const double& beta);
     extern double B_E_distrib(const double& epsilon);
     extern void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
