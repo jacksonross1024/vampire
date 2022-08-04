@@ -901,7 +901,7 @@ int ee_elestic(const int electron, const int electron_collision, const double e_
     else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance -= lattice_height;
         
     #pragma omp critical
-    if(x_distance ==  y_distance == z_distance == 0) std::cout << "distance " << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+    if(x_distance == 0 && y_distance == 0 && z_distance == 0) std::cout << "distance " << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
             electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
             electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << ", " << boundary_conditions_cutoff << ", " << lattice_depth << ", " << lattice_width << ", " << lattice_height << std::endl;
             
