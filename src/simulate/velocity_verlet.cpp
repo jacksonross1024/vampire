@@ -748,24 +748,31 @@ void ee_scattering() {
     const unsigned int size = cell_integration_lists.at(cell).at(0);
    if(size >= cell_integration_lists.at(cell).size()) std::cout << size << ", " << cell_integration_lists.at(cell).at(0) << ", " << cell << ", " << lattice_cells_per_omp.at(omp_get_thread_num()).at(l) << std::endl;
     
-    #pragma omp critical 
-    if(!equilibrium_step) std::cout << omp_get_thread_num() << ", " << cell << ", " << size << ", " << l << std::endl;
+  //  #pragma omp critical 
+   // if(!equilibrium_step) std::cout << omp_get_thread_num() << ", " << cell << ", " << size << ", " << l << std::endl;
 
     for(int e = 1; e < size; e++) {
       const unsigned int electron = cell_integration_lists.at(cell).at(e);
       if (electron_ee_scattering_list.at(electron).at(0) == 1) continue;
- 
+
+        if(electron != electron) std::cout << electron << ", " << cell << ", " << size << ", " << l << std::endl;
+
       const uint32_t c_size = electron_ee_scattering_list.at(electron).at(1) - 2;
 
       if(c_size <= 3) continue;
+      if(c_size != c_size) std::cout << c_size << ", " << electron << ", " << cell << ", " << size << ", " << l << std::endl;
+
       unsigned int electron_collision;
       int found = 0;
       for(uint32_t a = 0; a < c_size; a++) {
         electron_collision = 2 + ((omp_int_random.at(omp_get_thread_num())()) % c_size);
 
-         //   if(electron_collision >= electron_ee_scattering_list.at(electron).at(1)) std::cout << "random collision error " << electron_collision << ", " << electron_ee_scattering_list.at(electron).at(0) << std::endl;
+            if(electron_collision != electron_collision) std::cout << electron << ", " << cell << ", " << size << ", " << l << std::endl;
+            if(electron_collision >= electron_ee_scattering_list.at(electron).at(1)) std::cout << "random collision error " << electron_collision << ", " << electron_ee_scattering_list.at(electron).at(0) << std::endl;
         
         electron_collision = electron_ee_scattering_list.at(electron).at(electron_collision);
+
+         if(electron_collision != electron_collision) std::cout << electron << ", " << cell << ", " << size << ", " << l << std::endl;
         const unsigned int array_index_i = 3*electron_collision;
          int x_cell = int(floor(electron_position.at(array_index_i)  / x_step_size));
          int y_cell = int(floor(electron_position.at(array_index_i+1)/ y_step_size));
@@ -889,7 +896,7 @@ int ee_elestic(const int electron, const int electron_collision, const double e_
     if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance += lattice_height;
     else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance -= lattice_height;
         
-   // if(x_distance ==  y_distance == z_distance == 0) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+    if(x_distance ==  y_distance == z_distance == 0) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
             electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
             electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << ", " << boundary_conditions_cutoff << ", " << lattice_depth << ", " << lattice_width << ", " << lattice_height << std::endl;
             
