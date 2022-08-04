@@ -892,11 +892,11 @@ int ee_elestic(const int electron, const int electron_collision, const double e_
             
     const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
 
-   // if(length == 0.0) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+    if(length == 0.0) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
             electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
             electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << ", " << boundary_conditions_cutoff << ", " << lattice_depth << ", " << lattice_width << ", " << lattice_height << std::endl;
 
-      //    if (x_distance != x_distance || y_distance != y_distance ||  z_distance != z_distance) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+          if (x_distance != x_distance || y_distance != y_distance ||  z_distance != z_distance) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
             electron_position.at(array_index) << ", " << electron_position.at(array_index_i) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index_i + 1) << ", " <<\
             electron_position.at(array_index+2) << ", " <<  electron_position.at(array_index_i + 2) << ", " << boundary_conditions_cutoff << ", " << lattice_depth << ", " << lattice_width << ", " << lattice_height << std::endl;
 
@@ -904,7 +904,7 @@ int ee_elestic(const int electron, const int electron_collision, const double e_
                                   + (electron_velocity.at(array_index+1)- electron_velocity.at(array_index_i+1) )*y_distance\
                                   + (electron_velocity.at(array_index+2)- electron_velocity.at(array_index_i+2) )*z_distance) /length;
 
-    //  if(v_x_dot_product != v_x_dot_product) std::cout << "dot product " << v_x_dot_product << ", " << electron_velocity.at(array_index)  << ", " <<  electron_velocity.at(array_index_i) << ", " << x_distance << ", " <<\
+      if(v_x_dot_product != v_x_dot_product) std::cout << "dot product " << v_x_dot_product << ", " << electron_velocity.at(array_index)  << ", " <<  electron_velocity.at(array_index_i) << ", " << x_distance << ", " <<\
                                              electron_velocity.at(array_index+1) << ", " << electron_velocity.at(array_index_i+1) << ", " << y_distance << ", " << \
                                              electron_velocity.at(array_index+2) << ", " << electron_velocity.at(array_index_i+2) << ", " << z_distance << ", " << length << std::endl;
 
@@ -922,7 +922,7 @@ int ee_elestic(const int electron, const int electron_collision, const double e_
     const double deltaE = -1.0*(0.5*constants::m_e_r*(d_v_x_1*d_v_x_1 + d_v_y_1*d_v_y_1 + d_v_z_1*d_v_z_1) -\
                            0.5*constants::m_e_r*(d_v_x_2*d_v_x_2 + d_v_y_2*d_v_y_2 + d_v_z_2*d_v_z_2));
     
-   // if(deltaE != deltaE) std::cout << deltaE << ", " << normalised_dot_product << ", " << length << std::endl;
+    if(deltaE != deltaE) std::cout << deltaE << ", " << normalised_dot_product << ", " << length << std::endl;
      int DoS1 = electron_nearest_electron_list.at(electron).at(0) - 1;
      int DoS2 = electron_nearest_electron_list.at(electron_collision).at(0) - 1;
  
@@ -941,16 +941,17 @@ int ee_elestic(const int electron, const int electron_collision, const double e_
           DoS2 -= 1.0;
         }
       } 
-      }
-      // if(DoS1 < 0 || DoS2 < 0) {
-      //     std::cout << "elastic DoS < 0 " << DoS1 << ", " <<  electron_nearest_electron_list.at(electron).at(0) << ", " << DoS2 << ", " << electron_nearest_electron_list.at(electron_collision).at(0) <<std::endl;
-      //     DoS1 = int(fmax(0, DoS1));
-      //     DoS2 = int(fmax(0, DoS2));
-      //   }
-      //   if(DoS1 != DoS1 || DoS2 != DoS2) {
-      //     std::cout << "elastic DoS < 0 " << DoS1 << ", " <<  electron_nearest_electron_list.at(electron).at(0) << ", " << DoS2 << ", " << electron_nearest_electron_list.at(electron_collision).at(0) <<std::endl;
+      
+      if(DoS1 < 0 || DoS2 < 0) {
+          std::cout << "elastic DoS < 0 " << DoS1 << ", " <<  electron_nearest_electron_list.at(electron).at(0) << ", " << DoS2 << ", " << electron_nearest_electron_list.at(electron_collision).at(0) <<std::endl;
+          DoS1 = int(fmax(0, DoS1));
+          DoS2 = int(fmax(0, DoS2));
+        }
+        if(DoS1 != DoS1 || DoS2 != DoS2) {
+          std::cout << "elastic DoS < 0 " << DoS1 << ", " <<  electron_nearest_electron_list.at(electron).at(0) << ", " << DoS2 << ", " << electron_nearest_electron_list.at(electron_collision).at(0) <<std::endl;
          
-      //   }
+        }
+      }
       if(omp_uniform_random.at(omp_get_thread_num())() > exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
        
         electron_potential.at(electron) -= deltaE;
