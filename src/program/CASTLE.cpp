@@ -38,7 +38,7 @@ void create() {
 
     stopwatch_t castle_watch;
     castle_watch.start();
-     omp_threads = 16;
+     omp_threads = 8;
     equilibrium_step = true;
     //========
     // Initialize the lattice, electrons, and starting forces
@@ -559,10 +559,10 @@ else std::cout << "test failed " << test << std::endl;
       // std::cout << omp_get_thread_num() << ", " << (omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells) << ", " << (int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%(y_omp_cells)) + int(floor(l/(z_omp_cells/2)))%2 << ", " << 4*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)) << std::endl;
       
       //double decker cells
-     // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)));
+      lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(x_omp_cells* y_omp_cells/4)) + (l % (z_omp_cells/2)));
       
       //single decker cells
-      lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells)))%2).at( l % (z_omp_cells));
+     // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells)))%2).at( l % (z_omp_cells));
       
       ////serial cells
       //lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = l;  
