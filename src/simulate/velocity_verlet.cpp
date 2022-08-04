@@ -748,6 +748,9 @@ void ee_scattering() {
     const unsigned int size = cell_integration_lists.at(cell).at(0);
    if(size >= cell_integration_lists.at(cell).size()) std::cout << size << ", " << cell_integration_lists.at(cell).at(0) << ", " << cell << ", " << lattice_cells_per_omp.at(omp_get_thread_num()).at(l) << std::endl;
     
+    #pragma omp critical 
+    if(!equilibrium_step) std::cout << omp_get_thread_num() << ", " << cell << ", " << size << ", " << l << std::endl;
+
     for(int e = 1; e < size; e++) {
       const unsigned int electron = cell_integration_lists.at(cell).at(e);
       if (electron_ee_scattering_list.at(electron).at(0) == 1) continue;
