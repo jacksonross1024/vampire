@@ -42,12 +42,12 @@ int velocity_verlet_step(double time_step) {
           //  std::cout << "Updating new electron position." << std::endl;
     update_position();
 
-          std::cout << current_time_step << "; positions updated " << std::endl;
+         // std::cout << current_time_step << "; positions updated " << std::endl;
     update_dynamics();
         //  std::cout << "Output mean data" << std::endl;
     
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
-          std::cout << current_time_step << "; output updated " << std::endl;
+      //    std::cout << current_time_step << "; output updated " << std::endl;
     //reset integration
     CASTLE_real_time += dt;
     current_time_step++;
@@ -82,9 +82,9 @@ void update_position(){
     const unsigned int size = old_cell_integration_lists.at(cell).at(0);
    // cell_integration_lists.at(cell).at(0) = 1;
 
-    if((current_time_step % half_int_var) == 0 && ( (l % ((z_omp_cells/2)-1) )== 0 || (l % (z_omp_cells/2)) == 0) ) {
+  //  if((current_time_step % half_int_var) == 0 && ( (l % ((z_omp_cells/2)-1) )== 0 || (l % (z_omp_cells/2)) == 0) ) {
       #pragma omp barrier
-    }
+   // }
     
     for (int e = 1; e < size; e++) { 
       const unsigned int electron = old_cell_integration_lists.at(cell).at(e);
@@ -256,13 +256,13 @@ void update_dynamics() {
       }
 
       //  if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
-   //  if(!equilibrium_step) ea_scattering(e, array_index);
+    if(!equilibrium_step) ea_scattering(e, array_index);
    } 
   //  TEKE += external_potential;
       // std::cout << " nearest neighbor complete. ee step" << std::endl;
-     std::cout << current_time_step << "; integration and ea scattering updated " << std::endl;
+    // std::cout << current_time_step << "; integration and ea scattering updated " << std::endl;
     ee_scattering();
-      std::cout << current_time_step << "; ee scattering updated " << std::endl;
+  //    std::cout << current_time_step << "; ee scattering updated " << std::endl;
 
   Tp = Tp +  a_heat_capacity_i*1e-27*TLE *n_f/lattice_atoms;
   if(Te > 1.0) Te = Te + (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt*300.0/Te);
