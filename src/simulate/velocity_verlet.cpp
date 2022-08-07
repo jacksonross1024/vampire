@@ -221,6 +221,11 @@ void update_dynamics() {
     const static double sigma = dt * 0.1;
     unsigned int count = 0;
    
+     std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+    std::uniform_real_distribution<double> test_uniform;
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
@@ -247,7 +252,7 @@ void update_dynamics() {
       else neighbor_e_e_coulomb(e, array_index);
       //replace neighbor ee with step delayed approximation for ee scattering inside DoS calculations for scattering
 
-      if((photons_at_dt > count) && (omp_int_random.at(omp_get_thread_num())() % conduction_electrons < photons_at_dt) \
+      if((photons_at_dt > count) && (test_int(gen) % conduction_electrons < photons_at_dt) \
       && electron_ea_scattering_list.at(e).at(0) != 1) {
         #pragma omp atomic
         count++;
@@ -688,10 +693,15 @@ if(e_energy + deltaE > 0.9817*E_f_A) {
 */
 void ea_scattering(const int e, const int array_index) {
 
+      std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+    std::uniform_real_distribution<double> test_uniform;
     double scattering_velocity = electron_potential.at(e);
     double deltaE = sqrt(phonon_energy*E_f_A);
   
-    if(omp_uniform_random.at(omp_get_thread_num())() > exp(ea_rate/scattering_velocity)) {
+    if(test_uniform(gen) > exp(ea_rate/scattering_velocity)) {
      
       const unsigned int size = electron_nearest_electron_list.at(e).at(0);
       int DoS1 = size - 1;
@@ -716,8 +726,8 @@ void ea_scattering(const int e, const int array_index) {
       else electron_transport_list.at(e) = false;
 
       const double unit_vec = sqrt(2.0*scattering_velocity*constants::m_e_r_i);
-      const double theta = 2.0*M_PI*omp_uniform_random.at(omp_get_thread_num())();
-      const double phi   = M_PI*omp_uniform_random.at(omp_get_thread_num())() ;
+      const double theta = 2.0*M_PI*test_uniform(gen);
+      const double phi   = M_PI*test_uniform(gen) ;
      // if(electron_velocity.at(array_index+2) < 0.0) theta += M_PI;
 
       scattering_velocity = sqrt(2.0*electron_potential.at(e)*constants::m_e_r_i);
@@ -741,6 +751,11 @@ void ee_scattering() {
   omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
 
+  std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+    std::uniform_real_distribution<double> test_uniform;
   #pragma omp parallel reduction(+:e_e_scattering_count) 
   {
   for(int l = 0; l < cells_per_thread; l++) {
@@ -767,7 +782,7 @@ void ee_scattering() {
       unsigned int electron_collision;
       int found = 0;
       for(uint32_t a = 0; a < c_size; a++) {
-        electron_collision = 2 + ((omp_int_random.at(omp_get_thread_num())()) % c_size);
+        electron_collision = 2 + (test_int(gen) % c_size);
 
             // #pragma omp critical
             if(electron_collision != electron_collision) std::cout << "random collision selection" << electron << ", " << cell << ", " << size << ", " << l << std::endl;
@@ -811,10 +826,10 @@ void ee_scattering() {
       const double e_energy = electron_potential.at(electron);
       const double d_e_energy = electron_potential.at(electron_collision);
       if(equilibrium_step) {
-        double deltaE = omp_uniform_random.at(omp_get_thread_num())()*(e_energy - d_e_energy);
+        double deltaE = test_uniform(gen)*(e_energy - d_e_energy);
        if (deltaE != deltaE) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
     
-        if(omp_uniform_random.at(omp_get_thread_num())()< 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
+        if(test_uniform(gen) < 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
          if (deltaE != deltaE) std::cout  << deltaE << ", " << e_energy << ", " << d_e_energy << std::endl;
 
         int DoS1 = electron_nearest_electron_list.at(electron).at(0) - 1;
@@ -840,7 +855,7 @@ void ee_scattering() {
           }
         }
 
-        if(omp_uniform_random.at(omp_get_thread_num())()> exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
+        if(test_uniform(gen) > exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
        
           electron_potential.at(electron) -= deltaE;
           electron_potential.at(electron_collision)   += deltaE;
@@ -860,11 +875,17 @@ void ee_scattering() {
 }
 
 int ee_inelastic(const int electron, const int electron_collision, const double deltaE){
-    
+
+        std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+    std::uniform_real_distribution<double> test_uniform;
+
       const unsigned int array_index = 3*electron;
       const unsigned int array_index_i = 3*electron_collision;
-       double theta = 2.0*M_PI*omp_uniform_random.at(omp_get_thread_num())();
-       double phi = M_PI*omp_uniform_random.at(omp_get_thread_num())();
+       double theta = 2.0*M_PI*test_uniform(gen);
+       double phi = M_PI*test_uniform(gen);
 
       const double v_1 = sqrt(2.0*constants::m_e_r_i*electron_potential.at(electron));
       const double v_2 = sqrt(2.0*constants::m_e_r_i*electron_potential.at(electron_collision));
@@ -873,8 +894,8 @@ int ee_inelastic(const int electron, const int electron_collision, const double 
       electron_velocity.at(array_index+1) = v_1*sin(theta)*sin(phi);
       electron_velocity.at(array_index+2) = v_1*cos(phi);
 
-       theta = 2.0*M_PI*omp_uniform_random.at(omp_get_thread_num())();
-        phi = M_PI*omp_uniform_random.at(omp_get_thread_num())();
+       theta = 2.0*M_PI*test_uniform(gen);
+        phi = M_PI*test_uniform(gen);
       electron_velocity.at(array_index_i)   = v_2*cos(theta)*sin(phi);
       electron_velocity.at(array_index_i+1) = v_2*sin(theta)*sin(phi);
       electron_velocity.at(array_index_i+2) = v_2*cos(phi);
@@ -885,6 +906,12 @@ int ee_inelastic(const int electron, const int electron_collision, const double 
 int ee_elestic(const int electron, const int electron_collision, const double e_energy, const double d_e_energy) {
    const unsigned int array_index = 3*electron;
    const unsigned int array_index_i = 3*electron_collision;
+    
+      std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+    std::uniform_real_distribution<double> test_uniform;
     
     double x_distance = electron_position.at(array_index)  - electron_position.at(array_index_i);
     double y_distance = electron_position.at(array_index+1)- electron_position.at(array_index_i+1);
@@ -974,7 +1001,7 @@ int ee_elestic(const int electron, const int electron_collision, const double e_
          
         }
       }
-      if(omp_uniform_random.at(omp_get_thread_num())() > exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
+      if(test_uniform(gen) > exp(ee_rate*DoS1*DoS2/(0.6666+(deltaE*deltaE)))) {
        
         electron_potential.at(electron) -= deltaE;
         electron_potential.at(electron_collision)   += deltaE;

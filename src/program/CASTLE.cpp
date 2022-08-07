@@ -38,7 +38,7 @@ void create() {
 
     stopwatch_t castle_watch;
     castle_watch.start();
-     omp_threads = 1;
+     omp_threads = 8;
     equilibrium_step = true;
     //========
     // Initialize the lattice, electrons, and starting forces
@@ -335,11 +335,18 @@ void initialize () {
     std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<> seed_gen(0, int(pow(2,32) - 1));
-    for(int i = 0; i < omp_threads; i++) {
-     // std::cout << omp_get_num_threads() << std::endl;
-     omp_uniform_random.at(i).seed(i);
-      omp_int_random.at(i).seed(i);
+    std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+    std::uniform_real_distribution<double> test_uniform;
+    // for(int i = 0; i < omp_threads; i++) {
+    //  // std::cout << omp_get_num_threads() << std::endl;
+    //  omp_uniform_random.at(i).seed(seed_gen(gen));
+    //   omp_int_random.at(i).seed(seed_gen(gen));
+    // }
+
+    #pragma omp parallel 
+    {
+    for(unsigned int e = 0; e < conduction_electrons*conduction_electrons; e++) uint32_t test = test_int(gen);
+    for(unsigned int e = 0; e < conduction_electrons*conduction_electrons; e++) double test = test_uniform(gen);
     }
    // int test = omp_int_random.at(0)() % conduction_electrons;
     //test = omp_int_random.at(24)MTRand_int32::rand_int32() %conduction_electrons ;
@@ -559,13 +566,14 @@ else std::cout << "test failed " << test << std::endl;
       // std::cout << omp_get_thread_num() << ", " << (omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells) << ", " << (int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%(y_omp_cells)) + int(floor(l/(z_omp_cells/2)))%2 << ", " << 4*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)) << std::endl;
       
       //double decker cells
-     // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(x_omp_cells* y_omp_cells/4)) + (l % (z_omp_cells/2)));
+    
+     lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(x_omp_cells* y_omp_cells/4)) + (l % (z_omp_cells/2)));
       
       //single decker cells
      // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells)))%2).at( l % (z_omp_cells));
       
       ////serial cells
-      lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = l;  
+     // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = l;  
     }
     }
 
@@ -1149,20 +1157,26 @@ void initialize_velocities() {
        p_z = 0.0;
        int count = 1;
        uint32_t total_electrons = conduction_electrons;
+
+    std::srand(std::time(nullptr));
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+    std::uniform_real_distribution<double> test_uniform;
     #pragma omp parallel for schedule(guided) reduction(+:p_x,p_y,p_z)
     for(int e = 0; e < total_electrons; e++) {
       double phi,theta; //A/fS
       
       const unsigned int array_index = 3*e;
    
-      const double energy = electron_potential.at(omp_int_random.at(omp_get_thread_num())() % total_electrons);
+      const double energy = electron_potential.at(test_int(gen));
       if(energy > 0.99*E_f_A ) electron_transport_list.at(e) = true;
       
       const double vel = sqrt(2.0*energy*constants::m_e_r_i);
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
-          theta = 2.0*M_PI*omp_uniform_random.at(omp_get_thread_num())();
-          phi = M_PI * omp_uniform_random.at(omp_get_thread_num())();
+          theta = 2.0*M_PI*test_uniform(gen);
+          phi = M_PI * test_uniform(gen);
         } else {
           const double unit = sqrt((sim::CASTLE_x_vector*sim::CASTLE_x_vector)+(sim::CASTLE_y_vector*sim::CASTLE_y_vector)+(sim::CASTLE_z_vector*sim::CASTLE_z_vector));
           theta = atan2(sim::CASTLE_y_vector , sim::CASTLE_x_vector);
