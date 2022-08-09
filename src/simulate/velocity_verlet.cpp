@@ -261,7 +261,7 @@ void update_dynamics() {
       }
 
       //  if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
-    if(!equilibrium_step) ea_scattering(e, array_index);
+  // if(!equilibrium_step) ea_scattering(e, array_index);
    } 
   //  TEKE += external_potential;
       // std::cout << " nearest neighbor complete. ee step" << std::endl;
