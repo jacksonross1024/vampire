@@ -308,7 +308,7 @@ void initialize () {
     a_heat_capacity = 1e-27*a_specific_heat * n_f; //AJ/K/particle .at() AJ/K/nm**3
     a_heat_capacity_i = 1.0 / a_heat_capacity;
 
-    e_specific_heat = constants::kB_r*3.0/1.0; // gamma; //AJ/K**2/e- 
+    e_specific_heat = constants::kB_r*3.0/10.0; // gamma; //AJ/K**2/e- 
     e_specific_heat_i = 1.0 / e_specific_heat;
     e_heat_capacity = 1e-27*e_specific_heat * n_f; //AJ/K**2/e- -> .at(e-/m**3) -> AJ/K**2/nm**3
     e_heat_capacity_i = 1.0 / e_heat_capacity;
@@ -331,23 +331,23 @@ void initialize () {
     
    // int_random.seed(omp_threads);
    // omp_int_random.resize(omp_threads);
-   // std::cout << omp_get_num_threads() << std::endl;
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
-    std::uniform_real_distribution<double> test_uniform;
-    // for(int i = 0; i < omp_threads; i++) {
+  //  // std::cout << omp_get_num_threads() << std::endl;
+  //   std::srand(std::time(nullptr));
+  //   std::random_device rd;  //Will be used to obtain a seed for the random number engine
+  //   std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+  //   std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+  //   std::uniform_real_distribution<double> test_uniform;
+  //   // for(int i = 0; i < omp_threads; i++) {
     //  // std::cout << omp_get_num_threads() << std::endl;
     //  omp_uniform_random.at(i).seed(seed_gen(gen));
     //   omp_int_random.at(i).seed(seed_gen(gen));
     // }
 
-    #pragma omp parallel 
-    {
-    for(unsigned int e = 0; e < conduction_electrons*conduction_electrons; e++) uint32_t test = test_int(gen);
-    for(unsigned int e = 0; e < conduction_electrons*conduction_electrons; e++) double test = test_uniform(gen);
-    }
+    // #pragma omp parallel 
+    // {
+    // for(unsigned int e = 0; e < conduction_electrons*conduction_electrons; e++) uint32_t test = test_int(gen);
+    // for(unsigned int e = 0; e < conduction_electrons*conduction_electrons; e++) double test = test_uniform(gen);
+    // }
    // int test = omp_int_random.at(0)() % conduction_electrons;
     //test = omp_int_random.at(24)MTRand_int32::rand_int32() %conduction_electrons ;
     // Initialize lattice

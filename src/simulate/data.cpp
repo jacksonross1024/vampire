@@ -347,7 +347,7 @@ namespace CASTLE {
    void ea_scattering(const int e, const int array_index);
    void ee_scattering();
    int ee_inelastic(const int electron, const int electron_collision, const double deltaE);
-   int ee_elestic(const int electron, const int electron_collision,  const double e_energy, const double d_e_energy);
+   int ee_elestic(const int electron, const int electron_collision,  const double e_energy, const double d_e_energy, const double probability);
 
    double B_E_distrib(const double& epsilon);
    double M_B_distrib(const double& epsilon, const double& beta);
