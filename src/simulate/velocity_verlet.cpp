@@ -853,7 +853,7 @@ void ee_scattering() {
           }
         }
 
-        if(test_uniform(gen) > exp(1e-2*ee_rate*DoS1*DoS2/(1.0+(deltaE*deltaE))/(DoS1_n*DoS2_n))) {
+        if(test_uniform(gen) > exp(1e-2*ee_rate*DoS1*DoS2/(0.333+(deltaE*deltaE))/(DoS1_n*DoS2_n))) {
        
           electron_potential.at(electron) -= deltaE;
           electron_potential.at(electron_collision)   += deltaE;
