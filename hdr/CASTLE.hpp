@@ -191,6 +191,8 @@ namespace CASTLE {
     extern double d_TTMp;
     extern double G;
     
+    extern double transport_cutoff;
+    extern double core_cutoff;
     extern std::string time_stamp;
     extern std::ofstream lattice_output;
   
@@ -239,8 +241,9 @@ namespace CASTLE {
  
     extern void ea_scattering(const int e, const int array_index);
     extern void ee_scattering();
-    extern int ee_inelastic(const int electron, const int electron_collision, const double deltaE);
-    extern int ee_elestic(const int electron, const int electron_collision,  const double e_energy, const double d_e_energy, const double probability);
+    extern int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
+    extern int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
+    extern int ee_elastic(const int electron, const int electron_collision,  const double e_energy, const double d_e_energy, const double probability);
     extern double M_B_distrib(const double& epsilon, const double& beta);
     extern double B_E_distrib(const double& epsilon);
     extern void create_phonon_distribution(std::vector<double>& distribution, const double& beta);

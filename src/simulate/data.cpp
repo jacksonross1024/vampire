@@ -296,7 +296,8 @@ namespace CASTLE {
    double TTMp;
    double d_TTMp;
    double G;
-    
+   double transport_cutoff;
+   double core_cutoff;
 
    std::string time_stamp;
    std::ofstream lattice_output;
@@ -346,8 +347,9 @@ namespace CASTLE {
    // void aa_scattering();
    void ea_scattering(const int e, const int array_index);
    void ee_scattering();
-   int ee_inelastic(const int electron, const int electron_collision, const double deltaE);
-   int ee_elestic(const int electron, const int electron_collision,  const double e_energy, const double d_e_energy, const double probability);
+    int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
+     int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
+   int ee_elastic(const int electron, const int electron_collision,  const double e_energy, const double d_e_energy, const double probability);
 
    double B_E_distrib(const double& epsilon);
    double M_B_distrib(const double& epsilon, const double& beta);
