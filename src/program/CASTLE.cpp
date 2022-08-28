@@ -1286,7 +1286,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   distrib.open(string(directory) +"/"+ name);
   distrib.precision(20);
 
-  double step_size = 195.0 / double(conduction_electrons);
+  double step_size = 295.0 / double(conduction_electrons);
   const double max  = E_f_A + 3.0*constants::kB_r*Te;
   const double min = E_f_A - 3.0*constants::eV_to_AJ;
   std::cout << "min: " << min << ", max: " << max << std::endl;

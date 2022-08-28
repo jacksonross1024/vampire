@@ -796,7 +796,7 @@ void ee_scattering() {
         if((e_energy - deltaE < core_cutoff) || (d_e_energy + deltaE < core_cutoff)) continue;
         else {
           if(e_energy - deltaE < transport_cutoff) {
-            DoS1 = int(round(DoS_width*E_f_A*ee_density/3.0/(3*constants::kB_r*400.0+E_f_A - core_cutoff)));
+            DoS1 = int(round(DoS_width*E_f_A*ee_density/1.25/(3*constants::kB_r*400.0+E_f_A - core_cutoff)));
             DoS1_n = DoS1;
             for (int e = 1; e < electron_nearest_electron_list.at(electron).at(0); ++e) {
               if((electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) < (e_energy - deltaE + 0.5*DoS_width*E_f_A)) \
@@ -807,7 +807,7 @@ void ee_scattering() {
               }
             }
           } else {
-            DoS1 = int(round(DoS_width*E_f_A*ee_density/3.0/(3*constants::kB_r*400.0+E_f_A - core_cutoff)/12.0));
+            DoS1 = int(round(DoS_width*E_f_A*ee_density/1.25/(3*constants::kB_r*400.0+E_f_A - core_cutoff)/12.0));
             DoS1_n = DoS1;
             for (int e = 1; e < electron_nearest_electron_list.at(electron).at(0); ++e) {
               if((electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) < (e_energy - deltaE + 0.002*E_f_A)) \
@@ -819,7 +819,7 @@ void ee_scattering() {
             }
           }
           if(d_e_energy + deltaE < transport_cutoff) {
-            DoS2 = int(round(DoS_width*E_f_A*ee_density/3.0/(3*constants::kB_r*400.0+E_f_A - core_cutoff)));
+            DoS2 = int(round(DoS_width*E_f_A*ee_density/1.25/(3*constants::kB_r*400.0+E_f_A - core_cutoff)));
             DoS2_n = DoS2;
             for (int i = 1; i < electron_nearest_electron_list.at(electron_collision).at(0); ++i) {
               if((electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) < (d_e_energy + deltaE +  0.5*DoS_width*E_f_A)) \
@@ -830,7 +830,7 @@ void ee_scattering() {
               }
             }
           } else {
-            DoS2 = int(round(DoS_width*E_f_A*ee_density/3.0/(3*constants::kB_r*400.0+E_f_A - core_cutoff)/12.0));
+            DoS2 = int(round(DoS_width*E_f_A*ee_density/1.25/(3*constants::kB_r*400.0+E_f_A - core_cutoff)/12.0));
             DoS2_n = DoS2;
             for (int i = 1; i < electron_nearest_electron_list.at(electron_collision).at(0); ++i) {
               if((electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) < (d_e_energy + deltaE + 0.002*E_f_A)) \
