@@ -1546,7 +1546,7 @@ void output_data() {
     temp_map_6.open(string(directory) + "/Temp_Map6" + "/" + time_stamp);
     temp_map_7.open(string(directory) + "/Temp_Map7" + "/" + time_stamp);
     
-    const static double step_size = 0.004*E_f_A;
+    const static double step_size = 0.024*E_f_A;
   omp_set_dynamic(0);
        omp_set_num_threads(8);
 
@@ -1595,50 +1595,51 @@ void output_data() {
       // }    
     }
     }  
+    int output_count = (E_f_A - core_cutoff)/step_size;
 
-    for(int i = 0; i < conduction_electrons*0.01; i++) {
+    for(int i = 0; i < output_count + 5; i++) {
       temp_map_0 << i << ", " << temp_Map.at(0).at(i) << "\n";
       temp_Map.at(0).at(i) = 0;
     }
     temp_map_0.close();
 
-    for(int i = 0; i < conduction_electrons*0.01; i++) {
+    for(int i = 0; i < output_count + 5; i++) {
       temp_map_1 << i << ", " << temp_Map.at(1).at(i) << "\n";
       temp_Map.at(1).at(i) = 0;
     }
     temp_map_1.close();
 
-    for(int i = 0; i < conduction_electrons*0.01; i++) {
+    for(int i = 0; i < output_count + 5; i++) {
       temp_map_2 << i << ", " << temp_Map.at(2).at(i) << "\n";
       temp_Map.at(2).at(i) = 0;
     }
     temp_map_2.close();
     
-    for(int i = 0; i < conduction_electrons*0.01; i++) {
+    for(int i = 0; i < output_count + 5; i++) {
       temp_map_3 << i << ", " << temp_Map.at(3).at(i) << "\n";
       temp_Map.at(3).at(i) = 0;
     }
     temp_map_3.close();
     
-    for(int i = 0; i < conduction_electrons*0.01; i++) {
+    for(int i = 0; i < output_count + 5; i++) {
       temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
       temp_Map.at(4).at(i) = 0;
     }
     temp_map_4.close();
 
-    for(int i = 0; i < conduction_electrons*0.01; i++) {
+    for(int i = 0; i < output_count + 5; i++) {
       temp_map_5<< i << ", " << temp_Map.at(5).at(i) << "\n";
       temp_Map.at(5).at(i) = 0;
     }
     temp_map_5.close();
 
-    for(int i = 0; i < conduction_electrons*0.01; i++) {
+    for(int i = 0; i < output_count + 5; i++) {
       temp_map_6 << i << ", " << temp_Map.at(6).at(i) << "\n";
       temp_Map.at(6).at(i) = 0;
     }
     temp_map_6.close();
 
-    for(int i = 0; i < conduction_electrons*0.01; i++) {
+    for(int i = 0; i < output_count + 5; i++) {
       temp_map_7 << i << ", " << temp_Map.at(7).at(i) << "\n";
       temp_Map.at(7).at(i) = 0;
     }
