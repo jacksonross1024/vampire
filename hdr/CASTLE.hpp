@@ -108,7 +108,7 @@ namespace CASTLE {
     extern double e_specific_heat_i;
     extern double zero_pt_lattice_e;
     extern double phonon_energy;
-
+    extern int ee_density;
 
     extern bool ee_coupling;
     extern bool ea_coupling;
