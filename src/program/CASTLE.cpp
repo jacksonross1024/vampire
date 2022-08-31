@@ -373,8 +373,9 @@ void initialize () {
    
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
+    std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/6.0)) << " above transport cutoff; " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))) << " below" << std::endl;
     
-  std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists.at(0).size() << ", maximum integration list size: " << electron_integration_list.at(0).size() << std::endl;
+    std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists.at(0).size() << ", maximum integration list size: " << electron_integration_list.at(0).size() << std::endl;
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog. data" << std::endl;
@@ -395,9 +396,9 @@ else std::cout << "test failed " << test << std::endl;
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
-  x_omp_cells = int(floor(lattice_width / 50.0));
-  y_omp_cells = int(floor(lattice_depth / 50.0));
-  z_omp_cells = int(floor(lattice_height/ 50.0));
+  x_omp_cells = int(floor(lattice_width / 30.0));
+  y_omp_cells = int(floor(lattice_depth / 30.0));
+  z_omp_cells = int(floor(lattice_height/ 30.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -409,8 +410,8 @@ else std::cout << "test failed " << test << std::endl;
   old_cell_integration_lists.resize(total_cells);
 
   for(int i=0; i < total_cells; i++) {
-    cell_integration_lists.at(i).resize(int(1.25*double(conduction_electrons) / double(total_cells)), 0);
-    old_cell_integration_lists.at(i).resize(int(1.25*double(conduction_electrons) / double(total_cells)), 0);
+    cell_integration_lists.at(i).resize(int(4*double(conduction_electrons) / double(total_cells)), 0);
+    old_cell_integration_lists.at(i).resize(int(4*double(conduction_electrons) / double(total_cells)), 0);
     cell_integration_lists.at(i).at(0) = 1;
     old_cell_integration_lists.at(i).at(0) = 1;
   }
@@ -540,7 +541,7 @@ else std::cout << "test failed " << test << std::endl;
     
    // omp_set_num_threads(omp_threads);
     cells_per_thread = total_cells / omp_threads;
-    std::cout << "thread count " << omp_threads << ", " << cells_per_thread << ", " << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << std::endl;
+    std::cout << "thread count " << omp_threads << ", " << cells_per_thread << ", " << total_cells << ", " << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << std::endl;
     lattice_cells_per_omp.resize(omp_threads);
 
     for(int t=0; t< omp_threads;t++){
@@ -560,7 +561,7 @@ else std::cout << "test failed " << test << std::endl;
       
       //double decker cells
     
-     lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells)).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells/2)))%2).at((z_omp_cells/2)*floor(omp_get_thread_num()/(x_omp_cells* y_omp_cells/4)) + (l % (z_omp_cells/2)));
+     lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*max_x_threads)%x_omp_cells + int(floor(l/(2*max_z_threads)))).at((int(floor(omp_get_thread_num()*max_y_threads/x_omp_cells)*max_y_threads)%y_omp_cells) + int(floor(l/(max_z_threads)))%max_z_threads).at((max_z_threads)*floor(omp_get_thread_num()/(x_omp_cells* y_omp_cells/4)) + (l % (max_z_threads)));
       
       //single decker cells
      // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells)))%2).at( l % (z_omp_cells));
@@ -757,7 +758,7 @@ void initialize_electrons() {
     temp_Map.resize(8);
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
-        temp_Map.at(i).resize(round(conduction_electrons*0.01)+10,0);
+        temp_Map.at(i).resize(round(conduction_electrons*0.02)+10,0);
         // std::cout << temp_Map.at(i).at(0) << std::endl;
         // std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
     }
@@ -765,13 +766,13 @@ void initialize_electrons() {
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 40.0*40.0;
+    e_e_neighbor_cutoff = 23.0*23.0;
     
     half_int_var =  5;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 5;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 50.0*50.0;
+    e_e_integration_cutoff = 30.0*30.0;
     e_e_coulomb_cutoff = 9.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
@@ -783,9 +784,9 @@ void initialize_electrons() {
     electron_ea_scattering_list.resize(conduction_electrons);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    const int e_density =   int(round(1.25*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
-     ee_density =  int(round(1.25*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
-    const int ee_scattering= 20+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
+    const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
+     ee_density =  int(round(3*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
+    const int ee_scattering= 50+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
 std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
@@ -1286,7 +1287,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   distrib.open(string(directory) +"/"+ name);
   distrib.precision(20);
 
-  double step_size = 295.0 / double(conduction_electrons);
+  double step_size = 0.002;
   const double max  = E_f_A + 3.0*constants::kB_r*Te;
   const double min = E_f_A - 3.0*constants::eV_to_AJ;
   std::cout << "min: " << min << ", max: " << max << std::endl;
@@ -1317,7 +1318,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
  
         if(count == conduction_electrons) break;
       }
-      if(1 - return_phonon_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-2) transport_cutoff = epsilon;
+      if(1 - return_phonon_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-3) transport_cutoff = epsilon;
       energy_step++;
      // if (epsilon <= min) break;
 
@@ -1546,18 +1547,18 @@ void output_data() {
     temp_map_6.open(string(directory) + "/Temp_Map6" + "/" + time_stamp);
     temp_map_7.open(string(directory) + "/Temp_Map7" + "/" + time_stamp);
     
-    const static double step_size = 0.024*E_f_A;
+    const static double step_size = 4; //AJ
   omp_set_dynamic(0);
        omp_set_num_threads(8);
-
+  int output_count = 50+ (E_f_A - core_cutoff)/step_size;
     #pragma omp parallel
     {
     for(int e = 1; e < old_cell_integration_lists.at(omp_get_thread_num()).at(0); e++) {
       const unsigned int electron = cell_integration_lists.at(omp_get_thread_num()).at(e);
       const unsigned int array_index = 3*electron;
 
-      //const double velocity_length = ;
-      const unsigned int hist = int(std::min(conduction_electrons*0.01, std::max(0.0, floor((electron_potential.at(electron) - core_cutoff)/step_size))));
+      
+      const unsigned int hist = int(std::min(double(output_count), std::max(0.0, floor((electron_potential.at(electron) - core_cutoff)/step_size))));
       temp_Map.at(omp_get_thread_num()).at(hist)++;
       
      // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
@@ -1595,51 +1596,51 @@ void output_data() {
       // }    
     }
     }  
-    int output_count = (E_f_A - core_cutoff)/step_size;
+  
 
-    for(int i = 0; i < output_count + 5; i++) {
+    for(int i = 0; i < output_count; i++) {
       temp_map_0 << i << ", " << temp_Map.at(0).at(i) << "\n";
       temp_Map.at(0).at(i) = 0;
     }
     temp_map_0.close();
 
-    for(int i = 0; i < output_count + 5; i++) {
+    for(int i = 0; i < output_count; i++) {
       temp_map_1 << i << ", " << temp_Map.at(1).at(i) << "\n";
       temp_Map.at(1).at(i) = 0;
     }
     temp_map_1.close();
 
-    for(int i = 0; i < output_count + 5; i++) {
+    for(int i = 0; i < output_count; i++) {
       temp_map_2 << i << ", " << temp_Map.at(2).at(i) << "\n";
       temp_Map.at(2).at(i) = 0;
     }
     temp_map_2.close();
     
-    for(int i = 0; i < output_count + 5; i++) {
+    for(int i = 0; i < output_count; i++) {
       temp_map_3 << i << ", " << temp_Map.at(3).at(i) << "\n";
       temp_Map.at(3).at(i) = 0;
     }
     temp_map_3.close();
     
-    for(int i = 0; i < output_count + 5; i++) {
+    for(int i = 0; i < output_count; i++) {
       temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
       temp_Map.at(4).at(i) = 0;
     }
     temp_map_4.close();
 
-    for(int i = 0; i < output_count + 5; i++) {
+    for(int i = 0; i < output_count; i++) {
       temp_map_5<< i << ", " << temp_Map.at(5).at(i) << "\n";
       temp_Map.at(5).at(i) = 0;
     }
     temp_map_5.close();
 
-    for(int i = 0; i < output_count + 5; i++) {
+    for(int i = 0; i < output_count; i++) {
       temp_map_6 << i << ", " << temp_Map.at(6).at(i) << "\n";
       temp_Map.at(6).at(i) = 0;
     }
     temp_map_6.close();
 
-    for(int i = 0; i < output_count + 5; i++) {
+    for(int i = 0; i < output_count; i++) {
       temp_map_7 << i << ", " << temp_Map.at(7).at(i) << "\n";
       temp_Map.at(7).at(i) = 0;
     }

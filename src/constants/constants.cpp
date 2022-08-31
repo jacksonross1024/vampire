@@ -36,6 +36,7 @@ namespace constants{
    const double eps_0_A = 8.8541878128; // (s**2 C**2/m**3/kg ) -> [e30/e30] -> (fs**2 C**2/A**3/kg )
    const double K = e*e / (4*M_PI*M_PI *eps_0);
    const double K_A = 1e4*e_A*e_A / (4 * M_PI * M_PI * eps_0_A); // K for Coulomb's law in Angstroms
+   const double m_over_hbar_sq = m_e_r*m_e_r/hbar_r/hbar_r;
   // const double K_esp = K_A - (1e30*K); //error in K (is small, but noticible between A and m)
    // derived constants
 
