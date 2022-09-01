@@ -773,7 +773,7 @@ void initialize_electrons() {
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 30.0*30.0;
-    e_e_coulomb_cutoff = 9.0;
+    e_e_coulomb_cutoff = 23.0*23.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     electron_transport_list.resize(conduction_electrons, false);
@@ -786,7 +786,7 @@ void initialize_electrons() {
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
     const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
      ee_density =  int(round(3*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
-    const int ee_scattering= 50+int(round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
+    const int ee_scattering= int(3*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
 std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
@@ -1542,25 +1542,30 @@ void output_data() {
     temp_map_1.open(string(directory) + "/Temp_Map1" + "/" + time_stamp);
     temp_map_2.open(string(directory) + "/Temp_Map2" + "/" + time_stamp);
     temp_map_3.open(string(directory) + "/Temp_Map3" + "/" + time_stamp);
-    temp_map_4.open(string(directory) + "/Temp_Map4" + "/" + time_stamp);
-    temp_map_5.open(string(directory) + "/Temp_Map5" + "/" + time_stamp);
-    temp_map_6.open(string(directory) + "/Temp_Map6" + "/" + time_stamp);
-    temp_map_7.open(string(directory) + "/Temp_Map7" + "/" + time_stamp);
+    temp_map_4.open(string(directory) + "/Temp_Map0Ef" + "/" + time_stamp);
+    temp_map_5.open(string(directory) + "/Temp_Map1Ef" + "/" + time_stamp);
+    temp_map_6.open(string(directory) + "/Temp_Map2Ef" + "/" + time_stamp);
+    temp_map_7.open(string(directory) + "/Temp_Map3Ef" + "/" + time_stamp);
     
-    const static double step_size = 4; //AJ
+    const static double step_size_lr = 4; //AJ
+    const static double step_size_hr = 1; //AJ
   omp_set_dynamic(0);
-       omp_set_num_threads(8);
-  int output_count = 50+ (E_f_A - core_cutoff)/step_size;
+       omp_set_num_threads(4);
+  const int output_count_lr = 50+ (transport_cutoff - core_cutoff)/step_size_lr;
+  const int output_count_hr = 50+ (3.0*constants::kB_r*300.0 + E_f_A - transport_cutoff)/step_size_hr;
     #pragma omp parallel
     {
     for(int e = 1; e < old_cell_integration_lists.at(omp_get_thread_num()).at(0); e++) {
       const unsigned int electron = cell_integration_lists.at(omp_get_thread_num()).at(e);
-      const unsigned int array_index = 3*electron;
 
-      
-      const unsigned int hist = int(std::min(double(output_count), std::max(0.0, floor((electron_potential.at(electron) - core_cutoff)/step_size))));
-      temp_Map.at(omp_get_thread_num()).at(hist)++;
-      
+      const double energy = electron_potential.at(electron);
+      if(energy < transport_cutoff) {
+        const unsigned int hist = int(std::min(double(output_count_lr), std::max(0.0, floor(energy- core_cutoff)/step_size_lr)));
+        temp_Map.at(omp_get_thread_num()).at(hist)++;
+      } else {
+        const unsigned int hist = int(std::min(double(output_count_hr), std::max(0.0, floor(energy- transport_cutoff)/step_size_hr)));
+        temp_Map.at(omp_get_thread_num()+4).at(hist)++;
+      }
      // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
            // double x_pos = electron_position.at(array_index);
       // double y_pos = electron_position.at(array_index+1); 
@@ -1598,49 +1603,49 @@ void output_data() {
     }  
   
 
-    for(int i = 0; i < output_count; i++) {
+    for(int i = 0; i < output_count_lr; i++) {
       temp_map_0 << i << ", " << temp_Map.at(0).at(i) << "\n";
       temp_Map.at(0).at(i) = 0;
     }
     temp_map_0.close();
 
-    for(int i = 0; i < output_count; i++) {
+    for(int i = 0; i < output_count_lr; i++) {
       temp_map_1 << i << ", " << temp_Map.at(1).at(i) << "\n";
       temp_Map.at(1).at(i) = 0;
     }
     temp_map_1.close();
 
-    for(int i = 0; i < output_count; i++) {
+    for(int i = 0; i < output_count_lr; i++) {
       temp_map_2 << i << ", " << temp_Map.at(2).at(i) << "\n";
       temp_Map.at(2).at(i) = 0;
     }
     temp_map_2.close();
     
-    for(int i = 0; i < output_count; i++) {
+    for(int i = 0; i < output_count_lr; i++) {
       temp_map_3 << i << ", " << temp_Map.at(3).at(i) << "\n";
       temp_Map.at(3).at(i) = 0;
     }
     temp_map_3.close();
     
-    for(int i = 0; i < output_count; i++) {
+    for(int i = 0; i < output_count_hr; i++) {
       temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
       temp_Map.at(4).at(i) = 0;
     }
     temp_map_4.close();
 
-    for(int i = 0; i < output_count; i++) {
+    for(int i = 0; i < output_count_hr; i++) {
       temp_map_5<< i << ", " << temp_Map.at(5).at(i) << "\n";
       temp_Map.at(5).at(i) = 0;
     }
     temp_map_5.close();
 
-    for(int i = 0; i < output_count; i++) {
+    for(int i = 0; i < output_count_hr; i++) {
       temp_map_6 << i << ", " << temp_Map.at(6).at(i) << "\n";
       temp_Map.at(6).at(i) = 0;
     }
     temp_map_6.close();
 
-    for(int i = 0; i < output_count; i++) {
+    for(int i = 0; i < output_count_hr; i++) {
       temp_map_7 << i << ", " << temp_Map.at(7).at(i) << "\n";
       temp_Map.at(7).at(i) = 0;
     }

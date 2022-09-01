@@ -1046,7 +1046,7 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
         int DoS2;
         int DoS1_n;
         int DoS2_n;
-        const double DoS_width = 3;
+        const double DoS_width = 4;
             if(e_energy - deltaE < transport_cutoff) {
               DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
               DoS1_n = DoS1;
@@ -1059,19 +1059,19 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
                 }
               }
            } else {
-              DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/6.0));
+              DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0));
               DoS1_n = DoS1;
               for (int e = 1; e < electron_nearest_electron_list.at(electron).at(0); ++e) {
-                if( electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) < (e_energy - deltaE + 0.25)  \
-                &&  (electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) > (e_energy - deltaE - 0.25) )) {
+                if( electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) < (e_energy - deltaE + 0.5)  \
+                &&  (electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) > (e_energy - deltaE - 0.5) )) {
                   DoS1 -= 1;
                   if(DoS1 < 0) {
-                    std::cout << DoS1_n << ", " << DoS1 << ", " << electron << ", " << deltaE << std::endl;
+                    //std::cout << DoS1_n << ", " << DoS1 << ", " << electron << ", " << deltaE << std::endl;
                     DoS1 = 0; 
                     break;}
                 }
               }
-              std::cout << DoS1_n << ", " << DoS1 << ", " << electron << ", " << deltaE << std::endl;
+            //  std::cout << DoS1_n << ", " << DoS1 << ", " << electron << ", " << deltaE << std::endl;
             }
             if(d_e_energy + deltaE < transport_cutoff) {
               DoS2 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
@@ -1084,20 +1084,20 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
                 }
               }
             } else {
-              DoS2 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/6.0));
+              DoS2 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0));
               DoS2_n = DoS2;
               for (int i = 1; i < electron_nearest_electron_list.at(electron_collision).at(0); ++i) {
-                if((electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) < (d_e_energy + deltaE + 0.25)) \
-                && ( (electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) > (d_e_energy + deltaE - 0.25) ) )) {
+                if((electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) < (d_e_energy + deltaE + 0.5)) \
+                && ( (electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) > (d_e_energy + deltaE - 0.5) ) )) {
                   DoS2 -= 1;
                ///   if(DoS2 < -10) std::cout << "need tighter bounds hr ee2 " << DoS2 << ", " << electron_nearest_electron_list.at(electron_collision).at(0) << ", " << d_e_energy << ", " << d_e_energy + deltaE - 0.004*E_f_A << ", " << d_e_energy + deltaE + 0.004*E_f_A << std::endl;
                   if(DoS2 < 0) {
-                    std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
+                 //   std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
                     DoS2 = 0; 
                     break;}
                 }
               }
-              std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
+            //  std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
             }
 
           if(DoS1 == 0 || DoS2 == 0) return 0;
@@ -1111,7 +1111,7 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
 
           const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
 
-      if(probability > exp(ee_rate*DoS1*DoS2/((0.25+(deltaK))*DoS1_n*DoS2_n*(0.25+(deltaK))))) {
+      if(probability > exp(ee_rate*exp(-0.0625*sqrt(length))*DoS1*DoS2/((0.25+(deltaK))*DoS1_n*DoS2_n*(0.25+(deltaK))))) {
        
         electron_potential.at(electron) -= deltaE;
         electron_potential.at(electron_collision)   += deltaE;
