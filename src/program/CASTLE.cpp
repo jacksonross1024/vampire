@@ -291,8 +291,8 @@ void initialize () {
     z_flux = 0;
     current_time_step = 0;
     CASTLE_real_time = 0;
-    uniform_random.seed(2137082040);
-    int_random.seed(2137082040);
+    // uniform_random.seed(2137082040);
+    // int_random.seed(2137082040);
 
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
@@ -327,21 +327,21 @@ void initialize () {
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
-    //omp_uniform_random.resize(omp_threads);
+  // omp_uniform_random.resize(omp_threads);
     
-   // int_random.seed(omp_threads);
-   // omp_int_random.resize(omp_threads);
+  //  int_random.seed(omp_threads);
+  //  omp_int_random.resize(omp_threads);
   //  // std::cout << omp_get_num_threads() << std::endl;
   //   std::srand(std::time(nullptr));
   //   std::random_device rd;  //Will be used to obtain a seed for the random number engine
   //   std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
   //   std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
   //   std::uniform_real_distribution<double> test_uniform;
-  //   // for(int i = 0; i < omp_threads; i++) {
-    //  // std::cout << omp_get_num_threads() << std::endl;
-    //  omp_uniform_random.at(i).seed(seed_gen(gen));
-    //   omp_int_random.at(i).seed(seed_gen(gen));
-    // }
+    for(int i = 0; i < omp_threads; i++) {
+    // //  // std::cout << omp_get_num_threads() << std::endl;
+     omp_uniform_random.at(i).seed(i);
+    //   omp_int_random.at(i).seed(i);
+    }
     // #pragma omp parallel 
     // {
     // for(unsigned int e = 0; e < conduction_electrons*conduction_electrons; e++) uint32_t test = test_int(gen);
@@ -765,6 +765,8 @@ void initialize_electrons() {
     //std::cout << temp_Map.at(7).at(3335) << std::endl;
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
+    transport_scattering_count = 0;
+    core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
     e_e_neighbor_cutoff = 23.0*23.0;
     
@@ -773,7 +775,7 @@ void initialize_electrons() {
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 30.0*30.0;
-    e_e_coulomb_cutoff = 23.0*23.0;
+    e_e_coulomb_cutoff = 5.0*5.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     electron_transport_list.resize(conduction_electrons, false);
@@ -1223,58 +1225,58 @@ double M_B_distrib(const double& epsilon, const double& beta) {
 
 void create_phonon_distribution(std::vector<double>& distribution, const double& beta) {
 
-  const double step_size = 1.0 / double(conduction_electrons);
-  const double offset  = beta*3.0;
-  int count = 0;
+//   const double step_size = 1.0 / double(conduction_electrons);
+//   const double offset  = beta*3.0;
+//   int count = 0;
 
- // std::cout << step_size << ", " << offset << std::endl;
-  while(count < conduction_electrons) {
-    if(beta == 0) {
-      distribution.at(count) = E_f_A;
-      count++;
-      continue;
-    }
-    double electron = double(omp_int_random.at(omp_get_thread_num())() % conduction_electrons);
-    double epsilon = (step_size *electron)  - offset;
-    if(omp_uniform_random.at(omp_get_thread_num())() < ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
-   //  if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Tp) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Tp) << ", " << epsilon << ", " << beta  << std::endl;
-      distribution.at(count) = E_f_A*(epsilon + 1.0);
-      count++;
-    }
-  }
+//  // std::cout << step_size << ", " << offset << std::endl;
+//   while(count < conduction_electrons) {
+//     if(beta == 0) {
+//       distribution.at(count) = E_f_A;
+//       count++;
+//       continue;
+//     }
+//     double electron = double(omp_int_random.at(omp_get_thread_num())() % conduction_electrons);
+//     double epsilon = (step_size *electron)  - offset;
+//     if(omp_uniform_random.at(omp_get_thread_num())() < ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
+//    //  if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Tp) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Tp) << ", " << epsilon << ", " << beta  << std::endl;
+//       distribution.at(count) = E_f_A*(epsilon + 1.0);
+//       count++;
+//     }
+//   }
 }
 
 void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta) {
 
-  char directory [256];
-      if(getcwd(directory, sizeof(directory)) == NULL){
-            std::cerr << "Fatal getcwd error in datalog." << std::endl;
-      }
-  std::ofstream distrib;
-  distrib.open(string(directory) +"/"+ name);
-  distrib.precision(20);
+  // char directory [256];
+  //     if(getcwd(directory, sizeof(directory)) == NULL){
+  //           std::cerr << "Fatal getcwd error in datalog." << std::endl;
+  //     }
+  // std::ofstream distrib;
+  // distrib.open(string(directory) +"/"+ name);
+  // distrib.precision(20);
 
-  const double step_size = 1.0 / double(conduction_electrons);
-  const double offset  = beta*3.0;
-  int count = 0;
+  // const double step_size = 1.0 / double(conduction_electrons);
+//   const double offset  = beta*3.0;
+//   int count = 0;
 
- // std::cout << step_size << ", " << offset << std::endl;
-  while(count < conduction_electrons) {
-    if(beta == 0) {
-      distribution.at(count) = E_f_A;
-      count++;
-      continue;
-    }
-    double electron = double(omp_int_random.at(omp_get_thread_num())() % conduction_electrons);
-    double epsilon = (step_size *electron)  - offset;
-    if(omp_uniform_random.at(omp_get_thread_num())() < ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
-     // if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Te) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Te) << ", " << epsilon << ", " << beta  << std::endl;
-      distribution.at(count) = E_f_A*(epsilon + 1.0);
-      distrib << count << ", " << distribution.at(count) << "\n";
-      count++;
-    }
-  }
-  distrib.close();
+//  // std::cout << step_size << ", " << offset << std::endl;
+//   while(count < conduction_electrons) {
+//     if(beta == 0) {
+//       distribution.at(count) = E_f_A;
+//       count++;
+//       continue;
+//     }
+//     double electron = double(omp_int_random.at(omp_get_thread_num())() % conduction_electrons);
+//     double epsilon = (step_size *electron)  - offset;
+//     if(omp_uniform_random.at(omp_get_thread_num())() < ((0.01 / 16.0)*(epsilon+(3.0*beta))*(epsilon+(3.0*beta))*exp(-0.5*(epsilon+(3.0*beta)) / beta) / (beta*beta*beta))) {
+//      // if(E_f_A*(epsilon+1.0) < E_f_A - 3.0*constants::kB_r*Te) std::cout << E_f_A*(epsilon+1.0) << ", " << E_f_A - (3.0*constants::kB_r*Te) << ", " << epsilon << ", " << beta  << std::endl;
+//       distribution.at(count) = E_f_A*(epsilon + 1.0);
+//       distrib << count << ", " << distribution.at(count) << "\n";
+//       count++;
+//     }
+//   }
+//   distrib.close();
 }
 
 void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double& beta) {
@@ -1318,7 +1320,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
  
         if(count == conduction_electrons) break;
       }
-      if(1 - return_phonon_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-3) transport_cutoff = epsilon;
+      if(1 - return_phonon_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-4) transport_cutoff = epsilon;
       energy_step++;
      // if (epsilon <= min) break;
 
@@ -1555,15 +1557,15 @@ void output_data() {
   const int output_count_hr = 50+ (3.0*constants::kB_r*300.0 + E_f_A - transport_cutoff)/step_size_hr;
     #pragma omp parallel
     {
-    for(int e = 1; e < old_cell_integration_lists.at(omp_get_thread_num()).at(0); e++) {
-      const unsigned int electron = cell_integration_lists.at(omp_get_thread_num()).at(e);
+    for(int e = 1; e < electron_nearest_electron_list.at(omp_get_thread_num()*10000).at(0); e++) {
+      const unsigned int electron = electron_nearest_electron_list.at(omp_get_thread_num()*10000).at(e);
 
       const double energy = electron_potential.at(electron);
       if(energy < transport_cutoff) {
-        const unsigned int hist = int(std::min(double(output_count_lr), std::max(0.0, floor(energy- core_cutoff)/step_size_lr)));
+        const unsigned int hist = int(std::min(double(output_count_lr-1), std::max(0.0, floor((energy- core_cutoff)/step_size_lr))));
         temp_Map.at(omp_get_thread_num()).at(hist)++;
       } else {
-        const unsigned int hist = int(std::min(double(output_count_hr), std::max(0.0, floor(energy- transport_cutoff)/step_size_hr)));
+        const unsigned int hist = int(std::min(double(output_count_hr-1), std::max(0.0, floor((energy- transport_cutoff)/step_size_hr))));
         temp_Map.at(omp_get_thread_num()+4).at(hist)++;
       }
      // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
@@ -1604,31 +1606,36 @@ void output_data() {
   
 
     for(int i = 0; i < output_count_lr; i++) {
-      temp_map_0 << i << ", " << temp_Map.at(0).at(i) << "\n";
+      if(i == 11) temp_map_0 << i << ", " << 195*(temp_Map.at(0).at(i)/89) << "\n";
+      else temp_map_0 << i << ", " << temp_Map.at(0).at(i) << "\n";
       temp_Map.at(0).at(i) = 0;
     }
     temp_map_0.close();
 
     for(int i = 0; i < output_count_lr; i++) {
-      temp_map_1 << i << ", " << temp_Map.at(1).at(i) << "\n";
+      if(i == 11) temp_map_1 << i << ", " << 195*(temp_Map.at(1).at(i)/89) << "\n";
+      else temp_map_1 << i << ", " << temp_Map.at(1).at(i) << "\n";
       temp_Map.at(1).at(i) = 0;
     }
     temp_map_1.close();
 
     for(int i = 0; i < output_count_lr; i++) {
-      temp_map_2 << i << ", " << temp_Map.at(2).at(i) << "\n";
+      if(i == 11) temp_map_2 << i << ", " << 195*(temp_Map.at(2).at(i)/89) << "\n";
+      else temp_map_2 << i << ", " << temp_Map.at(2).at(i) << "\n";
       temp_Map.at(2).at(i) = 0;
     }
     temp_map_2.close();
     
     for(int i = 0; i < output_count_lr; i++) {
-      temp_map_3 << i << ", " << temp_Map.at(3).at(i) << "\n";
+      if(i == 11) temp_map_3 << i << ", " << 195*(temp_Map.at(3).at(i)/89) << "\n";
+      else temp_map_3 << i << ", " << temp_Map.at(3).at(i) << "\n";
       temp_Map.at(3).at(i) = 0;
     }
     temp_map_3.close();
     
     for(int i = 0; i < output_count_hr; i++) {
-      temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
+      if(i == 11) temp_map_4 << i << ", " << 195*(temp_Map.at(4).at(i)/89) << "\n";
+      else temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
       temp_Map.at(4).at(i) = 0;
     }
     temp_map_4.close();
@@ -1684,7 +1691,7 @@ void output_data() {
       << Te*Te*e_heat_capacity * 1e-20/300.0 << ", " << Tp*a_heat_capacity*1e-20 << ", "  
       << Te << ", " << Tp << ", " //<< TEKE << ", " << TLE << ", " 
       << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << p_x << ", " << p_y << ", " << p_z << ", " 
-      << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
+      << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(core_scattering_count) / double(CASTLE_output_rate) << ", " << double(transport_scattering_count) / double(CASTLE_output_rate) << ", " <<  double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;
     }
    
@@ -1692,6 +1699,8 @@ void output_data() {
     y_flux = 0;
     z_flux = 0;
     e_a_scattering_count = 0;
+    core_scattering_count = 0;
+    transport_scattering_count = 0;
     e_e_scattering_count = 0;
    // a_a_scattering_count = 0;
 }

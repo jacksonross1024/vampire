@@ -266,10 +266,15 @@ namespace CASTLE {
    std::vector<std::vector<unsigned int> > lattice_cells_per_omp;
    std::vector<unsigned int> escaping_electrons;
 
-   MTRand_closed uniform_random;
-   MTRand_int32 int_random;
+//    MTRand_closed uniform_random;
+//    MTRand_int32 int_random;
     std::vector<MTRand_closed> omp_uniform_random(32);
-    std::vector<MTRand_int32> omp_int_random(32);
+//     std::vector<MTRand_int32> omp_int_random(32);
+//   double = omp_int_random[omp_get_thread_num()]();
+//    std::srand(std::time(nullptr));
+//     std::random_device rd;  //Will be used to obtain a seed for the random number engine
+//     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+//     std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
    //std::vector<MTRand> omp_gaussian_random(omp_get_num_threads());
     //outputs
    
@@ -291,6 +296,8 @@ namespace CASTLE {
    double p_z;
    unsigned int e_a_scattering_count;
    unsigned int e_e_scattering_count;
+   unsigned int transport_scattering_count;
+   unsigned int core_scattering_count;
 
    double TTMe;
    double d_TTMe;

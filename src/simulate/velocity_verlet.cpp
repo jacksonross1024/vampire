@@ -63,23 +63,23 @@ void setup_output() {
 
 void update_position(){
 
+    omp_set_dynamic(0);
+    omp_set_num_threads(omp_threads);
     if(current_time_step % half_int_var == 0) {
       
       old_cell_integration_lists.swap(cell_integration_lists);
-      #pragma simd
+      #pragma omp parallel for
       for(int c = 0; c < total_cells; c++) {
-        cell_integration_lists.at(c).at(0) = 1;
+        cell_integration_lists[c][0] = 1;
       }
     }
-    omp_set_dynamic(0);
-    omp_set_num_threads(omp_threads);
- 
- 
+    
   #pragma omp parallel reduction(+:x_flux,y_flux,z_flux, p_x,p_y,p_z)
   {
+    const int thread = omp_get_thread_num();
   for (int l = 0 ; l < cells_per_thread; l++) {
-    const unsigned int cell = lattice_cells_per_omp.at(omp_get_thread_num()).at(l);
-    const unsigned int size = old_cell_integration_lists.at(cell).at(0);
+    const unsigned int cell = lattice_cells_per_omp.at(thread).at(l);
+    const unsigned int size = old_cell_integration_lists.at(cell)[0];
    // cell_integration_lists.at(cell).at(0) = 1;
 
   //  if((current_time_step % half_int_var) == 0 && ( (l % ((z_omp_cells/2)-1) )== 0 || (l % (z_omp_cells/2)) == 0) ) {
@@ -98,16 +98,19 @@ void update_position(){
     
      // if (x_pos != x_pos || y_pos != y_pos || z_pos != z_pos) std::cout << "access pos " << x_pos << ", " << y_pos << ", " << z_pos << ", " << \
       electron_position.at(array_index) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index+2) << ", " << electron << ", " << array_index << std::endl;
-      
-        p_x += electron_velocity.at(array_index);
-        p_y += electron_velocity.at(array_index+1) ;
-        p_z += electron_velocity.at(array_index+2) ;
+      const double v_x = electron_velocity.at(array_index);
+      const double v_y = electron_velocity.at(array_index+1) ;
+      const double v_z = electron_velocity.at(array_index+2) ;
+
+        p_x += v_x;
+        p_y += v_y;
+        p_z += v_z;
         
     //  if(electron_transport_list.at(electron)) {
 
-        x_pos += electron_velocity.at(array_index)   * dt;// + (electron_force.at(array_index)   * dt * dt * constants::K_A / 2); // x superarray component
-        y_pos += electron_velocity.at(array_index+1) * dt;// + (electron_force.at(array_index_y) * dt * dt * constants::K_A / 2); // y superarray component
-        z_pos += electron_velocity.at(array_index+2) * dt;// + (electron_force.at(array_index_z) * dt * dt * constants::K_A / 2); // z superarray component
+        x_pos += v_x * dt;// + (electron_force.at(array_index)   * dt * dt * constants::K_A / 2); // x superarray component
+        y_pos += v_y * dt;// + (electron_force.at(array_index_y) * dt * dt * constants::K_A / 2); // y superarray component
+        z_pos += v_z * dt;// + (electron_force.at(array_index_z) * dt * dt * constants::K_A / 2); // z superarray component
 
       //  if (x_pos != x_pos || y_pos != y_pos || z_pos != z_pos) std::cout << "update pos " << x_pos << ", " << y_pos << ", " << z_pos << ", " << \
          electron_position.at(array_index) << ", " << electron_position.at(array_index+1) << ", " << electron_position.at(array_index+2) << ", " << electron << ", " << array_index << ", " << dt << std::endl;
@@ -220,11 +223,12 @@ void update_dynamics() {
     double external_potential = 0.0; //AJ/e-
     const static double sigma = dt * 0.1;
     unsigned int count = 0;
-   
-     std::srand(std::time(nullptr));
+
+   std::srand(std::time(nullptr));
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
@@ -825,86 +829,93 @@ void ee_scattering() {
         const double e_energy = electron_potential.at(electron);
         const double d_e_energy = electron_potential.at(electron_collision);
         if(equilibrium_step){  
+          int blocking_lr;
+          int blocking_hr;
           double deltaE = test_uniform(gen)*(e_energy - d_e_energy);
-          if(test_uniform(gen) < 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
+          //if(test_uniform(gen) < 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
 
           if((e_energy - deltaE < core_cutoff) || (d_e_energy + deltaE < core_cutoff)) continue;
           
-            //if(e_energy - deltaE < transport_cutoff) {
-              DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
+            if(e_energy - deltaE < transport_cutoff) {
+              DoS1 = int(round(std::min(DoS_width, (DoS_width/2)+e_energy - core_cutoff)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));// + (0.75*std::min(0.0, transport_cutoff - e_energy - 0.5*DoS_width)*DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))));
               DoS1_n = DoS1;
+              blocking_lr = 15.0;
               for (int e = 1; e < electron_nearest_electron_list.at(electron).at(0); ++e) {
-               if( ((e_energy - deltaE -  0.5*DoS_width) < core_cutoff) || ((electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) < (e_energy - deltaE + 0.5*DoS_width)) \
+               if(  ((electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) < (e_energy - deltaE + 0.5*DoS_width)) \
                && ( (electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) > (e_energy - deltaE -  0.5*DoS_width) ) ) ) ){
                   DoS1 -= 1;
                 //  if(DoS1 < -10) std::cout << "need tighter bounds ee1 " << DoS1 << ", " << electron_nearest_electron_list.at(electron).at(0) << ", " << e_energy << ", " << e_energy - deltaE -  0.5*DoS_width << ", " << e_energy - deltaE +  0.5*DoS_width << std::endl;
-                  if(DoS1 < 0) {DoS1 = 0; break;}
+                  if(DoS1 < blocking_lr) {DoS1 = 0; break;}
                 }
               }
-          /* } else {
-              DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/6.0));
+           } else {
+              DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0 - (0.75*std::min(0.0, e_energy - transport_cutoff - 0.5)*DoS_width*0.5*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))));
               DoS1_n = DoS1;
+              blocking_hr = 5;
               for (int e = 1; e < electron_nearest_electron_list.at(electron).at(0); ++e) {
-                if( electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) < (e_energy - deltaE + 0.25)  \
-                &&  (electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) > (e_energy - deltaE - 0.25) )) {
+                if( electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) < (e_energy - deltaE + 0.5)  \
+                &&  (electron_potential.at(electron_nearest_electron_list.at(electron).at(e)) > (e_energy - deltaE - 0.5) )) {
                   DoS1 -= 1;
-                  if(DoS1 < 0) {
+                  if(DoS1 < blocking_hr) {
                    // std::cout << DoS1_n << ", " << DoS1 << ", " << electron << ", " << deltaE << std::endl;
                     DoS1 = 0; 
                     break;}
                 }
               }
              //  std::cout << DoS1_n << ", " << DoS1 << ", " << electron << ", " << deltaE << std::endl;
-            } */
-           // if(d_e_energy + deltaE < transport_cutoff) {
-              DoS2 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
+            } 
+            if(d_e_energy + deltaE < transport_cutoff) {
+              DoS2 = int(round(std::min(DoS_width, (DoS_width/2)+d_e_energy - core_cutoff)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));//  + (0.75*std::min(0.0, transport_cutoff - e_energy - 0.5*DoS_width)*DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))));
               DoS2_n = DoS2;
+              blocking_lr = 15;
               for (int i = 1; i < electron_nearest_electron_list.at(electron_collision).at(0); ++i) {
-                if( ((d_e_energy + deltaE -  0.5*DoS_width) < core_cutoff) || ((electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) < (d_e_energy + deltaE +  0.5*DoS_width)) \
+                if( ((electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) < (d_e_energy + deltaE +  0.5*DoS_width)) \
                 &&  ( (electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) > (d_e_energy + deltaE -  0.5*DoS_width) ) ) ) ) {
                   DoS2 -= 1;
-                  if(DoS2 < 0) {DoS2 = 0; break;}
+                  if(DoS2 < blocking_lr) {DoS2 = 0; break;}
                 }
               }
-          /*  } else {
-              DoS2 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/6.0));
+            } else {
+              DoS2 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0 - (0.75*std::min(0.0, e_energy - transport_cutoff - 0.5)*DoS_width*0.5*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))));
               DoS2_n = DoS2;
+              blocking_hr =  5;
               for (int i = 1; i < electron_nearest_electron_list.at(electron_collision).at(0); ++i) {
-                if((electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) < (d_e_energy + deltaE + 0.25)) \
-                && ( (electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) > (d_e_energy + deltaE - 0.25) ) )) {
+                if((electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) < (d_e_energy + deltaE + 0.5)) \
+                && ( (electron_potential.at(electron_nearest_electron_list.at(electron_collision).at(i)) > (d_e_energy + deltaE - 0.5) ) )) {
                   DoS2 -= 1;
                ///   if(DoS2 < -10) std::cout << "need tighter bounds hr ee2 " << DoS2 << ", " << electron_nearest_electron_list.at(electron_collision).at(0) << ", " << d_e_energy << ", " << d_e_energy + deltaE - 0.004*E_f_A << ", " << d_e_energy + deltaE + 0.004*E_f_A << std::endl;
-                  if(DoS2 < 0) {
+                  if(DoS2 < blocking_hr) {
                   //  std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
                     DoS2 = 0; 
                     break;}
                 }
               }
            //   std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
-            } */
+            } 
           
-          if(DoS1 == 0 || DoS2 == 0) continue;
+          if(DoS1 == 0|| DoS2 == 0) continue;
 
           const int array_index = 3*electron;
           const int array_index_i = 3*electron_collision;
-          const double k_1_x = sqrt(electron_velocity.at(array_index)*electron_velocity.at(array_index)*constants::m_over_hbar_sq);
-          const double k_1_y = sqrt(electron_velocity.at(array_index+1)*electron_velocity.at(array_index+1)*constants::m_over_hbar_sq);
-          const double k_1_z = sqrt(electron_velocity.at(array_index+2)*electron_velocity.at(array_index+2)*constants::m_over_hbar_sq);
+          const double k_1_x = electron_velocity.at(array_index)*constants::m_over_hbar_sq;
+          const double k_1_y = electron_velocity.at(array_index+1)*constants::m_over_hbar_sq;
+          const double k_1_z = electron_velocity.at(array_index+2)*constants::m_over_hbar_sq;
 
-          const double k_2_x = sqrt(electron_velocity.at(array_index_i)*electron_velocity.at(array_index_i)*constants::m_over_hbar_sq);
-          const double k_2_y = sqrt(electron_velocity.at(array_index_i+1)*electron_velocity.at(array_index_i+1)*constants::m_over_hbar_sq);
-          const double k_2_z = sqrt(electron_velocity.at(array_index_i+2)*electron_velocity.at(array_index_i+2)*constants::m_over_hbar_sq);
+          const double k_2_x = electron_velocity.at(array_index_i)*constants::m_over_hbar_sq;
+          const double k_2_y = electron_velocity.at(array_index_i+1)*constants::m_over_hbar_sq;
+          const double k_2_z = electron_velocity.at(array_index_i+2)*constants::m_over_hbar_sq;
 
           const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
           if(test_uniform(gen) > exp(ee_rate*DoS1*DoS2/((0.25+(deltaK))*DoS1_n*DoS2_n*(0.25+(deltaK))))) {
 
+            if (electron_potential.at(electron) < transport_cutoff) core_scattering_count++;
+            else transport_scattering_count++;
+            if (electron_potential.at(electron_collision) < transport_cutoff) core_scattering_count++;
+            else transport_scattering_count++;
+
             electron_potential.at(electron) -= deltaE;
             electron_potential.at(electron_collision)   += deltaE;
-            electron_transport_list.at(electron) = true;
-            electron_transport_list.at(electron_collision) = true;
-            if (electron_potential.at(electron) < transport_cutoff)  electron_transport_list.at(electron) = false;
-            if (electron_potential.at(electron_collision) < transport_cutoff) electron_transport_list.at(electron_collision) = false;
-          
+
             double theta = atan2(electron_velocity[array_index+1], electron_velocity[array_index]);
               if(theta != theta) theta = 0.0;
             double phi = acos(electron_velocity[array_index+2] / sqrt(2.0*constants::m_e_r_i*e_energy));
