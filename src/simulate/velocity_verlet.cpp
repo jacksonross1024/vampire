@@ -476,8 +476,8 @@ void e_e_coulomb(const int e, const int array_index) {
         ee_dos_count++;
        //  std::cout << e << ", " << i << ", " << length << std::endl;
         
-        if(electron_transport_list.at(electron)) ee_dos_hist.at(e).at(int(std::min(49.0,floor((electron_potential.at(electron)-transport_cutoff)/1))))++;
-        else ee_dos_hist.at(e).at(int(std::min(10.0,floor((electron_potential.at(electron)-core_cutoff)/4))))++;
+        if(electron_transport_list.at(electron)) ee_dos_hist.at(e).at(int(std::min(49.0, std::max(49.0,floor((electron_potential.at(electron)-transport_cutoff)/1)))))++;
+        else ee_dos_hist.at(e).at(int(std::min(10.0, std::max(0.0, floor((electron_potential.at(electron)-core_cutoff)/4)))))++;
       
          if(ee_dos_count >= electron_nearest_electron_list.at(e).size() - 2) {std::cout << e << ", " << ee_dos_count << " > " << electron_nearest_electron_list.at(e).size() << ", " << length << ", " << electron_potential.at(e)  << std::endl;
           break; }
@@ -529,8 +529,8 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         electron_nearest_electron_list.at(e).at(neighbor_count) = array_index_i/3;
         neighbor_count++;
       
-        if(electron_transport_list.at(electron)) ee_dos_hist.at(e).at(int(std::min(49.0,floor((electron_potential.at(electron)-transport_cutoff)/1))))++;
-        else ee_dos_hist.at(e).at(int(std::min(10.0,floor((electron_potential.at(electron)-core_cutoff)/4))))++;
+        if(electron_transport_list.at(electron)) ee_dos_hist.at(e).at(int(std::min(49.0, std::max(49.0, floor((electron_potential.at(electron)-transport_cutoff)/1)))))++;
+        else ee_dos_hist.at(e).at(int(std::min(10.0, std::max(0.0, floor((electron_potential.at(electron)-core_cutoff)/4)))))++;
 
          if(neighbor_count >= electron_nearest_electron_list.at(e).size() - 2) {std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list.at(e).size() << ", " << length << ", " << electron_potential.at(e)  << std::endl;
            break; }
@@ -831,12 +831,12 @@ void ee_scattering() {
           //if(test_uniform(gen) < 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
 
           if((e_energy - deltaE < core_cutoff) || (d_e_energy + deltaE < core_cutoff)) continue;
-          if(e_energy - deltaE < transport_cutoff) {
-            const int hist = int(floor((e_energy - core_cutoff)/4.0));
-            const int avg_occupation;
-            const int avg_dos;
-            if(hist <)
-          }
+          // if(e_energy - deltaE < transport_cutoff) {
+          //   const int hist = int(floor((e_energy - core_cutoff)/4.0));
+          //   const int avg_occupation;
+          //   const int avg_dos;
+          //   if(hist <)
+          // }
             if(e_energy - deltaE < transport_cutoff) {
               DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - (e_energy - deltaE) - 0.5*DoS_width)*0.75; //AJ
               DoS_lhs = 0.5*DoS_width; //AJ
@@ -917,6 +917,11 @@ void ee_scattering() {
 
             electron_potential.at(electron) -= deltaE;
             electron_potential.at(electron_collision)   += deltaE;
+
+            electron_transport_list.at(electron) = true;
+            electron_transport_list.at(electron_collision) = true;
+            if (electron_potential.at(electron) < transport_cutoff)  electron_transport_list.at(electron) = false;
+            if (electron_potential.at(electron_collision) < transport_cutoff) electron_transport_list.at(electron_collision) = false;
 
             double theta = atan2(electron_velocity[array_index+1], electron_velocity[array_index]);
               if(theta != theta) theta = 0.0;
