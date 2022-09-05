@@ -825,7 +825,7 @@ void ee_scattering() {
           if((e_energy - deltaE < core_cutoff) || (d_e_energy + deltaE < core_cutoff)) continue;
           
             if(e_energy - deltaE < transport_cutoff) {
-              DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - e_energy - deltaE - 0.5*DoS_width)*0.75; //AJ
+              DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - (e_energy - deltaE) - 0.5*DoS_width)*0.75; //AJ
               DoS_lhs = 0.5*DoS_width; //AJ
               DoS1 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))); //AJ
               DoS1_n = DoS1;
@@ -853,7 +853,7 @@ void ee_scattering() {
              //  std::cout << DoS1_n << ", " << DoS1 << ", " << electron << ", " << deltaE << std::endl;
             } 
             if(d_e_energy + deltaE < transport_cutoff) {
-              DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - d_e_energy + deltaE - 0.5*DoS_width)*0.75;
+              DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - (d_e_energy + deltaE) - 0.5*DoS_width)*0.75;
               DoS_lhs = 0.5*DoS_width;
               DoS2 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
               DoS2_n = DoS2;
