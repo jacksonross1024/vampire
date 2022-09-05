@@ -269,6 +269,7 @@ namespace CASTLE {
 //    MTRand_closed uniform_random;
 //    MTRand_int32 int_random;
     std::vector<MTRand> omp_uniform_random(32);
+    std::vector<MTRand_int32> omp_int_random(32);
 //     std::vector<MTRand_int32> omp_int_random(32);
 //   double = omp_int_random[omp_get_thread_num()]();
 //    std::srand(std::time(nullptr));

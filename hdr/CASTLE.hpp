@@ -163,7 +163,7 @@ namespace CASTLE {
     extern  std::vector<unsigned int> escaping_electrons;
   
     extern std::vector<MTRand> omp_uniform_random;
-   
+    extern std::vector<MTRand_int32> omp_int_random;
     //outputs
    
     extern double TEPE; //Angstroms

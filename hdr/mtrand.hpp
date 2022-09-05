@@ -89,7 +89,7 @@ inline uint32_t MTRand_int32::twiddle(uint32_t u, uint32_t v) {
 }
 
 inline uint32_t MTRand_int32::rand_int32() { // generate 32 bit random int
-  if (p == n) gen_state(); // new state vector needed
+  if (p >= n) gen_state(); // new state vector needed
 // gen_state() is split off to be non-inline, because it is only called once
 // in every 624 calls and otherwise irand() would become too big to get inlined
   uint32_t x = state[p++];

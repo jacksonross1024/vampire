@@ -336,19 +336,23 @@ void initialize () {
   //   std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
   //   std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
   //   std::uniform_real_distribution<double> test_uniform;
+    #pragma omp parallel
+    {
     for(uint32_t i = 0; i < omp_threads; i++) {
     // //  // std::cout << omp_get_num_threads() << std::endl;
+     omp_int_random.at(i).seed(i);
      omp_uniform_random.at(i).seed(i);
     //   omp_int_random.at(i).seed(i);
+    }
     }
     std::cout << "testing grnd() bounds..." << std::endl;
     #pragma omp parallel 
     {
     const int thread = omp_get_thread_num();
     for( int e = 0; e < conduction_electrons*conduction_electrons; e++) {
-      if(int(omp_uniform_random[thread]()*2147483647)%conduction_electrons < 0 || int(omp_uniform_random[thread]()*2147483647)%conduction_electrons >= conduction_electrons) std::cout << "grnd() error " << std::endl;
+      if(int(omp_uniform_random.at(thread)()*2147483647)%conduction_electrons < 0 || int(omp_uniform_random.at(thread)()*2147483647)%conduction_electrons >= conduction_electrons) std::cout << "grnd() error " << std::endl;
     }
-    for( int e = 0; e < conduction_electrons*conduction_electrons; e++) double test = omp_uniform_random[thread]();
+    for( int e = 0; e < conduction_electrons*conduction_electrons; e++) double test = omp_uniform_random.at(thread)();
     }
     std::cout << "grnd passed." << std::endl;
    // int test = omp_int_random[0]() % conduction_electrons;
