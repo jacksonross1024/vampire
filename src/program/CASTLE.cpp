@@ -327,8 +327,7 @@ void initialize () {
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
-  // omp_uniform_random.resize(omp_threads);
-    
+  // omp_uniform_random(omp_threads);
   //  int_random.seed(omp_threads);
   //  omp_int_random.resize(omp_threads);
   //  // std::cout << omp_get_num_threads() << std::endl;
@@ -337,17 +336,22 @@ void initialize () {
   //   std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
   //   std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
   //   std::uniform_real_distribution<double> test_uniform;
-    for(int i = 0; i < omp_threads; i++) {
+    for(uint32_t i = 0; i < omp_threads; i++) {
     // //  // std::cout << omp_get_num_threads() << std::endl;
      omp_uniform_random.at(i).seed(i);
     //   omp_int_random.at(i).seed(i);
     }
-    // #pragma omp parallel 
-    // {
-    // for(unsigned int e = 0; e < conduction_electrons*conduction_electrons; e++) uint32_t test = test_int(gen);
-    // for(unsigned int e = 0; e < conduction_electrons*conduction_electrons; e++) double test = test_uniform(gen);
-    // }
-   // int test = omp_int_random.at(0)() % conduction_electrons;
+    std::cout << "testing grnd() bounds..." << std::endl;
+    #pragma omp parallel 
+    {
+    const int thread = omp_get_thread_num();
+    for( int e = 0; e < conduction_electrons*conduction_electrons; e++) {
+      if(int(omp_uniform_random[thread]()*2147483647)%conduction_electrons < 0 || int(omp_uniform_random[thread]()*2147483647)%conduction_electrons >= conduction_electrons) std::cout << "grnd() error " << std::endl;
+    }
+    for( int e = 0; e < conduction_electrons*conduction_electrons; e++) double test = omp_uniform_random[thread]();
+    }
+    std::cout << "grnd passed." << std::endl;
+   // int test = omp_int_random[0]() % conduction_electrons;
     //test = omp_int_random.at(24)MTRand_int32::rand_int32() %conduction_electrons ;
     // Initialize lattice
     //========
@@ -375,7 +379,7 @@ void initialize () {
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
     std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/6.0)) << " above transport cutoff; " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))) << " below" << std::endl;
     
-    std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists.at(0).size() << ", maximum integration list size: " << electron_integration_list.at(0).size() << std::endl;
+    std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists[0].size() << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog. data" << std::endl;
@@ -389,10 +393,10 @@ void initialize () {
 
 
 void initialize_cell_omp() {
-double test = sqrt(-1.0)* sqrt(-1.0);
+  double test = sqrt(-1.0)* sqrt(-1.0);
 
-if (test != test) std::cout << "test passed " << test << std::endl;
-else std::cout << "test failed " << test << std::endl;
+  if (test != test) std::cout << "test passed " << test << std::endl;
+  else std::cout << "test failed " << test << std::endl;
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
@@ -412,12 +416,12 @@ else std::cout << "test failed " << test << std::endl;
   for(int i=0; i < total_cells; i++) {
     cell_integration_lists.at(i).resize(int(4*double(conduction_electrons) / double(total_cells)), 0);
     old_cell_integration_lists.at(i).resize(int(4*double(conduction_electrons) / double(total_cells)), 0);
-    cell_integration_lists.at(i).at(0) = 1;
-    old_cell_integration_lists.at(i).at(0) = 1;
+    cell_integration_lists.at(i)[0] = 1;
+    old_cell_integration_lists.at(i)[0] = 1;
   }
 
   escaping_electrons.resize( int(double(conduction_electrons) / double(total_cells)));
-  escaping_electrons.at(0) = 1;
+  escaping_electrons[0] = 1;
   lattice_cell_coordinate.resize(x_omp_cells);
   cell_lattice_coordinate.resize(total_cells);
   for(int c = 0; c < total_cells; c++) {
@@ -433,9 +437,9 @@ else std::cout << "test failed " << test << std::endl;
       lattice_cell_coordinate.at(i).at(k).resize(z_omp_cells);
       for(int j = 0; j < z_omp_cells; j++) {
         lattice_cell_coordinate.at(i).at(k).at(j) = cell_count;
-        cell_lattice_coordinate.at(cell_count).at(0) = i;
-        cell_lattice_coordinate.at(cell_count).at(1) = k;
-        cell_lattice_coordinate.at(cell_count).at(2) = j;
+        cell_lattice_coordinate.at(cell_count)[0] = i;
+        cell_lattice_coordinate.at(cell_count)[1] = k;
+        cell_lattice_coordinate.at(cell_count)[2] = j;
         cell_count++;
       }
     }
@@ -471,13 +475,13 @@ else std::cout << "test failed " << test << std::endl;
       y_cell = 0;
       z_cell = 0; }
      const int omp_cell = lattice_cell_coordinate.at(x_cell).at(y_cell).at(z_cell); 
-    int current_lattice_current_end = cell_integration_lists.at(omp_cell).at(0);
+    int current_lattice_current_end = cell_integration_lists.at(omp_cell)[0];
 
     cell_integration_lists.at(omp_cell).at(current_lattice_current_end) = e;
     old_cell_integration_lists.at(omp_cell).at(current_lattice_current_end) = e;
   
-    cell_integration_lists.at(omp_cell).at(0)++;
-    old_cell_integration_lists.at(omp_cell).at(0)++;
+    cell_integration_lists.at(omp_cell)[0]++;
+    old_cell_integration_lists.at(omp_cell)[0]++;
   
           if(current_lattice_current_end >= cell_integration_lists.at(omp_cell).size()) std::cout << \
             omp_cell << ", " << current_lattice_current_end << ", " << cell_integration_lists.at(omp_cell).size() << ", " << e << std::endl;
@@ -490,10 +494,10 @@ else std::cout << "test failed " << test << std::endl;
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
     cell_nearest_neighbor_list.at(c).resize(27); 
-    const int x_cell = cell_lattice_coordinate.at(c).at(0);
-    const int y_cell = cell_lattice_coordinate.at(c).at(1);
-    const int z_cell = cell_lattice_coordinate.at(c).at(2);
-   // cell_nearest_neighbor_list.at(c).at(0) = c;
+    const int x_cell = cell_lattice_coordinate.at(c)[0];
+    const int y_cell = cell_lattice_coordinate.at(c)[1];
+    const int z_cell = cell_lattice_coordinate.at(c)[2];
+   // cell_nearest_neighbor_list.at(c)[0] = c;
       //if(c == 0) std::cout << "starting spiral for cell 0" << std::endl;
    
     for(int s = 0; s < 27; s++) {
@@ -555,13 +559,14 @@ else std::cout << "test failed " << test << std::endl;
        omp_set_num_threads(omp_threads);
     #pragma omp parallel
     {
+    const int thread = omp_get_thread_num();
     for(int l = 0; l < cells_per_thread; l++) {
       // #pragma omp critical
       // std::cout << omp_get_thread_num() << ", " << (omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells) << ", " << (int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%(y_omp_cells)) + int(floor(l/(z_omp_cells/2)))%2 << ", " << 4*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)) << std::endl;
       
       //double decker cells
     
-     lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*max_x_threads)%x_omp_cells + int(floor(l/(2*max_z_threads)))).at((int(floor(omp_get_thread_num()*max_y_threads/x_omp_cells)*max_y_threads)%y_omp_cells) + int(floor(l/(max_z_threads)))%max_z_threads).at((max_z_threads)*floor(omp_get_thread_num()/(x_omp_cells* y_omp_cells/4)) + (l % (max_z_threads)));
+     lattice_cells_per_omp[thread].at(l) = lattice_cell_coordinate.at((thread*max_x_threads)%x_omp_cells + int(floor(l/(2*max_z_threads)))).at((int(floor(thread*max_y_threads/x_omp_cells)*max_y_threads)%y_omp_cells) + int(floor(l/(max_z_threads)))%max_z_threads).at((max_z_threads)*floor(thread/(x_omp_cells* y_omp_cells/4)) + (l % (max_z_threads)));
       
       //single decker cells
      // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells)))%2).at( l % (z_omp_cells));
@@ -597,9 +602,9 @@ else std::cout << "test failed " << test << std::endl;
   for (int c = 0; c < cells_per_thread; c++) {
     for(int l = 0; l < omp_threads; l++) {
       int current_cell = lattice_cells_per_omp.at(l).at(c);
-      int current_x = cell_lattice_coordinate.at(current_cell).at(0);
-      int current_y = cell_lattice_coordinate.at(current_cell).at(1);
-      int current_z = cell_lattice_coordinate.at(current_cell).at(2);
+      int current_x = cell_lattice_coordinate.at(current_cell)[0];
+      int current_y = cell_lattice_coordinate.at(current_cell)[1];
+      int current_z = cell_lattice_coordinate.at(current_cell)[2];
 
       x_comp[l] = current_x;
       y_comp[l] = current_y;
@@ -614,7 +619,7 @@ else std::cout << "test failed " << test << std::endl;
     // switch (omp_checkerboard_scheme)
     // {
     // case omp_checkerboard_scheme==1:    
-    //   int initial = lattice_cell_coordinate.at(omp_get_thread_num() - 1).at(0).at(0);
+    //   int initial = lattice_cell_coordinate.at(omp_get_thread_num() - 1)[0][0];
     //   for(int t = 0; t < cells_per_thread; t++) {
     //     lattice_cells_per_omp.at(t) = lattice_cell_coordinate.at(omp_get_thread_num() - 1).at(t % y_omp_cells).at(floor(t/z_omp_celss))
     //   }
@@ -647,7 +652,7 @@ else std::cout << "test failed " << test << std::endl;
       for(int s = 0; s < 27; s++) {
         const int cell = cell_nearest_neighbor_list.at(c).at(s);
 
-        const int size = cell_integration_lists.at(cell).at(0);
+        const int size = cell_integration_lists.at(cell)[0];
        // if(electron == 0) std::cout << size << ", " << cell << ", " << omp_get_thread_num() << std::endl;
 
         for(int i = 1; i < size; i++) {
@@ -693,9 +698,9 @@ else std::cout << "test failed " << test << std::endl;
             ee_scattering_count++;
         }
       }
-      electron_integration_list.at(electron).at(0) = ee_integration_count;
-      electron_nearest_electron_list.at(electron).at(0) = ee_dos_count;
-      electron_ee_scattering_list.at(electron).at(1) = ee_scattering_count;
+      electron_integration_list.at(electron)[0] = ee_integration_count;
+      electron_nearest_electron_list.at(electron)[0] = ee_dos_count;
+      electron_ee_scattering_list.at(electron)[1] = ee_scattering_count;
   //   std::cout << ee_integration_count << std::endl;
   }
     
@@ -759,7 +764,7 @@ void initialize_electrons() {
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
         temp_Map.at(i).resize(round(conduction_electrons*0.02)+10,0);
-        // std::cout << temp_Map.at(i).at(0) << std::endl;
+        // std::cout << temp_Map.at(i)[0] << std::endl;
         // std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
     }
     //std::cout << temp_Map.at(7).at(3335) << std::endl;
@@ -907,7 +912,7 @@ double reinitialize_electron_conserve_momentum(std::vector<double>& captured_ele
 
         }
         // std::cout << new_potential << std::endl;
-        for (int i = 1; i < electron_nearest_electron_list.at(electron_num).at(0)+1; i++) {
+        for (int i = 1; i < electron_nearest_electron_list.at(electron_num)[0]+1; i++) {
             if (i == electron_num) continue; //no self repulsion
             //if (symmetry_list.at(e).at(i)) continue;  //make use of symmetry
 
@@ -1040,9 +1045,9 @@ void initialize_electron_interactions() {
             electron_ee_scattering_list.at(e).at(scattering_count) = array_index_i/3;
             scattering_count++;
         }
-        electron_integration_list.at(e).at(0) = integration_count;
-        electron_nearest_electron_list.at(e).at(0) = neighbor_count;
-        electron_ee_scattering_list.at(e).at(1) = scattering_count;
+        electron_integration_list.at(e)[0] = integration_count;
+        electron_nearest_electron_list.at(e)[0] = neighbor_count;
+        electron_ee_scattering_list.at(e)[1] = scattering_count;
      }
   }
 /*
@@ -1082,7 +1087,7 @@ void initialize_electron_interactions() {
 //         atomic_nearest_atom_list.at(e).at(neighbor_count) = i;
 //         neighbor_count++;      
 //       }
-//       atomic_nearest_atom_list.at(e).at(1) = neighbor_count; 
+//       atomic_nearest_atom_list.at(e)[1] = neighbor_count; 
     
 //             if(err::check) if(e ==0) std::cout << "Calculating conduction-lattice repulsion" << std::endl;
 //     }
@@ -1124,7 +1129,7 @@ void initialize_electron_interactions() {
 //             atomic_nearest_electron_list.at(e).at(nearest_electron_count) = array_index_a;
 //             nearest_electron_count++;
 //         }
-//         atomic_nearest_electron_list.at(e).at(0) = nearest_electron_count;
+//         atomic_nearest_electron_list.at(e)[0] = nearest_electron_count;
 //     }
 // }
 */
@@ -1143,6 +1148,7 @@ void initialize_velocities() {
     const std::string n = "Init_E_distrib";
     std::cout << "conduction electrons " << conduction_electrons << std::endl;
    create_fermi_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
+   std::cout << "distribution generated" << std::endl;
   //  const std::string na = "P_distrib";
     //create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
    
@@ -1151,30 +1157,28 @@ void initialize_velocities() {
        p_x = 0.0;
        p_y = 0.0;
        p_z = 0.0;
-       int count = 1;
-       uint32_t total_electrons = conduction_electrons;
 
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
-    std::uniform_real_distribution<double> test_uniform;
+    // std::srand(std::time(nullptr));
+    // std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    // std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
+    // std::uniform_real_distribution<double> test_uniform;
 
     double minimum = E_f_A;
-    #pragma omp parallel for schedule(guided) reduction(+:p_x,p_y,p_z) 
-    for(int e = 0; e < total_electrons; e++) {
-      double phi,theta; //A/fS
-      
+    #pragma omp parallel for schedule(static) reduction(+:p_x,p_y,p_z) 
+    for(int e = 0; e < conduction_electrons; e++) {
+      double phi;
+      double theta;
       const unsigned int array_index = 3*e;
    
-      const double energy = electron_potential.at(test_int(gen));
+      const double energy = electron_potential[int(omp_uniform_random.at(omp_get_thread_num())()*2147483647)%conduction_electrons];
       if(energy > transport_cutoff) electron_transport_list.at(e) = true;
       
       const double vel = sqrt(2.0*energy*constants::m_e_r_i);
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
-          theta = 2.0*M_PI*test_uniform(gen);
-          phi = M_PI * test_uniform(gen);
+          theta = 2.0*M_PI*omp_uniform_random[omp_get_thread_num()]();
+          phi = M_PI * omp_uniform_random[omp_get_thread_num()]();
         } else {
           const double unit = sqrt((sim::CASTLE_x_vector*sim::CASTLE_x_vector)+(sim::CASTLE_y_vector*sim::CASTLE_y_vector)+(sim::CASTLE_z_vector*sim::CASTLE_z_vector));
           theta = atan2(sim::CASTLE_y_vector , sim::CASTLE_x_vector);
@@ -1195,10 +1199,9 @@ void initialize_velocities() {
         p_z += electron_velocity.at(array_index+2);
     }
    // std::cout << count << std::endl;
+   std::cout << "distribution assigned" << std::endl;
       std::ofstream Init_E_vel;
       Init_E_vel.open("Init_E_vel");
-     omp_set_dynamic(0);
-       omp_set_num_threads(omp_threads);
     #pragma omp parallel for schedule(static) reduction(min:minimum)
     for(int e = 0; e < conduction_electrons; e++) {
       const int array_index = 3*e;
@@ -1213,6 +1216,7 @@ void initialize_velocities() {
     for(int e = 0; e < conduction_electrons; e++) {
       Init_E_vel << e << ", " << electron_potential.at(e) << ", " << electron_velocity.at(3*e) << ", " << electron_velocity.at(3*e+1) << ", " << electron_velocity.at(3*e+2) << std::endl;
     }
+    std::cout << "distribution output" << std::endl;
     
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 }
@@ -1337,9 +1341,6 @@ double return_phonon_distribution(const double epsilon, const double beta)
   if(beta <= 0.00001) return 1.0;
   else return (1.0/(exp(epsilon/beta) + 1.0));
 }
-
-
-
 
 /*
 
@@ -1528,7 +1529,7 @@ void output_data() {
       // //temp_map_list.resize(8);
       // for(int i = 0; i < 8; i++) {
       //   temp_map_list.at(i).open(string(directory) + "/Temp_Map" + std::to_string(i) + "/" + time_stamp);
-      // // std::cout << temp_Map.at(i).at(0) << std::endl;
+      // // std::cout << temp_Map.at(i)[0] << std::endl;
       // //   std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
       // }
   std::ofstream temp_map_0;
@@ -1557,16 +1558,17 @@ void output_data() {
   const int output_count_hr = 50+ (3.0*constants::kB_r*300.0 + E_f_A - transport_cutoff)/step_size_hr;
     #pragma omp parallel
     {
-    for(int e = 1; e < electron_nearest_electron_list.at(omp_get_thread_num()*10000).at(0); e++) {
-      const unsigned int electron = electron_nearest_electron_list.at(omp_get_thread_num()*10000).at(e);
+    const int thread = omp_get_thread_num();
+    for(int e = 1; e < electron_nearest_electron_list[thread*10000][0]; e++) {
+      const unsigned int electron = electron_nearest_electron_list[thread*10000][e];
 
       const double energy = electron_potential.at(electron);
       if(energy < transport_cutoff) {
         const unsigned int hist = int(std::min(double(output_count_lr-1), std::max(0.0, floor((energy- core_cutoff)/step_size_lr))));
-        temp_Map.at(omp_get_thread_num()).at(hist)++;
+        temp_Map[thread].at(hist)++;
       } else {
         const unsigned int hist = int(std::min(double(output_count_hr-1), std::max(0.0, floor((energy- transport_cutoff)/step_size_hr))));
-        temp_Map.at(omp_get_thread_num()+4).at(hist)++;
+        temp_Map[thread+4].at(hist)++;
       }
      // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
            // double x_pos = electron_position.at(array_index);
@@ -1575,15 +1577,15 @@ void output_data() {
      // }
       // if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
       //    #pragma omp atomic update
-      //   temp_Map.at(1).at(hist)++;
+      //   temp_Map[1].at(hist)++;
       // }
       // if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
       //    #pragma omp atomic update
-      //   temp_Map.at(2).at(hist)++;
+      //   temp_Map[2].at(hist)++;
       // }
       // if(x_pos > lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
       //    #pragma omp atomic update
-      //   temp_Map.at(3).at(hist)++;
+      //   temp_Map[3].at(hist)++;
       // }
       // if(x_pos < lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
       //    #pragma omp atomic update
@@ -1606,30 +1608,30 @@ void output_data() {
   
 
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_0 << i << ", " << 195*(temp_Map.at(0).at(i)/89) << "\n";
-      else temp_map_0 << i << ", " << temp_Map.at(0).at(i) << "\n";
-      temp_Map.at(0).at(i) = 0;
+      if(i == 11) temp_map_0 << i << ", " << 195*(temp_Map[0].at(i)/89) << "\n";
+      else temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
+      temp_Map[0].at(i) = 0;
     }
     temp_map_0.close();
 
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_1 << i << ", " << 195*(temp_Map.at(1).at(i)/89) << "\n";
-      else temp_map_1 << i << ", " << temp_Map.at(1).at(i) << "\n";
-      temp_Map.at(1).at(i) = 0;
+      if(i == 11) temp_map_1 << i << ", " << 195*(temp_Map[1].at(i)/89) << "\n";
+      else temp_map_1 << i << ", " << temp_Map[1].at(i) << "\n";
+      temp_Map[1].at(i) = 0;
     }
     temp_map_1.close();
 
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_2 << i << ", " << 195*(temp_Map.at(2).at(i)/89) << "\n";
-      else temp_map_2 << i << ", " << temp_Map.at(2).at(i) << "\n";
-      temp_Map.at(2).at(i) = 0;
+      if(i == 11) temp_map_2 << i << ", " << 195*(temp_Map[2].at(i)/89) << "\n";
+      else temp_map_2 << i << ", " << temp_Map[2].at(i) << "\n";
+      temp_Map[2].at(i) = 0;
     }
     temp_map_2.close();
     
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_3 << i << ", " << 195*(temp_Map.at(3).at(i)/89) << "\n";
-      else temp_map_3 << i << ", " << temp_Map.at(3).at(i) << "\n";
-      temp_Map.at(3).at(i) = 0;
+      if(i == 11) temp_map_3 << i << ", " << 195*(temp_Map[3].at(i)/89) << "\n";
+      else temp_map_3 << i << ", " << temp_Map[3].at(i) << "\n";
+      temp_Map[3].at(i) = 0;
     }
     temp_map_3.close();
     

@@ -171,7 +171,7 @@ namespace CASTLE {
    bool heat_pulse_sim = false;
 
    unsigned int lattice_atoms; //number of lattice atoms
-   unsigned int conduction_electrons; //number of conduction electrons
+   int conduction_electrons; //number of conduction electrons
    double temperature;
 
    int velocity_verlet_step(double time_step);
@@ -268,7 +268,7 @@ namespace CASTLE {
 
 //    MTRand_closed uniform_random;
 //    MTRand_int32 int_random;
-    std::vector<MTRand_closed> omp_uniform_random(32);
+    std::vector<MTRand> omp_uniform_random(32);
 //     std::vector<MTRand_int32> omp_int_random(32);
 //   double = omp_int_random[omp_get_thread_num()]();
 //    std::srand(std::time(nullptr));
@@ -348,12 +348,12 @@ namespace CASTLE {
    // void neighbor_a_a_coulomb(const int a, const int array_index, \
    //              double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
-   void electron_thermal_field(const int e, const int array_index, const double EKE);
+   void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread);
  
    double electron_applied_voltage(const int e, const int array_index, double& external_potential);
 
    // void aa_scattering();
-   void ea_scattering(const int e, const int array_index);
+   void ea_scattering(const int e, const int array_index, const int thread);
    void ee_scattering();
     int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
      int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
