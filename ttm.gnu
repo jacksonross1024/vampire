@@ -37,7 +37,7 @@ FD(x) = h_1*1.0/(exp(x/TEMP_1) + 1.0)
 bin(x,w) = w*floor(x/w)
 
 kB = 1.34e-3
-e  = 80.3131
+e  = 83.3131
 n  = 97556
 
 T0 = 400.0
@@ -46,10 +46,10 @@ t0 = T0*kB/e
 s = 40.0
 
 core = 30.86/e
-transport = 77.7956/e
+transport = 80.5/e
 w = 0.004
 
-name = 100
+name = 0
 set title "300 fs"
 set ylabel "occupation"
 set xlabel "e/E_f"
