@@ -764,6 +764,7 @@ void initialize_electrons() {
     electron_position.resize(conduction_electrons * 3); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
     electron_velocity.resize(conduction_electrons * 3); //Angstroms
     electron_potential.resize(conduction_electrons, 0);
+    ee_dos_hist.resize(conduction_electrons);
     temp_Map.resize(8);
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
@@ -798,7 +799,7 @@ void initialize_electrons() {
     const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
      ee_density =  int(round(3*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
     const int ee_scattering= int(3*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
-std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
+  std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
     #pragma omp parallel for schedule(static) 
@@ -808,6 +809,7 @@ std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::en
         electron_nearest_electron_list.at(e).resize(ee_density);
         electron_ee_scattering_list.at(e).resize(ee_scattering);
         electron_ea_scattering_list.at(e).resize(2,0);
+        ee_dos_hist.at(e).resize(50,0);
 
         const int array_index = 3*e;
         electron_position.at(array_index)     = atoms::x_coord_array.at((e)%lattice_atoms) + 0.5*x_unit_size;
