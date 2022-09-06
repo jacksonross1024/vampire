@@ -377,7 +377,7 @@ void initialize () {
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
     std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K): " << e_heat_capacity*1e7 <<  ", G@300K(J/K/s/m**3): " <<  G*1e22*300.0  << \
-    ", ea_rate@300K(J/s/K/m**3): " << -1e-5*ea_rate*n_f/dt/300.0 <<  ", ea_rate@300(fs): " << tau/E_f_A << std::fixed << std::endl;
+    ", ea_rate@300K(J/s/K/m**3): " << -1e-5*ea_rate*n_f/dt/300.0 <<  ", ea_rate@300(fs): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/sim::applied_voltage*constants::eV_to_AJ << std::fixed << std::endl;
    
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
