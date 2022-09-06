@@ -345,7 +345,7 @@ void initialize () {
     //   omp_int_random.at(i).seed(i);
     }
     }
-    std::cout << "testing grnd() bounds..." << std::endl;
+    /*std::cout << "testing grnd() bounds..." << std::endl;
     #pragma omp parallel 
     {
     const int thread = omp_get_thread_num();
@@ -354,7 +354,7 @@ void initialize () {
     }
     for( int e = 0; e < conduction_electrons*conduction_electrons; e++) double test = omp_uniform_random.at(thread)();
     }
-    std::cout << "grnd passed." << std::endl;
+    std::cout << "grnd passed." << std::endl; */
    // int test = omp_int_random[0]() % conduction_electrons;
     //test = omp_int_random.at(24)MTRand_int32::rand_int32() %conduction_electrons ;
     // Initialize lattice
