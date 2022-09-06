@@ -268,7 +268,7 @@ namespace sim{
          double c = atof(value.c_str());
          vin::check_for_valid_value(c, word, line, prefix, unit, "J", 0.0, 1e10, "input", "0-1e10");
          sim::heat_pulse_sim = true;
-         sim::heat_pulse = c;
+         sim::fluence = c;
          return true;
       }
 

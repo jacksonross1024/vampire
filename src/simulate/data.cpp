@@ -106,7 +106,7 @@ namespace sim{
    bool applied_voltage_sim = false;
    bool heat_pulse_sim = false;
    double applied_voltage = 0.0;
-   double heat_pulse = 0.0;
+   double fluence = 0.0;
 
    double CASTLE_x_vector = 0.0;
 	double CASTLE_y_vector = 0.0;
@@ -252,7 +252,7 @@ namespace CASTLE {
    std::vector<double> electron_velocity; //Angstroms
    std::vector<double> electron_potential; //A
    std::vector<std::vector<int> > ee_dos_hist;
-   
+
    std::vector<bool> electron_transport_list;
    std::vector<std::vector<unsigned int> > electron_integration_list;
    std::vector<std::vector<unsigned int> > electron_nearest_electron_list;

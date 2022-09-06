@@ -227,14 +227,14 @@ void update_dynamics() {
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
-        photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - ((40.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((40.0 / dt)+sim::equilibration_time)))))); // AJ/fs/nm**3
+        photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - ((10.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((10.0 / dt)+sim::equilibration_time)))))); // AJ/fs/nm**3
         pump = 1e3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
         external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
      //   std::cout << photons_at_dt << std::endl;
         TTMe = d_TTMe;
         TTMp = d_TTMp;
           //AJ/fs/K -> g(T-T)=C/t
-        d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i*300.0/TTMe) + TTMe;
+        d_TTMe = ((G*(TTMp - TTMe)+pump)*dt*e_heat_capacity_i/TTMe) + TTMe;
       //  std::cout <<" TTMe: " << pump*dt*e_heat_capacity_i*300.0/TTMe << ", " << pump*dt*e_heat_capacity_i*300.0/Te;
         d_TTMp = ( G*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
       }
@@ -269,7 +269,7 @@ void update_dynamics() {
     ee_scattering();
   
   Tp +=  a_heat_capacity_i*1e-27*TLE *n_f/conduction_electrons;
-  Te += (e_heat_capacity_i*1e-27*TEKE*n_f*300.0/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt*300.0/Te);
+  Te += (e_heat_capacity_i*1e-27*TEKE*n_f/conduction_electrons/Te) + (e_heat_capacity_i*pump*dt/Te);
  
         if (err::check) std::cout << "reset scattering." << std::endl;
     

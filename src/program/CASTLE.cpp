@@ -317,7 +317,7 @@ void initialize () {
     phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.084)*constants::eV_to_AJ; //AJ?
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
-    power_density = 1e1*sim::heat_pulse; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
+    power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
     
     const static double tau = E_f_A /(M_PI*constants::hbar_r*ea_coupling_strength); // fs
     G = e_heat_capacity*4.0*ea_coupling_strength/(M_PI*constants::kB_r); //AJ/fs/K**2/nm**3 
@@ -377,7 +377,7 @@ void initialize () {
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
     std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K): " << e_heat_capacity*1e7 <<  ", G@300K(J/K/s/m**3): " <<  G*1e22*300.0  << \
-    ", ea_rate@300K(J/s/K/m**3): " << -1e-5*ea_rate*n_f/dt/300.0 <<  ", ea_rate@300(fs): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/sim::applied_voltage*constants::eV_to_AJ << std::fixed << std::endl;
+    ", ea_rate@300K(J/s/K/m**3): " << -1e-5*ea_rate*n_f/dt/300.0 <<  ", ea_rate@300(fs): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << std::fixed << std::endl;
    
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
@@ -1687,7 +1687,7 @@ void output_data() {
 
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << Te*Te*e_heat_capacity * 1e-20/300.0 << ", " << Tp*a_heat_capacity*1e-20 << ", " 
+      << Te*Te*e_heat_capacity * 1e7/300.0 << ", " << Tp*a_heat_capacity*1e7 << ", " 
       << Te << ", " << Tp << ", "  \
       << TTMe << ", " << TTMp << ", " << I << ", "
       << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
@@ -1696,7 +1696,7 @@ void output_data() {
 
     else {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << Te*Te*e_heat_capacity * 1e-20/300.0 << ", " << Tp*a_heat_capacity*1e-20 << ", "  
+      << Te*Te*e_heat_capacity * 1e7/300.0 << ", " << Tp*a_heat_capacity*1e7 << ", "  
       << Te << ", " << Tp << ", " //<< TEKE << ", " << TLE << ", " 
       << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << p_x << ", " << p_y << ", " << p_z << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(core_scattering_count) / double(CASTLE_output_rate) << ", " << double(transport_scattering_count) / double(CASTLE_output_rate) << ", " <<  double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
