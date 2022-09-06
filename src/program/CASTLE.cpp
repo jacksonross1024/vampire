@@ -1710,6 +1710,7 @@ void output_data() {
     core_scattering_count = 0;
     transport_scattering_count = 0;
     e_e_scattering_count = 0;
+    if(Te > 1300) transport_cutoff = 70.0;
    // a_a_scattering_count = 0;
 }
 

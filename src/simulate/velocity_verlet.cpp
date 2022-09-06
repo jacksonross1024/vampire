@@ -822,7 +822,7 @@ void ee_scattering() {
 
         const double e_energy = electron_potential.at(electron);
         const double d_e_energy = electron_potential.at(electron_collision);
-        if(equilibrium_step) {  
+       // if(equilibrium_step) {  
           int blocking_lr;
           int blocking_hr;
           double DoS_lhs;
@@ -832,7 +832,7 @@ void ee_scattering() {
           //if(test_uniform(gen) < 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
           
           if((e_energy - deltaE < core_cutoff) || (d_e_energy + deltaE < core_cutoff)) continue;
-          const double FD_width = ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff);
+        /*  const double FD_width = ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff);
           int e_occupation;
           int e_dos;
           int d_e_occupation;
@@ -840,40 +840,49 @@ void ee_scattering() {
           int hist;
           if(e_energy - deltaE < transport_cutoff) hist = int(floor((e_energy - deltaE - core_cutoff)/4.0));
           else hist = int(floor((e_energy - deltaE - transport_cutoff)/1.0));
-          if(hist < 10) { 
+
+          if(hist > 48) {std::cout << hist << ", " << e_energy << ", " << deltaE << ", " << (e_energy - deltaE - core_cutoff) << std::endl; continue;}
+          
+          if(hist < 1) { 
             e_dos = int(round(DoS_width*FD_width));
-            e_occupation = int(round((ee_dos_hist.at(electron).at(hist-1)+ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/3));
+            e_occupation = int(round((ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/2/e_dos));
+          } else if(hist < 10) { 
+            e_dos = int(round(DoS_width*FD_width));
+            e_occupation = int(round((ee_dos_hist.at(electron).at(hist-1)+ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/3/e_dos));
           } else if (hist > 11) {
             e_dos = int(round(DoS_width*FD_width/4));
-            e_occupation = int(round((ee_dos_hist.at(electron).at(hist-1)+ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/3));
+            e_occupation = int(round((ee_dos_hist.at(electron).at(hist-1)+ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/3/e_dos));
           } else if (hist == 10){
             e_dos = int(round((2*DoS_width*FD_width+0.25*DoS_width*FD_width)/3));
-            e_occupation = int(round((DoS_width*FD_width*ee_dos_hist.at(electron).at(hist-1)+DoS_width*FD_width*ee_dos_hist.at(electron).at(hist)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist+1))/e_dos));
+            e_occupation = int(round((DoS_width*FD_width*ee_dos_hist.at(electron).at(hist-1)+DoS_width*FD_width*ee_dos_hist.at(electron).at(hist)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist+1))/e_dos/3/e_dos));
           } else {
             e_dos = int(round((DoS_width*FD_width+0.5*DoS_width*FD_width)/3));
-            e_occupation = int(round((DoS_width*FD_width*ee_dos_hist.at(electron).at(hist-1)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist+1))/e_dos));
-          }
-          if(e_dos > 195 || e_dos < 33) std::cout << "ee occupation problem: " << e_occupation << ", " << e_dos << ", " << hist << ", " << e_energy << std::endl;
+            e_occupation = int(round((DoS_width*FD_width*ee_dos_hist.at(electron).at(hist-1)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist+1))/e_dos/3/e_dos));
+          }     
 
           if(d_e_energy + deltaE < transport_cutoff)  hist = int(floor((d_e_energy + deltaE - core_cutoff)/4.0));
           else  hist = int(floor((d_e_energy + deltaE - transport_cutoff)/1.0));
-            
-          if(hist < 10) { 
+          if( hist > 48) {std::cout << hist << ", " << d_e_energy << ", " << deltaE << ", " << (d_e_energy + deltaE - core_cutoff) << std::endl; continue;}
+
+          if(hist < 1) { 
             d_e_dos = int(round(DoS_width*FD_width));
-            d_e_occupation = int(round((ee_dos_hist.at(electron).at(hist-1)+ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/3));
+            d_e_occupation = int(round((ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/2/d_e_dos));
+          } else if(hist < 10) { 
+            d_e_dos = int(round(DoS_width*FD_width));
+            d_e_occupation = int(round((ee_dos_hist.at(electron).at(hist-1)+ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/3/d_e_dos));
           } else if (hist > 11) {
             d_e_dos = int(round(DoS_width*FD_width/4));
-            d_e_occupation = int(round((ee_dos_hist.at(electron).at(hist-1)+ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/3));
+            d_e_occupation = int(round((ee_dos_hist.at(electron).at(hist-1)+ee_dos_hist.at(electron).at(hist)+ee_dos_hist.at(electron).at(hist+1))/3/d_e_dos));
           } else if (hist == 10){
             d_e_dos = int(round((2*DoS_width*FD_width+0.25*DoS_width*FD_width)/3));
-            d_e_occupation = int(round((DoS_width*FD_width*ee_dos_hist.at(electron).at(hist-1)+DoS_width*FD_width*ee_dos_hist.at(electron).at(hist)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist+1))/d_e_dos));
+            d_e_occupation = int(round((DoS_width*FD_width*ee_dos_hist.at(electron).at(hist-1)+DoS_width*FD_width*ee_dos_hist.at(electron).at(hist)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist+1))/d_e_dos/3/d_e_dos));
           } else {
             d_e_dos = int(round((DoS_width*FD_width+0.5*DoS_width*FD_width)/3));
-            d_e_occupation = int(round((DoS_width*FD_width*ee_dos_hist.at(electron).at(hist-1)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist+1))/d_e_dos));
+            d_e_occupation = int(round((DoS_width*FD_width*ee_dos_hist.at(electron).at(hist-1)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist)+0.25*DoS_width*FD_width*ee_dos_hist.at(electron).at(hist+1))/d_e_dos/3/d_e_dos));
           }
           
-          if(d_e_dos > 195 || d_e_dos < 33) std::cout << "ee d_occupation problem: " << d_e_occupation << ", " << d_e_dos << ", " << hist << ", " << d_e_energy << std::endl;
-         // if(e_dos < (15.0/195.0) || d_e_dos < (15.0/195)) continue;
+          //if(hist == 11 || hist == 10) std::cout << "ee d_occupation problem: " << d_e_occupation << ", " << d_e_dos << ", " << hist << ", " << d_e_energy << std::endl;
+          if(e_dos > (180.0/195.0) || d_e_dos > (180.0/195.0)) continue; */
           if(e_energy - deltaE < transport_cutoff) {
               DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - (e_energy - deltaE) - 0.5*DoS_width)*0.75; //AJ
               DoS_lhs = 0.5*DoS_width; //AJ
@@ -931,7 +940,7 @@ void ee_scattering() {
               }
            //   std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
             } 
-          
+              
           if(DoS1 == 0|| DoS2 == 0) continue;
 
           const int array_index = 3*electron;
@@ -945,7 +954,7 @@ void ee_scattering() {
           const double k_2_z = electron_velocity.at(array_index_i+2)*constants::m_over_hbar_sq;
 
           const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
-          if(omp_uniform_random[thread]() > exp(ee_rate*DoS1*DoS2/((0.25+(deltaK))*DoS1_n*DoS2_n*(0.25+(deltaK))))) {
+          if(omp_uniform_random[thread]() > exp(ee_rate*DoS1*DoS2/(DoS1_n*DoS2_n*(0.25+(deltaK))*(0.25+(deltaK))))) {
 
             if (electron_potential.at(electron) < transport_cutoff) core_scattering_count++;
             else transport_scattering_count++;
@@ -986,10 +995,10 @@ void ee_scattering() {
             electron_ee_scattering_list.at(electron_collision)[0] = 1;
             break;
           }
-        } else if (int(ee_elastic(electron, electron_collision, e_energy, d_e_energy, omp_uniform_random[thread]() )) == 2) {
-          e_e_scattering_count += 2;
-          break;
-       }
+      //   } else if (int(ee_elastic(electron, electron_collision, e_energy, d_e_energy, omp_uniform_random[thread]() )) == 2) {
+      //     e_e_scattering_count += 2;
+      //     break;
+      //  }
       }
       }
     } 
