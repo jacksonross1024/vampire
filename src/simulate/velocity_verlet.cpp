@@ -470,8 +470,8 @@ void e_e_coulomb(const int e, const int array_index) {
         ee_dos_count++;
        //  std::cout << e << ", " << i << ", " << length << std::endl;
         
-        if(electron_potential[electron] > transport_cutoff) ee_dos_hist[e].at(int(std::min(47.0, std::max(11.0, 11.0 + floor((electron_potential[electron]-transport_cutoff)/1)))))++;
-        else ee_dos_hist[e].at(int(std::min(10.0, std::max(0.0, floor((electron_potential[electron]-core_cutoff)/4)))))++;
+        if(electron_potential[electron] > transport_cutoff) ee_dos_hist[e].at(int(std::min(47.0, std::max((transport_cutoff-core_cutoff)/4.0, (transport_cutoff-core_cutoff)/4.0 + floor((electron_potential[electron]-transport_cutoff)/1)))))++;
+        else ee_dos_hist[e].at(int(std::min((transport_cutoff-core_cutoff)/4.0 - 1.0, std::max(0.0, floor((electron_potential[electron]-core_cutoff)/4)))))++;
       
          if(ee_dos_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << ee_dos_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
           break; }
@@ -523,9 +523,9 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         electron_nearest_electron_list[e][neighbor_count] = array_index_i/3;
         neighbor_count++;
       
-        if(electron_potential[electron] > transport_cutoff) ee_dos_hist[e].at(int(std::min(47.0, std::max(11.0, 11.0 + floor((electron_potential[electron]-transport_cutoff)/1)))))++;
-        else ee_dos_hist[e].at(int(std::min(10.0, std::max(0.0, floor((electron_potential[electron]-core_cutoff)/4)))))++;
-
+        if(electron_potential[electron] > transport_cutoff) ee_dos_hist[e].at(int(std::min(47.0, std::max((transport_cutoff-core_cutoff)/4.0, (transport_cutoff-core_cutoff)/4.0 + floor((electron_potential[electron]-transport_cutoff)/1)))))++;
+        else ee_dos_hist[e].at(int(std::min((transport_cutoff-core_cutoff)/4.0 - 1.0, std::max(0.0, floor((electron_potential[electron]-core_cutoff)/4)))))++;
+      
          if(neighbor_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
            break; }
 
@@ -719,7 +719,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
         if(e_energy < transport_cutoff) hist = int(floor((e_energy - core_cutoff)/4.0));
         else hist = int(floor((e_energy - transport_cutoff)/1.0));
       
-        if(hist <= 10) e_dos = DoS_width*FD_width;        
+        if(hist <= int((transport_cutoff-core_cutoff)/4.0-1)) e_dos = DoS_width*FD_width;        
         else e_dos = DoS_width*FD_width/4.0;
 
         const double e_occupation = double(ee_dos_hist[e].at(hist))/e_dos;
@@ -727,7 +727,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
         if(e_energy + deltaE < transport_cutoff) hist = int(floor((e_energy + deltaE - core_cutoff)/4.0));
         else hist = int(floor((e_energy + deltaE - transport_cutoff)/1.0));
 
-        if(hist <= 10) d_e_dos = DoS_width*FD_width;        
+        if(hist <= int((transport_cutoff-core_cutoff)/4.0-1)) d_e_dos = DoS_width*FD_width;        
         else d_e_dos = DoS_width*FD_width/4.0;
 
          const double d_e_occupation = double(ee_dos_hist[e].at(hist))/d_e_dos;
@@ -865,7 +865,7 @@ void ee_scattering() {
           //   e_dos = int(round(DoS_width*FD_width));
           //   e_occupation = int(round((ee_dos_hist[electron][hist)+ee_dos_hist[electron][hist+1))/2/e_dos));
           // } else 
-          if(hist <= 10) e_dos = DoS_width*FD_width;        
+          if(hist <= int((transport_cutoff-core_cutoff)/4.0-1)) e_dos = DoS_width*FD_width;        
           else e_dos = DoS_width*FD_width/4.0;
 
           e_occupation = 1.0 - ee_dos_hist[electron].at(hist)/e_dos;
@@ -884,7 +884,7 @@ void ee_scattering() {
           
            if(hist >=  ee_dos_hist[electron].size()) {std::cout << hist << ", " << e_energy << ", " << d_e_energy << ", " << deltaE << ", " << floor(d_e_energy + deltaE - transport_cutoff) + 11 << std::endl; continue;}
           
-          if(hist <= 10) d_e_dos = DoS_width*FD_width;        
+          if(hist <= int((transport_cutoff-core_cutoff)/4.0-1)) d_e_dos = DoS_width*FD_width;        
           else d_e_dos = DoS_width*FD_width/4.0;
 
           d_e_occupation = 1.0 - ee_dos_hist[electron].at(hist)/d_e_dos;
