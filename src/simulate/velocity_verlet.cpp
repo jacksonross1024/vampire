@@ -717,7 +717,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
         double d_e_dos;
         int hist;
         if(e_energy < transport_cutoff) hist = int(floor((e_energy - core_cutoff)/4.0));
-        else hist = int(floor((e_energy - transport_cutoff)/1.0));
+        else hist = int(((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - transport_cutoff)/1.0));
       
         if(hist <= int((transport_cutoff-core_cutoff)/4.0-1)) e_dos = DoS_width*FD_width;        
         else e_dos = DoS_width*FD_width/4.0;
@@ -725,7 +725,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
         const double e_occupation = double(ee_dos_hist[e].at(hist))/e_dos;
 
         if(e_energy + deltaE < transport_cutoff) hist = int(floor((e_energy + deltaE - core_cutoff)/4.0));
-        else hist = int(floor((e_energy + deltaE - transport_cutoff)/1.0));
+        else hist =int(((transport_cutoff-core_cutoff)/4.0) + floor((e_energy + deltaE - transport_cutoff)/1.0));
 
         if(hist <= int((transport_cutoff-core_cutoff)/4.0-1)) d_e_dos = DoS_width*FD_width;        
         else d_e_dos = DoS_width*FD_width/4.0;
@@ -857,9 +857,9 @@ void ee_scattering() {
           double d_e_dos;
           int hist;
           if(e_energy - deltaE < transport_cutoff) hist = int(floor((e_energy - deltaE - core_cutoff)/4.0));
-          else hist = int(floor((e_energy - deltaE - transport_cutoff)/1.0));
+          else hist = int(((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - deltaE - transport_cutoff)/1.0));
 
-          if(hist >=  ee_dos_hist[electron].size()) {std::cout << hist << ", " << e_energy << ", " << d_e_energy << ", " << deltaE << ", " << floor(e_energy - deltaE - transport_cutoff) + 11 << std::endl; continue;}
+        //  if(hist >=  ee_dos_hist[electron].size()) {std::cout << hist << ", " << e_energy << ", " << d_e_energy << ", " << deltaE << ", " << floor(e_energy - deltaE - transport_cutoff) + 11 << std::endl; continue;}
           
           // if(hist < 1) { 
           //   e_dos = int(round(DoS_width*FD_width));
@@ -880,7 +880,7 @@ void ee_scattering() {
           // }     
 
           if(d_e_energy + deltaE < transport_cutoff)  hist = int(floor((d_e_energy + deltaE - core_cutoff)/4.0));
-          else  hist = int(floor((d_e_energy + deltaE - transport_cutoff)/1.0));
+          else  hist = int(((transport_cutoff-core_cutoff)/4.0) + floor((d_e_energy + deltaE - transport_cutoff)/1.0));
           
            if(hist >=  ee_dos_hist[electron].size()) {std::cout << hist << ", " << e_energy << ", " << d_e_energy << ", " << deltaE << ", " << floor(d_e_energy + deltaE - transport_cutoff) + 11 << std::endl; continue;}
           
