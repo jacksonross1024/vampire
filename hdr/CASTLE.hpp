@@ -185,8 +185,10 @@ namespace CASTLE {
     extern double p_z;
     extern unsigned int e_a_scattering_count;
     extern unsigned int e_e_scattering_count;
-    extern unsigned int transport_scattering_count;
-    extern unsigned int core_scattering_count;
+    extern unsigned int ee_transport_scattering_count;
+    extern unsigned int ee_core_scattering_count;
+    extern unsigned int ea_transport_scattering_count;
+    extern unsigned int ea_core_scattering_count;
 
     extern double TTMe;
     extern double d_TTMe;

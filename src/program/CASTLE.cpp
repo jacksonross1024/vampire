@@ -323,7 +323,7 @@ void initialize () {
     G = e_heat_capacity*4.0*ea_coupling_strength/(M_PI*constants::kB_r); //AJ/fs/K**2/nm**3 
    
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -1.0*dt*E_f_A/ tau; 
+    ea_rate = -1.0*dt*E_f_A*E_f_A/ tau; 
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
@@ -775,8 +775,10 @@ void initialize_electrons() {
     //std::cout << temp_Map.at(7).at(3335) << std::endl;
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
-    transport_scattering_count = 0;
-    core_scattering_count = 0;
+    ee_transport_scattering_count = 0;
+    ee_core_scattering_count = 0;
+    ea_transport_scattering_count = 0;
+    ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
     e_e_neighbor_cutoff = 23.0*23.0;
     
@@ -1699,7 +1701,10 @@ void output_data() {
       << Te*Te*e_heat_capacity * 1e7/300.0 << ", " << Tp*a_heat_capacity*1e7 << ", "  
       << Te << ", " << Tp << ", " //<< TEKE << ", " << TLE << ", " 
       << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << p_x << ", " << p_y << ", " << p_z << ", " 
-      << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << double(core_scattering_count) / double(CASTLE_output_rate) << ", " << double(transport_scattering_count) / double(CASTLE_output_rate) << ", " <<  double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
+      << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << \
+      double(ee_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ee_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
+      double(ea_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ea_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
+      double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;
     }
    
@@ -1707,8 +1712,10 @@ void output_data() {
     y_flux = 0;
     z_flux = 0;
     e_a_scattering_count = 0;
-    core_scattering_count = 0;
-    transport_scattering_count = 0;
+    ee_core_scattering_count = 0;
+    ee_transport_scattering_count = 0;
+    ea_core_scattering_count = 0;
+    ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
     if(Te > 1300) transport_cutoff = 70.0;
    // a_a_scattering_count = 0;

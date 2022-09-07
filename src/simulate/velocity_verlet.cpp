@@ -711,7 +711,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       const double DoS_width = 3;//AJ
       if(Te == Tp) return;
 
-      if(Tp <= Te) deltaE *= -1.0;
+      
        const double FD_width = ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff);
         double e_occupation;
         double e_dos;
@@ -777,7 +777,8 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       //   }
       // }
       if(e_occupation == d_e_occupation ) return;
-      if(e_occupation < d_e_occupation) deltaE *= -1.0;
+      if(Tp <= Te) deltaE *= -1.0;
+      if(e_occupation > d_e_occupation) deltaE *= -1.0;
      
       if(e_energy + deltaE < core_cutoff) return;
 
@@ -799,6 +800,8 @@ void ea_scattering(const int e, const int array_index, const int thread) {
 
       #pragma omp critical(eascattering)
       {
+      if (e_energy < transport_cutoff) ea_core_scattering_count++;
+      else ea_transport_scattering_count++;
       TEKE += deltaE;
       TLE -= deltaE;
       e_a_scattering_count++;
@@ -983,10 +986,10 @@ void ee_scattering() {
           const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
           if(omp_uniform_random[thread]() > exp(ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))))) {
 
-            if (electron_potential[electron] < transport_cutoff) core_scattering_count++;
-            else transport_scattering_count++;
-            if (electron_potential[electron_collision] < transport_cutoff) core_scattering_count++;
-            else transport_scattering_count++;
+            if (e_energy < transport_cutoff) ee_core_scattering_count++;
+            else ee_transport_scattering_count++;
+            if (d_e_energy < transport_cutoff) ee_core_scattering_count++;
+            else ee_transport_scattering_count++;
 
             electron_potential[electron] -= deltaE;
             electron_potential[electron_collision]   += deltaE;
@@ -1234,10 +1237,10 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
 
       #pragma omp critical 
       {
-      if (electron_potential[electron] < transport_cutoff) core_scattering_count++;
-      else transport_scattering_count++;
-      if (electron_potential[electron_collision] < transport_cutoff) core_scattering_count++;
-      else transport_scattering_count++;
+      if (electron_potential[electron] < transport_cutoff) ee_core_scattering_count++;
+      else ee_transport_scattering_count++;
+      if (electron_potential[electron_collision] < transport_cutoff) ee_core_scattering_count++;
+      else ee_transport_scattering_count++;
       }
         return 2;
 

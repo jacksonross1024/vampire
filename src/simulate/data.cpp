@@ -297,10 +297,12 @@ namespace CASTLE {
    double p_x;
    double p_y;
    double p_z;
-   unsigned int e_a_scattering_count;
-   unsigned int e_e_scattering_count;
-   unsigned int transport_scattering_count;
-   unsigned int core_scattering_count;
+     unsigned int e_a_scattering_count;
+      unsigned int e_e_scattering_count;
+      unsigned int ee_transport_scattering_count;
+      unsigned int ee_core_scattering_count;
+      unsigned int ea_transport_scattering_count;
+      unsigned int ea_core_scattering_count;
 
    double TTMe;
    double d_TTMe;
