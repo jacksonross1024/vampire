@@ -305,25 +305,25 @@ void initialize () {
 
     a_specific_heat = 25.0 /6.02e3; // //sim::TTCl; //J/K/mol -> .at(e20/Na) AJ/K/e-   
     a_specific_heat_i = 1.0 / a_specific_heat;
-    a_heat_capacity = 1e-27*a_specific_heat * n_f; //AJ/K/particle .at() AJ/K/nm**3
+    a_heat_capacity = 1.14e-27*a_specific_heat * n_f; //AJ/K/particle .at() AJ/K/nm**3
     a_heat_capacity_i = 1.0 / a_heat_capacity;
 
     e_specific_heat = 0.5*M_PI*M_PI*constants::kB*constants::kB/E_f; // gamma; //J/K**2/e- 
     e_specific_heat_i = 1.0 / e_specific_heat;
-    e_heat_capacity = 1e-7*e_specific_heat * n_f; //J/K**2/e- -> AJ/K**2/nm**3
+    e_heat_capacity = (10.4)*(1.0+0.084)*1e-7*e_specific_heat * n_f; //J/K/e- -> AJ/K**2/nm**3
     e_heat_capacity_i = 1.0 / e_heat_capacity;
 
-    ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/(constants::hbar_r*constants::hbar_r); // meV**2 -> 1/fs**2
+    ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/constants::hbar_r; // meV**2 -> AJ/fs
     phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.084)*constants::eV_to_AJ; //AJ?
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
     power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
     
-    const static double tau = E_f_A /(M_PI*constants::hbar_r*ea_coupling_strength); // fs
-    G = e_heat_capacity*4.0*ea_coupling_strength/(M_PI*constants::kB_r); //AJ/fs/K**2/nm**3 [e-20*e27*e15 = e23]
+    const static double tau = E_f_A /(M_PI*ea_coupling_strength); // fs
+    G = 300.0*e_heat_capacity/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -1.0*dt*E_f_A/ tau;  // 
+    ea_rate = -1.0*dt*E_f_A/tau;  //AJ(ready for E_i) 
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
@@ -376,12 +376,12 @@ void initialize () {
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
-    std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K): " << e_heat_capacity*1e7 <<  ", G@300K(J/K/s/m**3): " <<  G*1e23  << \
-    ", ea_rate@300K(J/s/K/m**3): " << -1e-5*ea_rate*n_f/dt <<  ", ea_rate@300(fs): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << std::fixed << std::endl;
-   
+    std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
+    ", ea_rate@300K(J/s/K/m**3): " << -1e-5*ea_rate*n_f/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << std::fixed << std::endl;
+    G = -1e-27*ea_rate*n_f/300.0; //J/s/K/m**3 []
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
-    std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/6.0)) << " above transport cutoff; " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))) << " below" << std::endl;
+    std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0)) << " above transport cutoff; " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))) << " below" << std::endl;
     
     std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists[0].size() << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
     char directory [256];
@@ -404,9 +404,9 @@ void initialize_cell_omp() {
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
-  x_omp_cells = int(floor(lattice_width / 30.0));
-  y_omp_cells = int(floor(lattice_depth / 30.0));
-  z_omp_cells = int(floor(lattice_height/ 30.0));
+  x_omp_cells = int(floor(lattice_width / 25.0));
+  y_omp_cells = int(floor(lattice_depth / 25.0));
+  z_omp_cells = int(floor(lattice_height/ 25.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -780,13 +780,13 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 23.0*23.0;
+    e_e_neighbor_cutoff = 19.5*19.5;
     
     half_int_var =  5;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 5;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 30.0*30.0;
+    e_e_integration_cutoff = 24.0*24.0;
     e_e_coulomb_cutoff = 5.0*5.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
@@ -811,7 +811,7 @@ void initialize_electrons() {
         electron_nearest_electron_list.at(e).resize(ee_density);
         electron_ee_scattering_list.at(e).resize(ee_scattering);
         electron_ea_scattering_list.at(e).resize(2,0);
-        ee_dos_hist.at(e).resize(50,0);
+        ee_dos_hist.at(e).resize(48,0);
 
         const int array_index = 3*e;
         electron_position.at(array_index)     = atoms::x_coord_array.at((e)%lattice_atoms) + 0.5*x_unit_size;
@@ -1173,6 +1173,7 @@ void initialize_velocities() {
     // std::uniform_real_distribution<double> test_uniform;
 
     double minimum = E_f_A;
+   // transport_cutoff = 106.978;
     #pragma omp parallel for schedule(static) reduction(+:p_x,p_y,p_z) 
     for(int e = 0; e < conduction_electrons; e++) {
       double phi;
@@ -1219,7 +1220,8 @@ void initialize_velocities() {
     }
 
     core_cutoff = minimum;
-    std::cout << "core cutoff: " << core_cutoff << std::endl;
+    transport_cutoff = core_cutoff + 44.0;
+    std::cout << "core cutoff: " << core_cutoff << ", transport cutoff: " << transport_cutoff << std::endl;
 
     for(int e = 0; e < conduction_electrons; e++) {
       Init_E_vel << e << ", " << electron_potential.at(e) << ", " << electron_velocity.at(3*e) << ", " << electron_velocity.at(3*e+1) << ", " << electron_velocity.at(3*e+2) << std::endl;
@@ -1339,8 +1341,9 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
    // subCount++;
     }
   }
+  //transport_cutoff = 173.78;
   //transport_cutoff = core_cutoff;
-  std::cout << "transport cutoff " << transport_cutoff << std::endl;
+  
  // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
@@ -1562,8 +1565,8 @@ void output_data() {
     const static double step_size_hr = 1; //AJ
   omp_set_dynamic(0);
        omp_set_num_threads(4);
-  const int output_count_lr = 50+ (transport_cutoff - core_cutoff)/step_size_lr;
-  const int output_count_hr = 50+ (3.0*constants::kB_r*300.0 + E_f_A - transport_cutoff)/step_size_hr;
+  const int output_count_lr = 11;
+  const int output_count_hr = 37;
     #pragma omp parallel
     {
     const int thread = omp_get_thread_num();
@@ -1616,35 +1619,35 @@ void output_data() {
   
 
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_0 << i << ", " << 195*(temp_Map[0].at(i)/89) << "\n";
+      if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
       else temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
       temp_Map[0].at(i) = 0;
     }
     temp_map_0.close();
 
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_1 << i << ", " << 195*(temp_Map[1].at(i)/89) << "\n";
+      if(i == 11) temp_map_1 << i << ", " << temp_Map[1].at(i) << "\n";
       else temp_map_1 << i << ", " << temp_Map[1].at(i) << "\n";
       temp_Map[1].at(i) = 0;
     }
     temp_map_1.close();
 
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_2 << i << ", " << 195*(temp_Map[2].at(i)/89) << "\n";
+      if(i == 11) temp_map_2 << i << ", " << temp_Map[2].at(i) << "\n";
       else temp_map_2 << i << ", " << temp_Map[2].at(i) << "\n";
       temp_Map[2].at(i) = 0;
     }
     temp_map_2.close();
     
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_3 << i << ", " << 195*(temp_Map[3].at(i)/89) << "\n";
+      if(i == 11) temp_map_3 << i << ", " << temp_Map[3].at(i) << "\n";
       else temp_map_3 << i << ", " << temp_Map[3].at(i) << "\n";
       temp_Map[3].at(i) = 0;
     }
     temp_map_3.close();
     
     for(int i = 0; i < output_count_hr; i++) {
-      if(i == 11) temp_map_4 << i << ", " << 195*(temp_Map.at(4).at(i)/89) << "\n";
+      if(i == 11) temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
       else temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
       temp_Map.at(4).at(i) = 0;
     }
@@ -1717,7 +1720,7 @@ void output_data() {
     ea_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
-    if(Te > 1300) transport_cutoff = 70.0;
+    if(Te > 900) transport_cutoff = 103.0;
    // a_a_scattering_count = 0;
 }
 
