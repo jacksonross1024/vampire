@@ -314,7 +314,7 @@ void initialize () {
     e_heat_capacity_i = 1.0 / e_heat_capacity;
 
     ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/constants::hbar_r; // meV**2 -> AJ/fs
-    phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.084)*constants::eV_to_AJ; //AJ?
+    phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.084)*constants::eV_to_AJ; // meV [e-3] AJ
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
     power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
@@ -324,7 +324,7 @@ void initialize () {
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
     ea_rate = -1.0*dt*E_f_A/tau;  //AJ(ready for E_i) 
-    ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
+    ee_rate = dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
   // omp_uniform_random(omp_threads);
@@ -811,7 +811,7 @@ void initialize_electrons() {
         electron_nearest_electron_list.at(e).resize(ee_density);
         electron_ee_scattering_list.at(e).resize(ee_scattering);
         electron_ea_scattering_list.at(e).resize(2,0);
-        ee_dos_hist.at(e).resize(48,0);
+        ee_dos_hist.at(e).resize(60,0);
 
         const int array_index = 3*e;
         electron_position.at(array_index)     = atoms::x_coord_array.at((e)%lattice_atoms) + 0.5*x_unit_size;
@@ -1565,109 +1565,108 @@ void output_data() {
     const static double step_size_hr = 1; //AJ
   omp_set_dynamic(0);
        omp_set_num_threads(4);
-  const int output_count_lr = 11;
-  const int output_count_hr = 37;
-    #pragma omp parallel
-    {
-    const int thread = omp_get_thread_num();
-    for(int e = 1; e < electron_nearest_electron_list[thread*10000][0]; e++) {
-      const unsigned int electron = electron_nearest_electron_list[thread*10000][e];
-
-      const double energy = electron_potential.at(electron);
-      if(energy < transport_cutoff) {
-        const unsigned int hist = int(std::min(double(output_count_lr-1), std::max(0.0, floor((energy- core_cutoff)/step_size_lr))));
-        temp_Map[thread].at(hist)++;
-      } else {
-        const unsigned int hist = int(std::min(double(output_count_hr-1), std::max(0.0, floor((energy- transport_cutoff)/step_size_hr))));
-        temp_Map[thread+4].at(hist)++;
-      }
-     // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
-           // double x_pos = electron_position.at(array_index);
-      // double y_pos = electron_position.at(array_index+1); 
-      // double z_pos = electron_position.at(array_index+2);
-     // }
-      // if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
-      //    #pragma omp atomic update
-      //   temp_Map[1].at(hist)++;
-      // }
-      // if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
-      //    #pragma omp atomic update
-      //   temp_Map[2].at(hist)++;
-      // }
-      // if(x_pos > lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
-      //    #pragma omp atomic update
-      //   temp_Map[3].at(hist)++;
-      // }
-      // if(x_pos < lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-      //    #pragma omp atomic update
-      //   temp_Map.at(4).at(hist)++;
-      // }
-      // if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-      //   #pragma omp atomic update
-      //   temp_Map.at(5).at(hist)++;
-      // }
-      // if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-      //    #pragma omp atomic update
-      //   temp_Map.at(6).at(hist)++;
-      // }
-      // if(x_pos > (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
-      //    #pragma omp atomic update
-      //   temp_Map.at(7).at(hist)++; 
-      // }    
-    }
-    }  
+  const int output_count_lr = int((transport_cutoff-core_cutoff)/4.0);
+  const int output_count_hr = ee_dos_hist[0].size();
+    // #pragma omp parallel
+    // {
+    // const int thread = omp_get_thread_num();
+    // for(int e = 1; e < electron_nearest_electron_list[thread*10000][0]; e++) {
+    //   const unsigned int electron = electron_nearest_electron_list[thread*10000][e];
+    //   const double energy = electron_potential.at(electron);
+    //   if(energy < transport_cutoff) {
+    //     const unsigned int hist = int(std::min(double(output_count_lr-1), std::max(0.0, floor((energy- core_cutoff)/step_size_lr))));
+    //     temp_Map[thread].at(hist)++;
+    //   } else {
+    //     const unsigned int hist = int(std::min(double(output_count_hr-1), std::max(0.0, floor((energy- transport_cutoff)/step_size_hr))));
+    //     temp_Map[thread+4].at(hist)++;
+    //   }
+    //  // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
+    //        // double x_pos = electron_position.at(array_index);
+    //   // double y_pos = electron_position.at(array_index+1); 
+    //   // double z_pos = electron_position.at(array_index+2);
+    //  // }
+    //   // if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+    //   //    #pragma omp atomic update
+    //   //   temp_Map[1].at(hist)++;
+    //   // }
+    //   // if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+    //   //    #pragma omp atomic update
+    //   //   temp_Map[2].at(hist)++;
+    //   // }
+    //   // if(x_pos > lattice_width * 0.5 && y_pos > lattice_depth*0.5 && z_pos < lattice_height * 0.5) {
+    //   //    #pragma omp atomic update
+    //   //   temp_Map[3].at(hist)++;
+    //   // }
+    //   // if(x_pos < lattice_width * 0.5 && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+    //   //    #pragma omp atomic update
+    //   //   temp_Map.at(4).at(hist)++;
+    //   // }
+    //   // if(x_pos > (lattice_width * 0.5) && y_pos < lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+    //   //   #pragma omp atomic update
+    //   //   temp_Map.at(5).at(hist)++;
+    //   // }
+    //   // if(x_pos < (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+    //   //    #pragma omp atomic update
+    //   //   temp_Map.at(6).at(hist)++;
+    //   // }
+    //   // if(x_pos > (lattice_width * 0.5) && y_pos > lattice_depth*0.5 && z_pos > lattice_height * 0.5) {
+    //   //    #pragma omp atomic update
+    //   //   temp_Map.at(7).at(hist)++; 
+    //   // }    
+    // }
+    // }  
   
 
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
-      else temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
-      temp_Map[0].at(i) = 0;
+     // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
+       temp_map_0 << i << ", " << ee_dos_hist[0].at(i) << "\n";
+     
     }
     temp_map_0.close();
 
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_1 << i << ", " << temp_Map[1].at(i) << "\n";
-      else temp_map_1 << i << ", " << temp_Map[1].at(i) << "\n";
-      temp_Map[1].at(i) = 0;
+      //if(i == 11) temp_map_1 << i << ", " << temp_Map[1].at(i) << "\n";
+       temp_map_1 << i << ", " << ee_dos_hist[10000].at(i) << "\n";
+     
     }
     temp_map_1.close();
 
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_2 << i << ", " << temp_Map[2].at(i) << "\n";
-      else temp_map_2 << i << ", " << temp_Map[2].at(i) << "\n";
-      temp_Map[2].at(i) = 0;
+     // if(i == 11) temp_map_2 << i << ", " << temp_Map[2].at(i) << "\n";
+       temp_map_2 << i << ", " << ee_dos_hist[20000].at(i) << "\n";
+     
     }
     temp_map_2.close();
     
     for(int i = 0; i < output_count_lr; i++) {
-      if(i == 11) temp_map_3 << i << ", " << temp_Map[3].at(i) << "\n";
-      else temp_map_3 << i << ", " << temp_Map[3].at(i) << "\n";
-      temp_Map[3].at(i) = 0;
+     // if(i == 11) temp_map_3 << i << ", " << temp_Map[3].at(i) << "\n";
+       temp_map_3 << i << ", " << ee_dos_hist[30000].at(i) << "\n";
+      
     }
     temp_map_3.close();
     
-    for(int i = 0; i < output_count_hr; i++) {
-      if(i == 11) temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
-      else temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
-      temp_Map.at(4).at(i) = 0;
+    for(int i = output_count_lr; i < output_count_hr; i++) {
+    //  if(i == 11) temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
+       temp_map_4 << i-output_count_lr << ", " << ee_dos_hist.at(0).at(i) << "\n";
+     
     }
     temp_map_4.close();
 
-    for(int i = 0; i < output_count_hr; i++) {
-      temp_map_5<< i << ", " << temp_Map.at(5).at(i) << "\n";
-      temp_Map.at(5).at(i) = 0;
+    for(int i = output_count_lr; i < output_count_hr; i++) {
+      temp_map_5<< i-output_count_lr << ", " << ee_dos_hist.at(10000).at(i) << "\n";
+  
     }
     temp_map_5.close();
 
-    for(int i = 0; i < output_count_hr; i++) {
-      temp_map_6 << i << ", " << temp_Map.at(6).at(i) << "\n";
-      temp_Map.at(6).at(i) = 0;
+    for(int i = output_count_lr; i < output_count_hr; i++) {
+      temp_map_6 << i-output_count_lr << ", " << ee_dos_hist.at(20000).at(i) << "\n";
+     
     }
     temp_map_6.close();
 
-    for(int i = 0; i < output_count_hr; i++) {
-      temp_map_7 << i << ", " << temp_Map.at(7).at(i) << "\n";
-      temp_Map.at(7).at(i) = 0;
+    for(int i = output_count_lr; i < output_count_hr; i++) {
+      temp_map_7 << i-output_count_lr << ", " << ee_dos_hist.at(30000).at(i) << "\n";
+ 
     }
     temp_map_7.close();
       // std::ofstream E_vel;
@@ -1720,7 +1719,8 @@ void output_data() {
     ea_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
-    if(Te > 900) transport_cutoff = 103.0;
+    if(Te > 900) transport_cutoff = 102.978;
+  // if(current_time_step > (sim::equilibration_time/2)) ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ);
    // a_a_scattering_count = 0;
 }
 
