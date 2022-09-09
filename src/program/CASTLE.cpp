@@ -1563,8 +1563,7 @@ void output_data() {
     
     const static double step_size_lr = 4; //AJ
     const static double step_size_hr = 1; //AJ
-  omp_set_dynamic(0);
-       omp_set_num_threads(4);
+
   const int output_count_lr = int((transport_cutoff-core_cutoff)/4.0);
   const int output_count_hr = ee_dos_hist[0].size();
     // #pragma omp parallel

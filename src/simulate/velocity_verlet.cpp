@@ -706,6 +706,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     //if(!electron_transport_list[e]) return;
     if(omp_uniform_random[thread]() > exp(ea_rate/e_energy)) {
        double deltaE = sqrt(phonon_energy*E_f_A);
+       if( e_energy + deltaE > (E_f_A+37.0) ) return;
       const unsigned int size = electron_nearest_electron_list[e][0];
       int DoS1; 
       int DoS2;
