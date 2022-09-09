@@ -699,12 +699,12 @@ if(e_energy + deltaE > 0.9817*E_f_A) {
 */
 void ea_scattering(const int e, const int array_index, const int thread) {
 
-    if(!electron_transport_list[e]) return;
+   // if(!electron_transport_list[e]) return;
     if(Te == Tp) return;
     double e_energy = electron_potential[e];
    
     //if(!electron_transport_list[e]) return;
-    if(omp_uniform_random[thread]() > exp(10*ea_rate/e_energy)) {
+    if(omp_uniform_random[thread]() > exp(ea_rate/e_energy)) {
        double deltaE = sqrt(phonon_energy*E_f_A);
       const unsigned int size = electron_nearest_electron_list[e][0];
       int DoS1; 
