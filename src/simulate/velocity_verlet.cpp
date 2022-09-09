@@ -720,11 +720,11 @@ void ea_scattering(const int e, const int array_index, const int thread) {
         
         int hist;
         if(e_energy < transport_cutoff) hist = int(std::min(0.0,  floor((e_energy - core_cutoff)/4.0)));     
-        else hist = int(std::max(ee_dos_hist[0].size(), ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - transport_cutoff)/1.0)));         
+        else hist = int(std::max(double(ee_dos_hist[0].size()), ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - transport_cutoff)/1.0)));         
         const double e_occupation = double(ee_dos_hist[e].at(hist))/e_dos;
 
         if(e_energy + deltaE < transport_cutoff) hist = int(std::min(0.0,  floor((e_energy + deltaE - core_cutoff)/4.0)));     
-        else hist = int(std::max(ee_dos_hist[0].size(), ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy + deltaE - transport_cutoff)/1.0)));   
+        else hist = int(std::max(double(ee_dos_hist[0].size()), ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy + deltaE - transport_cutoff)/1.0)));   
         const double d_e_occupation = double(ee_dos_hist[e].at(hist))/d_e_dos;
 
       // if(scattering_velocity + deltaE < transport_cutoff) {
@@ -852,7 +852,7 @@ void ee_scattering() {
           double d_e_dos;
           int hist;
           if(e_energy - deltaE < transport_cutoff) hist = int(std::min(0.0, (floor((e_energy - deltaE - core_cutoff)/4.0))));
-          else hist = int(std::max(ee_dos_hist[0].size(), ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - deltaE - transport_cutoff)/1.0)));
+          else hist = int(std::max(double(ee_dos_hist[0].size()), ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - deltaE - transport_cutoff)/1.0)));
 
         //  if(hist >=  ee_dos_hist[electron].size()) {std::cout << hist << ", " << e_energy << ", " << d_e_energy << ", " << deltaE << ", " << floor(e_energy - deltaE - transport_cutoff) + 11 << std::endl; continue;}
           // if(hist < 1) { 
@@ -874,7 +874,7 @@ void ee_scattering() {
           // }     
 
           if(d_e_energy + deltaE < transport_cutoff)  hist = int(std::min(0.0, floor((d_e_energy + deltaE - core_cutoff)/4.0)));
-          else  hist = int(std::max(ee_dos_hist[0].size(), ((transport_cutoff-core_cutoff)/4.0) + floor((d_e_energy + deltaE - transport_cutoff)/1.0)));
+          else  hist = int(std::max(double(ee_dos_hist[0].size()), ((transport_cutoff-core_cutoff)/4.0) + floor((d_e_energy + deltaE - transport_cutoff)/1.0)));
           
           // if(hist >=  ee_dos_hist[electron].size()) {std::cout << hist << ", " << e_energy << ", " << d_e_energy << ", " << deltaE << ", " << floor(d_e_energy + deltaE - transport_cutoff) + 11 << std::endl; continue;}
           
