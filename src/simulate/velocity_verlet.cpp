@@ -716,11 +716,11 @@ void ea_scattering(const int e, const int array_index, const int thread) {
         int hist;
         if(e_energy < transport_cutoff) {hist = int(std::max(0.0,  floor((e_energy - core_cutoff)/4.0))); e_dos = DoS_width*FD_width;}
         else {hist = int(std::max(ee_dos_hist[0].size() -1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - transport_cutoff)/1.0)));  e_dos = DoS_width*FD_width/4.0;}
-        const double e_occupation = std::max(double(ee_dos_hist[e].at(hist))/e_dos, 0.0);
+        const double e_occupation = double(ee_dos_hist[e].at(hist))/e_dos;
 
         if(e_energy + deltaE < transport_cutoff) {hist = int(std::min(0.0,  floor((e_energy + deltaE - core_cutoff)/4.0)));  d_e_dos = DoS_width*FD_width;} 
         else {hist = int(std::max(ee_dos_hist[0].size() -1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy + deltaE - transport_cutoff)/1.0)));  d_e_dos = DoS_width*FD_width/4.0;}
-        const double d_e_occupation = std::max(double(ee_dos_hist[e].at(hist))/d_e_dos, 0.0);
+        const double d_e_occupation = double(ee_dos_hist[e].at(hist))/d_e_dos;
 
       // if(scattering_velocity + deltaE < transport_cutoff) {
       //   DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
