@@ -764,7 +764,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       //     }
       //   }
       // }
-      if(e_occupation >= d_e_occupation*(187.5/195.0) && e_occupation <= d_e_occupation*(202.5/195.0) ) return;
+      if(e_occupation > 185.0/195.0 && d_e_occupation > 185.0/195.0) return;
       if(Tp <= Te) deltaE *= -1.0;
       if(e_occupation < d_e_occupation) deltaE *= -1.0;
      
