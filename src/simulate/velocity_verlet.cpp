@@ -854,7 +854,7 @@ void ee_scattering() {
           d_e_occupation = 1.0 - ee_dos_hist[electron_collision].at(hist)/d_e_dos;
 
           //if(hist == 11 || hist == 10) std::cout << "ee d_occupation problem: " << d_e_occupation << ", " << d_e_dos << ", " << hist << ", " << d_e_energy << std::endl;
-          if(e_occupation < (7.5/195.0) || d_e_occupation < (7.5/195.0)) {
+          if(e_occupation < (15/195.0) || d_e_occupation < (15/195.0)) {
            // std::cout << e_occupation << ", " << e_dos << ", " << d_e_occupation << ", " << d_e_dos << ", " << FD_width << std::endl;
             continue; }
 
