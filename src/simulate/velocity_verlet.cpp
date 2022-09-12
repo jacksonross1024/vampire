@@ -852,11 +852,12 @@ void ee_scattering() {
           }
 
           d_e_occupation = 1.0 - ee_dos_hist[electron_collision].at(hist)/d_e_dos;
-
-          //if(hist == 11 || hist == 10) std::cout << "ee d_occupation problem: " << d_e_occupation << ", " << d_e_dos << ", " << hist << ", " << d_e_energy << std::endl;
-          if(e_occupation < (15/195.0) || d_e_occupation < (15/195.0)) {
+          //if( (e_occupation < 0.0 || d_e_occupation < 0.0) && (d_e_energy + deltaE > transport_cutoff || e_energy - deltaE > transport_cutoff)) {
+            // #pragma omp critical
            // std::cout << e_occupation << ", " << e_dos << ", " << d_e_occupation << ", " << d_e_dos << ", " << FD_width << std::endl;
-            continue; }
+          //}
+          //if(hist == 11 || hist == 10) std::cout << "ee d_occupation problem: " << d_e_occupation << ", " << d_e_dos << ", " << hist << ", " << d_e_energy << std::endl;
+          if(e_occupation < (15.0/195.0) || d_e_occupation < (15.0/195.0)) continue; 
 
           const int array_index = 3*electron;
           const int array_index_i = 3*electron_collision;
@@ -869,7 +870,7 @@ void ee_scattering() {
 
           const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
           if(omp_uniform_random[thread]() < ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK)))) {
-
+            
             if (e_energy < transport_cutoff) ee_core_scattering_count++;
             else ee_transport_scattering_count++;
             if (d_e_energy < transport_cutoff) ee_core_scattering_count++;
