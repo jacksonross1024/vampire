@@ -404,9 +404,9 @@ void initialize_cell_omp() {
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
-  x_omp_cells = int(floor(lattice_width / 30.0));
-  y_omp_cells = int(floor(lattice_depth / 30.0));
-  z_omp_cells = int(floor(lattice_height/ 30.0));
+  x_omp_cells = int(floor(lattice_width / 40.0));
+  y_omp_cells = int(floor(lattice_depth / 40.0));
+  z_omp_cells = int(floor(lattice_height/ 40.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -780,13 +780,13 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 14.0*14.0;
+    e_e_neighbor_cutoff = 24.0*24.0;
     
-    half_int_var =  5;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
-    full_int_var = 10;//2*half_int_var;
+    half_int_var =  4;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    full_int_var = 8;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 30.0*30.0;
+    e_e_integration_cutoff = 40.0*40.0;
     e_e_coulomb_cutoff = 5.0*5.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
