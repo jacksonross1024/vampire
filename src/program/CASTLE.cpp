@@ -780,10 +780,10 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 14.0*14.0;
+    e_e_neighbor_cutoff = 20.0*20.0;
     
-    half_int_var =  4;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
-    full_int_var = 8;//2*half_int_var;
+    half_int_var =  3;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    full_int_var = 6;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 30.0*30.0;
@@ -799,7 +799,7 @@ void initialize_electrons() {
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
     const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
-     ee_density =  3*int(round(pow(e_e_neighbor_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
+     ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
     const int ee_scattering= int(3*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
   std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       omp_set_dynamic(0);
