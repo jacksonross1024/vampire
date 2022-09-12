@@ -37,6 +37,7 @@ namespace constants{
    extern const double K; //K for Coulomb's law
    extern const double K_A;
    extern const double hbar_over_me_sqrt;
+   extern const double m_over_hbar_sqrt;
 
 } // end of exchange namespace
 
