@@ -96,33 +96,26 @@ void update_position(){
     
     for (int e = 1; e < size; e++) { 
       const unsigned int electron = old_cell_integration_lists[cell][e];
-      const unsigned int array_index = 3*electron;
-    //  const int array_index_y = array_index + 1;
-     // const int array_index_z = array_index + 2;
-  
-      double x_pos = electron_position[array_index];
-      double y_pos = electron_position[array_index+1];
-      double z_pos = electron_position[array_index+2];
+
+        const unsigned int array_index = 3*electron;
+      
+        double x_pos = electron_position[array_index];
+        double y_pos = electron_position[array_index+1];
+        double z_pos = electron_position[array_index+2];
     
-     // if (x_pos != x_pos || y_pos != y_pos || z_pos != z_pos) std::cout << "access pos " << x_pos << ", " << y_pos << ", " << z_pos << ", " << \
-      electron_position[array_index] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index+2] << ", " << electron << ", " << array_index << std::endl;
-      const double v_x = electron_velocity[array_index];
-      const double v_y = electron_velocity[array_index+1] ;
-      const double v_z = electron_velocity[array_index+2] ;
+      if(electron_potential[electron] > E_f_A) {
+        const double v_x = electron_velocity[array_index];
+        const double v_y = electron_velocity[array_index+1] ;
+        const double v_z = electron_velocity[array_index+2] ;
 
         p_x += v_x;
         p_y += v_y;
         p_z += v_z;
         
-    //  if(electron_transport_list[electron]) {
-
         x_pos += v_x * dt;// + (electron_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
         y_pos += v_y * dt;// + (electron_force[array_index_y) * dt * dt * constants::K_A / 2); // y superarray component
         z_pos += v_z * dt;// + (electron_force[array_index_z) * dt * dt * constants::K_A / 2); // z superarray component
 
-      //  if (x_pos != x_pos || y_pos != y_pos || z_pos != z_pos) std::cout << "update pos " << x_pos << ", " << y_pos << ", " << z_pos << ", " << \
-         electron_position[array_index] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index+2] << ", " << electron << ", " << array_index << ", " << dt << std::endl;
-      
         if (x_pos < 0.0) {x_pos += lattice_width; x_flux--;}
         else if (x_pos > lattice_width) {x_pos -= lattice_width; x_flux++;}
 
@@ -132,13 +125,10 @@ void update_position(){
         if (z_pos < 0.0) {z_pos += lattice_height; z_flux--;}
         else if (z_pos > lattice_height) {z_pos -= lattice_height; z_flux++;}
 
-        //   if (x_pos != x_pos || y_pos != y_pos || z_pos != z_pos) std::cout << "periodic boundary " << x_pos << ", " << y_pos << ", " << z_pos << ", " << \
-              electron_position[array_index] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index+2] << ", " << electron << ", " << array_index << ", " << dt << std::endl;
-      
         electron_position[array_index]   = x_pos;
         electron_position[array_index+1] = y_pos;
         electron_position[array_index+2] = z_pos;
-        
+      }    
     
       if(current_time_step % full_int_var == 0) {
 
@@ -258,7 +248,8 @@ void update_dynamics() {
     for (int e = 0; e < conduction_electrons; e++) {
       const unsigned int array_index = 3*e;        
       
-      if(current_time_step % half_int_var == 0) e_e_coulomb(e, array_index);
+      if(current_time_step % half_int_var == 0 && electron_potential[e] > E_f_A) e_e_coulomb(e, array_index);
+      else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
       else neighbor_e_e_coulomb(e, array_index);
       
 
@@ -836,6 +827,7 @@ void ee_scattering() {
           
           if((e_energy - deltaE < core_cutoff) || (d_e_energy + deltaE < core_cutoff) || (e_energy - deltaE) > (E_f_A+37.0) || (d_e_energy + deltaE > (E_f_A+37.0))) continue;
           const double FD_width = std::min(electron_nearest_electron_list[electron][0]-1.0, ee_density/3.0)/(3.0*constants::kB_r*300.0+E_f_A - core_cutoff);
+          if(electron_nearest_electron_list[electron][0]-1.0 < ee_density/3.0) std::cout << electron_nearest_electron_list[electron][0]-1.0 << ", " << ee_density/3.0 << ", " << FD_width << std::endl;
           double e_occupation;
           double e_dos;
           double d_e_occupation;
