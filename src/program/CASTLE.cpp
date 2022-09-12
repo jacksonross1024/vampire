@@ -1220,7 +1220,7 @@ void initialize_velocities() {
     }
 
     core_cutoff = minimum;
-    transport_cutoff = core_cutoff + 44.0;
+    transport_cutoff = core_cutoff + 44.01;
     std::cout << "core cutoff: " << core_cutoff << ", transport cutoff: " << transport_cutoff << std::endl;
 
     for(int e = 0; e < conduction_electrons; e++) {
