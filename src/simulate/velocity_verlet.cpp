@@ -827,7 +827,7 @@ void ee_scattering() {
           
           if((e_energy - deltaE < core_cutoff) || (d_e_energy + deltaE < core_cutoff) || (e_energy - deltaE) > (E_f_A+37.0) || (d_e_energy + deltaE > (E_f_A+37.0))) continue;
           const double FD_width = std::min(electron_nearest_electron_list[electron][0]-1.0, ee_density/3.0)/(3.0*constants::kB_r*300.0+E_f_A - core_cutoff);
-          if(electron_nearest_electron_list[electron][0]-1.0 < ee_density/3.0) std::cout << electron_nearest_electron_list[electron][0]-1.0 << ", " << ee_density/3.0 << ", " << FD_width << std::endl;
+          //if(electron_nearest_electron_list[electron][0]-1.0 < ee_density/3.0) std::cout << electron_nearest_electron_list[electron][0]-1.0 << ", " << ee_density/3.0 << ", " << FD_width << std::endl;
           double e_occupation;
           double e_dos;
           double d_e_occupation;
