@@ -792,10 +792,12 @@ void ee_scattering() {
          if (err::check) std::cout << "ee_scattering." << std::endl;
   omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
+  const static double q_sq = 0.25*constants::hbar_over_me_sqrt;
+  const static double DoS_width = 4;//AJ
 
   #pragma omp parallel reduction(+:e_e_scattering_count, ee_core_scattering_count, ee_transport_scattering_count) 
   {
-    const double DoS_width = 4;//AJ
+    
     const int thread = omp_get_thread_num();
 
   for(int l = 0; l < cells_per_thread; l++) {
@@ -861,15 +863,18 @@ void ee_scattering() {
 
           const int array_index = 3*electron;
           const int array_index_i = 3*electron_collision;
-          const double k_1_x = electron_velocity[array_index]*constants::m_over_hbar_sq;
-          const double k_1_y = electron_velocity[array_index+1]*constants::m_over_hbar_sq;
-          const double k_1_z = electron_velocity[array_index+2]*constants::m_over_hbar_sq;
-          const double k_2_x = electron_velocity[array_index_i]*constants::m_over_hbar_sq;
-          const double k_2_y = electron_velocity[array_index_i+1]*constants::m_over_hbar_sq;
-          const double k_2_z = electron_velocity[array_index_i+2]*constants::m_over_hbar_sq;
+          // const double k_1_x = electron_velocity[array_index]*constants::m_over_hbar_sq;
+          // const double k_1_y = electron_velocity[array_index+1]*constants::m_over_hbar_sq;
+          // const double k_1_z = electron_velocity[array_index+2]*constants::m_over_hbar_sq;
+          // const double k_2_x = electron_velocity[array_index_i]*constants::m_over_hbar_sq;
+          // const double k_2_y = electron_velocity[array_index_i+1]*constants::m_over_hbar_sq;
+          // const double k_2_z = electron_velocity[array_index_i+2]*constants::m_over_hbar_sq;
 
-          const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
-          if(omp_uniform_random[thread]() < ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK)))) {
+          const double deltaK = (electron_velocity[array_index]  -electron_velocity[array_index_i])  *(electron_velocity[array_index]  -electron_velocity[array_index_i])\
+                              + (electron_velocity[array_index+1]-electron_velocity[array_index_i+1])*(electron_velocity[array_index+1]-electron_velocity[array_index_i+1])\
+                              + (electron_velocity[array_index+2]-electron_velocity[array_index_i+2])*(electron_velocity[array_index+2]-electron_velocity[array_index_i+2]);
+
+          if(omp_uniform_random[thread]() < 1e2*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK)))) {
             
             if (e_energy < transport_cutoff) ee_core_scattering_count++;
             else ee_transport_scattering_count++;
@@ -1089,17 +1094,17 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
             } 
 
           if(DoS1 == 0 || DoS2 == 0) return 0;
-          const double k_1_x = electron_velocity[array_index]*constants::m_over_hbar_sq;
-          const double k_1_y = electron_velocity[array_index+1]*constants::m_over_hbar_sq;
-          const double k_1_z = electron_velocity[array_index+2]*constants::m_over_hbar_sq;
+          // const double k_1_x = electron_velocity[array_index]*constants::m_over_hbar_sq;
+          // const double k_1_y = electron_velocity[array_index+1]*constants::m_over_hbar_sq;
+          // const double k_1_z = electron_velocity[array_index+2]*constants::m_over_hbar_sq;
 
-          const double k_2_x = electron_velocity[array_index_i]*constants::m_over_hbar_sq;
-          const double k_2_y = electron_velocity[array_index_i+1]*constants::m_over_hbar_sq;
-          const double k_2_z = electron_velocity[array_index_i+2]*constants::m_over_hbar_sq;
+          // const double k_2_x = electron_velocity[array_index_i]*constants::m_over_hbar_sq;
+          // const double k_2_y = electron_velocity[array_index_i+1]*constants::m_over_hbar_sq;
+          // const double k_2_z = electron_velocity[array_index_i+2]*constants::m_over_hbar_sq;
 
-          const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
+        //  const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
 
-      if(probability > exp(ee_rate*exp(-0.0625*sqrt(length))*DoS1*DoS2/((0.25+(deltaK))*DoS1_n*DoS2_n*(0.25+(deltaK))))) {
+      if(probability > exp(ee_rate*exp(-0.0625*sqrt(length))*DoS1*DoS2/((0.25+(deltaE))*DoS1_n*DoS2_n*(0.25+(deltaE))))) {
        
         electron_potential[electron] -= deltaE;
         electron_potential[electron_collision]   += deltaE;
