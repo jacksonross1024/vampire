@@ -33,6 +33,93 @@ void create() {
             if (err::check) std::cout << "Creating CASTLE..." << std::endl; 
             if (err::check) std::cout << "  ";
   
+  /*  double x,y,z,r,r_min, d_x,d_y,d_z, p_x,p_y,p_z, d_p_x,d_p_y,d_p_z, p, force, f_x,f_y,f_z, d_f_x,d_f_y,d_f_z, theta, phi, potential;
+    double a_x,a_y, a_d_x,a_d_y,a_d_z, a_p_x,a_p_y, a_f_x,a_f_y, a_d_f_x,a_d_f_y;
+    std::ofstream electron_output;
+    std::ofstream ballistic_data;
+
+    dt = 1e-1; //fs
+
+    a_x = 0;
+    a_y = 0;
+
+    x = -7;
+    y = 0;
+
+    p_x = 15.0; //A/fs 
+    p_y = 0;
+
+ballistic_data.open("Ballistic_Data");
+for(int a = 0; a < 1200; a++) {
+    if(a == 600) continue;
+    r = 7;
+    r_min = r;
+    int t = 0;
+    std::string height  = std::to_string(a);
+    electron_output.open("Ballistic_Electron/" + height + ".xyz");
+    electron_output << "Ballistic Electron" << "\n" << "\n";
+
+    theta = 1.25*M_PI*(1.0 - (0.5*(a/1500.0)));
+    p_x = 15.0; //A/fs 
+    p_y = 0;
+    x = r*cos(theta);
+    y = r*sin(theta);
+
+   force = exp(-0.5*r)*(0.5*r + 1.0) / (r*r); //N -> Kg A/fs**2 
+    //if(r < 1.6) force = (sqrt(3.0)*exp(-0.5*r)*(0.5*r+1)/(r*r)) - (sqrt(3)*(exp(-0.5*r)*(2.97182 - 2.47652*r))/((r - 3.2)*(r-3.2)));
+    // else force = 0.0;
+    ballistic_data << theta << ", " << theta / M_PI << ", ";
+    f_x = force * cos(theta);
+    f_y = force * sin(theta);
+    electron_output << t << " " << x << " " << y << "\n";
+    while(r <= 7.01) {
+        
+        d_x = x + (p_x*dt) ;//+ (f_x*dt*dt / (2*constants::m_e_r));
+        d_y = y + (p_y*dt) ;//+ (f_y*dt*dt / (2*constants::m_e_r));
+       
+        //update forces
+        r = sqrt(((d_x -a_x)*(d_x - a_x)) + ((d_y - a_y)*(d_y - a_y)));
+        if(r < r_min) r_min = r;
+
+        force = exp(-0.5*r)*(0.5*r + 1.0) / (r*r); //N -> Kg A/fs**2 
+        // if(r < 1.6) force = (sqrt(3.0)*exp(-0.5*r)*(0.5*r+1)/(r*r)) - (sqrt(3.0)*(exp(-0.5*r)*(2.97182 - 2.47652*r))/((r - 3.2)*(r-3.2)));
+        // else force = 0.0;
+
+        electron_output << t+1 << ", " << d_x << ", " << d_y << " " <<  (force)*1e-1*constants::m_e_r_i << " "\
+          << sqrt((p_x*p_x)+(p_y*p_y))*1e-1 + force*1e-1*1e-1/(2*constants::m_e_r)<< "\n";
+
+        theta = atan2(d_y,  d_x);
+        if(theta != theta) theta = 0.0;
+  
+        d_f_x = force * cos(theta);
+        d_f_y = force * sin(theta);
+
+        //update velocity
+        d_p_x =p_x+ ((d_f_x + f_x)*dt/ (2*constants::m_e_r));
+        d_p_y =p_y+ ((d_f_y + f_y)*dt/ (2*constants::m_e_r));
+
+        phi = atan2(d_p_y, d_p_x);
+          if(phi!=phi) phi = 0.0;
+
+        p_x = 15.0*cos(phi);
+        p_y = 15.0*sin(phi);
+
+        x = d_x;
+        y = d_y;
+
+        f_x = d_f_x;
+        f_y = d_f_y;
+
+        t++;
+
+        phi = atan2(p_y, p_x);
+        if(phi != phi) phi = 0.0;
+       // electron_output << t << " " << x << " " << y << "\n";
+    }
+    electron_output.close();
+    ballistic_data << theta / M_PI << ", " << r_min << ", " << phi / M_PI << ", " << sqrt(p_x*p_x + p_y*p_y) <<  "\n";
+
+} ballistic_data.close();   */
 
         std::cout << "Building CASTLE..." <<std::endl;
 
@@ -56,167 +143,7 @@ void create() {
   
         std::cout << "Storming CASTLE..." << std::endl;
    
- /*   double x,y,z,r,r_min, d_x,d_y,d_z, p_x,p_y,p_z, d_p_x,d_p_y,d_p_z, p, force, f_x,f_y,f_z, d_f_x,d_f_y,d_f_z, theta, phi, potential;
-    double a_x,a_y, a_d_x,a_d_y,a_d_z, a_p_x,a_p_y, a_f_x,a_f_y, a_d_f_x,a_d_f_y;
-    std::ofstream electron_output;
-    std::ofstream ballistic_data;
-    std::ofstream atom_output;
-  
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<double> scattering_chance (0,1);
-
-    //dt = 1e-4;
-
-    a_x = 0;
-    a_y = 0;
-
-    x = -7;
-    y = 0;
-    d_z = 0;
-
-    p_x = -1e-5*v_f; 
-    p_y = 0;
-
-    a_p_x = 0;
-    a_p_y = 0;
-    a_d_z = 0;
-ballistic_data.open("CASTLE/Ballistic_Data");
-for(int a = 0; a < 1500; a++) {
-    if(a == 750) continue;
-      bool collision = false;
-    r = 7;
-    theta = M_PI*(1.omp_threads - (a * 3.3333333333e-4));
-   
-   // ((a/3000) - 0.omp_threads)*M_PI;
-    x = r*cos(theta);
-    y = r*sin(theta);
-    int t = 0;
-   // std::cout << theta << ", " <<  x << ", " << y << std::endl;
-
-    std::string height  = std::to_string(a);
-    electron_output.open("Castle/Ballistic_Electron/" + height + ".xyz");
-    electron_output << "Ballistic Electron" << "\n" << "\n";
-    atom_output.open("CASTLE/Ballistic_Atom/" + height + ".xyz");
-    atom_output << "Ballistic Atom" << "\n" << "\n";
-
-    p_x = 3e-5*v_f; 
-    p_y = 0;
-
-    r_min = r = sqrt((x*x)+(y*y));
-  //  force = 10*((3.3*3.3*exp(-3.3*r)) - 1 / (r*r));
-    force = (1 - (5*exp(-4*r)*(4*r + 1))) / (r * r);
-    
-    
-    theta = atanl(y/x);
-    if (x < 0) theta += M_PI;
-
-    ballistic_data << theta << ", " << theta / M_PI << ", ";
-    f_x = force * cos(theta);
-    f_y = force * sin(theta);
-
-    a_f_x = -1*f_x;
-    a_f_y = -1*f_y;
-
-    a_p_x = 0;
-    a_p_y = 0;
-    a_x = 0;
-    a_y = 0;
-
-   // std::cout << force<< ", " << f_x << ", " << f_y << std::endl; 
-   // std::cout << "time_step: " << t << ", x_distance: " << x << ", y_distance: " << y << "\n";
-    while(r <= 7.01) {
-        
-       // std::string time = std::to_string(t);
-        // new output file
-        
-        //updte position
-        d_x = x + (p_x*dt) + (f_x*dt*dt*constants::K_A / (2*constants::m_e_r));
-        d_y = y + (p_y*dt) + (f_y*dt*dt*constants::K_A / (2*constants::m_e_r));
-      //  d_z = z + (p_z*dt) + (f_z*dt*dt*constants::K_A / (2*constants::m_e_r));
-
-        a_d_x = a_x + (a_p_x*dt) + (a_f_x*dt*dt*constants::K_A / (2*atomic_mass));
-        a_d_y = a_y + (a_p_y*dt) + (a_f_y*dt*dt*constants::K_A / (2*atomic_mass));
-
-        if (t % 10 == 0) electron_output << t << ", " << d_x << ", " << d_y << ", " << d_z << "\n";
-        if (t % 10 == 0) atom_output << t << ", " << a_d_x << ", " << a_d_y << ", " << a_d_z << "\n";
-
-        //update forces
-        r = sqrt(((d_x - a_d_x)*(d_x - a_d_x)) + ((d_y - a_d_y)*(d_y - a_d_y)));
-        if(r < r_min) r_min = r;
-        force = -1.06*(1 - (27*exp(-5*r)*(5*r + 1))) / (r * r);
-        //potential = 12*((3.3*exp(-1*r)) - exp(-1*r));
-
-     //   phi   = acos(d_z / r);
-        theta = atanl(d_y / d_x);
-        if(d_x < 0) theta += M_PI;
-    
-
-        d_f_x = force * cos(theta);
-        d_f_y = force * sin(theta);
-
-        a_d_f_x = -1*d_f_x;
-        a_d_f_y = -1*d_f_y;
-
-       // a_d_f_x += -2e7*a_d_x;
-        //a_d_f_y += -2e7*a_d_y;
-
-      //  d_f_z = force * cos(phi); 
-     /*   if(r < 0.7 && !collision) {
-            double excitation_energy = ((p_x*p_x)+(p_y*p_y))*constants::m_e_r*0.5 + 1.06*((27*expl(-5*r) / r) - (1 / r)) - E_f_A;
-            double scattering_velocity = sqrt((p_x*p_x)+(p_y*p_y)) - sqrt(2*E_f_A/constants::m_e_r);
-            if(excitation_energy > 0 && scattering_velocity > 0) {
-                if(scattering_chance(gen) < (1 - exp(-1*excitation_energy))) {
-                double vel = sqrt((p_x*p_x)+(p_y*p_y));
-                theta = atanl(p_y / p_x);
-                if(p_x < 0) theta += M_PI;
-                
-                
-                p_x = scattering_velocity * cos(theta);
-                p_y = scattering_velocity * sin(theta);
-                
-
-                vel = sqrt((a_p_x*a_p_x)+(a_p_y*a_p_y));
-                theta = atanl(a_p_y / a_p_x);
-                if(a_p_x < 0) theta += M_PI;
-                scattering_velocity += sqrt(2*E_f_A/atomic_mass);
-              
-                a_p_x  = scattering_velocity * cos(theta);
-                a_p_y = scattering_velocity * sin(theta);
-                collision = true;
-                }
-            }
-                
-        } 
-        //update velocity
-        p_x += ((d_f_x + f_x)*dt*constants::K_A / (2*constants::m_e_r));
-        p_y += ((d_f_y + f_y)*dt*constants::K_A / (2*constants::m_e_r));
-
-        a_p_x += ((a_d_f_x + a_f_x)*dt*constants::K_A / (2*atomic_mass));
-        a_p_y += ((a_d_f_y + a_f_y)*dt*constants::K_A / (2*atomic_mass));
-       // d_p_z = p_z + ((d_f_z + f_z)*dt*constants::K_A / (2*constants::m_e_r));
-
-        x = d_x;
-        y = d_y;
-        a_x = a_d_x;
-        a_y = a_d_y;
-
-        f_x = d_f_x;
-        f_y = d_f_y;
-        a_f_x = a_d_f_x;
-        a_f_y = a_d_f_y;
-
-        t++;
-
-        phi = atanl(p_y/p_x);
-        if(p_x < 0) phi += M_PI;
-    }
-    electron_output.close();
-    atom_output.close();
-   // std::cout << "time_step: " << t << ", x_distance: " << d_x << ", y_distance: " << d_y << "\n";
-    ballistic_data << theta / M_PI << ", " << r_min << ", " << phi / M_PI << "\n";
-} ballistic_data.close();  */
+ 
     //========
     // Integrate total time steps
     //========
@@ -377,7 +304,7 @@ void initialize () {
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
     std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
-    ", ea_rate@300K(J/s/K/m**3): " << -1e-5*ea_rate*n_f/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << std::fixed << std::endl;
+    ", ea_rate@300K(J/s/K/m**3): " << -1e-5*ea_rate*n_f/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << " n_f " << 1/(n_f*1e-30) << std::fixed << std::endl;
     G = -1e-27*ea_rate*n_f/300.0; //J/s/K/m**3 []
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
@@ -404,9 +331,9 @@ void initialize_cell_omp() {
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
-  x_omp_cells = int(floor(lattice_width / 30.0));
-  y_omp_cells = int(floor(lattice_depth / 30.0));
-  z_omp_cells = int(floor(lattice_height/ 30.0));
+  x_omp_cells = int(floor(lattice_width / 40.0));
+  y_omp_cells = int(floor(lattice_depth / 40.0));
+  z_omp_cells = int(floor(lattice_height/ 40.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -780,13 +707,13 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 20.0*20.0;
+    e_e_neighbor_cutoff = 30.0*30.0;
     
     half_int_var =  3;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 6;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 30.0*30.0;
+    e_e_integration_cutoff = 40.0*40.0;
     e_e_coulomb_cutoff = 5.0*5.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;

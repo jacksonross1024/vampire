@@ -241,9 +241,14 @@ void update_dynamics() {
        omp_set_num_threads(omp_threads);
        std::vector<int> chosen;
        chosen.resize(photons_at_dt);
-      for(int p = 0; p < photons_at_dt; p++) {
-        chosen[p] = int(omp_uniform_random[omp_get_thread_num()]()*2147483647) % (conduction_electrons/2);
-      }
+      while(count < photons_at_dt) {
+        int select = int(omp_uniform_random[omp_get_thread_num()]()*2147483647) % (conduction_electrons);
+        double e_energy = electron_potential[select];
+        if(return_phonon_distribution((e_energy+photon_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < (1.0-1e-3)) {
+          chosen[count] = select;
+          count++;
+        }
+      } count = 0;
     #pragma omp parallel for schedule(dynamic, 10)
     for (int e = 0; e < conduction_electrons; e++) {
       const unsigned int array_index = 3*e;        
@@ -707,11 +712,11 @@ void ea_scattering(const int e, const int array_index, const int thread) {
         int hist;
         if(e_energy < transport_cutoff) {hist = int(std::max(0.0,  floor((e_energy - core_cutoff)/4.0))); e_dos = DoS_width*FD_width;}
         else {hist = int(std::max(ee_dos_hist[0].size() -1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - transport_cutoff)/1.0)));  e_dos = DoS_width*FD_width/4.0;}
-         double e_occupation = double(ee_dos_hist[e].at(hist))/e_dos;
+        double e_occupation = double(ee_dos_hist[e].at(hist))/e_dos;
 
         if(e_energy + deltaE < transport_cutoff) {hist = int(std::min(0.0,  floor((e_energy + deltaE - core_cutoff)/4.0)));  d_e_dos = DoS_width*FD_width;} 
         else {hist = int(std::max(ee_dos_hist[0].size() -1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy + deltaE - transport_cutoff)/1.0)));  d_e_dos = DoS_width*FD_width/4.0;}
-         double d_e_occupation = double(ee_dos_hist[e].at(hist))/d_e_dos;
+        double d_e_occupation = double(ee_dos_hist[e].at(hist))/d_e_dos;
 
         if(e_energy < transport_cutoff) e_occupation = 1.0;
         if(e_energy + deltaE < transport_cutoff) d_e_occupation = 1.0;
