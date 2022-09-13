@@ -707,12 +707,15 @@ void ea_scattering(const int e, const int array_index, const int thread) {
         int hist;
         if(e_energy < transport_cutoff) {hist = int(std::max(0.0,  floor((e_energy - core_cutoff)/4.0))); e_dos = DoS_width*FD_width;}
         else {hist = int(std::max(ee_dos_hist[0].size() -1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - transport_cutoff)/1.0)));  e_dos = DoS_width*FD_width/4.0;}
-        const double e_occupation = double(ee_dos_hist[e].at(hist))/e_dos;
+         double e_occupation = double(ee_dos_hist[e].at(hist))/e_dos;
 
         if(e_energy + deltaE < transport_cutoff) {hist = int(std::min(0.0,  floor((e_energy + deltaE - core_cutoff)/4.0)));  d_e_dos = DoS_width*FD_width;} 
         else {hist = int(std::max(ee_dos_hist[0].size() -1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy + deltaE - transport_cutoff)/1.0)));  d_e_dos = DoS_width*FD_width/4.0;}
-        const double d_e_occupation = double(ee_dos_hist[e].at(hist))/d_e_dos;
+         double d_e_occupation = double(ee_dos_hist[e].at(hist))/d_e_dos;
 
+        if(e_energy < transport_cutoff) e_occupation = 1.0;
+        if(e_energy + deltaE < transport_cutoff) d_e_occupation = 1.0;
+        if(e_occupation - d_e_occupation == 0.0) return;
       // if(scattering_velocity + deltaE < transport_cutoff) {
       //   DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
       //   DoS1_n = DoS1;
@@ -826,8 +829,9 @@ void ee_scattering() {
            
           double deltaE = omp_uniform_random[thread]()*(e_energy - d_e_energy);
           //if(test_uniform(gen) < 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
-          
-          if((e_energy - deltaE < core_cutoff) || (d_e_energy + deltaE < core_cutoff) || (e_energy - deltaE) > (E_f_A+37.0) || (d_e_energy + deltaE > (E_f_A+37.0))) continue;
+          if(e_energy - deltaE < transport_cutoff || d_e_energy + deltaE < transport_cutoff) continue;
+
+          if( (e_energy - deltaE) > (E_f_A+37.0) || (d_e_energy + deltaE > (E_f_A+37.0))) continue;
           const double FD_width = std::min(electron_nearest_electron_list[electron][0]-1.0, ee_density/3.0)/(3.0*constants::kB_r*300.0+E_f_A - core_cutoff);
           //if(electron_nearest_electron_list[electron][0]-1.0 < ee_density/3.0) std::cout << electron_nearest_electron_list[electron][0]-1.0 << ", " << ee_density/3.0 << ", " << FD_width << std::endl;
           double e_occupation;
@@ -859,6 +863,8 @@ void ee_scattering() {
            // std::cout << e_occupation << ", " << e_dos << ", " << d_e_occupation << ", " << d_e_dos << ", " << FD_width << std::endl;
           //}
           //if(hist == 11 || hist == 10) std::cout << "ee d_occupation problem: " << d_e_occupation << ", " << d_e_dos << ", " << hist << ", " << d_e_energy << std::endl;
+          
+          
           if(e_occupation < (15.0/195.0) || d_e_occupation < (15.0/195.0)) continue; 
 
           const int array_index = 3*electron;
