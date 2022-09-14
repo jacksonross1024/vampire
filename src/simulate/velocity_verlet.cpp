@@ -40,7 +40,7 @@ int velocity_verlet_step(double time_step) {
        p_y = 0.0;
        p_z = 0.0;
           //  std::cout << "Updating new electron position." << std::endl;
-   update_position();
+ //  update_position();
 
          // std::cout << current_time_step << "; positions updated " << std::endl;
     update_dynamics();
@@ -253,9 +253,9 @@ void update_dynamics() {
     for (int e = 0; e < conduction_electrons; e++) {
       const unsigned int array_index = 3*e;        
       
-      if(current_time_step % half_int_var == 0 && electron_potential[e] > E_f_A) e_e_coulomb(e, array_index);
-      else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
-      else neighbor_e_e_coulomb(e, array_index);
+      if(current_time_step == 0) e_e_coulomb(e, array_index);
+     // else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
+      // else neighbor_e_e_coulomb(e, array_index);
       
 
       if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {

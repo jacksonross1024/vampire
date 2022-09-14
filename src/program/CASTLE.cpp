@@ -331,9 +331,9 @@ void initialize_cell_omp() {
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
-  x_omp_cells = int(floor(lattice_width / 40.0));
-  y_omp_cells = int(floor(lattice_depth / 40.0));
-  z_omp_cells = int(floor(lattice_height/ 40.0));
+  x_omp_cells = int(floor(lattice_width / 30.0));
+  y_omp_cells = int(floor(lattice_depth / 30.0));
+  z_omp_cells = int(floor(lattice_height/ 30.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -379,7 +379,7 @@ void initialize_cell_omp() {
  
   //lattice cell division
   //int current_lattice_current_end;
- // #pragma omp parallel for schedule(static) private(current_lattice_current_end)
+ #pragma omp parallel for schedule(static)
   for(int e = 0; e < conduction_electrons; e++) {
     const int array_index = 3*e;
      int x_cell = int(floor(electron_position.at(array_index) / x_step_size));
@@ -406,7 +406,7 @@ void initialize_cell_omp() {
       y_cell = 0;
       z_cell = 0; }
      const int omp_cell = lattice_cell_coordinate.at(x_cell).at(y_cell).at(z_cell); 
-    int current_lattice_current_end = cell_integration_lists.at(omp_cell)[0];
+     int current_lattice_current_end = cell_integration_lists.at(omp_cell)[0];
 
     cell_integration_lists.at(omp_cell).at(current_lattice_current_end) = e;
     old_cell_integration_lists.at(omp_cell).at(current_lattice_current_end) = e;
@@ -417,7 +417,7 @@ void initialize_cell_omp() {
           if(current_lattice_current_end >= cell_integration_lists.at(omp_cell).size()) std::cout << \
             omp_cell << ", " << current_lattice_current_end << ", " << cell_integration_lists.at(omp_cell).size() << ", " << e << std::endl;
       
-  } 
+  }
   cell_nearest_neighbor_list.resize(total_cells);
   std::vector<int> spiral_cell_counter;
   spiral_cell_counter.resize(total_cells, 0);
@@ -707,14 +707,14 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 30.0*30.0;
+    e_e_neighbor_cutoff = 14.0*14.0;
     
     half_int_var =  3;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 6;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 40.0*40.0;
-    e_e_coulomb_cutoff = 5.0*5.0;
+    e_e_integration_cutoff = 30.0*30.0;
+    e_e_coulomb_cutoff = 14.0*14.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     electron_transport_list.resize(conduction_electrons, false);
