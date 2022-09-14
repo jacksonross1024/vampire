@@ -48,14 +48,14 @@ int velocity_verlet_step(double time_step) {
     
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
       //    std::cout << current_time_step << "; output updated " << std::endl;
-    const int size = ee_dos_hist[0].size();
-    #pragma omp parallel for
-    for(int e = 0; e < conduction_electrons; e++) {
-      electron_ee_scattering_list[e][0] = 0;
-      for(int h = 0; h < size; h++) {
-        ee_dos_hist[e][h] = 0;
-      }
-    }
+    // const int size = ee_dos_hist[0].size();
+    // #pragma omp parallel for
+    // for(int e = 0; e < conduction_electrons; e++) {
+    //   electron_ee_scattering_list[e][0] = 0;
+    //   for(int h = 0; h < size; h++) {
+    //     ee_dos_hist[e][h] = 0;
+    //   }
+    // }
     //reset integration
     CASTLE_real_time += dt;
     current_time_step++;
