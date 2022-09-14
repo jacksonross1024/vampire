@@ -832,7 +832,7 @@ void ee_scattering() {
           double DoS_lhs;
           double DoS_rhs;
            
-          double deltaE = omp_uniform_random[thread]()*(e_energy - d_e_energy);
+          double deltaE = 0.25*omp_uniform_random[thread]()*(e_energy - d_e_energy);
           //if(test_uniform(gen) < 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
           if(e_energy - deltaE < transport_cutoff || d_e_energy + deltaE < transport_cutoff) continue;
 
