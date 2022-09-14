@@ -881,18 +881,18 @@ void ee_scattering() {
           const double d_phi = 2.0*M_PI*ee_scattering_angle*(omp_uniform_random[thread]() - 0.5);
           const double v_1 = sqrt(2.0*constants::m_e_r_i*(e_energy-deltaE));
 
-          const double k_1_x = electron_velocity[array_index]  *constants::m_over_hbar_sqrt;
-          const double k_1_y = electron_velocity[array_index+1]*constants::m_over_hbar_sqrt;
-          const double k_1_z = electron_velocity[array_index+2]*constants::m_over_hbar_sqrt;
-          const double k_2_x = v_1*cos(theta+d_theta)*sin(phi+d_phi)*constants::m_over_hbar_sqrt;
-          const double k_2_y = v_1*sin(theta+d_theta)*sin(phi+d_phi)*constants::m_over_hbar_sqrt;
-          const double k_2_z = v_1*cos(phi+d_phi)*constants::m_over_hbar_sqrt;
+          // const double k_1_x = electron_velocity[array_index]  *constants::m_over_hbar_sqrt;
+          // const double k_1_y = electron_velocity[array_index+1]*constants::m_over_hbar_sqrt;
+          // const double k_1_z = electron_velocity[array_index+2]*constants::m_over_hbar_sqrt;
+          // const double k_2_x = v_1*cos(theta+d_theta)*sin(phi+d_phi)*constants::m_over_hbar_sqrt;
+          // const double k_2_y = v_1*sin(theta+d_theta)*sin(phi+d_phi)*constants::m_over_hbar_sqrt;
+          // const double k_2_z = v_1*cos(phi+d_phi)*constants::m_over_hbar_sqrt;
 
           // const double deltaK = (electron_velocity[array_index]  -electron_velocity[array_index_i])  *(electron_velocity[array_index]  -electron_velocity[array_index_i])\
                               + (electron_velocity[array_index+1]-electron_velocity[array_index_i+1])*(electron_velocity[array_index+1]-electron_velocity[array_index_i+1])\
                               + (electron_velocity[array_index+2]-electron_velocity[array_index_i+2])*(electron_velocity[array_index+2]-electron_velocity[array_index_i+2]);
-           const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
-          if(omp_uniform_random[thread]() < ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK)))) {
+         //  const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
+          if(omp_uniform_random[thread]() < ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaE))*(q_sq+(deltaE)))) {
             
             if (e_energy < transport_cutoff) ee_core_scattering_count++;
             else ee_transport_scattering_count++;
@@ -909,9 +909,9 @@ void ee_scattering() {
             
             const double v_2 = sqrt(2.0*constants::m_e_r_i*electron_potential[electron_collision]);
 
-            electron_velocity[array_index]   = k_2_x*constants::hbar_over_me_sqrt;
-            electron_velocity[array_index+1] = k_2_y*constants::hbar_over_me_sqrt;
-            electron_velocity[array_index+2] = k_2_z*constants::hbar_over_me_sqrt;
+            electron_velocity[array_index]   = v_1*cos(theta+d_theta)*sin(phi+d_phi);// k_2_x*constants::hbar_over_me_sqrt;
+            electron_velocity[array_index+1] = v_1*sin(theta+d_theta)*sin(phi+d_phi);// k_2_y*constants::hbar_over_me_sqrt;
+            electron_velocity[array_index+2] = v_1*cos(phi+d_phi);// k_2_z*constants::hbar_over_me_sqrt;
 
             theta = atan2(electron_velocity[array_index_i+1], electron_velocity[array_index_i]);
             phi = acos(electron_velocity[array_index_i+2] / sqrt(2.0*constants::m_e_r_i*d_e_energy));
