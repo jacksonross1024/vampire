@@ -861,8 +861,9 @@ void ee_scattering() {
           //   hist = int(std::min(ee_dos_hist[0].size() - 1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((d_e_energy + deltaE - transport_cutoff)/1.0))); 
           //   d_e_dos = DoS_width*FD_width/4.0;
           // }
-          e_occupation = 1.0 - return_phonon_distribution((e_energy-deltaE)/E_f_A, constants::kB_r*Te/E_f_A);
-          d_e_occupation = 1.0 - return_phonon_distribution((d_e_energy+deltaE)/E_f_A, constants::kB_r*Te/E_f_A);
+          e_occupation = 1.0 - return_phonon_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+          d_e_occupation = 1.0 - return_phonon_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+          
           // d_e_occupation = 1.0 - ee_dos_hist[electron_collision].at(hist)/d_e_dos;
           // //if( (e_occupation < 0.0 || d_e_occupation < 0.0) && (d_e_energy + deltaE > transport_cutoff || e_energy - deltaE > transport_cutoff)) {
           //   // #pragma omp critical
@@ -892,6 +893,8 @@ void ee_scattering() {
                               + (electron_velocity[array_index+1]-electron_velocity[array_index_i+1])*(electron_velocity[array_index+1]-electron_velocity[array_index_i+1])\
                               + (electron_velocity[array_index+2]-electron_velocity[array_index_i+2])*(electron_velocity[array_index+2]-electron_velocity[array_index_i+2]);
           const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
+        //  if(e_energy < transport_cutoff) std::cout << e_energy << ", " << e_occupation << ", " << 1.0 - return_phonon_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) << ", " << deltaK << ", " <<  exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK)))) << std::endl;
+          //if(d_e_energy < transport_cutoff) std::cout << d_e_energy << ", " << d_e_occupation << ", " << 1.0 - return_phonon_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) << ", " << deltaK << ", " <<  exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK)))) << std::endl;
           if(omp_uniform_random[thread]() > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK))))) {
             
             if (e_energy < transport_cutoff) ee_core_scattering_count++;
@@ -1139,8 +1142,8 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
         //       }
         //    //   std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
         //     } 
-          e_occupation = 1.0 - return_phonon_distribution((e_energy-deltaE)/E_f_A, constants::kB_r*Te/E_f_A);
-          d_e_occupation = 1.0 - return_phonon_distribution((d_e_energy+deltaE)/E_f_A, constants::kB_r*Te/E_f_A);
+          e_occupation = 1.0 - return_phonon_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+          d_e_occupation = 1.0 - return_phonon_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
         //   if(e_occupation < (15.0/195.0) || d_e_occupation < (15.0/195.0)) return 0; 
           const double k_1_x = v_x*constants::m_over_hbar_sqrt;
           const double k_1_y = v_y*constants::m_over_hbar_sqrt;
