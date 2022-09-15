@@ -103,7 +103,7 @@ void update_position(){
         double y_pos = electron_position[array_index+1];
         double z_pos = electron_position[array_index+2];
     
-      if(electron_potential[electron] > E_f_A) {
+     // if(electron_potential[electron] > E_f_A) {
         const double v_x = electron_velocity[array_index];
         const double v_y = electron_velocity[array_index+1] ;
         const double v_z = electron_velocity[array_index+2] ;
@@ -128,7 +128,7 @@ void update_position(){
         electron_position[array_index]   = x_pos;
         electron_position[array_index+1] = y_pos;
         electron_position[array_index+2] = z_pos;
-     }    
+    //  }    
     
       if(current_time_step % half_int_var == 0) {
 
@@ -253,8 +253,8 @@ void update_dynamics() {
     for (int e = 0; e < conduction_electrons; e++) {
       const unsigned int array_index = 3*e;        
       
-      if(current_time_step % half_int_var == 0 && electron_potential[e] > E_f_A) e_e_coulomb(e, array_index);
-      else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
+      if(current_time_step % half_int_var == 0 ) e_e_coulomb(e, array_index);
+     // else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
        else neighbor_e_e_coulomb(e, array_index);
       
 
@@ -834,7 +834,7 @@ void ee_scattering() {
            
           double deltaE = omp_uniform_random[thread]()*(e_energy - d_e_energy);
           //if(test_uniform(gen) < 0.5*exp(abs(deltaE)/(-0.5))) deltaE *= -1.0;
-          //if(e_energy - deltaE < transport_cutoff || d_e_energy + deltaE < transport_cutoff) continue;
+          if(e_energy - deltaE < core_cutoff || d_e_energy + deltaE < core_cutoff) continue;
 
           if( (e_energy - deltaE) > (E_f_A+37.0) || (d_e_energy + deltaE > (E_f_A+37.0))) continue;
          // const double FD_width = (electron_nearest_electron_list[electron][0]-1.0)/(3.0*constants::kB_r*300.0+E_f_A - core_cutoff);
@@ -851,9 +851,7 @@ void ee_scattering() {
           //   hist = int(std::min(ee_dos_hist[0].size() - 1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - deltaE - transport_cutoff)/1.0))); 
           //   e_dos = DoS_width*FD_width/4.0;
           // }
-
           // e_occupation =  1.0 - ee_dos_hist[electron].at(hist)/e_dos;  
-
           // if(d_e_energy + deltaE < transport_cutoff) {
           //   hist = int(std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/4.0))); 
           //   d_e_dos = DoS_width*FD_width; 
@@ -869,8 +867,7 @@ void ee_scattering() {
           //   // #pragma omp critical
           //  // std::cout << e_occupation << ", " << e_dos << ", " << d_e_occupation << ", " << d_e_dos << ", " << FD_width << std::endl;
           // //}
-          // //if(hist == 11 || hist == 10) std::cout << "ee d_occupation problem: " << d_e_occupation << ", " << d_e_dos << ", " << hist << ", " << d_e_energy << std::endl;
-          
+          // //if(hist == 11 || hist == 10) std::cout << "ee d_occupation problem: " << d_e_occupation << ", " << d_e_dos << ", " << hist << ", " << d_e_energy << std::endl; 
           // if(e_occupation < (15.0/195.0) || d_e_occupation < (15.0/195.0)) continue; 
 
           const int array_index = 3*electron;
@@ -893,10 +890,12 @@ void ee_scattering() {
                               + (electron_velocity[array_index+1]-electron_velocity[array_index_i+1])*(electron_velocity[array_index+1]-electron_velocity[array_index_i+1])\
                               + (electron_velocity[array_index+2]-electron_velocity[array_index_i+2])*(electron_velocity[array_index+2]-electron_velocity[array_index_i+2]);
           const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
-        //  if(e_energy < transport_cutoff) std::cout << e_energy << ", " << e_occupation << ", " << 1.0 - return_phonon_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) << ", " << deltaK << ", " <<  exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK)))) << std::endl;
-          //if(d_e_energy < transport_cutoff) std::cout << d_e_energy << ", " << d_e_occupation << ", " << 1.0 - return_phonon_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) << ", " << deltaK << ", " <<  exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK)))) << std::endl;
-          if(omp_uniform_random[thread]() > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK))))) {
-            
+        if(omp_uniform_random[thread]() > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK))))) {
+        //      #pragma omp critical
+        //  if(e_energy-deltaE < transport_cutoff) std::cout << e_energy << ", " << e_energy-deltaE << ", " << e_occupation << ", " << 1.0 - return_phonon_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) << ", " << deltaK << ", " <<  exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK)))) << std::endl;
+        //   #pragma omp critical
+        //   if(d_e_energy+deltaE < transport_cutoff) std::cout << d_e_energy <<  ", " << deltaE+d_e_energy << ", " << d_e_occupation << ", " << 1.0 - return_phonon_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) << ", " << deltaK << ", " <<  exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK)))) << std::endl;
+          
             if (e_energy < transport_cutoff) ee_core_scattering_count++;
             else ee_transport_scattering_count++;
             if (d_e_energy < transport_cutoff) ee_core_scattering_count++;
@@ -1057,7 +1056,7 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
         int DoS1; 
         int DoS2;
         // const double DoS_width = 4;
-        // if( (e_energy - deltaE) > (E_f_A+37.0) || (d_e_energy + deltaE > (E_f_A+37.0))) return 0;
+        if( (e_energy - deltaE) > (E_f_A+37.0) || (d_e_energy + deltaE > (E_f_A+37.0))) return 0;
         //   const double FD_width = (electron_nearest_electron_list[electron][0]-1.0)/(3.0*constants::kB_r*300.0+E_f_A - core_cutoff);
         //   //if(electron_nearest_electron_list[electron][0]-1.0 < ee_density/3.0) std::cout << electron_nearest_electron_list[electron][0]-1.0 << ", " << ee_density/3.0 << ", " << FD_width << std::endl;
           double e_occupation;

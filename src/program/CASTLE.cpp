@@ -1114,9 +1114,9 @@ void initialize_velocities() {
       const double vel = sqrt(2.0*energy*constants::m_e_r_i);
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
-          theta = omp_uniform_random[omp_get_thread_num()]();
-          phi = omp_uniform_random[omp_get_thread_num()]();
-          sign = M_PI*omp_uniform_random[omp_get_thread_num()]();
+          theta = 2.0*M_PI*omp_uniform_random[omp_get_thread_num()]();
+          phi = M_PI*omp_uniform_random[omp_get_thread_num()]();
+         
         } else {
           const double unit = sqrt((sim::CASTLE_x_vector*sim::CASTLE_x_vector)+(sim::CASTLE_y_vector*sim::CASTLE_y_vector)+(sim::CASTLE_z_vector*sim::CASTLE_z_vector));
           theta = atan2(sim::CASTLE_y_vector , sim::CASTLE_x_vector);
@@ -1128,10 +1128,10 @@ void initialize_velocities() {
           if(theta != theta || phi != phi || vel != vel) std::cout << theta << ", " << phi << ", " << vel << ", " << energy << std::endl;
       
             if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
-        electron_velocity.at(array_index)     = cos(2.0*M_PI*theta)*sqrt(1.0-phi)*vel; 
-        electron_velocity.at(array_index + 1) = sin(2.0*M_PI*theta)*sqrt(1.0-phi)*vel;
-        electron_velocity.at(array_index + 2) = sqrt(phi)*vel; 
-          if(sign < 0.5*M_PI) electron_velocity.at(array_index+2) *= -1.0;
+        electron_velocity.at(array_index)     = cos(theta)*sin(phi)*vel; 
+        electron_velocity.at(array_index + 1) = sin(theta)*sin(phi)*vel;
+        electron_velocity.at(array_index + 2) = cos(phi)*vel; 
+        
 
         p_x += electron_velocity.at(array_index);
         p_y += electron_velocity.at(array_index+1);
@@ -1154,9 +1154,9 @@ void initialize_velocities() {
     std::cout << "core cutoff: " << core_cutoff << ", transport cutoff: " << transport_cutoff << std::endl;
     std::cout << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << std::endl;
     for(int e = 0; e < conduction_electrons; e++) {
-      electron_velocity.at(3*e)   -= (p_x/double(conduction_electrons));
-      electron_velocity.at(3*e+1) -= (p_y/double(conduction_electrons));  
-      electron_velocity.at(3*e+2) -= (p_z/double(conduction_electrons));
+      // electron_velocity.at(3*e)   -= (p_x/double(conduction_electrons));
+      // electron_velocity.at(3*e+1) -= (p_y/double(conduction_electrons));  
+      // electron_velocity.at(3*e+2) -= (p_z/double(conduction_electrons));
 
       Init_E_vel << e << ", " << electron_potential.at(e)<< ", " <<  electron_velocity.at(3*e) << ", " << electron_velocity.at(3*e+1) << ", " << electron_velocity.at(3*e+2) << "\n";
     }
