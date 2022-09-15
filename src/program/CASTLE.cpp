@@ -707,10 +707,10 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 5.0*5.0;
+    e_e_neighbor_cutoff = 15.0*15.0;
     
-    half_int_var =  8;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
-    full_int_var = 16;//2*half_int_var;
+    half_int_var =  4;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    full_int_var = 8;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 30.0*30.0;
