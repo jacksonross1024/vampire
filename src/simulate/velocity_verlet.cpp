@@ -128,7 +128,7 @@ void update_position(){
         electron_position[array_index]   = x_pos;
         electron_position[array_index+1] = y_pos;
         electron_position[array_index+2] = z_pos;
-      }    
+     }    
     
       if(current_time_step % half_int_var == 0) {
 
@@ -892,7 +892,7 @@ void ee_scattering() {
                               + (electron_velocity[array_index+1]-electron_velocity[array_index_i+1])*(electron_velocity[array_index+1]-electron_velocity[array_index_i+1])\
                               + (electron_velocity[array_index+2]-electron_velocity[array_index_i+2])*(electron_velocity[array_index+2]-electron_velocity[array_index_i+2]);
           const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
-          if(omp_uniform_random[thread]() > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaE))*(q_sq+(deltaE))))) {
+          if(omp_uniform_random[thread]() > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((q_sq+(deltaK))*(q_sq+(deltaK))))) {
             
             if (e_energy < transport_cutoff) ee_core_scattering_count++;
             else ee_transport_scattering_count++;

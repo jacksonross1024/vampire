@@ -331,9 +331,9 @@ void initialize_cell_omp() {
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
-  x_omp_cells = int(floor(lattice_width / 25.0));
-  y_omp_cells = int(floor(lattice_depth / 25.0));
-  z_omp_cells = int(floor(lattice_height/ 25.0));
+  x_omp_cells = int(floor(lattice_width / 30.0));
+  y_omp_cells = int(floor(lattice_depth / 30.0));
+  z_omp_cells = int(floor(lattice_height/ 30.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -707,13 +707,13 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 15.0*15.0;
+    e_e_neighbor_cutoff = 5.0*5.0;
     
-    half_int_var =  4;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
-    full_int_var = 8;//2*half_int_var;
+    half_int_var =  8;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    full_int_var = 16;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 25.0*25.0;
+    e_e_integration_cutoff = 30.0*30.0;
     e_e_coulomb_cutoff = 5.0*5.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
@@ -1444,6 +1444,18 @@ void output_data() {
     //=========
     // Output equilibration step data
     //=========
+    double variance;
+    double size = 0;
+    for(int l = 0; l < total_cells; l++) {
+     size += cell_integration_lists[l][0];
+
+    }  
+    size /= total_cells;
+    variance = 0;
+    for(int l = 0; l < total_cells; l++) {
+     variance += (cell_integration_lists[l][0] - size)*(cell_integration_lists[l][0] - size);
+    } 
+    variance = sqrt(variance/total_cells);
 
     if((current_time_step % (CASTLE_output_rate * CASTLE_MD_rate)) == 0) {
       time_stamp = std::to_string(current_time_step);
@@ -1548,8 +1560,9 @@ void output_data() {
     //   // }    
     // }
     // }  
-  
-
+    
+    
+    
     for(int i = 0; i < output_count_lr; i++) {
      // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
        temp_map_0 << i << ", " << ee_dos_hist[0].at(i) << "\n";
@@ -1626,7 +1639,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << Te*Te*e_heat_capacity * 1e7 << ", " << Tp*a_heat_capacity*1e7 << ", " 
       << Te << ", " << Tp << ", "  \
-      << TTMe << ", " << TTMp << ", " << I << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
+      << TTMe << ", " << TTMp << ", " << I << ", " << variance << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
        << std::endl;
     }
@@ -1635,7 +1648,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << Te*Te*e_heat_capacity * 1e7 << ", " << Tp*a_heat_capacity*1e7 << ", "  
       << Te << ", " << Tp << ", " //<< TEKE << ", " << TLE << ", " 
-      << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
+      << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << variance << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << \
       double(ee_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ee_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
       double(ea_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ea_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
