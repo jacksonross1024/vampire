@@ -1071,9 +1071,7 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
         //     hist = int(std::min(ee_dos_hist[0].size() - 1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - deltaE - transport_cutoff)/1.0))); 
         //     e_dos = DoS_width*FD_width/4.0;
         //   }
-
         //   e_occupation =  1.0 - ee_dos_hist[electron].at(hist)/e_dos;  
-
         //   if(d_e_energy + deltaE < transport_cutoff) {
         //     hist = int(std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/4.0))); 
         //     d_e_dos = DoS_width*FD_width; 
@@ -1081,7 +1079,6 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
         //     hist = int(std::min(ee_dos_hist[0].size() - 1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((d_e_energy + deltaE - transport_cutoff)/1.0))); 
         //     d_e_dos = DoS_width*FD_width/4.0;
         //   }
-
         //   d_e_occupation = 1.0 - ee_dos_hist[electron_collision].at(hist)/d_e_dos;
 
         // if(e_energy - deltaE < transport_cutoff) {
@@ -1147,9 +1144,9 @@ int ee_elastic(const int electron, const int electron_collision, const double e_
           const double k_1_x = v_x*constants::m_over_hbar_sqrt;
           const double k_1_y = v_y*constants::m_over_hbar_sqrt;
           const double k_1_z = v_z*constants::m_over_hbar_sqrt;
-          const double k_2_x = v_x - x_distance*normalised_dot_product;
-          const double k_2_y = v_y - y_distance*normalised_dot_product;
-          const double k_2_z = v_z - z_distance*normalised_dot_product;  
+          const double k_2_x = (v_x - x_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
+          const double k_2_y = (v_y - y_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
+          const double k_2_z = (v_z - z_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
 
          const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
 
