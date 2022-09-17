@@ -833,7 +833,7 @@ void ee_scattering() {
 
         const double e_energy = electron_potential[electron];
         const double d_e_energy = electron_potential[electron_collision];
-        const double length = electron_ee_scattering_list[electron][2*a + 1];
+        const double length = electron_ee_scattering_list[electron].at(2*a + 1);
     /* if(equilibrium_step) {  
           // int blocking_lr;
           // int blocking_hr;
@@ -1042,7 +1042,10 @@ int ee_elastic(const int electron, const int electron_collision, const double le
     const double d_v_x_2 = v_x   - x_distance*normalised_dot_product;
     const double d_v_y_2 = v_y   - y_distance*normalised_dot_product;
     const double d_v_z_2 = v_z   - z_distance*normalised_dot_product;
-
+    if(d_v_x_1!=d_v_x_1 || d_v_y_1!=d_v_y_1 || d_v_z_1!=d_v_z_1 || d_v_x_2!=d_v_x_2 || d_v_y_2!=d_v_y_2 || d_v_z_2!=d_v_z_2) {
+      std::cout << v_x << ", " << v_y << ", " << v_z << ", " <<  v_x_2 << ", " << v_y_2 << ", " << v_z_2 << ", " << \
+                   x_distance << ", " << y_distance << ", " << z_distance << ", " <<  normalised_dot_product << std::endl;
+    }
     const double deltaE = -1.0*(0.5*constants::m_e_r*(d_v_x_1*d_v_x_1 + d_v_y_1*d_v_y_1 + d_v_z_1*d_v_z_1) -\
                            0.5*constants::m_e_r*(d_v_x_2*d_v_x_2 + d_v_y_2*d_v_y_2 + d_v_z_2*d_v_z_2));
     // #pragma omp critical
