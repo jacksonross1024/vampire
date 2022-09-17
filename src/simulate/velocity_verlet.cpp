@@ -768,10 +768,10 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       //   }
       // }
      // if(e_occupation > 180.0/195.0 && d_e_occupation > 180.0/195.0) return;
-      if(Tp <= Te) deltaE *= -1.0;
+      
       if((return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) - return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)) < 1e-3) return;
       if(return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)) deltaE *= -1.0;
-      
+      if(Tp <= Te) deltaE *= -1.0;
       if(e_energy + deltaE < core_cutoff ) return;
 
       electron_potential[e] += deltaE;
