@@ -257,7 +257,7 @@ namespace CASTLE {
    std::vector<std::vector<unsigned int> > electron_integration_list;
    std::vector<std::vector<unsigned int> > electron_nearest_electron_list;
    std::vector<std::vector<unsigned int> > electron_nearest_atom_list;
-   std::vector<std::vector<uint32_t> > electron_ee_scattering_list;
+   std::vector<std::vector<double> > electron_ee_scattering_list;
    std::vector<std::vector<unsigned int> > electron_ea_scattering_list;
    std::vector<std::vector< int> > cell_lattice_coordinate;
    std::vector<std::vector<unsigned int > > cell_integration_lists;
@@ -362,7 +362,7 @@ namespace CASTLE {
    void ee_scattering();
     int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
      int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
-   int ee_elastic(const int electron, const int electron_collision,  const double e_energy, const double d_e_energy, const double probability);
+   int ee_elastic(const int electron, const int electron_collision,  const double length, const double e_energy, const double d_e_energy, const double probability);
 
    double B_E_distrib(const double& epsilon);
    double M_B_distrib(const double& epsilon, const double& beta);
