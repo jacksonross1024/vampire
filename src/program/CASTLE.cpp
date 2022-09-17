@@ -714,7 +714,7 @@ void initialize_electrons() {
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 30.0*30.0;
-    e_e_coulomb_cutoff = 5.0*5.0;
+    e_e_coulomb_cutoff = 15.0*15.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     electron_transport_list.resize(conduction_electrons, false);
@@ -1561,57 +1561,62 @@ void output_data() {
     // }
     // }  
     
-    
+    int count = 0;
+    int electrons[4];
+    while(count < 3) {
+      int selection = int(omp_uniform_random[0]()*2147483647) % (conduction_electrons);
+      if(electron_transport_list[selection]) {electrons[count] = selection; count++;}
+    }
     
     for(int i = 0; i < output_count_lr; i++) {
      // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
-       temp_map_0 << i << ", " << ee_dos_hist[0].at(i) << "\n";
+       temp_map_0 << i << ", " << ee_dos_hist[electrons[0]].at(i) << "\n";
      
     }
     temp_map_0.close();
 
     for(int i = 0; i < output_count_lr; i++) {
       //if(i == 11) temp_map_1 << i << ", " << temp_Map[1].at(i) << "\n";
-       temp_map_1 << i << ", " << ee_dos_hist[10000].at(i) << "\n";
+       temp_map_1 << i << ", " << ee_dos_hist[electrons[1]].at(i) << "\n";
      
     }
     temp_map_1.close();
 
     for(int i = 0; i < output_count_lr; i++) {
      // if(i == 11) temp_map_2 << i << ", " << temp_Map[2].at(i) << "\n";
-       temp_map_2 << i << ", " << ee_dos_hist[20000].at(i) << "\n";
+       temp_map_2 << i << ", " << ee_dos_hist[electrons[2]].at(i) << "\n";
      
     }
     temp_map_2.close();
     
     for(int i = 0; i < output_count_lr; i++) {
      // if(i == 11) temp_map_3 << i << ", " << temp_Map[3].at(i) << "\n";
-       temp_map_3 << i << ", " << ee_dos_hist[30000].at(i) << "\n";
+       temp_map_3 << i << ", " << ee_dos_hist[electrons[3]].at(i) << "\n";
       
     }
     temp_map_3.close();
     
     for(int i = output_count_lr; i < output_count_hr; i++) {
     //  if(i == 11) temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
-       temp_map_4 << i-output_count_lr << ", " << ee_dos_hist.at(0).at(i) << "\n";
+       temp_map_4 << i-output_count_lr << ", " << ee_dos_hist.at(electrons[0]).at(i) << "\n";
      
     }
     temp_map_4.close();
 
     for(int i = output_count_lr; i < output_count_hr; i++) {
-      temp_map_5<< i-output_count_lr << ", " << ee_dos_hist.at(10000).at(i) << "\n";
+      temp_map_5<< i-output_count_lr << ", " << ee_dos_hist.at(electrons[1]).at(i) << "\n";
   
     }
     temp_map_5.close();
 
     for(int i = output_count_lr; i < output_count_hr; i++) {
-      temp_map_6 << i-output_count_lr << ", " << ee_dos_hist.at(20000).at(i) << "\n";
+      temp_map_6 << i-output_count_lr << ", " << ee_dos_hist.at(electrons[2]).at(i) << "\n";
      
     }
     temp_map_6.close();
 
     for(int i = output_count_lr; i < output_count_hr; i++) {
-      temp_map_7 << i-output_count_lr << ", " << ee_dos_hist.at(30000).at(i) << "\n";
+      temp_map_7 << i-output_count_lr << ", " << ee_dos_hist.at(electrons[3]).at(i) << "\n";
  
     }
     temp_map_7.close();
