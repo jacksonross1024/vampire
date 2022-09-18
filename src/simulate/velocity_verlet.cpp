@@ -1014,13 +1014,14 @@ int ee_elastic(const int electron, const int electron_collision, const double le
     double y_distance = electron_position[array_index+1]- electron_position[array_index_i+1];
     double z_distance = electron_position[array_index+2]- electron_position[array_index_i+2]; 
 
-    // if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance += lattice_width;
-    // else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance -= lattice_width;
-    // if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance += lattice_depth;
-    // else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance -= lattice_depth;    
-    // if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance += lattice_height;
-    // else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance -= lattice_height;
-    // const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
+    if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance += lattice_width;
+    else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance -= lattice_width;
+    if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance += lattice_depth;
+    else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance -= lattice_depth;    
+    if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance += lattice_height;
+    else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance -= lattice_height;
+   // const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
+
       if(length == 0.0) return 0;
     const double v_x = electron_velocity[array_index];
     const double v_y = electron_velocity[array_index+1];
