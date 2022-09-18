@@ -1158,7 +1158,7 @@ int ee_elastic(const int electron, const int electron_collision, const double le
 
     //      const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
     // if(deltaK != deltaK) return 0;
-      if(probability  < ee_rate*e_occupation*d_e_occupation/((0.25+(deltaE))*(0.25+(deltaE)))) {
+      if(probability  > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((0.25+(deltaE))*(0.25+(deltaE))))) {
        
         electron_potential[electron] -= deltaE;
         electron_potential[electron_collision]   += deltaE;
