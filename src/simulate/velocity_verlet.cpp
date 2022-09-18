@@ -829,7 +829,7 @@ void ee_scattering() {
         
         int electron_collision = electron_ee_scattering_list[electron][a*2];
        // if(!electron_transport_list[electron_collision]) continue;
-        if(electron_ee_scattering_list[electron_collision][0] == 1) continue;
+        if(electron_ee_scattering_list.at(electron_collision)[0] == 1) continue;
 
         const double e_energy = electron_potential[electron];
         const double d_e_energy = electron_potential[electron_collision];
