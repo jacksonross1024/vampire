@@ -1149,16 +1149,16 @@ int ee_elastic(const int electron, const int electron_collision, const double le
           e_occupation = 1.0 - return_phonon_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
           d_e_occupation = 1.0 - return_phonon_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
         //   if(e_occupation < (15.0/195.0) || d_e_occupation < (15.0/195.0)) return 0; 
-    //       const double k_1_x = v_x*constants::m_over_hbar_sqrt;
-    //       const double k_1_y = v_y*constants::m_over_hbar_sqrt;
-    //       const double k_1_z = v_z*constants::m_over_hbar_sqrt;
-    //       const double k_2_x = (v_x - x_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
-    //       const double k_2_y = (v_y - y_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
-    //       const double k_2_z = (v_z - z_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
+          const double k_1_x = v_x*constants::m_over_hbar_sqrt;
+          const double k_1_y = v_y*constants::m_over_hbar_sqrt;
+          const double k_1_z = v_z*constants::m_over_hbar_sqrt;
+          const double k_2_x = (v_x - x_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
+          const double k_2_y = (v_y - y_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
+          const double k_2_z = (v_z - z_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
 
-    //      const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
-    // if(deltaK != deltaK) return 0;
-      if(probability  > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((0.25+(deltaE))*(0.25+(deltaE))))) {
+         const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
+    if(deltaK != deltaK) return 0;
+      if(probability  > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))))) {
        
         electron_potential[electron] -= deltaE;
         electron_potential[electron_collision]   += deltaE;
