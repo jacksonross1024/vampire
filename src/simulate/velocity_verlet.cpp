@@ -149,12 +149,12 @@ void update_position(){
       // z_cell = 0; }
           const unsigned int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
           
-          if ((abs(x_cell - cell_lattice_coordinate[cell][0]) > 1 &&\
-              abs(x_cell - cell_lattice_coordinate[cell][0]) <= (x_omp_cells-2)) ||
-             (abs(y_cell - cell_lattice_coordinate[cell][1]) > 1  &&\
-              abs(y_cell - cell_lattice_coordinate[cell][1]) <= (y_omp_cells-2)) ||\
-             (abs(z_cell - cell_lattice_coordinate[cell][2]) > 1  &&\
-              abs(z_cell - cell_lattice_coordinate[cell][2]) <= (z_omp_cells-2) )) {
+          if ((abs(x_cell - cell_lattice_coordinate.at(cell)[0]) > 1 &&\
+              abs(x_cell - cell_lattice_coordinate.at(cell)[0]) <= (x_omp_cells-2)) ||
+             (abs(y_cell - cell_lattice_coordinate.at(cell)[1]) > 1  &&\
+              abs(y_cell - cell_lattice_coordinate.at(cell)[1]) <= (y_omp_cells-2)) ||\
+             (abs(z_cell - cell_lattice_coordinate.at(cell)[2]) > 1  &&\
+              abs(z_cell - cell_lattice_coordinate.at(cell)[2]) <= (z_omp_cells-2) )) {
             #pragma omp critical(halo)
             {
             escaping_electrons[escaping_electrons[0]] = electron;
@@ -249,7 +249,7 @@ void update_dynamics() {
         }
       } count = 0;
       pump = 0.0;
-    #pragma omp parallel for schedule(dynamic, 10)
+    #pragma omp parallel for schedule(dynamic, 10) reduction(+:external_potential)
     for (int e = 0; e < conduction_electrons; e++) {
       const unsigned int array_index = 3*e;        
       
@@ -257,20 +257,20 @@ void update_dynamics() {
      // else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
       else if (electron_transport_list[e]) neighbor_e_e_coulomb(e, array_index);
 
-      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-        #pragma omp atomic
-        count++;
+      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+      //   #pragma omp atomic
+      //   count++;
 
-        #pragma omp atomic
-        pump += external_potential;
-        electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
-      }
+      //   #pragma omp atomic
+      //   pump += external_potential;
+      //   // electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
+      // }
       
-      //  if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
-    if(!equilibrium_step && electron_transport_list[e]) ea_scattering(e, array_index, omp_get_thread_num());
+       if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
+       if(!equilibrium_step && electron_transport_list[e]) ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
-  
+    TEKE = external_potential;
    ee_scattering();
     pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
   Tp +=  a_heat_capacity_i*1e-27*TLE *n_f/conduction_electrons;
@@ -634,28 +634,14 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
 //    // if(a == 100) std::cout << size << std::endl;
 // }
 */
-double electron_applied_voltage(const int& e, const int& array_index, double& external_potential) {
-  
+double electron_applied_voltage(const int e, const int array_index, double& external_potential) {
 
-  const static double vel = 5e-11*dt*applied_voltage*constants::e_A*constants::m_e_r_i; //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
-  double e_energy = electron_potential[e];
-  double deltaE = 0.5*constants::m_e_r*(((vel+electron_velocity[array_index])*(vel+electron_velocity[array_index]))+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) - e_energy;
+  electron_velocity[array_index] += 5e-11*dt*applied_voltage*constants::e_A*constants::m_e_r_i; //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
+  const double deltaE = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) - electron_potential[e];
 
-  double DoS1 = electron_nearest_electron_list[e][0] - 1;
-if(e_energy + deltaE > 0.9817*E_f_A) {
-  for (int i = 1; i < electron_nearest_electron_list[e][0]; i++) {
-    if((electron_potential[electron_nearest_electron_list[e][i]] < e_energy + fmax(1.2*deltaE, 0.8*deltaE)) \
-    && (electron_potential[electron_nearest_electron_list[e][i]] > e_energy + fmin(0.8*deltaE, 1.2*deltaE))) {
-      DoS1 -= 1.0;
-    }
-  }
-  DoS1 /= double(electron_nearest_electron_list[e][0] - 1.0);
-  if(omp_uniform_random[omp_get_thread_num()]() > exp(-3.0*DoS1)) {
-    electron_velocity[array_index] += vel;
-    external_potential += deltaE;
-    electron_potential[e] += deltaE;
-  }
-} 
+  external_potential += deltaE;
+  electron_potential[e] += deltaE;
+ 
   return 0.0;
 }
 /*
