@@ -257,20 +257,20 @@ void update_dynamics() {
      // else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
       else if (electron_transport_list[e]) neighbor_e_e_coulomb(e, array_index);
 
-      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-        #pragma omp atomic
-        count++;
+      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+      //   #pragma omp atomic
+      //   count++;
 
-        #pragma omp atomic
-        pump += external_potential;
-        // electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
-      }
+      //   #pragma omp atomic
+      //   pump += external_potential;
+      //   // electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
+      // }
       
-      //  if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
-       if(!equilibrium_step && electron_transport_list[e]) ea_scattering(e, array_index, omp_get_thread_num());
+       if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
+      //  if(!equilibrium_step && electron_transport_list[e]) ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
-    // TEKE = external_potential;
+    TEKE = external_potential;
    ee_scattering();
     pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
   Tp +=  a_heat_capacity_i*1e-27*TLE *n_f/conduction_electrons;
