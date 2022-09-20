@@ -701,10 +701,10 @@ void ea_scattering(const int e, const int array_index, const int thread) {
 
    // if(!electron_transport_list[e]) return;
     if(Te == Tp) return;
-    double e_energy = electron_potential[e];
+    const double e_energy = electron_potential[e];
    
     //if(!electron_transport_list[e]) return;
-    if(omp_uniform_random[thread]() > exp(ea_rate/e_energy)) {
+    if(omp_uniform_random[thread]() > exp(ea_rate*sqrt(E_f_A/e_energy))) {
        double deltaE = sqrt(phonon_energy*E_f_A);
        if( e_energy + deltaE > (E_f_A+37.0) ) return;
       //const unsigned int size = electron_nearest_electron_list[e][0];
@@ -1064,93 +1064,93 @@ int ee_elastic(const int electron, const int electron_collision, const double le
         // int DoS1; 
         // int DoS2;
         
-        if( (e_energy - deltaE) > (E_f_A+37.0) || (d_e_energy + deltaE > (E_f_A+37.0))) return 0;
-          double FD_width = (electron_nearest_electron_list[electron][0]-1.0)/(3.0*constants::kB_r*300.0+E_f_A - core_cutoff);
-          const double DoS_width = 4;
-        //   //if(electron_nearest_electron_list[electron][0]-1.0 < ee_density/3.0) std::cout << electron_nearest_electron_list[electron][0]-1.0 << ", " << ee_density/3.0 << ", " << FD_width << std::endl;
-          double e_occupation;
-          double e_dos;
-          double d_e_occupation;
-          double d_e_dos;
-          int hist;
-          if(e_energy - deltaE < transport_cutoff) {
-            hist = int(std::max(0.0, floor((e_energy - deltaE - core_cutoff)/4.0))); 
-            e_dos = DoS_width*FD_width;
-          } else {
-            hist = int(std::min(ee_dos_hist[0].size() - 1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - deltaE - transport_cutoff)/1.0))); 
-            e_dos = DoS_width*FD_width/4.0;
-          }
-          e_occupation =  1.0 - ee_dos_hist[electron].at(hist)/e_dos;  
-          if(d_e_energy + deltaE < transport_cutoff) {
-            hist = int(std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/4.0))); 
-            d_e_dos = DoS_width*FD_width; 
-          } else {
-            hist = int(std::min(ee_dos_hist[0].size() - 1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((d_e_energy + deltaE - transport_cutoff)/1.0))); 
-            d_e_dos = DoS_width*FD_width/4.0;
-          }
-          d_e_occupation = 1.0 - ee_dos_hist[electron_collision].at(hist)/d_e_dos;
+        // if( (e_energy - deltaE) > (E_f_A+37.0) || (d_e_energy + deltaE > (E_f_A+37.0))) return 0;
+        //   double FD_width = (electron_nearest_electron_list[electron][0]-1.0)/(3.0*constants::kB_r*300.0+E_f_A - core_cutoff);
+        //   const double DoS_width = 4;
+        // //   //if(electron_nearest_electron_list[electron][0]-1.0 < ee_density/3.0) std::cout << electron_nearest_electron_list[electron][0]-1.0 << ", " << ee_density/3.0 << ", " << FD_width << std::endl;
+        //   double e_occupation;
+        //   double e_dos;
+        //   double d_e_occupation;
+        //   double d_e_dos;
+        //   int hist;
+        //   if(e_energy - deltaE < transport_cutoff) {
+        //     hist = int(std::max(0.0, floor((e_energy - deltaE - core_cutoff)/4.0))); 
+        //     e_dos = DoS_width*FD_width;
+        //   } else {
+        //     hist = int(std::min(ee_dos_hist[0].size() - 1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - deltaE - transport_cutoff)/1.0))); 
+        //     e_dos = DoS_width*FD_width/4.0;
+        //   }
+        //   e_occupation =  1.0 - ee_dos_hist[electron].at(hist)/e_dos;  
+        //   if(d_e_energy + deltaE < transport_cutoff) {
+        //     hist = int(std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/4.0))); 
+        //     d_e_dos = DoS_width*FD_width; 
+        //   } else {
+        //     hist = int(std::min(ee_dos_hist[0].size() - 1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((d_e_energy + deltaE - transport_cutoff)/1.0))); 
+        //     d_e_dos = DoS_width*FD_width/4.0;
+        //   }
+        //   d_e_occupation = 1.0 - ee_dos_hist[electron_collision].at(hist)/d_e_dos;
 
-        // if(e_energy - deltaE < transport_cutoff) {
-        //       DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - (e_energy - deltaE) - 0.5*DoS_width)*0.75; //AJ
-        //       DoS_lhs = 0.5*DoS_width; //AJ
-        //       DoS1 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))); //AJ
-        //       DoS1_n = DoS1;
-        //       blocking_lr = int((15.0/195.0)*DoS1);
-        //       for (int e = 1; e < electron_nearest_electron_list[electron][0]; ++e) {
-        //        if(  ((electron_potential[electron_nearest_electron_list[electron][e]] < (e_energy - deltaE + DoS_rhs)) \
-        //        && ( (electron_potential[electron_nearest_electron_list[electron][e]] > (e_energy - deltaE -  DoS_lhs) ) ) ) ){
-        //           DoS1 -= 1;
-        //           if(DoS1 < blocking_lr) {DoS1 = 0; break;}
-        //         }
-        //       }
-        //    } else {
-        //       DoS_lhs = 0.25*0.5*DoS_width - std::min(0.0, e_energy - transport_cutoff - deltaE - 0.25*0.5*DoS_width)*DoS_width*0.75;
-        //       DoS_rhs = 0.25*0.5*DoS_width;
-        //       DoS1 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
-        //       DoS1_n = DoS1;
-        //       blocking_hr = int((15.0/195.0)*DoS1);
-        //       for (int e = 1; e < electron_nearest_electron_list[electron][0]; ++e) {
-        //         if( electron_potential[electron_nearest_electron_list[electron][e]] < (e_energy - deltaE + DoS_rhs)  \
-        //         &&  (electron_potential[electron_nearest_electron_list[electron][e]] > (e_energy - deltaE - DoS_lhs) )) {
-        //           DoS1 -= 1;
-        //           if(DoS1 < blocking_hr) { DoS1 = 0; break;}
-        //         }
-        //       }
-        //      //  std::cout << DoS1_n << ", " << DoS1 << ", " << electron << ", " << deltaE << std::endl;
-        //     } 
-        //     if(d_e_energy + deltaE < transport_cutoff) {
-        //       DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - (d_e_energy + deltaE) - 0.5*DoS_width)*0.75;
-        //       DoS_lhs = 0.5*DoS_width;
-        //       DoS2 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
-        //       DoS2_n = DoS2;
-        //       blocking_lr = int((15.0/195.0)*DoS2);
-        //       for (int i = 1; i < electron_nearest_electron_list[electron_collision][0]; ++i) {
-        //         if( ((electron_potential[electron_nearest_electron_list[electron_collision][i]] < (d_e_energy + deltaE + DoS_rhs)) \
-        //         &&  ( (electron_potential[electron_nearest_electron_list[electron_collision][i]] > (d_e_energy + deltaE -  DoS_lhs) ) ) ) ) {
-        //           DoS2 -= 1;
-        //           if(DoS2 < blocking_lr) {DoS2 = 0; break;}
-        //         }
-        //       }
-        //     } else {
-        //       DoS_lhs = 0.25*0.5*DoS_width - std::min(0.0, d_e_energy - transport_cutoff + deltaE - 0.25*0.5*DoS_width)*DoS_width*0.75;
-        //       DoS_rhs = 0.25*0.5*DoS_width;
-        //       DoS2 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
-        //       DoS2_n = DoS2;
-        //       blocking_hr = int((15.0/195.0)*DoS2);
-        //       for (int i = 1; i < electron_nearest_electron_list[electron_collision][0]; ++i) {
-        //         if((electron_potential[electron_nearest_electron_list[electron_collision][i]] < (d_e_energy + deltaE + DoS_rhs)) \
-        //         && ( (electron_potential[electron_nearest_electron_list[electron_collision][i]] > (d_e_energy + deltaE - DoS_lhs) ) )) {
-        //           DoS2 -= 1;
-        //        ///   if(DoS2 < -10) std::cout << "need tighter bounds hr ee2 " << DoS2 << ", " << electron_nearest_electron_list[electron_collision][0] << ", " << d_e_energy << ", " << d_e_energy + deltaE - 0.004*E_f_A << ", " << d_e_energy + deltaE + 0.004*E_f_A << std::endl;
-        //           if(DoS2 < blocking_hr) { DoS2 = 0; break;}
-        //         }
-        //       }
-        //    //   std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
-        //     } 
-          // e_occupation = 1.0 - return_phonon_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
-          // d_e_occupation = 1.0 - return_phonon_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+        // // if(e_energy - deltaE < transport_cutoff) {
+        // //       DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - (e_energy - deltaE) - 0.5*DoS_width)*0.75; //AJ
+        // //       DoS_lhs = 0.5*DoS_width; //AJ
+        // //       DoS1 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))); //AJ
+        // //       DoS1_n = DoS1;
+        // //       blocking_lr = int((15.0/195.0)*DoS1);
+        // //       for (int e = 1; e < electron_nearest_electron_list[electron][0]; ++e) {
+        // //        if(  ((electron_potential[electron_nearest_electron_list[electron][e]] < (e_energy - deltaE + DoS_rhs)) \
+        // //        && ( (electron_potential[electron_nearest_electron_list[electron][e]] > (e_energy - deltaE -  DoS_lhs) ) ) ) ){
+        // //           DoS1 -= 1;
+        // //           if(DoS1 < blocking_lr) {DoS1 = 0; break;}
+        // //         }
+        // //       }
+        // //    } else {
+        // //       DoS_lhs = 0.25*0.5*DoS_width - std::min(0.0, e_energy - transport_cutoff - deltaE - 0.25*0.5*DoS_width)*DoS_width*0.75;
+        // //       DoS_rhs = 0.25*0.5*DoS_width;
+        // //       DoS1 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
+        // //       DoS1_n = DoS1;
+        // //       blocking_hr = int((15.0/195.0)*DoS1);
+        // //       for (int e = 1; e < electron_nearest_electron_list[electron][0]; ++e) {
+        // //         if( electron_potential[electron_nearest_electron_list[electron][e]] < (e_energy - deltaE + DoS_rhs)  \
+        // //         &&  (electron_potential[electron_nearest_electron_list[electron][e]] > (e_energy - deltaE - DoS_lhs) )) {
+        // //           DoS1 -= 1;
+        // //           if(DoS1 < blocking_hr) { DoS1 = 0; break;}
+        // //         }
+        // //       }
+        // //      //  std::cout << DoS1_n << ", " << DoS1 << ", " << electron << ", " << deltaE << std::endl;
+        // //     } 
+        // //     if(d_e_energy + deltaE < transport_cutoff) {
+        // //       DoS_rhs = 0.5*DoS_width + std::min(0.0, transport_cutoff - (d_e_energy + deltaE) - 0.5*DoS_width)*0.75;
+        // //       DoS_lhs = 0.5*DoS_width;
+        // //       DoS2 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
+        // //       DoS2_n = DoS2;
+        // //       blocking_lr = int((15.0/195.0)*DoS2);
+        // //       for (int i = 1; i < electron_nearest_electron_list[electron_collision][0]; ++i) {
+        // //         if( ((electron_potential[electron_nearest_electron_list[electron_collision][i]] < (d_e_energy + deltaE + DoS_rhs)) \
+        // //         &&  ( (electron_potential[electron_nearest_electron_list[electron_collision][i]] > (d_e_energy + deltaE -  DoS_lhs) ) ) ) ) {
+        // //           DoS2 -= 1;
+        // //           if(DoS2 < blocking_lr) {DoS2 = 0; break;}
+        // //         }
+        // //       }
+        // //     } else {
+        // //       DoS_lhs = 0.25*0.5*DoS_width - std::min(0.0, d_e_energy - transport_cutoff + deltaE - 0.25*0.5*DoS_width)*DoS_width*0.75;
+        // //       DoS_rhs = 0.25*0.5*DoS_width;
+        // //       DoS2 = int(round((DoS_lhs+DoS_rhs)*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
+        // //       DoS2_n = DoS2;
+        // //       blocking_hr = int((15.0/195.0)*DoS2);
+        // //       for (int i = 1; i < electron_nearest_electron_list[electron_collision][0]; ++i) {
+        // //         if((electron_potential[electron_nearest_electron_list[electron_collision][i]] < (d_e_energy + deltaE + DoS_rhs)) \
+        // //         && ( (electron_potential[electron_nearest_electron_list[electron_collision][i]] > (d_e_energy + deltaE - DoS_lhs) ) )) {
+        // //           DoS2 -= 1;
+        // //        ///   if(DoS2 < -10) std::cout << "need tighter bounds hr ee2 " << DoS2 << ", " << electron_nearest_electron_list[electron_collision][0] << ", " << d_e_energy << ", " << d_e_energy + deltaE - 0.004*E_f_A << ", " << d_e_energy + deltaE + 0.004*E_f_A << std::endl;
+        // //           if(DoS2 < blocking_hr) { DoS2 = 0; break;}
+        // //         }
+        // //       }
+        // //    //   std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
+        // //     } 
+          const double e_occupation = 1.0 - return_phonon_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+          const double d_e_occupation = 1.0 - return_phonon_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
 
-          if(e_occupation < (15.0/195.0) || d_e_occupation < (15.0/195.0)) return 0; 
+        //   if(e_occupation < (15.0/195.0) || d_e_occupation < (15.0/195.0)) return 0; 
         
         //   const double k_1_x = v_x*constants::m_over_hbar_sqrt;
         //   const double k_1_y = v_y*constants::m_over_hbar_sqrt;
