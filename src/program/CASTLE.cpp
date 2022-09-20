@@ -246,11 +246,11 @@ void initialize () {
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
     power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
     
-    const static double tau = E_f_A /(M_PI*ea_coupling_strength); // fs
-    G = 300.0*e_heat_capacity/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]
+    const static double tau = E_f_A /(M_PI*ea_coupling_strength); // fs/AJ
+    G = 300.0*e_heat_capacity/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -1.0*dt*E_f_A/tau;  //AJ(ready for E_i) 
+    ea_rate = -1.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     ee_rate = dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
@@ -707,10 +707,10 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 25.0*25.0;
+    e_e_neighbor_cutoff = 15.0*15.0;
     
-    half_int_var =  2;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
-    full_int_var = 4;//2*half_int_var;
+    half_int_var =  4;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    full_int_var = 8;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 30.0*30.0;
