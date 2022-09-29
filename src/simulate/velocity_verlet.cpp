@@ -96,7 +96,7 @@ void update_position(){
     
     for (int e = 1; e < size; e++) { 
       const unsigned int electron = old_cell_integration_lists[cell][e];
-       // if(!electron_transport_list[electron]) continue;
+      if(!electron_transport_list[electron] ) continue;
         const unsigned int array_index = 3*electron;
       
         double x_pos = electron_position[array_index];
@@ -104,8 +104,8 @@ void update_position(){
         double z_pos = electron_position[array_index+2];
 
         const double v_x = electron_velocity[array_index];
-        const double v_y = electron_velocity[array_index+1] ;
-        const double v_z = electron_velocity[array_index+2] ;
+        const double v_y = electron_velocity[array_index+1];
+        const double v_z = electron_velocity[array_index+2];
 
         p_x += v_x;
         p_y += v_y;
@@ -130,7 +130,7 @@ void update_position(){
      
     
       if(current_time_step % half_int_var == 0) {
-          //  if(!electron_transport_list[electron]) continue;
+          
            int x_cell = int(floor(x_pos / x_step_size));
 
            int y_cell = int(floor(y_pos / y_step_size));
@@ -249,25 +249,25 @@ void update_dynamics() {
         }
       } count = 0;
       pump = 0.0;
-    #pragma omp parallel for schedule(dynamic, 10) reduction(+:external_potential)
+    #pragma omp parallel for schedule(dynamic, 10) reduction(+:pump)
     for (int e = 0; e < conduction_electrons; e++) {
       const unsigned int array_index = 3*e;        
       
       if(current_time_step % half_int_var == 0) e_e_coulomb(e, array_index);
-     // else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
+     else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
       else if (electron_transport_list[e]) neighbor_e_e_coulomb(e, array_index);
 
       // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
       //   #pragma omp atomic
       //   count++;
-
-      //   #pragma omp atomic
+      
       //   pump += external_potential;
-      //   // electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
+
+      //   electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
       // }
       
-       if(!equilibrium_step) electron_applied_voltage(e, array_index, external_potential);
-       if(!equilibrium_step && electron_transport_list[e]) ea_scattering(e, array_index, omp_get_thread_num());
+      if(!equilibrium_step && electron_transport_list[e]) electron_applied_voltage(e, array_index, external_potential);
+       if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
     TEKE = external_potential;
@@ -1138,15 +1138,15 @@ int ee_elastic(const int electron, const int electron_collision, const double le
 
         //   if(e_occupation < (15.0/195.0) || d_e_occupation < (15.0/195.0)) return 0; 
         
-    //       const double k_1_x = v_x*constants::m_over_hbar_sqrt;
-    //       const double k_1_y = v_y*constants::m_over_hbar_sqrt;
-    //       const double k_1_z = v_z*constants::m_over_hbar_sqrt;
-    //       const double k_2_x = (v_x - x_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
-    //       const double k_2_y = (v_y - y_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
-    //       const double k_2_z = (v_z - z_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
-    //      const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
-    // if(deltaK != deltaK) return 0;
-      if(probability  > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((0.25+(deltaE))*(0.25+(deltaE))))) {
+          const double k_1_x = v_x*constants::m_over_hbar_sqrt;
+          const double k_1_y = v_y*constants::m_over_hbar_sqrt;
+          const double k_1_z = v_z*constants::m_over_hbar_sqrt;
+          const double k_2_x = (v_x - x_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
+          const double k_2_y = (v_y - y_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
+          const double k_2_z = (v_z - z_distance*normalised_dot_product)*constants::m_over_hbar_sqrt;
+         const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
+    if(deltaK != deltaK) return 0;
+      if(probability  > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))))) {
        
         electron_potential[electron] -= deltaE;
         electron_potential[electron_collision]   += deltaE;
