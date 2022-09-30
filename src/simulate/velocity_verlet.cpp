@@ -73,8 +73,11 @@ void update_position(){
 
     omp_set_dynamic(0);
     omp_set_num_threads(omp_threads);
+    // std::ofstream flux_hist;
+    // std::vector<int> flux_index;
     if(current_time_step % half_int_var == 0) {
-      
+      // flux_hist.open("flux_hist/" + std::to_string(current_time_step));
+      // flux_index.resize(100,0);
       old_cell_integration_lists.swap(cell_integration_lists);
       #pragma omp parallel for
       for(int c = 0; c < total_cells; c++) {
@@ -84,8 +87,16 @@ void update_position(){
     
   #pragma omp parallel reduction(+:x_flux,y_flux,z_flux, p_x,p_y,p_z)
   {
+    std::ofstream flux_hist;
+    std::vector<int> flux_index;
     const int thread = omp_get_thread_num();
-  for (int l = 0 ; l < cells_per_thread; l++) {
+
+    if(current_time_step % half_int_var == 0) {
+      flux_hist.open("flux_hist_" + std::to_string(thread) + "/" + std::to_string(current_time_step) );
+      flux_index.resize(100,0); 
+    }
+
+    for (int l = 0 ; l < cells_per_thread; l++) {
     const unsigned int cell = lattice_cells_per_omp[thread][l];
     const unsigned int size = old_cell_integration_lists[cell][0];
    // cell_integration_lists[cell][0] = 1;
@@ -96,7 +107,7 @@ void update_position(){
     
     for (int e = 1; e < size; e++) { 
       const unsigned int electron = old_cell_integration_lists[cell][e];
-      if(!electron_transport_list[electron] ) continue;
+      // if(!electron_transport_list[electron] ) continue;
         const unsigned int array_index = 3*electron;
       
         double x_pos = electron_position[array_index];
@@ -115,8 +126,15 @@ void update_position(){
         y_pos += v_y * dt;// + (electron_force[array_index_y) * dt * dt * constants::K_A / 2); // y superarray component
         z_pos += v_z * dt;// + (electron_force[array_index_z) * dt * dt * constants::K_A / 2); // z superarray component
 
-        if (x_pos < 0.0) {x_pos += lattice_width; x_flux--;}
-        else if (x_pos > lattice_width) {x_pos -= lattice_width; x_flux++;}
+        if (x_pos < 0.0) {
+          x_pos += lattice_width; 
+          x_flux--;
+          if(current_time_step % half_int_var == 0) flux_index.at(int(std::max(0.0, std::min(99.0,floor((electron_potential[electron] - core_cutoff)/1.0)))))--;}
+        else if (x_pos > lattice_width) {
+          x_pos -= lattice_width; 
+          x_flux++;
+          if(current_time_step % half_int_var == 0) flux_index.at(int(std::max(0.0, std::min(99.0,floor((electron_potential[electron] - core_cutoff)/1.0)))))++;
+        }
 
         if (y_pos < 0.0) {y_pos += lattice_depth; y_flux--;}
         else if (y_pos > lattice_depth) {y_pos -= lattice_depth; y_flux++;}
@@ -174,8 +192,14 @@ void update_position(){
       }
     }
   }
+    if(current_time_step % half_int_var == 0) {
+      for(int e = 0; e < flux_index.size(); e++) {
+        flux_hist << e << ", " << flux_index[e] << "\n";
+      }
+    }
   }
-      if(current_time_step % half_int_var == 0) {
+
+  if(current_time_step % half_int_var == 0) {    
     const unsigned int size = escaping_electrons[0];
    // std::cout << "escaping electrons " << size-1 << ", " << escaping_electrons.size() << std::endl;
     
@@ -266,8 +290,8 @@ void update_dynamics() {
       //   electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
       // }
       
-      if(!equilibrium_step && electron_transport_list[e]) electron_applied_voltage(e, array_index, external_potential);
-       if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
+      if(!equilibrium_step ) electron_applied_voltage(e, array_index, external_potential);
+      if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
     TEKE = external_potential;
