@@ -163,14 +163,14 @@ namespace sim{
 namespace CASTLE {
 
      // input and material parameters
-   unsigned int  omp_threads = 1;
+    int  omp_threads = 1;
    bool CASTLE_program;
    bool CASTLE_output_data; //output position and velocity data
    bool equilibrium_step;
    bool applied_voltage_sim = false;
    bool heat_pulse_sim = false;
 
-   unsigned int lattice_atoms; //number of lattice atoms
+    int lattice_atoms; //number of lattice atoms
    int conduction_electrons; //number of conduction electrons
    double temperature;
 
@@ -188,11 +188,11 @@ namespace CASTLE {
     //simulation variables
    double total_time_steps;
    double loop_time;
-   unsigned int    CASTLE_output_rate; //output velocity and position data at this multiple
-   unsigned int CASTLE_MD_rate;
+    int    CASTLE_output_rate; //output velocity and position data at this multiple
+    int CASTLE_MD_rate;
 
-   unsigned int full_int_var;
-   unsigned int half_int_var;
+    int full_int_var;
+    int half_int_var;
    double boundary_conditions_cutoff;
    double dt;
    double v_f; //meters
@@ -231,11 +231,11 @@ namespace CASTLE {
    double ea_coupling_strength;
    double ee_scattering_angle;
 
-   unsigned int x_omp_cells;// = int(floor(lattice_width / 15.0));
-   unsigned int y_omp_cells;// = int(floor(lattice_depth / 15.0));
-   unsigned int z_omp_cells;// = int(floor(lattice_height/ 15.0));
+    int x_omp_cells;// = int(floor(lattice_width / 15.0));
+    int y_omp_cells;// = int(floor(lattice_depth / 15.0));
+    int z_omp_cells;// = int(floor(lattice_height/ 15.0));
 
-  unsigned int total_cells;// = x_omp_cells*y_omp_cells*z_omp_cells;
+   int total_cells;// = x_omp_cells*y_omp_cells*z_omp_cells;
 
   double x_step_size;// = lattice_width / double(x_omp_cells);
   double y_step_size;// = lattice_depth / double(y_omp_cells);
@@ -244,30 +244,30 @@ namespace CASTLE {
     //integration variables
     long long int current_time_step;
    double CASTLE_real_time;
-   unsigned int cells_per_thread;
+    int cells_per_thread;
   // std::vector<double> atom_anchor_position;
   // std::vector<double> atom_position;
 
    std::vector<double> electron_position; //Angstroms
    std::vector<double> electron_velocity; //Angstroms
    std::vector<double> electron_potential; //A
-   std::vector<std::vector<int> > ee_dos_hist;
+   std::vector<std::vector< int> > ee_dos_hist;
 
    std::vector<bool> electron_transport_list;
-   std::vector<std::vector<unsigned int> > electron_integration_list;
-   std::vector<std::vector<unsigned int> > electron_nearest_electron_list;
-   std::vector<std::vector<unsigned int> > electron_nearest_atom_list;
+   std::vector<std::vector<int> > electron_integration_list;
+   std::vector<std::vector< int> > electron_nearest_electron_list;
+   std::vector<std::vector< int> > electron_nearest_atom_list;
    std::vector<std::vector<double> > electron_ee_scattering_list;
-   std::vector<std::vector<unsigned int> > electron_ea_scattering_list;
-   std::vector<std::vector< int> > cell_lattice_coordinate;
-   std::vector<std::vector<unsigned int > > cell_integration_lists;
-   std::vector<std::vector<unsigned  int> > old_cell_integration_lists;
-   std::vector<std::vector<unsigned int > > cell_nearest_neighbor_list;
-   std::vector<std::vector < std::vector <unsigned int > > > lattice_cell_coordinate;
-   std::vector<std::vector<unsigned int> > temp_Map;
-   std::vector<std::vector<unsigned int> > lattice_cells_per_omp;
-   std::vector<unsigned int> escaping_electrons;
-
+   std::vector<std::vector< int> > electron_ea_scattering_list;
+   std::vector<std::vector<int> > cell_lattice_coordinate;
+   std::vector<std::vector< int > > cell_integration_lists;
+   std::vector<std::vector< int> > old_cell_integration_lists;
+   std::vector<std::vector< int > > cell_nearest_neighbor_list;
+   std::vector<std::vector < std::vector <int > > > lattice_cell_coordinate;
+   std::vector<std::vector< int> > temp_Map;
+   std::vector<std::vector< int> > lattice_cells_per_omp;
+   std::vector< int> escaping_electrons;
+   std::vector< int> relaxation_time_hist;
 //    MTRand_closed uniform_random;
 //    MTRand_int32 int_random;
     std::vector<MTRand> omp_uniform_random(32);
@@ -297,12 +297,12 @@ namespace CASTLE {
    double p_x;
    double p_y;
    double p_z;
-     unsigned int e_a_scattering_count;
-      unsigned int e_e_scattering_count;
-      unsigned int ee_transport_scattering_count;
-      unsigned int ee_core_scattering_count;
-      unsigned int ea_transport_scattering_count;
-      unsigned int ea_core_scattering_count;
+      int e_a_scattering_count;
+       int e_e_scattering_count;
+       int ee_transport_scattering_count;
+       int ee_core_scattering_count;
+       int ea_transport_scattering_count;
+       int ea_core_scattering_count;
 
    double TTMe;
    double d_TTMe;

@@ -49,9 +49,15 @@ int velocity_verlet_step(double time_step) {
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
       //    std::cout << current_time_step << "; output updated " << std::endl;
     const int size = ee_dos_hist[0].size();
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic, 100)
     for(int e = 0; e < conduction_electrons; e++) {
-      electron_ee_scattering_list[e][0] = 0;
+      if(electron_ee_scattering_list[e][0] == 1) {
+        relaxation_time_hist[3*e]++;
+        relaxation_time_hist[3*e + 2] += relaxation_time_hist[3*e + 1];
+        relaxation_time_hist[3*e + 1] = 0;
+        electron_ee_scattering_list[e][0] = 0;
+      } else relaxation_time_hist[3*e + 1]++;
+
       for(int h = 0; h < size; h++) {
         ee_dos_hist[e][h] = 0;
       }
@@ -92,13 +98,17 @@ void update_position(){
     const int thread = omp_get_thread_num();
 
     if(current_time_step % half_int_var == 0) {
-      flux_hist.open("flux_hist_" + std::to_string(thread) + "/" + std::to_string(current_time_step) );
+      char directory [256];
+      if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog. time stamps" << std::endl;
+      }
+      flux_hist.open(string(directory) + "/flux_hist_" + std::to_string(thread) + "/" + std::to_string(current_time_step) );
       flux_index.resize(100,0); 
     }
 
     for (int l = 0 ; l < cells_per_thread; l++) {
-    const unsigned int cell = lattice_cells_per_omp[thread][l];
-    const unsigned int size = old_cell_integration_lists[cell][0];
+    const   int cell = lattice_cells_per_omp[thread][l];
+    const   int size = old_cell_integration_lists[cell][0];
    // cell_integration_lists[cell][0] = 1;
 
   //  if((current_time_step % half_int_var) == 0 && ( (l % ((z_omp_cells/2)-1) )== 0 || (l % (z_omp_cells/2)) == 0) ) {
@@ -106,9 +116,9 @@ void update_position(){
    // }
     
     for (int e = 1; e < size; e++) { 
-      const unsigned int electron = old_cell_integration_lists[cell][e];
+      const   int electron = old_cell_integration_lists[cell][e];
       // if(!electron_transport_list[electron] ) continue;
-        const unsigned int array_index = 3*electron;
+        const   int array_index = 3*electron;
       
         double x_pos = electron_position[array_index];
         double y_pos = electron_position[array_index+1];
@@ -165,7 +175,7 @@ void update_position(){
       // x_cell = 0;
       // y_cell = 0;
       // z_cell = 0; }
-          const unsigned int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
+          const   int omp_cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
           
           if ((abs(x_cell - cell_lattice_coordinate.at(cell)[0]) > 1 &&\
               abs(x_cell - cell_lattice_coordinate.at(cell)[0]) <= (x_omp_cells-2)) ||
@@ -200,12 +210,12 @@ void update_position(){
   }
 
   if(current_time_step % half_int_var == 0) {    
-    const unsigned int size = escaping_electrons[0];
+    const   int size = escaping_electrons[0];
    // std::cout << "escaping electrons " << size-1 << ", " << escaping_electrons.size() << std::endl;
     
     for (int e = 1; e < size; e++) {
-      const unsigned int electron = escaping_electrons[e];
-      const unsigned int array_index = 3*electron;
+      const   int electron = escaping_electrons[e];
+      const   int array_index = 3*electron;
       int x_cell = int(floor(electron_position[array_index] / x_step_size));
 
       int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
@@ -243,7 +253,7 @@ void update_dynamics() {
     double pump = 0.0; // AJ / fs
     double external_potential = 0.0; //AJ/e-
     const static double sigma = dt * 0.1;
-    unsigned int count = 0;
+      int count = 0;
 
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
@@ -275,18 +285,16 @@ void update_dynamics() {
       pump = 0.0;
     #pragma omp parallel for schedule(dynamic, 10) reduction(+:pump)
     for (int e = 0; e < conduction_electrons; e++) {
-      const unsigned int array_index = 3*e;        
+      const  int array_index = 3*e;        
       
       if(current_time_step % half_int_var == 0) e_e_coulomb(e, array_index);
-     else if (current_time_step % full_int_var == 0) e_e_coulomb(e, array_index);
-      else if (electron_transport_list[e]) neighbor_e_e_coulomb(e, array_index);
-
+     //else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
+      else  neighbor_e_e_coulomb(e, array_index);
+// if ()
       // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
       //   #pragma omp atomic
       //   count++;
-      
       //   pump += external_potential;
-
       //   electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
       // }
       
@@ -446,10 +454,10 @@ void e_e_coulomb(const int e, const int array_index) {
       // y_cell = 0;
       // z_cell = 0; }
   ///  std::cout << lattice_cell_coordinate[0][0][0] << std::endl;
-    const unsigned int cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
-    unsigned int ee_dos_count = 1;
-    unsigned int ee_integration_count = 1;
-    unsigned int ee_scattering_list = 1;
+    const   int cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
+      int ee_dos_count = 1;
+      int ee_integration_count = 1;
+      int ee_scattering_list = 1;
    
     for(int s = 0; s < 27; s++) {
       const int int_cell = cell_nearest_neighbor_list[cell][s];
@@ -515,12 +523,12 @@ void e_e_coulomb(const int e, const int array_index) {
   }
 void neighbor_e_e_coulomb(const int e, const int array_index) {
     
-    const unsigned int size = electron_integration_list[e][0];
-    unsigned int neighbor_count = 1;
-    unsigned int scattering_count = 1;
+    const   int size = electron_integration_list[e][0];
+      int neighbor_count = 1;
+      int scattering_count = 1;
  
     for (int i = 1; i < size; i++) {
-        const unsigned int array_index_i = electron_integration_list[e][i];
+        const   int array_index_i = electron_integration_list[e][i];
         const int electron = array_index_i/3;
 
         double x_distance = electron_position[array_index]   - electron_position[array_index_i];
@@ -717,7 +725,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     if(omp_uniform_random[thread]() > exp(ea_rate*sqrt(E_f_A/e_energy))) {
        double deltaE = sqrt(phonon_energy*E_f_A);
        if( e_energy + deltaE > (E_f_A+37.0) ) return;
-      //const unsigned int size = electron_nearest_electron_list[e][0];
+      //const   int size = electron_nearest_electron_list[e][0];
      // const double DoS_width = 4;//AJ
      // const double FD_width = std::min(size - 1.0, ee_density/3.0)/(3*constants::kB_r*300.0+E_f_A - core_cutoff);
      // double e_dos; 
@@ -824,13 +832,13 @@ void ee_scattering() {
     const int thread = omp_get_thread_num();
 
   for(int l = 0; l < cells_per_thread; l++) {
-    const unsigned int cell = lattice_cells_per_omp[thread][l];
-    const unsigned int size = cell_integration_lists[cell][0];
+    const   int cell = lattice_cells_per_omp[thread][l];
+    const   int size = cell_integration_lists[cell][0];
     
     #pragma omp barrier 
 
     for(int e = 1; e < size; e++) {
-      const unsigned int electron = cell_integration_lists[cell][e];
+      const   int electron = cell_integration_lists[cell][e];
         if(!electron_transport_list[electron]) continue;
         if (electron_ee_scattering_list[electron][0] == 1) continue;
       const int scattering_size = electron_ee_scattering_list[electron][1];
@@ -964,8 +972,8 @@ int ee_energy_conserved(const int electron, const int electron_collision, const 
     std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
     std::uniform_real_distribution<double> test_uniform;
 
-      const unsigned int array_index = 3*electron;
-      const unsigned int array_index_i = 3*electron_collision;
+      const   int array_index = 3*electron;
+      const   int array_index_i = 3*electron_collision;
        double theta = 2.0*M_PI*test_uniform(gen);
        double phi = M_PI*test_uniform(gen);
 
@@ -993,8 +1001,8 @@ int ee_final_momentum_conserved(const int electron, const int electron_collision
     std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
     std::uniform_real_distribution<double> test_uniform;
 
-      const unsigned int array_index = 3*electron;
-      const unsigned int array_index_i = 3*electron_collision;
+      const   int array_index = 3*electron;
+      const   int array_index_i = 3*electron_collision;
       double theta = atan2(electron_velocity[array_index+1], electron_velocity[array_index]);
       double phi = acos(electron_velocity[array_index+2] / sqrt(2.0*constants::m_e_r_i*e_energy));
       const double d_theta = 4.0*M_PI*ee_scattering_angle*(test_uniform(gen) - 0.5);
@@ -1017,8 +1025,8 @@ int ee_final_momentum_conserved(const int electron, const int electron_collision
 }
 
 int ee_elastic(const int electron, const int electron_collision, const double length, const double e_energy, const double d_e_energy, const double probability) {
-   const unsigned int array_index = 3*electron;
-   const unsigned int array_index_i = 3*electron_collision;
+   const   int array_index = 3*electron;
+   const   int array_index_i = 3*electron_collision;
 
     double x_distance = electron_position[array_index]  - electron_position[array_index_i];
     double y_distance = electron_position[array_index+1]- electron_position[array_index_i+1];
@@ -1175,8 +1183,8 @@ int ee_elastic(const int electron, const int electron_collision, const double le
         electron_potential[electron] -= deltaE;
         electron_potential[electron_collision]   += deltaE;
 
-        electron_ee_scattering_list[electron][0] == 1;
-        electron_ee_scattering_list[electron_collision][0] == 1;
+        electron_ee_scattering_list[electron][0] = 1;
+        electron_ee_scattering_list[electron_collision][0] = 1;
 
         electron_transport_list[electron] = true;
         electron_transport_list[electron_collision] = true;

@@ -688,11 +688,13 @@ void initialize_electrons() {
     // Initialize arrays for holding electron variables
     //      Arrays in super array format to take advantage of caching
     //========
-    electron_position.resize(conduction_electrons * 3); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
-    electron_velocity.resize(conduction_electrons * 3); //Angstroms
+    electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
+    electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
     electron_potential.resize(conduction_electrons, 0);
     ee_dos_hist.resize(conduction_electrons);
+    relaxation_time_hist.resize(3*conduction_electrons, 0);
     temp_Map.resize(8);
+
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
         temp_Map.at(i).resize(round(conduction_electrons*0.02)+10,0);
@@ -707,14 +709,14 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 15.0*15.0;
+    e_e_neighbor_cutoff = 10.0*10.0;
     
-    half_int_var =  4;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
-    full_int_var = 8;//2*half_int_var;
+    half_int_var =  8;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    full_int_var = 16;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 30.0*30.0;
-    e_e_coulomb_cutoff = 14.0*14.0;
+    e_e_coulomb_cutoff = 9.75*9.750;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     electron_transport_list.resize(conduction_electrons, false);
@@ -1106,7 +1108,7 @@ void initialize_velocities() {
       double phi;
       double theta;
       double sign;
-      const unsigned int array_index = 3*e;
+      const   int array_index = 3*e;
    
       const double energy = electron_potential[int(omp_uniform_random.at(omp_get_thread_num())()*2147483647)%conduction_electrons];
       if(energy > transport_cutoff) electron_transport_list.at(e) = true;
@@ -1489,14 +1491,14 @@ void output_data() {
       // // std::cout << temp_Map.at(i)[0] << std::endl;
       // //   std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
       // }
-  std::ofstream temp_map_0;
-  std::ofstream temp_map_1;
-  std::ofstream temp_map_2;
-  std::ofstream temp_map_3;
-  std::ofstream temp_map_4;
-  std::ofstream temp_map_5;
-  std::ofstream temp_map_6;
-  std::ofstream temp_map_7;
+    std::ofstream temp_map_0;
+    std::ofstream temp_map_1;
+    std::ofstream temp_map_2;
+    std::ofstream temp_map_3;
+    std::ofstream temp_map_4;
+    std::ofstream temp_map_5;
+    std::ofstream temp_map_6;
+    std::ofstream temp_map_7;
     
     temp_map_0.open(string(directory) + "/Temp_Map0" + "/" + time_stamp);
     temp_map_1.open(string(directory) + "/Temp_Map1" + "/" + time_stamp);
@@ -1507,22 +1509,28 @@ void output_data() {
     temp_map_6.open(string(directory) + "/Temp_Map2Ef" + "/" + time_stamp);
     temp_map_7.open(string(directory) + "/Temp_Map3Ef" + "/" + time_stamp);
     
+    std::ofstream relaxation_time;
+    relaxation_time.open(string(directory)  + "/relaxation_time/" + time_stamp);
+    for(int e = 0; e < conduction_electrons; e++) {
+      const double avg = double(relaxation_time_hist[3*e+2])/std::max(1.0,double(relaxation_time_hist[3*e]));
+      if(relaxation_time_hist[3*e] > 0) relaxation_time << e << ", " << electron_potential[e] << ", " << avg << "\n";
+    }
     const static double step_size_lr = 4; //AJ
     const static double step_size_hr = 1; //AJ
 
-  const int output_count_lr = int((transport_cutoff-core_cutoff)/4.0);
-  const int output_count_hr = ee_dos_hist[0].size();
+    const int output_count_lr = int((transport_cutoff-core_cutoff)/4.0);
+    const int output_count_hr = ee_dos_hist[0].size();
     // #pragma omp parallel
     // {
     // const int thread = omp_get_thread_num();
     // for(int e = 1; e < electron_nearest_electron_list[thread*10000][0]; e++) {
-    //   const unsigned int electron = electron_nearest_electron_list[thread*10000][e];
+    //   const   int electron = electron_nearest_electron_list[thread*10000][e];
     //   const double energy = electron_potential.at(electron);
     //   if(energy < transport_cutoff) {
-    //     const unsigned int hist = int(std::min(double(output_count_lr-1), std::max(0.0, floor((energy- core_cutoff)/step_size_lr))));
+    //     const   int hist = int(std::min(double(output_count_lr-1), std::max(0.0, floor((energy- core_cutoff)/step_size_lr))));
     //     temp_Map[thread].at(hist)++;
     //   } else {
-    //     const unsigned int hist = int(std::min(double(output_count_hr-1), std::max(0.0, floor((energy- transport_cutoff)/step_size_hr))));
+    //     const   int hist = int(std::min(double(output_count_hr-1), std::max(0.0, floor((energy- transport_cutoff)/step_size_hr))));
     //     temp_Map[thread+4].at(hist)++;
     //   }
     //  // if(x_pos < (lattice_width * 0.5) && y_pos < (lattice_depth*0.5) && z_pos < (lattice_height * 0.5)) {        
