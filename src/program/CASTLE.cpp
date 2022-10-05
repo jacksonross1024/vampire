@@ -331,9 +331,9 @@ void initialize_cell_omp() {
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
-  x_omp_cells = int(floor(lattice_width / 30.0));
-  y_omp_cells = int(floor(lattice_depth / 30.0));
-  z_omp_cells = int(floor(lattice_height/ 30.0));
+  x_omp_cells = int(floor(lattice_width / 15.0));
+  y_omp_cells = int(floor(lattice_depth / 15.0));
+  z_omp_cells = int(floor(lattice_height/ 15.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -692,9 +692,9 @@ void initialize_electrons() {
     electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
     electron_potential.resize(conduction_electrons, 0);
     ee_dos_hist.resize(conduction_electrons);
-    relaxation_time_hist.resize(3*conduction_electrons, 0);
+    relaxation_time_hist.resize(3*conduction_electrons);
     temp_Map.resize(8);
-
+    flux_index.resize(100,0); 
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
     for(int i = 0; i < 8; i++) {
         temp_Map.at(i).resize(round(conduction_electrons*0.02)+10,0);
@@ -711,11 +711,11 @@ void initialize_electrons() {
     ee_scattering_angle = sim::ee_scattering_angle;
     e_e_neighbor_cutoff = 10.0*10.0;
     
-    half_int_var =  8;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
-    full_int_var = 16;//2*half_int_var;
+    half_int_var =  2;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 30.0*30.0;
+    e_e_integration_cutoff = 15.0*15.0;
     e_e_coulomb_cutoff = 9.75*9.750;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
@@ -740,8 +740,12 @@ void initialize_electrons() {
         electron_nearest_electron_list.at(e).resize(ee_density, 0);
         electron_ee_scattering_list.at(e).resize(ee_scattering*2, 0);
         electron_ea_scattering_list.at(e).resize(2,0);
-        ee_dos_hist.at(e).resize(60,0);
+        ee_dos_hist.at(e).resize(70,0);
 
+        relaxation_time_hist[3*e].resize(4*70,0);
+        relaxation_time_hist[3*e+1].resize(4*70,0);
+        relaxation_time_hist[3*e+2].resize(4*70,0);
+        
         const int array_index = 3*e;
         electron_position.at(array_index)     = atoms::x_coord_array.at((e)%lattice_atoms) + 0.5*x_unit_size;
         electron_position.at(array_index + 1) = atoms::y_coord_array.at((e)%lattice_atoms) + 0.5*y_unit_size;
@@ -1491,34 +1495,58 @@ void output_data() {
       // // std::cout << temp_Map.at(i)[0] << std::endl;
       // //   std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
       // }
-    std::ofstream temp_map_0;
-    std::ofstream temp_map_1;
-    std::ofstream temp_map_2;
-    std::ofstream temp_map_3;
-    std::ofstream temp_map_4;
-    std::ofstream temp_map_5;
-    std::ofstream temp_map_6;
-    std::ofstream temp_map_7;
     
-    temp_map_0.open(string(directory) + "/Temp_Map0" + "/" + time_stamp);
-    temp_map_1.open(string(directory) + "/Temp_Map1" + "/" + time_stamp);
-    temp_map_2.open(string(directory) + "/Temp_Map2" + "/" + time_stamp);
-    temp_map_3.open(string(directory) + "/Temp_Map3" + "/" + time_stamp);
-    temp_map_4.open(string(directory) + "/Temp_Map0Ef" + "/" + time_stamp);
-    temp_map_5.open(string(directory) + "/Temp_Map1Ef" + "/" + time_stamp);
-    temp_map_6.open(string(directory) + "/Temp_Map2Ef" + "/" + time_stamp);
-    temp_map_7.open(string(directory) + "/Temp_Map3Ef" + "/" + time_stamp);
-    
-    std::ofstream relaxation_time;
-    relaxation_time.open(string(directory)  + "/relaxation_time/" + time_stamp);
-    for(int e = 0; e < conduction_electrons; e++) {
-      const double avg = double(relaxation_time_hist[3*e+2])/std::max(1.0,double(relaxation_time_hist[3*e]));
-      if(relaxation_time_hist[3*e] > 0) relaxation_time << e << ", " << electron_potential[e] << ", " << avg << "\n";
-    }
-    const static double step_size_lr = 4; //AJ
-    const static double step_size_hr = 1; //AJ
+      std::ofstream temp_map;
+      std::ofstream flux_hist;
+      std::ofstream relaxation_time;
 
-    const int output_count_lr = int((transport_cutoff-core_cutoff)/4.0);
+    // std::ofstream temp_map_1;
+    // std::ofstream temp_map_2;
+    // std::ofstream temp_map_3;
+    // std::ofstream temp_map_4;
+    // std::ofstream temp_map_5;
+    // std::ofstream temp_map_6;
+    // std::ofstream temp_map_7;
+    
+      temp_map.open(string(directory) + "/Temp_Map/" + time_stamp);
+      flux_hist.open(string(directory) + "/flux_hist/" + time_stamp );   
+      relaxation_time.open(string(directory)  + "/relaxation_time/" + time_stamp);
+
+    // temp_map_1.open(string(directory) + "/Temp_Map1" + "/" + time_stamp);
+    // temp_map_2.open(string(directory) + "/Temp_Map2" + "/" + time_stamp);
+    // temp_map_3.open(string(directory) + "/Temp_Map3" + "/" + time_stamp);
+    // temp_map_4.open(string(directory) + "/Temp_Map0Ef" + "/" + time_stamp);
+    // temp_map_5.open(string(directory) + "/Temp_Map1Ef" + "/" + time_stamp);
+    // temp_map_6.open(string(directory) + "/Temp_Map2Ef" + "/" + time_stamp);
+    // temp_map_7.open(string(directory) + "/Temp_Map3Ef" + "/" + time_stamp);
+      
+
+      for(int e = 0; e < flux_index.size(); e++) {
+        flux_hist << e << ", " << flux_index[e] << "\n";
+      }
+
+    double avg  = 0.0;
+    int total = 0;
+     omp_set_dynamic(0);
+    omp_set_num_threads(omp_threads);
+   // #pragma omp parallel
+    // {
+    for(int h = 0; h < 4*70; h++) {
+      avg = 0.0;
+      total = 0;
+    //  #pragma omp for reduction(+:avg) reduction(+:total)
+      for(int e = 0; e < conduction_electrons; e++) { 
+        avg += double(relaxation_time_hist[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist[3*e][h]) );
+        total += relaxation_time_hist[3*e][h];
+
+      }
+      // #pragma omp single
+      // {
+      relaxation_time << double(h)/4.0 + int(round(core_cutoff)) << ", " << avg << "\n";
+      // }
+    }
+    // }
+  //  const int output_count_lr = int(round(transport_cutoff-core_cutoff));
     const int output_count_hr = ee_dos_hist[0].size();
     // #pragma omp parallel
     // {
@@ -1576,14 +1604,36 @@ void output_data() {
       if(electron_transport_list[selection]) {electrons[count] = selection; count++;}
     }
     
-    for(int i = 0; i < output_count_lr; i++) {
+    for(int i = 0; i < output_count_hr; i++) {
      // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
-       temp_map_0 << i << ", " << ee_dos_hist[electrons[0]].at(i) << "\n";
-     
+     // if(i < output_count_lr) { 
+      temp_map << i + int(round(core_cutoff)) << ", " << ee_dos_hist[electrons[0]].at(i) \
+                      << ", " << ee_dos_hist[electrons[1]].at(i) \
+                      << ", " << ee_dos_hist[electrons[2]].at(i) \
+                      << ", " << ee_dos_hist[electrons[3]].at(i) << "\n";
+      // temp_map_0 << 4*i+1 + int(round(core_cutoff)) << ", " << ee_dos_hist[electrons[0]].at(i) \
+      //                 << ", " << ee_dos_hist[electrons[1]].at(i) \
+      //                 << ", " << ee_dos_hist[electrons[2]].at(i) \
+      //                 << ", " << ee_dos_hist[electrons[3]].at(i) << "\n";
+      // temp_map_0 << 4*i +2 + int(round(core_cutoff))<< ", " << ee_dos_hist[electrons[0]].at(i) \
+      //                 << ", " << ee_dos_hist[electrons[1]].at(i) \
+      //                 << ", " << ee_dos_hist[electrons[2]].at(i) \
+      //                 << ", " << ee_dos_hist[electrons[3]].at(i) << "\n";
+      // temp_map_0 << 4*i +3 + int(round(core_cutoff))<< ", " << ee_dos_hist[electrons[0]].at(i) \
+      //                 << ", " << ee_dos_hist[electrons[1]].at(i) \
+      //                 << ", " << ee_dos_hist[electrons[2]].at(i) \
+      //                 << ", " << ee_dos_hist[electrons[3]].at(i) << "\n";
+      // } else {
+      // temp_map_0 << i + int(round(core_cutoff))
+      //   << ", " << ee_dos_hist[electrons[0]].at(i) \
+      //   << ", " << ee_dos_hist[electrons[1]].at(i) \
+      //   << ", " << ee_dos_hist[electrons[2]].at(i) \
+      //   << ", " << ee_dos_hist[electrons[3]].at(i) << "\n"; 
+      // }
     }
-    temp_map_0.close();
+    temp_map.close();
 
-    for(int i = 0; i < output_count_lr; i++) {
+   /* for(int i = 0; i < output_count_lr; i++) {
       //if(i == 11) temp_map_1 << i << ", " << temp_Map[1].at(i) << "\n";
        temp_map_1 << i << ", " << ee_dos_hist[electrons[1]].at(i) << "\n";
      
@@ -1603,12 +1653,13 @@ void output_data() {
       
     }
     temp_map_3.close();
-    
-    for(int i = output_count_lr; i < output_count_hr; i++) {
+    */
+   
+   /* for(int i = output_count_lr; i < output_count_hr; i++) {
     //  if(i == 11) temp_map_4 << i << ", " << temp_Map.at(4).at(i) << "\n";
        temp_map_4 << i-output_count_lr << ", " << ee_dos_hist.at(electrons[0]).at(i) << "\n";
      
-    }
+    } 
     temp_map_4.close();
 
     for(int i = output_count_lr; i < output_count_hr; i++) {
@@ -1627,7 +1678,7 @@ void output_data() {
       temp_map_7 << i-output_count_lr << ", " << ee_dos_hist.at(electrons[3]).at(i) << "\n";
  
     }
-    temp_map_7.close();
+    temp_map_7.close(); */
       // std::ofstream E_vel;
       // E_vel.open("velocity/"+time_stamp);
       // for(int e = 0; e<conduction_electrons; e++) {
