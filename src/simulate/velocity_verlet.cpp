@@ -275,18 +275,18 @@ void update_dynamics() {
      //else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
       else  neighbor_e_e_coulomb(e, array_index);
 // if ()
-      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-      //   #pragma omp atomic
-      //   count++;
-      //   pump += external_potential;
-      //   electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
-      // }
+      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+        #pragma omp atomic
+        count++;
+        pump += external_potential;
+        electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
+      }
       
-      if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
+      //if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
       ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
-    TEKE += external_potential;
+  //  TEKE += external_potential;
    ee_scattering();
     pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
   Tp +=  a_heat_capacity_i*1e-27*TLE *n_f/conduction_electrons;
