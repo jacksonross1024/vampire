@@ -125,7 +125,7 @@ for(int a = 0; a < 1200; a++) {
 
     stopwatch_t castle_watch;
     castle_watch.start();
-     omp_threads = 8;
+     omp_threads = 32;
     equilibrium_step = true;
     //========
     // Initialize the lattice, electrons, and starting forces
@@ -497,7 +497,7 @@ void initialize_cell_omp() {
       
       //double decker cells
     
-     lattice_cells_per_omp[thread].at(l) = lattice_cell_coordinate.at((thread*max_x_threads)%x_omp_cells + int(floor(l/(2*max_z_threads)))).at((int(floor(thread*max_y_threads/x_omp_cells)*max_y_threads)%y_omp_cells) + int(floor(l/(max_z_threads)))%max_z_threads).at((max_z_threads)*floor(thread/(x_omp_cells* y_omp_cells/4)) + (l % (max_z_threads)));
+     lattice_cells_per_omp[thread].at(l) = lattice_cell_coordinate.at((thread*max_x_threads/2)%x_omp_cells + int(floor(l/(2*max_z_threads)))).at((max_y_threads/2)*(int(floor(thread*max_y_threads/(2*x_omp_cells)))%max_y_threads) + int(floor(l/(max_z_threads)))%(max_z_threads/2)).at((max_z_threads)*floor(thread/(x_omp_cells* y_omp_cells/4)) + (l % (max_z_threads)));
       
       //single decker cells
      // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells)))%2).at( l % (z_omp_cells));
@@ -519,7 +519,10 @@ void initialize_cell_omp() {
       if(cell_check[c] == cell_check[c+1] == 1 ) continue;
       std::cout << "unintegrated cell: " << cell_check[c] << ", " << cell_check[c+1] << std::endl;
     }
-
+    for(int c = 0; c < total_cells; c++) {
+      if(cell_check[c] == 1 ) continue;
+      std::cout << "over-integrated cell: " << cell_check[c]  << std::endl;
+    }
         omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
    
