@@ -712,14 +712,14 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 10.0*10.0;
+    e_e_neighbor_cutoff = 14.0*14.0;
     
-    half_int_var =  2;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    half_int_var =  1;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
     e_e_integration_cutoff = 15.0*15.0;
-    e_e_coulomb_cutoff = 9.75*9.750;
+    e_e_coulomb_cutoff = 14.0*14.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     electron_transport_list.resize(conduction_electrons, false);
@@ -1526,6 +1526,7 @@ void output_data() {
 
       for(int e = 0; e < flux_index.size(); e++) {
         flux_hist << e << ", " << flux_index[e] << "\n";
+        flux_index[e] = 0;
       }
 
     double avg  = 0.0;
