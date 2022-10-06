@@ -283,7 +283,7 @@ void update_dynamics() {
       // }
       
       if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
-      if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
+      ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
     TEKE += external_potential;
