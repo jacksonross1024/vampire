@@ -287,6 +287,8 @@ namespace CASTLE {
    double TLE;
    double Tp;
    double Te;
+   double d_Tp;
+   double d_Te;
     
    double MEPE; //meters
    double MEKE; //meters

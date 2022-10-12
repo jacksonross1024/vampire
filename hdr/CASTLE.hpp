@@ -173,6 +173,8 @@ namespace CASTLE {
     extern double TLE; //Angstroms
     extern double Tp;
     extern double Te;
+    extern double d_Tp;
+    extern double d_Te;
     
     extern double MEPE; //meters
     extern double MEKE; //meters

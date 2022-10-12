@@ -266,21 +266,23 @@ void update_dynamics() {
           count++;
         }
       } //count = 0;
-      // pump = 0.0;
+       pump = 0.0;
+       Tp = d_Tp;
+       Te = d_Te;
     #pragma omp parallel for schedule(dynamic, 10)
     for (int e = 0; e < conduction_electrons; e++) {
       const  int array_index = 3*e;        
       
-      if(current_time_step % half_int_var == 0) e_e_coulomb(e, array_index);
-     //else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
-      else  neighbor_e_e_coulomb(e, array_index);
+     if(current_time_step % half_int_var == 0) e_e_coulomb(e, array_index);
+    //  else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
+     else  neighbor_e_e_coulomb(e, array_index);
 // if ()
       if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
         #pragma omp atomic
         count++;
 
       // pump += external_potential;
-        electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
+        // electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
       }
       
       //if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
@@ -290,8 +292,8 @@ void update_dynamics() {
   //  TEKE += external_potential;
    ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
-  Tp +=  a_heat_capacity_i*1e-27*TLE *n_f/conduction_electrons;
-  Te += (e_heat_capacity_i*1e-27*TEKE*n_f/conduction_electrons/Te) + (e_heat_capacity_i*pump/Te);
+  d_Tp =  a_heat_capacity_i*TLE *n_f/conduction_electrons + Tp;
+  d_Te = (e_heat_capacity_i*TEKE*n_f/conduction_electrons/Te) + (e_heat_capacity_i*pump/Te) + Te;
  
         if (err::check) std::cout << "reset scattering." << std::endl;
        
@@ -696,78 +698,17 @@ double electron_applied_voltage(const int e, const int array_index, double& exte
 void ea_scattering(const int e, const int array_index, const int thread) {
 
    // if(!electron_transport_list[e]) return;
-    //if(Te == Tp) return;
+   // if(Te == Tp) return;
     const double e_energy = electron_potential[e];
    
     //if(!electron_transport_list[e]) return;
     if(omp_uniform_random[thread]() > exp(ea_rate*sqrt(E_f_A/e_energy))) {
        double deltaE = sqrt(phonon_energy*E_f_A);
        if( e_energy + deltaE > (E_f_A+37.0) ) return;
-      //const   int size = electron_nearest_electron_list[e][0];
-     // const double DoS_width = 4;//AJ
-     // const double FD_width = std::min(size - 1.0, ee_density/3.0)/(3*constants::kB_r*300.0+E_f_A - core_cutoff);
-     // double e_dos; 
-     // double d_e_dos;
-        
-        // int hist;
-        // if(e_energy < transport_cutoff) {hist = int(std::max(0.0,  floor((e_energy - core_cutoff)/4.0))); e_dos = DoS_width*FD_width;}
-        // else {hist = int(std::max(ee_dos_hist[0].size() -1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy - transport_cutoff)/1.0)));  e_dos = DoS_width*FD_width/4.0;}
-        // double e_occupation = double(ee_dos_hist[e].at(hist))/e_dos;
 
-        // if(e_energy + deltaE < transport_cutoff) {hist = int(std::min(0.0,  floor((e_energy + deltaE - core_cutoff)/4.0)));  d_e_dos = DoS_width*FD_width;} 
-        // else {hist = int(std::max(ee_dos_hist[0].size() -1.0, ((transport_cutoff-core_cutoff)/4.0) + floor((e_energy + deltaE - transport_cutoff)/1.0)));  d_e_dos = DoS_width*FD_width/4.0;}
-        // double d_e_occupation = double(ee_dos_hist[e].at(hist))/d_e_dos;
-
-        // if(e_energy < transport_cutoff) e_occupation = 1.0;
-        // if(e_energy + deltaE < transport_cutoff) d_e_occupation = 1.0;
-        // if(e_occupation - d_e_occupation == 0.0) return;
-      // if(scattering_velocity + deltaE < transport_cutoff) {
-      //   DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
-      //   DoS1_n = DoS1;
-      //   for (int i = 1; i < size ; i++) {
-      //     if( ((scattering_velocity + deltaE -  0.5*DoS_width) < core_cutoff) || ((electron_potential[electron_nearest_electron_list[e][i)) < scattering_velocity + deltaE + 0.5*DoS_width) \
-      //     && (electron_potential[electron_nearest_electron_list[e][i)) > scattering_velocity + deltaE - 0.5*DoS_width) ) ) {
-      //       DoS1 -= 1.0;
-      //       if(DoS1 < 0) {DoS1 = 0; break;}
-      //     }
-      //   }
-      // } else {
-      //   DoS1 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))/6.0);
-      //   DoS1_n = DoS1;
-      //   for (int i = 1; i < size ; i++) {
-      //     if( ((scattering_velocity + deltaE -  0.25) < core_cutoff) || ((electron_potential[electron_nearest_electron_list[e][i)) < scattering_velocity + deltaE + 0.25) \
-      //     && (electron_potential[electron_nearest_electron_list[e][i)) > scattering_velocity + deltaE - 0.25) ) ) {
-      //       DoS1 -= 1.0;
-      //       if(DoS1 < 0) {DoS1 = 0; break;}
-      //     }
-      //   }
-      // }
-      // if(scattering_velocity < transport_cutoff) {
-      //   DoS2 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)));
-      //   DoS2_n = DoS2;
-      //   for (int i = 1; i < size ; i++) {
-      //     if ( (scattering_velocity - 0.5*DoS_width) < core_cutoff || ((electron_potential[electron_nearest_electron_list[e][i)) < scattering_velocity + 0.5*DoS_width) \
-      //     && (electron_potential[electron_nearest_electron_list[e][i)) > scattering_velocity - 0.5*DoS_width) ) ) {
-      //       DoS2 -= 1.0;
-      //       if(DoS2 < 0) {DoS2 = 0; break;}
-      //     }
-      //   }
-      // } else {
-      //   DoS2 = int(round(DoS_width*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))/6.0);
-      //   DoS2_n = DoS2;
-      //   for (int i = 1; i < size ; i++) {
-      //     if ( (scattering_velocity - 0.25) < core_cutoff || ((electron_potential[electron_nearest_electron_list[e][i)) < scattering_velocity + 0.25) \
-      //     && (electron_potential[electron_nearest_electron_list[e][i)) > scattering_velocity - 0.25) ) ) {
-      //       DoS2 -= 1.0;
-      //       if(DoS2 < 0) {DoS2 = 0; break;}
-      //     }
-      //   }
-      // }
-     // if(e_occupation > 180.0/195.0 && d_e_occupation > 180.0/195.0) return;
-      
-      if((return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) - return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)) < 1e-3) return;
-      if(return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)) deltaE *= -1.0;
-      if(Tp <= Te) deltaE *= -1.0;
+      if((return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) - return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)) < 1e-4) return;
+     // if(return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)) deltaE *= -1.0;
+      if(Tp < Te) deltaE *= -1.0;
       if(e_energy + deltaE < core_cutoff ) return;
 
       // relaxation_time_hist[3*e].at(int(floor((electron_potential[e]-core_cutoff)/0.25)) )++;

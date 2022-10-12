@@ -125,7 +125,7 @@ for(int a = 0; a < 1200; a++) {
 
     stopwatch_t castle_watch;
     castle_watch.start();
-     omp_threads = 32;
+     omp_threads = 8;
     equilibrium_step = true;
     //========
     // Initialize the lattice, electrons, and starting forces
@@ -190,8 +190,8 @@ void initialize () {
     lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
     CASTLE_output_rate = sim::partial_time;
     dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
-    TTMe = TTMp = d_TTMe = d_TTMp = Tp = Te = sim::temperature;
-    //Te = 1300.0;
+    TTMe = TTMp = d_TTMe = d_TTMp = Tp = Te = d_Tp = d_Te = sim::temperature;
+    // Te += 1.0;
     total_time_steps = sim::equilibration_time; //100
     CASTLE_MD_rate = sim::CASTLE_MD_rate;
   
@@ -224,20 +224,20 @@ void initialize () {
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
     applied_voltage = sqrt(1.60218e-19*2.0*sim::applied_voltage/constants::eps_0/(1e-30*lattice_width * lattice_height * lattice_depth)); //eV -> V/m
-    n_f = 1.0e30 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
-    E_f = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
+    n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
+    E_f = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
     E_f_A = E_f*1e20; //AJ
     mu_f = 1e20*5 * E_f / (3.0 * conduction_electrons);//Fermi-level
     v_f = sqrt(2 * E_f_A * constants::m_e_r_i); // A/fs
 
     a_specific_heat = 25.0 /6.02e3; // //sim::TTCl; //J/K/mol -> .at(e20/Na) AJ/K/e-   
     a_specific_heat_i = 1.0 / a_specific_heat;
-    a_heat_capacity = 1.14e-27*a_specific_heat * n_f; //AJ/K/particle .at() AJ/K/nm**3
+    a_heat_capacity = 1.14*a_specific_heat * n_f; //AJ/K/particle .at() AJ/K/nm**3
     a_heat_capacity_i = 1.0 / a_heat_capacity;
 
     e_specific_heat = 0.5*M_PI*M_PI*constants::kB*constants::kB/E_f; // gamma; //J/K**2/e- 
     e_specific_heat_i = 1.0 / e_specific_heat;
-    e_heat_capacity = (10.4)*(1.0+0.084)*1e-7*e_specific_heat * n_f; //J/K/e- -> AJ/K**2/nm**3
+    e_heat_capacity = (10.4)*(1.0+0.084)*1e20*e_specific_heat * n_f; //J/K/e- -> AJ/K**2/nm**3
     e_heat_capacity_i = 1.0 / e_heat_capacity;
 
     ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/constants::hbar_r; // meV**2 -> AJ/fs
@@ -304,8 +304,8 @@ void initialize () {
              if (err::check) std::cout << "Particles a movin" << std::endl;
   
     std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
-    ", ea_rate@300K(J/s/K/m**3): " << -1e-5*ea_rate*n_f/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << " n_f " << 1/(n_f*1e-30) << std::fixed << std::endl;
-    G = -1e-27*ea_rate*n_f/300.0; //J/s/K/m**3 []
+    ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << " n_f " << 1/(n_f*1e-30) << std::fixed << std::endl;
+    G = -1.0*ea_rate*n_f/300.0; //J/s/K/m**3 []
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
     std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0)) << " above transport cutoff; " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))) << " below" << std::endl;
@@ -326,8 +326,8 @@ void initialize () {
 void initialize_cell_omp() {
   double test = sqrt(-1.0)* sqrt(-1.0);
 
-  if (test != test) std::cout << "test passed " << test << std::endl;
-  else std::cout << "test failed " << test << std::endl;
+  // if (test != test) std::cout << "test passed " << test << std::endl;
+  // else std::cout << "test failed " << test << std::endl;
   //have each thread deal with a given cell, with the cell integration list organized by nearest electrons
   // as well as nearest neighbor electrons. Reset for the sorting will occur at cell_width / (v_t * dt) time steps  
   
@@ -359,7 +359,7 @@ void initialize_cell_omp() {
     cell_lattice_coordinate.at(c).resize(3);
   }
   int cell_count = 0;
-      std::cout << "cell integration arrays generated." << std::endl;
+    if(err::check)   std::cout << "cell integration arrays generated." << std::endl;
 
   //omp lattice coordinates map
   for(int i = 0; i < x_omp_cells; i++) {
@@ -375,7 +375,7 @@ void initialize_cell_omp() {
       }
     }
   }
-    std::cout << "lattice coordinate arrays initiated." << std::endl;
+  if(err::check)   std::cout << "lattice coordinate arrays initiated." << std::endl;
  
   //lattice cell division
   //int current_lattice_current_end;
@@ -421,7 +421,7 @@ void initialize_cell_omp() {
   cell_nearest_neighbor_list.resize(total_cells);
   std::vector<int> spiral_cell_counter;
   spiral_cell_counter.resize(total_cells, 0);
-  std::cout << "electrons in cells" << std::endl;
+  if(err::check) std::cout << "electrons in cells" << std::endl;
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
     cell_nearest_neighbor_list.at(c).resize(27); 
@@ -463,18 +463,20 @@ void initialize_cell_omp() {
   }
   
   
-    std::cout << "spiral integration coordiantes initialized." << std::endl;
+    if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
       omp_set_dynamic(0);
-      omp_set_num_threads(omp_threads);
+ 
 
-    int max_x_threads = x_omp_cells / 2;
-    int max_y_threads = y_omp_cells / 2;
-    int max_z_threads = z_omp_cells / 2;
+    const int max_x_threads = 2;
+    const int max_y_threads = 2;
+    const int max_z_threads = 2;
 
     int max_total_threads = max_x_threads * max_y_threads * max_z_threads;
-    
-   // omp_set_num_threads(omp_threads);
+    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
+    omp_threads = int(std::min(double(max_total_threads), double(omp_threads)));
+
+    omp_set_num_threads(omp_threads);
     cells_per_thread = total_cells / omp_threads;
     std::cout << "thread count " << omp_threads << ", " << cells_per_thread << ", " << total_cells << ", " << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << std::endl;
     lattice_cells_per_omp.resize(omp_threads);
@@ -497,7 +499,7 @@ void initialize_cell_omp() {
       
       //double decker cells
     
-     lattice_cells_per_omp[thread].at(l) = lattice_cell_coordinate.at((thread*max_x_threads/2)%x_omp_cells + int(floor(l/(2*max_z_threads)))).at((max_y_threads/2)*(int(floor(thread*max_y_threads/(2*x_omp_cells)))%max_y_threads) + int(floor(l/(max_z_threads)))%(max_z_threads/2)).at((max_z_threads)*floor(thread/(x_omp_cells* y_omp_cells/4)) + (l % (max_z_threads)));
+     lattice_cells_per_omp[thread].at(l) = lattice_cell_coordinate.at((thread*max_x_threads)%x_omp_cells + int(floor(l/(max_y_threads*max_z_threads)))).at((max_y_threads)*(int(floor(thread/(max_x_threads)))%(max_y_threads)) + int(floor(l/(max_z_threads)))%(max_y_threads)).at((max_z_threads)*floor(thread/(max_x_threads*max_y_threads)) + (l % (max_z_threads)));
       
       //single decker cells
      // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells)))%2).at( l % (z_omp_cells));
@@ -549,7 +551,7 @@ void initialize_cell_omp() {
       if(abs(z_comp[l] - z_comp[l+1]) < 1 && y_comp[l] == y_comp[l+1] && x_comp[l] == x_comp[l+1]) std::cout <<  z_comp[l] << ", " <<  z_comp[l+1] << ", " << l << ", " << l+1 << std::endl;
     }
   }
-      std::cout << " checkerboard omp parallelisation scheme tested" << std::endl;
+    if(err::check)  std::cout << " checkerboard omp parallelisation scheme tested" << std::endl;
     // switch (omp_checkerboard_scheme)
     // {
     // case omp_checkerboard_scheme==1:    
@@ -730,9 +732,9 @@ void initialize_electrons() {
     electron_ea_scattering_list.resize(conduction_electrons);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-30))));
-     ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
-    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-30));
+    const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-3))));
+     ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
+    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
   std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
@@ -1705,17 +1707,18 @@ void output_data() {
 
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << Te*Te*e_heat_capacity * 1e7 << ", " << Tp*a_heat_capacity*1e7 << ", " 
-      << Te << ", " << Tp << ", "  \
-      << TTMe << ", " << TTMp << ", " << I << ", " << variance << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
-      << e_a_scattering_count << ", " << e_e_scattering_count  << ", " << x_flux << ", " << y_flux << ", " << z_flux  << ", " \
-       << std::endl;
-    }
-
-    else {
+      << d_Te*Te*e_heat_capacity << ", "  << d_Tp*a_heat_capacity << ", " <<  (Te*Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
+      << Te << ", " << Tp << ", " << TEKE << ", " << TLE << ", " 
+      << d_TTMe << ", " << d_TTMp << ", " <<  I*double(CASTLE_output_rate) << ", " << variance << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
+      << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / 1 << ", " << double(e_e_scattering_count) / double(1) << ", " << \
+      double(ee_core_scattering_count) / double(1) << ", " << double(ee_transport_scattering_count) / double(1) << ", " <<\
+      double(ea_core_scattering_count) / double(1) << ", " << double(ea_transport_scattering_count) / double(1) << ", " <<\
+      double(x_flux) / double(1) << ", " << double(y_flux) / 1 << ", " << double(z_flux) / double(1)  << ", " \
+      << std::endl;
+    } else {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << Te*Te*e_heat_capacity * 1e7 << ", " << Tp*a_heat_capacity*1e7 << ", "  
-      << Te << ", " << Tp << ", " //<< TEKE << ", " << TLE << ", " 
+      << d_Te*Te*e_heat_capacity << ", "  << d_Tp*a_heat_capacity << ", " <<  (Te*Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
+      << d_Te << ", " << d_Tp << ", " << TEKE << ", " << TLE << ", " 
       << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << variance << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << \
       double(ee_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ee_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
@@ -1723,7 +1726,7 @@ void output_data() {
       double(x_flux) / double(CASTLE_output_rate) << ", " << double(y_flux) / CASTLE_output_rate << ", " << double(z_flux) / double(CASTLE_output_rate)  << ", " \
       << std::endl;
     }
-   
+  //  << std::accumulate(electron_potential.begin(), electron_potential.end(), 0.0) << ", "
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
@@ -1733,7 +1736,7 @@ void output_data() {
     ea_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
-    if(Te > 900) transport_cutoff = 102.951;
+    // if(Te > 900) transport_cutoff = 102.951;
   // if(current_time_step > (sim::equilibration_time/2)) ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ);
    // a_a_scattering_count = 0;
 }
