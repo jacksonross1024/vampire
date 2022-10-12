@@ -121,14 +121,14 @@ void update_position(){
         if (x_pos < 0.0) {
           x_pos += lattice_width; 
           x_flux--;
-          if(current_time_step % half_int_var == 0) {
+          if (current_time_step % CASTLE_output_rate == 0) {
             #pragma omp atomic
             flux_index.at(int(std::max(0.0, std::min(99.0,floor((electron_potential[electron] - core_cutoff)/1.0)))))--;
           }
         } else if (x_pos > lattice_width) {
           x_pos -= lattice_width; 
           x_flux++;
-          if(current_time_step % half_int_var == 0) {
+          if (current_time_step % CASTLE_output_rate == 0) {
             #pragma omp atomic
             flux_index.at(int(std::max(0.0, std::min(99.0,floor((electron_potential[electron] - core_cutoff)/1.0)))))++; 
           } 
@@ -265,8 +265,8 @@ void update_dynamics() {
           chosen[count] = select;
           count++;
         }
-      } count = 0;
-      pump = 0.0;
+      } //count = 0;
+      // pump = 0.0;
     #pragma omp parallel for schedule(dynamic, 10) reduction(+:pump, external_potential)
     for (int e = 0; e < conduction_electrons; e++) {
       const  int array_index = 3*e;        
@@ -275,22 +275,22 @@ void update_dynamics() {
      //else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
       else  neighbor_e_e_coulomb(e, array_index);
 // if ()
-      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-        #pragma omp atomic
-        count++;
-        pump += external_potential;
-        electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
-      }
+      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+      //   #pragma omp atomic
+      //   count++;
+      //   pump += external_potential;
+      //   // electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
+      // }
       
       //if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
-      ea_scattering(e, array_index, omp_get_thread_num());
+      if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
     }
-   if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
+  //  if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
   //  TEKE += external_potential;
    ee_scattering();
     pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
   Tp +=  a_heat_capacity_i*1e-27*TLE *n_f/conduction_electrons;
-  Te += (e_heat_capacity_i*1e-27*TEKE*n_f/conduction_electrons/Te) + (e_heat_capacity_i*pump/Te);
+  Te += (e_heat_capacity_i*1e-27*TEKE*n_f/conduction_electrons/Te);// + (e_heat_capacity_i*pump/Te);
  
         if (err::check) std::cout << "reset scattering." << std::endl;
        
