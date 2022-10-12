@@ -244,7 +244,7 @@ void update_dynamics() {
         //hv(dt)/fs
         photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - ((10.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((10.0 / dt)+sim::equilibration_time)))))); // AJ/fs/nm**3
         pump = 1e3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
-        external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
+        //external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
      //   std::cout << photons_at_dt << std::endl;
         TTMe = d_TTMe;
         TTMp = d_TTMp;
@@ -267,7 +267,7 @@ void update_dynamics() {
         }
       } //count = 0;
       // pump = 0.0;
-    #pragma omp parallel for schedule(dynamic, 10) reduction(+:pump, external_potential)
+    #pragma omp parallel for schedule(dynamic, 10)
     for (int e = 0; e < conduction_electrons; e++) {
       const  int array_index = 3*e;        
       
@@ -275,22 +275,23 @@ void update_dynamics() {
      //else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
       else  neighbor_e_e_coulomb(e, array_index);
 // if ()
-      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-      //   #pragma omp atomic
-      //   count++;
-      //   pump += external_potential;
-      //   // electron_thermal_field(e, array_index, external_potential, omp_get_thread_num());
-      // }
+      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+        #pragma omp atomic
+        count++;
+
+      // pump += external_potential;
+        electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
+      }
       
       //if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
       if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
     }
-  //  if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
+   if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
   //  TEKE += external_potential;
    ee_scattering();
-    pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
+   // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
   Tp +=  a_heat_capacity_i*1e-27*TLE *n_f/conduction_electrons;
-  Te += (e_heat_capacity_i*1e-27*TEKE*n_f/conduction_electrons/Te);// + (e_heat_capacity_i*pump/Te);
+  Te += (e_heat_capacity_i*1e-27*TEKE*n_f/conduction_electrons/Te) + (e_heat_capacity_i*pump/Te);
  
         if (err::check) std::cout << "reset scattering." << std::endl;
        
@@ -298,17 +299,7 @@ void update_dynamics() {
 
 void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread) {
         
-        //  old_vel += EKE;
-   // external_interaction_list[e] = false;
-    // int array_index_y = array_index + 1;
-    // int array_index_z = array_index + 2;
-   // double x_vel = electron_velocity[array_index];//   + ((electron_force[array_index]   + new_electron_force[array_index])   * dt  * constants::K_A / 2); 
-    //double y_vel = electron_velocity[array_index+1];// + ((electron_force[array_index_y) + new_electron_force[array_index_y)) * dt  * constants::K_A / 2);
-    //double z_vel = electron_velocity[array_index+2];// + ((electron_force[array_index_z) + new_electron_force[array_index_z)) * dt  * constants::K_A / 2);
- //   double vel = sqrt((x_vel*x_vel)+(y_vel*y_vel)+(z_vel*z_vel));
-  //  double theta = atan(y_vel / x_vel);
-   // double phi = acos(z_vel / vel);
-    //if(x_vel < 0.0) theta += M_PI;
+    
     const double theta = omp_uniform_random[thread]() * 2.0 * M_PI;
     const double phi   = omp_uniform_random[thread]() * M_PI; 
 
