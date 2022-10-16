@@ -242,7 +242,7 @@ void update_dynamics() {
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
-        photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - ((10.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((10.0 / dt)+sim::equilibration_time)))))); // AJ/fs/nm**3
+        photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - ((40.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((40.0 / dt)+sim::equilibration_time)))))); // AJ/fs/nm**3
         pump = 1e3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
         //external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
      //   std::cout << photons_at_dt << std::endl;
@@ -265,8 +265,8 @@ void update_dynamics() {
           chosen[count] = select;
           count++;
         }
-      } //count = 0;
-       pump = 0.0;
+      } count = 0;
+      //  pump = 0.0;
        Tp = d_Tp;
        Te = d_Te;
     #pragma omp parallel for schedule(dynamic, 10)
@@ -274,15 +274,15 @@ void update_dynamics() {
       const  int array_index = 3*e;        
       
      if(current_time_step % half_int_var == 0) e_e_coulomb(e, array_index);
-    //  else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
+    // //  else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
      else  neighbor_e_e_coulomb(e, array_index);
-// if ()
+
       if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
         #pragma omp atomic
         count++;
 
       // pump += external_potential;
-        // electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
+        electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
       }
       
       //if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
@@ -697,25 +697,16 @@ double electron_applied_voltage(const int e, const int array_index, double& exte
 */
 void ea_scattering(const int e, const int array_index, const int thread) {
 
-   // if(!electron_transport_list[e]) return;
-   // if(Te == Tp) return;
     const double e_energy = electron_potential[e];
-   
-    //if(!electron_transport_list[e]) return;
-    if(omp_uniform_random[thread]() > exp(ea_rate*sqrt(E_f_A/e_energy))) {
-       double deltaE = sqrt(phonon_energy*E_f_A);
-       if( e_energy + deltaE > (E_f_A+37.0) ) return;
+    double deltaE = sqrt(phonon_energy*E_f_A);
+    if(e_energy + deltaE < core_cutoff ) return;
+    if( e_energy + deltaE > (E_f_A+37.0) ) return;
+    const double dist_const = return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) - return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+    if(Tp < Te) deltaE *= -1.0;
 
-      if((return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) - return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)) < 1e-4) return;
-     // if(return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)) deltaE *= -1.0;
-      if(Tp < Te) deltaE *= -1.0;
-      if(e_energy + deltaE < core_cutoff ) return;
-
-      // relaxation_time_hist[3*e].at(int(floor((electron_potential[e]-core_cutoff)/0.25)) )++;
-      // relaxation_time_hist[3*e + 2].at(int(floor((electron_potential[e]-core_cutoff)/0.25)) ) += current_time_step - relaxation_time_hist[3*e + 1].at(int(floor((electron_potential[e]-core_cutoff)/0.25)));
+    if(omp_uniform_random[thread]() > exp(ea_rate*dist_const*sqrt(E_f_A/e_energy))) {
+    
       electron_potential[e] += deltaE;
-     // relaxation_time_hist[3*e + 1].at(int(floor((electron_potential[e]-core_cutoff)/0.25)) ) = current_time_step;
-
       electron_transport_list[e] = true;
       if(electron_potential[e] < transport_cutoff) electron_transport_list[e] = false;
 
@@ -994,7 +985,6 @@ int ee_elastic(const int electron, const int electron_collision, const double le
 
       //if(e_energy - deltaE < transport_cutoff || d_e_energy + deltaE < transport_cutoff) return 0;
     //  if((e_energy + deltaE < transport_cutoff) || (d_e_energy - deltaE < transport_cutoff)) return 0;
-     
         // int blocking_lr;
         // int blocking_hr;
         // double DoS_lhs;
