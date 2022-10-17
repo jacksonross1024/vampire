@@ -49,8 +49,9 @@ int velocity_verlet_step(double time_step) {
     if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
       //    std::cout << current_time_step << "; output updated " << std::endl;
     const int size = ee_dos_hist[0].size();
-    #pragma omp parallel for schedule(dynamic, 100)
+    #pragma omp parallel for schedule(dynamic, 8)
     for(int e = 0; e < conduction_electrons; e++) {
+      electron_ee_scattering_list[e][0] = 0;
       for(int h = 0; h < size; h++) {
         ee_dos_hist[e][h] = 0;
       }
@@ -719,7 +720,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       electron_velocity[array_index+1] = scattering_velocity * sin(theta)*sin(phi);
       electron_velocity[array_index+2] = scattering_velocity * cos(phi); 
     
-     // electron_ee_scattering_list[e][0] = 1;
+      electron_ee_scattering_list[e][0] = 1;
 
       #pragma omp critical(eascattering)
       {
