@@ -125,7 +125,7 @@ for(int a = 0; a < 1200; a++) {
 
     stopwatch_t castle_watch;
     castle_watch.start();
-     omp_threads = 8;
+     omp_threads = sim::CASTLE_omp_threads;
     equilibrium_step = true;
     //========
     // Initialize the lattice, electrons, and starting forces

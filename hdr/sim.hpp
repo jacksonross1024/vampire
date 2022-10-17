@@ -285,6 +285,8 @@ namespace sim{
 	extern bool heat_pulse_sim;
 	extern double applied_voltage;
 	extern double fluence;
+	
+	extern int CASTLE_omp_threads;
 
 	extern double CASTLE_x_vector;
 	extern double CASTLE_y_vector;

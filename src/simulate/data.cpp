@@ -103,6 +103,8 @@ namespace sim{
    bool fermi_function= false;
 
    //CASTLE Input
+   int CASTLE_omp_threads = 1;
+
    bool applied_voltage_sim = false;
    bool heat_pulse_sim = false;
    double applied_voltage = 0.0;

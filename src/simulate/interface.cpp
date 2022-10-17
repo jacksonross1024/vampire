@@ -323,6 +323,13 @@ namespace sim{
          sim::ee_scattering_angle = a;
          return true;
       }
+      test = "omp-threads";
+      if(word == test) {
+         int t = atoi(value.c_str());
+         vin::check_for_valid_int(t, word, line, prefix, 1, 32, "input", "1, 8 or 32");
+         sim::CASTLE_omp_threads = t;
+         return true;
+      }
       //--------------------------------------------------------------------
       // input parameter not found here
       return false;
