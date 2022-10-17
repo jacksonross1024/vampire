@@ -707,7 +707,13 @@ void ea_scattering(const int e, const int array_index, const int thread) {
 
     if(omp_uniform_random[thread]() > exp(ea_rate*dist_const*sqrt(E_f_A/e_energy))) {
     
+      relaxation_time_hist_ea[3*e].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) )++;
+      relaxation_time_hist_ea[3*e + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist_ea[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) );
+      
       electron_potential[e] += deltaE;
+      
+      relaxation_time_hist_ea[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) = current_time_step;
+      
       electron_transport_list[e] = true;
       if(electron_potential[e] < transport_cutoff) electron_transport_list[e] = false;
 
@@ -1093,17 +1099,17 @@ int ee_elastic(const int electron, const int electron_collision, const double le
     if(deltaK != deltaK) return 0;
       if(probability  > exp(-1.0*ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))))) {
         
-        relaxation_time_hist[3*electron].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) )++;
-        relaxation_time_hist[3*electron_collision].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) )++;
+        relaxation_time_hist_ee[3*electron].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) )++;
+        relaxation_time_hist_ee[3*electron_collision].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) )++;
         
-        relaxation_time_hist[3*electron + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist[3*electron + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) );
-        relaxation_time_hist[3*electron_collision + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist[3*electron_collision + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) );
+        relaxation_time_hist_ee[3*electron + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist_ee[3*electron + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) );
+        relaxation_time_hist_ee[3*electron_collision + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist_ee[3*electron_collision + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) );
         
         electron_potential[electron] -= deltaE;
         electron_potential[electron_collision]   += deltaE;
 
-        relaxation_time_hist[3*electron + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) ) = current_time_step;
-        relaxation_time_hist[3*electron_collision + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) ) = current_time_step;
+        relaxation_time_hist_ee[3*electron + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) ) = current_time_step;
+        relaxation_time_hist_ee[3*electron_collision + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[electron]-core_cutoff)/0.25)))) ) = current_time_step;
 
         electron_ee_scattering_list[electron][0] = 1;
         electron_ee_scattering_list[electron_collision][0] = 1;

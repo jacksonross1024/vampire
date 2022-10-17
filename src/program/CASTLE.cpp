@@ -697,7 +697,8 @@ void initialize_electrons() {
     electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
     electron_potential.resize(conduction_electrons, 0);
     ee_dos_hist.resize(conduction_electrons);
-    relaxation_time_hist.resize(3*conduction_electrons);
+    relaxation_time_hist_ee.resize(3*conduction_electrons);
+    relaxation_time_hist_ea.resize(3*conduction_electrons);
     temp_Map.resize(8);
     flux_index.resize(100,0); 
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
@@ -747,9 +748,13 @@ void initialize_electrons() {
         electron_ea_scattering_list.at(e).resize(2,0);
         ee_dos_hist.at(e).resize(70,0);
 
-        relaxation_time_hist[3*e].resize(4*70,0);
-        relaxation_time_hist[3*e+1].resize(4*70,0);
-        relaxation_time_hist[3*e+2].resize(4*70,0);
+        relaxation_time_hist_ee[3*e].resize(4*70,0);
+        relaxation_time_hist_ee[3*e+1].resize(4*70,0);
+        relaxation_time_hist_ee[3*e+2].resize(4*70,0);
+
+        relaxation_time_hist_ea[3*e].resize(4*70,0);
+        relaxation_time_hist_ea[3*e+1].resize(4*70,0);
+        relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
         const int array_index = 3*e;
         electron_position.at(array_index)     = atoms::x_coord_array.at((e)%lattice_atoms) + 0.5*x_unit_size;
@@ -1531,25 +1536,27 @@ void output_data() {
         flux_index[e] = 0;
       }
 
-    double avg  = 0.0;
-    int total = 0;
-     omp_set_dynamic(0);
+    double ee_avg;
+    double ea_avg;
+    int ee_total;
+    int ea_total;
+    omp_set_dynamic(0);
     omp_set_num_threads(omp_threads);
-   // #pragma omp parallel
-    // {
+ 
     for(int h = 0; h < 4*70; h++) {
-      avg = 0.0;
-      total = 0;
-    //  #pragma omp for reduction(+:avg) reduction(+:total)
+      ee_avg = 0.0;
+      ea_avg = 0.0;
+      ee_total = 0;
+      ea_total = 0;
       for(int e = 0; e < conduction_electrons; e++) { 
-        avg += double(relaxation_time_hist[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist[3*e][h]) );
-        total += relaxation_time_hist[3*e][h];
-
+        ee_avg += double(relaxation_time_hist_ee[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee[3*e][h]) );
+        ea_avg += double(relaxation_time_hist_ea[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ea[3*e][h]) );
+        if(relaxation_time_hist_ee[3*e + 2][h] > 0) ee_total++;
+        if(relaxation_time_hist_ea[3*e + 2][h] > 0) ea_total++;
       }
-      // #pragma omp single
-      // {
-      relaxation_time << double(h)/4.0 + int(round(core_cutoff)) << ", " << avg << "\n";
-      // }
+
+      relaxation_time << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg/double(ee_total) << ", " << ea_avg/double(ea_total) << "\n";
+   
     }
     // }
   //  const int output_count_lr = int(round(transport_cutoff-core_cutoff));

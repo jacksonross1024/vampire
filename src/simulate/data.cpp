@@ -267,7 +267,8 @@ namespace CASTLE {
    std::vector<std::vector< int> > temp_Map;
    std::vector<std::vector< int> > lattice_cells_per_omp;
    std::vector< int> escaping_electrons;
-   std::vector<std::vector< int> > relaxation_time_hist;
+   std::vector<std::vector< int> > relaxation_time_hist_ee;
+   std::vector<std::vector< int> > relaxation_time_hist_ea;
    std::vector<int> flux_index;
 //    MTRand_closed uniform_random;
 //    MTRand_int32 int_random;
