@@ -472,9 +472,9 @@ void initialize_cell_omp() {
     const int max_y_threads = 2;
     const int max_z_threads = 4;
 
-    int max_total_threads = max_x_threads * max_y_threads * max_z_threads;
-    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
-    omp_threads = int(std::min(double(max_total_threads), double(omp_threads)));
+    int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
+   if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
+   omp_threads = int(std::min(double(max_total_threads), double(omp_threads)));
 
     omp_set_num_threads(omp_threads);
     cells_per_thread = total_cells / omp_threads;
@@ -489,7 +489,7 @@ void initialize_cell_omp() {
     // if(omp_threads == max_y_threads) omp_checkerboard_scheme = 2;
    // std::cout << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << ", " <<  cells_per_thread << ", " << max_x_threads << ", " << max_y_threads << ", " << max_z_threads << std::endl;
     omp_set_dynamic(0);
-       omp_set_num_threads(omp_threads);
+    omp_set_num_threads(omp_threads);
     #pragma omp parallel
     {
     const int thread = omp_get_thread_num();
@@ -499,7 +499,7 @@ void initialize_cell_omp() {
       
       //double decker cells
     
-     lattice_cells_per_omp[thread].at(l) = lattice_cell_coordinate.at((thread*max_x_threads)%x_omp_cells + int(floor(l/(max_y_threads*max_z_threads)))).at((max_y_threads)*(int(floor(thread/(max_x_threads)))%(max_y_threads)) + int(floor(l/(max_z_threads)))%(max_y_threads)).at((max_z_threads)*floor(thread/(max_x_threads*max_y_threads)) + (l % (max_z_threads)));
+     lattice_cells_per_omp[thread].at(l) = lattice_cell_coordinate.at((thread*max_x_threads)%x_omp_cells + int(floor(l/(max_y_threads*max_z_threads)))).at((max_y_threads)*(int(floor(thread*max_x_threads/(x_omp_cells)))%(y_omp_cells/ max_y_threads)) + int(floor(l/(max_z_threads)))%(max_y_threads)).at((max_z_threads)*floor(thread/(x_omp_cells*y_omp_cells/(max_x_threads*max_y_threads))) + (l % (max_z_threads)));
       
       //single decker cells
      // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells)))%2).at( l % (z_omp_cells));
