@@ -260,7 +260,7 @@ namespace CASTLE {
     extern void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
    //  double return_phonon_distribution(const double& epsilon, const double& beta);
     
-    extern double return_phonon_distribution(const double epsilon, const double beta);
+    extern double return_fermi_distribution(const double epsilon, const double beta);
 }
 
 

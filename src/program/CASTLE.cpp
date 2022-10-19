@@ -27,7 +27,7 @@
 
 namespace CASTLE {
 
-// double return_phonon_distribution(const double& epsilon, const double& beta );
+// double return_fermi_distribution(const double& epsilon, const double& beta );
 void create() {
 
             if (err::check) std::cout << "Creating CASTLE..." << std::endl; 
@@ -1273,7 +1273,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
     while(count < conduction_electrons) { 
 
       double epsilon = max - step_size*energy_step;
-      int occupation = int(round((conduction_electrons/(max-min))*0.05*(return_phonon_distribution((epsilon-E_f_A)/E_f_A, beta)+return_phonon_distribution((epsilon - 0.5*step_size - E_f_A)/E_f_A, beta))));
+      int occupation = int(round((conduction_electrons/(max-min))*0.05*(return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta)+return_fermi_distribution((epsilon - 0.5*step_size - E_f_A)/E_f_A, beta))));
      
      // int steps = round(1.0 / double(occupation));
       for(int o = 0; o < occupation; o++) {
@@ -1284,7 +1284,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
  
         if(count == conduction_electrons) break;
       }
-      if(1 - return_phonon_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-4) transport_cutoff = epsilon;
+      if(1 - return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-4) transport_cutoff = epsilon;
       energy_step++;
      // if (epsilon <= min) break;
 
@@ -1297,164 +1297,73 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
  // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
-double return_phonon_distribution(const double epsilon, const double beta) 
+/*
+void create_gaussian_distribution(const std::string& name, std::vector<double>& distribution, const double& beta) {
+
+  char directory [256];
+      if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog. fermi dist" << std::endl;
+      }
+  std::ofstream distrib;
+  distrib.open(string(directory) +"/"+ name);
+  distrib.precision(20);
+
+  double step_size = 0.002;
+  const double max  = E_f_A + 3.0*constants::kB_r*Te;
+  const double min = E_f_A - 3.0*constants::eV_to_AJ;
+  std::cout << "min: " << min << ", max: " << max << std::endl;
+  step_size *= (max-min);
+ // else step_size = 1.0;
+
+  int count = 0;
+  int subCount = 0;
+  int energy_step = 0;
+  if(beta <= 0.000001 ) {
+    while(count < conduction_electrons) {
+      distribution.at(count) = E_f_A;
+      distrib << count << ", " << distribution.at(count) << "\n";
+      count++;
+    }
+  } else {
+    while(count < conduction_electrons) { 
+
+      double epsilon = max - step_size*energy_step;
+      int occupation = int(round((conduction_electrons/(max-min))*0.05*(return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta)+return_fermi_distribution((epsilon - 0.5*step_size - E_f_A)/E_f_A, beta))));
+     
+     // int steps = round(1.0 / double(occupation));
+      for(int o = 0; o < occupation; o++) {
+        distribution.at(count) = epsilon - 0.25*step_size;
+        distrib << count << ", " << distribution.at(count) << "\n";
+        count++;
+        //if (count == conduction_electrons/2) transport_cutoff = epsilon - step_size*0.5;
+ 
+        if(count == conduction_electrons) break;
+      }
+      if(1 - return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-4) transport_cutoff = epsilon;
+      energy_step++;
+     // if (epsilon <= min) break;
+
+   // subCount++;
+    }
+  }
+  //transport_cutoff = 173.78;
+  //transport_cutoff = core_cutoff;
+  
+ // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
+  distrib.close();
+} */
+double return_fermi_distribution(const double epsilon, const double beta) 
 {
   if(beta <= 0.00001) return 1.0;
   else return (1.0/(exp(epsilon/beta) + 1.0));
 }
 
-/*
+// double return_gaussian_distribution(const double epsilon, const double beta) 
+// {
+//   if(beta <= 0.00001) return 1.0;
+//   else return exp(-0.5*((epsilon*epsilon) - E_f_A)/(beta*beta));
+// }
 
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<double> range_distrib(-1,1);
-    std::uniform_real_distribution<double> scattering_prob_distrib(0,1);
-    std::normal_distribution<double> velocity_gaussian_distrib(0.omp_threads,0.1);
-
-    int array_index = 3*e;
-    bool collision = false;
-   // double atom_energy = atomic_phonon_energy.at(2*a);
-
-    
-    double excitation_constant = velocity_gaussian_distrib(gen);
-    
-    double Px = electron_velocity.at(array_index);
-    double Py = electron_velocity.at(array_index+1);
-    double Pz = electron_velocity.at(array_index+2);
-    double P = sqrt(Px*Px+Py*Py+Pz*Pz);
-    double P_p = sqrt(Px*Px+Py*Py);
-    double P_i = sqrt(Pz*Pz);
-    double scattering_velocity = P;
-    double electron_TE = 1e10*(electron_potential.at(e)*constants::K + P*P*constants::m_e*0.5);
-   
-   
-
-    double d_p = sqrt(l_x*l_x+l_y*l_y);
-    double d_i = sqrt(l_z*l_z);
-    double d_r = sqrt((l_x*l_x)+(l_y*l_y)+(l_z*l_z));
-    double polar_value = M_PI * range_distrib(gen);
-    double incline_value = M_PI * range_distrib(gen);
-    double normal_polar_angle = acos((l_x*Px+l_y*Py)/(P_p*d_p));
-    double normal_incline_angle = acos((l_z*Pz) / (P_i*d_i));
-
-    double excitation_energy = abs(excitation_constant)*(electron_TE - atomic_phonon_energy.at(2*a));
-
-    
-    if (excitation_energy > 0) {
-      //  std::cout << electron_TE << ", " << atomic_phonon_energy.at(2*a) << ", " << excitation_energy << ", " << electron_TE - excitation_energy << std::endl;
-        excitation_energy = electron_TE - excitation_energy;
-        
-        scattering_velocity = 1e-5*sqrt(2*excitation_energy/constants::m_e);
-       // std::cout << P - scattering_velocity << std::endl;
-      // if(scattering_velocity < 0) std::cout << P << ", " << scattering_velocity << ", " << P - scattering_velocity <<  std::endl;
-    
-
-        if(normal_polar_angle > M_PI) normal_polar_angle = -1*(normal_polar_angle-M_PI);
-        else if (normal_polar_angle < -1*M_PI) normal_polar_angle = -1*(normal_polar_angle+M_PI);
-
-        if(normal_incline_angle > M_PI) normal_incline_angle = -1*(normal_incline_angle-M_PI);
-        else if (normal_incline_angle < -1*M_PI) normal_incline_angle = -1*(normal_incline_angle+M_PI);
-
-    
-        double polar_scattering_angle = atanl(Py/Px);
-        if(polar_scattering_angle < 0) polar_scattering_angle += M_PI;
-        double incline_scattering_angle = acos(Pz/P);
-
-        double polar_prob = velocity_gaussian_distrib(gen)*polar_value*polar_value* ( ( ((M_PI/2)+normal_polar_angle) * exp( (polar_value-1)*(polar_value-1)/(-8)) )+( ((M_PI/2)-normal_polar_angle) * exp( (polar_value+1)*(polar_value+1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
-        double incline_prob = velocity_gaussian_distrib(gen)*incline_value*incline_value* ( ( ((M_PI/2)+normal_incline_angle)  * exp( (incline_value-1)*(incline_value-1)/(-8)) ) + ( ((M_PI/2)-normal_incline_angle) * exp( (incline_value-1)*(incline_value-1)/(-8)) ) )/(d_r*2*M_PI*sqrt(2*M_PI));
-    
-        if(scattering_prob_distrib(gen) < polar_prob) {
-            polar_scattering_angle = polar_value - normal_polar_angle;
-      //  scattering_velocity *= velocity_gaussian_distrib(gen);
-            collision = true;
-        }
-        if(scattering_prob_distrib(gen) < incline_prob) {
-            incline_scattering_angle = incline_value - normal_incline_angle;
-        //scattering_velocity *= ;
-            collision = true;
-        }
-   // std::cout << scattering_velocity << std::endl;
-        if(collision) {
-        
-            if(scattering_velocity < P) {
-              //  if(electron_TE - atomic_phonon_energy.at(2*a) < 0) std::cout << "TE: " << electron_TE << ", E_f: " << atomic_phonon_energy.at(2*a) << std::endl;
-                P = scattering_velocity;
-            }
-            
-        
-            #pragma omp critical
-            {
-        
-            atomic_phonon_energy.at(2*a) += excitation_energy;
-            TLE += excitation_energy;
-            }
-        } 
-        //#pragma omp critical
-     //   std::cout << "Scattering Velocity: " << scattering_velocity << ", incoming_velocity" << P << std::endl; //", polar_probability " << polar_prob << ", incline_prob " << incline_prob << ", normal_polar_angle " << normal_polar_angle << ", " << ", polar_scattering_angle " << polar_scattering_angle << ", incline_scattering_angle" << incline_scattering_angle << std::endl;
-        //#pragma omp critical
-      //  TLE += P*P - scattering_velocity*scattering_velocity;
-       // #pragma omp critical
-        //if(TLE != 0) std::cout << TLE << std::endl;
-     //   std::cout << scattering_velocity*1e5 << std::endl;
-        electron_velocity.at(array_index)   = P * cos(polar_scattering_angle)*sin(incline_scattering_angle);
-        electron_velocity.at(array_index+1) = P * sin(polar_scattering_angle)*sin(incline_scattering_angle);
-        electron_velocity.at(array_index+2) = P * cos(incline_scattering_angle); 
-    }
-
-    //TLE += atomic_phonon_energy.at(2*a);
-    return 0;//TLE;
-}
-
-double e_p_scattering(int e, int a, const double& x_distance, const double& y_distance, const double& z_distance) {
-   
-    int b;
-    
-    double d_x,d_y,d_z;
-   
-    std::srand(std::time(nullptr));
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    std::uniform_real_distribution<double> phonon_jump_distrib(0,1);
-    std::uniform_int_distribution<> phonon_random_walk(0,26);
-
-    double atomic_energy = atomic_phonon_energy.at(2*a);
-    int p_p_coupling;
-    int p_e_reverse_coupling; // = atomic_phonon_energy.at(2*a + 1);
-    int array_index = 3*e;
-    double scattering_velocity = sqrt((electron_velocity.at(array_index)*electron_velocity.at(array_index)) + (electron_velocity.at(array_index+1)*electron_velocity.at(array_index+1)) + (electron_velocity.at(array_index+2)*electron_velocity.at(array_index+2)));
-    double length = sqrt((x_distance*x_distance)+(y_distance*y_distance)+(z_distance*z_distance));
-    double electron_energy = 0.5*constants::m_e*1e10*scattering_velocity*scattering_velocity;
-    double excitation_energy = exp(-1*length)*(electron_energy - atomic_energy);
-    if(excitation_energy > 0) {
-        if(phonon_jump_distrib(gen) > 0.2*exp(-1*excitation_energy)) {
-            #pragma omp critical 
-            {
-            atomic_phonon_energy.at(2*a) += excitation_energy;
-            atomic_phonon_energy.at(2*a +1)++;
-            TLE += excitation_energy;
-            }
-            scattering_velocity -= 1e-5*sqrt(2*excitation_energy/constants::m_e);
-            
-        }
-    } else {
-        if(phonon_jump_distrib(gen) < 0.1*p_e_reverse_coupling*exp(-1*length)) {
-            #pragma omp critical 
-            {
-            atomic_phonon_energy.at(2*a) += excitation_energy;
-            atomic_phonon_energy.at(2*a+1) = 0;
-            TLE += excitation_energy;
-            }
-            scattering_velocity += 1e-5*sqrt(-2*excitation_energy/constants::m_e);
-        
-        } else {
-            #pragma omp critical
-            atomic_phonon_energy.at(2*a+1)++;
-        }
-    }
-    return 0;
-} 
-*/
 void output_data() {
   
     //=========

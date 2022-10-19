@@ -262,12 +262,12 @@ void update_dynamics() {
       while(count < photons_at_dt) {
         int select = int(omp_uniform_random[omp_get_thread_num()]()*2147483647) % (conduction_electrons);
         double e_energy = electron_potential[select];
-        if(return_phonon_distribution((e_energy+photon_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < (1.0-1e-3)) {
+        if(return_fermi_distribution((e_energy+photon_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < (1.0-1e-3)) {
           chosen[count] = select;
           count++;
         }
       } count = 0;
-      //  pump = 0.0;
+       pump = 0.0;
        Tp = d_Tp;
        Te = d_Te;
     #pragma omp parallel for schedule(dynamic, 10)
@@ -278,19 +278,18 @@ void update_dynamics() {
     // //  else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
      else  neighbor_e_e_coulomb(e, array_index);
 
-      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-        #pragma omp atomic
-        count++;
-
-      // pump += external_potential;
-        electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
-      }
+      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+      //   #pragma omp atomic
+      //   count++;
+      // // pump += external_potential;
+      //   electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
+      // }
       
-      //if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
+      if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
       if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
-  //  TEKE += external_potential;
+   TEKE += external_potential;
    ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
   d_Tp =  a_heat_capacity_i*TLE *n_f/conduction_electrons + Tp;
@@ -651,8 +650,6 @@ double electron_applied_voltage(const int e, const int array_index, double& exte
   electron_velocity[array_index] += 5e-11*dt*applied_voltage*constants::e_A*constants::m_e_r_i; //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
   const double deltaE = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) - electron_potential[e];
 
-
-  // external_potential += deltaE;
   electron_potential[e] += deltaE;
  
   return deltaE;
@@ -702,7 +699,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double deltaE = sqrt(phonon_energy*E_f_A);
     if(e_energy + deltaE < core_cutoff ) return;
     if( e_energy + deltaE > (E_f_A+37.0) ) return;
-    const double dist_const = return_phonon_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) - return_phonon_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+    const double dist_const = return_fermi_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) - return_fermi_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
     if(Tp < Te) deltaE *= -1.0;
 
     if(omp_uniform_random[thread]() > exp(ea_rate*dist_const*sqrt(E_f_A/e_energy))) {
@@ -1084,8 +1081,8 @@ int ee_elastic(const int electron, const int electron_collision, const double le
         // //       }
         // //    //   std::cout << DoS2_n << ", " << DoS2 << ", " << electron_collision << ", " << deltaE << std::endl;
         // //     } 
-          const double e_occupation = 1.0 - return_phonon_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
-          const double d_e_occupation = 1.0 - return_phonon_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+          const double e_occupation = 1.0 - return_fermi_distribution((e_energy-deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+          const double d_e_occupation = 1.0 - return_fermi_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
 
         //   if(e_occupation < (15.0/195.0) || d_e_occupation < (15.0/195.0)) return 0; 
         
