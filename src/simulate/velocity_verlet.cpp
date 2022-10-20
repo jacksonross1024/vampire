@@ -285,11 +285,11 @@ void update_dynamics() {
       //   electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
       // }
       
-      if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
+      // if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
       if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
-   TEKE += external_potential;
+  //  TEKE += external_potential;
    ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
   d_Tp =  a_heat_capacity_i*TLE *n_f/conduction_electrons + Tp;
@@ -704,12 +704,12 @@ void ea_scattering(const int e, const int array_index, const int thread) {
 
     if(omp_uniform_random[thread]() > exp(ea_rate*dist_const*sqrt(E_f_A/e_energy))) {
     
-      relaxation_time_hist_ea[3*e].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) )++;
-      relaxation_time_hist_ea[3*e + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist_ea[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) );
+      relaxation_time_hist_ee[3*e].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) )++;
+      relaxation_time_hist_ee[3*e + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist_ea[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) );
       
       electron_potential[e] += deltaE;
       
-      relaxation_time_hist_ea[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) = current_time_step;
+      relaxation_time_hist_ee[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) = current_time_step;
       
       electron_transport_list[e] = true;
       if(electron_potential[e] < transport_cutoff) electron_transport_list[e] = false;

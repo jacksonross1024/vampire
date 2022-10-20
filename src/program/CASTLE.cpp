@@ -1454,18 +1454,18 @@ void output_data() {
  
     for(int h = 0; h < 4*70; h++) {
       ee_avg = 0.0;
-      ea_avg = 0.0;
+      // ea_avg = 0.0;
       ee_total = 0;
-      ea_total = 0;
+      // ea_total = 0;
       for(int e = 0; e < conduction_electrons; e++) { 
         ee_avg += double(relaxation_time_hist_ee[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee[3*e][h]) );
-        ea_avg += double(relaxation_time_hist_ea[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ea[3*e][h]) );
+        // ea_avg += double(relaxation_time_hist_ea[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ea[3*e][h]) );
         if(relaxation_time_hist_ee[3*e + 2][h] > 0) ee_total++;
-        if(relaxation_time_hist_ea[3*e + 2][h] > 0) ea_total++;
+        // if(relaxation_time_hist_ea[3*e + 2][h] > 0) ea_total++;
       }
 
-      relaxation_time << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg/double(ee_total) << ", " << ea_avg/double(ea_total) << "\n";
-   
+      relaxation_time << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg/std::max(1.0,double(ee_total)) << ", " << ee_total  << "\n";
+      // << ", " << ea_avg/std::max(1.0,double(ea_total)) << ", " << ea_total
     }
     // }
   //  const int output_count_lr = int(round(transport_cutoff-core_cutoff));
