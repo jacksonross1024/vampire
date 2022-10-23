@@ -699,11 +699,11 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double deltaE = sqrt(phonon_energy*E_f_A);
     if(e_energy + deltaE < core_cutoff ) return;
     if( e_energy + deltaE > (E_f_A+37.0) ) return;
-    double e_occupation   = ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))) /(45.0-6.7);
-    double d_e_occupation = ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy + deltaE - core_cutoff)/1.0))))) /(45.0-6.7);
+    double e_occupation   = ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))) /(45.0-6.5);
+    double d_e_occupation = ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy + deltaE - core_cutoff)/1.0))))) /(45.0-6.5);
     if(Tp < Te) deltaE *= -1.0;
     if(e_occupation < d_e_occupation) deltaE *= -1.0;
-    
+
     if(omp_uniform_random[thread]() > exp(ea_rate*abs(e_occupation-d_e_occupation)*sqrt(E_f_A/e_energy))) {
     
       relaxation_time_hist_ee[3*e].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) )++;
@@ -743,7 +743,7 @@ void ee_scattering() {
   omp_set_dynamic(0);
        omp_set_num_threads(omp_threads);
   const static double q_sq = 0.25;
-  const double e_dos = 17.0;
+  const double e_dos = 45.0;
   #pragma omp parallel reduction(+:e_e_scattering_count, ee_core_scattering_count, ee_transport_scattering_count) 
   {
     
@@ -807,8 +807,7 @@ void ee_scattering() {
 
           if(d_v_x_1!=d_v_x_1 || d_v_y_1!=d_v_y_1 || d_v_z_1!=d_v_z_1 || d_v_x_2!=d_v_x_2 || d_v_y_2!=d_v_y_2 || d_v_z_2!=d_v_z_2) {
             std::cout << v_x << ", " << v_y << ", " << v_z << ", " <<  v_x_2 << ", " << v_y_2 << ", " << v_z_2 << ", " << \
-            x_distance << ", " << y_distance << ", " << z_distance << ", " <<  v_x_dot_product << std::endl;
-            }
+            x_distance << ", " << y_distance << ", " << z_distance << ", " <<  v_x_dot_product << std::endl; }
 
         const double deltaE = -1.0*(0.5*constants::m_e_r*(d_v_x_1*d_v_x_1 + d_v_y_1*d_v_y_1 + d_v_z_1*d_v_z_1) -\
                            0.5*constants::m_e_r*(d_v_x_2*d_v_x_2 + d_v_y_2*d_v_y_2 + d_v_z_2*d_v_z_2));
@@ -821,8 +820,8 @@ void ee_scattering() {
         if( (e_energy - deltaE) > (core_cutoff+70.0) || (d_e_energy + deltaE > (core_cutoff+70.0))) continue;
         if( (e_energy + deltaE) > (core_cutoff+70.0) || (d_e_energy - deltaE > (core_cutoff+70.0))) continue;
 
-        double e_occupation   = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0))))))/(e_dos-6.7));     
-        double d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0))))))/(e_dos-6.7));
+        double e_occupation   = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0))))))/(e_dos-6.5));     
+        double d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0))))))/(e_dos-6.5));
         
         // if(e_occupation > 0.0) {
         //   // e_occupation = 0.0;
@@ -833,7 +832,7 @@ void ee_scattering() {
         //   std::cout << ee_dos_hist[electron_collision].at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0))))) << ", " << int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))) << ", " << d_e_occupation << ", " << 1- return_fermi_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)<< std::endl;
         // } else d_e_occupation = 0.0;
 
-        double e_back_pressure = exp( 50.0*(std::max(0.0, ((ee_dos_hist[electron].at(int(std::min(69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))))/(e_dos+6.7)) - 1.0)-0.149));   
+        double e_back_pressure = exp( 50.0*(std::max(0.0, ((ee_dos_hist[electron].at(int(std::min(69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))))/(e_dos+6.5)) - 1.0)-0.149));   
         if( e_energy - deltaE > transport_cutoff || d_e_energy + deltaE > transport_cutoff || \
             e_energy + deltaE > transport_cutoff || d_e_energy - deltaE > transport_cutoff ) e_back_pressure = 1.0;
 
