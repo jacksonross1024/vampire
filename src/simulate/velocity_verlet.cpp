@@ -699,10 +699,12 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double deltaE = sqrt(phonon_energy*E_f_A);
     if(e_energy + deltaE < core_cutoff ) return;
     if( e_energy + deltaE > (E_f_A+37.0) ) return;
-    const double dist_const = return_fermi_distribution((e_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) - return_fermi_distribution((e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A);
+    double e_occupation   = ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))) /(45.0-6.7);
+    double d_e_occupation = ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy + deltaE - core_cutoff)/1.0))))) /(45.0-6.7);
     if(Tp < Te) deltaE *= -1.0;
-
-    if(omp_uniform_random[thread]() > exp(ea_rate*dist_const*sqrt(E_f_A/e_energy))) {
+    if(e_occupation < d_e_occupation) deltaE *= -1.0;
+    
+    if(omp_uniform_random[thread]() > exp(ea_rate*abs(e_occupation-d_e_occupation)*sqrt(E_f_A/e_energy))) {
     
       relaxation_time_hist_ee[3*e].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) )++;
       relaxation_time_hist_ee[3*e + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist_ea[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) );
