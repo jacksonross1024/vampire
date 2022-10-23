@@ -709,7 +709,7 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 19.0*19.0;
+    e_e_neighbor_cutoff = 20.0*20.0;
     
     half_int_var =  1;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 4;//2*half_int_var;
@@ -1363,18 +1363,34 @@ void output_data() {
     //=========
     // Output equilibration step data
     //=========
-    double variance;
-    double size = 0;
+    double cell_stddev = 0.0;
+    double cell_size = 0.0;
+    double e_stddev = 0.0;
+    double e_size = 0.0;
     for(int l = 0; l < total_cells; l++) {
-     size += cell_integration_lists[l][0];
-
+     cell_size += cell_integration_lists[l][0];
     }  
-    size /= total_cells;
-    variance = 0;
+    cell_size /= total_cells;
+   
     for(int l = 0; l < total_cells; l++) {
-     variance += (cell_integration_lists[l][0] - size)*(cell_integration_lists[l][0] - size);
+     cell_stddev += (cell_integration_lists[l][0] - cell_size)*(cell_integration_lists[l][0] - cell_size);
     } 
-    variance = sqrt(variance/total_cells);
+    cell_stddev = sqrt(cell_stddev/total_cells);
+
+     omp_set_dynamic(0);
+    omp_set_num_threads(4);
+    #pragma omp parallel for reduction(+:e_size)
+    for(int e = 0; e < conduction_electrons; e++) {
+      e_size += electron_nearest_electron_list[e][0];
+    }
+    e_size /= conduction_electrons;
+
+    #pragma omp parallel for reduction(+:e_stddev)
+    for(int e = 0; e < conduction_electrons; e++) {
+      e_stddev += (electron_nearest_electron_list[e][0] - e_size)*(electron_nearest_electron_list[e][0] - e_size);
+    }
+   
+    e_stddev = sqrt(e_stddev/conduction_electrons);
 
     if((current_time_step % (CASTLE_output_rate * CASTLE_MD_rate)) == 0) {
       time_stamp = std::to_string(current_time_step);
@@ -1443,8 +1459,7 @@ void output_data() {
     double ea_avg;
     int ee_total;
     int ea_total;
-    omp_set_dynamic(0);
-    omp_set_num_threads(omp_threads);
+   
  
     for(int h = 0; h < 4*70; h++) {
       ee_avg = 0.0;
@@ -1619,7 +1634,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << d_Te*Te*e_heat_capacity << ", "  << d_Tp*a_heat_capacity << ", " <<  (d_Te*Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << Te << ", " << Tp << ", " << TEKE << ", " << TLE << ", " 
-      << d_TTMe << ", " << d_TTMp << ", " <<  I*double(CASTLE_output_rate) << ", " << variance << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
+      << d_TTMe << ", " << d_TTMp << ", " <<  I*double(CASTLE_output_rate) << ", " << cell_size << ", " << cell_stddev << ", " << e_size << ", " << e_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / 1 << ", " << double(e_e_scattering_count) / double(1) << ", " << \
       double(ee_core_scattering_count) / double(1) << ", " << double(ee_transport_scattering_count) / double(1) << ", " <<\
       double(ea_core_scattering_count) / double(1) << ", " << double(ea_transport_scattering_count) / double(1) << ", " <<\
@@ -1629,7 +1644,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << d_Te*Te*e_heat_capacity << ", "  << d_Tp*a_heat_capacity << ", " <<  (d_Te*Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << d_Te << ", " << d_Tp << ", " << TEKE << ", " << TLE << ", " 
-      << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << variance << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
+      << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << cell_size << ", " << cell_stddev << ", " << e_size << ", " << e_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << \
       double(ee_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ee_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
       double(ea_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ea_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\

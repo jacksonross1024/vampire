@@ -537,8 +537,8 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
        // else 
        ee_dos_hist[e].at(int(std::max(0.0, std::min(69.0, floor((electron_potential[electron]-core_cutoff)/1)))))++;
       
-         if(neighbor_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
-           break; }
+        if(neighbor_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
+        break; }
 
         if (length > e_e_coulomb_cutoff) continue; 
         electron_ee_scattering_list[e][scattering_count*2] = array_index_i/3;
@@ -819,8 +819,8 @@ void ee_scattering() {
         if( (e_energy - deltaE) > (core_cutoff+70.0) || (d_e_energy + deltaE > (core_cutoff+70.0))) continue;
         if( (e_energy + deltaE) > (core_cutoff+70.0) || (d_e_energy - deltaE > (core_cutoff+70.0))) continue;
 
-        double e_occupation   = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0))))))/(e_dos-5.5));     
-        double d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0))))))/(e_dos-5.5));
+        double e_occupation   = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0))))))/(e_dos-6.7));     
+        double d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0))))))/(e_dos-6.7));
         
         // if(e_occupation > 0.0) {
         //   // e_occupation = 0.0;
@@ -831,8 +831,8 @@ void ee_scattering() {
         //   std::cout << ee_dos_hist[electron_collision].at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0))))) << ", " << int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))) << ", " << d_e_occupation << ", " << 1- return_fermi_distribution((d_e_energy+deltaE-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A)<< std::endl;
         // } else d_e_occupation = 0.0;
 
-        double e_back_pressure = 1.0;//exp( 10.0*pow( std::max(0.0, (((ee_dos_hist[electron].at(int(std::min(69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))))/(e_dos+5.5))-1.0) ), 3.0));   
-        // if( e_energy - deltaE > transport_cutoff || d_e_energy + deltaE > transport_cutoff || \
+        double e_back_pressure = exp( 50.0*(std::max(0.0, ((ee_dos_hist[electron].at(int(std::min(69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))))/(e_dos+6.7)) - 1.0)-0.149));   
+        if( e_energy - deltaE > transport_cutoff || d_e_energy + deltaE > transport_cutoff || \
             e_energy + deltaE > transport_cutoff || d_e_energy - deltaE > transport_cutoff ) e_back_pressure = 1.0;
 
         const double k_1_x = v_x*constants::m_over_hbar_sqrt;
@@ -882,6 +882,7 @@ void ee_scattering() {
           if (electron_potential[electron_collision] < transport_cutoff) ee_core_scattering_count++;
           else ee_transport_scattering_count++;
           e_e_scattering_count += 2;
+          if(e_back_pressure > 1.0) e_e_scattering_count += 2;
           }
           break;
         }
