@@ -147,6 +147,7 @@ namespace CASTLE {
     extern std::vector<double> electron_velocity; //Angstroms 
     extern std::vector<double> electron_potential; //A-1
     extern std::vector<std::vector< int> > ee_dos_hist;
+    extern std::vector<std::vector< int > > global_e_dos;
 
     extern std::vector<bool> electron_transport_list;
     extern std::vector<std::vector< int> > electron_integration_list;

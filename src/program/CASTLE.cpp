@@ -225,10 +225,10 @@ void initialize () {
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
     applied_voltage = sqrt(1.60218e-19*2.0*sim::applied_voltage/constants::eps_0/(1e-30*lattice_width * lattice_height * lattice_depth)); //eV -> V/m
     n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
-    E_f = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy // meters
+    E_f = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A = E_f*1e20; //AJ
-    mu_f = 1e20*5 * E_f / (3.0 * conduction_electrons);//Fermi-level
-    v_f = sqrt(2 * E_f_A * constants::m_e_r_i); // A/fs
+    mu_f = 5.0 * E_f_A / (3.0 * conduction_electrons);//Fermi-level
+    v_f = sqrt(2.0 * E_f_A * constants::m_e_r_i); // A/fs
 
     a_specific_heat = 25.0 /6.02e3; // //sim::TTCl; //J/K/mol -> .at(e20/Na) AJ/K/e-   
     a_specific_heat_i = 1.0 / a_specific_heat;
@@ -339,10 +339,10 @@ void initialize_cell_omp() {
   old_cell_integration_lists.resize(total_cells);
 
   for(int i=0; i < total_cells; i++) {
-    cell_integration_lists.at(i).resize(int(4*double(conduction_electrons) / double(total_cells)), 0);
-    old_cell_integration_lists.at(i).resize(int(4*double(conduction_electrons) / double(total_cells)), 0);
-    cell_integration_lists.at(i)[0] = 1;
-    old_cell_integration_lists.at(i)[0] = 1;
+    cell_integration_lists[i].resize(int(4*double(conduction_electrons) / double(total_cells)), 0);
+    old_cell_integration_lists[i].resize(int(4*double(conduction_electrons) / double(total_cells)), 0);
+    cell_integration_lists[i][0] = 1;
+    old_cell_integration_lists[i][0] = 1;
   }
 
   escaping_electrons.resize( int(double(conduction_electrons) / double(total_cells)));
@@ -373,7 +373,10 @@ void initialize_cell_omp() {
  
   //lattice cell division
   //int current_lattice_current_end;
- #pragma omp parallel for schedule(static)
+//  #pragma omp parallel
+ 
+  // if(omp_get_num_threads() != omp_threads) std::cout << "omp pragma error " << omp_get_num_threads() << " != " << omp_threads << std::endl;
+  // #pragma omp for 
   for(int e = 0; e < conduction_electrons; e++) {
     const int array_index = 3*e;
      int x_cell = int(floor(electron_position.at(array_index) / x_step_size));
@@ -385,7 +388,7 @@ void initialize_cell_omp() {
      int z_cell = int(floor(electron_position.at(array_index+2) / z_step_size));
       //if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position.at(array_index+2) << ", " << z_step_size << ", " << floor(electron_position.at(array_index+2) / z_step_size) << std::endl;
     
-    if(x_cell != x_cell || y_cell != y_cell || z_cell != z_cell) std::cout << x_cell << ", " << y_cell << ", " << z_cell << ", " <<\
+    if(x_cell != x_cell || y_cell != y_cell || z_cell != z_cell ) std::cout << x_cell << ", " << y_cell << ", " << z_cell << ", " <<\
     int(floor(electron_position.at(array_index) / x_step_size)) << ", " << int(floor(electron_position.at(array_index+1) / y_step_size)) << ", " << \
     int(floor(electron_position.at(array_index+2) / z_step_size)) << std::endl;
 
@@ -412,6 +415,7 @@ void initialize_cell_omp() {
             omp_cell << ", " << current_lattice_current_end << ", " << cell_integration_lists.at(omp_cell).size() << ", " << e << std::endl;
       
   }
+ 
   cell_nearest_neighbor_list.resize(total_cells);
   std::vector<int> spiral_cell_counter;
   spiral_cell_counter.resize(total_cells, 0);
@@ -459,9 +463,6 @@ void initialize_cell_omp() {
   
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
-      omp_set_dynamic(0);
- 
-
     const int max_x_threads = 2;
     const int max_y_threads = 2;
     const int max_z_threads = 2;
@@ -470,7 +471,6 @@ void initialize_cell_omp() {
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
    omp_threads = int(std::min(double(max_total_threads), double(omp_threads)));
 
-    omp_set_num_threads(omp_threads);
     cells_per_thread = total_cells / omp_threads;
     std::cout << "thread count " << omp_threads << ", " << cells_per_thread << ", " << total_cells << ", " << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << std::endl;
     lattice_cells_per_omp.resize(omp_threads);
@@ -482,8 +482,7 @@ void initialize_cell_omp() {
     // if(omp_threads == max_x_threads) omp_checkerboard_scheme = 1;
     // if(omp_threads == max_y_threads) omp_checkerboard_scheme = 2;
    // std::cout << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << ", " <<  cells_per_thread << ", " << max_x_threads << ", " << max_y_threads << ", " << max_z_threads << std::endl;
-    omp_set_dynamic(0);
-    omp_set_num_threads(omp_threads);
+
     #pragma omp parallel
     {
     const int thread = omp_get_thread_num();
@@ -693,6 +692,7 @@ void initialize_electrons() {
     ee_dos_hist.resize(conduction_electrons);
     relaxation_time_hist_ee.resize(3*conduction_electrons);
     relaxation_time_hist_ea.resize(3*conduction_electrons);
+    global_e_dos.resize(70);
     temp_Map.resize(8);
     flux_index.resize(100,0); 
     //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
@@ -715,7 +715,7 @@ void initialize_electrons() {
     full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 19.0*19.0;
+    e_e_integration_cutoff = 20.0*20.0;
     e_e_coulomb_cutoff = 14.0*14.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
@@ -731,8 +731,13 @@ void initialize_electrons() {
      ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
     const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
   std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
-      omp_set_dynamic(0);
-       omp_set_num_threads(omp_threads);
+      
+    for(int h = 0; h < 70; h++) {
+      global_e_dos[h].resize(2,0);
+    }
+
+    omp_set_dynamic(0);
+    omp_set_num_threads(omp_threads);
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
@@ -741,7 +746,7 @@ void initialize_electrons() {
         electron_ee_scattering_list.at(e).resize(ee_scattering*2, 0);
         electron_ea_scattering_list.at(e).resize(2,0);
         ee_dos_hist.at(e).resize(70,0);
-
+        
         relaxation_time_hist_ee[3*e].resize(4*70,0);
         relaxation_time_hist_ee[3*e+1].resize(4*70,0);
         relaxation_time_hist_ee[3*e+2].resize(4*70,0);
@@ -1111,17 +1116,21 @@ void initialize_velocities() {
 
     double minimum = E_f_A;
    // transport_cutoff = 106.978;
-    #pragma omp parallel for schedule(static) reduction(+:p_x,p_y,p_z) 
-    for(int e = 0; e < conduction_electrons; e++) {
-      double phi;
-      double theta;
-      double sign;
-      const   int array_index = 3*e;
-   
-      const double energy = electron_potential[int(omp_uniform_random.at(omp_get_thread_num())()*2147483647)%conduction_electrons];
-      if(energy > transport_cutoff) electron_transport_list.at(e) = true;
+    
+    #pragma omp parallel 
+    {
       
-      const double vel = sqrt(2.0*energy*constants::m_e_r_i);
+      #pragma omp for schedule(static) reduction(+:p_x,p_y,p_z) 
+      for(int e = 0; e < conduction_electrons; e++) {
+        double phi;
+        double theta;
+        double sign;
+        const int array_index = 3*e;
+   
+        const double energy = electron_potential[int(omp_uniform_random.at(omp_get_thread_num())()*2147483647)%conduction_electrons];
+        if(energy > transport_cutoff) electron_transport_list.at(e) = true;
+        
+        const double vel = sqrt(2.0*energy*constants::m_e_r_i);
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
           theta = 2.0*M_PI*omp_uniform_random[omp_get_thread_num()]();
@@ -1146,7 +1155,9 @@ void initialize_velocities() {
         p_x += electron_velocity.at(array_index);
         p_y += electron_velocity.at(array_index+1);
         p_z += electron_velocity.at(array_index+2);
+      }
     }
+
    // std::cout << count << std::endl;
    std::cout << "distribution assigned" << std::endl;
       std::ofstream Init_E_vel;
@@ -1161,6 +1172,32 @@ void initialize_velocities() {
 
     core_cutoff = minimum;
     transport_cutoff = core_cutoff + 44.01;
+
+  #pragma omp parallel 
+  {
+    std::vector<int> local_e_dos;
+    local_e_dos.resize(70,0);
+    #pragma omp for nowait
+    for(int e = 0; e < conduction_electrons; e++) {
+      local_e_dos[int(std::min(69.0, std::max(0.0, floor((electron_potential[e] - core_cutoff)/1))))]++;
+    }
+    
+    #pragma omp critical 
+    {
+      for(int h = 0; h < 70; h++) {
+        global_e_dos[h][1] += local_e_dos[h];
+      }
+    }
+  }
+    
+    int total = 0;
+    for(int h = 0 ; h < 70; h++) {
+      // std::cout << h << ", " <<  global_e_dos[h][1] << std::endl;
+      total += global_e_dos[h][1];
+    }
+
+    if(total != conduction_electrons) std::cout <<"hist problem " << total << ", " << conduction_electrons << std::endl;
+
     std::cout << "core cutoff: " << core_cutoff << ", transport cutoff: " << transport_cutoff << std::endl;
     std::cout << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << std::endl;
     for(int e = 0; e < conduction_electrons; e++) {
