@@ -883,7 +883,7 @@ void ee_scattering() {
         
         if(omp_uniform_random[thread]() > exp(ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))))) {
         
-          if(e_energy < transport_cutoff && d_e_energy < transport_cutoff) std::cout <<\
+         // if(e_energy < transport_cutoff && d_e_energy < transport_cutoff) std::cout <<\
             e_energy << ", " << d_e_energy << ", " << e_occupation << ", " << d_e_occupation << ", " << deltaE << ", " << deltaK << ", " <<\
             global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))[0] << ", " << \
             global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))[1] << ", " << \
