@@ -253,7 +253,7 @@ void update_position(){
 void update_dynamics() {
   
   //  int array_index;
-    const static double photon_energy = sim::applied_voltage*constants::eV_to_AJ; //AJ/hv
+     double photon_energy = sim::applied_voltage*constants::eV_to_AJ; //AJ/hv
     //AJ/fs/nm**2 -> [1e-3volume(A**3)/(AJ/hv)) hv/fs 
     const static double photon_rate = 1e-2*power_density*lattice_width*lattice_depth/photon_energy; //hv/fs
     int photons_at_dt = 0; //hv*dt
@@ -300,18 +300,18 @@ void update_dynamics() {
     // //  else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
      else  neighbor_e_e_coulomb(e, array_index);
 
-      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-        #pragma omp atomic
-        count++;
-      // pump += external_potential;
-        electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
-      }
+      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+      //   #pragma omp atomic
+      //   count++;
+      // // pump += external_potential;
+      //   electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
+      // }
       
-      // if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, pump);
+      if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, photon_energy);
       if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
-  //  TEKE += external_potential;
+   TEKE += external_potential;
    ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
   d_Tp =  a_heat_capacity_i*TLE *n_f/conduction_electrons + Tp;
@@ -670,7 +670,8 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
 double electron_applied_voltage(const int e, const int array_index, double& external_potential) {
 
   electron_velocity[array_index] += 5e-11*dt*applied_voltage*constants::e_A*constants::m_e_r_i; //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
-  const double deltaE = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])+(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) - electron_potential[e];
+  const double deltaE = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])\
+  +(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) - electron_potential[e];
 
   electron_potential[e] += deltaE;
  
