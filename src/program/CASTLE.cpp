@@ -308,9 +308,9 @@ void initialize () {
     G = -1.0*ea_rate*n_f/300.0; //J/s/K/m**3 []
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
-    std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0)) << " above transport cutoff; " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff))) << " below" << std::endl;
+    std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0))  << std::endl;
     
-    std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists[0].size() << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
+   if (err::check)  std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists[0].size() << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
     char directory [256];
     if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog. data" << std::endl;
@@ -419,7 +419,7 @@ void initialize_cell_omp() {
   cell_nearest_neighbor_list.resize(total_cells);
   std::vector<int> spiral_cell_counter;
   spiral_cell_counter.resize(total_cells, 0);
-  if(err::check) std::cout << "electrons in cells" << std::endl;
+      if(err::check) std::cout << "electrons in cells" << std::endl;
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
     cell_nearest_neighbor_list.at(c).resize(27); 
@@ -472,7 +472,7 @@ void initialize_cell_omp() {
    omp_threads = int(std::min(double(max_total_threads), double(omp_threads)));
 
     cells_per_thread = total_cells / omp_threads;
-    std::cout << "thread count " << omp_threads << ", " << cells_per_thread << ", " << total_cells << ", " << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << std::endl;
+    if (err::check) std::cout << "thread count " << omp_threads << ", " << cells_per_thread << ", " << total_cells << ", " << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << std::endl;
     lattice_cells_per_omp.resize(omp_threads);
 
     for(int t=0; t< omp_threads;t++){
@@ -730,7 +730,7 @@ void initialize_electrons() {
     const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-3))));
      ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
     const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
-  std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
+        if (err::check)  std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       
     for(int h = 0; h < 70; h++) {
       global_e_dos[h].resize(2,0);
@@ -1098,7 +1098,7 @@ void initialize_velocities() {
     const std::string n = "Init_E_distrib";
     std::cout << "conduction electrons " << conduction_electrons << std::endl;
    create_fermi_distribution(n, electron_potential,constants::kB_r*Te/E_f_A);
-   std::cout << "distribution generated" << std::endl;
+        if (err::check) std::cout << "distribution generated" << std::endl;
   //  const std::string na = "P_distrib";
     //create_phonon_distribution(na, atom_potential,constants::kB_r*Te/E_f_A);
    
@@ -1159,7 +1159,7 @@ void initialize_velocities() {
     }
 
    // std::cout << count << std::endl;
-   std::cout << "distribution assigned" << std::endl;
+        if (err::check) std::cout << "distribution assigned" << std::endl;
       std::ofstream Init_E_vel;
       Init_E_vel.open("Init_E_vel");
     #pragma omp parallel for schedule(static) reduction(min:minimum)
@@ -1199,7 +1199,7 @@ void initialize_velocities() {
     if(total != conduction_electrons) std::cout <<"hist problem " << total << ", " << conduction_electrons << std::endl;
 
     std::cout << "core cutoff: " << core_cutoff << ", transport cutoff: " << transport_cutoff << std::endl;
-    std::cout << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << std::endl;
+    if (err::check) std::cout << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << std::endl;
     for(int e = 0; e < conduction_electrons; e++) {
       // electron_velocity.at(3*e)   -= (p_x/double(conduction_electrons));
       // electron_velocity.at(3*e+1) -= (p_y/double(conduction_electrons));  
@@ -1207,7 +1207,7 @@ void initialize_velocities() {
 
       Init_E_vel << e << ", " << electron_potential.at(e)<< ", " <<  electron_velocity.at(3*e) << ", " << electron_velocity.at(3*e+1) << ", " << electron_velocity.at(3*e+2) << "\n";
     }
-    std::cout << "distribution output" << std::endl;
+   if (err::check)  std::cout << "distribution output" << std::endl;
     
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 }
@@ -1287,7 +1287,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   double step_size = 0.002;
   const double max  = E_f_A + 3.0*constants::kB_r*Te;
   const double min = E_f_A - 3.0*constants::eV_to_AJ;
-  std::cout << "min: " << min << ", max: " << max << std::endl;
+  if (err::check)  std::cout << "min: " << min << ", max: " << max << std::endl;
   step_size *= (max-min);
  // else step_size = 1.0;
 
