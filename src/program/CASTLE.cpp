@@ -1669,7 +1669,7 @@ void output_data() {
 
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << d_Te*Te*e_heat_capacity << ", "  << d_Tp*a_heat_capacity << ", " <<  (d_Te*Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
+      << d_Te*d_Te*e_heat_capacity << ", "  << d_Tp*a_heat_capacity << ", " <<  (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << Te << ", " << Tp << ", " << TEKE << ", " << TLE << ", " 
       << d_TTMe << ", " << d_TTMp << ", " <<  I*double(CASTLE_output_rate) << ", " << cell_size << ", " << cell_stddev << ", " << e_size << ", " << e_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / 1 << ", " << double(e_e_scattering_count) / double(1) << ", " << \
@@ -1679,7 +1679,7 @@ void output_data() {
       << std::endl;
     } else {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << d_Te*Te*e_heat_capacity << ", "  << d_Tp*a_heat_capacity << ", " <<  (d_Te*Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
+      << d_Te*d_Te*e_heat_capacity << ", "  << d_Tp*a_heat_capacity << ", " <<  (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << d_Te << ", " << d_Tp << ", " << TEKE << ", " << TLE << ", " 
       << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << cell_size << ", " << cell_stddev << ", " << e_size << ", " << e_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << \
