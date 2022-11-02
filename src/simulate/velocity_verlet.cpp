@@ -300,18 +300,18 @@ void update_dynamics() {
     // //  else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
      else  neighbor_e_e_coulomb(e, array_index);
 
-      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-      //   #pragma omp atomic
-      //   count++;
-      // // pump += external_potential;
-      //   electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
-      // }
+      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+        #pragma omp atomic
+        count++;
+      // pump += external_potential;
+        electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
+      }
       
-      if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, photon_energy);
+      // if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, photon_energy);
       if(!equilibrium_step) ea_scattering(e, array_index, omp_get_thread_num());
     }
    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
-   TEKE += external_potential;
+  //  TEKE += external_potential;
    ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
   d_Tp =  a_heat_capacity_i*TLE *n_f/conduction_electrons + Tp;
@@ -872,13 +872,13 @@ void ee_scattering() {
         //if(electron_transport_list[electron]) e_back_pressure = exp( 45.0*(std::max(0.0, ((ee_dos_hist[electron].at(int(std::min(69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))))/(e_dos+2.5)) - 1.0)-0.149));   
           // if(e_back_pressure > 1.0) std::cout << e_back_pressure << std::endl;
 
-        const double k_1_x = v_x*constants::m_over_hbar_sqrt;
-        const double k_1_y = v_y*constants::m_over_hbar_sqrt;
-        const double k_1_z = v_z*constants::m_over_hbar_sqrt;
-        const double k_2_x = (v_x - x_distance*v_x_dot_product)*constants::m_over_hbar_sqrt;
-        const double k_2_y = (v_y - y_distance*v_x_dot_product)*constants::m_over_hbar_sqrt;
-        const double k_2_z = (v_z - z_distance*v_x_dot_product)*constants::m_over_hbar_sqrt;
-        const double deltaK = (k_1_x-k_2_x)*(k_1_x-k_2_x) + (k_1_y-k_2_y)*(k_1_y-k_2_y) + (k_1_z-k_2_z)*(k_1_z-k_2_z);
+        const double d_k_x = x_distance*v_x_dot_product*constants::m_over_hbar_sqrt;
+        const double d_k_y = y_distance*v_x_dot_product*constants::m_over_hbar_sqrt;
+        const double d_k_z = z_distance*v_x_dot_product*constants::m_over_hbar_sqrt;
+        //const double k_2_x = d_v_x_2*constants::m_over_hbar_sqrt;
+        // co  nst double k_2_y = d_v_y_2*constants::m_over_hbar_sqrt;
+        // const double k_2_z = d_v_z_2*constants::m_over_hbar_sqrt;
+        const double deltaK = (d_k_x*d_k_x) + (d_k_y*d_k_y) + (d_k_z*d_k_z);
             
             if(deltaK != deltaK)  {std::cout << "ee error: " << deltaK << std::endl; continue;}
         
