@@ -325,9 +325,9 @@ void initialize () {
 
 void initialize_cell_omp() {
 
-  x_omp_cells = int(floor(lattice_width / 20.0));
-  y_omp_cells = int(floor(lattice_depth / 20.0));
-  z_omp_cells = int(floor(lattice_height/ 20.0));
+  x_omp_cells = int(floor(lattice_width / 15.0));
+  y_omp_cells = int(floor(lattice_depth / 15.0));
+  z_omp_cells = int(floor(lattice_height/ 15.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -709,13 +709,13 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 19.0*19.0;
+    e_e_neighbor_cutoff = 14.0*14.0;
     
     half_int_var =  1;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 20.0*20.0;
+    e_e_integration_cutoff = 15.0*15.0;
     e_e_coulomb_cutoff = 14.0*14.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
