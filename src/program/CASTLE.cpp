@@ -1189,10 +1189,16 @@ void initialize_velocities() {
       }
     }
   }
-    
+    char directory [256];
+      if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog. time stamps" << std::endl;
+      }
+
+    std::ofstream global_e_dos_out;
+    global_e_dos_out.open(string(directory) + "/Temp_Map/init");
     int total = 0;
     for(int h = 0 ; h < 70; h++) {
-      // std::cout << h << ", " <<  global_e_dos[h][1] << std::endl;
+      global_e_dos_out << h + int(core_cutoff) << ", " <<  global_e_dos[h][1] << std::endl;
       total += global_e_dos[h][1];
     }
 
@@ -1575,7 +1581,8 @@ void output_data() {
     for(int i = 0; i < output_count_hr; i++) {
      // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
      // if(i < output_count_lr) { 
-      temp_map << i + int(round(core_cutoff)) << ", " << ee_dos_hist[electrons[0]].at(i) \
+      temp_map << i + int(round(core_cutoff)) << ", " << global_e_dos[i][0] << ", " << global_e_dos[i][1] 
+                      << ", " << ee_dos_hist[electrons[0]].at(i) \
                       << ", " << ee_dos_hist[electrons[1]].at(i) \
                       << ", " << ee_dos_hist[electrons[2]].at(i) \
                       << ", " << ee_dos_hist[electrons[3]].at(i) << "\n";
