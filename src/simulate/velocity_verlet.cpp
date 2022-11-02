@@ -719,20 +719,20 @@ double electron_applied_voltage(const int e, const int array_index, double& exte
 void ea_scattering(const int e, const int array_index, const int thread) {
 
     const double e_energy = electron_potential[e];
-    double deltaE = sqrt(phonon_energy*E_f_A);
+    double deltaE = phonon_energy;
     if(e_energy - deltaE < core_cutoff ) return;
     if( e_energy + deltaE > (core_cutoff+70.0) ) return;
     double e_occupation;  
-    if( e_energy > transport_cutoff) e_occupation = double(ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))))/18.0;     
+    if( e_energy > transport_cutoff) e_occupation = double(ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0))))))/19.0;     
     else e_occupation =  double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0)))))[0])/ std::max(1.0,double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0)))))[1]));    
     double d_e_occupation;
-    if( (e_energy + deltaE) > transport_cutoff ) d_e_occupation = double(ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy + deltaE - core_cutoff)/1.0))))))/18.0;
+    if( (e_energy + deltaE) > transport_cutoff ) d_e_occupation = double(ee_dos_hist[e].at(int(std::min( 69.0, std::max(0.0, floor((e_energy + deltaE - core_cutoff)/1.0))))))/19.0;
     else d_e_occupation = double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy + deltaE - core_cutoff)/1.0)))))[0]) / std::max(1.0,double(global_e_dos.at(int(std::min( 69.0, std::max(0.0, floor((e_energy + deltaE - core_cutoff)/1.0)))))[1])); 
         
     if(Tp < Te) deltaE *= -1.0;
     if(e_occupation < d_e_occupation) deltaE *= -1.0;
 
-    if(omp_uniform_random[thread]() > exp(ea_rate*std::min(1.0, abs(e_occupation-d_e_occupation))*sqrt(1.0/e_energy))) {
+    if(omp_uniform_random[thread]() > exp(ea_rate*std::min(1.0, abs(e_occupation-d_e_occupation))*sqrt(E_f_A/e_energy))) {
       //if(deltaE > 0.0) std::cout << e_occupation << ", " << d_e_occupation << ", " << e_energy << ", " << double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy - core_cutoff)/1.0)))))[0]) << ", " << deltaE << ", " <<  double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy + deltaE - core_cutoff)/1.0)))))[0]) << std::endl;  
       relaxation_time_hist_ee[3*e].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) )++;
       relaxation_time_hist_ee[3*e + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist_ea[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) );
@@ -849,11 +849,13 @@ void ee_scattering() {
 
         double e_occupation;   
         double e_dos = double(global_e_dos.at(int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))[1]);
-        if ( (e_energy - deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))/18.0));     
+        if ( (e_energy - deltaE) > transport_cutoff) e_occupation =  std::max(0.0, 401.0 - double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))[0]) ) / 401.0;     
+        // e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))/18.0));     
         else e_occupation =  std::max(0.0, e_dos - double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))[0]) ) / e_dos;     
         double d_e_occupation;
         double d_e_dos = double(global_e_dos.at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))))[1]);
-        if ( (d_e_energy+deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))))/18.0));
+        if ( (d_e_energy+deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 401.0  - double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))))[0]) ) / 401.0 ; 
+        //d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))))/18.0));
         else d_e_occupation = std::max(0.0, d_e_dos  - double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))))[0]) ) / d_e_dos ; 
         
         // if(e_occupation > 0.0) {
