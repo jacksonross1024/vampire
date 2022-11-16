@@ -254,7 +254,7 @@ void initialize () {
     G = 300.0*e_heat_capacity*E_f_A*2.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -0.350*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
+    ea_rate = -6.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
