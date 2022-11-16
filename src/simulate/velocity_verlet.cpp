@@ -729,9 +729,9 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double r_e_occupation;
     const int e_index = int(std::min( 68.0, std::max(1.0, floor((e_energy - core_cutoff)/1.0))));
     if( e_energy > transport_cutoff) {
-      e_occupation = std::min(1.0, double(global_e_dos.at(e_index)[0]) / 401.0); 
-      f_e_occupation = std::min(1.0, double(ee_dos_hist.at(e_index+1)[0]) / 401.0); 
-      r_e_occupation = std::min(1.0, double(ee_dos_hist.at(e_index-1)[0]) / 401.0); 
+      e_occupation = std::min(1.0, double(global_e_dos.at(e_index)[0]) / 393.0); 
+      f_e_occupation = std::min(1.0, double(global_e_dos.at(e_index+1)[0]) / 393.0); 
+      r_e_occupation = std::min(1.0, double(global_e_dos.at(e_index-1)[0]) / 393.0); 
       // e_occupation = std::min(1.0, double(ee_dos_hist.at(e)[e_index]) / 19.0); 
       // f_e_occupation = std::min(1.0, double(ee_dos_hist.at(e)[e_index+1]) / 19.0); 
       // r_e_occupation = std::min(1.0, double(ee_dos_hist.at(e)[e_index-1]) / 19.0); 
@@ -744,8 +744,12 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double thermal_factor = e_occupation-f_e_occupation;
     //  if(thermal_factor < 0.0) std::cout << thermal_factor << ", " <<return_BE_integrand(deltaE, Te) << ", " <<return_BE_integrand(deltaE, Tp) << std::endl ;
     double occupation_factor = return_BE_integrand(deltaE,Tp)-(f_e_occupation*(1.0-e_occupation)/thermal_factor);
-    
-    if(omp_uniform_random[thread]() > exp(ea_rate*std::max(0.0,thermal_factor*occupation_factor)*sqrt(E_f_A/e_energy))) {
+    double factor = thermal_factor*occupation_factor;
+    if(factor < 0.0 || factor > 1.0) {
+      // std::cout << "forwards " << factor << ", " << thermal_factor << " (" << e_occupation << " - " << f_e_occupation << "), " << occupation_factor << ", " << return_BE_integrand(deltaE,Tp) << std::endl;
+      factor = std::max(0.0, std::min(1.0, factor));
+    }
+    if(omp_uniform_random[thread]() > exp(ea_rate*factor)) {
       
       //  std::cout << e_occupation << ", " << d_e_occupation << ", " << double(e_index+1)+core_cutoff - e_energy << ", " << thermal_factor << ", "<< return_BE_integrand(abs(deltaE),Tp)*(e_occupation-d_e_occupation) << ", " << d_e_occupation*(1.0-e_occupation) << ", " << exp(ea_rate*abs(thermal_factor)) << std::endl;  
       relaxation_time_hist_ee[3*e].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) )++;
@@ -783,8 +787,12 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     thermal_factor = r_e_occupation - e_occupation;
     //  if(thermal_factor < 0.0) std::cout << thermal_factor << ", " <<return_BE_integrand(deltaE, Te) << ", " <<return_BE_integrand(deltaE, Tp) << std::endl ;
     occupation_factor = return_BE_integrand(deltaE,Tp)-(e_occupation*(1.0-r_e_occupation)/thermal_factor);
-    
-   if( omp_uniform_random[thread]() > exp(ea_rate*std::max(0.0,-1.0*thermal_factor*occupation_factor)*sqrt(E_f_A/e_energy))) {
+     factor = -1.0*thermal_factor*occupation_factor;
+    if(factor < 0.0 || factor > 1.0) {
+      // std::cout << "backwards " << factor << ", " << thermal_factor << " (" << r_e_occupation << " - " << e_occupation << "), " << occupation_factor << ", " << return_BE_integrand(deltaE,Tp) << std::endl;
+      factor = std::max(0.0, std::min(1.0, factor));
+    }
+   if( omp_uniform_random[thread]() > exp(ea_rate*factor)) {
 
       deltaE *= -1.0;
       // std::cout << e_occupation << ", " << d_e_occupation << ", " << double(e_index+1)+core_cutoff - e_energy << ", " << thermal_factor << ", "<< return_BE_integrand(abs(deltaE),Tp)*(e_occupation-d_e_occupation) << ", " << d_e_occupation*(1.0-e_occupation) << ", " << exp(ea_rate*abs(thermal_factor)) << std::endl;  
