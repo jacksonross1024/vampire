@@ -254,7 +254,7 @@ void initialize () {
     G = 300.0*e_heat_capacity*E_f_A*2.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -6.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
+    ea_rate = -2.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
@@ -329,9 +329,9 @@ void initialize () {
 
 void initialize_cell_omp() {
 
-  x_omp_cells = int(floor(lattice_width / 15.0));
-  y_omp_cells = int(floor(lattice_depth / 15.0));
-  z_omp_cells = int(floor(lattice_height/ 15.0));
+  x_omp_cells = int(floor(lattice_width / 20.0));
+  y_omp_cells = int(floor(lattice_depth / 20.0));
+  z_omp_cells = int(floor(lattice_height/ 20.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -713,13 +713,13 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 14.0*14.0;
+    e_e_neighbor_cutoff = 19.0*19.0;
     
     half_int_var =  1;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 15.0*15.0;
+    e_e_integration_cutoff = 20.0*20.0;
     e_e_coulomb_cutoff = 14.0*14.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
