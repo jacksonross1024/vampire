@@ -262,7 +262,7 @@ namespace CASTLE {
    //  double return_phonon_distribution(const double& epsilon, const double& beta);
     
     extern double return_fermi_distribution(const double epsilon, const double beta);
-    extern double return_BE_integrand(const double temperature);
+    extern double return_BE_integrand(const double phonon_e, const double temperature);
 }
 
 

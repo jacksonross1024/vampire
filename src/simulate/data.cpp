@@ -377,5 +377,5 @@ namespace CASTLE {
    void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
    void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
    double return_fermi_distribution(const double& epsilon, const double& beta);// {  return (1.0/(exp(epsilon/beta) + 1.0));}
-   double return_BE_integrand(const double temperature);
+   double return_BE_integrand(const double phonon_e, const double temperature);
 }
