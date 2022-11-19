@@ -217,7 +217,9 @@ namespace CASTLE {
    double zero_pt_lattice_e;
    double phonon_energy;
    int ee_density;
-
+   int dos_size;
+   double dos_occ;
+   
    double e_e_integration_cutoff;
    double e_e_neighbor_cutoff;
    double e_e_coulomb_cutoff;

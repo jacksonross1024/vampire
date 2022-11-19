@@ -59,7 +59,7 @@ int velocity_verlet_step(double time_step) {
 
     int total_1 = 0;
     int total_2 = 0;
-    for(int h = 0 ; h < 70; h++) {
+    for(int h = 0 ; h < dos_size; h++) {
        //std::cout << h << ", " << global_e_dos[h][0] << ", " << global_e_dos[h][1] << std::endl;
       total_1 += global_e_dos[h][0];
       total_2 += global_e_dos[h][1];
@@ -100,7 +100,7 @@ void update_position(){
   #pragma omp parallel reduction(+:x_flux,y_flux,z_flux, p_x,p_y,p_z)
   {
     std::vector<int> local_e_dos;
-    local_e_dos.resize(70,0);
+    local_e_dos.resize(dos_size,0);
     const int thread = omp_get_thread_num();
     if(omp_get_num_threads() != omp_threads) std::cout << "omp pragma error " << omp_get_num_threads() << " != " << omp_threads << std::endl;
     int local = 0;
@@ -114,7 +114,7 @@ void update_position(){
   
       for (int e = 1; e < size; e++) { 
         const int electron = old_cell_integration_lists[cell][e];
-        local_e_dos[int(std::min(69.0, std::max(0.0, floor((electron_potential[electron] - core_cutoff)/1.0))))]++;
+        local_e_dos[int(std::min(dos_size-1.0, std::max(0.0, floor((electron_potential[electron] - core_cutoff)/phonon_energy))))]++;
 
       // if(!electron_transport_list[electron] ) continue;
         const int array_index = 3*electron;
@@ -210,7 +210,7 @@ void update_position(){
     #pragma omp critical 
     {
     total += local;
-    for (int h = 0; h < 70; h++) {
+    for (int h = 0; h < dos_size; h++) {
       global_e_dos[h][0] += local_e_dos[h];
     }
     } 
@@ -504,7 +504,7 @@ void e_e_coulomb(const int e, const int array_index) {
         
        // if(electron_potential[electron] > transport_cutoff) ee_dos_hist[e].at(int(std::min(69.0, std::max( (transport_cutoff-core_cutoff)/4.0, (transport_cutoff-core_cutoff)/4.0 + floor((electron_potential[electron]-transport_cutoff)/1)))))++;
       //  else 
-        ee_dos_hist[e].at(int(std::max(0.0, std::min(69.0, floor((electron_potential[electron]-core_cutoff)/1)))))++;
+        ee_dos_hist[e].at(int(std::max(0.0, std::min(dos_size-1.0, floor((electron_potential[electron]-core_cutoff)/phonon_energy)))))++;
         
         if(ee_dos_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << ee_dos_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
           break; }
@@ -559,7 +559,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
       
         //if(electron_potential[electron] > transport_cutoff) ee_dos_hist[e].at(int(std::min(51.0, std::max((transport_cutoff-core_cutoff)/4.0, (transport_cutoff-core_cutoff)/4.0 + floor((electron_potential[electron]-transport_cutoff)/1)))))++;
        // else 
-       ee_dos_hist[e].at(int(std::max(0.0, std::min(69.0, floor((electron_potential[electron]-core_cutoff)/1)))))++;
+       ee_dos_hist[e].at(int(std::max(0.0, std::min(dos_size-1.0, floor((electron_potential[electron]-core_cutoff)/phonon_energy)))))++;
       
         if(neighbor_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
         break; }
@@ -721,20 +721,20 @@ double electron_applied_voltage(const int e, const int array_index, double& exte
 void ea_scattering(const int e, const int array_index, const int thread) {
 
     const double e_energy = electron_potential[e];
-    double deltaE = 1.0; //double(e_index+1)+core_cutoff - e_energy;
-    if(e_energy - deltaE < core_cutoff ) return;
-    if( e_energy + deltaE > (core_cutoff+70.0) ) return;
+    // double deltaE = 1.0; //double(e_index+1)+core_cutoff - e_energy;
+    if(e_energy - phonon_energy < core_cutoff ) return;
+    if( e_energy + phonon_energy > (core_cutoff+70.0) ) return;
     double e_occupation;
     double f_e_occupation;
     double r_e_occupation;
-    const int e_index = int(std::min( 68.0, std::max(1.0, floor((e_energy - core_cutoff)/1.0))));
+    const int e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - core_cutoff)/phonon_energy))));
     if( e_energy > transport_cutoff) {
-      e_occupation   = std::min(1.0, double(global_e_dos.at(e_index  )[0]) / 1003.0); 
-      f_e_occupation = std::min(1.0, double(global_e_dos.at(e_index+1)[0]) / 1003.0); 
-      r_e_occupation = std::min(1.0, double(global_e_dos.at(e_index-1)[0]) / 1003.0); 
-      // e_occupation = std::min(1.0, double(ee_dos_hist.at(e)[e_index]) / 19.0); 
-      // f_e_occupation = std::min(1.0, double(ee_dos_hist.at(e)[e_index+1]) / 19.0); 
-      // r_e_occupation = std::min(1.0, double(ee_dos_hist.at(e)[e_index-1]) / 19.0); 
+      e_occupation   = double(global_e_dos.at(e_index  )[0]) / dos_occ; 
+      f_e_occupation = double(global_e_dos.at(e_index+1)[0]) / dos_occ; 
+      r_e_occupation = double(global_e_dos.at(e_index-1)[0]) / dos_occ; 
+      // e_occupation = double(ee_dos_hist.at(e)[e_index]) / 7.0; 
+      // f_e_occupation = double(ee_dos_hist.at(e)[e_index+1]) / 7.0; 
+      // r_e_occupation =  double(ee_dos_hist.at(e)[e_index-1]) / 7.0; 
     } else {
       e_occupation   = std::min(1.0, double(global_e_dos.at(e_index  )[0]) / std::max(1.0, double(global_e_dos.at(e_index  )[1])));    
       f_e_occupation = std::min(1.0, double(global_e_dos.at(e_index+1)[0]) / std::max(1.0, double(global_e_dos.at(e_index+1)[1]))); 
@@ -743,11 +743,11 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       
     double thermal_factor = e_occupation-f_e_occupation;
     //  if(thermal_factor < 0.0) std::cout << thermal_factor << ", " <<return_BE_integrand(deltaE, Te) << ", " <<return_BE_integrand(deltaE, Tp) << std::endl ;
-    double occupation_factor = return_BE_integrand(deltaE,Tp)-(f_e_occupation*(1.0-e_occupation)/thermal_factor);
+    double occupation_factor = return_BE_integrand(phonon_energy,Tp)-(f_e_occupation*(1.0-e_occupation)/thermal_factor);
     double factor = thermal_factor*occupation_factor;
     // if(factor < 0.0 || factor > 1.0) {
       // std::cout << "forwards " << factor << ", " << thermal_factor << " (" << e_occupation << " - " << f_e_occupation << "), " << occupation_factor << ", " << return_BE_integrand(deltaE,Tp) << std::endl;
-      factor = std::max(0.0, std::min(1.0, factor));
+      factor = std::max(0.0, factor);
     // }
     if(omp_uniform_random[thread]() > exp(ea_rate*factor)) {
       
@@ -755,7 +755,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       relaxation_time_hist_ee[3*e].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) )++;
       relaxation_time_hist_ee[3*e + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist_ea[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) );
       
-      electron_potential[e] += deltaE;
+      electron_potential[e] += phonon_energy;
       
       relaxation_time_hist_ee[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) = current_time_step;
       
@@ -777,8 +777,8 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       {
       ea_core_scattering_count++;
       // else ea_transport_scattering_count++;
-      TEKE += deltaE;
-      TLE -= deltaE;
+      TEKE += phonon_energy;
+      TLE -= phonon_energy;
       e_a_scattering_count++;
       }
       return;
@@ -786,20 +786,20 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     
     thermal_factor = r_e_occupation - e_occupation;
     //  if(thermal_factor < 0.0) std::cout << thermal_factor << ", " <<return_BE_integrand(deltaE, Te) << ", " <<return_BE_integrand(deltaE, Tp) << std::endl ;
-    occupation_factor = return_BE_integrand(deltaE,Tp)-(e_occupation*(1.0-r_e_occupation)/thermal_factor);
+    occupation_factor = return_BE_integrand(phonon_energy,Tp)-(e_occupation*(1.0-r_e_occupation)/thermal_factor);
      factor = -1.0*thermal_factor*occupation_factor;
     // if(factor < 0.0 || factor > 1.0) {
       // std::cout << "backwards " << factor << ", " << thermal_factor << " (" << r_e_occupation << " - " << e_occupation << "), " << occupation_factor << ", " << return_BE_integrand(deltaE,Tp) << std::endl;
-      factor = std::max(0.0, std::min(1.0, factor));
+      factor = std::max(0.0, factor);
     // }
    if( omp_uniform_random[thread]() > exp(ea_rate*factor)) {
 
-      deltaE *= -1.0;
+      // deltaE *= -1.0;
       // std::cout << e_occupation << ", " << d_e_occupation << ", " << double(e_index+1)+core_cutoff - e_energy << ", " << thermal_factor << ", "<< return_BE_integrand(abs(deltaE),Tp)*(e_occupation-d_e_occupation) << ", " << d_e_occupation*(1.0-e_occupation) << ", " << exp(ea_rate*abs(thermal_factor)) << std::endl;  
       relaxation_time_hist_ee[3*e].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) )++;
       relaxation_time_hist_ee[3*e + 2].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) += current_time_step - relaxation_time_hist_ea[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) );
       
-      electron_potential[e] += deltaE;
+      electron_potential[e] -= phonon_energy;
       
       relaxation_time_hist_ee[3*e + 1].at(int(std::max(0.0, std::min( 4.0*70.0 - 1.0, floor((electron_potential[e]-core_cutoff)/0.25)))) ) = current_time_step;
       
@@ -821,8 +821,8 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       {
       // if (deltaE > 0.0) ea_core_scattering_count++;
       ea_transport_scattering_count++;
-      TEKE += deltaE;
-      TLE -= deltaE;
+      TEKE -= phonon_energy;
+      TLE += phonon_energy;
       e_a_scattering_count++;
       }
     } 
@@ -899,8 +899,8 @@ void ee_scattering() {
             std::cout << v_x << ", " << v_y << ", " << v_z << ", " <<  v_x_2 << ", " << v_y_2 << ", " << v_z_2 << ", " << \
             x_distance << ", " << y_distance << ", " << z_distance << ", " <<  v_x_dot_product << std::endl; }
 
-        const double deltaE = -1.0*(0.5*constants::m_e_r*(d_v_x_1*d_v_x_1 + d_v_y_1*d_v_y_1 + d_v_z_1*d_v_z_1) -\
-                           0.5*constants::m_e_r*(d_v_x_2*d_v_x_2 + d_v_y_2*d_v_y_2 + d_v_z_2*d_v_z_2));
+        const double deltaE = 1.0*(0.5*constants::m_e_r*(d_v_x_2*d_v_x_2 + d_v_y_2*d_v_y_2 + d_v_z_2*d_v_z_2) -\
+                           0.5*constants::m_e_r*(v_x*v_x + v_y*v_y + v_z*v_z));
     
           if(deltaE != deltaE) std::cout << "deltaE " << deltaE << ", " << v_x_dot_product << ", " << length << std::endl;
         
@@ -911,15 +911,15 @@ void ee_scattering() {
         // if( (e_energy + deltaE) > (core_cutoff+70.0) || (d_e_energy - deltaE > (core_cutoff+70.0))) std::cout << "bounds issue " << e_energy + deltaE  << ", " << d_e_energy - deltaE  << ", " << core_cutoff+70.0 << std::endl;;
 
         double e_occupation;   
-        double e_dos = double(global_e_dos.at(int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))[1]);
+        double e_dos = double(global_e_dos.at(int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/phonon_energy)))))[1]);
         // e_occupation =  std::max(0.0, 401.0 - double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))[0]) ) / 405.0;     
-        if ( (e_energy - deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))/45.0));     
-        else e_occupation = std::max(0.0, 1.0 - double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/1.0)))))[0]) / e_dos);     
+        if ( (e_energy - deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/phonon_energy)))))/7.0));     
+        else e_occupation = std::max(0.0, 1.0 - double(global_e_dos.at( int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/phonon_energy)))))[0]) / e_dos);     
         double d_e_occupation;
-        double d_e_dos = double(global_e_dos.at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))))[1]);
+        double d_e_dos = double(global_e_dos.at(int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/phonon_energy)))))[1]);
         //d_e_occupation = std::max(0.0, 401.0  - double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))))[0]) ) / 405.0 ; 
-        if ( (d_e_energy+deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))))/45.0));
-        else d_e_occupation = std::max(0.0, 1.0  - double(global_e_dos.at( int(std::min( 69.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/1.0)))))[0]) / d_e_dos); 
+        if ( (d_e_energy+deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/phonon_energy)))))/7.0));
+        else d_e_occupation = std::max(0.0, 1.0  - double(global_e_dos.at( int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/phonon_energy)))))[0]) / d_e_dos); 
         
         // if(e_occupation > 0.0) {
         //   // e_occupation = 0.0;
@@ -945,7 +945,7 @@ void ee_scattering() {
         const double deltaK = (d_k_x*d_k_x) + (d_k_y*d_k_y) + (d_k_z*d_k_z);
             
             if(deltaK != deltaK)  {std::cout << "ee error: " << deltaK << std::endl; continue;}
-        
+        const double rspace_Hsr = ee_rate*exp(-1.0*sqrt(length))/length/4.0/M_PI;
         if(omp_uniform_random[thread]() > exp(ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))))) {
         
          // if(e_energy < transport_cutoff && d_e_energy < transport_cutoff) std::cout <<\
@@ -994,7 +994,12 @@ void ee_scattering() {
           else ee_transport_scattering_count++;
           if (electron_potential[electron_collision] < transport_cutoff) ee_core_scattering_count++;
           else ee_transport_scattering_count++;
+          lattice_output << e_e_scattering_count << ", " << electron << ", " << electron_collision << ", " \
+                         << x_distance*v_x_dot_product << ", " << y_distance*v_x_dot_product << ", " << z_distance*v_x_dot_product << ", " \
+                         << deltaE << ", " << deltaK << ", "  << sqrt(length) << ", " << v_x_dot_product << ", " \
+                         << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))) << ", " << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaE*deltaE))*(0.25+(deltaE*deltaE))) << ", " << rspace_Hsr << std::endl;
           e_e_scattering_count += 2;
+          
           // if(e_back_pressure > 1.0) e_e_scattering_count += 2;
           }
           break;
