@@ -945,8 +945,9 @@ void ee_scattering() {
         const double deltaK = (d_k_x*d_k_x) + (d_k_y*d_k_y) + (d_k_z*d_k_z);
             
             if(deltaK != deltaK)  {std::cout << "ee error: " << deltaK << std::endl; continue;}
-        const double rspace_Hsr = ee_rate*exp(-1.0*sqrt(length))/length/4.0/M_PI;
-        if(omp_uniform_random[thread]() > exp(ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))))) {
+        // const double rspace_Hsr = ee_rate*exp(-1.0*sqrt(length))/length/4.0/M_PI;
+        const double occupation_factor = e_occupation*d_e_occupation;
+        if(omp_uniform_random[thread]() > exp(ee_rate*occupation_factor/((0.25+(deltaK))*(0.25+(deltaK))))) {
         
          // if(e_energy < transport_cutoff && d_e_energy < transport_cutoff) std::cout <<\
             e_energy << ", " << d_e_energy << ", " << e_occupation << ", " << d_e_occupation << ", " << deltaE << ", " << deltaK << ", " <<\
@@ -994,7 +995,7 @@ void ee_scattering() {
           else ee_transport_scattering_count++;
           if (electron_potential[electron_collision] < transport_cutoff) ee_core_scattering_count++;
           else ee_transport_scattering_count++;
-          lattice_output << e_e_scattering_count << ", " << electron << ", " << electron_collision << ", " \
+          // lattice_output << e_e_scattering_count << ", " << electron << ", " << electron_collision << ", " \
                          << x_distance*v_x_dot_product << ", " << y_distance*v_x_dot_product << ", " << z_distance*v_x_dot_product << ", " \
                          << deltaE << ", " << deltaK << ", "  << sqrt(length) << ", " << v_x_dot_product << ", " \
                          << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))) << ", " << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaE*deltaE))*(0.25+(deltaE*deltaE))) << ", " << rspace_Hsr << std::endl;
