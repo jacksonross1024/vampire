@@ -729,16 +729,16 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double r_e_occupation;
     const int e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - core_cutoff)/phonon_energy))));
     if( e_energy > transport_cutoff) {
-      e_occupation   = double(global_e_dos.at(e_index  )[0]) / dos_occ; 
-      f_e_occupation = double(global_e_dos.at(e_index+1)[0]) / dos_occ; 
-      r_e_occupation = double(global_e_dos.at(e_index-1)[0]) / dos_occ; 
+      e_occupation   = double(global_e_dos[e_index  ][0]) / dos_occ; 
+      f_e_occupation = double(global_e_dos[e_index+1][0]) / dos_occ; 
+      r_e_occupation = double(global_e_dos[e_index-1][0]) / dos_occ; 
       // e_occupation = double(ee_dos_hist.at(e)[e_index]) / 7.0; 
       // f_e_occupation = double(ee_dos_hist.at(e)[e_index+1]) / 7.0; 
       // r_e_occupation =  double(ee_dos_hist.at(e)[e_index-1]) / 7.0; 
     } else {
-      e_occupation   = std::min(1.0, double(global_e_dos.at(e_index  )[0]) / std::max(1.0, double(global_e_dos.at(e_index  )[1])));    
-      f_e_occupation = std::min(1.0, double(global_e_dos.at(e_index+1)[0]) / std::max(1.0, double(global_e_dos.at(e_index+1)[1]))); 
-      r_e_occupation = std::min(1.0, double(global_e_dos.at(e_index-1)[0]) / std::max(1.0, double(global_e_dos.at(e_index-1)[1]))); 
+      e_occupation   = std::min(1.0, double(global_e_dos[e_index  ][0]) / std::max(1.0, double(global_e_dos[e_index  ][1])));    
+      f_e_occupation = std::min(1.0, double(global_e_dos[e_index+1][0]) / std::max(1.0, double(global_e_dos[e_index+1][1]))); 
+      r_e_occupation = std::min(1.0, double(global_e_dos[e_index-1][0]) / std::max(1.0, double(global_e_dos[e_index-1][1]))); 
     }
       
     double thermal_factor = e_occupation-f_e_occupation;
@@ -914,18 +914,18 @@ void ee_scattering() {
         double e_dos = double(global_e_dos.at(int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/phonon_energy)))))[1]);
         
             //**local density of states**
-        // if ( (e_energy - deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/phonon_energy)))))/7.0));     
+        if ( (e_energy - deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron].at(int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/phonon_energy)))))/7.0));     
             //**global density of states**
-        if ( (e_energy - deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - double(global_e_dos.at(int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/phonon_energy))))) [0])/dos_occ);  
+        // if ( (e_energy - deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - double(global_e_dos.at(int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/phonon_energy))))) [0])/dos_occ);  
         else e_occupation = std::max(0.0, 1.0 - double(global_e_dos.at( int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - deltaE - core_cutoff)/phonon_energy)))))[0]) / e_dos);     
         
         double d_e_occupation;
         double d_e_dos = double(global_e_dos.at(int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/phonon_energy)))))[1]);
         
             //**local density of states**
-        // if ( (d_e_energy+deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/phonon_energy)))))/7.0));
+        if ( (d_e_energy+deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - (ee_dos_hist[electron_collision].at(int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/phonon_energy)))))/7.0));
             //**global density of states**
-        if ( (d_e_energy + deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos.at(int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/phonon_energy))))) [0])/dos_occ);  
+        // if ( (d_e_energy + deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos.at(int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/phonon_energy))))) [0])/dos_occ);  
         else d_e_occupation = std::max(0.0, 1.0  - double(global_e_dos.at( int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy + deltaE - core_cutoff)/phonon_energy)))))[0]) / d_e_dos); 
         
         // if(e_occupation > 0.0) {
