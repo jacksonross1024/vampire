@@ -112,6 +112,7 @@ namespace CASTLE {
     extern int ee_density;
     extern int dos_size;
     extern double dos_occ;
+    extern double local_dos_occ;
 
     extern bool ee_coupling;
     extern bool ea_coupling;

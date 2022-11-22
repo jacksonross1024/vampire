@@ -219,6 +219,7 @@ namespace CASTLE {
    int ee_density;
    int dos_size;
    double dos_occ;
+   double local_dos_occ;
    
    double e_e_integration_cutoff;
    double e_e_neighbor_cutoff;
