@@ -46,7 +46,7 @@ int velocity_verlet_step(double time_step) {
     update_dynamics();
         //  std::cout << "Output mean data" << std::endl;
     
-    if (current_time_step % CASTLE_output_rate == 0)   output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
+    if (current_time_step % CASTLE_output_rate == 0) output_data(); //std::cout << "x_flux: " << x_flux / CASTLE_output_rate << "\n"; x_flux = 0;
       //    std::cout << current_time_step << "; output updated " << std::endl;
     const int size = ee_dos_hist[0].size();
     #pragma omp parallel for schedule(dynamic, 8)
@@ -741,10 +741,10 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       r_e_occupation = std::min(1.0, double(global_e_dos[e_index-1][0]) / std::max(1.0, double(global_e_dos[e_index-1][1]))); 
     }
       
-    double thermal_factor = e_occupation-f_e_occupation;
+    double thermal_factor = (e_occupation-f_e_occupation)*return_BE_integrand(phonon_energy,Tp);
     //  if(thermal_factor < 0.0) std::cout << thermal_factor << ", " <<return_BE_integrand(deltaE, Te) << ", " <<return_BE_integrand(deltaE, Tp) << std::endl ;
-    double occupation_factor = return_BE_integrand(phonon_energy,Tp)-(f_e_occupation*(1.0-e_occupation)/thermal_factor);
-    double factor = thermal_factor*occupation_factor;
+    double occupation_factor = -1.0*(f_e_occupation*(1.0-e_occupation));
+    double factor = thermal_factor+occupation_factor;
     // if(factor < 0.0 || factor > 1.0) {
       // std::cout << "forwards " << factor << ", " << thermal_factor << " (" << e_occupation << " - " << f_e_occupation << "), " << occupation_factor << ", " << return_BE_integrand(deltaE,Tp) << std::endl;
       factor = std::max(0.0, factor);
@@ -784,10 +784,10 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       return;
     }  
     
-    thermal_factor = r_e_occupation - e_occupation;
+    thermal_factor = -1.0*(r_e_occupation - e_occupation)*return_BE_integrand(phonon_energy,Tp);
     //  if(thermal_factor < 0.0) std::cout << thermal_factor << ", " <<return_BE_integrand(deltaE, Te) << ", " <<return_BE_integrand(deltaE, Tp) << std::endl ;
-    occupation_factor = return_BE_integrand(phonon_energy,Tp)-(e_occupation*(1.0-r_e_occupation)/thermal_factor);
-     factor = -1.0*thermal_factor*occupation_factor;
+    occupation_factor = e_occupation*(1.0-r_e_occupation);
+     factor = thermal_factor+occupation_factor;
     // if(factor < 0.0 || factor > 1.0) {
       // std::cout << "backwards " << factor << ", " << thermal_factor << " (" << r_e_occupation << " - " << e_occupation << "), " << occupation_factor << ", " << return_BE_integrand(deltaE,Tp) << std::endl;
       factor = std::max(0.0, factor);
