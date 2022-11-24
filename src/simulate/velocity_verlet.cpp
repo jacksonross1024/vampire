@@ -294,6 +294,7 @@ void update_dynamics() {
        Te = d_Te;
     #pragma omp parallel for schedule(dynamic, 8)
     for (int e = 0; e < conduction_electrons; e++) {
+      if(electron_potential[e] < 0.8*E_f_A) continue;
       const  int array_index = 3*e;        
       
      if(current_time_step % half_int_var == 0) e_e_coulomb(e, array_index);
@@ -740,8 +741,9 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       f_e_occupation = std::min(1.0, double(global_e_dos[e_index+1][0]) / std::max(1.0, double(global_e_dos[e_index+1][1]))); 
       r_e_occupation = std::min(1.0, double(global_e_dos[e_index-1][0]) / std::max(1.0, double(global_e_dos[e_index-1][1]))); 
     }
-      
-    double thermal_factor = (e_occupation-f_e_occupation)*return_BE_integrand(phonon_energy,Tp);
+    // const double phonon_factor = 0.25*mtrandom::gaussian();//(omp_uniform_random[thread]);
+    //if(phonon_factor > 1.5 || phonon_factor < -1.5 ) std::cout << phonon_factor << ", " << phonon_energy*(1.5 - phonon_factor) << std::endl;
+    double thermal_factor = (e_occupation-f_e_occupation)*return_BE_integrand(phonon_energy*0.5*(1.5 - 0.25*mtrandom::gaussian()),Tp);
     //  if(thermal_factor < 0.0) std::cout << thermal_factor << ", " <<return_BE_integrand(deltaE, Te) << ", " <<return_BE_integrand(deltaE, Tp) << std::endl ;
     double occupation_factor = -1.0*(f_e_occupation*(1.0-e_occupation));
     double factor = thermal_factor+occupation_factor;
@@ -846,8 +848,9 @@ void ee_scattering() {
     #pragma omp barrier 
 
     for(int e = 1; e < size; e++) {
-
+      
       const int electron = cell_integration_lists[cell][e];
+      if (electron_potential[electron] < 0.8*E_f_A) continue;
       if (electron_ee_scattering_list[electron][0] == 1) continue;
       // if (!electron_transport_list[electron]) continue;
       const int scattering_size = electron_ee_scattering_list[electron][1];
@@ -856,6 +859,7 @@ void ee_scattering() {
 
       for(int a = 1; a < scattering_size; a++) {
         int electron_collision = electron_ee_scattering_list[electron][a*2];
+        if (electron_potential[electron_collision] < 0.8*E_f_A) continue;
         if (electron_ee_scattering_list.at(electron_collision)[0] == 1) continue;
         // if (!electron_transport_list[electron_collision]) continue;
         const double d_e_energy = electron_potential[electron_collision];
