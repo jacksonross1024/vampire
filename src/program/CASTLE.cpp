@@ -254,7 +254,7 @@ void initialize () {
     G = 300.0*e_heat_capacity*E_f_A*2.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -2.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
+    ea_rate = -6.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
@@ -332,9 +332,9 @@ void initialize () {
 
 void initialize_cell_omp() {
 
-  x_omp_cells = int(floor(lattice_width / 20.0));
-  y_omp_cells = int(floor(lattice_depth / 20.0));
-  z_omp_cells = int(floor(lattice_height/ 20.0));
+  x_omp_cells = int(floor(lattice_width / 15.0));
+  y_omp_cells = int(floor(lattice_depth / 15.0));
+  z_omp_cells = int(floor(lattice_height/ 15.0));
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -472,7 +472,7 @@ void initialize_cell_omp() {
 
     const int max_x_threads = 2;
     const int max_y_threads = 2;
-    const int max_z_threads = 2;  
+    const int max_z_threads = 4;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -643,6 +643,8 @@ void initialize_cell_omp() {
     std::cout << "nearest neighbor integration list complete." << std::endl;
 */
 } 
+
+
 //====================================
 // Creates and outputs atomic lattice
 //      Currently static lattice
@@ -719,14 +721,14 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = 19.0*19.0;
+    e_e_neighbor_cutoff = 14.0*14.0;
     
     half_int_var =  1;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = 20.0*20.0;
-    e_e_coulomb_cutoff = 4.0*4.0;
+    e_e_integration_cutoff = 15.0*15.0;
+    e_e_coulomb_cutoff = 10.0*10.0;
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     electron_transport_list.resize(conduction_electrons, false);
@@ -1181,7 +1183,7 @@ void initialize_velocities() {
     }
 
     core_cutoff = minimum;
-    transport_cutoff = core_cutoff + 44.01;
+    // transport_cutoff = core_cutoff + 44.01;
 
   #pragma omp parallel 
   {
@@ -1411,9 +1413,11 @@ double return_fermi_distribution(const double epsilon, const double beta)
 //   if(beta <= 0.00001) return 1.0;
 //   else return exp(-0.5*((epsilon*epsilon) - E_f_A)/(beta*beta));
 // }
+
 double return_BE_integrand(const double phonon_e, const double temperature) {
   return 1.0/(exp(phonon_e/(temperature*constants::kB_r)) - 1.0);
 }
+
 void output_data() {
   
     //=========
@@ -1461,55 +1465,13 @@ void output_data() {
             std::cerr << "Fatal getcwd error in datalog. time stamps" << std::endl;
       }
 
-      // std::ofstream atomic_phonon_output;
-      // atomic_phonon_output.open(string(directory) + "/Atom_Energy/" + time_stamp);
-      // atomic_phonon_output.precision(10);
-      // atomic_phonon_output << std::scientific;
-      // std::ofstream atomic_phonon_output_hist;
-      // atomic_phonon_output_hist.open(string(directory) + "/Atom_Energy/" + time_stamp + ".hist");
-      // atomic_phonon_output_hist.precision(10);
-      // atomic_phonon_output_hist << std::scientific;
-      // electron_position_output_down.open(string(directory) + "/Electron_Position/" + time_stamp + ".xyz");
-      // electron_position_output_down << conduction_electrons << "\n";
-      // electron_position_output_down << time_stamp << "\n";
-      // electron_position_output_down.precision(10);
-      // electron_position_output_down << std::scientific;
-      // electron_velocity_output.open(string(directory) + "/Electron_Velocity/" + time_stamp + ".csv");
-      // electron_velocity_output << "Electron number,    x-component,     y-component,    z-component,     length, energy" << "\n";
-      // electron_velocity_output.precision(10);
-      // electron_velocity_output << std::scientific;
-      // //std::vector<std::ofstream> temp_map_list;
-      // //temp_map_list.resize(8);
-      // for(int i = 0; i < 8; i++) {
-      //   temp_map_list.at(i).open(string(directory) + "/Temp_Map" + std::to_string(i) + "/" + time_stamp);
-      // // std::cout << temp_Map.at(i)[0] << std::endl;
-      // //   std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
-      // }
-    
       std::ofstream temp_map;
       std::ofstream flux_hist;
       std::ofstream relaxation_time;
-
-    // std::ofstream temp_map_1;
-    // std::ofstream temp_map_2;
-    // std::ofstream temp_map_3;
-    // std::ofstream temp_map_4;
-    // std::ofstream temp_map_5;
-    // std::ofstream temp_map_6;
-    // std::ofstream temp_map_7;
     
       temp_map.open(string(directory) + "/Temp_Map/" + time_stamp);
       flux_hist.open(string(directory) + "/flux_hist/" + time_stamp );   
       relaxation_time.open(string(directory)  + "/relaxation_time/" + time_stamp);
-
-    // temp_map_1.open(string(directory) + "/Temp_Map1" + "/" + time_stamp);
-    // temp_map_2.open(string(directory) + "/Temp_Map2" + "/" + time_stamp);
-    // temp_map_3.open(string(directory) + "/Temp_Map3" + "/" + time_stamp);
-    // temp_map_4.open(string(directory) + "/Temp_Map0Ef" + "/" + time_stamp);
-    // temp_map_5.open(string(directory) + "/Temp_Map1Ef" + "/" + time_stamp);
-    // temp_map_6.open(string(directory) + "/Temp_Map2Ef" + "/" + time_stamp);
-    // temp_map_7.open(string(directory) + "/Temp_Map3Ef" + "/" + time_stamp);
-      
 
       for(int e = 0; e < flux_index.size(); e++) {
         flux_hist << e << ", " << flux_index[e] << "\n";
@@ -1530,7 +1492,7 @@ void output_data() {
       for(int e = 0; e < conduction_electrons; e++) { 
         ee_avg += double(relaxation_time_hist_ee[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee[3*e][h]) );
         // ea_avg += double(relaxation_time_hist_ea[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ea[3*e][h]) );
-        if(relaxation_time_hist_ee[3*e + 2][h] > 0) ee_total++;
+        ee_total += relaxation_time_hist_ee[3*e][h];
         // if(relaxation_time_hist_ea[3*e + 2][h] > 0) ea_total++;
       }
 
@@ -1723,7 +1685,7 @@ void output_data() {
     ea_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
-    transport_cutoff = core_cutoff+44.01 - 0.5*floor((d_Te - 300.0)/100.0);
+    // transport_cutoff = core_cutoff+44.01 - 0.5*floor((d_Te - 300.0)/100.0);
     // if(Te > 900) transport_cutoff = 102.951;
   // if(current_time_step > (sim::equilibration_time/2)) ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ);
    // a_a_scattering_count = 0;
