@@ -318,9 +318,8 @@ void update_dynamics() {
       
       // if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, photon_energy);
       // if(!equilibrium_step) 
-      //if(equilibrium_step && electron_potential[e] > 0.8*E_f_A) ea_scattering(e, array_index, omp_get_thread_num());
-     // else if (!equilibrium_step) 
-      ea_scattering(e, array_index, omp_get_thread_num());
+      if(equilibrium_step && electron_potential[e] > 0.8*E_f_A) ea_scattering(e, array_index, omp_get_thread_num());
+     else if (!equilibrium_step)  ea_scattering(e, array_index, omp_get_thread_num());
     }
     if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
       //  TEKE += external_potential;
@@ -444,7 +443,7 @@ void electron_thermal_field(const int e, const int array_index, const double EKE
 // }
 */
 void e_e_coulomb(const int e, const int array_index) {
-    // if(electron_potential[e] < 0.8*E_f_A) return;
+    if(electron_potential[e] < 0.8*E_f_A) return;
 
     int x_cell = int(floor(electron_position[array_index] / x_step_size));
       //if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
@@ -520,7 +519,7 @@ void e_e_coulomb(const int e, const int array_index) {
   //  if(e == 0 ) std::cout << ee_integration_count << ", " << ee_dos_count << ", " << ee_scattering_list << std::endl;
   }
 void neighbor_e_e_coulomb(const int e, const int array_index) {
-    // if(electron_potential[e] < 0.8*E_f_A) return;
+    if(electron_potential[e] < 0.8*E_f_A) return;
     const int size = electron_integration_list[e][0];
       int neighbor_count = 1;
       int scattering_count = 1;
@@ -903,7 +902,7 @@ void ee_scattering() {
     for(int e = 1; e < size; e++) {
       
       const int electron = cell_integration_lists[cell][e];
-      // if (electron_potential[electron] < 0.8*E_f_A) continue;
+      if (electron_potential[electron] < 0.8*E_f_A) continue;
       if (electron_ee_scattering_list[electron][0] == 1) continue;
       // if (!electron_transport_list[electron]) continue;
       const int scattering_size = electron_ee_scattering_list[electron][1];
@@ -912,7 +911,7 @@ void ee_scattering() {
 
       for(int a = 1; a < scattering_size; a++) {
         int electron_collision = electron_ee_scattering_list[electron][a*2];
-        // if (electron_potential[electron_collision] < 0.8*E_f_A) continue;
+        if (electron_potential[electron_collision] < 0.8*E_f_A) continue;
         if (electron_ee_scattering_list[electron_collision][0] == 1) continue;
         // if (!electron_transport_list[electron_collision]) continue;
         const double d_e_energy = electron_potential[electron_collision];
