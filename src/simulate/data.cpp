@@ -274,7 +274,7 @@ namespace CASTLE {
    std::vector<std::vector< int> > lattice_cells_per_omp;
    std::vector< int> escaping_electrons;
    std::vector<std::vector< int> > relaxation_time_hist_ee;
-   std::vector<std::vector< int> > relaxation_time_hist_ea;
+   // std::vector<std::vector< int> > relaxation_time_hist_ea;
    std::vector<int> flux_index;
 //    MTRand_closed uniform_random;
 //    MTRand_int32 int_random;
@@ -378,7 +378,7 @@ namespace CASTLE {
    double M_B_distrib(const double& epsilon, const double& beta);
    void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
    void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
-   void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
-   double return_fermi_distribution(const double& epsilon, const double& beta);// {  return (1.0/(exp(epsilon/beta) + 1.0));}
+   void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double beta);
+   double return_fermi_distribution(const double epsilon, const double beta);// {  return (1.0/(exp(epsilon/beta) + 1.0));}
    double return_BE_integrand(const double phonon_e, const double temperature);
 }

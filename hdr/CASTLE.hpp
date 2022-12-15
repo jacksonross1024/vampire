@@ -65,7 +65,7 @@ namespace CASTLE {
     extern bool applied_voltage_sim;
     extern bool heat_pulse_sim;
 
-    extern  int lattice_atoms; //number of lattice atoms
+    extern int lattice_atoms; //number of lattice atoms
     extern int conduction_electrons; //number of conduction electrons
     extern double temperature;
 
@@ -83,11 +83,11 @@ namespace CASTLE {
     //simulation variables
     extern double total_time_steps;
     extern double loop_time;
-    extern  int    CASTLE_output_rate; 
-    extern  int CASTLE_MD_rate; //output velocity and position data at this multiple
+    extern int    CASTLE_output_rate; 
+    extern int CASTLE_MD_rate; //output velocity and position data at this multiple
   
-    extern  int full_int_var;
-    extern  int half_int_var;
+    extern int full_int_var;
+    extern int half_int_var;
     extern double boundary_conditions_cutoff;
     extern double dt;
     extern double v_f; //meters
@@ -126,11 +126,11 @@ namespace CASTLE {
     extern double e_e_neighbor_cutoff;
     extern double e_e_coulomb_cutoff;
 
-    extern  int x_omp_cells;// = int(floor(lattice_width / 15.0));
-    extern  int y_omp_cells;// = int(floor(lattice_depth / 15.0));
-    extern  int z_omp_cells;// = int(floor(lattice_height/ 15.0));
+    extern int x_omp_cells;// = int(floor(lattice_width / 15.0));
+    extern int y_omp_cells;// = int(floor(lattice_depth / 15.0));
+    extern int z_omp_cells;// = int(floor(lattice_height/ 15.0));
 
-    extern  int total_cells;// = x_omp_cells*y_omp_cells*z_omp_cells;
+    extern int total_cells;// = x_omp_cells*y_omp_cells*z_omp_cells;
 
     extern double x_step_size;// = lattice_width / double(x_omp_cells);
     extern double y_step_size;// = lattice_depth / double(y_omp_cells);
@@ -143,32 +143,32 @@ namespace CASTLE {
     extern long long int current_time_step;
     extern double CASTLE_real_time;
     extern int cells_per_thread;
-    extern std::vector<double> atom_anchor_position;
-    extern std::vector<double> atom_position;
+    // extern std::vector<double> atom_anchor_position;
+    // extern std::vector<double> atom_position;
 
     extern std::vector<double> electron_position; //Angstroms
     extern std::vector<double> electron_velocity; //Angstroms 
     extern std::vector<double> electron_potential; //A-1
     extern std::vector<std::vector< int> > ee_dos_hist;
-    extern std::vector<std::vector< int > > global_e_dos;
+    extern std::vector<std::vector< int> > global_e_dos;
 
-    extern std::vector<bool> electron_transport_list;
+    // extern std::vector<bool> electron_transport_list;
     extern std::vector<std::vector< int> > electron_integration_list;
     extern std::vector<std::vector< int> > electron_nearest_electron_list;
-    extern std::vector<std::vector< int> > electron_nearest_atom_list;
+    // extern std::vector<std::vector< int> > electron_nearest_atom_list;
     extern std::vector<std::vector<double> > electron_ee_scattering_list;
     extern std::vector<std::vector< int> > electron_ea_scattering_list;
-    extern std::vector<std::vector<int> > cell_lattice_coordinate;
+    extern std::vector<std::vector< int> > cell_lattice_coordinate;
     extern std::vector<std::vector< int> > cell_integration_lists;
     extern std::vector<std::vector< int> > old_cell_integration_lists;
-    extern std::vector<std::vector<  int > > cell_nearest_neighbor_list;
-    extern std::vector<std::vector<std::vector<int> > > lattice_cell_coordinate;
+    extern std::vector<std::vector< int> > cell_nearest_neighbor_list;
+    extern std::vector<std::vector<std::vector< int> > > lattice_cell_coordinate;
     extern std::vector<std::vector< int> > temp_Map;
     extern std::vector<std::vector< int> > lattice_cells_per_omp;
     extern std::vector< int> escaping_electrons;
     extern std::vector<std::vector< int> > relaxation_time_hist_ee;
-    extern std::vector<std::vector< int> > relaxation_time_hist_ea;
-    extern std::vector<int> flux_index;
+    // extern std::vector<std::vector< int> > relaxation_time_hist_ea;
+    extern std::vector< int> flux_index;
     extern std::vector<MTRand> omp_uniform_random;
     extern std::vector<MTRand_int32> omp_int_random;
     //outputs
@@ -261,7 +261,7 @@ namespace CASTLE {
     extern double B_E_distrib(const double& epsilon);
     extern void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
     extern void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
-    extern void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
+    extern void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double beta);
    //  double return_phonon_distribution(const double& epsilon, const double& beta);
     
     extern double return_fermi_distribution(const double epsilon, const double beta);
