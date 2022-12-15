@@ -211,9 +211,9 @@ void initialize () {
     lattice_depth  = cs::system_dimensions[1]+y_unit_size; // A
     lattice_height  = cs::system_dimensions[2]+z_unit_size; // A
 
-    if( lattice_height < 26 || lattice_depth < 26 || lattice_width < 26) {
-      std::cerr << "Lattice dimension Error: castle must be 4.5x4.5x4.5 nm^3 minimum" << std::endl;
-    }
+    // if( lattice_height < 26 || lattice_depth < 26 || lattice_width < 26) {
+    //   std::cerr << "Lattice dimension Error: castle must be 4.5x4.5x4.5 nm^3 minimum" << std::endl;
+    // }
 
     x_flux = 0;
     y_flux = 0;
@@ -332,9 +332,13 @@ void initialize () {
 
 void initialize_cell_omp() {
 
-  x_omp_cells = int(floor(lattice_width / 20.0));
-  y_omp_cells = int(floor(lattice_depth / 20.0));
-  z_omp_cells = int(floor(lattice_height/ 20.0));
+  // double 
+  // x_omp_cells = int(floor(lattice_width / 20.0));
+  // y_omp_cells = int(floor(lattice_depth / 20.0));
+  // z_omp_cells = int(floor(lattice_height/ 20.0));
+  x_omp_cells = 4;
+  y_omp_cells = 4;
+  z_omp_cells = 4;
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
