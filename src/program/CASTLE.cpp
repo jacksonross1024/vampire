@@ -333,12 +333,12 @@ void initialize () {
 void initialize_cell_omp() {
 
   // double 
-  x_omp_cells = int(floor(lattice_width / 30.0));
-  y_omp_cells = int(floor(lattice_depth / 30.0));
-  z_omp_cells = int(floor(lattice_height/ 30.0));
-  // x_omp_cells = 4;
-  // y_omp_cells = 4;
-  // z_omp_cells = 4;
+  // x_omp_cells = int(floor(lattice_width / 0.0));
+  // y_omp_cells = int(floor(lattice_depth / 30.0));
+  // z_omp_cells = int(floor(lattice_height/ 30.0));
+  x_omp_cells = 8;
+  y_omp_cells = 8;
+  z_omp_cells = 8;
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -474,9 +474,9 @@ void initialize_cell_omp() {
   
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
-    const int max_x_threads = 2;
-    const int max_y_threads = 2;
-    const int max_z_threads = 2;  
+    const int max_x_threads = 4;
+    const int max_y_threads = 4;
+    const int max_z_threads = 4;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -725,13 +725,13 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
+    e_e_neighbor_cutoff = pow((lattice_width/8.0)-1.0,2.0);
     
-    half_int_var =  1;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    half_int_var =  2;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     // full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = pow(lattice_width/4.0,2.0);
+    e_e_integration_cutoff = pow(lattice_width/8.0,2.0);
     e_e_coulomb_cutoff = pow(1.4*1.4*1.4, 2.0);
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
