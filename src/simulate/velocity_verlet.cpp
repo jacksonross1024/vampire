@@ -52,7 +52,7 @@ int velocity_verlet_step(double time_step) {
    const int size = ee_dos_hist[0].size();
     #pragma omp parallel for schedule(dynamic, 8)
     for(int e = 0; e < conduction_electrons; e++) {
-      if(electron_potential[e] < E_f_A-24.25) continue;
+      // if(electron_potential[e] < E_f_A-24.25) continue;
       electron_ee_scattering_list[e][0] = 0;
       for(int h = 0; h < size; h++) {
         ee_dos_hist[e][h] = 0;
@@ -118,7 +118,7 @@ void update_position(){
       for (int e = 1; e < size; e++) { 
         const int electron = old_cell_integration_lists[cell][e];
         local_e_dos[int(std::min(dos_size-1.0, std::max(0.0, floor((electron_potential[electron] - core_cutoff)/phonon_energy))))]++;
-        if(electron_potential[electron] < (E_f_A-24.25)) continue;
+        // if(electron_potential[electron] < (E_f_A-24.25)) continue;
         
 
       // if(!electron_transport_list[electron] ) continue;
@@ -132,14 +132,14 @@ void update_position(){
         const double v_y = electron_velocity[array_index+1];
         const double v_z = electron_velocity[array_index+2];
 
-        if(electron_potential[e] > 0.98*E_f_A) {
+        // if(electron_potential[e] > 0.98*E_f_A) {
           p_x += v_x;
           p_y += v_y;
           p_z += v_z;
           x_pos += v_x * dt;// + (electron_force[array_index]   * dt * dt * constants::K_A / 2); // x superarray component
           y_pos += v_y * dt;// + (electron_force[array_index_y) * dt * dt * constants::K_A / 2); // y superarray component
           z_pos += v_z * dt;// + (electron_force[array_index_z) * dt * dt * constants::K_A / 2); // z superarray component
-        }
+        // }
 
         if (x_pos < 0.0) {
           x_pos += lattice_width; 
@@ -292,7 +292,7 @@ void update_dynamics() {
     while(count < photons_at_dt) {
       int select = int(omp_uniform_random[omp_get_thread_num()]()*2147483647) % (conduction_electrons);
       double e_energy = electron_potential[select];
-      if( e_energy > (E_f_A-24.25)) {
+      if( return_fermi_distribution((e_energy+photon_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < (1.0-1e-2) && e_energy > E_f_A-23.25) {
         chosen[count] = select;
         count++;
       }
@@ -304,8 +304,8 @@ void update_dynamics() {
       if(err::check) std::cout << "conditions set; updating dos " << std::endl;
     #pragma omp parallel for schedule(dynamic, 8)
     for (int e = 0; e < conduction_electrons; e++) {
-      if(electron_potential[e] < (E_f_A-24.25)) continue;
-      const int array_index = 3*e;        
+      // if(electron_potential[e] < (E_f_A-24.25)) continue;
+      const int array_index = 3*e;
       
       if(current_time_step % half_int_var == 0) e_e_coulomb(e, array_index);
       // else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
@@ -320,8 +320,9 @@ void update_dynamics() {
       
       // if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, photon_energy);
       // if(!equilibrium_step) 
-      if(equilibrium_step && electron_potential[e] > 0.8*E_f_A) ea_scattering(e, array_index, omp_get_thread_num());
-     else if (!equilibrium_step)  ea_scattering(e, array_index, omp_get_thread_num());
+      // if(equilibrium_step && electron_potential[e] > 0.8*E_f_A) ea_scattering(e, array_index, omp_get_thread_num());
+    //  else if (!equilibrium_step)  
+      ea_scattering(e, array_index, omp_get_thread_num());
     }
     if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
       //  TEKE += external_potential;
@@ -468,7 +469,7 @@ void e_e_coulomb(const int e, const int array_index) {
       for(int i = 1; i < size; i++) {
         const int electron = cell_integration_lists[int_cell][i];
         if(e == electron) continue;
-        if(electron_potential[electron] < (E_f_A-24.25)) continue;
+        // if(electron_potential[electron] < (E_f_A-24.25)) continue;
         const int array_index_i = 3*electron;
 
         double x_distance = electron_position[array_index]   - electron_position[array_index_i];
@@ -530,7 +531,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
     for (int i = 1; i < size; i++) {
         const int array_index_i = electron_integration_list[e][i];
         const int electron = array_index_i/3;
-        if(electron_potential[electron] < (E_f_A-24.25)) continue;
+        // if(electron_potential[electron] < (E_f_A-24.25)) continue;
 
         double x_distance = electron_position[array_index]   - electron_position[array_index_i];
         double y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
@@ -720,7 +721,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
 
     const double e_energy = electron_potential[e];
     // double deltaE = 1.0; //double(e_index+1)+core_cutoff - e_energy;
-    if(e_energy - phonon_energy < core_cutoff ) return;
+    // if(e_energy - phonon_energy < E_f_A-23.25 ) return;
     if( e_energy + phonon_energy > (core_cutoff+100.0) ) return;
     double e_occupation;
     double f_e_occupation;
@@ -906,7 +907,7 @@ void ee_scattering() {
     for(int e = 1; e < size; e++) {
       
       const int electron = cell_integration_lists[cell][e];
-      if (electron_potential[electron] < (E_f_A-24.25)) continue;
+      // if (electron_potential[electron] < (E_f_A-24.25)) continue;
       if (electron_ee_scattering_list[electron][0] == 1) continue;
       // if (!electron_transport_list[electron]) continue;
       const int scattering_size = electron_ee_scattering_list[electron][1];
@@ -915,7 +916,7 @@ void ee_scattering() {
 
       for(int a = 1; a < scattering_size; a++) {
         int electron_collision = electron_ee_scattering_list[electron][a*2];
-        if (electron_potential[electron_collision] < (E_f_A-24.25)) continue;
+        // if (electron_potential[electron_collision] < (E_f_A-24.25)) continue;
         if (electron_ee_scattering_list[electron_collision][0] == 1) continue;
         // if (!electron_transport_list[electron_collision]) continue;
         const double d_e_energy = electron_potential[electron_collision];
@@ -977,7 +978,7 @@ void ee_scattering() {
                           //  }
       //  deltaE = (0.5*constants::m_e_r*(d_v_x_2*d_v_x_2 + d_v_y_2*d_v_y_2 + d_v_z_2*d_v_z_2) -\
                            0.5*constants::m_e_r*(v_x*v_x + v_y*v_y + v_z*v_z));
-        if((e_energy + deltaE < E_f_A-24.25) || (d_e_energy - deltaE < E_f_A-24.25)) continue;
+        if((e_energy + deltaE < core_cutoff) || (d_e_energy - deltaE < core_cutoff)) continue;
         // if((e_energy + deltaE < core_cutoff) || (d_e_energy - deltaE < core_cutoff)) std::cout << "bounds issue " << e_energy + deltaE  << ", " << d_e_energy - deltaE  << ", " << core_cutoff << std::endl;
 
         if( (e_energy + deltaE) > (core_cutoff+100.0) || (d_e_energy - deltaE > (core_cutoff+100.0))) continue;
