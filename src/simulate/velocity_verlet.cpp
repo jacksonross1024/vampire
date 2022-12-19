@@ -330,7 +330,7 @@ void update_dynamics() {
     ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
     d_Tp =  a_heat_capacity_i*TLE *n_f/conduction_electrons + Tp;
-    d_Te = (e_heat_capacity_i*TEKE*n_f/conduction_electrons/Te) + (dt*e_heat_capacity_i*pump/Te) + Te;
+    d_Te = (e_heat_capacity_i*TEKE*n_f/conduction_electrons/300.0) + (dt*e_heat_capacity_i*pump/300.0) + Te;
  
         if (err::check) std::cout << "reset scattering." << std::endl;
        
@@ -907,7 +907,7 @@ void ee_scattering() {
     for(int e = 1; e < size; e++) {
       
       const int electron = cell_integration_lists[cell][e];
-      // if (electron_potential[electron] < (E_f_A-24.25)) continue;
+      if (electron_potential[electron] < (E_f_A*0.8)) continue;
       if (electron_ee_scattering_list[electron][0] == 1) continue;
       // if (!electron_transport_list[electron]) continue;
       const int scattering_size = electron_ee_scattering_list[electron][1];
@@ -916,7 +916,7 @@ void ee_scattering() {
 
       for(int a = 1; a < scattering_size; a++) {
         int electron_collision = electron_ee_scattering_list[electron][a*2];
-        // if (electron_potential[electron_collision] < (E_f_A-24.25)) continue;
+        if (electron_potential[electron_collision] < (E_f_A*0.8)) continue;
         if (electron_ee_scattering_list[electron_collision][0] == 1) continue;
         // if (!electron_transport_list[electron_collision]) continue;
         const double d_e_energy = electron_potential[electron_collision];
@@ -989,9 +989,9 @@ void ee_scattering() {
         double e_dos = double(global_e_dos[e_index][1]);
         
             //**local density of states**
-        // if ( (e_energy + deltaE) > transport_cutoff) e_occupation = 1.0 - (double(ee_dos_hist[electron][e_index])/local_dos_occ);     
+        if ( (e_energy + deltaE) > transport_cutoff) e_occupation = 1.0 - (double(ee_dos_hist[electron][e_index])/local_dos_occ);     
             //**global density of states**
-        if ( (e_energy + deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/dos_occ);  
+        // if ( (e_energy + deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/dos_occ);  
         else e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0]) / e_dos);     
         
         double d_e_occupation;
@@ -999,9 +999,9 @@ void ee_scattering() {
         double d_e_dos = double(global_e_dos[d_index][1]);
         
             //**local density of states**
-        // if ( (d_e_energy - deltaE) > transport_cutoff) d_e_occupation = 1.0 - (double(ee_dos_hist[electron_collision][d_index])/local_dos_occ);
+        if ( (d_e_energy - deltaE) > transport_cutoff) d_e_occupation = 1.0 - (double(ee_dos_hist[electron_collision][d_index])/local_dos_occ);
             //**global density of states**
-        if ( (d_e_energy - deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_index][0])/dos_occ);  
+        // if ( (d_e_energy - deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_index][0])/dos_occ);  
         else d_e_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_index][0]) / d_e_dos); 
         
         // if(e_occupation > 0.0) {
