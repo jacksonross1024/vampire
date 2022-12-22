@@ -292,7 +292,7 @@ void update_dynamics() {
     while(count < photons_at_dt) {
       int select = int(omp_uniform_random[omp_get_thread_num()]()*2147483647) % (conduction_electrons);
       double e_energy = electron_potential[select];
-      if( return_fermi_distribution((e_energy+photon_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < (1.0-1e-2) && e_energy > E_f_A-23.25) {
+      if( return_fermi_distribution((e_energy+photon_energy-E_f_A)/E_f_A, constants::kB_r*Te/E_f_A) < (1.0-1e-2)) {
         chosen[count] = select;
         count++;
       }
@@ -330,7 +330,7 @@ void update_dynamics() {
     ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;
     d_Tp =  a_heat_capacity_i*TLE *n_f/conduction_electrons + Tp;
-    d_Te = (e_heat_capacity_i*TEKE*n_f/conduction_electrons/300.0) + (dt*e_heat_capacity_i*pump/300.0) + Te;
+    d_Te = (e_heat_capacity_i*TEKE*n_f/conduction_electrons/Te) + (dt*e_heat_capacity_i*pump/Te) + Te;
  
         if (err::check) std::cout << "reset scattering." << std::endl;
        
@@ -727,13 +727,14 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double f_e_occupation;
     double r_e_occupation;
     const int e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - core_cutoff)/phonon_energy))));
+    const double local_d_dos = std::min(local_dos_occ, phonon_energy*double(electron_nearest_electron_list[e][0])/(E_f_A-core_cutoff));
     if( e_energy > transport_cutoff) {
       e_occupation   = std::min(1.0,double(global_e_dos[e_index  ][0]) / dos_occ); 
       f_e_occupation = std::min(1.0,double(global_e_dos[e_index+1][0]) / dos_occ); 
       r_e_occupation = std::min(1.0,double(global_e_dos[e_index-1][0]) / dos_occ); 
-      // e_occupation   =  std::min(1.0,double(ee_dos_hist[e][e_index  ]) / local_dos_occ); 
-      // f_e_occupation = std::min(1.0,double(ee_dos_hist[e][e_index+1]) / local_dos_occ); 
-      // r_e_occupation =  std::min(1.0,double(ee_dos_hist[e][e_index-1]) / local_dos_occ); 
+      // e_occupation   =  std::min(1.0,double(ee_dos_hist[e][e_index  ]) / local_d_dos); 
+      // f_e_occupation = std::min(1.0,double(ee_dos_hist[e][e_index+1]) / local_d_dos); 
+      // r_e_occupation =  std::min(1.0,double(ee_dos_hist[e][e_index-1]) / local_d_dos); 
     } else {
       e_occupation   = std::min(1.0, double(global_e_dos[e_index  ][0]) / std::max(1.0, double(global_e_dos[e_index  ][1])));    
       f_e_occupation = std::min(1.0, double(global_e_dos[e_index+1][0]) / std::max(1.0, double(global_e_dos[e_index+1][1]))); 
@@ -907,7 +908,7 @@ void ee_scattering() {
     for(int e = 1; e < size; e++) {
       
       const int electron = cell_integration_lists[cell][e];
-      if (electron_potential[electron] < (E_f_A*0.8)) continue;
+      // if (electron_potential[electron] < (E_f_A*0.8)) continue;
       if (electron_ee_scattering_list[electron][0] == 1) continue;
       // if (!electron_transport_list[electron]) continue;
       const int scattering_size = electron_ee_scattering_list[electron][1];
@@ -916,7 +917,7 @@ void ee_scattering() {
 
       for(int a = 1; a < scattering_size; a++) {
         int electron_collision = electron_ee_scattering_list[electron][a*2];
-        if (electron_potential[electron_collision] < (E_f_A*0.8)) continue;
+        // if (electron_potential[electron_collision] < (E_f_A*0.8)) continue;
         if (electron_ee_scattering_list[electron_collision][0] == 1) continue;
         // if (!electron_transport_list[electron_collision]) continue;
         const double d_e_energy = electron_potential[electron_collision];
@@ -986,23 +987,25 @@ void ee_scattering() {
 
         double e_occupation;   
         const int e_index = int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy + deltaE - core_cutoff)/phonon_energy))));
-        double e_dos = double(global_e_dos[e_index][1]);
+        const double local_e_dos = std::min(local_dos_occ, phonon_energy*double(electron_nearest_electron_list[electron][0])/(E_f_A-core_cutoff));
+        double global_dos = double(global_e_dos[e_index][1]);
         
             //**local density of states**
-        if ( (e_energy + deltaE) > transport_cutoff) e_occupation = 1.0 - (double(ee_dos_hist[electron][e_index])/local_dos_occ);     
+        if ( (e_energy + deltaE) > transport_cutoff) e_occupation = 1.0 - (double(ee_dos_hist[electron][e_index])/local_e_dos);     
             //**global density of states**
         // if ( (e_energy + deltaE) > transport_cutoff) e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/dos_occ);  
-        else e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0]) / e_dos);     
+        else e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0]) / global_dos);     
         
         double d_e_occupation;
         const int d_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy - deltaE - core_cutoff)/phonon_energy))));
-        double d_e_dos = double(global_e_dos[d_index][1]);
+        const double local_d_dos = std::min(local_dos_occ, phonon_energy*double(electron_nearest_electron_list[electron_collision][0])/(E_f_A-core_cutoff));
+        global_dos = double(global_e_dos[d_index][1]);
         
             //**local density of states**
-        if ( (d_e_energy - deltaE) > transport_cutoff) d_e_occupation = 1.0 - (double(ee_dos_hist[electron_collision][d_index])/local_dos_occ);
+        if ( (d_e_energy - deltaE) > transport_cutoff) d_e_occupation = 1.0 - (double(ee_dos_hist[electron_collision][d_index])/local_d_dos);
             //**global density of states**
         // if ( (d_e_energy - deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_index][0])/dos_occ);  
-        else d_e_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_index][0]) / d_e_dos); 
+        else d_e_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_index][0]) / global_dos); 
         
         // if(e_occupation > 0.0) {
         //   // e_occupation = 0.0;

@@ -276,19 +276,9 @@ void initialize () {
     //   omp_int_random.at(i).seed(i);
     }
     }
-    /*std::cout << "testing grnd() bounds..." << std::endl;
-    #pragma omp parallel 
-    {
-    const int thread = omp_get_thread_num();
-    for( int e = 0; e < conduction_electrons*conduction_electrons; e++) {
-      if(int(omp_uniform_random.at(thread)()*2147483647)%conduction_electrons < 0 || int(omp_uniform_random.at(thread)()*2147483647)%conduction_electrons >= conduction_electrons) std::cout << "grnd() error " << std::endl;
-    }
-    for( int e = 0; e < conduction_electrons*conduction_electrons; e++) double test = omp_uniform_random.at(thread)();
-    }
-    std::cout << "grnd passed." << std::endl; */
-   // int test = omp_int_random[0]() % conduction_electrons;
-    //test = omp_int_random.at(24)MTRand_int32::rand_int32() %conduction_electrons ;
-    // Initialize lattice
+
+    conduction_electrons = round(0.5*conduction_electrons);
+
     //========
     initialize_positions();
             if (err::check) std::cout << "Lattice built " << std::endl;
@@ -727,7 +717,7 @@ void initialize_electrons() {
     ee_scattering_angle = sim::ee_scattering_angle;
     e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     
-    half_int_var =  2;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    half_int_var =  1;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     // full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
@@ -745,7 +735,7 @@ void initialize_electrons() {
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
     const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-3))));
      ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
-    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   3.0)*1.25*M_PI * 1.0*n_f * 1e-3));
+    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
         if (err::check)  std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       
     for(int h = 0; h < dos_size; h++) {
@@ -772,9 +762,9 @@ void initialize_electrons() {
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
         const int array_index = 3*e;
-        electron_position.at(array_index)     = atoms::x_coord_array.at((e)%lattice_atoms) + 0.5*x_unit_size;
-        electron_position.at(array_index + 1) = atoms::y_coord_array.at((e)%lattice_atoms) + 0.5*y_unit_size;
-        electron_position.at(array_index + 2) = atoms::z_coord_array.at((e)%lattice_atoms) + 0.5*z_unit_size;
+        electron_position.at(array_index)     = atoms::x_coord_array.at((e*2)%lattice_atoms) + 0.5*x_unit_size;
+        electron_position.at(array_index + 1) = atoms::y_coord_array.at((e*2)%lattice_atoms) + 0.5*y_unit_size;
+        electron_position.at(array_index + 2) = atoms::z_coord_array.at((e*2)%lattice_atoms) + 0.5*z_unit_size;
         //initialize and output electron posititons
       //  = atom_anchor_position.at(3*(e%lattice_atoms));//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
        // electron_position.at(array_index + 2) = atom_anchor_position.at(3*(e%lattice_atoms)+2);// + cos(phi)*screening_depth;//*radius_mod(gen);
@@ -1305,7 +1295,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   distrib.precision(20);
 
   double step_size = 0.002;
-  const double max  = E_f_A + 3.0*constants::kB_r*Te;
+  const double max  = E_f_A;// + 3.0*constants::kB_r*Te;
   const double min = E_f_A - 3.0*constants::eV_to_AJ;
   if (err::check)  std::cout << "min: " << min << ", max: " << max << std::endl;
   step_size *= (max-min);
@@ -1323,22 +1313,22 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   } else {
     while(count < conduction_electrons) { 
 
-      double epsilon = max - step_size*energy_step;
-      int occupation = int(round((conduction_electrons/(max-min))*0.1*(return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta))));//+return_fermi_distribution((epsilon - 0.5*step_size - E_f_A)/E_f_A, beta))));
+      double epsilon = max + 3.0*constants::kB_r*Te - step_size*energy_step;
+      int occupation = int(round((2.0*conduction_electrons/(max-min))*0.05*(return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta)+return_fermi_distribution((epsilon - 0.5*step_size - E_f_A)/E_f_A, beta))));
      
      // int steps = round(1.0 / double(occupation));
       for(int o = 0; o < occupation; o++) {
-        distribution.at(count) = epsilon - 0.5*step_size;
+        distribution.at(count) = epsilon - 0.25*step_size;
         distrib << count << ", " << distribution.at(count) << "\n";
         count++;
       
         if(count == conduction_electrons) break;
       }
-      if(1 - return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-3) transport_cutoff = epsilon;
+      if(1.0 - return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-3) transport_cutoff = epsilon;
       energy_step++;
     }
   }
-
+  // transport_cutoff = 98.0;
  // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
@@ -1572,9 +1562,9 @@ void output_data() {
     ea_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
-    if(transport_cutoff > core_cutoff+45.61 - 0.5*floor((d_Te - 300.0)/100.0)) {
-      std::cout << "transport cutoff shift from " << transport_cutoff << " to " << core_cutoff+45.61 - 0.5*floor((d_Te - 300.0)/100.0) << std::endl;
-     transport_cutoff = core_cutoff+45.61 - 0.5*floor((d_Te - 300.0)/100.0);
+    if(transport_cutoff > core_cutoff+20.4041 - 0.5*floor((d_Te - 300.0)/100.0)) {
+      std::cout << "transport cutoff shift from " << transport_cutoff << " to " << core_cutoff+20.4041 - 0.5*floor((d_Te - 300.0)/100.0) << std::endl;
+     transport_cutoff = core_cutoff+20.4041 - 0.5*floor((d_Te - 300.0)/100.0);
     }
     // if(Te > 900) transport_cutoff = 102.951;
   // if(current_time_step > (sim::equilibration_time/2)) ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ);
