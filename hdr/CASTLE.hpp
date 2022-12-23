@@ -57,7 +57,7 @@
 namespace CASTLE {
 
     // input variables
-    extern  int  omp_threads;
+    extern int  omp_threads;
     extern bool CASTLE_program;
     extern bool CASTLE_output_data; //output position and velocity data
     
@@ -65,8 +65,10 @@ namespace CASTLE {
     extern bool applied_voltage_sim;
     extern bool heat_pulse_sim;
 
-    extern int lattice_atoms; //number of lattice atoms
+    extern int lattice_atoms;
     extern int conduction_electrons; //number of conduction electrons
+    extern int layer_1;
+    extern int layer_2;
     extern double temperature;
 
     extern int velocity_verlet_step(double time_step);
@@ -111,7 +113,8 @@ namespace CASTLE {
     extern double phonon_energy;
     extern int ee_density;
     extern int dos_size;
-    extern double dos_occ;
+    extern double dos_occ_1;
+    extern double dos_occ_2;
     extern double local_dos_occ;
 
     extern bool ee_coupling;
@@ -143,47 +146,46 @@ namespace CASTLE {
     extern long long int current_time_step;
     extern double CASTLE_real_time;
     extern int cells_per_thread;
-    // extern std::vector<double> atom_anchor_position;
-    // extern std::vector<double> atom_position;
 
     extern std::vector<double> electron_position; //Angstroms
     extern std::vector<double> electron_velocity; //Angstroms 
     extern std::vector<double> electron_potential; //A-1
     extern std::vector<std::vector< int> > ee_dos_hist;
-    extern std::vector<std::vector< int> > global_e_dos;
+    extern std::vector<std::vector< int> > global_e_dos_1;
+    extern std::vector<std::vector< int> > global_e_dos_2;
 
     // extern std::vector<bool> electron_transport_list;
     extern std::vector<std::vector< int> > electron_integration_list;
     extern std::vector<std::vector< int> > electron_nearest_electron_list;
-    // extern std::vector<std::vector< int> > electron_nearest_atom_list;
     extern std::vector<std::vector<double> > electron_ee_scattering_list;
-    extern std::vector<std::vector< int> > electron_ea_scattering_list;
     extern std::vector<std::vector< int> > cell_lattice_coordinate;
     extern std::vector<std::vector< int> > cell_integration_lists;
     extern std::vector<std::vector< int> > old_cell_integration_lists;
     extern std::vector<std::vector< int> > cell_nearest_neighbor_list;
     extern std::vector<std::vector<std::vector< int> > > lattice_cell_coordinate;
-    extern std::vector<std::vector< int> > temp_Map;
     extern std::vector<std::vector< int> > lattice_cells_per_omp;
     extern std::vector< int> escaping_electrons;
-    extern std::vector<std::vector< int> > relaxation_time_hist_ee;
+    extern std::vector<std::vector< int> > relaxation_time_hist_ee_1;
+    extern std::vector<std::vector< int> > relaxation_time_hist_ee_2;
     // extern std::vector<std::vector< int> > relaxation_time_hist_ea;
     extern std::vector< int> flux_index;
     extern std::vector<MTRand> omp_uniform_random;
     extern std::vector<MTRand_int32> omp_int_random;
     //outputs
    
-    extern double TEPE; //Angstroms
-    extern double TEKE; //Angstroms
-    extern double TLE; //Angstroms
-    extern double Tp;
-    extern double Te;
-    extern double d_Tp;
-    extern double d_Te;
-    
-    extern double MEPE; //meters
-    extern double MEKE; //meters
-    extern double MLE; //meters
+    extern double TEKE_1; //Angstroms
+    extern double TLE_1; //Angstroms
+    extern double Tp_1;
+    extern double Te_1;
+    extern double d_Tp_1;
+    extern double d_Te_1;
+
+    extern double TEKE_2; //Angstroms
+    extern double TLE_2; //Angstroms
+    extern double Tp_2;
+    extern double Te_2;
+    extern double d_Tp_2;
+    extern double d_Te_2;
 
     extern long int x_flux;
     extern long int y_flux;
@@ -191,20 +193,27 @@ namespace CASTLE {
     extern double p_x;
     extern double p_y;
     extern double p_z;
-    extern  int e_a_scattering_count;
-    extern  int e_e_scattering_count;
-    extern  int ee_transport_scattering_count;
-    extern  int ee_core_scattering_count;
-    extern  int ea_transport_scattering_count;
-    extern  int ea_core_scattering_count;
+    extern int ee_transport_scattering_count_1;
+    extern int ee_core_scattering_count_1;
+    extern int ea_transport_scattering_count_1;
+    extern int ea_core_scattering_count_1;
+    extern int ee_transport_scattering_count_2;
+    extern int ee_core_scattering_count_2;
+    extern int ea_transport_scattering_count_2;
+    extern int ea_core_scattering_count_2;
 
-    extern double TTMe;
-    extern double d_TTMe;
-    extern double TTMp;
-    extern double d_TTMp;
+    extern double TTMe_1;
+    extern double d_TTMe_1;
+    extern double TTMp_1;
+    extern double d_TTMp_1;
+     extern double TTMe_2;
+    extern double d_TTMe_2;
+    extern double TTMp_2;
+    extern double d_TTMp_2;
     extern double G;
     
-    extern double transport_cutoff;
+    extern double transport_cutoff_1;
+    extern double transport_cutoff_2;
     extern double core_cutoff;
     extern std::string time_stamp;
     extern std::ofstream lattice_output;
@@ -234,13 +243,11 @@ namespace CASTLE {
     extern void update_dynamics();
 
 //     extern void e_a_coulomb(const int& e, const int& array_index);
-//               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
-   
+//               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);   
 //    extern void neighbor_e_a_coulomb(const int& e, const int& array_index);
 //                 // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
     
     extern void e_e_coulomb(const int e, const int array_index);
-    
     extern void neighbor_e_e_coulomb(const int e, const int array_index);
     
     // extern void a_a_coulomb(const int a, const int array_index, \
@@ -249,14 +256,10 @@ namespace CASTLE {
     //             double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
     extern void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread);
- 
     extern double electron_applied_voltage(const int e, const int array_index, double& external_potential);
  
     extern void ea_scattering(const int e, const int array_index, const int thread);
     extern void ee_scattering();
-    extern int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
-    extern int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
-    extern int ee_elastic(const int electron, const int electron_collision, const double length,  const double e_energy, const double d_e_energy, const double probability);
     extern double M_B_distrib(const double& epsilon, const double& beta);
     extern double B_E_distrib(const double& epsilon);
     extern void create_phonon_distribution(std::vector<double>& distribution, const double& beta);

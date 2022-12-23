@@ -166,160 +166,161 @@ namespace CASTLE {
 
      // input and material parameters
     int  omp_threads = 1;
-   bool CASTLE_program;
-   bool CASTLE_output_data; //output position and velocity data
-   bool equilibrium_step;
-   bool applied_voltage_sim = false;
-   bool heat_pulse_sim = false;
+     bool CASTLE_program;
+     bool CASTLE_output_data; //output position and velocity data
+    
+     bool equilibrium_step;
+     bool applied_voltage_sim;
+     bool heat_pulse_sim;
 
-    int lattice_atoms; //number of lattice atoms
-   int conduction_electrons; //number of conduction electrons
-   double temperature;
+      int lattice_atoms;
+      int conduction_electrons; //number of conduction electrons
+      int layer_1;
+      int layer_2;
+      double temperature;
 
-   int velocity_verlet_step(double time_step);
-   double lattice_height; //Angstroms
-   double lattice_width;  //Angsrtoms
-   double lattice_depth;  //Angstroms
-   double atomic_size;    //Angstroms
-   double screening_depth;//Angstroms
+     int velocity_verlet_step(double time_step);
+     double lattice_height; //Angstroms
+     double lattice_width;  //Angsrtoms
+     double lattice_depth;  //Angstroms
+     double atomic_size;    //Angstroms
+     double screening_depth;//Angstroms
 
-   double x_unit_size;
-   double y_unit_size;
-   double z_unit_size;
+     double x_unit_size;
+     double y_unit_size;
+     double z_unit_size;
 
     //simulation variables
-   double total_time_steps;
-   double loop_time;
-    int    CASTLE_output_rate; //output velocity and position data at this multiple
-    int CASTLE_MD_rate;
+     double total_time_steps;
+     double loop_time;
+     int    CASTLE_output_rate; 
+     int CASTLE_MD_rate; //output velocity and position data at this multiple
+  
+     int full_int_var;
+     int half_int_var;
+     double boundary_conditions_cutoff;
+     double dt;
+     double v_f; //meters
+     double E_f; //meters
+     double E_f_A;
+     double mu_f; //meters
+     double n_f; //meters
+     double atomic_mass;
+     double mu_r; //inverse reduced mass in reduced units
+     double combined_mass; //inverse with reduced units
+     double Tr; // inverse seconds
+     double a_heat_capacity; // AJ/K/mol -> AJ/K
+     double e_heat_capacity; // AJ/K/mol -> AJ/K
+     double a_heat_capacity_i; // K/AJ
+     double e_heat_capacity_i; // K/AJ
+     double a_specific_heat; //AJ/K/particle
+     double e_specific_heat;
+     double a_specific_heat_i;
+     double e_specific_heat_i;
+     double zero_pt_lattice_e;
+     double phonon_energy;
+     int ee_density;
+     int dos_size;
+     double dos_occ_1;
+     double dos_occ_2;
+     double local_dos_occ;
 
-    int full_int_var;
-    int half_int_var;
-   double boundary_conditions_cutoff;
-   double dt;
-   double v_f; //meters
-   double E_f; //meters
-   double E_f_A;
-   double mu_f; //meters
-   double n_f; //meters
-   double atomic_mass;
-   double mu_r; //inverse reduced mass in reduced units
-   double combined_mass; //inverse with reduced units
-   double Tr; // inverse seconds
-   double a_heat_capacity;
-   double e_heat_capacity;
-   double a_heat_capacity_i;
-   double e_heat_capacity_i;
-   double a_specific_heat; //AJ/K/particle
-   double e_specific_heat;
-   double a_specific_heat_i;
-   double e_specific_heat_i;
-   double zero_pt_lattice_e;
-   double phonon_energy;
-   int ee_density;
-   int dos_size;
-   double dos_occ;
-   double local_dos_occ;
-   
-   double e_e_integration_cutoff;
-   double e_e_neighbor_cutoff;
-   double e_e_coulomb_cutoff;
+     bool ee_coupling;
+     bool ea_coupling;
+     double ea_rate;
+     double ee_rate;
+     double ee_coupling_strength;
+     double ea_coupling_strength;
+     double ee_scattering_angle;
 
-   double applied_voltage = 0.0;
-   double power_density = 0.0;
-   
-   bool ee_coupling = false;
-   bool ea_coupling = false;
-   double ee_rate;
-   double ea_rate;
-   double ee_coupling_strength;
-   double ea_coupling_strength;
-   double ee_scattering_angle;
+     double e_e_integration_cutoff;
+     double e_e_neighbor_cutoff;
+     double e_e_coulomb_cutoff;
 
-    int x_omp_cells;// = int(floor(lattice_width / 15.0));
-    int y_omp_cells;// = int(floor(lattice_depth / 15.0));
-    int z_omp_cells;// = int(floor(lattice_height/ 15.0));
+     int x_omp_cells;// = int(floor(lattice_width / 15.0));
+     int y_omp_cells;// = int(floor(lattice_depth / 15.0));
+     int z_omp_cells;// = int(floor(lattice_height/ 15.0));
 
-   int total_cells;// = x_omp_cells*y_omp_cells*z_omp_cells;
+     int total_cells;// = x_omp_cells*y_omp_cells*z_omp_cells;
 
-  double x_step_size;// = lattice_width / double(x_omp_cells);
-  double y_step_size;// = lattice_depth / double(y_omp_cells);
-  double z_step_size;// = lattice_height/ double(z_omp_cells);
+     double x_step_size;// = lattice_width / double(x_omp_cells);
+     double y_step_size;// = lattice_depth / double(y_omp_cells);
+     double z_step_size;// = lattice_height/ double(z_omp_cells);
+ 
+     double applied_voltage;
+     double power_density;
 
     //integration variables
-    long long int current_time_step;
-   double CASTLE_real_time;
-    int cells_per_thread;
-  // std::vector<double> atom_anchor_position;
-  // std::vector<double> atom_position;
+     long long int current_time_step;
+     double CASTLE_real_time;
+     int cells_per_thread;
 
-   std::vector<double> electron_position; //Angstroms
-   std::vector<double> electron_velocity; //Angstroms
-   std::vector<double> electron_potential; //A
-   std::vector<std::vector< int> > ee_dos_hist;
-   std::vector< std::vector< int > > global_e_dos;
+     std::vector<double> electron_position; //Angstroms
+     std::vector<double> electron_velocity; //Angstroms 
+     std::vector<double> electron_potential; //A-1
+     std::vector<std::vector< int> > ee_dos_hist;
+     std::vector<std::vector< int> > global_e_dos_1;
+     std::vector<std::vector< int> > global_e_dos_2;
 
-   std::vector<bool> electron_transport_list;
-   std::vector<std::vector<int> > electron_integration_list;
-   std::vector<std::vector< int> > electron_nearest_electron_list;
-   std::vector<std::vector< int> > electron_nearest_atom_list;
-   std::vector<std::vector<double> > electron_ee_scattering_list;
-   std::vector<std::vector< int> > electron_ea_scattering_list;
-   std::vector<std::vector<int> > cell_lattice_coordinate;
-   std::vector<std::vector< int > > cell_integration_lists;
-   std::vector<std::vector< int> > old_cell_integration_lists;
-   std::vector<std::vector< int > > cell_nearest_neighbor_list;
-   std::vector<std::vector < std::vector <int > > > lattice_cell_coordinate;
-   std::vector<std::vector< int> > temp_Map;
-   std::vector<std::vector< int> > lattice_cells_per_omp;
-   std::vector< int> escaping_electrons;
-   std::vector<std::vector< int> > relaxation_time_hist_ee;
-   // std::vector<std::vector< int> > relaxation_time_hist_ea;
-   std::vector<int> flux_index;
-//    MTRand_closed uniform_random;
-//    MTRand_int32 int_random;
-    std::vector<MTRand> omp_uniform_random(32);
-    std::vector<MTRand_int32> omp_int_random(32);
-//     std::vector<MTRand_int32> omp_int_random(32);
-//   double = omp_int_random[omp_get_thread_num()]();
-//    std::srand(std::time(nullptr));
-//     std::random_device rd;  //Will be used to obtain a seed for the random number engine
-//     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-//     std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
-   //std::vector<MTRand> omp_gaussian_random(omp_get_num_threads());
+    //  std::vector<bool> electron_transport_list;
+     std::vector<std::vector< int> > electron_integration_list;
+     std::vector<std::vector< int> > electron_nearest_electron_list;
+     std::vector<std::vector<double> > electron_ee_scattering_list;
+     std::vector<std::vector< int> > cell_lattice_coordinate;
+     std::vector<std::vector< int> > cell_integration_lists;
+     std::vector<std::vector< int> > old_cell_integration_lists;
+     std::vector<std::vector< int> > cell_nearest_neighbor_list;
+     std::vector<std::vector<std::vector< int> > > lattice_cell_coordinate;
+     std::vector<std::vector< int> > lattice_cells_per_omp;
+     std::vector< int> escaping_electrons;
+     std::vector<std::vector< int> > relaxation_time_hist_ee_1;
+     std::vector<std::vector< int> > relaxation_time_hist_ee_2;
+    //  std::vector<std::vector< int> > relaxation_time_hist_ea;
+     std::vector< int> flux_index;
+     std::vector<MTRand> omp_uniform_random(32);
+     std::vector<MTRand_int32> omp_int_random(32);
     //outputs
    
-   double TEPE; //Angstroms
-   double TEKE; //Angstroms
-   double TLE;
-   double Tp;
-   double Te;
-   double d_Tp;
-   double d_Te;
-    
-   double MEPE; //meters
-   double MEKE; //meters
-   double MLE;
+     double TEKE_1; //Angstroms
+     double TLE_1; //Angstroms
+     double Tp_1;
+     double Te_1;
+     double d_Tp_1;
+     double d_Te_1;
 
-   long int x_flux;
-   long int y_flux;
-   long int z_flux;
-   double p_x;
-   double p_y;
-   double p_z;
-      int e_a_scattering_count;
-       int e_e_scattering_count;
-       int ee_transport_scattering_count;
-       int ee_core_scattering_count;
-       int ea_transport_scattering_count;
-       int ea_core_scattering_count;
+     double TEKE_2; //Angstroms
+     double TLE_2; //Angstroms
+     double Tp_2;
+     double Te_2;
+     double d_Tp_2;
+     double d_Te_2;
 
-   double TTMe;
-   double d_TTMe;
-   double TTMp;
-   double d_TTMp;
-   double G;
-   double transport_cutoff;
+     long int x_flux;
+     long int y_flux;
+     long int z_flux;
+     double p_x;
+     double p_y;
+     double p_z;
+     int ee_transport_scattering_count_1;
+     int ee_core_scattering_count_1;
+     int ea_transport_scattering_count_1;
+     int ea_core_scattering_count_1;
+     int ee_transport_scattering_count_2;
+     int ee_core_scattering_count_2;
+     int ea_transport_scattering_count_2;
+     int ea_core_scattering_count_2;
+
+     double TTMe_1;
+     double d_TTMe_1;
+     double TTMp_1;
+     double d_TTMp_1;
+      double TTMe_2;
+     double d_TTMe_2;
+     double TTMp_2;
+     double d_TTMp_2;
+     double G;
+    double transport_cutoff_1;
+     double transport_cutoff_2;
    double core_cutoff;
 
    std::string time_stamp;
@@ -365,15 +366,11 @@ namespace CASTLE {
 
    void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread);
  
-   double electron_applied_voltage(const int e, const int array_index, double& external_potential);
+   double electron_applied_voltage(const int e, const int array_index, double& al_potential);
 
    // void aa_scattering();
    void ea_scattering(const int e, const int array_index, const int thread);
    void ee_scattering();
-    int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
-     int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
-   int ee_elastic(const int electron, const int electron_collision,  const double length, const double e_energy, const double d_e_energy, const double probability);
-
    double B_E_distrib(const double& epsilon);
    double M_B_distrib(const double& epsilon, const double& beta);
    void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
