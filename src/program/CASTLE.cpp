@@ -250,7 +250,7 @@ void initialize () {
     G = 300.0*e_heat_capacity*E_f_A*2.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
+    ea_rate = -3.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
@@ -284,8 +284,8 @@ void initialize () {
    initialize_velocities();
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
-    dos_occ_1  = round(phonon_energy*(conduction_electrons/(E_f_A-core_cutoff)));
-    // dos_occ_2  = round(phonon_energy*(layer_2/(E_f_A-core_cutoff)));
+    dos_occ_1  = round(phonon_energy*(layer_1/(E_f_A-core_cutoff)));
+    dos_occ_2  = round(phonon_energy*(layer_2/(E_f_A-core_cutoff)));
     local_dos_occ = round(0.9*phonon_energy*(ee_density/3.0/(E_f_A-core_cutoff)));
     std::cout << "global dos_1 occupation: "<< dos_occ_1 << ", local dos occupation: " << local_dos_occ << std::endl;
 
@@ -1137,22 +1137,22 @@ void initialize_velocities() {
   {
     std::vector<int> local_e_dos_1;
     local_e_dos_1.resize(dos_size,0);
-    // std::vector<int> local_e_dos_2;
-    // local_e_dos_2.resize(dos_size,0);
+    std::vector<int> local_e_dos_2;
+    local_e_dos_2.resize(dos_size,0);
     #pragma omp for nowait
     for(int e = 0; e < conduction_electrons; e++) {
-      // if(electron_position[3*e+2] > (lattice_height-60.0)) {
+      if(electron_position[3*e+2] > (lattice_height-60.0)) {
         local_e_dos_1[int(std::min(dos_size-1.0, std::max(0.0, floor((electron_potential[e] - core_cutoff)/phonon_energy))))]++;
-      // } else {
-        // local_e_dos_2[int(std::min(dos_size-1.0, std::max(0.0, floor((electron_potential[e] - core_cutoff)/phonon_energy))))]++;
-      // }
+      } else {
+        local_e_dos_2[int(std::min(dos_size-1.0, std::max(0.0, floor((electron_potential[e] - core_cutoff)/phonon_energy))))]++;
+      }
     }
     
     #pragma omp critical 
     {
       for(int h = 0; h < dos_size; h++) {
         global_e_dos_1[h][1] += local_e_dos_1[h];
-        // global_e_dos_2[h][1] += local_e_dos_2[h];
+        global_e_dos_2[h][1] += local_e_dos_2[h];
       }
     }
   }
@@ -1164,16 +1164,16 @@ void initialize_velocities() {
 
     std::ofstream global_e_dos_out_1;
     global_e_dos_out_1.open(string(directory) + "/Temp_Map_1/init");
-    // std::ofstream global_e_dos_out_2;
-    // global_e_dos_out_2.open(string(directory) + "/Temp_Map_2/init");
-    // lattice_output.open(string(directory) + "/ee_scattering");
+    std::ofstream global_e_dos_out_2;
+    global_e_dos_out_2.open(string(directory) + "/Temp_Map_2/init");
+    lattice_output.open(string(directory) + "/ee_scattering");
     int total_1 = 0;
-    // int total_2 = 0;
+    int total_2 = 0;
     for(int h = 0 ; h < dos_size; h++) {
       global_e_dos_out_1 << h + int(core_cutoff) << ", " <<  global_e_dos_1[h][1] << std::endl;
-      // global_e_dos_out_2 << h + int(core_cutoff) << ", " <<  global_e_dos_2[h][1] << std::endl;
+      global_e_dos_out_2 << h + int(core_cutoff) << ", " <<  global_e_dos_2[h][1] << std::endl;
       total_1 += global_e_dos_1[h][1];
-      // total_2 += global_e_dos_2[h][1];
+      total_2 += global_e_dos_2[h][1];
     }
 
     if(total_1 != conduction_electrons) std::cout <<"hist problem " << total_1 << ", " << conduction_electrons << std::endl;
@@ -1297,7 +1297,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
       energy_step++;
     }
   }
-  // transport_cutoff = 98.0;
+  transport_cutoff_1 = transport_cutoff_2 = 98.0;
  // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
@@ -1431,24 +1431,24 @@ void output_data() {
         if(e_energy < E_f_A) {
           if(e_energy > transport_cutoff_2) {
             local_d_U_2  += (E_f_A - e_energy)*std::max(0.0, 1.0 - double(ee_dos_hist[e][index])/local_dos_occ);
-            global_d_U_2 += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_1[index][0])/dos_occ_1)); 
+            global_d_U_2 += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_2[index][0])/dos_occ_2)); 
           } else {
-            local_d_U_2  += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_1[index][0])/double(global_e_dos_1[index][1])));
-            global_d_U_2 += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_1[index][0])/double(global_e_dos_1[index][1])));  
+            local_d_U_2  += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_2[index][0])/double(global_e_dos_2[index][1])));
+            global_d_U_2 += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_2[index][0])/double(global_e_dos_2[index][1])));  
           }
         } else {
-          global_d_U_2 += (e_energy - E_f_A)*double(global_e_dos_1[index][0])/dos_occ_1;
+          global_d_U_2 += (e_energy - E_f_A)*double(global_e_dos_2[index][0])/dos_occ_2;
           local_d_U_2  += (e_energy - E_f_A)*double(ee_dos_hist[e][index])/local_dos_occ;
         }
       }
     }
-    e_size_1 /= conduction_electrons;
-    scat_size_1 /= conduction_electrons;
-    d_U_avg_1 /= conduction_electrons;
+    e_size_1 /= layer_1;
+    scat_size_1 /= layer_1;
+    d_U_avg_1 /= layer_1;
 
-    e_size_2 /= conduction_electrons;
-    scat_size_2 /= conduction_electrons;
-    d_U_avg_2 /= conduction_electrons;
+    e_size_2 /= layer_2;
+    scat_size_2 /= layer_2;
+    d_U_avg_2 /= layer_2;
 
     #pragma omp parallel for reduction(+:e_stddev_1, scat_stddev_1, e_stddev_2, scat_stddev_2)
     for(int e = 0; e < conduction_electrons; e++) {
@@ -1460,11 +1460,11 @@ void output_data() {
         scat_stddev_2 += (electron_ee_scattering_list[e][1] - scat_size_2)*(electron_ee_scattering_list[e][1] - scat_size_2);
     }
    
-    e_stddev_1 = sqrt(e_stddev_1/conduction_electrons);
-    scat_stddev_1 = sqrt(scat_stddev_1/conduction_electrons);
+    e_stddev_1 = sqrt(e_stddev_1/layer_1);
+    scat_stddev_1 = sqrt(scat_stddev_1/layer_1);
 
-    e_stddev_2 = sqrt(e_stddev_2/conduction_electrons);
-    scat_stddev_2 = sqrt(scat_stddev_2/conduction_electrons);
+    e_stddev_2 = sqrt(e_stddev_2/layer_2);
+    scat_stddev_2 = sqrt(scat_stddev_2/layer_2);
     
     if((current_time_step % (CASTLE_output_rate * CASTLE_MD_rate)) == 0) {
       time_stamp = std::to_string(current_time_step);
@@ -1477,13 +1477,13 @@ void output_data() {
       std::ofstream flux_hist;
       std::ofstream temp_map_1;
       std::ofstream relaxation_time_1;
-      // std::ofstream temp_map_2;
+      std::ofstream temp_map_2;
       std::ofstream relaxation_time_2;
 
       flux_hist.open(string(directory) + "/flux_hist/" + time_stamp );   
       temp_map_1.open(string(directory) + "/Temp_Map_1/" + time_stamp);
       relaxation_time_1.open(string(directory)  + "/relaxation_time_1/" + time_stamp);
-      // temp_map_2.open(string(directory) + "/Temp_Map_2/" + time_stamp);
+      temp_map_2.open(string(directory) + "/Temp_Map_2/" + time_stamp);
       relaxation_time_2.open(string(directory)  + "/relaxation_time_2/" + time_stamp);
 
       for(int e = 0; e < flux_index.size(); e++) {
@@ -1516,17 +1516,17 @@ void output_data() {
   
     int count_1 = 0;
     int electrons_1[4];
-    // int count_2 = 0;
-    // int electrons_2[4];
+    int count_2 = 0;
+    int electrons_2[4];
 
     while(count_1 < 3) {
       int selection = int(omp_uniform_random[0]()*2147483647) % (conduction_electrons);
       if(electron_position[3*selection +2] > (lattice_height-60.0)) {electrons_1[count_1] = selection; count_1++;}
     }
-    // while(count_2 < 3) {
-    //   int selection = int(omp_uniform_random[0]()*2147483647) % (conduction_electrons);
-    //   if(electron_position[3*selection +2] < (lattice_height-60.0)) {electrons_2[count_2] = selection; count_2++;}
-    // }
+    while(count_2 < 3) {
+      int selection = int(omp_uniform_random[0]()*2147483647) % (conduction_electrons);
+      if(electron_position[3*selection +2] < (lattice_height-60.0)) {electrons_2[count_2] = selection; count_2++;}
+    }
 
     for(int i = 0; i < output_count_hr; i++) {
       temp_map_1 << i*phonon_energy + int(round(core_cutoff)) << ", " << global_e_dos_1.at(i)[0] << ", " << global_e_dos_1[i][1] 
@@ -1535,16 +1535,17 @@ void output_data() {
                       << ", " << ee_dos_hist[electrons_1[2]].at(i) \
                       << ", " << ee_dos_hist[electrons_1[3]].at(i) << "\n";
 
-     // temp_map_2 << i*phonon_energy + int(round(core_cutoff)) << ", " << global_e_dos_2.at(i)[0] << ", " << global_e_dos_2[i][1] \
+     temp_map_2 << i*phonon_energy + int(round(core_cutoff)) << ", " << global_e_dos_2.at(i)[0] << ", " << global_e_dos_2[i][1] \
                       << ", " << ee_dos_hist[electrons_2[0]].at(i) \
                       << ", " << ee_dos_hist[electrons_2[1]].at(i) \
                       << ", " << ee_dos_hist[electrons_2[2]].at(i) \
                       << ", " << ee_dos_hist[electrons_2[3]].at(i) << "\n";
     }
     temp_map_1.close();
-    // temp_map_2.close();
+    temp_map_2.close();
 
-      std::cout << std::fixed; std::cout.precision(3); std::cout << "  " << current_time_step / total_time_steps * 100 << "%. " << std::endl; 
+    
+      std::cout << std::fixed; std::cout.precision(3); std::cout << "  " << current_time_step / total_time_steps * 100 << "%. dos_1 " << dos_occ_1 << ", dos_2: " << dos_occ_2 << std::endl; 
     }
     mean_data.precision(10);
     mean_data << std::scientific;
@@ -1554,7 +1555,7 @@ void output_data() {
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << d_Te_1*300.0*e_heat_capacity << ", " << d_Te_2*300.0*e_heat_capacity << ", "  << global_d_U_1 << ", " <<  global_d_U_2 << ", " << local_d_U_1 << ", " <<  local_d_U_2 << ", " // (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
-      << Te_1 << ", " << Tp_1 << ", " << Te_2 << ", " << Tp_2 << ", " << d_U_avg_1 << ", " << d_U_avg_2 << ", " 
+      << Te_1 << ", " << Tp_1 << ", " << Te_2 << ", " << Tp_2 << ", " << layer_1 << ", " << layer_2 << ", " 
       << d_TTMe_1 << ", " << d_TTMp_1 << ", " << d_TTMe_2 << ", " << d_TTMp_2 << ", " <<I*double(CASTLE_output_rate) << ", " << e_size_1 << ", " << e_stddev_1 << ", " << e_size_2 << ", " << e_stddev_2 << ", " << scat_size_1 << ", " << scat_stddev_1 << ", " << scat_size_2 << ", " << scat_stddev_2 << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(ee_core_scattering_count_1+ee_transport_scattering_count_1) / 1 << ", " << double(ee_core_scattering_count_2+ee_transport_scattering_count_2) / 1 << ", " << double(ea_core_scattering_count_1+ea_transport_scattering_count_1) / double(1) << ", " << double(ea_core_scattering_count_2+ea_transport_scattering_count_2) / double(1) << ", " <<\
       double(ee_core_scattering_count_1) / double(1) << ", " << double(ee_transport_scattering_count_1) / double(1) << ", " <<\
@@ -1566,7 +1567,7 @@ void output_data() {
     } else {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << d_Te_1*300.0*e_heat_capacity << ", "  << d_Te_2*300.0*e_heat_capacity << ", "  << global_d_U_1 << ", " <<  global_d_U_2 << ", " << local_d_U_1 << ", " <<  local_d_U_2 << ", " // (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
-      << Te_1 << ", " << Tp_1 << ", " << Te_2 << ", " << Tp_2 << ", " << d_U_avg_1 << ", " << d_U_avg_2 << ", " 
+      << Te_1 << ", " << Tp_1 << ", " << Te_2 << ", " << Tp_2 << ", " << layer_1 << ", " << layer_2 << ", " 
       << d_TTMe_1 << ", " << d_TTMp_1 << ", " << d_TTMe_2 << ", " << d_TTMp_2 << ", " <<I*double(CASTLE_output_rate) << ", " << e_size_1 << ", " << e_stddev_1 << ", " << e_size_2 << ", " << e_stddev_2 << ", " << scat_size_1 << ", " << scat_stddev_1 << ", " << scat_size_2 << ", " << scat_stddev_2 << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", "
       << std::fixed; mean_data.precision(1); mean_data <<  double(ee_core_scattering_count_1+ee_transport_scattering_count_1) / double(CASTLE_output_rate) << ", " << double(ee_core_scattering_count_2+ee_transport_scattering_count_2) / double(CASTLE_output_rate) << ", " << double(ea_core_scattering_count_1+ea_transport_scattering_count_1) / double(CASTLE_output_rate) << ", " << double(ea_core_scattering_count_2+ea_transport_scattering_count_2) / double(CASTLE_output_rate) << ", " <<
       double(ee_core_scattering_count_1) / double(CASTLE_output_rate) << ", " << double(ee_transport_scattering_count_1) / double(CASTLE_output_rate) << ", " <<\
