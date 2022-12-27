@@ -699,7 +699,7 @@ void initialize_electrons() {
     ee_scattering_angle = sim::ee_scattering_angle;
     e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     
-    half_int_var =  3;
+    half_int_var =  1;
     
     e_e_integration_cutoff = pow(lattice_width/4.0,2.0);
     e_e_coulomb_cutoff = pow(1.4*1.4*1.4, 2.0);
