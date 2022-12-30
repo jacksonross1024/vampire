@@ -326,9 +326,9 @@ void initialize_cell_omp() {
   // x_omp_cells = int(floor(lattice_width / 0.0));
   // y_omp_cells = int(floor(lattice_depth / 30.0));
   // z_omp_cells = int(floor(lattice_height/ 30.0));
-  x_omp_cells = 4;
-  y_omp_cells = 4;
-  z_omp_cells = 4;
+  x_omp_cells = 8;
+  y_omp_cells = 8;
+  z_omp_cells = 8;
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -464,8 +464,8 @@ void initialize_cell_omp() {
   
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
-    const int max_x_threads = 2;
-    const int max_y_threads = 2;
+    const int max_x_threads = 4;
+    const int max_y_threads = 4;
     const int max_z_threads = 2;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
@@ -715,13 +715,13 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
+    e_e_neighbor_cutoff = pow((lattice_width/8.0)-1.0,2.0);
     
     half_int_var =  4;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     // full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = pow(lattice_width/4.0,2.0);
+    e_e_integration_cutoff = pow(lattice_width/8.0,2.0);
     e_e_coulomb_cutoff = pow(1.4*1.4*1.4, 2.0);
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
@@ -1449,10 +1449,10 @@ void output_data() {
 
     #pragma omp parallel for reduction(+:e_stddev,scat_stddev)
     for(int e = 0; e < conduction_electrons; e++) {
-      if(electron_potential[e] > 0.8*E_f_A){
+      // if(electron_potential[e] > 0.8*E_f_A){
         e_stddev += (electron_nearest_electron_list[e][0] - e_size)   *(electron_nearest_electron_list[e][0] - e_size);
         scat_stddev += (electron_ee_scattering_list[e][1] - scat_size)*(electron_ee_scattering_list[e][1] - scat_size);
-      }
+      // }
     }
    
     e_stddev = sqrt(e_stddev/electron_counter);
@@ -1474,15 +1474,18 @@ void output_data() {
       flux_hist.open(string(directory) + "/flux_hist/" + time_stamp );   
       relaxation_time.open(string(directory)  + "/relaxation_time/" + time_stamp);
 
+    // std::cout << "why?" << std::endl;
       for(int e = 0; e < flux_index.size(); e++) {
-        flux_hist << e << ", " << flux_index[e] << "\n";
+        flux_hist << e << ", " << flux_index.at(e) << "\n";
         flux_index[e] = 0;
       }
-
+      flux_hist.close();
+    
     double ee_avg;
     double ea_avg;
     int ee_total;
     int ea_total;
+   
    
     // std::cout << relaxation_time_hist_ee[0].size() << std::endl;
     for(int h = 0; h < relaxation_time_hist_ee[0].size(); h++) {
@@ -1500,6 +1503,8 @@ void output_data() {
       relaxation_time << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg/std::max(1.0,double(ee_total)) << ", " << ee_total  << "\n";
       // << ", " << ea_avg/std::max(1.0,double(ea_total)) << ", " << ea_total
     }
+    relaxation_time.close();
+      // std::cout << "why not" << std::endl;
     // }
   //  const int output_count_lr = int(round(transport_cutoff-core_cutoff));
     const int output_count_hr = ee_dos_hist[0].size();
@@ -1509,18 +1514,22 @@ void output_data() {
     int electrons[4];
     while(count < 3) {
       int selection = int(omp_uniform_random[0]()*2147483647) % (conduction_electrons);
-       if(electron_potential[selection] > E_f_A*0.8) {electrons[count] = selection; count++;}
+       //if(electron_potential[selection] > core_cutoff) {
+        electrons[count] = selection; 
+        count++;
     }
-    
+
+     
     for(int i = 0; i < output_count_hr; i++) {
      // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
      // if(i < output_count_lr) { 
       temp_map << i*phonon_energy + int(round(core_cutoff)) << ", " << global_e_dos.at(i)[0] << ", " << global_e_dos[i][1] 
-                      << ", " << ee_dos_hist[electrons[0]].at(i) \
+                      << ", " << ee_dos_hist.at(electrons[0]).at(i) \
                       << ", " << ee_dos_hist[electrons[1]].at(i) \
                       << ", " << ee_dos_hist[electrons[2]].at(i) \
                       << ", " << ee_dos_hist[electrons[3]].at(i) << "\n";
     }
+    // std::cout << "why not" << std::endl;
     temp_map.close();
 
 
