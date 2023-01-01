@@ -467,7 +467,7 @@ void initialize_cell_omp() {
 
     const int max_x_threads = 4;
     const int max_y_threads = 4;
-    const int max_z_threads = 4;  
+    const int max_z_threads = 2;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -718,7 +718,7 @@ void initialize_electrons() {
     ee_scattering_angle = sim::ee_scattering_angle;
     e_e_neighbor_cutoff = pow((lattice_width/8.0)-1.0,2.0);
     
-    half_int_var =  1;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    half_int_var =  4;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     // full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
