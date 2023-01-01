@@ -301,7 +301,8 @@ void initialize () {
     std::cout << "global dos occupation: "<< dos_occ  << ", local dos occupation: " << local_dos_occ << std::endl;
 
     std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
-    ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << std::fixed << std::endl;
+    ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << \
+    ", phonon energy: " << 0.5*phonon_energy << ", dos width: " << phonon_energy <<  std::fixed << std::endl;
    //G = -1.0*ea_rate*n_f/300.0; //J/s/K/m**3 []
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
@@ -1294,13 +1295,15 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   distrib.open(string(directory) +"/"+ name);
   distrib.precision(20);
 
-  double step_size = 0.002;
+  double step_size = 0.002; // 1/500
   const double max  = E_f_A;// + 3.0*constants::kB_r*Te;
-  const double min = E_f_A - 3.0*constants::eV_to_AJ;
+  const double min = E_f_A - 1.5*constants::eV_to_AJ;
+  
   if (err::check)  std::cout << "min: " << min << ", max: " << max << std::endl;
-  step_size *= (max-min);
+  step_size *= (max-min); // 0.048 AJ
  // else step_size = 1.0;
-
+  const double occupation_normalisation = step_size*conduction_electrons/(max-min);
+    std::cout << " create fermi distribution occupation for normalistaion: " << occupation_normalisation << std::endl;
   int count = 0;
   int subCount = 0;
   int energy_step = 0;
@@ -1313,12 +1316,12 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   } else {
     while(count < conduction_electrons) { 
 
-      double epsilon = max + 3.0*constants::kB_r*Te - step_size*energy_step;
-      int occupation = int(round((2.0*conduction_electrons/(max-min))*0.05*(return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta)+return_fermi_distribution((epsilon - 0.5*step_size - E_f_A)/E_f_A, beta))));
+      double epsilon = max + 10.0*constants::kB_r*Te - step_size*energy_step;
+      int occupation = int(round(occupation_normalisation*0.5*(return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta)+return_fermi_distribution((epsilon-step_size- E_f_A)/E_f_A, beta))));
      
      // int steps = round(1.0 / double(occupation));
       for(int o = 0; o < occupation; o++) {
-        distribution.at(count) = epsilon - 0.25*step_size;
+        distribution.at(count) = epsilon - 0.5*step_size;
         distrib << count << ", " << distribution.at(count) << "\n";
         count++;
       
@@ -1455,6 +1458,7 @@ void output_data() {
       // }
     }
    
+
     e_stddev = sqrt(e_stddev/electron_counter);
     scat_stddev = sqrt(scat_stddev/electron_counter);
 
@@ -1480,29 +1484,46 @@ void output_data() {
         flux_index[e] = 0;
       }
       flux_hist.close();
-    
-    double ee_avg;
-    double ea_avg;
-    int ee_total;
-    int ea_total;
-   
-   
-    // std::cout << relaxation_time_hist_ee[0].size() << std::endl;
-    for(int h = 0; h < relaxation_time_hist_ee[0].size(); h++) {
-      ee_avg = 0.0;
-      // ea_avg = 0.0;
-      ee_total = 0;
-      // ea_total = 0;
+
+    // stopwatch_t omp_time;
+    // omp_time.start();
+    double ee_avg = 0.0;
+    int ee_total = 0;
+    #pragma omp parallel 
+    {
+      std::vector<double> ee_avg_array;
+      std::vector<int> ee_total_array;
+      ee_avg_array.resize(relaxation_time_hist_ee[0].size(), 0.0);
+      ee_total_array.resize(relaxation_time_hist_ee[0].size(), 0);
+      #pragma omp for 
       for(int e = 0; e < conduction_electrons; e++) { 
-        ee_avg += double(relaxation_time_hist_ee[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee[3*e][h]) );
-        // ea_avg += double(relaxation_time_hist_ea[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ea[3*e][h]) );
-        ee_total += relaxation_time_hist_ee[3*e][h];
-        // if(relaxation_time_hist_ea[3*e + 2][h] > 0) ea_total++;
+        for(int h = 0; h < relaxation_time_hist_ee[0].size(); h++) {
+        
+          ee_avg_array[h] += double(relaxation_time_hist_ee[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee[3*e][h]) );
+          ee_total_array[h] += relaxation_time_hist_ee[3*e][h];
+        }
       }
 
-      relaxation_time << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg/std::max(1.0,double(ee_total)) << ", " << ee_total  << "\n";
-      // << ", " << ea_avg/std::max(1.0,double(ea_total)) << ", " << ea_total
+      for(int h = 0; h < relaxation_time_hist_ee[0].size(); h++) {
+        #pragma omp critical
+        {
+        ee_avg += ee_avg_array[h];
+        ee_total += ee_total_array[h];
+        ee_avg_array[h] = 0;
+        ee_total_array[h] = 0;
+        }
+        #pragma omp barrier
+
+        #pragma omp single 
+        {
+        relaxation_time << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg/std::max(1.0,double(ee_total)) << ", " << ee_total  << "\n"; 
+        ee_avg = 0.0;
+        ee_total = 0;
+        }
+      }
     }
+
+    // std::cout << "relaxatime output timing: " << omp_time.elapsed_seconds() << std::endl;
     relaxation_time.close();
       // std::cout << "why not" << std::endl;
     // }
@@ -1519,7 +1540,6 @@ void output_data() {
         count++;
     }
 
-     
     for(int i = 0; i < output_count_hr; i++) {
      // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
      // if(i < output_count_lr) { 
