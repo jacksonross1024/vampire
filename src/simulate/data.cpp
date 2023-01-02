@@ -200,23 +200,35 @@ namespace CASTLE {
      int half_int_var;
      double boundary_conditions_cutoff;
      double dt;
+     double E_f_1; //meters
+     double E_f_A_1;
+     double n_f_1; //meters
      double v_f; //meters
-     double E_f; //meters
-     double E_f_A;
-     double mu_f; //meters
-     double n_f; //meters
+     double E_f_2; //meters
+     double E_f_A_2;
+     double n_f_2; //meters
      double atomic_mass;
      double mu_r; //inverse reduced mass in reduced units
      double combined_mass; //inverse with reduced units
      double Tr; // inverse seconds
      double a_heat_capacity; // AJ/K/mol -> AJ/K
-     double e_heat_capacity; // AJ/K/mol -> AJ/K
+   
      double a_heat_capacity_i; // K/AJ
-     double e_heat_capacity_i; // K/AJ
+   
      double a_specific_heat; //AJ/K/particle
-     double e_specific_heat;
+  
      double a_specific_heat_i;
-     double e_specific_heat_i;
+    
+
+       double e_heat_capacity_i_1; // K/AJ
+     double e_heat_capacity_1; // AJ/K/mol -> AJ/K
+     double e_specific_heat_1;
+     double e_specific_heat_i_1;
+     double e_heat_capacity_i_2; // K/AJ
+     double e_heat_capacity_2; // AJ/K/mol -> AJ/K
+     double e_specific_heat_2;
+     double e_specific_heat_i_2;
+
      double zero_pt_lattice_e;
      double phonon_energy;
      int ee_density;

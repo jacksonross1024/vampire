@@ -222,21 +222,27 @@ void initialize () {
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
     applied_voltage = sqrt(1.60218e-19*2.0*sim::applied_voltage/constants::eps_0/(1e-30*lattice_width * lattice_height * lattice_depth)); //eV -> V/m
-    n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
-    E_f = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
-    E_f_A = E_f*1e20; //AJ
-    mu_f = 5.0 * E_f_A / (3.0 * conduction_electrons);//Fermi-level
-    v_f = sqrt(2.0 * E_f_A * constants::m_e_r_i); // A/fs
+    n_f_1 = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
+    E_f_1 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_1*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
+    E_f_A_1 = E_f_1*1e20; //AJ
+    n_f_2 = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
+    E_f_2 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_2*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
+    E_f_A_2 = E_f_2*1e20; //AJ
 
     a_specific_heat = 25.0 /6.02e3; // //sim::TTCl; //J/K/mol -> .at(e20/Na) AJ/K/e-   
     a_specific_heat_i = 1.0 / a_specific_heat;
-    a_heat_capacity = 1.14*a_specific_heat * n_f; //AJ/K/particle .at() AJ/K/nm**3
+    a_heat_capacity = 1.14*a_specific_heat * n_f_1; //AJ/K/particle .at() AJ/K/nm**3
     a_heat_capacity_i = 1.0 / a_heat_capacity;
 
-    e_specific_heat = 0.5*M_PI*M_PI*constants::kB*constants::kB/E_f; // gamma; //J/K**2/e- 
-    e_specific_heat_i = 1.0 / e_specific_heat;
-    e_heat_capacity = (10.4)*(1.0+0.084)*1e20*e_specific_heat * n_f; //J/K/e- -> AJ/K**2/nm**3
-    e_heat_capacity_i = 1.0 / e_heat_capacity;
+    e_specific_heat_1 = 0.5*M_PI*M_PI*constants::kB*constants::kB/E_f_1; // gamma; //J/K**2/e- 
+    e_specific_heat_i_1 = 1.0 / e_specific_heat_1;
+    e_heat_capacity_1 = (10.4)*(1.0+0.084)*1e20*e_specific_heat_1 * n_f_1; //J/K/e- -> AJ/K**2/nm**3
+    e_heat_capacity_i_1 = 1.0 / e_heat_capacity_1;
+
+    e_specific_heat_2 = 0.5*M_PI*M_PI*constants::kB*constants::kB/E_f_2; // gamma; //J/K**2/e- 
+    e_specific_heat_i_2 = 1.0 / e_specific_heat_2;
+    e_heat_capacity_2 = (10.4)*(1.0+0.084)*1e20*e_specific_heat_2 * n_f_2; //J/K/e- -> AJ/K**2/nm**3
+    e_heat_capacity_i_2 = 1.0 / e_heat_capacity_2;
 
     ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/constants::hbar_r; // meV**2 -> AJ/fs
     phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.084)*constants::eV_to_AJ; // meV [e-3] AJ
@@ -246,11 +252,11 @@ void initialize () {
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
     power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
     
-    const static double tau = E_f_A /(M_PI*ea_coupling_strength); // fs/AJ
-    G = 300.0*e_heat_capacity*E_f_A*2.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
+    const static double tau = E_f_A_1 /(M_PI*ea_coupling_strength); // fs/AJ
+    G = 300.0*e_heat_capacity_1*E_f_A_1*2.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -3.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
+    ea_rate = -3.0*dt*E_f_A_1/tau;  //AJ(ready for E_i)  AJfs/fs
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     omp_set_num_threads(omp_threads);
@@ -284,14 +290,36 @@ void initialize () {
    initialize_velocities();
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
-    dos_occ_1  = round(phonon_energy*(layer_1/(E_f_A-core_cutoff)));
-    dos_occ_2  = round(phonon_energy*(layer_2/(E_f_A-core_cutoff)));
-    local_dos_occ = round(0.9*phonon_energy*(ee_density/3.0/(E_f_A-core_cutoff)));
+    dos_occ_1  = round(phonon_energy*(layer_1/(E_f_A_1-core_cutoff)));
+    dos_occ_2  = round(phonon_energy*(layer_2/(E_f_A_2-core_cutoff)));
+    local_dos_occ = round(0.9*phonon_energy*(ee_density/3.0/(E_f_A_1-core_cutoff)));
     std::cout << "global dos_1 occupation: "<< dos_occ_1 << ", local dos occupation: " << local_dos_occ << std::endl;
 
-    std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
-    ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << std::fixed << std::endl;
+    std::cout << "E_f(AJ): " << E_f_A_1 << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity_1*1e7 << ", n_e: " << n_f_1 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
+    ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f_1/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A_1 << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << std::fixed << std::endl;
    //G = -1.0*ea_rate*n_f/300.0; //J/s/K/m**3 []
+
+
+    n_f_1 = 2.0e3 * layer_1 / ((lattice_width) * (lattice_height-120.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
+    E_f_1 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_1*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
+    E_f_A_1 = E_f_1*1e20; //AJ
+    n_f_2 = 2.0e3 * layer_2 / ((lattice_width) * (lattice_height-60.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
+    E_f_2 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_2*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
+    E_f_A_2 = E_f_2*1e20; //AJ
+
+    e_specific_heat_1 = 0.5*M_PI*M_PI*constants::kB*constants::kB/E_f_1; // gamma; //J/K**2/e- 
+    e_specific_heat_i_1 = 1.0 / e_specific_heat_1;
+    e_heat_capacity_1 = (10.4)*(1.0+0.084)*1e20*e_specific_heat_1 * n_f_1; //J/K/e- -> AJ/K**2/nm**3
+    e_heat_capacity_i_1 = 1.0 / e_heat_capacity_1;
+
+    e_specific_heat_2 = 0.5*M_PI*M_PI*constants::kB*constants::kB/E_f_2; // gamma; //J/K**2/e- 
+    e_specific_heat_i_2 = 1.0 / e_specific_heat_2;
+    e_heat_capacity_2 = (10.4)*(1.0+0.084)*1e20*e_specific_heat_2 * n_f_2; //J/K/e- -> AJ/K**2/nm**3
+    e_heat_capacity_i_2 = 1.0 / e_heat_capacity_2;
+
+   std::cout << "E_f(AJ)_1: " << E_f_A_1 << ", C_v_e_1: " << e_heat_capacity_1*1e7 << ", n_e_1: " << n_f_1  << ", layer_1(actual;ideal): " << layer_1 << ";" << conduction_electrons/3.0<< \
+    "\nE_f(AJ)_2: " << E_f_A_2 << ", C_v_e_2: " << e_heat_capacity_2*1e7 << ", n_e_2: " << n_f_2 << ", layer_2(actual;ideal): " << layer_2 << ";" << conduction_electrons*2.0/3.0 << std::endl;
+
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
     // std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0))  << std::endl;
@@ -710,9 +738,9 @@ void initialize_electrons() {
     electron_ee_scattering_list.resize(conduction_electrons);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f * 1e-3))));
-     ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
-    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f * 1e-3));
+    const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.0*n_f_1 * 1e-3))));
+     ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 1.0*n_f_1 * 1e-3));
+    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.0*n_f_1 * 1e-3));
         if (err::check)  std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
       
     for(int h = 0; h < dos_size; h++) {
@@ -1073,7 +1101,7 @@ void initialize_velocities() {
 
     const std::string n = "Init_E_distrib";
     std::cout << "conduction electrons " << conduction_electrons << std::endl;
-    create_fermi_distribution(n, electron_potential,constants::kB_r*Te_1/E_f_A);
+    create_fermi_distribution(n, electron_potential,constants::kB_r*Te_1/106.733);
         if (err::check) std::cout << "distribution generated" << std::endl;
   
       omp_set_dynamic(0);
@@ -1082,7 +1110,7 @@ void initialize_velocities() {
        p_y = 0.0;
        p_z = 0.0;
 
-    double minimum = E_f_A;
+    double minimum = E_f_A_1;
     #pragma omp parallel 
     {
       
@@ -1264,10 +1292,13 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   distrib.precision(20);
 
   double step_size = 0.002;
-  const double max  = E_f_A;// + 3.0*constants::kB_r*Te;
-  const double min = E_f_A - 3.0*constants::eV_to_AJ;
+  const double max  = E_f_A_1;// + 3.0*constants::kB_r*Te;
+  const double min = E_f_A_1 - 1.5*constants::eV_to_AJ;
   if (err::check)  std::cout << "min: " << min << ", max: " << max << std::endl;
   step_size *= (max-min);
+
+  const double occupation_normalisation = step_size*conduction_electrons/(max-min);
+    std::cout << " create fermi distribution occupation for normalistaion: " << occupation_normalisation << std::endl;
  // else step_size = 1.0;
 
   int count = 0;
@@ -1275,29 +1306,29 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   int energy_step = 0;
   if(beta <= 0.000001 ) {
     while(count < conduction_electrons) {
-      distribution.at(count) = E_f_A;
+      distribution.at(count) = E_f_A_1;
       distrib << count << ", " << distribution.at(count) << "\n";
       count++;
     }
   } else {
     while(count < conduction_electrons) { 
 
-      double epsilon = max + 3.0*constants::kB_r*Te_1 - step_size*energy_step;
-      int occupation = int(round((2.0*conduction_electrons/(max-min))*0.05*(return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta)+return_fermi_distribution((epsilon - 0.5*step_size - E_f_A)/E_f_A, beta))));
+      double epsilon = max + 10.0*constants::kB_r*Te_1 - step_size*energy_step;
+      int occupation = int(round(0.5*occupation_normalisation*(return_fermi_distribution((epsilon-E_f_A_1)/E_f_A_1, beta)+return_fermi_distribution((epsilon - step_size - E_f_A_1)/E_f_A_1, beta))));
      
      // int steps = round(1.0 / double(occupation));
       for(int o = 0; o < occupation; o++) {
-        distribution.at(count) = epsilon - 0.25*step_size;
+        distribution.at(count) = epsilon - 0.5*step_size;
         distrib << count << ", " << distribution.at(count) << "\n";
         count++;
       
         if(count == conduction_electrons) break;
       }
-      if(1.0 - return_fermi_distribution((epsilon-E_f_A)/E_f_A, beta) > 1e-3) {transport_cutoff_1 = epsilon; transport_cutoff_2 = epsilon;}
+      if(1.0 - return_fermi_distribution((epsilon-E_f_A_1)/E_f_A_1, beta) > 1e-3) {transport_cutoff_1 = epsilon; transport_cutoff_2 = epsilon;}
       energy_step++;
     }
   }
-  transport_cutoff_1 = transport_cutoff_2 = 98.0;
+  // transport_cutoff_1 = transport_cutoff_2 = 98.0;
  // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
@@ -1409,17 +1440,17 @@ void output_data() {
         e_size_1 += electron_nearest_electron_list[e][0];
         scat_size_1 += electron_ee_scattering_list[e][1];
       
-        if(e_energy < E_f_A) {
+        if(e_energy < E_f_A_1) {
           if(e_energy > transport_cutoff_1) {
-            local_d_U_1  += (E_f_A - e_energy)*std::max(0.0, 1.0 - double(ee_dos_hist[e][index])/local_dos_occ);
-            global_d_U_1 += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_1[index][0])/dos_occ_1)); 
+            local_d_U_1  += (E_f_A_1 - e_energy)*std::max(0.0, 1.0 - double(ee_dos_hist[e][index])/local_dos_occ);
+            global_d_U_1 += (E_f_A_1 - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_1[index][0])/dos_occ_1)); 
           } else {
-            local_d_U_1  += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_1[index][0])/double(global_e_dos_1[index][1])));
-            global_d_U_1 += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_1[index][0])/double(global_e_dos_1[index][1])));  
+            local_d_U_1  += (E_f_A_1 - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_1[index][0])/double(global_e_dos_1[index][1])));
+            global_d_U_1 += (E_f_A_1 - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_1[index][0])/double(global_e_dos_1[index][1])));  
           }
         } else {
-          global_d_U_1 += (e_energy - E_f_A)*double(global_e_dos_1[index][0])/dos_occ_1;
-          local_d_U_1  += (e_energy - E_f_A)*double(ee_dos_hist[e][index])/local_dos_occ;
+          global_d_U_1 += (e_energy - E_f_A_1)*double(global_e_dos_1[index][0])/dos_occ_1;
+          local_d_U_1  += (e_energy - E_f_A_1)*double(ee_dos_hist[e][index])/local_dos_occ;
         }
       } else {
         d_U_avg_2 += e_energy;
@@ -1428,17 +1459,17 @@ void output_data() {
         e_size_2 += electron_nearest_electron_list[e][0];
         scat_size_2 += electron_ee_scattering_list[e][1];
       
-        if(e_energy < E_f_A) {
+        if(e_energy < E_f_A_2) {
           if(e_energy > transport_cutoff_2) {
-            local_d_U_2  += (E_f_A - e_energy)*std::max(0.0, 1.0 - double(ee_dos_hist[e][index])/local_dos_occ);
-            global_d_U_2 += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_2[index][0])/dos_occ_2)); 
+            local_d_U_2  += (E_f_A_2 - e_energy)*std::max(0.0, 1.0 - double(ee_dos_hist[e][index])/local_dos_occ);
+            global_d_U_2 += (E_f_A_2 - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_2[index][0])/dos_occ_2)); 
           } else {
-            local_d_U_2  += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_2[index][0])/double(global_e_dos_2[index][1])));
-            global_d_U_2 += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_2[index][0])/double(global_e_dos_2[index][1])));  
+            local_d_U_2  += (E_f_A_2 - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_2[index][0])/double(global_e_dos_2[index][1])));
+            global_d_U_2 += (E_f_A_2 - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos_2[index][0])/double(global_e_dos_2[index][1])));  
           }
         } else {
-          global_d_U_2 += (e_energy - E_f_A)*double(global_e_dos_2[index][0])/dos_occ_2;
-          local_d_U_2  += (e_energy - E_f_A)*double(ee_dos_hist[e][index])/local_dos_occ;
+          global_d_U_2 += (e_energy - E_f_A_2)*double(global_e_dos_2[index][0])/dos_occ_2;
+          local_d_U_2  += (e_energy - E_f_A_2)*double(ee_dos_hist[e][index])/local_dos_occ;
         }
       }
     }
@@ -1491,26 +1522,81 @@ void output_data() {
         flux_index[e] = 0;
       }
 
-      double ee_avg_1;
-      int ee_total_1;
-      double ee_avg_2;
-      int ee_total_2;
-    
-    for(int h = 0; h < relaxation_time_hist_ee_1[0].size(); h++) {
-      ee_avg_1 = 0.0;
-      ee_total_1 = 0;
+      // double ee_avg_1;
+      // int ee_total_1;
+      // double ee_avg_2;
+      // int ee_total_2;
+    // for(int h = 0; h < relaxation_time_hist_ee_1[0].size(); h++) {
+    //   ee_avg_1 = 0.0;
+    //   ee_total_1 = 0;
+    //   for(int e = 0; e < conduction_electrons; e++) { 
+    //     if(electron_position[3*e+2] > (lattice_height-60.0)) {
+    //       ee_avg_1 += double(relaxation_time_hist_ee_1[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee_1[3*e][h]) );
+    //       ee_total_1 += relaxation_time_hist_ee_1[3*e][h];
+    //     } else {
+    //       ee_avg_2 += double(relaxation_time_hist_ee_2[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee_2[3*e][h]) );
+    //       ee_total_2 += relaxation_time_hist_ee_2[3*e][h];
+    //     }
+    //   }
+    //   relaxation_time_1 << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg_1/std::max(1.0,double(ee_total_1)) << ", " << ee_total_1 << "\n";
+    //   relaxation_time_2 << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg_2/std::max(1.0,double(ee_total_2)) << ", " << ee_total_2 << "\n";
+    // }
+
+    double ee_avg_1 = 0.0;
+    int ee_total_1 = 0;
+    double ee_avg_2 = 0.0;
+    int ee_total_2 = 0;
+    #pragma omp parallel num_threads(8)
+    {
+      std::vector<double> ee_avg_array_1;
+      std::vector<int> ee_total_array_1;
+      std::vector<double> ee_avg_array_2;
+      std::vector<int> ee_total_array_2;
+      ee_avg_array_1.resize(relaxation_time_hist_ee_1[0].size(), 0.0);
+      ee_total_array_1.resize(relaxation_time_hist_ee_1[0].size(), 0);
+      ee_avg_array_2.resize(relaxation_time_hist_ee_2[0].size(), 0.0);
+      ee_total_array_2.resize(relaxation_time_hist_ee_2[0].size(), 0);
+      #pragma omp for 
       for(int e = 0; e < conduction_electrons; e++) { 
-        if(electron_position[3*e+2] > (lattice_height-60.0)) {
-          ee_avg_1 += double(relaxation_time_hist_ee_1[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee_1[3*e][h]) );
-          ee_total_1 += relaxation_time_hist_ee_1[3*e][h];
-        } else {
-          ee_avg_2 += double(relaxation_time_hist_ee_2[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee_2[3*e][h]) );
-          ee_total_2 += relaxation_time_hist_ee_2[3*e][h];
+        for(int h = 0; h < relaxation_time_hist_ee_1[0].size(); h++) {
+        
+          if(electron_position[3*e+2] > (lattice_height-60.0)) {
+            ee_avg_array_1[h] += double(relaxation_time_hist_ee_1[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee_1[3*e][h]) );
+            ee_total_array_1[h] += relaxation_time_hist_ee_1[3*e][h];
+          } else {
+            ee_avg_array_2[h] += double(relaxation_time_hist_ee_2[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee_2[3*e][h]) );
+            ee_total_array_2[h] += relaxation_time_hist_ee_2[3*e][h];
+          }
         }
       }
-      relaxation_time_1 << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg_1/std::max(1.0,double(ee_total_1)) << ", " << ee_total_1 << "\n";
-      relaxation_time_2 << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg_2/std::max(1.0,double(ee_total_2)) << ", " << ee_total_2 << "\n";
+
+      for(int h = 0; h < relaxation_time_hist_ee_1[0].size(); h++) {
+        #pragma omp critical
+        {
+        ee_avg_1 += ee_avg_array_1[h];
+        ee_total_1 += ee_total_array_1[h];
+        ee_avg_2 += ee_avg_array_2[h];
+        ee_total_2 += ee_total_array_2[h];
+        ee_avg_array_1[h] = 0;
+        ee_total_array_1[h] = 0;
+        ee_avg_array_2[h] = 0;
+        ee_total_array_2[h] = 0;
+        }
+        #pragma omp barrier
+
+        #pragma omp single 
+        {
+        relaxation_time_1 << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg_1/std::max(1.0,double(ee_total_1)) << ", " << ee_total_1  << "\n"; 
+        ee_avg_1 = 0.0;
+        ee_total_1 = 0;
+        relaxation_time_2 << double(h)/4.0 + int(round(core_cutoff)) << ", " << ee_avg_2/std::max(1.0,double(ee_total_2)) << ", " << ee_total_2  << "\n"; 
+        ee_avg_2 = 0.0;
+        ee_total_2 = 0;
+        }
+      }
     }
+    relaxation_time_1.close();
+    relaxation_time_2.close();
 
     const int output_count_hr = ee_dos_hist[0].size();
   
@@ -1545,7 +1631,7 @@ void output_data() {
     temp_map_2.close();
 
     
-      std::cout << std::fixed; std::cout.precision(3); std::cout << "  " << current_time_step / total_time_steps * 100 << "%. dos_1 " << dos_occ_1 << ", dos_2: " << dos_occ_2 << std::endl; 
+      std::cout << std::fixed; std::cout.precision(3); std::cout << "  " << current_time_step / total_time_steps * 100 << "%. E_f_1: " << E_f_A_1 << ", E_f_2: " << E_f_A_2 << std::endl; 
     }
     mean_data.precision(10);
     mean_data << std::scientific;
@@ -1554,7 +1640,7 @@ void output_data() {
 
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << d_Te_1*300.0*e_heat_capacity << ", " << d_Te_2*300.0*e_heat_capacity << ", "  << global_d_U_1 << ", " <<  global_d_U_2 << ", " << local_d_U_1 << ", " <<  local_d_U_2 << ", " // (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
+      << d_Te_1*300.0*e_heat_capacity_1 << ", " << d_Te_2*300.0*e_heat_capacity_1 << ", "  << global_d_U_1 << ", " <<  global_d_U_2 << ", " << local_d_U_1 << ", " <<  local_d_U_2 << ", " // (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << Te_1 << ", " << Tp_1 << ", " << Te_2 << ", " << Tp_2 << ", " << layer_1 << ", " << layer_2 << ", " 
       << d_TTMe_1 << ", " << d_TTMp_1 << ", " << d_TTMe_2 << ", " << d_TTMp_2 << ", " <<I*double(CASTLE_output_rate) << ", " << e_size_1 << ", " << e_stddev_1 << ", " << e_size_2 << ", " << e_stddev_2 << ", " << scat_size_1 << ", " << scat_stddev_1 << ", " << scat_size_2 << ", " << scat_stddev_2 << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(ee_core_scattering_count_1+ee_transport_scattering_count_1) / 1 << ", " << double(ee_core_scattering_count_2+ee_transport_scattering_count_2) / 1 << ", " << double(ea_core_scattering_count_1+ea_transport_scattering_count_1) / double(1) << ", " << double(ea_core_scattering_count_2+ea_transport_scattering_count_2) / double(1) << ", " <<\
@@ -1566,7 +1652,7 @@ void output_data() {
       << std::endl;
     } else {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << d_Te_1*300.0*e_heat_capacity << ", "  << d_Te_2*300.0*e_heat_capacity << ", "  << global_d_U_1 << ", " <<  global_d_U_2 << ", " << local_d_U_1 << ", " <<  local_d_U_2 << ", " // (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
+      << d_Te_1*300.0*e_heat_capacity_1 << ", "  << d_Te_2*300.0*e_heat_capacity_1 << ", "  << global_d_U_1 << ", " <<  global_d_U_2 << ", " << local_d_U_1 << ", " <<  local_d_U_2 << ", " // (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << Te_1 << ", " << Tp_1 << ", " << Te_2 << ", " << Tp_2 << ", " << layer_1 << ", " << layer_2 << ", " 
       << d_TTMe_1 << ", " << d_TTMp_1 << ", " << d_TTMe_2 << ", " << d_TTMp_2 << ", " <<I*double(CASTLE_output_rate) << ", " << e_size_1 << ", " << e_stddev_1 << ", " << e_size_2 << ", " << e_stddev_2 << ", " << scat_size_1 << ", " << scat_stddev_1 << ", " << scat_size_2 << ", " << scat_stddev_2 << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", "
       << std::fixed; mean_data.precision(1); mean_data <<  double(ee_core_scattering_count_1+ee_transport_scattering_count_1) / double(CASTLE_output_rate) << ", " << double(ee_core_scattering_count_2+ee_transport_scattering_count_2) / double(CASTLE_output_rate) << ", " << double(ea_core_scattering_count_1+ea_transport_scattering_count_1) / double(CASTLE_output_rate) << ", " << double(ea_core_scattering_count_2+ea_transport_scattering_count_2) / double(CASTLE_output_rate) << ", " <<

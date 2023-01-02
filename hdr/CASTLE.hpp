@@ -93,22 +93,32 @@ namespace CASTLE {
     extern double boundary_conditions_cutoff;
     extern double dt;
     extern double v_f; //meters
-    extern double E_f; //meters
-    extern double E_f_A;
+    extern double E_f_1; //meters
+    extern double E_f_A_1;
     extern double mu_f; //meters
-    extern double n_f; //meters
+    extern double n_f_1; //meters
+    extern double v_f; //meters
+    extern double E_f_2; //meters
+    extern double E_f_A_2;
+    extern double n_f_2; //meters
     extern double atomic_mass;
     extern double mu_r; //inverse reduced mass in reduced units
     extern double combined_mass; //inverse with reduced units
     extern double Tr; // inverse seconds
     extern double a_heat_capacity; // AJ/K/mol -> AJ/K
-    extern double e_heat_capacity; // AJ/K/mol -> AJ/K
-    extern double a_heat_capacity_i; // K/AJ
-    extern double e_heat_capacity_i; // K/AJ
     extern double a_specific_heat; //AJ/K/particle
-    extern double e_specific_heat;
-    extern double a_specific_heat_i;
-    extern double e_specific_heat_i;
+     extern double a_specific_heat_i;
+    extern double a_heat_capacity_i; // K/AJ
+
+    extern double e_heat_capacity_i_1; // K/AJ
+    extern double e_heat_capacity_1; // AJ/K/mol -> AJ/K
+    extern double e_specific_heat_1;
+    extern double e_specific_heat_i_1;
+    extern double e_heat_capacity_i_2; // K/AJ
+    extern double e_heat_capacity_2; // AJ/K/mol -> AJ/K
+    extern double e_specific_heat_2;
+    extern double e_specific_heat_i_2;
+
     extern double zero_pt_lattice_e;
     extern double phonon_energy;
     extern int ee_density;
