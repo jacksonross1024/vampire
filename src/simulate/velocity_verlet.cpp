@@ -53,7 +53,7 @@ int velocity_verlet_step(double time_step) {
     n_f_1 = 2.0e3 * layer_1 / ((lattice_width) * (lattice_height-280.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
     E_f_1 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_1*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A_1 = E_f_1*1e20; //AJ
-    n_f_2 = 2.0e3 * layer_2 / ((lattice_width) * (lattice_height-140.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
+    n_f_2 = 4.0e3 * layer_2 / ((lattice_width) * (lattice_height-140.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
     E_f_2 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_2*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A_2 = E_f_2*1e20; //AJ
 
@@ -187,7 +187,7 @@ void update_position(){
         else if (z_pos > lattice_height) { z_pos = lattice_height-0.001; electron_velocity[array_index+2] *= -1.0;}
         
         else if (electron_position[array_index+2] > (lattice_height-140.0) && z_pos < (lattice_height-140.0)) {
-          if( omp_uniform_random[thread]() > exp((E_f_A_2-E_f_A_1)*106.733/electron_potential[e]) ) {
+          if( omp_uniform_random[thread]() > exp((E_f_A_2-E_f_A_1)*E_f_A_1/electron_potential[e]) ) {
             // const double theta = omp_uniform_random[thread]() * 2.0 * M_PI;
             // const double phi   = omp_uniform_random[thread]() * M_PI; 
             // const double vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);
@@ -204,7 +204,7 @@ void update_position(){
             }
         }
         else if (electron_position[array_index+2] < (lattice_height-140.0) && z_pos > (lattice_height-140.0)) {
-          if( omp_uniform_random[thread]() > exp((E_f_A_1-E_f_A_2)*106.733/electron_potential[e]) ) {
+          if( omp_uniform_random[thread]() > exp((E_f_A_1-E_f_A_2)*E_f_A_1/electron_potential[e]) ) {
             // const double theta = omp_uniform_random[thread]() * 2.0 * M_PI;
             // const double phi   = omp_uniform_random[thread]() * M_PI; 
             // const double vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);

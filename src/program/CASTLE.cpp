@@ -222,10 +222,10 @@ void initialize () {
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
     applied_voltage = sqrt(1.60218e-19*2.0*sim::applied_voltage/constants::eps_0/(1e-30*lattice_width * lattice_height * lattice_depth)); //eV -> V/m
-    n_f_1 = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
+    n_f_1 = 1.0e3 * conduction_electrons / (lattice_width * (lattice_height-280.0) * lattice_depth) / 3.0; // e- / A**3 -> e-/m**3
     E_f_1 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_1*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A_1 = E_f_1*1e20; //AJ
-    n_f_2 = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth); // e- / A**3 -> e-/m**3
+    n_f_2 = 2.0e3 * conduction_electrons / (lattice_width * (lattice_height-140.0) * lattice_depth) / 3.0; // e- / A**3 -> e-/m**3
     E_f_2 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_2*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A_2 = E_f_2*1e20; //AJ
 
@@ -299,7 +299,7 @@ void initialize () {
     ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f_1/300.0 <<  ", tau(fs/AJ): " << tau/E_f_A_1 << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << std::fixed << std::endl;
    //G = -1.0*ea_rate*n_f/300.0; //J/s/K/m**3 []
 
-
+    //2 factor from halved electron active space 
     n_f_1 = 2.0e3 * layer_1 / ((lattice_width) * (lattice_height-280.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
     E_f_1 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_1*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A_1 = E_f_1*1e20; //AJ
