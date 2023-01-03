@@ -53,7 +53,7 @@ int velocity_verlet_step(double time_step) {
     n_f_1 = 2.0e3 * layer_1 / ((lattice_width) * (lattice_height-280.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
     E_f_1 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_1*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A_1 = E_f_1*1e20; //AJ
-    n_f_2 = 4.0e3 * layer_2 / ((lattice_width) * (lattice_height-140.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
+    n_f_2 = 2.0e3 * layer_2 / ((lattice_width) * (lattice_height-140.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
     E_f_2 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_2*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A_2 = E_f_2*1e20; //AJ
 
