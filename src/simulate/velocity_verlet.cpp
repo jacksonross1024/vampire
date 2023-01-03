@@ -187,7 +187,7 @@ void update_position(){
         else if (z_pos > lattice_height) { z_pos = lattice_height-0.001; electron_velocity[array_index+2] *= -1.0;}
         
         else if (electron_position[array_index+2] > (lattice_height-140.0) && z_pos < (lattice_height-140.0)) {
-          if( omp_uniform_random[thread]() > exp((E_f_A_2-E_f_A_1)*E_f_A_1/electron_potential[e]) ) {
+          if( omp_uniform_random[thread]() > exp((E_f_A_2-E_f_A_1)*E_f_1*1e20/electron_potential[e]) ) {
             // const double theta = omp_uniform_random[thread]() * 2.0 * M_PI;
             // const double phi   = omp_uniform_random[thread]() * M_PI; 
             // const double vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);
@@ -204,7 +204,7 @@ void update_position(){
             }
         }
         else if (electron_position[array_index+2] < (lattice_height-140.0) && z_pos > (lattice_height-140.0)) {
-          if( omp_uniform_random[thread]() > exp((E_f_A_1-E_f_A_2)*E_f_A_1/electron_potential[e]) ) {
+          if( omp_uniform_random[thread]() > exp((E_f_A_1-E_f_A_2)*E_f_1*1e20/electron_potential[e]) ) {
             // const double theta = omp_uniform_random[thread]() * 2.0 * M_PI;
             // const double phi   = omp_uniform_random[thread]() * M_PI; 
             // const double vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);

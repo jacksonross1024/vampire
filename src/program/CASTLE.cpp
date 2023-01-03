@@ -1101,7 +1101,7 @@ void initialize_velocities() {
 
     const std::string n = "Init_E_distrib";
     std::cout << "conduction electrons " << conduction_electrons << std::endl;
-    create_fermi_distribution(n, electron_potential,constants::kB_r*Te_1/106.733);
+    create_fermi_distribution(n, electron_potential, E_f_1*1e20, constants::kB_r*Te_1);
         if (err::check) std::cout << "distribution generated" << std::endl;
   
       omp_set_dynamic(0);
@@ -1281,7 +1281,7 @@ void create_phonon_distribution(const std::string& name, std::vector<double>& di
 //   distrib.close();
 }
 
-void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double beta) {
+void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double mu, const double beta) {
 
   char directory [256];
       if(getcwd(directory, sizeof(directory)) == NULL){
@@ -1292,8 +1292,8 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   distrib.precision(20);
 
   double step_size = 0.002;
-  const double max  = E_f_A_1;// + 3.0*constants::kB_r*Te;
-  const double min = E_f_A_1 - 1.5*constants::eV_to_AJ;
+  const double max  = mu;// + 3.0*constants::kB_r*Te;
+  const double min = mu - 1.5*constants::eV_to_AJ;
   if (err::check)  std::cout << "min: " << min << ", max: " << max << std::endl;
   step_size *= (max-min);
 
@@ -1306,7 +1306,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   int energy_step = 0;
   if(beta <= 0.000001 ) {
     while(count < conduction_electrons) {
-      distribution.at(count) = E_f_A_1;
+      distribution.at(count) = mu;
       distrib << count << ", " << distribution.at(count) << "\n";
       count++;
     }
@@ -1314,7 +1314,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
     while(count < conduction_electrons) { 
 
       double epsilon = max + 10.0*constants::kB_r*Te_1 - step_size*energy_step;
-      int occupation = int(round(0.5*occupation_normalisation*(return_fermi_distribution((epsilon-E_f_A_1)/E_f_A_1, beta)+return_fermi_distribution((epsilon - step_size - E_f_A_1)/E_f_A_1, beta))));
+      int occupation = int(round(0.5*occupation_normalisation*(return_fermi_distribution(epsilon - mu, beta)+return_fermi_distribution(epsilon - step_size - mu, beta))));
      
      // int steps = round(1.0 / double(occupation));
       for(int o = 0; o < occupation; o++) {
@@ -1324,7 +1324,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
       
         if(count == conduction_electrons) break;
       }
-      if(1.0 - return_fermi_distribution((epsilon-E_f_A_1)/E_f_A_1, beta) > 1e-3) {transport_cutoff_1 = epsilon; transport_cutoff_2 = epsilon;}
+      if(1.0 - return_fermi_distribution(epsilon-mu, beta) > 1e-3) {transport_cutoff_1 = epsilon; transport_cutoff_2 = epsilon;}
       energy_step++;
     }
   }
