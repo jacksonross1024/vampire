@@ -1591,9 +1591,9 @@ void output_data() {
     ea_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
-    if(transport_cutoff > core_cutoff+20.4041 - 0.5*floor((d_Te - 300.0)/100.0)) {
-      std::cout << "transport cutoff shift from " << transport_cutoff << " to " << core_cutoff+20.4041 - 0.5*floor((d_Te - 300.0)/100.0) << std::endl;
-     transport_cutoff = core_cutoff+20.4041 - 0.5*floor((d_Te - 300.0)/100.0);
+    if(transport_cutoff > core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0)) {
+      std::cout << "transport cutoff shift from " << transport_cutoff << " to " << core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0) << std::endl;
+     transport_cutoff = core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0);
     }
     // if(Te > 900) transport_cutoff = 102.951;
   // if(current_time_step > (sim::equilibration_time/2)) ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ);
