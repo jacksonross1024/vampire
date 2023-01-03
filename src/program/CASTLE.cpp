@@ -1331,7 +1331,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
       energy_step++;
     }
   }
-  // transport_cutoff = 98.0;
+  transport_cutoff = 66.244;
  // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
