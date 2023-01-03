@@ -300,10 +300,10 @@ void initialize () {
    //G = -1.0*ea_rate*n_f/300.0; //J/s/K/m**3 []
 
 
-    n_f_1 = 2.0e3 * layer_1 / ((lattice_width) * (lattice_height-120.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
+    n_f_1 = 2.0e3 * layer_1 / ((lattice_width) * (lattice_height-280.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
     E_f_1 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_1*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A_1 = E_f_1*1e20; //AJ
-    n_f_2 = 2.0e3 * layer_2 / ((lattice_width) * (lattice_height-60.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
+    n_f_2 = 2.0e3 * layer_2 / ((lattice_width) * (lattice_height-140.0) * (lattice_depth)); // e- / A**3 -> e-/m**3
     E_f_2 = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f_2*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A_2 = E_f_2*1e20; //AJ
 
@@ -771,7 +771,7 @@ void initialize_electrons() {
         electron_position[array_index+1] = atoms::y_coord_array.at((e*2)%lattice_atoms) + 0.5*y_unit_size;
         electron_position[array_index+2] = atoms::z_coord_array.at((e*2)%lattice_atoms) + 0.5*z_unit_size;
 
-        if(electron_position[array_index+2] > (lattice_height-60.0)) layer_1++;
+        if(electron_position[array_index+2] > (lattice_height-140.0)) layer_1++;
         else layer_2++;
     }
     if(err::check) std::cout << "layer_1: " << layer_1 << ", layer_2: " << layer_2 << std::endl;
@@ -1169,7 +1169,7 @@ void initialize_velocities() {
     local_e_dos_2.resize(dos_size,0);
     #pragma omp for nowait
     for(int e = 0; e < conduction_electrons; e++) {
-      if(electron_position[3*e+2] > (lattice_height-60.0)) {
+      if(electron_position[3*e+2] > (lattice_height-140.0)) {
         local_e_dos_1[int(std::min(dos_size-1.0, std::max(0.0, floor((electron_potential[e] - core_cutoff)/phonon_energy))))]++;
       } else {
         local_e_dos_2[int(std::min(dos_size-1.0, std::max(0.0, floor((electron_potential[e] - core_cutoff)/phonon_energy))))]++;
@@ -1433,7 +1433,7 @@ void output_data() {
     for(int e = 0; e < conduction_electrons; e++) {
       double e_energy = electron_potential[e];
 
-      if(electron_position[3*e+2] > (lattice_height-60.0)) {
+      if(electron_position[3*e+2] > (lattice_height-140.0)) {
         d_U_avg_1 += e_energy;
         int index = std::min(dos_size-1.0, std::max(0.0, floor((e_energy-core_cutoff)/phonon_energy)));
       
@@ -1560,7 +1560,7 @@ void output_data() {
       for(int e = 0; e < conduction_electrons; e++) { 
         for(int h = 0; h < relaxation_time_hist_ee_1[0].size(); h++) {
         
-          if(electron_position[3*e+2] > (lattice_height-60.0)) {
+          if(electron_position[3*e+2] > (lattice_height-140.0)) {
             ee_avg_array_1[h] += double(relaxation_time_hist_ee_1[3*e + 2][h])/std::max(1.0, double(relaxation_time_hist_ee_1[3*e][h]) );
             ee_total_array_1[h] += relaxation_time_hist_ee_1[3*e][h];
           } else {
@@ -1607,11 +1607,11 @@ void output_data() {
 
     while(count_1 < 3) {
       int selection = int(omp_uniform_random[0]()*2147483647) % (conduction_electrons);
-      if(electron_position[3*selection +2] > (lattice_height-60.0)) {electrons_1[count_1] = selection; count_1++;}
+      if(electron_position[3*selection +2] > (lattice_height-140.0)) {electrons_1[count_1] = selection; count_1++;}
     }
     while(count_2 < 3) {
       int selection = int(omp_uniform_random[0]()*2147483647) % (conduction_electrons);
-      if(electron_position[3*selection +2] < (lattice_height-60.0)) {electrons_2[count_2] = selection; count_2++;}
+      if(electron_position[3*selection +2] < (lattice_height-140.0)) {electrons_2[count_2] = selection; count_2++;}
     }
 
     for(int i = 0; i < output_count_hr; i++) {
