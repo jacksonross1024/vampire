@@ -187,7 +187,7 @@ void update_position(){
         else if (z_pos > lattice_height) { z_pos = lattice_height-0.001; electron_velocity[array_index+2] *= -1.0;}
         
         else if (electron_position[array_index+2] > (lattice_height-60.0) && z_pos < (lattice_height-60.0)) {
-          if( omp_uniform_random[thread]() > exp((E_f_A_2-E_f_A_1)*108.099/electron_potential[e]) ) {
+          if( omp_uniform_random[thread]() > exp((E_f_A_2-E_f_A_1)*106.733/electron_potential[e]) ) {
             // const double theta = omp_uniform_random[thread]() * 2.0 * M_PI;
             // const double phi   = omp_uniform_random[thread]() * M_PI; 
             // const double vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);
@@ -204,7 +204,7 @@ void update_position(){
             }
         }
         else if (electron_position[array_index+2] < (lattice_height-60.0) && z_pos > (lattice_height-60.0)) {
-          if( omp_uniform_random[thread]() > exp((E_f_A_1-E_f_A_2)*108.099/electron_potential[e]) ) {
+          if( omp_uniform_random[thread]() > exp((E_f_A_1-E_f_A_2)*106.733/electron_potential[e]) ) {
             // const double theta = omp_uniform_random[thread]() * 2.0 * M_PI;
             // const double phi   = omp_uniform_random[thread]() * M_PI; 
             // const double vel = sqrt(2.0*electron_potential[e]*constants::m_e_r_i);
@@ -321,12 +321,12 @@ void update_dynamics() {
         TTMe_2 = d_TTMe_2;
         TTMp_2 = d_TTMp_2;
           //AJ/fs/K -> g(T-T)=C/t
-        d_TTMe_1 = ((0.01*G*(TTMe_2 - TTMe_1)+G*(TTMp_1 - TTMe_1)+pump)*dt*e_heat_capacity_i_1/TTMe_1)+ TTMe_1;
-        d_TTMp_1 = (  0.1*G*(TTMp_2 - TTMp_1)+G*(TTMe_1 - TTMp_1)      *dt*a_heat_capacity_i)       + TTMp_1;
+        d_TTMe_1 = ((0.001*G*(TTMe_2 - TTMe_1)+G*(TTMp_1 - TTMe_1)+pump)*dt*e_heat_capacity_i_1/TTMe_1)+ TTMe_1;
+        d_TTMp_1 = (  0.01*G*(TTMp_2 - TTMp_1)+G*(TTMe_1 - TTMp_1)      *dt*a_heat_capacity_i)       + TTMp_1;
 
           //AJ/fs/K -> g(T-T)=C/t
-        d_TTMe_2 = ((0.01*G*(TTMe_1 - TTMe_2)+G*(TTMp_2 - TTMe_2)+pump)*dt*e_heat_capacity_i_2/TTMe_2)+ TTMe_2;
-        d_TTMp_2 = (  0.1*G*(TTMp_1 - TTMp_2)+G*(TTMe_2 - TTMp_2)      *dt*a_heat_capacity_i)       + TTMp_2;
+        d_TTMe_2 = ((0.001*G*(TTMe_1 - TTMe_2)+G*(TTMp_2 - TTMe_2)+pump)*dt*e_heat_capacity_i_2/TTMe_2)+ TTMe_2;
+        d_TTMp_2 = (  0.01*G*(TTMp_1 - TTMp_2)+G*(TTMe_2 - TTMp_2)      *dt*a_heat_capacity_i)       + TTMp_2;
       }
     }
       

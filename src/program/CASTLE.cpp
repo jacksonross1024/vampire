@@ -1676,13 +1676,13 @@ void output_data() {
     ea_core_scattering_count_2 = 0;
     ea_transport_scattering_count_2 = 0;
 
-    if(transport_cutoff_1 > core_cutoff+20.4041 - 0.5*floor((d_Te_1 - 300.0)/100.0)) {
-      std::cout << "transport cutoff_1 shift from " << transport_cutoff_1 << " to " << core_cutoff+20.4041 - 0.5*floor((d_Te_1 - 300.0)/100.0) << std::endl;
-     transport_cutoff_1 = core_cutoff+20.4041 - 0.5*floor((d_Te_1 - 300.0)/100.0);
+    if(transport_cutoff_1 > core_cutoff+20.4041 - 0.5*floor((d_TTMe_1 - 300.0)/100.0)) {
+      std::cout << "transport cutoff_1 shift from " << transport_cutoff_1 << " to " << core_cutoff+20.4041 - 0.5*floor((d_TTMe_1 - 300.0)/100.0) << std::endl;
+     transport_cutoff_1 = core_cutoff+20.4041 - 0.5*floor((d_TTMe_1 - 300.0)/100.0);
     }
-    if(transport_cutoff_2 > core_cutoff+20.4041 - 0.5*floor((d_Te_2 - 300.0)/100.0)) {
-      std::cout << "transport cutoff_2 shift from " << transport_cutoff_2 << " to " << core_cutoff+20.4041 - 0.5*floor((d_Te_2 - 300.0)/100.0) << std::endl;
-     transport_cutoff_2 = core_cutoff+20.4041 - 0.5*floor((d_Te_2 - 300.0)/100.0);
+    if(transport_cutoff_2 > core_cutoff+20.4041 - 0.5*floor((d_TTMe_2 - 300.0)/100.0)) {
+      std::cout << "transport cutoff_2 shift from " << transport_cutoff_2 << " to " << core_cutoff+20.4041 - 0.5*floor((d_TTMe_2 - 300.0)/100.0) << std::endl;
+     transport_cutoff_2 = core_cutoff+20.4041 - 0.5*floor((d_TTMe_2 - 300.0)/100.0);
     }
 }
 
