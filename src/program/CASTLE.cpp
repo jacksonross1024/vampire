@@ -465,8 +465,8 @@ void initialize_cell_omp() {
   
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
-    const int max_x_threads = 2;
-    const int max_y_threads = 2;
+    const int max_x_threads = 4;
+    const int max_y_threads = 4;
     const int max_z_threads = 2;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
