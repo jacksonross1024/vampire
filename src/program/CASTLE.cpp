@@ -297,7 +297,7 @@ void initialize () {
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
     dos_occ  = round(phonon_energy*(conduction_electrons/(E_f_A-core_cutoff)));
-    local_dos_occ = round(0.9*phonon_energy*(ee_density/3.0/(E_f_A-core_cutoff)));
+    local_dos_occ = round(0.9*phonon_energy*(ee_density/6.0/(E_f_A-core_cutoff)));
     std::cout << "global dos occupation: "<< dos_occ  << ", local dos occupation: " << local_dos_occ << std::endl;
 
     std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
@@ -320,16 +320,15 @@ void initialize () {
 
 }
 
-
 void initialize_cell_omp() {
 
   // double 
   // x_omp_cells = int(floor(lattice_width / 0.0));
   // y_omp_cells = int(floor(lattice_depth / 30.0));
   // z_omp_cells = int(floor(lattice_height/ 30.0));
-  x_omp_cells = 8;
-  y_omp_cells = 8;
-  z_omp_cells = 8;
+  x_omp_cells = 4;
+  y_omp_cells = 4;
+  z_omp_cells = 4;
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -465,8 +464,8 @@ void initialize_cell_omp() {
   
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
-    const int max_x_threads = 4;
-    const int max_y_threads = 4;
+    const int max_x_threads = 2;
+    const int max_y_threads = 2;
     const int max_z_threads = 2;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
@@ -716,13 +715,13 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = pow((lattice_width/8.0)-1.0,2.0);
+    e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     
-    half_int_var =  4;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
+    half_int_var =  1;//(e_e_integration_cutoff - e_e_neighbor_cutoff) / (dt*v_f);
     // full_int_var = 4;//2*half_int_var;
  //   boundary_conditions_cutoff = 18.0; //_e_integration_cutoff - 2;
    // e_e_neighbor_cutoff *= e_e_neighbor_cutoff;
-    e_e_integration_cutoff = pow(lattice_width/8.0,2.0);
+    e_e_integration_cutoff = pow(lattice_width/4.0,2.0);
     e_e_coulomb_cutoff = pow(1.4*1.4*1.4, 2.0);
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
@@ -1123,7 +1122,7 @@ void initialize_velocities() {
     
     #pragma omp parallel 
     {
-      
+      int thread = omp_get_thread_num();
       #pragma omp for schedule(dynamic, 8) reduction(+:p_x,p_y,p_z) 
       for(int e = 0; e < conduction_electrons; e++) {
         double phi;
@@ -1131,7 +1130,7 @@ void initialize_velocities() {
         double sign;
         const int array_index = 3*e;
    
-        const double energy = electron_potential[int(omp_uniform_random.at(omp_get_thread_num())()*2147483647)%conduction_electrons];
+        const double energy = electron_potential[int(omp_uniform_random[thread]()*2147483647)%conduction_electrons];
         //  if(energy > transport_cutoff) electron_transport_list.at(e) = true;
         
         const double vel = sqrt(2.0*energy*constants::m_e_r_i);
@@ -1175,6 +1174,7 @@ void initialize_velocities() {
     }
 
     core_cutoff = minimum;
+    // transport_cutoff = minimum;
     // transport_cutoff = core_cutoff + 44.01;
 
   #pragma omp parallel 
@@ -1220,6 +1220,20 @@ void initialize_velocities() {
     }
    if (err::check)  std::cout << "distribution output" << std::endl;
     
+    std::ofstream d_U_output;
+    d_U_output.open(string(directory) + "/dU_calibration.txt");
+    d_U_output.precision(10);
+    double dos_occ_temp  = round(phonon_energy*(conduction_electrons/(E_f_A-core_cutoff)));
+    for( double t = 0.0; t < 2000.0; t++) {
+      double dU = 0.0;
+      for( double e = core_cutoff; e < E_f_A+10.0*constants::kB_r*t; e += phonon_energy) {
+        if(e < E_f_A) dU += dos_occ_temp*return_fermi_distribution(e - E_f_A, constants::kB_r*t)*(E_f_A - e)*(1.0-return_fermi_distribution(e -E_f_A,constants::kB_r*t));
+        else dU += dos_occ_temp*return_fermi_distribution(e - E_f_A, constants::kB_r*t)*(e - E_f_A)*return_fermi_distribution(e -E_f_A,constants::kB_r*t);
+      }
+      d_U_output << t << ", " << dU/conduction_electrons  << std::endl;
+    }
+    d_U_output.close();
+
             if (err::check) std::cout << "Electron velocity ready..." << std::endl;
 }
 
@@ -1331,7 +1345,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
       energy_step++;
     }
   }
-  transport_cutoff = 66.244;
+  transport_cutoff = E_f_A;
  // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
@@ -1425,30 +1439,34 @@ void output_data() {
     #pragma omp parallel for reduction(+:e_size, scat_size, global_d_U, local_d_U, electron_counter, d_U_avg)
     for(int e = 0; e < conduction_electrons; e++) {
       double e_energy = electron_potential[e];
-      d_U_avg += e_energy;
+      d_U_avg += e_energy*e_energy;
       // if(e_energy < E_f_A-24.25) continue;
       int index = std::min(dos_size-1.0, std::max(0.0, floor((e_energy-core_cutoff)/phonon_energy)));
       
-        e_size += electron_nearest_electron_list[e][0];
-        scat_size += electron_ee_scattering_list[e][1];
-        electron_counter++;
+      e_size += electron_nearest_electron_list[e][0];
+      scat_size += electron_ee_scattering_list[e][1];
+  //    electron_counter++;
       
       if(e_energy < E_f_A) {
         if(e_energy > transport_cutoff) {
-          local_d_U += (E_f_A - e_energy)*std::max(0.0, 1.0 - double(ee_dos_hist[e][index])/local_dos_occ);
-          global_d_U+= (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos[index][0])/dos_occ)); 
+          local_d_U += (E_f_A - e_energy)*abs(1.0 - double(ee_dos_hist[e][index])/local_dos_occ);
+          global_d_U+= (E_f_A - e_energy)*abs(1.0 - (double(global_e_dos[index][0])/dos_occ)); 
         } else {
-          local_d_U += (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos[index][0])/double(global_e_dos[index][1])));
-          global_d_U+= (E_f_A - e_energy)*std::max(0.0, 1.0 - (double(global_e_dos[index][0])/double(global_e_dos[index][1])));  
+          local_d_U += (E_f_A - e_energy)*abs(1.0 - (double(global_e_dos[index][0])/double(global_e_dos[index][1])));
+          global_d_U+= (E_f_A - e_energy)*abs(1.0 - (double(global_e_dos[index][0])/double(global_e_dos[index][1])));  
         }
       } else {
         global_d_U += (e_energy - E_f_A)*double(global_e_dos[index][0])/dos_occ;
         local_d_U += (e_energy - E_f_A)*double(ee_dos_hist[e][index])/local_dos_occ;
       }
     }
-    e_size /= electron_counter;
-    scat_size /= electron_counter;
-    d_U_avg /= conduction_electrons;//(lattice_depth*lattice_width*lattice_height);
+
+    local_d_U /= conduction_electrons;
+    global_d_U /= conduction_electrons;
+    e_size /= conduction_electrons;
+    scat_size /= conduction_electrons;
+    d_U_avg /= 3*conduction_electrons*(E_f_A-core_cutoff);//*3*constants::eV_to_AJ;//*(E_f_A-core_cutoff);
+    // d_U_avg *= 3.0*constants::eV_to_AJ; //(lattice_depth*lattice_width*lattice_height);
 
     #pragma omp parallel for reduction(+:e_stddev,scat_stddev)
     for(int e = 0; e < conduction_electrons; e++) {
@@ -1459,8 +1477,8 @@ void output_data() {
     }
    
 
-    e_stddev = sqrt(e_stddev/electron_counter);
-    scat_stddev = sqrt(scat_stddev/electron_counter);
+    e_stddev = sqrt(e_stddev/conduction_electrons);
+    scat_stddev = sqrt(scat_stddev/conduction_electrons);
 
     if((current_time_step % (CASTLE_output_rate * CASTLE_MD_rate)) == 0) {
       time_stamp = std::to_string(current_time_step);
@@ -1562,8 +1580,8 @@ void output_data() {
 
     if(!current_time_step) {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << d_Te*300.0*e_heat_capacity << ", "  << global_d_U << ", " << local_d_U << ", "// (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
-      << Te << ", " << Tp << ", " << sqrt(E_f_A)* sqrt((20.42698111+0.293672852*d_U_avg-0.5*E_f_A)*6.0*2.0)/M_PI/constants::kB_r << ", " << d_U_avg << ", " 
+      << d_Te*d_Te*e_heat_capacity << ", "  << global_d_U << ", " << local_d_U << ", "// (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
+      << Te << ", " << Tp << ", " << sqrt(std::max(0.0, d_U_avg-(E_f_A*E_f_A - pow(E_f_A-1.5*constants::eV_to_AJ, 2.0))/3.0/constants::eV_to_AJ)*6.0*3.0*constants::eV_to_AJ)/M_PI/constants::kB_r << ", " << d_U_avg << ", " 
       << d_TTMe << ", " << d_TTMp << ", " <<  I*double(CASTLE_output_rate) << ", " << e_size << ", " << e_stddev << ", " << scat_size << ", " << scat_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / 1 << ", " << double(e_e_scattering_count) / double(1) << ", " << \
       double(ee_core_scattering_count) / double(1) << ", " << double(ee_transport_scattering_count) / double(1) << ", " <<\
@@ -1572,8 +1590,8 @@ void output_data() {
       << std::endl;
     } else {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
-      << d_Te*300.0*e_heat_capacity << ", "  << global_d_U << ", " << local_d_U << ", " //<<  (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
-      << d_Te << ", " << d_Tp << ", " << sqrt(E_f_A)* sqrt((20.42698111+0.293672852*d_U_avg-0.5*E_f_A)*6.0*2.0)/M_PI/constants::kB_r << ", " << d_U_avg << ", " 
+      << d_Te*d_Te*e_heat_capacity << ", "  << global_d_U << ", " << local_d_U << ", " //<<  (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
+      << d_Te << ", " << d_Tp << ", " << sqrt(std::max(0.0,d_U_avg-(E_f_A*E_f_A - pow(E_f_A-1.5*constants::eV_to_AJ, 2.0))/3.0/constants::eV_to_AJ)*6.0*3.0*constants::eV_to_AJ)/M_PI/constants::kB_r << ", " << d_U_avg << ", " 
       << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << e_size << ", " << e_stddev << ", " << scat_size << ", " << scat_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << \
       double(ee_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ee_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
@@ -1591,10 +1609,13 @@ void output_data() {
     ea_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
-    if(transport_cutoff > core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0)) {
-      std::cout << "transport cutoff shift from " << transport_cutoff << " to " << core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0) << std::endl;
-     transport_cutoff = core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0);
-    }
+
+    std::cout << "transport cutoff shift from " << transport_cutoff << ", to: ";
+    if(equilibrium_step) transport_cutoff = E_f_A - (E_f_A - core_cutoff)*current_time_step/sim::equilibration_time;
+    // if(transport_cutoff > core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0)) {
+       std::cout << transport_cutoff << std::endl;
+    //  transport_cutoff = core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0);
+    // }
     // if(Te > 900) transport_cutoff = 102.951;
   // if(current_time_step > (sim::equilibration_time/2)) ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ);
    // a_a_scattering_count = 0;
