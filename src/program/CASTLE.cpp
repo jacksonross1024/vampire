@@ -297,7 +297,7 @@ void initialize () {
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
     dos_occ  = round(phonon_energy*(conduction_electrons/(E_f_A-core_cutoff)));
-    local_dos_occ = round(0.9*phonon_energy*(ee_density/6.0/(E_f_A-core_cutoff)));
+    local_dos_occ = round(phonon_energy*(ee_density/6.0/(E_f_A-core_cutoff)));
     std::cout << "global dos occupation: "<< dos_occ  << ", local dos occupation: " << local_dos_occ << std::endl;
 
     std::cout << "E_f(AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
@@ -1181,7 +1181,7 @@ void initialize_velocities() {
     }
 
     core_cutoff = minimum;
-    // transport_cutoff = minimum;
+    transport_cutoff = minimum;
     // transport_cutoff = core_cutoff + 44.01;
 
   #pragma omp parallel 
@@ -1352,7 +1352,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
       energy_step++;
     }
   }
-  transport_cutoff = E_f_A;
+  // transport_cutoff = E_f_A;
  // std::cout << "Total atoms to fill " << count << " electrons: " << subCount << std::endl;
   distrib.close();
 }
@@ -1446,7 +1446,9 @@ void output_data() {
     #pragma omp parallel for reduction(+:e_size, scat_size, global_d_U, local_d_U, electron_counter, d_U_avg)
     for(int e = 0; e < conduction_electrons; e++) {
       double e_energy = electron_potential[e];
-      if(e_energy > transport_cutoff) {d_U_avg += e_energy*e_energy; electron_counter++;}
+      // if(e_energy > transport_cutoff) {
+        d_U_avg += e_energy*e_energy;
+        //  electron_counter++;
       // if(e_energy < E_f_A-24.25) continue;
       int index = std::min(dos_size-1.0, std::max(0.0, floor((e_energy-core_cutoff)/phonon_energy)));
       
@@ -1472,7 +1474,7 @@ void output_data() {
     global_d_U /= conduction_electrons;
     e_size /= conduction_electrons;
     scat_size /= conduction_electrons;
-    d_U_avg /= 3*electron_counter*(E_f_A-core_cutoff);//*3*constants::eV_to_AJ;//*(E_f_A-core_cutoff);
+    d_U_avg /= 3*conduction_electrons*(E_f_A-core_cutoff);//*3*constants::eV_to_AJ;//*(E_f_A-core_cutoff);
     // d_U_avg *= 3.0*constants::eV_to_AJ; //(lattice_depth*lattice_width*lattice_height);
 
     #pragma omp parallel for reduction(+:e_stddev,scat_stddev)
@@ -1617,10 +1619,10 @@ void output_data() {
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
 
-    std::cout << "transport cutoff shift from " << transport_cutoff << ", to: ";
-    if(equilibrium_step) transport_cutoff = E_f_A - (E_f_A - core_cutoff)*current_time_step/sim::equilibration_time;
-    // if(transport_cutoff > core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0)) {
-       std::cout << transport_cutoff << std::endl;
+    // std::cout << "transport cutoff shift from " << transport_cutoff << ", to: ";
+    // if(equilibrium_step) transport_cutoff = E_f_A - (E_f_A - core_cutoff)*current_time_step/sim::equilibration_time;
+    // // if(transport_cutoff > core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0)) {
+    //    std::cout << transport_cutoff << std::endl;
     //  transport_cutoff = core_cutoff+20.4041 - 0.5*floor((d_TTMe - 300.0)/100.0);
     // }
     // if(Te > 900) transport_cutoff = 102.951;
