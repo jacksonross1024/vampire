@@ -1120,7 +1120,12 @@ void initialize_velocities() {
 
     double minimum = E_f_A;
    // transport_cutoff = 106.978;
-    
+    std::random_device rd;
+    std::mt19937 g(rd());
+    for(int r = 0; r < 7; r++) {
+      std::shuffle(electron_potential.begin(), electron_potential.end(), g);
+    }
+
     #pragma omp parallel 
     {
       int thread = omp_get_thread_num();
@@ -1131,7 +1136,8 @@ void initialize_velocities() {
         double sign;
         const int array_index = 3*e;
    
-        const double energy = electron_potential[int(omp_uniform_random[thread]()*2147483647)%conduction_electrons];
+        const double energy = electron_potential[e];
+        //[int(omp_uniform_random[thread]()*2147483647)%conduction_electrons];
         //  if(energy > transport_cutoff) electron_transport_list.at(e) = true;
         
         const double vel = sqrt(2.0*energy*constants::m_e_r_i);
