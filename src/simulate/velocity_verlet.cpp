@@ -731,12 +731,12 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     const int e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - core_cutoff)/phonon_energy))));
     const double local_d_dos = std::min(local_dos_occ, phonon_energy*double(electron_nearest_electron_list[e][0])/(E_f_A-core_cutoff));
     if( e_energy > transport_cutoff) {
-      // e_occupation   = std::min(1.0,double(global_e_dos[e_index  ][0]) / dos_occ); 
-      // f_e_occupation = std::min(1.0,double(global_e_dos[e_index+1][0]) / dos_occ); 
-      // r_e_occupation = std::min(1.0,double(global_e_dos[e_index-1][0]) / dos_occ); 
-      e_occupation   =  std::min(1.0,double(ee_dos_hist[e][e_index  ]) / local_d_dos); 
-      f_e_occupation =  std::min(1.0,double(ee_dos_hist[e][e_index+1]) / local_d_dos); 
-      r_e_occupation =  std::min(1.0,double(ee_dos_hist[e][e_index-1]) / local_d_dos); 
+      e_occupation   = std::min(1.0,double(global_e_dos[e_index  ][0]) / dos_occ); 
+      f_e_occupation = std::min(1.0,double(global_e_dos[e_index+1][0]) / dos_occ); 
+      r_e_occupation = std::min(1.0,double(global_e_dos[e_index-1][0]) / dos_occ); 
+      // e_occupation   =  std::min(1.0,double(ee_dos_hist[e][e_index  ]) / local_d_dos); 
+      // f_e_occupation =  std::min(1.0,double(ee_dos_hist[e][e_index+1]) / local_d_dos); 
+      // r_e_occupation =  std::min(1.0,double(ee_dos_hist[e][e_index-1]) / local_d_dos); 
     } else {
       e_occupation   = std::min(1.0, double(global_e_dos[e_index  ][0]) / std::max(1.0, double(global_e_dos[e_index  ][1])));    
       f_e_occupation = std::min(1.0, double(global_e_dos[e_index+1][0]) / std::max(1.0, double(global_e_dos[e_index+1][1]))); 
@@ -994,9 +994,9 @@ void ee_scattering() {
         double global_dos = double(global_e_dos[e_index][1]);
         
             //**local density of states**
-        if ( (e_energy + deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - (double(ee_dos_hist[electron][e_index])/local_e_dos));     
+        // if ( (e_energy + deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - (double(ee_dos_hist[electron][e_index])/local_e_dos));     
             //**global density of states**
-        // if ( (e_energy + deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/dos_occ);  
+        if ( (e_energy + deltaE) > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/dos_occ);  
         else d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0]) / global_dos);     
         e_occupation = std::max(1.0, double(ee_dos_hist[electron][int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - core_cutoff)/phonon_energy))))]) - local_e_dos);
 
@@ -1005,9 +1005,9 @@ void ee_scattering() {
         global_dos = double(global_e_dos[d_index][1]);
         
             //**local density of states**
-        if ( (d_e_energy - deltaE) > transport_cutoff) d_d_occupation = std::max(0.0, 1.0 - (double(ee_dos_hist[electron_collision][d_index])/local_d_dos));
+        // if ( (d_e_energy - deltaE) > transport_cutoff) d_d_occupation = std::max(0.0, 1.0 - (double(ee_dos_hist[electron_collision][d_index])/local_d_dos));
             //**global density of states**
-        // if ( (d_e_energy - deltaE) > transport_cutoff) d_d_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_index][0])/dos_occ);  
+        if ( (d_e_energy - deltaE) > transport_cutoff) d_d_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_index][0])/dos_occ);  
         else d_d_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_index][0]) / global_dos); 
         d_occupation = std::max(1.0, double(ee_dos_hist[electron_collision][int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy - core_cutoff)/phonon_energy))))]) - local_d_dos);
 
