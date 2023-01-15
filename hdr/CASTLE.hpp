@@ -113,7 +113,8 @@ namespace CASTLE {
     extern int dos_size;
     extern double dos_occ;
     extern double local_dos_occ;
-
+    extern double step_size;
+    
     extern bool ee_coupling;
     extern bool ea_coupling;
     extern double ea_rate;
@@ -261,10 +262,10 @@ namespace CASTLE {
     extern double B_E_distrib(const double& epsilon);
     extern void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
     extern void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
-    extern void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double beta);
+    extern void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
    //  double return_phonon_distribution(const double& epsilon, const double& beta);
     
-    extern double return_fermi_distribution(const double epsilon, const double beta);
+    extern double return_fermi_distribution(const double energy, const double temp);
     extern double return_BE_integrand(const double phonon_e, const double temperature);
 }
 
