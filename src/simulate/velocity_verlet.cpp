@@ -746,7 +746,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       r_e_occupation = std::min(1.0, double(global_e_dos[r_e_index][0]) / std::max(1.0, double(global_e_dos[r_e_index][1]))); 
     }
     
-    const double thermal_factor = return_BE_integrand(phonon_factor,Tp);
+    const double thermal_factor = return_BE_integrand(phonon_factor, TTMp);
     const double f_factor = thermal_factor*(e_occupation - f_e_occupation) - f_e_occupation*(1.0-e_occupation);
     const double r_factor = thermal_factor*(e_occupation - r_e_occupation) + e_occupation*(1.0-r_e_occupation);
 
@@ -777,7 +777,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
 
       #pragma omp critical(eascattering)
       {
-      lattice_output << phonon_factor/phonon_energy/2.0 << ", " << f_factor << ", " << r_factor << ", " << thermal_factor << ", " << e_occupation << ", " <<\
+      //lattice_output << phonon_factor/phonon_energy/2.0 << ", " << f_factor << ", " << r_factor << ", " << thermal_factor << ", " << e_occupation << ", " <<\
       f_e_occupation << ", " << r_e_occupation << ", " << \
       thermal_factor*(return_fermi_distribution((e_index*phonon_energy+core_cutoff-E_f_A), Te)-return_fermi_distribution((e_index*phonon_energy+core_cutoff+phonon_factor-E_f_A), Te))\
     - return_fermi_distribution((e_index*phonon_energy+core_cutoff-E_f_A), Te)*(1.0 - return_fermi_distribution((e_index*phonon_energy+core_cutoff-E_f_A), Te))  << ", " << \
@@ -821,7 +821,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
 
       #pragma omp critical(eascattering)
       {
-     lattice_output << phonon_factor/phonon_energy/2.0 << ", " << f_factor << ", " << r_factor << ", " << thermal_factor << ", " << e_occupation << ", " <<\
+     //lattice_output << phonon_factor/phonon_energy/2.0 << ", " << f_factor << ", " << r_factor << ", " << thermal_factor << ", " << e_occupation << ", " <<\
       f_e_occupation << ", " << r_e_occupation << ", " << \
       thermal_factor*(return_fermi_distribution((e_index*phonon_energy+core_cutoff-E_f_A), Te)-return_fermi_distribution((e_index*phonon_energy+core_cutoff+phonon_factor-E_f_A), Te))\
     - return_fermi_distribution((e_index*phonon_energy+core_cutoff-E_f_A), Te)*(1.0 - return_fermi_distribution((e_index*phonon_energy+core_cutoff-E_f_A), Te))  << ", " << \
