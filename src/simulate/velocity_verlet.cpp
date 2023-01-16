@@ -723,8 +723,8 @@ void ea_scattering(const int e, const int array_index, const int thread) {
 
     const double e_energy = electron_potential[e];
     // double deltaE = 1.0; //double(e_index+1)+core_cutoff - e_energy;
-    // if(e_energy - phonon_energy < E_f_A-23.25 ) return;
-    if( e_energy + phonon_energy > (core_cutoff+100.0) ) return;
+    if(e_energy - 2.0*phonon_energy < core_cutoff ) return;
+    if( e_energy + 2.0*phonon_energy > (core_cutoff+100.0) ) return;
     double e_occupation;
     double f_e_occupation;
     double r_e_occupation;
