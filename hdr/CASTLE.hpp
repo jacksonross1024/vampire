@@ -113,8 +113,9 @@ namespace CASTLE {
     extern int dos_size;
     extern double dos_occ;
     extern double local_dos_occ;
+    extern std::vector<double> dos_standard;
     extern double step_size;
-    
+
     extern bool ee_coupling;
     extern bool ea_coupling;
     extern double ea_rate;

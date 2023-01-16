@@ -724,7 +724,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     const double e_energy = electron_potential[e];
     // double deltaE = 1.0; //double(e_index+1)+core_cutoff - e_energy;
     if(e_energy - 2.0*phonon_energy < core_cutoff ) return;
-    if( e_energy + 2.0*phonon_energy > (core_cutoff+100.0) ) return;
+    if( e_energy + 2.0*phonon_energy > (core_cutoff+60.0) ) return;
     double e_occupation;
     double f_e_occupation;
     double r_e_occupation;
@@ -984,7 +984,7 @@ void ee_scattering() {
         if((e_energy + deltaE < core_cutoff) || (d_e_energy - deltaE < core_cutoff)) continue;
         // if((e_energy + deltaE < core_cutoff) || (d_e_energy - deltaE < core_cutoff)) std::cout << "bounds issue " << e_energy + deltaE  << ", " << d_e_energy - deltaE  << ", " << core_cutoff << std::endl;
 
-        if( (e_energy + deltaE) > (core_cutoff+100.0) || (d_e_energy - deltaE > (core_cutoff+100.0))) continue;
+        if( (e_energy + deltaE) > (core_cutoff+60.0) || (d_e_energy - deltaE > (core_cutoff+60.0))) continue;
         // if( (e_energy + deltaE) > (core_cutoff+70.0) || (d_e_energy - deltaE > (core_cutoff+70.0))) std::cout << "bounds issue " << e_energy + deltaE  << ", " << d_e_energy - deltaE  << ", " << core_cutoff+70.0 << std::endl;;
 
         // double e_occupation; 

@@ -220,6 +220,7 @@ namespace CASTLE {
    int dos_size;
    double dos_occ;
    double local_dos_occ;
+   std::vector<double> dos_standard;
    double step_size;
    
    double e_e_integration_cutoff;
