@@ -221,6 +221,8 @@ namespace CASTLE {
    double dos_occ;
    double local_dos_occ;
    std::vector<double> dos_standard;
+   std::vector<double> dWdE_standard;
+   std::vector<double> dWdE_standard_i;
    double step_size;
    
    double e_e_integration_cutoff;
@@ -381,6 +383,11 @@ namespace CASTLE {
    void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
    void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
    void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
-   double return_fermi_distribution(const double energy, const double temp);// {  return (1.0/(exp(epsilon/beta) + 1.0));}
-   double return_BE_integrand(const double phonon_e, const double temperature);
+   double return_fermi_distribution(const double energy, const double temp); //energy = e_i - E_f_A
+   double return_BE_distribution(const double phonon_e, const double temperature);
+
+   double return_dWdE_lower(const double e_energy); //energy -> momentum 
+   double return_dWdE_higher(const double e_energy); // energy -> momentum
+   double return_dWdE_lower_i(const double e_mom); // momentum -> energy
+   double return_dWdE_higher_i(const double e_mom); // momentum -> energy
 }
