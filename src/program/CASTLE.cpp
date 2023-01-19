@@ -758,9 +758,9 @@ void initialize_electrons() {
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
         const int array_index = 3*e;
-        electron_position.at(array_index)     = atoms::x_coord_array.at((e)%lattice_atoms) + 0.5*x_unit_size;
-        electron_position.at(array_index + 1) = atoms::y_coord_array.at((e)%lattice_atoms) + 0.5*y_unit_size;
-        electron_position.at(array_index + 2) = atoms::z_coord_array.at((e)%lattice_atoms) + 0.5*z_unit_size;
+        electron_position.at(array_index)     = atoms::x_coord_array.at((e*2)%lattice_atoms) + 0.5*x_unit_size;
+        electron_position.at(array_index + 1) = atoms::y_coord_array.at((e*2)%lattice_atoms) + 0.5*y_unit_size;
+        electron_position.at(array_index + 2) = atoms::z_coord_array.at((e*2)%lattice_atoms) + 0.5*z_unit_size;
         //initialize and output electron posititons
       //  = atom_anchor_position.at(3*(e%lattice_atoms));//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
        // electron_position.at(array_index + 2) = atom_anchor_position.at(3*(e%lattice_atoms)+2);// + cos(phi)*screening_depth;//*radius_mod(gen);
