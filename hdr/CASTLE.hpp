@@ -113,7 +113,7 @@ namespace CASTLE {
     extern int dos_size;
     extern double dos_occ;
     extern double local_dos_occ;
-    extern std::vector<double> dos_standard;
+    extern std::vector<double> dos_standard; //e-/energy_hist_step (for full lattice)
     extern std::vector<double> dWdE_standard;
     extern std::vector<double> dWdE_standard_i;
     extern double step_size;
@@ -264,10 +264,11 @@ namespace CASTLE {
     extern double return_fermi_distribution(const double energy, const double temp); //energy = e_i - E_f_A
     extern double return_BE_distribution(const double phonon_e, const double temperature);
 
-    extern double return_dWdE_lower(const double e_energy); //energy -> momentum 
-    extern double return_dWdE_higher(const double e_energy); // energy -> momentum
-    extern double return_dWdE_lower_i(const double e_mom); // momentum -> energy
-    extern double return_dWdE_higher_i(const double e_mom); // momentum -> energy
+    extern double return_dWdE(const double e_energy); //energy -> momentum 
+    // extern double return_dWdE_higher(const double e_energy); // energy -> momentum
+    extern double return_dWdE_i(const double e_mom); // momentum -> energy
+    // extern double return_dWdE_higher_i(const double e_mom); // momentum -> energy
+    extern double return_vel(const double energy); //inverse slope of dWdE / hbar_r
 }
 
 

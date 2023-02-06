@@ -386,8 +386,9 @@ namespace CASTLE {
    double return_fermi_distribution(const double energy, const double temp); //energy = e_i - E_f_A
    double return_BE_distribution(const double phonon_e, const double temperature);
 
-   double return_dWdE_lower(const double e_energy); //energy -> momentum 
-   double return_dWdE_higher(const double e_energy); // energy -> momentum
-   double return_dWdE_lower_i(const double e_mom); // momentum -> energy
-   double return_dWdE_higher_i(const double e_mom); // momentum -> energy
+   double return_dWdE(const double e_energy); //energy -> momentum 
+   // double return_dWdE_higher(const double e_energy); // energy -> momentum
+   double return_dWdE_i(const double e_mom); // momentum -> energy
+   // double return_dWdE_higher_i(const double e_mom); // momentum -> energy
+   double return_vel(const double energy); //inverse slope of dWdE / hbar_r
 }
