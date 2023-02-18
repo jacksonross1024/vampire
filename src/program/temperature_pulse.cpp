@@ -139,7 +139,13 @@ double two_temperature_function(double ftime){
          else mp::material[mat].temperature=sim::TTTe;
       }
    }
-
+	
+	if(sim::piezomagnetic_dipole_field) {
+		sim::piezomagnetic_dipole_time = ftime;
+		sim::piezomagnetic_dipole_field_strength = 2.4e1;
+   						//exp(-four_ln_2*reduced_time*reduced_time)*i_pump_time/four_ln_2;
+		if(ftime > sim::pump_time) sim::piezomagnetic_dipole_field = false;
+	}
    return sim::TTTe;
 
 }
@@ -181,6 +187,12 @@ double double_pump_two_temperature_function(double ftime){
          }
       }
 
+	if(sim::piezomagnetic_dipole_field) {
+		sim::piezomagnetic_dipole_time = ftime;
+		sim::piezomagnetic_dipole_field_strength = 2.4*(
+							exp(-four_ln_2*reduced_time1*reduced_time1)*i_pump_time1 + 
+							exp(-four_ln_2*reduced_time2*reduced_time2)*i_pump_time2); 
+	}
 		return sim::TTTe;
 }
 
@@ -274,7 +286,7 @@ void temperature_pulse(){
 		// Output data
 		vout::data();
 	}
-
+	if(stats::calculate_spinwaves) stats::spinwaves.reset();
 	//loop sim::runs times
 	for(int r=0; r<sim::runs;r++){
 

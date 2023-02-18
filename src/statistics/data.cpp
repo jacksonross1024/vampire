@@ -45,6 +45,8 @@ namespace stats{
    bool calculate_system_binder_cumulant        = false;
    bool calculate_material_binder_cumulant      = false;
 
+   bool calculate_spinwaves                     = false;
+
    energy_statistic_t system_energy("s");
    energy_statistic_t grain_energy("g");
    energy_statistic_t material_energy("m");
@@ -74,6 +76,7 @@ namespace stats{
    binder_cumulant_statistic_t system_binder_cumulant("bc");
    binder_cumulant_statistic_t material_binder_cumulant("mbc");
 
+   spinwave_statistic_t spinwaves("sw");
    //-----------------------------------------------------------------------------
    // Shared variables used for statistics calculation
    //-----------------------------------------------------------------------------

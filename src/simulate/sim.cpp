@@ -312,6 +312,8 @@ int run(){
    // Precondition spins at equilibration temperature
    montecarlo::monte_carlo_preconditioning();
 
+	if(stats::calculate_spinwaves) stats::spinwaves.reset();
+	
    // For MPI version, calculate initialisation time
    if(vmpi::my_rank==0){
 		std::cout << "Starting Simulation with Program ";
@@ -574,6 +576,7 @@ int run(){
 
    // De-initialize GPU
    if(gpu::acceleration) gpu::finalize();
+	if(stats::calculate_spinwaves) stats::spinwaves.finalize();
 
    // optionally save checkpoint file
    if(sim::save_checkpoint_flag && !sim::save_checkpoint_continuous_flag) save_checkpoint();

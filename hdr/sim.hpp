@@ -151,6 +151,10 @@ namespace sim{
 	extern double TTTe; /// electron temperature
 	extern double TTTp; /// phonon temperature
 
+	extern double piezomagnetic_dipole_time;
+	extern bool piezomagnetic_dipole_field;
+	extern double piezomagnetic_dipole_field_strength;
+	
 	extern int system_simulation_flags;
 	extern int hamiltonian_simulation_flags[10];
 
@@ -206,7 +210,7 @@ namespace sim{
 
 	void calculate_spin_fields(const int start_index,const int end_index);
 	void calculate_external_fields(const int start_index,const int end_index);
-
+	void calculate_piezomagnetic_dipole(const int start_index,const int end_index);
    // LaGrange multiplier variables
    extern double lagrange_lambda_x;
    extern double lagrange_lambda_y;

@@ -62,11 +62,11 @@ namespace internal{
    				const int end   = neighbour_list_end_index[atom]+1;
 
                // loop over all neighbours
-   				for(int nn = start; nn < end; ++nn){
+   				for(int nn = start; nn < end; ++nn) {
 
    					const int natom = neighbour_list_array[nn]; // get neighbouring atom number
    					const double Jij = i_exchange_list[ neighbour_interaction_type_array[nn] ].Jij; // get exchange constant between atoms
-
+                  
    					hx += Jij * spin_array_x[natom]; // add exchange fields
    					hy += Jij * spin_array_y[natom];
    					hz += Jij * spin_array_z[natom];
@@ -95,7 +95,7 @@ namespace internal{
                const int end   = neighbour_list_end_index[atom]+1;
 
                // loop over all neighbours
-               for(int nn = start; nn < end; ++nn){
+               for(int nn = start; nn < end; ++nn) {
 
                   const int natom = neighbour_list_array[nn]; // get neighbouring atom number
                   const int iid = neighbour_interaction_type_array[nn]; // interaction id

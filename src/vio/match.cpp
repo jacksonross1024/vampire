@@ -445,6 +445,13 @@ namespace vin{
             sim::pump_power=pp;
             return EXIT_SUCCESS;
         }
+        test="piezomagnetic-dipole-pulse";
+        if(word==test){
+            //double pp=atof(value.c_str());
+           // check_for_valid_value(pp, word, line, prefix, unit, "none", 0.0, 1.0e40,"input","0.0 - 1.0E40");
+            sim::piezomagnetic_dipole_field = true;
+            return EXIT_SUCCESS;
+        }
         //--------------------------------------------------------------------
         test="second-laser-pulse-time";
         if(word==test){
@@ -1467,6 +1474,16 @@ namespace vin{
             vout::output_rate=r;
             return EXIT_SUCCESS;
         }
+
+        test="spinwaves";
+        if(word==test){
+            int r=atoi(value.c_str());
+            check_for_valid_int(r, word, line, prefix, 1, 1000000,"input","1 - 1,000,000");
+            stats::calculate_spinwaves = true;
+            stats::spinwaves.frequency_step = r;
+            return EXIT_SUCCESS;
+        }
+
 
         //--------------------------------------------------------------------
         // keyword not found

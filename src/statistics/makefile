@@ -14,6 +14,7 @@ standard_deviation.o\
 reset.o \
 susceptibility.o \
 binder_cumulant.o\
+spinwave.o \
 torque.o \
 update.o
 

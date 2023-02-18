@@ -67,6 +67,7 @@ int calculate_dipolar_fields(const int,const int);
 void calculate_fmr_fields(const int,const int);
 void calculate_lagrange_fields(const int,const int);
 void calculate_full_spin_fields(const int start_index,const int end_index);
+void calculate_piezomagnetic_dipole(const int start_index,const int end_index);
 
 namespace sim{
 
@@ -122,6 +123,7 @@ void calculate_spin_fields(const int start_index,const int end_index){
 		calculate_full_spin_fields(start_index,end_index);
 	}
 
+	if(sim::piezomagnetic_dipole_field) calculate_piezomagnetic_dipole(start_index,end_index);
 	return;
 
 }
@@ -545,3 +547,29 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 	return;
 
 }
+
+void sim::calculate_piezomagnetic_dipole(const int start_index,const int end_index){
+
+         //const double scale = 2.0; // 2*2/3 = 2 Factor to rescale anisotropies to usual scale
+         const double frequency = cos(2.0*M_PI * sim::piezomagnetic_dipole_time*7.45e12);  // dt per cycle
+		 const double k2 = sim::piezomagnetic_dipole_field_strength;
+		//  std::cout << frequency << ", " << sim::piezomagnetic_dipole_time*7.45e12 << ", " << sim::piezomagnetic_dipole_time << std::endl;
+         // Loop over all atoms between start and end index
+		//  std::cout << sim::piezomagnetic_dipole_time << ", " << frequency << std::endl;
+
+         for(int atom = start_index; atom < end_index; atom++) {
+
+            // get atom material
+            const int mat = atoms::type_array[atom];
+           
+            const double ex = ((mat == 1) ? 1 : -1) * frequency;
+            const double ey = frequency;
+
+            atoms::x_total_spin_field_array[atom] += ex*k2;
+            atoms::y_total_spin_field_array[atom] += ey*k2;
+
+         }
+
+         return;
+
+      }

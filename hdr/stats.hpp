@@ -16,6 +16,8 @@
 #include <vector>
 #include <string>
 
+#include <fftw3.h>
+#include "sim.hpp"
 namespace stats
 //==========================================================
 // Namespace statistics
@@ -86,11 +88,13 @@ namespace stats
 	extern bool calculate_system_binder_cumulant;
 	extern bool calculate_material_binder_cumulant;
 
+   extern bool calculate_spinwaves;
+
 	// forward declaration of friend classes
 	class susceptibility_statistic_t;
 	class specific_heat_statistic_t;
-        class binder_cumulant_statistic_t;
-
+   class binder_cumulant_statistic_t;
+   class spinwave_statistic_t;
 	class standard_deviation_statistic_t;
    //----------------------------------
    // Energy class definition
@@ -337,6 +341,49 @@ namespace stats
 
    };
 
+   class spinwave_statistic_t{
+
+      public:
+         spinwave_statistic_t (std::string n):initialised(false){
+           name = n;
+         };
+         void initialize();
+         void update();
+         void reset();
+         void finalize();
+         int frequency_step = 10;
+
+      private:
+           bool initialised = false;
+
+            double          *S_t;       // Spatial Magnetisation
+            // double          *S_r; //projection of S_t with spacial matrix// might become 4D fft
+            // double          *S_o;
+            double          *r_i; // spatial tensor
+            int               *r_s;
+            fftw_complex    *S_i;       // K-space field
+            fftw_complex    *S_0;
+
+            fftw_plan       plan_S; //frequency fft
+            // fftw_plan       plan_r; //spatial fft
+
+            double* fft_coefficients;
+            int K_points;
+            int i_atoms;
+            std::string name;
+            int N;
+            int time_range;
+            int time_step;
+            int freq_hist_bins;
+            double freq_hist_step;
+            double freq_hist_cutoff[2] = {0.0};
+            inline void spin_correlation( fftw_complex& a, double S_x_i , double S_y_i, fftw_complex& c)
+            {
+                a[0] = (0.54-0.46*cos(2.0*M_PI*sim::time/sim::total_time))* (S_x_i * c[0] + S_y_i * c[1]);
+                a[1] = (0.54-0.46*cos(2.0*M_PI*sim::time/sim::total_time))* (S_y_i * c[0] - S_x_i * c[1]);
+            }
+   };
+
    //----------------------------------
 	// Statistics class instantiations
    //----------------------------------
@@ -369,6 +416,7 @@ namespace stats
    extern binder_cumulant_statistic_t system_binder_cumulant;
    extern binder_cumulant_statistic_t material_binder_cumulant;
 
+   extern spinwave_statistic_t spinwaves;
 }
 
 #endif /*STATS_H_*/
