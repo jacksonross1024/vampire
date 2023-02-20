@@ -44,7 +44,7 @@ namespace stats {
                 if( fftw_init_threads() == 0)
                     std::cout << "Error initialising threads for FFTW!" << std::endl;
 
-                int Nthreads = 6;
+                int Nthreads = 4;
                 time_step = 0;
                 N = atoms::num_atoms;
                 //gamma point (0,0,0)                       pt. 0
@@ -58,6 +58,7 @@ namespace stats {
                 //Z point (0,0,1/2)                         pt. 40
                 //lambda line (0,0,v)                       pt. 41-49        
                 i_atoms = 1500;//2+ atoms::num_atoms;
+                double cutoff = 0.225;
                   K_points = 90;
                fft_coefficients = (double*) fftw_malloc( sizeof(double) * 4 * K_points);
                // tetrahedral points/lines
@@ -158,9 +159,9 @@ namespace stats {
                         if(d_z > cs::system_dimensions[2]*0.5)   d_z -= cs::system_dimensions[2];//cos(phi);
                         else if(d_z < -1.0*cs::system_dimensions[2]*0.5)  d_z += cs::system_dimensions[2];//cos(phi);
 
-                        if(std::abs(d_x) > cs::system_dimensions[0]*0.248|| \
-                           std::abs(d_y) > cs::system_dimensions[1]*0.248 || \
-                           std::abs(d_z) > cs::system_dimensions[2]*0.248) continue;
+                        if(std::abs(d_x) > cs::system_dimensions[0]*cutoff|| \
+                           std::abs(d_y) > cs::system_dimensions[1]*cutoff || \
+                           std::abs(d_z) > cs::system_dimensions[2]*cutoff) continue;
 
                         double cutoff =  normalisation*sin(fft_x*std::abs(d_x)/2.0) + normalisation*sin(fft_y*std::abs(d_y)/2.0) + normalisation*sin(fft_z*std::abs(d_z)/2.0);
                         if(cutoff > 0.1) {
@@ -235,23 +236,23 @@ namespace stats {
 
 void spinwave_statistic_t::reset(){
 
-        int electron = 0;
-        // #pragma omp parallel for num_threads(2)
+        // int electron = 0;
+        #pragma omp parallel for num_threads(2)
         for(int a = 0; a < atoms::num_atoms; a++) {
             // const int start = atoms::neighbour_list_start_index[a];
    		    // const int end   = atoms::neighbour_list_end_index[a]+1;
             
             int count = 0;
-            S_0[electron*i_atoms+count][0] = atoms::x_spin_array[a];
-            S_0[electron*i_atoms+count][1] = atoms::y_spin_array[a];
+            S_0[a*i_atoms+count][0] = atoms::x_spin_array[a];
+            S_0[a*i_atoms+count][1] = atoms::y_spin_array[a];
             count++;
-            for(int nn = 1; nn < r_s[electron*i_atoms]; ++nn) {
-                        const int natom = r_s[electron*i_atoms+nn];
-                S_0[electron*i_atoms+count][0] = atoms::x_spin_array[natom];
-                S_0[electron*i_atoms+count][1] = atoms::y_spin_array[natom];
+            for(int nn = 1; nn < r_s[a*i_atoms]; ++nn) {
+                        const int natom = r_s[a*i_atoms+nn];
+                S_0[a*i_atoms+count][0] = atoms::x_spin_array[natom];
+                S_0[a*i_atoms+count][1] = atoms::y_spin_array[natom];
                 count++;
             }
-            electron++;
+            // electron++;
         }
         time_step = 0;
 }
@@ -264,21 +265,21 @@ void spinwave_statistic_t::update() {
         if(!initialised) {
             std::cout << "FFT spinwave has been called but not initialised." << std::endl;                    exit(-1);
         }
-        int electron = 0;
-        // #pragma omp parallel for num_threads(3)
+        // int electron = 0;
+        #pragma omp parallel for num_threads(2)
         for( int atom = 0; atom < atoms::num_atoms; atom++) {
             // const int start = atoms::neighbour_list_start_index[atom];
    		    // const int end   = atoms::neighbour_list_end_index[atom]+1;
             
             int count = 0;
-            spin_correlation(S_i[time_step*N*i_atoms + electron*i_atoms + 0 ], atoms::x_spin_array[atom], atoms::y_spin_array[atom], S_0[electron*i_atoms + 0]);
+            spin_correlation(S_i[time_step*N*i_atoms + atom*i_atoms + 0 ], atoms::x_spin_array[atom], atoms::y_spin_array[atom], S_0[atom*i_atoms + 0]);
             count++;
-            for(int nn = 1; nn < r_s[electron*i_atoms]; ++nn) {
-                        const int natom = r_s[electron*i_atoms+nn];
-                spin_correlation(S_i[time_step*N*i_atoms + electron*i_atoms + count], atoms::x_spin_array[natom], atoms::y_spin_array[natom], S_0[electron*i_atoms + count]);
+            for(int nn = 1; nn < r_s[atom*i_atoms]; ++nn) {
+                        const int natom = r_s[atom*i_atoms+nn];
+                spin_correlation(S_i[time_step*N*i_atoms + atom*i_atoms + count], atoms::x_spin_array[natom], atoms::y_spin_array[natom], S_0[atom*i_atoms + count]);
                 count++;
             }
-            electron++;
+            // electron++;
         }
 
         time_step++;
