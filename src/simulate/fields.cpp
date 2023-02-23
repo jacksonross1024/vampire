@@ -71,7 +71,7 @@ void calculate_piezomagnetic_dipole(const int start_index,const int end_index);
 
 namespace sim{
 
-void calculate_spin_fields(const int start_index,const int end_index){
+void calculate_spin_fields(const int start_index,const int end_index) {
 
 	///======================================================
 	/// 		Subroutine to calculate spin dependent fields
@@ -208,13 +208,15 @@ int calculate_applied_fields(const int start_index,const int end_index){
 	///==========================================================================
 
 	// check calling of routine if error checking is activated
-	if(err::check==true){std::cout << "calculate_applied_fields has been called" << std::endl;}
+	// if(err::check==true){
+		
 
 	// Declare constant temporaries for global field
 	const double Hx=sim::H_vec[0]*sim::H_applied;
 	const double Hy=sim::H_vec[1]*sim::H_applied;
 	const double Hz=sim::H_vec[2]*sim::H_applied;
 
+	// std::cout << "calculate_applied_fields has been called" << Hx << ", " << Hy << ", " << Hz << std::endl;
 	// Declare array for local (material specific) applied field
 	std::vector<double> Hlocal(0);
 
@@ -552,7 +554,7 @@ void sim::calculate_piezomagnetic_dipole(const int start_index,const int end_ind
 
          //const double scale = 2.0; // 2*2/3 = 2 Factor to rescale anisotropies to usual scale
          const double frequency = cos(2.0*M_PI * sim::piezomagnetic_dipole_time*7.45e12);  // dt per cycle
-		 const double k2 = sim::piezomagnetic_dipole_field_strength;
+		 const double k2 = 4.8e1;//sim::piezomagnetic_dipole_field_strength;
 		//  std::cout << frequency << ", " << sim::piezomagnetic_dipole_time*7.45e12 << ", " << sim::piezomagnetic_dipole_time << std::endl;
          // Loop over all atoms between start and end index
 		//  std::cout << sim::piezomagnetic_dipole_time << ", " << frequency << std::endl;
@@ -560,13 +562,15 @@ void sim::calculate_piezomagnetic_dipole(const int start_index,const int end_ind
          for(int atom = start_index; atom < end_index; atom++) {
 
             // get atom material
-            const int mat = atoms::type_array[atom];
            
-            const double ex = ((mat == 1) ? 1 : -1) * frequency;
-            const double ey = frequency;
+            double ex = 0;
+			// if (atoms::type_array[atom] != 1 || atoms::type_array[atom] != 0) std::cout << atoms::type_array[atom] << std::endl;
+			if (atoms::type_array[atom] == 1) ex = -k2* frequency;
+			else ex = k2*frequency;
+            // const double ey = frequency;
 
-            atoms::x_total_spin_field_array[atom] += ex*k2;
-            atoms::y_total_spin_field_array[atom] += ey*k2;
+            atoms::x_total_spin_field_array[atom] += ex;
+            atoms::y_total_spin_field_array[atom] += k2*frequency;
 
          }
 
