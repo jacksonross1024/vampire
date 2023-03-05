@@ -76,6 +76,9 @@ namespace sim{
    std::vector < double > domain_wall_second_vector_y(100,0);
    std::vector < double > domain_wall_second_vector_z(100,1.0);
    
+   bool enable_laser_torque_fields = false;
+   double laser_torque_strength = 0.0;
+   
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -84,6 +87,9 @@ namespace sim{
       bool enable_spin_torque_fields = false; // flag to enable spin torque fields
       bool enable_vcma_fields        = false; // flag to enable voltage-controlled anisotropy fields
 
+      
+      std::vector<double> lot_unit_vector(3, 0.0);
+      std::vector<double> lot_lt;
       std::vector<sim::internal::mp_t> mp; // array of material properties
 
       std::vector<double> stt_asm; // array of spin transfer torque asymmetry
@@ -95,7 +101,7 @@ namespace sim{
       std::vector<double> sot_rj;  // array of adiabatic spin torques
       std::vector<double> sot_pj;  // array of non-adiabatic spin torques
       std::vector<double> sot_polarization_unit_vector(3,0.0); // sot spin polarization direction
-
+      double electrical_pulse_strength = 0;
       std::vector<double> vcmak;   // voltage controlled anisotropy coefficient
 
    } // end of internal namespace

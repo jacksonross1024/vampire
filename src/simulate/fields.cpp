@@ -119,7 +119,8 @@ void calculate_spin_fields(const int start_index,const int end_index) {
 
 	// Add spin torque fields
 	if( sim::internal::enable_spin_torque_fields == true ||
-		 sim::internal::enable_vcma_fields        == true ){
+		 sim::internal::enable_vcma_fields        == true || 
+		 sim::enable_laser_torque_fields  == true){
 		calculate_full_spin_fields(start_index,end_index);
 	}
 
@@ -209,14 +210,16 @@ int calculate_applied_fields(const int start_index,const int end_index){
 
 	// check calling of routine if error checking is activated
 	// if(err::check==true){
-		
+	// if(sim::piezomagnetic_dipole_field_strength <= 0.0) return 0;
 
 	// Declare constant temporaries for global field
-	const double Hx=sim::H_vec[0]*sim::H_applied;
-	const double Hy=sim::H_vec[1]*sim::H_applied;
-	const double Hz=sim::H_vec[2]*sim::H_applied;
+	double cos_sq = std::cos(2.0*M_PI*sim::time*mp::dt_SI*7.45e12 - M_PI*0.5);// > 0 ? cos(2.0*M_PI*sim::time*7.45e12 - M_PI*0.5) : 0.0;
+	
+	const double Hx=sim::H_vec[0]*sim::H_actual*cos_sq;
+	const double Hy=sim::H_vec[1]*sim::H_actual*cos_sq;
+	const double Hz=sim::H_vec[2]*sim::H_actual*cos_sq;
 
-	// std::cout << "calculate_applied_fields has been called" << Hx << ", " << Hy << ", " << Hz << std::endl;
+	// if(start_index == 0) std::std::cout << sim::H_actual << std::endl;cout << "calculate_applied_fields has been called" << Hx << ", " << Hy << ", " << Hz << std::endl;
 	// Declare array for local (material specific) applied field
 	std::vector<double> Hlocal(0);
 
@@ -504,7 +507,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		const double stpj = stt_pj[material];
 
 		const double stt_lambda = stt_asm[material];
-		const double factor = program::fractional_electric_field_strength / (1.0 + stt_lambda*(sx*stpx + sy*stpy + sz*stpz) );
+		const double factor = program::fractional_electric_field_strength*sim::internal::electrical_pulse_strength / (1.0 + stt_lambda*(sx*stpx + sy*stpy + sz*stpz) );
 
 		// calculate field
 		hx += factor * ( (strj-alpha*stpj)*(sy*stpz - sz*stpy) + (stpj+alpha*strj)*stpx );
@@ -524,13 +527,26 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		const double sotpj = sot_pj[material];
 
 		const double sot_lambda = sot_asm[material];
-		const double sot_factor = program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
-
+		double sot_factor = sim::internal::electrical_pulse_strength* program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*1.0 + sy*1.0 + sz*sotpz) );
+		if(sot_factor != sot_factor) sot_factor = 0.0;
+		//  if(sot_factor < 0) std::cout << hx << ", " << hy << ", " << hz << ", " << sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy ) << std::endl;
 		// calculate field
 		hx += sot_factor * ( (sotrj-alpha*sotpj)*(sy*sotpz - sz*sotpy) + (sotpj+alpha*sotrj)*sotpx );
 		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );
 		hz += sot_factor * ( (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz );
+		
+		const double lotlt = sim::laser_torque_strength * std::abs(sin(2.0*atan2(sy, sx)))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;// *;//hardcode Mn2Au 110 assymetry factor
+		// if(atom==1) std::cout << lotlt << ", " << sim::laser_torque_strength << ", " << std::abs(sin(2.0*atan2(sy, sx))) << ", " << lot_lt[material] << ", " << (1e-24/mp::material[material].mu_s_SI ) << std::endl;
+		const double lotx = lot_unit_vector[0];
+		const double loty = lot_unit_vector[1];
+		const double lotz = lot_unit_vector[2];
 
+		hx += lotlt * (loty*sz - sy*lotz);
+		hy += lotlt * (lotz*sx - sz*lotx);
+		hz += lotlt * (lotx*sy - sx*loty);
+
+		// hy += sotrj*sotpy*sy;
+		
 		//----------------------------------------------------------------------------------
 		// VCMA field
 		//----------------------------------------------------------------------------------
@@ -554,7 +570,7 @@ void sim::calculate_piezomagnetic_dipole(const int start_index,const int end_ind
 
          //const double scale = 2.0; // 2*2/3 = 2 Factor to rescale anisotropies to usual scale
          const double frequency = cos(2.0*M_PI * sim::piezomagnetic_dipole_time*7.45e12);  // dt per cycle
-		 const double k2 = 4.8e1;//sim::piezomagnetic_dipole_field_strength;
+		 const double k2 = sim::piezomagnetic_dipole_field_strength;
 		//  std::cout << frequency << ", " << sim::piezomagnetic_dipole_time*7.45e12 << ", " << sim::piezomagnetic_dipole_time << std::endl;
          // Loop over all atoms between start and end index
 		//  std::cout << sim::piezomagnetic_dipole_time << ", " << frequency << std::endl;

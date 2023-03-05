@@ -76,7 +76,10 @@ namespace vout{
 
    // Output Function 3 - with Header
    void Happ(std::ostream& stream, bool header){
-      stream << generic_output_double("B_applied" ,sim::H_applied,header);
+      stream << generic_output_double("B_applied" , std::cos(2.0*M_PI*sim::time*mp::dt_SI*7.45e12 - M_PI*0.5)*sim::H_actual, header);
+   }
+   void lot_strength(std::ostream& stream, bool header){
+      stream << generic_output_double("lot_strength" , sim::laser_torque_strength, header);
    }
 
    // Output Function 4 - with Header

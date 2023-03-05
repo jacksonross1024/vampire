@@ -379,7 +379,7 @@ void spinwave_statistic_t::finalize() {
    int h_value = 0;
     #pragma omp parallel for num_threads(4) private(h_value)
     for(int t = 0; t < time_range; t++) {
-        int thread = 0;// omp_get_thread_num();
+        int thread =  0;//omp_get_thread_num();
         for(int a = 0; a < N; a++) {   
             double value = std::abs(S_t[t*N*i_atoms + a*i_atoms + 0]*normalise);
             // if(value < 50) {

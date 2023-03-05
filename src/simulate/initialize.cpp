@@ -32,6 +32,7 @@ namespace sim{
       sim::internal::sot_rj.resize(num_materials,0.0);
       sim::internal::sot_pj.resize(num_materials,0.0);
 
+      sim::internal::lot_lt.resize(num_materials, 0.0);
       sim::internal::vcmak.resize(num_materials, 0.0);
 
       // loop over materials set by user
@@ -45,6 +46,7 @@ namespace sim{
          if(sim::internal::mp[m].sot_rj.is_set())  sim::internal::sot_rj[m]  = sim::internal::mp[m].sot_rj.get();
          if(sim::internal::mp[m].sot_pj.is_set())  sim::internal::sot_pj[m]  = sim::internal::mp[m].sot_pj.get();
 
+         if(sim::internal::mp[m].lt.is_set())  sim::internal::lot_lt[m] = sim::internal::mp[m].lt.get();
          // set vcma coefficients (requires sim::internal::enable_vcma_fields == true) but this should be default
          if(sim::internal::mp[m].vcmak.is_set()){
             const double imu_s = 1.0 / mp::material[m].mu_s_SI; // calculate inverse moment

@@ -1460,6 +1460,11 @@ namespace vin{
            output_list.push_back(72);
            return EXIT_SUCCESS;
         }
+        test="lot-strength";
+        if(word==test){
+           output_list.push_back(73);
+           return EXIT_SUCCESS;
+        }
         //--------------------------------------------------------------------
         test="gnuplot-array-format";
         if(word==test){

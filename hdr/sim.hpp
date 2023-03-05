@@ -98,6 +98,7 @@ namespace sim{
 	extern double Hmax; // T
 	extern double Hinc; // T
 	extern double Heq; // T
+	extern double H_actual;
 	extern double applied_field_angle_phi;
 	extern double applied_field_angle_theta;
 	extern bool applied_field_set_by_angle;
@@ -134,7 +135,8 @@ namespace sim{
 	// extern double head_position[2];
 	// extern double head_speed;
 	// extern bool   head_laser_on;
-
+	extern bool enable_laser_torque_fields;
+	extern double laser_torque_strength; //0-1 
 	extern double cooling_time;
 	extern int cooling_function_flag;
 	extern pump_functions_t pump_function;

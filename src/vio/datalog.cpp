@@ -273,6 +273,8 @@ namespace vout{
 			case 72:
 			   vout::fractional_electric_field_strength(stream, header);
 				break;
+			case 73:
+				vout::lot_strength(stream, header);
          case 997: //MP
 				vout::material_binder_cumulant(stream,header);
 				break;
