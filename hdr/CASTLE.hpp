@@ -1,7 +1,5 @@
 
 
-
-
 #ifndef CASTLE_H_
 #define CASTLE_H_
 
@@ -53,7 +51,6 @@
 #include "random.hpp"
 
 
-
 namespace CASTLE {
 
     // input variables
@@ -65,7 +62,7 @@ namespace CASTLE {
     extern bool applied_voltage_sim;
     extern bool heat_pulse_sim;
 
-    extern int lattice_atoms; //number of lattice atoms
+    extern double lattice_atoms; //number of lattice atoms
     extern int conduction_electrons; //number of conduction electrons
     extern double temperature;
 
@@ -109,6 +106,7 @@ namespace CASTLE {
     extern double e_specific_heat_i;
     extern double zero_pt_lattice_e;
     extern double phonon_energy;
+    extern double i_phonon_energy;
     extern int ee_density;
     extern int dos_size;
     extern double dos_occ;
@@ -210,6 +208,7 @@ namespace CASTLE {
     
     extern double transport_cutoff;
     extern double core_cutoff;
+    extern double DoS_cutoff;
     extern std::string time_stamp;
     extern std::ofstream lattice_output;
   
@@ -233,7 +232,6 @@ namespace CASTLE {
     extern void create();
     extern void output_data();
 
-    extern void setup_output();
     extern void update_position();
     extern void update_dynamics();
 
@@ -260,11 +258,12 @@ namespace CASTLE {
     extern void ee_scattering();
     extern double B_E_distrib(const double& epsilon);
     extern void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
+    extern void create_defined_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
    //  double return_phonon_distribution(const double& epsilon, const double& beta);
     extern double return_fermi_distribution(const double energy, const double temp); //energy = e_i - E_f_A
     extern double return_BE_distribution(const double phonon_e, const double temperature);
 
-    extern double return_dWdE(const double e_energy); //energy -> momentum 
+    extern double return_dWdE(const double e_energy) ; //energy -> momentum 
     // extern double return_dWdE_higher(const double e_energy); // energy -> momentum
     extern double return_dWdE_i(const double e_mom); // momentum -> energy
     // extern double return_dWdE_higher_i(const double e_mom); // momentum -> energy

@@ -172,7 +172,7 @@ namespace CASTLE {
    bool applied_voltage_sim = false;
    bool heat_pulse_sim = false;
 
-    int lattice_atoms; //number of lattice atoms
+    double lattice_atoms; //number of lattice atoms
    int conduction_electrons; //number of conduction electrons
    double temperature;
 
@@ -216,6 +216,7 @@ namespace CASTLE {
    double e_specific_heat_i;
    double zero_pt_lattice_e;
    double phonon_energy;
+   double i_phonon_energy;
    int ee_density;
    int dos_size;
    double dos_occ;
@@ -325,6 +326,7 @@ namespace CASTLE {
    double G;
    double transport_cutoff;
    double core_cutoff;
+   double DoS_cutoff;
 
    std::string time_stamp;
    std::ofstream lattice_output;
@@ -349,7 +351,6 @@ namespace CASTLE {
    void create();
    void output_data();
 
-   void setup_output();
    void update_position();
    void update_dynamics();
 
@@ -374,15 +375,16 @@ namespace CASTLE {
    // void aa_scattering();
    void ea_scattering(const int e, const int array_index, const int thread);
    void ee_scattering();
-    int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
-     int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
-   int ee_elastic(const int electron, const int electron_collision,  const double length, const double e_energy, const double d_e_energy, const double probability);
+   //  int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
+   //   int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
+   // int ee_elastic(const int electron, const int electron_collision,  const double length, const double e_energy, const double d_e_energy, const double probability);
 
-   double B_E_distrib(const double& epsilon);
-   double M_B_distrib(const double& epsilon, const double& beta);
-   void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
-   void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
+   // double B_E_distrib(const double& epsilon);
+   // double M_B_distrib(const double& epsilon, const double& beta);
+   // void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
+   // void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
    void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
+   void create_defined_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
    double return_fermi_distribution(const double energy, const double temp); //energy = e_i - E_f_A
    double return_BE_distribution(const double phonon_e, const double temperature);
 
