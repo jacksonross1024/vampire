@@ -433,6 +433,7 @@ void initialize () {
           d_count++;
           // avg /= count;
           dWdE_standard[d_count-1] = avg / count;
+          if(d_count == dos_size) {l = 25; break;}
           // std::cout << d_count-1 << ", " << avg / count << std::endl;
         }
         if(count == 0)  {
@@ -442,10 +443,7 @@ void initialize () {
         }
       }
 
-      // char directory [256];
-      // if(getcwd(directory, sizeof(directory)) == NULL){
-      //       std::cerr << "Fatal getcwd error in datalog. fermi dist" << std::endl;
-      // }
+    
       std::ofstream dWdE_standard_output;
       dWdE_standard_output.open(string(directory) + "/dWdE_standard.csv");
       // min = E_f_A -1.5*constants::eV_to_AJ;
@@ -625,10 +623,6 @@ void initialize_cell_omp() {
     for(int t=0; t< omp_threads;t++){
       lattice_cells_per_omp.at(t).resize(cells_per_thread);
     }
-    // int omp_checkerboard_scheme = 0;
-    // if(omp_threads == max_x_threads) omp_checkerboard_scheme = 1;
-    // if(omp_threads == max_y_threads) omp_checkerboard_scheme = 2;
-   // std::cout << x_omp_cells << ", " << y_omp_cells << ", " << z_omp_cells << ", " <<  cells_per_thread << ", " << max_x_threads << ", " << max_y_threads << ", " << max_z_threads << std::endl;
 
     #pragma omp parallel
     {
@@ -733,13 +727,6 @@ void initialize_lattice() {
 //====================================
 void initialize_electrons() {
 
-    // char directory .at(omp_threads6);
-    // if(getcwd(directory, sizeof(directory)) == NULL){
-    //         std::cerr << "Fatal getcwd error in datalog." << std::endl;
-    // }
-    // electron_position_output_down.open(string(directory) + "/Electron_Position_Init.xyz");
-    // electron_position_output_down << conduction_electrons << "\n";  
-    // electron_position_output_down << "Initial positions for electrons" << "\n";  
 
             if (err::check) std::cout << "Lattice output file and electron position file opened..." << std::endl;
     //=========
@@ -755,13 +742,7 @@ void initialize_electrons() {
 
     // temp_Map.resize(8);
     flux_index.resize(100,0); 
-    //const static double step_size = 8.0*((8.0*constants::kB_r*Te) + ((1.0 - 0.9817)*E_f_A)) / double(conduction_electrons);
-    // for(int i = 0; i < 8; i++) {
-    //     temp_Map.at(i).resize(dos_size+10,0);
-    //     // std::cout << temp_Map.at(i)[0] << std::endl;
-    //     // std::cout << temp_Map.at(i).at(round(conduction_electrons*0.3)-1) << std::endl;
-    // }
-    //std::cout << temp_Map.at(7).at(3335) << std::endl;
+ 
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
     ee_transport_scattering_count = 0;
@@ -970,15 +951,6 @@ void initialize_electron_interactions() {
 */
 void initialize_velocities() {
     
-    // char directory .at(omp_threads6);
-    // if(getcwd(directory, sizeof(directory)) == NULL){
-    //         std::cerr << "Fatal getcwd error in datalog." << std::endl;
-    // }
-    // electron_velocity_output.open(string(directory) + "/Electron_Velocity/init.csv");
-    // electron_velocity_output << "electron number, x-component, y-component, z-component, length" << std::endl;  
-    // std::ofstream atom_phonon_output;
-    // atom_phonon_output.open(string(directory) + "/Atom_Energy/init.csv");
-    // atom_phonon_output << "atom number, energy" << std::endl;
 
     const std::string n = "Init_E_distrib";
     // std::cout << "conduction electrons " << conduction_electrons << std::endl;
@@ -1174,17 +1146,7 @@ void create_fermi_distribution(const std::string& name, std::vector<double>& dis
   const double max  = E_f_A;// + 3.0*constants::kB_r*Te;
   const double min = E_f_A - 1.5*constants::eV_to_AJ;
   std::cout << "DoS E_f_A discrete offset " << int(DoS_cutoff) << ". Active space size " << dos_size << std::endl;
-  // DoS_cutoff = min;
-  // std::cout << min << std::endl;
-  // step_size = (max-min)/round((max-min)/step_size);
-  // double occupation_normalisation = round(step_size*conduction_electrons/(max-min));
-  // double error = (step_size*conduction_electrons/(max-min))-occupation_normalisation;
-  // std::cout << " create fermi distribution occupation for normalistaion: " << occupation_normalisation << " with error: " << error << ", step size: " << step_size << std::endl;
-  //step_size *= occupation_normalisation/(step_size*conduction_electrons/(max-min));
-  //occupation_normalisation = round(step_size*conduction_electrons/(max-min));
-  // error = abs((step_size*conduction_electrons/(max-min))-occupation_normalisation);
-  // std::cout << " create fermi distribution occupation for normalistaion: " << step_size*lattice_atoms << " with error: " << 0.0 << ", step size: " << step_size << std::endl;
-  
+ 
   global_e_dos.resize(dos_size);
   for(int h = 0; h < dos_size; h++) {
       global_e_dos[h].resize(2,0);
@@ -1360,6 +1322,7 @@ void create_defined_fermi_distribution(const std::string& name, std::vector<doub
            break;}
         }
         // energy_step++;
+        if(return_fermi_distribution(epsilon - E_f_A, temp) < 1.0-1e-3) transport_cutoff = epsilon;
         epsilon -= step_size;
         if(epsilon >= zero_temp) finite_electron_number = count;
       }
@@ -1435,12 +1398,6 @@ double return_fermi_distribution(const double energy, const double temp)
   if(temp <= 0.00001) return (1.0/(exp(energy/(constants::kB_r*1.0)) + 1.0));
   else return (1.0/(exp(energy/(constants::kB_r*temp)) + 1.0));
 }
-
-// double return_gaussian_distribution(const double epsilon, const double beta) 
-// {
-//   if(beta <= 0.00001) return 1.0;
-//   else return exp(-0.5*((epsilon*epsilon) - E_f_A)/(beta*beta));
-// }
 
 double return_BE_distribution(const double phonon_e, const double temperature) {
   return 1.0/(exp(phonon_e/(temperature*constants::kB_r)) - 1.0);
