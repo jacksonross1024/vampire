@@ -610,7 +610,7 @@ void initialize_cell_omp() {
     //number of cells each thread takes in each lattice direction
     const int max_x_threads = 4;
     const int max_y_threads = 4;
-    const int max_z_threads = 4;  
+    const int max_z_threads = 2;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -765,13 +765,15 @@ void initialize_electrons() {
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
 
+    global_tau_ep.resize(dos_size, 0.0);
+    global_tau_ee.resize(dos_size, 0.0);
+
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
     const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 5.2*n_f * 1e-3))));
      ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 5.2*n_f * 1e-3));
     const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 5.2*n_f * 1e-3));
         if (err::check)  std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
     
-
     omp_set_dynamic(0);
     omp_set_num_threads(omp_threads);
     #pragma omp parallel for schedule(static) 
@@ -1413,10 +1415,6 @@ double return_dWdE_i(const double momentum) {
   else return E_f_A + ((momentum- 3.71037)/0.0244961);
 }
 
-// double return_dWdE_higher_i(const double momentum) {
-//   if() return (momentum-3.58796)/0.00232028;
-//   else 
-// }
 
 double return_vel(const double energy) {
   if(energy > (E_f_A+4.86166)) return 1.0/(constants::hbar_r*0.00275775);
@@ -1471,9 +1469,15 @@ void output_data() {
      if(err::check)  std::cout << "stdDev occ calcualted " << std::endl;
     // int|E_f window : (1-f_i)(E_f - E_i)D(e_i)de -> Reiman sum with step size: phonon_energy
 
+    double tau_ep = 0.0;
+    double tau_ee = 0.0;
     for(double u_e = core_cutoff; u_e < (core_cutoff+59.0); u_e += phonon_energy) {
-    
+      
       const int index = std::min(dos_size-1.0, floor((u_e-DoS_cutoff)*i_phonon_energy));
+      tau_ep += global_tau_ep[index];
+      tau_ee += global_tau_ee[index];
+      // global_tau_ep[index] = 0.0;
+      // global_tau_ee[index] = 0.0;
       if(u_e < E_f_A) {
         if(u_e > transport_cutoff) {
           double dos = dos_standard[index]*phonon_energy/lattice_atoms;
@@ -1502,7 +1506,8 @@ void output_data() {
 
 
     global_d_U /= (dos_standard[int(floor((E_f_A-DoS_cutoff)*i_phonon_energy))]/lattice_atoms);//dos_standard[int(floor(E_f_A-core_cutoff)*i_phonon_energy)]*i_phonon_energy; //divide by D(E_f) 
-
+    tau_ep /= double(conduction_electrons);
+    tau_ee /= double(conduction_electrons);
     e_stddev = sqrt(e_stddev/double(conduction_electrons));
     scat_stddev = sqrt(scat_stddev/double(conduction_electrons));
 
@@ -1549,7 +1554,9 @@ void output_data() {
         }
       }
 
-      for(int h = 0; h < relaxation_time_hist_ee[0].size(); h++) {
+      for(int h = 0; h < dos_size ; h++) {
+
+      if(h < relaxation_time_hist_ee[0].size()) {
         #pragma omp critical
         {
         ee_avg += ee_avg_array[h];
@@ -1557,13 +1564,19 @@ void output_data() {
         ee_avg_array[h] = 0;
         ee_total_array[h] = 0;
         }
+      }
         #pragma omp barrier
 
         #pragma omp single 
         {
-        relaxation_time << double(h)/4.0 + int(round(DoS_cutoff)) << ", " << ee_avg/std::max(1.0,double(ee_total)) << ", " << ee_total  << "\n"; 
-        ee_avg = 0.0;
-        ee_total = 0;
+        if(h < dos_size) {
+          relaxation_time << double(h)/4.0 + int(round(DoS_cutoff)) << ", " << ee_avg/std::max(1.0,double(ee_total)) << ", " << ee_total; 
+          ee_avg = 0.0;
+          ee_total = 0;
+        }
+        relaxation_time << global_tau_ep[h] << ", " << global_tau_ee[h] << std::endl;
+        global_tau_ep[h] = 0.0;
+        global_tau_ee[h] = 0.0;
         }
       }
     }
@@ -1595,7 +1608,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << d_Te*d_Te*e_heat_capacity << ", "  << 6.0*sqrt(global_d_U*1.0)/M_PI/constants::kB_r << ", " <<  global_d_U << ", "// (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << Te << ", " << Tp << ", " << -1.0*transient_entropy << ", " << d_U_avg << ", " 
-      << d_TTMe << ", " << d_TTMp << ", " <<  I*double(CASTLE_output_rate) << ", " << e_size << ", " << e_stddev << ", " << scat_size << ", " << scat_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
+      << d_TTMe << ", " << d_TTMp << ", " <<  I*double(CASTLE_output_rate) << ", " << e_size << ", " << tau_ep << ", " << scat_size << ", " << tau_ee << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / 1 << ", " << double(e_e_scattering_count) / double(1) << ", " << \
       double(ee_core_scattering_count) / double(1) << ", " << double(ee_transport_scattering_count) / double(1) << ", " <<\
       double(ea_core_scattering_count) / double(1) << ", " << double(ea_transport_scattering_count) / double(1) << ", " <<\
@@ -1605,7 +1618,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << d_Te*d_Te*e_heat_capacity << ", " << 6.0*sqrt(global_d_U*1.0)/M_PI/constants::kB_r << ", " << global_d_U << ", " //<<  (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << d_Te << ", " << d_Tp << ", " << -1.0*transient_entropy << ", " << d_U_avg << ", " 
-      << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << e_size << ", " << e_stddev << ", " << scat_size << ", " << scat_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
+      << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << e_size << ", " << tau_ep << ", " << scat_size << ", " << tau_ee << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << \
       double(ee_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ee_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
       double(ea_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ea_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\

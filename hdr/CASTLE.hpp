@@ -205,6 +205,8 @@ namespace CASTLE {
     extern double TTMp;
     extern double d_TTMp;
     extern double G;
+    extern std::vector<double> global_tau_ep;
+    extern std::vector<double> global_tau_ee;
     
     extern double transport_cutoff;
     extern double core_cutoff;

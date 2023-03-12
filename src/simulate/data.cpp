@@ -328,6 +328,9 @@ namespace CASTLE {
    double core_cutoff;
    double DoS_cutoff;
 
+   std::vector<double> global_tau_ep;
+   std::vector<double> global_tau_ee;
+
    std::string time_stamp;
    std::ofstream lattice_output;
   
