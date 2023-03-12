@@ -610,7 +610,7 @@ void initialize_cell_omp() {
     //number of cells each thread takes in each lattice direction
     const int max_x_threads = 4;
     const int max_y_threads = 4;
-    const int max_z_threads = 2;  
+    const int max_z_threads = 4;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -1622,7 +1622,7 @@ void output_data() {
     ea_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
-
+    if(!equilibrium_step) half_int_var = 1;
     
     // if(equilibrium_step) transport_cutoff = E_f_A - (E_f_A - core_cutoff)*current_time_step/sim::equilibration_time;
     if(transport_cutoff > E_f_A - 0.5*floor((d_TTMe - 300.0)/100.0)) {
