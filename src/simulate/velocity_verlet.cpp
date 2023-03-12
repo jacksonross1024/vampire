@@ -341,12 +341,10 @@ void electron_thermal_field(const int e, const int array_index, const double EKE
     const double phi   = omp_uniform_random[thread]() * M_PI; 
 
     electron_potential[e] += EKE;
-    
-    const double vel = dWdE_standard[int(floor((electron_potential[e]-DoS_cutoff)*i_phonon_energy))];
-      //  if(electron_potential[e] < 0.9817*E_f_A) std::cout << electron_potential[e] << ", " << EKE << ", " << vel << std::endl;
-    electron_velocity[array_index]   = vel*cos(theta)*sin(phi);
-    electron_velocity[array_index+1] = vel*sin(theta)*sin(phi);
-    electron_velocity[array_index+2] = vel*cos(phi);
+  
+    electron_velocity[array_index]   = cos(theta)*sin(phi);
+    electron_velocity[array_index+1] = sin(theta)*sin(phi);
+    electron_velocity[array_index+2] = cos(phi);
 
   //  electron_ee_scattering_list[e][0] = 1;
     electron_ea_scattering_list[e][0] = 1;
