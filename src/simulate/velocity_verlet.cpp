@@ -290,7 +290,7 @@ void update_dynamics() {
     while(count < photons_at_dt) {
       int select = int(omp_uniform_random[omp_get_thread_num()]()*2147483647) % (conduction_electrons);
       double e_energy = electron_potential[select];
-      if( return_fermi_distribution(e_energy+photon_energy-E_f_A, Te) < (1.0-1e-2)) {
+      if(e_energy > (core_cutoff+2.0*phonon_energy) && return_fermi_distribution(e_energy+photon_energy-E_f_A, Te) < (1.0-1e-2)) {
         chosen[count] = select;
         count++;
       }
@@ -718,8 +718,8 @@ void ea_scattering(const int e, const int array_index, const int thread) {
 
     const double e_energy = electron_potential[e];
     // double deltaE = 1.0; //double(e_index+1)+DoS_cutoff - e_energy;
-    if(e_energy - 4.0*phonon_energy < core_cutoff ) return;
-    if( e_energy + 4.0*phonon_energy > (core_cutoff+60.0) ) return;
+    if(e_energy - 2.0*phonon_energy < core_cutoff ) return;
+    if( e_energy + 2.0*phonon_energy > (core_cutoff+60.0) ) return;
     double e_occupation;
     double f_e_occupation;
     double r_e_occupation;
