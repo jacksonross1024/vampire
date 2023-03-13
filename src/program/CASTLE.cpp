@@ -1570,7 +1570,7 @@ void output_data() {
         #pragma omp single 
         {
         if(h < dos_size) {
-          relaxation_time << double(h)/4.0 + int(round(DoS_cutoff)) << ", " << ee_avg/std::max(1.0,double(ee_total)) << ", " << ee_total; 
+          relaxation_time << double(h)/4.0 + int(round(DoS_cutoff)) << ", " << ee_avg/std::max(1.0,double(ee_total)) << ", " << ee_total << ", ";
           ee_avg = 0.0;
           ee_total = 0;
         }
