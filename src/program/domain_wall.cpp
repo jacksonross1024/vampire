@@ -34,6 +34,11 @@ namespace program{
 		// check calling of routine if error checking is activated
 		if(err::check==true) std::cout << "program::domain walls has been called" << std::endl;
 
+		char directory [256];
+      	if(getcwd(directory, sizeof(directory)) == NULL){
+            std::cerr << "Fatal getcwd error in datalog." << std::endl;
+      	}
+
 		double temp=sim::temperature;
 		#ifdef MPICF
 		int num_local_atoms =  vmpi::num_core_atoms+vmpi::num_bdry_atoms;
@@ -43,7 +48,7 @@ namespace program{
 
 		int num_averages = 50;
 		num_averages = num_averages/2.0;
-		int num_dw_cells = (cs::system_dimensions[sim::domain_wall_axis])/sim::domain_wall_discretisation + 1;
+		int num_dw_cells = (cs::system_dimensions[sim::domain_wall_axis]/sim::domain_wall_discretisation) + 1;
 		std::vector <double > atom_to_cell_array(num_local_atoms,0);
 		std::vector  < double > mag_x(mp::num_materials*num_dw_cells,0.0);
 		std::vector  < double > mag_y(mp::num_materials*num_dw_cells,0.0);
@@ -57,31 +62,20 @@ namespace program{
 			// sim::domain_wall_second_vector_y[0] = -sim::domain_wall_second_vector_y[1];
 			// 	sim::domain_wall_second_vector_z[0] = -sim::domain_wall_second_vector_z[1];
 		}
-
-		//	 std::cout << sim::domain_wall_width << "\t" << sim::domain_wall_position*cs::system_dimensions[0] << "\t" << num_dw_cells << "\t" << sim::domain_wall_axis << std::endl;
-
-
-
 		//reverses the magentisation of atoms further away than the domain wall distance.
 		if (!sim::load_checkpoint_flag){
 			if (sim::domain_wall_axis == 0){
-				for(int atom=0;atom<num_local_atoms;atom++){
+				for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
-					if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0){
+					if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0) {
 						int mat = atoms::type_array[atom];
 						double pos = (atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position + sim::domain_wall_width/2.0)/sim::domain_wall_width;
-						if (pos > 1) pos = 1;
-						if (pos < 0) pos = 0;
-						double dx = -atoms::x_spin_array[atom] + sim::domain_wall_second_vector_x[mat];
-						double dy = -atoms::y_spin_array[atom] + sim::domain_wall_second_vector_y[mat];
-						double dz = -atoms::z_spin_array[atom] + sim::domain_wall_second_vector_z[mat];
-						double mx = atoms::x_spin_array[atom] + dx*pos;
-						double my = atoms::y_spin_array[atom] + dy*pos;
-						double mz = atoms::z_spin_array[atom] + dz*pos;
-						atoms::x_spin_array[atom] = mx;
-						atoms::y_spin_array[atom] = my;
-						atoms::z_spin_array[atom] = mz;
-						std::cout << atom << '\t' << atoms::x_coord_array[atom] << '\t' << atoms::x_spin_array[atom] << '\t' << atoms::y_spin_array[atom] << '\t' << atoms::z_spin_array[atom] << '\t' << sim::domain_wall_second_vector_x[mat] << '\t' << sim::domain_wall_second_vector_y[mat] << '\t' << sim::domain_wall_second_vector_z[mat] << '\t' <<std::endl;
+						if (pos > 1) pos = 1.0;
+						else if (pos < 0) pos = 0.0;
+						atoms::x_spin_array[atom] +=  (sim::domain_wall_second_vector_x[mat] - atoms::x_spin_array[atom])*pos;
+						atoms::y_spin_array[atom] +=  (sim::domain_wall_second_vector_y[mat] - atoms::y_spin_array[atom])*pos;
+						atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*pos;
+			
 					}
 				}
 			}
@@ -112,7 +106,6 @@ namespace program{
 				}
 			}
 
-
 			// if (sim::domain_wall_axis == 1){
 			//    for(int atom=0;atom<num_local_atoms;atom++){
 			//       if (atoms::y_coord_array[atom] > cs::system_dimensions[1]*sim::domain_wall_position){
@@ -135,8 +128,6 @@ namespace program{
 			//    }
 			// }
 		}
-
-
 
 		// std::cout << sim::anti_PBC[0] << '\t' <<  sim::anti_PBC[1] << '\t' <<  sim::anti_PBC[2] <<std::endl;
 		// if (sim::anti_PBC[0] || sim::anti_PBC[1] || sim::anti_PBC[2]){
@@ -221,8 +212,6 @@ namespace program{
 		//   }
 		// }
 
-
-
 		//works out which atoms are in which cells and sets cells based on wether the domain wall
 		//is along x or y or z
 
@@ -269,6 +258,54 @@ namespace program{
 			// Set equilibration temperature
 			sim::temperature=sim::Teq;
 		}
+		for (int cell = 0; cell < num_dw_cells; cell++){
+				for (int mat = 0; mat < mp::num_materials; mat ++){
+					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
+					mag_x[num_dw_cells*mat + cell] = 0.0;
+					mag_y[num_dw_cells*mat + cell] = 0.0;
+					mag_z[num_dw_cells*mat + cell] = 0.0;
+				}
+			}
+
+			#ifdef MPICF
+			MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],     num_dw_cells*mp::num_materials,    MPI_INT,    MPI_MIN, MPI_COMM_WORLD);
+			#endif
+			std::ofstream myfile;
+			string filename = "/dw/dw-0.txt";
+			myfile.open (string(directory) + filename);
+
+			for(int atom=0;atom<num_local_atoms;atom++){
+				int cell = atom_to_cell_array[atom];
+				int mat = atoms::type_array[atom];
+				mag_x[num_dw_cells*mat + cell] += atoms::x_spin_array[atom];
+				mag_y[num_dw_cells*mat + cell] += atoms::y_spin_array[atom];
+				mag_z[num_dw_cells*mat + cell] += atoms::z_spin_array[atom];
+
+			}
+
+
+			#ifdef MPICF
+			MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+			MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+			MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+			#endif
+			//	 std::cout << "a" <<std::endl;
+
+			for (int cell = 0; cell < num_dw_cells; cell++){
+				for (int mat = 0; mat < mp::num_materials; mat ++){
+					if (num_atoms_in_cell[num_dw_cells*mat + cell] > 0){
+
+						myfile << cell <<"\t" <<  mat << '\t' << mag_x[num_dw_cells*mat + cell] /num_atoms_in_cell[num_dw_cells*mat + cell]  << "\t" << mag_y[num_dw_cells*mat + cell] /num_atoms_in_cell[num_dw_cells*mat + cell]  << "\t" << mag_z[num_dw_cells*mat + cell]/num_atoms_in_cell[num_dw_cells*mat + cell]  << "\t" << num_atoms_in_cell[num_dw_cells*mat + cell]  <<  std::endl;// av_dl << std::endl;//'\t' << sum_mag[new_pos*3 + 0][mat] << "\t" << sum_mag[new_pos*3 + 1][mat] << "\t" << sum_mag[new_pos*3 + 2][mat] << "\t" << counter[new_pos][mat] << "\t" << dl[cell][mat] << std::endl;
+					}
+				}
+
+			}
+			myfile.close();
+			// Output data
+			vout::data();
 
 		// Equilibrate system
 		while(sim::time<sim::equilibration_time){
@@ -286,7 +323,7 @@ namespace program{
 
 
 		// Set temperature and reset stats only if continue checkpoint not loaded
-		if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag){}
+		if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag) {}
 		else{
 
 			// set simulation temperature
@@ -334,9 +371,11 @@ namespace program{
 
 
 			std::ofstream myfile;
-			string filename = "dw-" + std::to_string(sim::time) + ".txt";
-			myfile.open (filename);
-
+			string filename = "/dw/dw-" + std::to_string(sim::time) + ".txt";
+			myfile.open (string(directory) + filename);
+			if(!myfile.is_open()) {
+				std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
+			}
 			for(int atom=0;atom<num_local_atoms;atom++){
 				int cell = atom_to_cell_array[atom];
 				int mat = atoms::type_array[atom];
