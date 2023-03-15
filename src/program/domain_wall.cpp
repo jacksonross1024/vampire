@@ -333,14 +333,23 @@ namespace program{
 			stats::reset();
 
 		}
-
-		//	std::cout << "reset mag" << std::endl;
-
+		
 
 		// Perform Time Series
 		while(sim::time<sim::equilibration_time+sim::total_time){
 
-
+			double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
+		//	std::cout << "reset mag" << std::endl;
+			const double i_pump_time = 1.0/sim::pump_time;
+  		 	const double reduced_time = (ftime-3.*sim::pump_time)*i_pump_time;
+   			const double four_ln_2 = 2.77258872224; // 4 ln 2
+   // 2/(delta sqrt(pi/ln 2))*0.1, delta = 10 nm, J/m^2 -> mJ/cm^2 (factor 0.1)
+   
+   		const double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+		if(sim::enable_laser_torque_fields) {
+			sim::laser_torque_strength = gaussian;
+		// if(gaussian > 1.0) std::cout << gaussian << std::endl;
+		}
 			for (int cell = 0; cell < num_dw_cells; cell++){
 				for (int mat = 0; mat < mp::num_materials; mat ++){
 					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
@@ -393,6 +402,8 @@ namespace program{
 			#endif
 			//	 std::cout << "a" <<std::endl;
 
+			double position = 0.0;
+			double width = 0.0;
 			for (int cell = 0; cell < num_dw_cells; cell++){
 				for (int mat = 0; mat < mp::num_materials; mat ++){
 					if (num_atoms_in_cell[num_dw_cells*mat + cell] > 0){
