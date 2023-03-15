@@ -67,9 +67,9 @@ namespace program{
 			if (sim::domain_wall_axis == 0){
 				for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
-					if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0) {
+					if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
 						int mat = atoms::type_array[atom];
-						double pos = (atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position + sim::domain_wall_width/2.0)/sim::domain_wall_width;
+						double pos = 0.5 + 0.5*std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
 						if (pos > 1) pos = 1.0;
 						else if (pos < 0) pos = 0.0;
 						atoms::x_spin_array[atom] +=  (sim::domain_wall_second_vector_x[mat] - atoms::x_spin_array[atom])*pos;
