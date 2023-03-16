@@ -480,7 +480,7 @@ namespace vout{
 
    // Output Function 72
    void fractional_electric_field_strength(std::ostream& stream, bool header){
-      stream << generic_output_double("frac_voltage", program::fractional_electric_field_strength, header);
+      stream << generic_output_double("frac_voltage", sim::laser_torque_strength, header);
    }
 
 }

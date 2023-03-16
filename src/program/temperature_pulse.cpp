@@ -119,7 +119,7 @@ double two_temperature_function(double ftime){
    const double two_delta_sqrt_pi_ln_2 = 9394372.787;
    const double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
    if(sim::enable_laser_torque_fields) {
-		sim::laser_torque_strength = gaussian;
+		sim::laser_torque_strength = gaussian*gaussian;
 		// if(gaussian > 1.0) std::cout << gaussian << std::endl;
 	}
 	
@@ -310,8 +310,8 @@ void temperature_pulse(){
 
 			// Calculate time from pulse
 			double time_from_start=mp::dt_SI*double(sim::time-start_time);
-			if(time_from_start > 4e-12) sim::H_actual = sim::H_applied;
-			if (time_from_start > 8e-12) sim::H_actual = sim::Heq;
+			if(time_from_start > 12e-12) sim::H_actual = sim::H_applied;
+			if (time_from_start > 20e-12) sim::H_actual = sim::Heq;
 			// Calculate temperature
 			sim::temperature=temperature_pulse_function(time_from_start);
 
