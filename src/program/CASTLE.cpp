@@ -329,12 +329,14 @@ void initialize () {
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
     ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
+    // ee_rate = -2.0*dt*M_PI*pow(constants::e, 4.0)/(pow(constants::eps_0_A,2.0)*pow(1.25*M_PI*1.97,2.0)*constants::hbar_r*1e-30);
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
-
+        // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
+        // 2*3.14 16^4 (AC) /10.5(AJ fs) / 64e16 (fs^2 AC^2 / A^3 kg)^2 / A^6
     E_f_A -= ((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy - floor((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy))*phonon_energy;
     // core_cutoff = E_f_A - DoS_cutoff;
      std::cout << "E_f(AJ): " << E_f*1e20 << ", discretised (AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
-    ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau(fs/AJ): " << tau*1e-20/E_f << ", photon max rate: " << 1e-2*power_density*lattice_width*lattice_depth/(sim::applied_voltage*constants::eV_to_AJ) << \
+    ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau_ep(fs/AJ): " << tau*1e-20/E_f << ", tau_ee(fs/AJ): " << -1*dt/ee_rate << \
     ", phonon energy: " << 2*phonon_energy << ", dos width: " << phonon_energy <<  std::fixed << std::endl;
 
     omp_set_num_threads(omp_threads);
@@ -610,7 +612,7 @@ void initialize_cell_omp() {
     //number of cells each thread takes in each lattice direction
     const int max_x_threads = 4;
     const int max_y_threads = 4;
-    const int max_z_threads = 2;  
+    const int max_z_threads = 4;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -1044,10 +1046,13 @@ void initialize_velocities() {
     #pragma omp critical 
     {
       for(int h = 0; h < dos_size; h++) {
+        global_e_dos[h][0] += local_e_dos[h];
         global_e_dos[h][1] += local_e_dos[h];
       }
     }
   }
+    q_sq = k_sq();
+    std::cout << "screening: " <<  sqrt(-1.0/q_sq) << std::endl;
     char directory [256];
       if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog. time stamps" << std::endl;
@@ -1414,7 +1419,6 @@ double return_dWdE_i(const double momentum) {
   if(momentum > 3.82946) return E_f_A + ((momentum-3.81605)/0.00275775);
   else return E_f_A + ((momentum- 3.71037)/0.0244961);
 }
-
 
 double return_vel(const double energy) {
   if(energy > (E_f_A+4.86166)) return 1.0/(constants::hbar_r*0.00275775);

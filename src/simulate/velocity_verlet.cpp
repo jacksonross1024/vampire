@@ -300,6 +300,8 @@ void update_dynamics() {
     Tp = d_Tp;
     Te = d_Te;
       if(err::check) std::cout << "conditions set; updating dos " << std::endl;
+
+
     #pragma omp parallel for schedule(dynamic, 4)
     for (int e = 0; e < conduction_electrons; e++) {
       // if(electron_potential[e] < (E_f_A-24.25)) continue;
@@ -841,7 +843,7 @@ void ee_scattering() {
 
   omp_set_dynamic(0);
   omp_set_num_threads(omp_threads);
-  const static double q_sq = 1.4*1.4;//*constants::hbar_over_me_sqrt*constants::hbar_over_me_sqrt;
+ // const static double q_sq = 1.4*1.4;//*constants::hbar_over_me_sqrt*constants::hbar_over_me_sqrt;
   #pragma omp parallel reduction(+:e_e_scattering_count, ee_core_scattering_count, ee_transport_scattering_count) 
   {
     
@@ -1042,7 +1044,26 @@ void ee_scattering() {
   // std::cout << "minimum K: " << min << "; maximum K: " << max << std::endl;
 }
 
+double k_sq() {
+  double q_sq = 0.0;
+  double f_0;
+  double f_2;
+  double df_dE;
+  for(int h = 8; h < dos_size-2; h++) {
+  
+    if( ((h-1)*phonon_energy+DoS_cutoff) > transport_cutoff) f_0 = double(global_e_dos[h-1][0])/(dos_standard[h-1]*phonon_energy);
+    else f_0 = double(global_e_dos[h-1][0])/double(global_e_dos[h-1][1]);
 
+    if( ((h+1)*phonon_energy+DoS_cutoff) > transport_cutoff) f_2 = double(global_e_dos[h+1][0])/(dos_standard[h+1]*phonon_energy);
+    else f_2 = double(global_e_dos[h+1][0])/double(global_e_dos[h+1][1]);
+
+    df_dE = (f_2 - f_0)/(2.0*phonon_energy);
+    q_sq += phonon_energy*dos_standard[h]*phonon_energy*df_dE/lattice_atoms;
+   
+  }
+
+  return q_sq;
+}
 
 } //end CASTLE namespace
 

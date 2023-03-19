@@ -123,6 +123,7 @@ namespace CASTLE {
     extern double ee_coupling_strength;
     extern double ea_coupling_strength;
     extern double ee_scattering_angle;
+    extern double q_sq;
 
     extern double e_e_integration_cutoff;
     extern double e_e_neighbor_cutoff;
@@ -236,22 +237,9 @@ namespace CASTLE {
 
     extern void update_position();
     extern void update_dynamics();
-
-//     extern void e_a_coulomb(const int& e, const int& array_index);
-//               //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
-   
-//    extern void neighbor_e_a_coulomb(const int& e, const int& array_index);
-//                 // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
-    
     extern void e_e_coulomb(const int e, const int array_index);
     
     extern void neighbor_e_e_coulomb(const int e, const int array_index);
-    
-    // extern void a_a_coulomb(const int a, const int array_index, \
-    //             double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
-    // extern void neighbor_a_a_coulomb(const int a, const int array_index, \
-    //             double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
-
     extern void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread);
  
     extern double electron_applied_voltage(const int e, const int array_index, double& external_potential);
@@ -270,6 +258,7 @@ namespace CASTLE {
     extern double return_dWdE_i(const double e_mom); // momentum -> energy
     // extern double return_dWdE_higher_i(const double e_mom); // momentum -> energy
     extern double return_vel(const double energy); //inverse slope of dWdE / hbar_r
+    extern double k_sq();
 }
 
 
