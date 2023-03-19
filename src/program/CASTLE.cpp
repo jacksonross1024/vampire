@@ -328,7 +328,7 @@ void initialize () {
     G = 300.0*e_heat_capacity*E_f_A*3.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
+    ea_rate = -300.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
 
     E_f_A -= ((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy - floor((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy))*phonon_energy;
@@ -610,7 +610,7 @@ void initialize_cell_omp() {
     //number of cells each thread takes in each lattice direction
     const int max_x_threads = 4;
     const int max_y_threads = 4;
-    const int max_z_threads = 2;  
+    const int max_z_threads = 4;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -1574,7 +1574,7 @@ void output_data() {
           ee_avg = 0.0;
           ee_total = 0;
         }
-        relaxation_time << global_tau_ep[h] << ", " << global_tau_ee[h] << std::endl;
+        relaxation_time << h*phonon_energy + DoS_cutoff << ", " << global_tau_ep[h] << ", " << global_tau_ee[h] << std::endl;
         global_tau_ep[h] = 0.0;
         global_tau_ee[h] = 0.0;
         }
