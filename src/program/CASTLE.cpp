@@ -328,8 +328,7 @@ void initialize () {
     G = 300.0*e_heat_capacity*E_f_A*3.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
-    ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
-    // ee_rate = -2.0*dt*M_PI*pow(constants::e, 4.0)/(pow(constants::eps_0_A,2.0)*pow(1.25*M_PI*1.97,2.0)*constants::hbar_r*1e-30);
+    ea_rate = -300.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
         // 2*3.14 16^4 (AC) /10.5(AJ fs) / 64e16 (fs^2 AC^2 / A^3 kg)^2 / A^6
@@ -1578,7 +1577,7 @@ void output_data() {
           ee_avg = 0.0;
           ee_total = 0;
         }
-        relaxation_time << global_tau_ep[h] << ", " << global_tau_ee[h] << std::endl;
+        relaxation_time << h*phonon_energy + DoS_cutoff << ", " << global_tau_ep[h] << ", " << global_tau_ee[h] << std::endl;
         global_tau_ep[h] = 0.0;
         global_tau_ee[h] = 0.0;
         }
