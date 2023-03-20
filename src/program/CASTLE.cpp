@@ -331,11 +331,11 @@ void initialize () {
     ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
-        ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*x_unit_size*y_unit_size*z_unit_size), 2.0)/constants::hbar_r;
+    ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*1.25*M_PI*7.0*7.0*7.0), 2.0)/constants::hbar_r; // AJ/A^4
     E_f_A -= ((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy - floor((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy))*phonon_energy;
     // core_cutoff = E_f_A - DoS_cutoff;
      std::cout << "E_f(AJ): " << E_f*1e20 << ", discretised (AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
-    ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau_ep(fs/AJ): " << tau*1e-20/E_f << ", tau_ee(fs/AJ): " << ee_rate << ", M_ee(AJ): "  <<\
+    ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau_ep(fs/AJ): " << tau*1e-20/E_f << ", ee_rate(J/s/K/m^3): " << -1e22*ee_rate*n_f/dt/300.0 << ", tau_ee(fs/AJ): " << 1.0/((-1.0/(11.9*11.9))*ee_rate/dt) << \
     ", phonon energy: " << 2*phonon_energy << ", dos width: " << phonon_energy <<  std::fixed << std::endl;
 
     omp_set_num_threads(omp_threads);
