@@ -106,13 +106,6 @@ void update_position(){
       if(current_time_step % half_int_var == 0) size = old_cell_integration_lists[cell][0];
       else  size = cell_integration_lists[cell][0];
 
-      // if(err::check) {
-      //   #pragma omp critical 
-      //   {
-          // std::cout << thread << ", " << size << std::endl;
-      //   }
-      // }
-   // cell_integration_lists[cell][0] = 1;
       local += size - 1;
   //  if((current_time_step % half_int_var) == 0 && ( (l % ((z_omp_cells/2)-1) )== 0 || (l % (z_omp_cells/2)) == 0) ) {
       #pragma omp barrier
@@ -326,6 +319,8 @@ void update_dynamics() {
     if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
       //  TEKE += external_potential;
         if(err::check) std::cout << "dos updated. ee scattering step..." << std::endl;
+      q_sq = k_sq();
+     
     ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;  
     if(!equilibrium_step) d_Tp =  a_heat_capacity_i*TLE *n_f/conduction_electrons + Tp;
@@ -744,7 +739,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     
     const double thermal_factor = return_BE_distribution(phonon_factor, TTMp);
     const double f_factor = thermal_factor*(e_occupation - f_e_occupation) - f_e_occupation*(1.0-e_occupation);
-    const double r_factor = (thermal_factor+0.0)*(e_occupation - r_e_occupation) + e_occupation*(1.0-r_e_occupation);
+    const double r_factor = (thermal_factor+1.0)*(e_occupation - r_e_occupation) + e_occupation*(1.0-r_e_occupation);
     global_tau_ep[e_index] += ea_rate*(f_factor - r_factor);
 
     if(f_factor > 0.0 && omp_uniform_random[thread]() > exp(ea_rate*f_factor)) {
@@ -948,6 +943,7 @@ void ee_scattering() {
 
         global_tau_ee[e_index] += ee_rate*occupation_factor/((q_sq+(deltaK))*(q_sq+(deltaK)));
         global_tau_ee[d_index] += ee_rate*occupation_factor/((q_sq+(deltaK))*(q_sq+(deltaK)));
+
         if(omp_uniform_random[thread]() > exp(ee_rate*occupation_factor/((q_sq+(deltaK))*(q_sq+(deltaK))))) {
 
           // if(a_factor > (b_factor+1.0) || abs(deltaE) < 0.1) std::cout << a_factor << " > " << b_factor+1 << ", dE: "<< deltaE << ", " << k_1 << ", " << k_2 << ", " << d_k_1 << ", " << d_k_2 << ", " << e_energy << ", " << d_e_energy << ", " << d_e_1 << ", " << d_e_2 << std::endl;
@@ -1014,22 +1010,24 @@ void ee_scattering() {
 double k_sq() {
   double q_sq = 0.0;
   double f_0;
-  double f_2;
+  // double f_2;
+  double k;
   double df_dE;
   for(int h = 8; h < dos_size-2; h++) {
   
-    if( ((h-1)*phonon_energy+DoS_cutoff) > transport_cutoff) f_0 = double(global_e_dos[h-1][0])/(dos_standard[h-1]*phonon_energy);
-    else f_0 = double(global_e_dos[h-1][0])/double(global_e_dos[h-1][1]);
+    if( ((h)*phonon_energy+DoS_cutoff) > transport_cutoff) f_0 = double(global_e_dos[h][0])/(dos_standard[h]*phonon_energy);
+    else f_0 = double(global_e_dos[h][0])/double(global_e_dos[h][1]);
 
-    if( ((h+1)*phonon_energy+DoS_cutoff) > transport_cutoff) f_2 = double(global_e_dos[h+1][0])/(dos_standard[h+1]*phonon_energy);
-    else f_2 = double(global_e_dos[h+1][0])/double(global_e_dos[h+1][1]);
+    k = return_dWdE(h*phonon_energy + DoS_cutoff);
+    // if( ((h+1)*phonon_energy+DoS_cutoff) > transport_cutoff) f_2 = double(global_e_dos[h+1][0])/(dos_standard[h+1]*phonon_energy);
+    // else f_2 = double(global_e_dos[h+1][0])/double(global_e_dos[h+1][1]);
 
-    df_dE = (f_2 - f_0)/(2.0*phonon_energy);
-    q_sq += phonon_energy*dos_standard[h]*phonon_energy*df_dE/lattice_atoms;
-   
+    // df_dE = (f_2 - f_0)/(2.0*phonon_energy);
+    q_sq += phonon_energy*dos_standard[h]*f_0*1.0/(k*k*lattice_atoms*x_unit_size*y_unit_size*z_unit_size);
+            // s^2 /  fs^2
   }
 
-  return q_sq;
+  return pow(sqrt(constants::K* q_sq) + (11.9-4.569471), 2.0);
 }
 
 } //end CASTLE namespace
