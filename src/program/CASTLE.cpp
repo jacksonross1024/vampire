@@ -1440,6 +1440,7 @@ void output_data() {
     double local_d_U = 0.0;
     double d_U_avg = 0.0;
     double transient_entropy = 0.0;
+    int ballistic_count = 0;
     #pragma omp parallel for schedule(dynamic,4)  reduction(+:e_size, scat_size, local_d_U, d_U_avg)
     for(int e = 0; e < conduction_electrons; e++) {
       double e_energy = electron_potential[e];
@@ -1451,8 +1452,14 @@ void output_data() {
 
       e_size += electron_nearest_electron_list[e][0];
       scat_size += electron_ee_scattering_list[e][1];
+
+      if(e_energy  > (E_f_A+4.865)) {
+        #pragma omp atomic 
+        ballistic_count++;
+      }
     }
 
+    if(ballistic_count > 0) std::cout << "Ballistic count: " << ballistic_count << std::endl;
     local_d_U /= lattice_atoms* (dos_standard[int(floor((E_f_A-DoS_cutoff)*i_phonon_energy))]/lattice_atoms); // normalise by volume (e- number) then D(E_f) and DoS width for sum
     // global_d_U /= conduction_electrons/(E_f_A-core_cutoff);
     e_size /= conduction_electrons;
