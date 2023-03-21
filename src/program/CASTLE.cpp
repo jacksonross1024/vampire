@@ -766,7 +766,7 @@ void initialize_electrons() {
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
 
-    global_tau_ep.resize(dos_size, 0.0);
+    global_tau_ep.resize(dos_size*2, 0.0);
     global_tau_ee.resize(dos_size, 0.0);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
@@ -1584,7 +1584,7 @@ void output_data() {
           ee_avg = 0.0;
           ee_total = 0;
         }
-        relaxation_time << h*phonon_energy + DoS_cutoff << ", " << global_tau_ep[h] << ", " << global_tau_ee[h] << std::endl;
+        relaxation_time << h*phonon_energy + DoS_cutoff << ", " << global_tau_ep[2*h] << ", " << global_tau_ep[2*h+1] << ", " << global_tau_ee[h] << std::endl;
         global_tau_ep[h] = 0.0;
         global_tau_ee[h] = 0.0;
         }
