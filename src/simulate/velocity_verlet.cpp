@@ -738,8 +738,8 @@ void ea_scattering(const int e, const int array_index, const int thread) {
    }
     
    const double thermal_factor = return_BE_distribution(phonon_factor, TTMp);
-   const double f_factor = thermal_factor*e_occupation*(1.0 - f_e_occupation);// - f_e_occupation*(1.0-e_occupation);
-   const double r_factor = (thermal_factor + 1.0) * e_occupation*(1.0-r_e_occupation);
+   const double f_factor = thermal_factor*(1.0 - f_e_occupation);// - f_e_occupation*(1.0-e_occupation);
+   const double r_factor = (thermal_factor + 1.0) *(1.0-r_e_occupation);
    global_tau_ep[2*e_index] += ea_rate*(f_factor);
    global_tau_ep[2*e_index+1] -=  ea_rate*(r_factor );
    if(f_factor > 0.0 && omp_uniform_random[thread]() > exp(ea_rate*f_factor)) {
