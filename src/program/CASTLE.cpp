@@ -1540,7 +1540,7 @@ void output_data() {
 
     // std::cout << "why?" << std::endl;
       for(int e = 0; e < flux_index.size(); e++) {
-        flux_hist << e << ", " << flux_index.at(e) << "\n";
+        flux_hist << e << ", " << flux_index[e] << "\n";
         flux_index[e] = 0;
       }
       flux_hist.close();
