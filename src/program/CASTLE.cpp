@@ -331,7 +331,7 @@ void initialize () {
     ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
-    ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*1.25*M_PI*7.0*7.0*7.0), 2.0)/constants::hbar_r; // AJ/A^4
+    ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*3.54*3.54*3.54), 2.0)/constants::hbar_r; // AJ/A^4
     E_f_A -= ((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy - floor((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy))*phonon_energy;
     // core_cutoff = E_f_A - DoS_cutoff;
      std::cout << "E_f(AJ): " << E_f*1e20 << ", discretised (AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
@@ -1095,17 +1095,17 @@ void initialize_velocities() {
     double delta_dos_2 = dos_standard[int(floor((E_f_A-DoS_cutoff)*i_phonon_energy))];
     double dos_e_f = dos_standard[int(floor((E_f_A-DoS_cutoff)*i_phonon_energy))];
     for( double t = 0.0; t < 2000.0; t++) {
-    
+      u = 2.42e-3*t/2000.0;
       // if(t > 400) 
       // u = 2.40326e-2*exp((t-0)/250.00);
       // u = (delta_dos_1 - delta_dos_2)/dos_e_f;
-      if(t > 400) u = 0.2;
-      if(t > 500) u = 0.5;
-      if(t > 600) u = 0.8;
-      if(t > 800) u = 1.0;
-      if(t > 900) u = 1.2;
-      if(t > 1100) u = 2.0;
-      if(t > 1300) u = 2.1;
+      // if(t > 400) u = 0.2;
+      // if(t > 500) u = 0.5;
+      // if(t > 600) u = 0.8;
+      // if(t > 800) u = 1.0;
+      // if(t > 900) u = 1.2;
+      // if(t > 1100) u = 2.0;
+      // if(t > 1300) u = 2.1;
      
       // else u = 0.0;
       double dU = 0.0;

@@ -323,10 +323,10 @@ void update_dynamics() {
      
     ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;  
-    if(!equilibrium_step) d_Tp =  a_heat_capacity_i*TLE *n_f/conduction_electrons + Tp;
+    if(!equilibrium_step) d_Tp =  a_heat_capacity_i*TLE *n_f*4.087312/conduction_electrons + Tp;
     else d_Tp = sim::temperature;
 
-    d_Te = (e_heat_capacity_i*TEKE*n_f/conduction_electrons/abs(Te)) + (dt*e_heat_capacity_i*pump/abs(Te)) + Te;
+    d_Te = (e_heat_capacity_i*TEKE*n_f*4.087312/conduction_electrons/abs(Te)) + (dt*e_heat_capacity_i*pump/abs(Te)) + Te;
  
         if (err::check) std::cout << "reset scattering." << std::endl;
        
@@ -719,7 +719,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double e_occupation;
     double f_e_occupation;
     double r_e_occupation;
-    const double phonon_factor = 2.0*phonon_energy;// + (phonon_energy*mtrandom::gaussianc(omp_uniform_random[thread])/6.0);// ;//+ 0.16*abs(mtrandom::gaussianc(omp_uniform_random[thread]));// ;//
+    const double phonon_factor = 2.0*phonon_energy + (phonon_energy*mtrandom::gaussianc(omp_uniform_random[thread])/4.0);// ;//+ 0.16*abs(mtrandom::gaussianc(omp_uniform_random[thread]));// ;//
     const int e_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - DoS_cutoff)*i_phonon_energy))));
     const int f_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy + phonon_factor - DoS_cutoff)*i_phonon_energy))));
     const int r_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - phonon_factor - DoS_cutoff)*i_phonon_energy))));
@@ -738,10 +738,10 @@ void ea_scattering(const int e, const int array_index, const int thread) {
    }
     
    const double thermal_factor = return_BE_distribution(phonon_factor, TTMp);
-   const double f_factor = thermal_factor*(e_occupation - f_e_occupation);// - f_e_occupation*(1.0-e_occupation);
-   const double r_factor = e_occupation*(1.0-r_e_occupation);
-   global_tau_ep[2*e_index] += ea_rate*(thermal_factor*(e_occupation - f_e_occupation));
-   global_tau_ep[2*e_index+1] +=  ea_rate*( - e_occupation*(1.0-r_e_occupation));
+   const double f_factor = thermal_factor*e_occupation*(1.0 - f_e_occupation);// - f_e_occupation*(1.0-e_occupation);
+   const double r_factor = (thermal_factor + 1.0) * e_occupation*(1.0-r_e_occupation);
+   global_tau_ep[2*e_index] += ea_rate*(f_factor);
+   global_tau_ep[2*e_index+1] -=  ea_rate*(r_factor );
    if(f_factor > 0.0 && omp_uniform_random[thread]() > exp(ea_rate*f_factor)) {
       double deltaE = 2.0*phonon_energy;
       
