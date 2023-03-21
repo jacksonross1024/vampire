@@ -300,8 +300,7 @@ void initialize () {
     // uniform_random.seed(2137082040);
     // int_random.seed(2137082040);
 
-    mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
-    combined_mass = 1 / (atomic_mass + constants::m_e_r);
+    c_s = 6040.0 * 1e-5; //m/s -> [e10/e15] A/fs
     applied_voltage = sqrt(1.60218e-19*2.0*sim::applied_voltage/constants::eps_0/(1e-30*lattice_width * lattice_height * lattice_depth)); //eV -> V/m
     n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/4.087312; // e- / A**3 -> e-/m**3
     E_f = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
@@ -321,7 +320,7 @@ void initialize () {
 
     ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/constants::hbar_r; // meV**2 -> AJ/fs
 
-    atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
+    vacancies = 0;
     power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
     
     const static double tau = 3.0*E_f_A /(M_PI*ea_coupling_strength); // fs/AJ
@@ -379,18 +378,14 @@ void initialize () {
 
              if (err::check) std::cout << "Particles a movin" << std::endl;
     dos_occ  = phonon_energy * dos_standard[int(floor((E_f_A-DoS_cutoff)*i_phonon_energy))];
-    // local_dos_occ = round(phonon_energy*(ee_density/6.0/(E_f_A-core_cutoff)));
+   
      if(err::check)  std::cout << "DoS(E_f) : " << dos_occ  << std::endl;
 
-   
-   //G = -1.0*ea_rate*n_f/300.0; //J/s/K/m**3 []
+
      initialize_cell_omp(); 
-  // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
-    // std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0))  << std::endl;
-    
+
    if (err::check)  std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists[0].size() << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
    
-    
     std::string dWdE_name = "Ni-dWdE.csv";
     std::vector<std::vector< double> > dWdE_scale;
     dWdE_scale.resize(25);
@@ -735,9 +730,12 @@ void initialize_electrons() {
     //      Arrays in super array format to take advantage of caching
     //========
     electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
+    void_position.resize(conduction_electrons * 3, 0);
     electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
     electron_potential.resize(conduction_electrons, 0);
+    void_potential.resize(conduction_electrons*2, 0);
     ee_dos_hist.resize(conduction_electrons);
+    void_dos_hist.resize(conduction_electrons);
     relaxation_time_hist_ee.resize(3*conduction_electrons);
     // relaxation_time_hist_ea.resize(3*conduction_electrons);
 
@@ -762,6 +760,8 @@ void initialize_electrons() {
     // electron_transport_list.resize(conduction_electrons, false);
     electron_integration_list.resize(conduction_electrons);
     electron_nearest_electron_list.resize(conduction_electrons);
+    void_integration_list.resize(conduction_electrons);
+    electron_nearest_void_list.resize(conduction_electrons);
   
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
@@ -782,6 +782,9 @@ void initialize_electrons() {
 
         electron_integration_list.at(e).resize(e_density, 0);
         electron_nearest_electron_list.at(e).resize(ee_density, 0);
+        void_integration_list.at(e).resize(e_density, 0);
+        electron_nearest_void_list.at(e).resize(ee_density, 0);
+
         electron_ee_scattering_list.at(e).resize(ee_scattering*2, 0);
         electron_ea_scattering_list.at(e).resize(2,0);
         
@@ -789,19 +792,15 @@ void initialize_electrons() {
         relaxation_time_hist_ee[3*e+1].resize(4*60,0);
         relaxation_time_hist_ee[3*e+2].resize(4*60,0);
 
-        ee_dos_hist.at(e).resize(dos_size,0);
-        // relaxation_time_hist_ea[3*e].resize(4*70,0);
-        // relaxation_time_hist_ea[3*e+1].resize(4*70,0);
-        // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
-        
+        ee_dos_hist[e].resize(dos_size,0);
+        void_dos_hist[e].resize(dos_size);
+        for(int v = 0; v< dos_size; v++) void_dos_hist[e][v].resize(ee_scattering,0);
+
         const int array_index = 3*e;
         electron_position.at(array_index)     = atoms::x_coord_array.at(e%int(lattice_atoms)) + 0.5*x_unit_size;
         electron_position.at(array_index + 1) = atoms::y_coord_array.at(e%int(lattice_atoms)) + 0.5*y_unit_size;
         electron_position.at(array_index + 2) = atoms::z_coord_array.at(e%int(lattice_atoms)) + 0.5*z_unit_size;
-        //initialize and output electron posititons
-      //  = atom_anchor_position.at(3*(e%lattice_atoms));//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
-       // electron_position.at(array_index + 2) = atom_anchor_position.at(3*(e%lattice_atoms)+2);// + cos(phi)*screening_depth;//*radius_mod(gen);
-    }
+      }
 }
 
 void initialize_forces() {
@@ -984,16 +983,10 @@ void initialize_velocities() {
         double theta;
         double sign;
         const int array_index = 3*e;
-   
         const double energy = electron_potential[e];
-        //[int(omp_uniform_random[thread]()*2147483647)%conduction_electrons];
-        //  if(energy > transport_cutoff) electron_transport_list.at(e) = true;
-        
         double vel;
         
         vel = return_vel(energy);
-        // if(vel < min) min = vel;
-
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
           theta = 2.0*M_PI*omp_uniform_random[thread]();
           phi = M_PI*omp_uniform_random[thread]();

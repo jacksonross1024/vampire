@@ -165,14 +165,14 @@ namespace sim{
 namespace CASTLE {
 
      // input and material parameters
-    int  omp_threads = 1;
+   int  omp_threads = 1;
    bool CASTLE_program;
    bool CASTLE_output_data; //output position and velocity data
    bool equilibrium_step;
    bool applied_voltage_sim = false;
    bool heat_pulse_sim = false;
 
-    double lattice_atoms; //number of lattice atoms
+   double lattice_atoms; //number of lattice atoms
    int conduction_electrons; //number of conduction electrons
    double temperature;
 
@@ -190,11 +190,11 @@ namespace CASTLE {
     //simulation variables
    double total_time_steps;
    double loop_time;
-    int    CASTLE_output_rate; //output velocity and position data at this multiple
-    int CASTLE_MD_rate;
+   int    CASTLE_output_rate; //output velocity and position data at this multiple
+   int CASTLE_MD_rate;
 
-    int full_int_var;
-    int half_int_var;
+   int vacancies;
+   int half_int_var;
    double boundary_conditions_cutoff;
    double dt;
    double v_f; //meters
@@ -202,7 +202,7 @@ namespace CASTLE {
    double E_f_A;
    double mu_f; //meters
    double n_f; //meters
-   double atomic_mass;
+   double c_s;
    double mu_r; //inverse reduced mass in reduced units
    double combined_mass; //inverse with reduced units
    double Tr; // inverse seconds
@@ -256,19 +256,24 @@ namespace CASTLE {
     long long int current_time_step;
    double CASTLE_real_time;
     int cells_per_thread;
-  // std::vector<double> atom_anchor_position;
-  // std::vector<double> atom_position;
+
 
    std::vector<double> electron_position; //Angstroms
-   std::vector<double> electron_velocity; //Angstroms
-   std::vector<double> electron_potential; //A
+   std::vector<double> void_position; //Angstroms
+   std::vector<double> electron_velocity; //Angstroms 
+   std::vector<double> electron_potential; //A-1
+   std::vector<double> void_potential; //A-1
    std::vector<std::vector< int> > ee_dos_hist;
-   std::vector< std::vector< int > > global_e_dos;
+   std::vector<std::vector< std::vector< int> > > void_dos_hist;
+   std::vector<std::vector< int> > global_e_dos;
+   std::vector<std::vector< int> > global_v_dos;
 
-   std::vector<bool> electron_transport_list;
-   std::vector<std::vector<int> > electron_integration_list;
+   std::vector<std::vector< int> > electron_integration_list;
+   std::vector<std::vector< int> > void_integration_list;
+    
    std::vector<std::vector< int> > electron_nearest_electron_list;
-   std::vector<std::vector< int> > electron_nearest_atom_list;
+   std::vector<std::vector< int> > electron_nearest_void_list;
+   
    std::vector<std::vector<double> > electron_ee_scattering_list;
    std::vector<std::vector< int> > electron_ea_scattering_list;
    std::vector<std::vector<int> > cell_lattice_coordinate;
@@ -280,21 +285,11 @@ namespace CASTLE {
    std::vector<std::vector< int> > lattice_cells_per_omp;
    std::vector< int> escaping_electrons;
    std::vector<std::vector< int> > relaxation_time_hist_ee;
-   // std::vector<std::vector< int> > relaxation_time_hist_ea;
+  
    std::vector<int> flux_index;
-//    MTRand_closed uniform_random;
-//    MTRand_int32 int_random;
     std::vector<MTRand> omp_uniform_random(32);
     std::vector<MTRand_int32> omp_int_random(32);
-//     std::vector<MTRand_int32> omp_int_random(32);
-//   double = omp_int_random[omp_get_thread_num()]();
-//    std::srand(std::time(nullptr));
-//     std::random_device rd;  //Will be used to obtain a seed for the random number engine
-//     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-//     std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
-   //std::vector<MTRand> omp_gaussian_random(omp_get_num_threads());
-    //outputs
-   
+
    double TEPE; //Angstroms
    double TEKE; //Angstroms
    double TLE;
@@ -358,44 +353,22 @@ namespace CASTLE {
    void update_position();
    void update_dynamics();
 
-   // void e_a_coulomb(const int& e, const int& array_index);
-   //            //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
-   
-   // void neighbor_e_a_coulomb(const int& e, const int& array_index);
-   //              // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
-    
-   void e_e_coulomb(const int e, const int array_index);
+   void e_e_coulomb(const int e, const int array_index, const int cell);
    void neighbor_e_e_coulomb(const int e, const int array_index);
-   
-   // void a_a_coulomb(const int a, const int array_index, \
-   //              double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
-   // void neighbor_a_a_coulomb(const int a, const int array_index, \
-   //              double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
+   void neighbor_e_v_coulomb(const int e, const int array_index, const int cell);
 
    void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread);
- 
-   double electron_applied_voltage(const int e, const int array_index, double& external_potential);
+   double electron_applied_voltage(const int e, const int array_index, double&l_potential);
 
-   // void aa_scattering();
-   void ea_scattering(const int e, const int array_index, const int thread);
+   void ea_scattering(const int e, const int array_index, const int thread, const int cell);
    void ee_scattering();
-   //  int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
-   //   int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
-   // int ee_elastic(const int electron, const int electron_collision,  const double length, const double e_energy, const double d_e_energy, const double probability);
 
-   // double B_E_distrib(const double& epsilon);
-   // double M_B_distrib(const double& epsilon, const double& beta);
-   // void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
-   // void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
    void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
    void create_defined_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
    double return_fermi_distribution(const double energy, const double temp); //energy = e_i - E_f_A
    double return_BE_distribution(const double phonon_e, const double temperature);
-
    double return_dWdE(const double e_energy); //energy -> momentum 
-   // double return_dWdE_higher(const double e_energy); // energy -> momentum
    double return_dWdE_i(const double e_mom); // momentum -> energy
-   // double return_dWdE_higher_i(const double e_mom); // momentum -> energy
    double return_vel(const double energy); //inverse slope of dWdE / hbar_r
    double k_sq();
 }
