@@ -34,7 +34,7 @@ namespace constants{
    const double e_A = 16.02176634; //AC/e-  (Angstrom Coulombs)
    const double eps_0 = 8.8541878128e-12; //permittivity of free space  
    const double eps_0_A = 8.8541878128e-42; //(s^2 C^2/m^3/kg ) -> [e-30] -> (s^2 C^2/A^3/kg ) 
-   const double K = e*e / eps_0_A; // e^2/eps_0_A -> kg A^3/fs**2/e-^2
+   const double K = e*e / eps_0_A; // C^2/s^2 C^2/kg/A^3 -> kg A^3/s^2 -> AJ A
    const double K_A = 1e4*e_A*e_A / (4 * M_PI * M_PI * eps_0_A); // K for Coulomb's law in Angstroms
    const double hbar_over_me_sqrt = hbar_r/m_e_r;
    const double m_over_hbar_sqrt = m_e_r/hbar_r;
