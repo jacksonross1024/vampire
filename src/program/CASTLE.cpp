@@ -473,9 +473,9 @@ void initialize () {
 void initialize_cell_omp() {
 
   //number of cells in each lattice direction
-  x_omp_cells = 8;
-  y_omp_cells = 8;
-  z_omp_cells = 8;
+  x_omp_cells = 4;
+  y_omp_cells = 4;
+  z_omp_cells = 4;
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -612,9 +612,9 @@ void initialize_cell_omp() {
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
     //number of cells each thread takes in each lattice direction
-    const int max_x_threads = 4;
-    const int max_y_threads = 4;
-    const int max_z_threads = 4;  
+    const int max_x_threads = 2;
+    const int max_y_threads = 2;
+    const int max_z_threads = 2;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -740,7 +740,7 @@ void initialize_electrons() {
     electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
     electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
     electron_potential.resize(conduction_electrons, 0);
-    ee_dos_hist.resize(conduction_electrons);
+    // ee_dos_hist.resize(conduction_electrons);
     relaxation_time_hist_ee.resize(3*conduction_electrons);
     // relaxation_time_hist_ea.resize(3*conduction_electrons);
 
@@ -754,17 +754,17 @@ void initialize_electrons() {
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
     ee_scattering_angle = sim::ee_scattering_angle;
-    e_e_neighbor_cutoff = pow((lattice_width/8.0)-1.0,2.0);
+    // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     
     half_int_var =  5;
     
     e_e_integration_cutoff = pow(lattice_width/8.0,2.0);
-    e_e_coulomb_cutoff = pow(10.0, 2.0);
+    e_e_coulomb_cutoff = pow(7.0, 2.0);
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     // electron_transport_list.resize(conduction_electrons, false);
     electron_integration_list.resize(conduction_electrons);
-    electron_nearest_electron_list.resize(conduction_electrons);
+    // electron_nearest_electron_list.resize(conduction_electrons);
   
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
@@ -773,9 +773,9 @@ void initialize_electrons() {
     global_tau_ee.resize(dos_size, 0.0);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 5.2*n_f * 1e-3))));
-     ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 5.2*n_f * 1e-3));
-    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 5.2*n_f * 1e-3));
+    const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 3.8*n_f * 1e-3))));
+     ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3));
+    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 3.8*n_f * 1e-3));
         if (err::check)  std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
     
     omp_set_dynamic(0);
@@ -784,15 +784,15 @@ void initialize_electrons() {
     for (int e = 0; e < conduction_electrons; e++) {
 
         electron_integration_list.at(e).resize(e_density, 0);
-        electron_nearest_electron_list.at(e).resize(ee_density, 0);
-        electron_ee_scattering_list.at(e).resize(ee_scattering*2, 0);
+        // electron_nearest_electron_list.at(e).resize(ee_density, 0);
+        electron_ee_scattering_list.at(e).resize(ee_scattering, 0);
         electron_ea_scattering_list.at(e).resize(2,0);
         
         relaxation_time_hist_ee[3*e].resize(4*60,0);
         relaxation_time_hist_ee[3*e+1].resize(4*60,0);
         relaxation_time_hist_ee[3*e+2].resize(4*60,0);
 
-        ee_dos_hist.at(e).resize(dos_size,0);
+        // ee_dos_hist.at(e).resize(dos_size,0);
         // relaxation_time_hist_ea[3*e].resize(4*70,0);
         // relaxation_time_hist_ea[3*e+1].resize(4*70,0);
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
@@ -856,9 +856,9 @@ void initialize_electron_interactions() {
             electron_integration_list.at(e).at(integration_count) = array_index_i;
             integration_count++;
 
-            if (length > e_e_neighbor_cutoff) continue;
-            electron_nearest_electron_list.at(e).at(neighbor_count) = array_index_i/3;
-            neighbor_count++;
+            // if (length > e_e_neighbor_cutoff) continue;
+            // electron_nearest_electron_list.at(e).at(neighbor_count) = array_index_i/3;
+            // neighbor_count++;
 
             if(length > e_e_coulomb_cutoff) {
               
@@ -868,7 +868,7 @@ void initialize_electron_interactions() {
             scattering_count++;
         }
         electron_integration_list.at(e)[0] = integration_count;
-        electron_nearest_electron_list.at(e)[0] = neighbor_count;
+        // electron_nearest_electron_list.at(e)[0] = neighbor_count;
         electron_ee_scattering_list.at(e)[1] = scattering_count;
      }
   }
@@ -1489,21 +1489,21 @@ void output_data() {
     omp_set_dynamic(0);
     omp_set_num_threads(omp_threads);
     double global_d_U = 0.0;
-    double local_d_U = 0.0;
+    // double local_d_U = 0.0;
     double d_U_avg = 0.0;
     double transient_entropy = 0.0;
     int ballistic_count = 0;
     int count = 0;
-    #pragma omp parallel for schedule(dynamic,4)  reduction(+:e_size, scat_size, local_d_U, d_U_avg, count)
+    #pragma omp parallel for schedule(dynamic,4)  reduction(+:e_size, scat_size, d_U_avg, count)
     for(int e = 0; e < conduction_electrons; e++) {
       double e_energy = electron_potential[e];
       
       if(e_energy >= 84.181114) {d_U_avg += e_energy*phonon_energy; count++;}
-      int index = std::min(dos_size-1.0, std::max(0.0, floor((e_energy-DoS_cutoff)*i_phonon_energy)));
-      if(e_energy < E_f_A)  local_d_U += (E_f_A - e_energy)*phonon_energy*abs(1.0 - double(ee_dos_hist[e][index])/(dos_standard[index]*phonon_energy));
-      else local_d_U += (e_energy - E_f_A)*phonon_energy*double(ee_dos_hist[e][index])/(dos_standard[index]*phonon_energy);
+      // int index = std::min(dos_size-1.0, std::max(0.0, floor((e_energy-DoS_cutoff)*i_phonon_energy)));
+      // if(e_energy < E_f_A)  local_d_U += (E_f_A - e_energy)*phonon_energy*abs(1.0 - double(ee_dos_hist[e][index])/(dos_standard[index]*phonon_energy));
+      // else local_d_U += (e_energy - E_f_A)*phonon_energy*double(ee_dos_hist[e][index])/(dos_standard[index]*phonon_energy);
 
-      e_size += electron_nearest_electron_list[e][0];
+      e_size += electron_integration_list[e][0];
       scat_size += electron_ee_scattering_list[e][1];
 
       if(e_energy  > (E_f_A+4.865)) {
@@ -1513,7 +1513,7 @@ void output_data() {
     }
 
     if(ballistic_count > 0) std::cout << "Ballistic count: " << ballistic_count << std::endl;
-    local_d_U /= lattice_atoms* (dos_standard[int(floor((E_f_A-DoS_cutoff)*i_phonon_energy))]/lattice_atoms); // normalise by volume (e- number) then D(E_f) and DoS width for sum
+    // local_d_U /= lattice_atoms* (dos_standard[int(floor((E_f_A-DoS_cutoff)*i_phonon_energy))]/lattice_atoms); // normalise by volume (e- number) then D(E_f) and DoS width for sum
     // global_d_U /= conduction_electrons/(E_f_A-core_cutoff);
     e_size /= conduction_electrons;
     scat_size /= conduction_electrons;
@@ -1525,7 +1525,7 @@ void output_data() {
     #pragma omp parallel for schedule(dynamic, 4)  reduction(+:e_stddev,scat_stddev)
     for(int e = 0; e < conduction_electrons; e++) {
       // if(electron_potential[e] > 0.8*E_f_A){
-        e_stddev += (electron_nearest_electron_list[e][0] - e_size)   *(electron_nearest_electron_list[e][0] - e_size);
+        e_stddev += (electron_integration_list[e][0] - e_size)   *(electron_integration_list[e][0] - e_size);
         scat_stddev += (electron_ee_scattering_list[e][1] - scat_size)*(electron_ee_scattering_list[e][1] - scat_size);
       // }
     }
@@ -1648,7 +1648,7 @@ void output_data() {
       // std::cout << "why not" << std::endl;
     // }
   //  const int output_count_lr = int(round(transport_cutoff-core_cutoff));
-    const int output_count_hr = ee_dos_hist[0].size();
+    const int output_count_hr = global_e_dos[0].size();
    
     for(int i = 0; i < output_count_hr; i++) {
      // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";

@@ -262,12 +262,12 @@ namespace CASTLE {
    std::vector<double> electron_position; //Angstroms
    std::vector<double> electron_velocity; //Angstroms
    std::vector<double> electron_potential; //A
-   std::vector<std::vector< int> > ee_dos_hist;
+   // std::vector<std::vector< int> > ee_dos_hist;
    std::vector< std::vector< int > > global_e_dos;
 
    std::vector<bool> electron_transport_list;
    std::vector<std::vector<int> > electron_integration_list;
-   std::vector<std::vector< int> > electron_nearest_electron_list;
+   // std::vector<std::vector< int> > electron_nearest_electron_list;
    std::vector<std::vector< int> > electron_nearest_atom_list;
    std::vector<std::vector<double> > electron_ee_scattering_list;
    std::vector<std::vector< int> > electron_ea_scattering_list;
