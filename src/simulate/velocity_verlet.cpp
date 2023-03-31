@@ -455,7 +455,7 @@ void e_e_coulomb(const int e, const int array_index) {
     int ee_dos_count = 1;
     int ee_integration_count = 1;
     int ee_scattering_list = 1;
-   
+    double scattering_range = (electron_potential[e] > E_f_A+4.8) ? 100.0 : 7.0;
     for(int s = 0; s < 27; s++) {
       const int int_cell = cell_nearest_neighbor_list[cell][s];
       const int size = cell_integration_lists[int_cell][0];
@@ -493,7 +493,7 @@ void e_e_coulomb(const int e, const int array_index) {
           break; }
         ee_integration_count++;
 
-        if(length > e_e_neighbor_cutoff) continue;
+        if(length > scattering_range) continue;
         electron_nearest_electron_list[e][ee_dos_count] = electron;
         ee_dos_count++;
    
@@ -502,7 +502,7 @@ void e_e_coulomb(const int e, const int array_index) {
         if(ee_dos_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << " ee dos " << ee_dos_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
           break; }
 
-        if (length > e_e_coulomb_cutoff) continue; 
+        if (length > scattering_range) continue; 
         electron_ee_scattering_list[e][ee_scattering_list*2] = electron;
         electron_ee_scattering_list[e][ee_scattering_list*2 +1] = length;
         if(ee_scattering_list >= electron_ee_scattering_list[e].size() - 3) {std::cout << e << " ee scattering " << ee_scattering_list << " > " << electron_ee_scattering_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
@@ -521,7 +521,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
     const int size = electron_integration_list[e][0];
       int neighbor_count = 1;
       int scattering_count = 1;
- 
+     double scattering_range = (electron_potential[e] > E_f_A+4.8) ? 100.0 : 7.0;
     for (int i = 1; i < size; i++) {
         const int array_index_i = electron_integration_list[e][i];
         const int electron = array_index_i/3;
@@ -547,7 +547,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         electron_position[array_index] << ", " << electron_position[array_index_i] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index_i + 1] << ", " <<\
         electron_position[array_index+2] << ", " <<  electron_position[array_index_i + 2] << std::endl;
         
-        if(length > e_e_neighbor_cutoff) continue;
+        if(length > scattering_range) continue;
         electron_nearest_electron_list[e][neighbor_count] = array_index_i/3;
         neighbor_count++;
       
@@ -556,7 +556,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         if(neighbor_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
         break; }
 
-        if (length > e_e_coulomb_cutoff) continue; 
+        if (length > scattering_range) continue; 
         electron_ee_scattering_list[e][scattering_count*2] = array_index_i/3;
         electron_ee_scattering_list[e][scattering_count*2 +1] = length;
         scattering_count++;

@@ -759,7 +759,7 @@ void initialize_electrons() {
     half_int_var =  5;
     
     e_e_integration_cutoff = pow(lattice_width/8.0,2.0);
-    e_e_coulomb_cutoff = pow(7.0, 2.0);
+    e_e_coulomb_cutoff = pow(10.0, 2.0);
     
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     // electron_transport_list.resize(conduction_electrons, false);
