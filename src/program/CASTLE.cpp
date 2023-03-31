@@ -473,9 +473,9 @@ void initialize () {
 void initialize_cell_omp() {
 
   //number of cells in each lattice direction
-  x_omp_cells = 4;
-  y_omp_cells = 4;
-  z_omp_cells = 4;
+  x_omp_cells = 8;
+  y_omp_cells = 8;
+  z_omp_cells = 8;
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -565,12 +565,16 @@ void initialize_cell_omp() {
   }
  
   cell_nearest_neighbor_list.resize(total_cells);
+  cell_lr_neighbor_list.resize(total_cells);
   std::vector<int> spiral_cell_counter;
   spiral_cell_counter.resize(total_cells, 0);
+  std::vector<int> lr_cell_counter;
+  lr_cell_counter.resize(total_cells, 0);
       if(err::check) std::cout << "electrons in cells" << std::endl;
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
     cell_nearest_neighbor_list.at(c).resize(27); 
+    cell_lr_neighbor_list.at(c).resize(125);
     const int x_cell = cell_lattice_coordinate.at(c)[0];
     const int y_cell = cell_lattice_coordinate.at(c)[1];
     const int z_cell = cell_lattice_coordinate.at(c)[2];
@@ -602,19 +606,50 @@ void initialize_cell_omp() {
       //if(s == 13) std::cout << cell_nearest_neighbor_list.at(c).at(s) << ", " << c << ", " << x_cell << ", " << y_cell << ", " << z_cell << std::endl;
    
     }
+
+    for(int s = 0; s < 125; s++) {
+
+      int cell_spiral_xmod = x_cell + (s % 5) - 2;
+      if(cell_spiral_xmod < -1) cell_spiral_xmod = x_omp_cells - 2;
+      else if(cell_spiral_xmod < 0) cell_spiral_xmod = x_omp_cells - 1;
+      else if (cell_spiral_xmod > x_omp_cells) cell_spiral_xmod = 1;
+      else if (cell_spiral_xmod > x_omp_cells-1) cell_spiral_xmod = 0;
+        // if(s == 0) std::cout << "<" << cell_spiral_xmod;
+
+      int cell_spiral_ymod = y_cell + (int(floor(s / 5)) % 5) - 2;
+      if(cell_spiral_ymod < -1) cell_spiral_ymod = y_omp_cells - 2;
+      else if(cell_spiral_ymod < 0) cell_spiral_ymod = y_omp_cells - 1;
+      else if (cell_spiral_ymod > y_omp_cells) cell_spiral_ymod = 1;
+      else if (cell_spiral_ymod > y_omp_cells-1) cell_spiral_ymod = 0;
+         // if(s == 0) std::cout << "," << cell_spiral_ymod;
+
+      int cell_spiral_zmod = z_cell + int(floor(s / 25)) - 2;
+      if(cell_spiral_zmod < -1) cell_spiral_zmod = z_omp_cells - 2;
+      else if(cell_spiral_zmod < 0) cell_spiral_zmod = z_omp_cells - 1;
+      else if (cell_spiral_zmod > z_omp_cells) cell_spiral_zmod = 1;
+      else if (cell_spiral_zmod > z_omp_cells-1) cell_spiral_zmod = 0;
+         // if(s == 0) std::cout << "," << cell_spiral_zmod << ">" << std::endl;
+
+      int cell = lattice_cell_coordinate.at(cell_spiral_xmod).at(cell_spiral_ymod).at(cell_spiral_zmod);
+      cell_lr_neighbor_list.at(c).at(s) = cell;
+      lr_cell_counter[cell]++;
+      //if(s == 13) std::cout << cell_nearest_neighbor_list.at(c).at(s) << ", " << c << ", " << x_cell << ", " << y_cell << ", " << z_cell << std::endl;
+   
+    }
   }
 
   for(int c = 0; c < total_cells; c++) {
     if(spiral_cell_counter[c] != 27) std::cout << "spiral cell error on cell " << c << " with " << spiral_cell_counter[c] << std::endl;
+    if(lr_cell_counter[c] != 125) std::cout << "lr cell error on cell " << c << " with " << lr_cell_counter[c] << std::endl;
   }
   
   
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
     //number of cells each thread takes in each lattice direction
-    const int max_x_threads = 2;
-    const int max_y_threads = 2;
-    const int max_z_threads = 2;  
+    const int max_x_threads = 4;
+    const int max_y_threads = 4;
+    const int max_z_threads = 4;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;

@@ -105,23 +105,20 @@ void update_position() {
       int size;
       if(current_time_step % half_int_var == 0) size = old_cell_integration_lists[cell][0];
       else  size = cell_integration_lists[cell][0];
-
+      std::vector<int> cell_integration_list;
+      cell_integration_list = (current_time_step % half_int_var == 0) ? old_cell_integration_lists[cell] : cell_integration_lists[cell];
       local += size - 1;
   //  if((current_time_step % half_int_var) == 0 && ( (l % ((z_omp_cells/2)-1) )== 0 || (l % (z_omp_cells/2)) == 0) ) {
       #pragma omp barrier
   
       for (int e = 1; e < size; e++) { 
-        int electron; 
-        if(current_time_step % half_int_var == 0) electron = old_cell_integration_lists[cell][e];
-        else electron = cell_integration_lists[cell][e];
+        int electron = cell_integration_list[e];
+      //   if(current_time_step % half_int_var == 0) electron = old_cell_integration_lists[cell][e];
+      //   else electron = cell_integration_lists[cell][e];
         const double energy = electron_potential[electron];
-        // if(energy < core_cutoff ) std::cout << energy << std::endl;
+   
         const double vel = return_vel(energy);
         local_e_dos[int(std::min(dos_size-1.0, std::max(0.0, floor((energy - DoS_cutoff)*i_phonon_energy))))]++;
-        // if(electron_potential[electron] < (E_f_A-24.25)) continue;
-        
-
-      // if(!electron_transport_list[electron] ) continue;
         const int array_index = 3*electron;
 
         double x_pos = electron_position[array_index];
@@ -204,17 +201,17 @@ void update_position() {
     }
         
         if(err::check && omp_get_thread_num()==0) std::cout << "positions updated. updating global dos..." << std::endl;
-    #pragma omp critical 
-    {
-    total += local;
-    for (int h = 0; h < dos_size; h++) {
-      global_e_dos[h][0] += local_e_dos[h];
-    }
-    } 
-  }
+   #pragma omp critical 
+   {
+      total += local;
+      for (int h = 0; h < dos_size; h++) {
+         global_e_dos[h][0] += local_e_dos[h];
+      }
+   } 
+   }
       if(err::check) std::cout << "global dos updated. catching escaped electrons: " << escaping_electrons[0] << std::endl;
   // if(total != conduction_electrons) std::cout << total << ", " << conduction_electrons << std::endl;
-  if(current_time_step % half_int_var == 0) {    
+   if(current_time_step % half_int_var == 0) {    
     const int size = escaping_electrons[0];
   //  std::cout << "escaping electrons " << size-1 << ", " << escaping_electrons.size() << std::endl;
     
@@ -349,32 +346,25 @@ void electron_thermal_field(const int e, const int array_index, const double EKE
 }
 
 void e_e_coulomb(const int e, const int array_index) {
-    // if(electron_potential[e] < 0.8*E_f_A) return;
 
-    int x_cell = int(floor(electron_position[array_index] / x_step_size));
-      //if (x_cell < 0 || x_cell > x_omp_cells) std::cout << electron_position[array_index] << ", " << x_step_size << ", " << floor(electron_position[array_index] / x_step_size) << std::endl;
+   const int cell = lattice_cell_coordinate[int(floor(electron_position[array_index] / x_step_size))][int(floor(electron_position[array_index+1] / y_step_size))][int(floor(electron_position[array_index+2] / z_step_size))];
+   int ee_dos_count = 1;
+   int ee_integration_count = 1;
+   int ee_scattering_list = 1;
+   double scattering_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 49.0;
+   double integration_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 100.0;
+   int e_size = 6*round(pow(scattering_range, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
+   int i_size = 3*round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
+   if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
+   if(electron_integration_list[e].size() < i_size) electron_integration_list[e].resize(i_size, 0);
+   int cells = (i_size > e_e_integration_cutoff) ? 125 : 27;
+   std::vector<int> integration_list;
+   integration_list = (cells > 27) ? cell_lr_neighbor_list[cell] : cell_nearest_neighbor_list[cell];
 
-    int y_cell = int(floor(electron_position[array_index+1] / y_step_size));
-      //if (y_cell < 0 || y_cell > y_omp_cells) std::cout << electron_position[array_index+1] << ", " << y_step_size << ", " << floor(electron_position[array_index+1] / y_step_size) << std::endl;
-    
-    int z_cell = int(floor(electron_position[array_index+2] / z_step_size));
-      //if (z_cell < 0 || z_cell > z_omp_cells) std::cout << electron_position[array_index+2] << ", " << z_step_size << ", " << floor(electron_position[array_index+2] / z_step_size) << std::endl;
-
-    const int cell = lattice_cell_coordinate[x_cell][y_cell][z_cell];
-    int ee_dos_count = 1;
-    int ee_integration_count = 1;
-    int ee_scattering_list = 1;
-    double scattering_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 49.0;
-    double integration_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 100.0;
-    int e_size = 6*round(pow(scattering_range, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
-    int i_size = 3*round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
-    if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
-    if(electron_integration_list[e].size() < i_size) electron_integration_list[e].resize(i_size, 0);
-
-    for(int s = 0; s < 27; s++) {
-      const int int_cell = cell_nearest_neighbor_list[cell][s];
+    for(int s = 0; s < cells; s++) {
+      const int int_cell = integration_list[s];
       const int size = cell_integration_lists[int_cell][0];
-    
+      if(size != size || size < 1  ) std::cout << size << std::endl;
       for(int i = 1; i < size; i++) {
         const int electron = cell_integration_lists[int_cell][i];
         if(e == electron) continue;
@@ -428,7 +418,8 @@ void e_e_coulomb(const int e, const int array_index) {
    //  electron_nearest_electron_list[e][0] = ee_dos_count;
     electron_ee_scattering_list[e][1] = ee_scattering_list;
   //  if(e == 0 ) std::cout << ee_integration_count << ", " << ee_dos_count << ", " << ee_scattering_list << std::endl;
-  }
+}
+
 void neighbor_e_e_coulomb(const int e, const int array_index) {
     // if(electron_potential[e] < 0.8*E_f_A) return;
    const int size = electron_integration_list[e][0];
@@ -438,7 +429,6 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
    // int l_size = 3*round(pow(400.0,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
 
    double scattering_range = (electron_integration_list[e].size() > s_size) ? 400.0 : 49.0;
-
     for (int i = 1; i < size; i++) {
         const int array_index_i = electron_integration_list[e][i];
         const int electron = array_index_i/3;

@@ -165,6 +165,7 @@ namespace CASTLE {
     extern std::vector<std::vector< int> > cell_integration_lists;
     extern std::vector<std::vector< int> > old_cell_integration_lists;
     extern std::vector<std::vector< int> > cell_nearest_neighbor_list;
+    extern std::vector<std::vector< int> > cell_lr_neighbor_list;
     extern std::vector<std::vector<std::vector< int> > > lattice_cell_coordinate;
     extern std::vector<std::vector< int> > temp_Map;
     extern std::vector<std::vector< int> > lattice_cells_per_omp;
