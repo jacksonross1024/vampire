@@ -358,45 +358,22 @@ namespace CASTLE {
 
    void update_position();
    void update_dynamics();
-
-   // void e_a_coulomb(const int& e, const int& array_index);
-   //            //  double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
-   
-   // void neighbor_e_a_coulomb(const int& e, const int& array_index);
-   //              // double& a_x_force, double& a_y_force, double& a_z_force, double& EPE, double& LPE);
-    
    void e_e_coulomb(const int e, const int array_index);
    void neighbor_e_e_coulomb(const int e, const int array_index);
-   
-   // void a_a_coulomb(const int a, const int array_index, \
-   //              double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
-   // void neighbor_a_a_coulomb(const int a, const int array_index, \
-   //              double& a_x_force, double& a_y_force, double& a_z_force, double& LPE);
 
    void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread);
- 
    double electron_applied_voltage(const int e, const int array_index, double& external_potential);
-
-   // void aa_scattering();
    void ea_scattering(const int e, const int array_index, const int thread);
    void ee_scattering();
-   //  int ee_energy_conserved(const int electron, const int electron_collision, const double deltaE);
-   //   int ee_final_momentum_conserved(const int electron, const int electron_collision, const double deltaE, const double e_energy, const double d_e_energy);
-   // int ee_elastic(const int electron, const int electron_collision,  const double length, const double e_energy, const double d_e_energy, const double probability);
-
-   // double B_E_distrib(const double& epsilon);
-   // double M_B_distrib(const double& epsilon, const double& beta);
-   // void create_phonon_distribution(std::vector<double>& distribution, const double& beta);
-   // void create_phonon_distribution(const std::string& name, std::vector<double>& distribution, const double& beta);
+   void elastic_scattering(int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy );
+   void inelastic_scattering(int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy);
    void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
    void create_defined_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
    double return_fermi_distribution(const double energy, const double temp); //energy = e_i - E_f_A
    double return_BE_distribution(const double phonon_e, const double temperature);
 
    double return_dWdE(const double e_energy); //energy -> momentum 
-   // double return_dWdE_higher(const double e_energy); // energy -> momentum
    double return_dWdE_i(const double e_mom); // momentum -> energy
-   // double return_dWdE_higher_i(const double e_mom); // momentum -> energy
    double return_vel(const double energy); //inverse slope of dWdE / hbar_r
    double k_sq();
 }
