@@ -615,7 +615,7 @@ void ee_scattering() {
   int e_excess_p = 0;
   int e_excess_n = 0;
  // const static double q_sq = 1.4*1.4;//*constants::hbar_over_me_sqrt*constants::hbar_over_me_sqrt;
-  #pragma omp parallel reduction(+:e_e_scattering_count, ee_core_scattering_count, ee_transport_scattering_count) 
+  #pragma omp parallel 
   {
     
   const int thread = omp_get_thread_num();
@@ -645,7 +645,7 @@ void ee_scattering() {
          bool e_ballistic = (e_energy > (E_f_A+4.8)) ? true : false;
          bool d_e_ballistic = (d_e_energy > (E_f_A+4.8)) ? true : false;
 
-         if(e_ballistic != d_e_ballistic && (e_ballistic || d_e_ballistic) ) inelastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy);
+         if((e_ballistic != d_e_ballistic) && (e_ballistic || d_e_ballistic) ) inelastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy);
          else elastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy);
 
       }
@@ -795,8 +795,8 @@ void inelastic_scattering(int thread, int e, int array_index, int d_e, int array
    double deltaE = 0.1*(e_energy-d_e_energy);
    double d_e_occupation;  
    double d_d_occupation;
-   double d_e_1 = e_energy+deltaE;
-   double d_e_2 = d_e_energy-deltaE;
+   double d_e_1 = e_energy-deltaE;
+   double d_e_2 = d_e_energy+deltaE;
    const int e_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_1 - DoS_cutoff)*i_phonon_energy))));
    if ( d_e_1 > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/(dos_standard[e_index]*phonon_energy));  
    else  d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0]) / double(global_e_dos[e_index][1]));  
