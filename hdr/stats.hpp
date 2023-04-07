@@ -16,7 +16,7 @@
 #include <vector>
 #include <string>
 
-#include <fftw3.h>
+// #include <fftw3.h>
 #include "sim.hpp"
 namespace stats
 //==========================================================
@@ -356,34 +356,34 @@ namespace stats
       private:
            bool initialised = false;
 
-            double          *S_t;       // Spatial Magnetisation
-            // double          *S_r; //projection of S_t with spacial matrix// might become 4D fft
-            // double          *S_o;
-            double          *r_i; // spatial tensor
-            double         *r_cutoff;
-            int               *r_s;
-            fftw_complex    *S_i;       // K-space field
-            fftw_complex    *S_0;
+            // double          *S_t;       // Spatial Magnetisation
+            // // double          *S_r; //projection of S_t with spacial matrix// might become 4D fft
+            // // double          *S_o;
+            // double          *r_i; // spatial tensor
+            // double         *r_cutoff;
+            // int               *r_s;
+            // fftw_complex    *S_i;       // K-space field
+            // fftw_complex    *S_0;
 
-            fftw_plan       plan_S; //frequency fft
-            // fftw_plan       plan_r; //spatial fft
+            // fftw_plan       plan_S; //frequency fft
+            // // fftw_plan       plan_r; //spatial fft
 
-            double* fft_coefficients;
-            int K_points;
-            int i_atoms;
-            int r_atoms;
+            // double* fft_coefficients;
+            // int K_points;
+            // int i_atoms;
+            // int r_atoms;
             std::string name;
-            int N;
-            int time_range;
-            int time_step;
-            int freq_hist_bins;
-            double freq_hist_step;
-            double freq_hist_cutoff[2] = {0.0};
-            inline void spin_correlation( fftw_complex& a, double S_x, double S_y, fftw_complex& c)
-            {
-                a[0] = (0.54-0.46*cos(2.0*M_PI*sim::time/sim::total_time))* (S_x * c[0] + S_y * c[1]);
-                a[1] = (0.54-0.46*cos(2.0*M_PI*sim::time/sim::total_time))* (S_y * c[0] - S_x * c[1]);
-            }
+            // int N;
+            // int time_range;
+            // int time_step;
+            // int freq_hist_bins;
+            // double freq_hist_step;
+            // double freq_hist_cutoff[2] = {0.0};
+            // inline void spin_correlation( fftw_complex& a, double S_x, double S_y, fftw_complex& c)
+            // {
+            //     a[0] = (0.54-0.46*cos(2.0*M_PI*sim::time/sim::total_time))* (S_x * c[0] + S_y * c[1]);
+            //     a[1] = (0.54-0.46*cos(2.0*M_PI*sim::time/sim::total_time))* (S_y * c[0] - S_x * c[1]);
+            // }
    };
 
    //----------------------------------
