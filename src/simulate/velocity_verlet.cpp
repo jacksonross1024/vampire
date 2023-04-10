@@ -797,6 +797,10 @@ void inelastic_scattering(int thread, int e, int array_index, int d_e, int array
    double d_d_occupation;
    double d_e_1 = e_energy-deltaE;
    double d_e_2 = d_e_energy+deltaE;
+   
+   if(d_e_1 < core_cutoff || d_e_2 < core_cutoff) return;
+   if( d_e_1 > (core_cutoff+60.0) || d_e_2 > (core_cutoff+60.0)) return;
+   
    const int e_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_1 - DoS_cutoff)*i_phonon_energy))));
    if ( d_e_1 > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/(dos_standard[e_index]*phonon_energy));  
    else  d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0]) / double(global_e_dos[e_index][1]));  
