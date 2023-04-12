@@ -119,7 +119,7 @@ double two_temperature_function(double ftime){
    const double two_delta_sqrt_pi_ln_2 = 9394372.787;
    const double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
    if(sim::enable_laser_torque_fields) {
-		sim::laser_torque_strength = gaussian*gaussian;
+		sim::laser_torque_strength = gaussian;
 		// if(gaussian > 1.0) std::cout << gaussian << std::endl;
 	}
 	
