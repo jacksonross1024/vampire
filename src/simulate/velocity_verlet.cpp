@@ -39,6 +39,15 @@ int velocity_verlet_step(double time_step) {
     p_x = 0.0;
     p_y = 0.0;
     p_z = 0.0;
+
+    int total_1 = 0;
+    int total_2 = 0;
+    for(int h = 0 ; h < dos_size; h++) {
+      //  std::cout << h << ", " << global_e_dos[h][0] << ", " << global_e_dos[h][1] << std::endl;
+      total_1 += global_e_dos[h][0];
+      total_2 += global_e_dos[h][1];
+      global_e_dos[h][0] = 0;
+    }
           if(err::check)  std::cout << "Updating new electron position." << std::endl;
    update_position();
 
@@ -59,15 +68,8 @@ int velocity_verlet_step(double time_step) {
       // }
     }
 
-    int total_1 = 0;
-    int total_2 = 0;
-    for(int h = 0 ; h < dos_size; h++) {
-       //std::cout << h << ", " << global_e_dos[h][0] << ", " << global_e_dos[h][1] << std::endl;
-      total_1 += global_e_dos[h][0];
-      total_2 += global_e_dos[h][1];
-      global_e_dos[h][0] = 0;
-    }
-    // if(total_1 != conduction_electrons) std::cout << "hist problem " << total_1 << " != " << conduction_electrons << " != " << total_2 << std::endl;
+    
+   //  if(total_1 != conduction_electrons) std::cout << "hist problem " << total_1 << " != " << conduction_electrons << " != " << total_2 << std::endl;
     
     //reset integration
     CASTLE_real_time += dt;
@@ -92,6 +94,7 @@ void update_position() {
     }
      if(err::check) std::cout << " updating position..." << std::endl;
     int total = 0;
+    int total_1 = 0;
   
   #pragma omp parallel reduction(+:x_flux,y_flux,z_flux, p_x,p_y,p_z)
   {
@@ -102,9 +105,12 @@ void update_position() {
     int local = 0;
     for (int l = 0 ; l < cells_per_thread; l++) {
       const int cell = lattice_cells_per_omp[thread][l];
+      // #pragma omp critical
+      // std::cout << "cell " << cell << " done by thread " << thread << std::endl;
       int size;
       if(current_time_step % half_int_var == 0) size = old_cell_integration_lists[cell][0];
       else  size = cell_integration_lists[cell][0];
+
       std::vector<int> cell_integration_list;
       cell_integration_list = (current_time_step % half_int_var == 0) ? old_cell_integration_lists[cell] : cell_integration_lists[cell];
       local += size - 1;
@@ -204,13 +210,15 @@ void update_position() {
    #pragma omp critical 
    {
       total += local;
+
       for (int h = 0; h < dos_size; h++) {
          global_e_dos[h][0] += local_e_dos[h];
+         total_1 += local_e_dos[h];
       }
    } 
    }
       if(err::check) std::cout << "global dos updated. catching escaped electrons: " << escaping_electrons[0] << std::endl;
-  // if(total != conduction_electrons) std::cout << total << ", " << conduction_electrons << std::endl;
+  if(total != conduction_electrons || total_1 != conduction_electrons) std::cout << total << ", " << conduction_electrons << std::endl;
    if(current_time_step % half_int_var == 0) {    
     const int size = escaping_electrons[0];
   //  std::cout << "escaping electrons " << size-1 << ", " << escaping_electrons.size() << std::endl;
@@ -351,11 +359,11 @@ void e_e_coulomb(const int e, const int array_index) {
    int ee_dos_count = 1;
    int ee_integration_count = 1;
    int ee_scattering_list = 1;
-   double scattering_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 49.0;
+   // double scattering_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 49.0;
    double integration_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 100.0;
-   int e_size = 6*round(pow(scattering_range, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
+   // int e_size = 6*round(pow(scattering_range, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
    int i_size = 3*round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
-   if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
+   // if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
    if(electron_integration_list[e].size() < i_size) electron_integration_list[e].resize(i_size, 0);
    int cells = (i_size > e_e_integration_cutoff) ? 125 : 27;
    std::vector<int> integration_list;
@@ -405,7 +413,7 @@ void e_e_coulomb(const int e, const int array_index) {
       //   if(ee_dos_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << " ee dos " << ee_dos_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
       //     break; }
 
-        if (length > scattering_range) continue; 
+        if (length > e_e_coulomb_cutoff) continue; 
         electron_ee_scattering_list[e][ee_scattering_list*2] = electron;
         electron_ee_scattering_list[e][ee_scattering_list*2 +1] = length;
         if(ee_scattering_list >= electron_ee_scattering_list[e].size() - 3) {std::cout << e << " ee scattering " << ee_scattering_list << " > " << electron_ee_scattering_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
@@ -800,7 +808,7 @@ void inelastic_scattering(int thread, int e, int array_index, int d_e, int array
    
    if(d_e_1 < core_cutoff || d_e_2 < core_cutoff) return;
    if( d_e_1 > (core_cutoff+60.0) || d_e_2 > (core_cutoff+60.0)) return;
-   
+
    const int e_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_1 - DoS_cutoff)*i_phonon_energy))));
    if ( d_e_1 > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/(dos_standard[e_index]*phonon_energy));  
    else  d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0]) / double(global_e_dos[e_index][1]));  

@@ -570,7 +570,14 @@ void initialize_cell_omp() {
   spiral_cell_counter.resize(total_cells, 0);
   std::vector<int> lr_cell_counter;
   lr_cell_counter.resize(total_cells, 0);
-      if(err::check) std::cout << "electrons in cells" << std::endl;
+      if(err::check) std::cout << "electrons in cells; checking occupancy" << std::endl;
+
+  int total_c = 0;
+  for(int c = 0; c < total_cells; c++) {
+    total_c += cell_integration_lists[c][0]-1;
+  }
+    if(total_c != conduction_electrons) std::cout << "not enough electrons: " << total_c << " in " << total_cells << " instead of " << conduction_electrons <<std::endl;
+  
   //spiral lattice integration
   for(int c = 0; c < total_cells; c++) {
     cell_nearest_neighbor_list.at(c).resize(27); 
@@ -672,7 +679,9 @@ void initialize_cell_omp() {
       
       //double decker cells
     
-     lattice_cells_per_omp[thread].at(l) = lattice_cell_coordinate.at((thread*max_x_threads)%x_omp_cells + int(floor(l/(max_y_threads*max_z_threads)))).at((max_y_threads)*(int(floor(thread*max_x_threads/(x_omp_cells)))%(y_omp_cells/ max_y_threads)) + int(floor(l/(max_z_threads)))%(max_y_threads)).at((max_z_threads)*floor(thread/(x_omp_cells*y_omp_cells/(max_x_threads*max_y_threads))) + (l % (max_z_threads)));
+     lattice_cells_per_omp[thread].at(l) = lattice_cell_coordinate.at((thread*max_x_threads)%x_omp_cells + int(floor(l/(max_y_threads*max_z_threads))))\
+                                                                  .at((max_y_threads)*(int(floor(thread*max_x_threads/(x_omp_cells)))%(y_omp_cells/ max_y_threads)) + int(floor(l/(max_z_threads)))%(max_y_threads))\
+                                                                  .at((max_z_threads)*floor(thread/(x_omp_cells*y_omp_cells/(max_x_threads*max_y_threads))) + (l % (max_z_threads)));
       
       //single decker cells
      // lattice_cells_per_omp.at(omp_get_thread_num()).at(l) = lattice_cell_coordinate.at((omp_get_thread_num()*2)%x_omp_cells + floor(l/(2*z_omp_cells))).at((int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%y_omp_cells) + int(floor(l/(z_omp_cells)))%2).at( l % (z_omp_cells));
@@ -791,7 +800,7 @@ void initialize_electrons() {
     ee_scattering_angle = sim::ee_scattering_angle;
     // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     
-    half_int_var =  5;
+    half_int_var =  4;
     
     e_e_integration_cutoff = pow(lattice_width/8.0,2.0);
     e_e_coulomb_cutoff = pow(7.0, 2.0);
@@ -1685,7 +1694,7 @@ void output_data() {
   //  const int output_count_lr = int(round(transport_cutoff-core_cutoff));
     const int output_count_hr = global_e_dos[0].size();
    
-    for(int i = 0; i < output_count_hr; i++) {
+    for(int i = 0; i < dos_size; i++) {
      // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
      // if(i < output_count_lr) { 
       temp_map << i*phonon_energy + DoS_cutoff << ", " << global_e_dos[i][0] << ", " << global_e_dos[i][1] << "\n";
@@ -1733,7 +1742,7 @@ void output_data() {
     ea_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     e_e_scattering_count = 0;
-    if(!equilibrium_step) half_int_var = 1;
+    // if(!equilibrium_step) half_int_var = 1;
     
     // if(equilibrium_step) transport_cutoff = E_f_A - (E_f_A - core_cutoff)*current_time_step/sim::equilibration_time;
     if(transport_cutoff > (E_f_A - 0.5*floor((d_TTMe - 300.0)/100.0))) {
