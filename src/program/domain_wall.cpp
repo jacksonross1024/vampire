@@ -48,6 +48,8 @@ namespace program{
 
 		int num_averages = 50;
 		num_averages = num_averages/2.0;
+		sim::domain_wall_centre = 0.1*cs::system_dimensions[0]*sim::domain_wall_position;
+		sim::domain_wall_velocity = 0.0;
 		int num_dw_cells = (cs::system_dimensions[sim::domain_wall_axis]/sim::domain_wall_discretisation) + 1;
 		std::vector <double > atom_to_cell_array(num_local_atoms,0);
 		std::vector  < double > mag_x(mp::num_materials*num_dw_cells,0.0);
@@ -69,11 +71,32 @@ namespace program{
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
 					if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
 						int mat = atoms::type_array[atom];
-						double pos = 0.5 + 0.5*std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
-						if (pos > 1) pos = 1.0;
-						else if (pos < 0) pos = 0.0;
-						atoms::x_spin_array[atom] +=  (sim::domain_wall_second_vector_x[mat] - atoms::x_spin_array[atom])*pos;
-						atoms::y_spin_array[atom] =  ((mat == 2)?1.0:-1)*sqrt(1.0 - atoms::x_spin_array[atom]*atoms::x_spin_array[atom]);
+						double pos = std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
+						//volatile double pos_x = std::cos(pos);
+						//volatile double pos_y = std::sin(pos); //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
+					
+						double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
+					
+						atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* sqrt(1.0-pos*pos)*mod;
+						atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos*mod;
+						atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*pos;
+			
+					}
+				}
+			}
+			if (sim::domain_wall_axis == 1){
+				for(int atom=0;atom<num_local_atoms;atom++) {
+					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
+					if (atoms::y_coord_array[atom] > cs::system_dimensions[1]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
+						int mat = atoms::type_array[atom];
+						double pos = std::tanh((atoms::y_coord_array[atom] - cs::system_dimensions[1]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
+						//volatile double pos_x = std::cos(pos);
+						//volatile double pos_y = std::sin(pos); //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
+					
+						double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
+					
+						atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* sqrt(1.0-pos*pos)*mod;
+						atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos*mod;
 						atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*pos;
 			
 					}
@@ -97,7 +120,6 @@ namespace program{
 			// 			double my = atoms::y_spin_array[atom] + dy*pos;
 			// 			double mz = atoms::z_spin_array[atom] + dz*pos;
 			// 			//	std::cout << dx << '\t' << dy << "\t" << dz << std::endl;
-
 			// 			atoms::x_spin_array[atom] = mx;
 			// 			atoms::y_spin_array[atom] = my;
 			// 			atoms::z_spin_array[atom] = mz;
@@ -105,7 +127,6 @@ namespace program{
 			// 		}
 			// 	}
 			// }
-
 			// if (sim::domain_wall_axis == 1){
 			//    for(int atom=0;atom<num_local_atoms;atom++){
 			//       if (atoms::y_coord_array[atom] > cs::system_dimensions[1]*sim::domain_wall_position){
@@ -227,6 +248,17 @@ namespace program{
 				//	if (cell > num_dw_cells) std::cout << atoms::x_coord_array[atom] << '\t' << sim::domain_wall_discretisation <<std::endl;
 			}
 		}
+		if (sim::domain_wall_axis == 1){
+			for(int atom=0;atom<num_local_atoms;atom++){
+				int mat = atoms::type_array[atom];
+				int cell = atoms::y_coord_array[atom]/sim::domain_wall_discretisation;
+				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
+				atom_to_cell_array[atom] = cell;
+				num_atoms_in_cell[num_dw_cells*mat + cell] ++;
+
+				//	if (cell > num_dw_cells) std::cout << atoms::x_coord_array[atom] << '\t' << sim::domain_wall_discretisation <<std::endl;
+			}
+		}
 		// if (sim::domain_wall_axis == 1){
 		// 	for(int atom=0;atom<num_local_atoms;atom++){
 		// 		int mat = atoms::type_array[atom];
@@ -241,11 +273,8 @@ namespace program{
 		// 		int cell = atoms::z_coord_array[atom]/sim::domain_wall_discretisation;
 		// 		atom_to_cell_array[atom] = cell;
 		// 		num_atoms_in_cell[num_dw_cells*mat + cell] ++;
-
 		// 	}
 		// }
-
-
 
 		#ifdef MPICF
 		MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],     num_dw_cells*mp::num_materials,    MPI_INT,    MPI_SUM, MPI_COMM_WORLD);
@@ -267,12 +296,12 @@ namespace program{
 			}
 		}
 
-			#ifdef MPICF
-			MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
-			//MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],     num_dw_cells*mp::num_materials,    MPI_INT,    MPI_MIN, MPI_COMM_WORLD);
-			#endif
+			// #ifdef MPICF
+			// MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			// MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			// MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			// //MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],     num_dw_cells*mp::num_materials,    MPI_INT,    MPI_MIN, MPI_COMM_WORLD);
+			// #endif
 			std::ofstream myfile;
 			string filename = "/dw/dw-0.txt";
 			myfile.open (string(directory) + filename);
@@ -322,12 +351,13 @@ namespace program{
 				}
 			}
 
-			#ifdef MPICF
-			MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
-			//MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],     num_dw_cells*mp::num_materials,    MPI_INT,    MPI_MIN, MPI_COMM_WORLD);
-			#endif
+			// #ifdef MPICF
+			// MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			// MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			// MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			// //MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],     num_dw_cells*mp::num_materials,    MPI_INT,    MPI_MIN, MPI_COMM_WORLD);
+			// #endif
+			
 			std::ofstream myfile;
 			string filename = "/dw/dw-eq.txt";
 			myfile.open (string(directory) + filename);
@@ -387,6 +417,20 @@ namespace program{
    			const double four_ln_2 = 2.77258872224; // 4 ln 2
    			const double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
 			if(sim::enable_laser_torque_fields) sim::laser_torque_strength = gaussian;
+   			const double two_delta_sqrt_pi_ln_2 = 9394372.787;
+	
+   			const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time;
+   			const double Te = sim::TTTe;
+   			const double Tp = sim::TTTp;
+   			const double G  = sim::TTG;
+   			const double Ce = sim::TTCe;
+   			const double Cl = sim::TTCl;
+   			const double dt = mp::dt_SI;
+
+			// integrate two temperature model (floor in free elecron approximation (c prop to T) for low temperatures)
+			if(Te>1.0) sim::TTTe = (-G*(Te-Tp)+pump)*dt/(Ce*Te) + Te;
+			else sim::TTTe =       (-G*(Te-Tp)+pump)*dt/Ce + Te;
+			sim::TTTp =            ( G*(Te-Tp)     )*dt/Cl + Tp - (Tp-sim::Teq)*sim::HeatSinkCouplingConstant*dt;
 
 			for (int cell = 0; cell < num_dw_cells; cell++){
 				for (int mat = 0; mat < mp::num_materials; mat ++) {
@@ -397,12 +441,12 @@ namespace program{
 				}
 			}
 
-			#ifdef MPICF
-			MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
-			// MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],     num_dw_cells*mp::num_materials,    MPI_INT,    MPI_MIN, MPI_COMM_WORLD);
-			#endif
+			// #ifdef MPICF
+			// MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			// MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			// MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_MIN, MPI_COMM_WORLD);
+			// // MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],     num_dw_cells*mp::num_materials,    MPI_INT,    MPI_MIN, MPI_COMM_WORLD);
+			// #endif
 
 			// Integrate system
 			sim::integrate(sim::partial_time);
@@ -416,40 +460,46 @@ namespace program{
 			if(!myfile.is_open()) {
 				std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
 			}
-			for(int atom=0;atom<num_local_atoms;atom++){
+
+			double minima_x[2] = {0.0, 0.0};
+			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
 				int mat = atoms::type_array[atom];
+				if(mat == 1 && atoms::x_spin_array[atom] > 0.90) {
+					minima_x[0] += atoms::x_coord_array[atom]*atoms::x_spin_array[atom]; 
+					minima_x[1]++;
+				}
 				mag_x[num_dw_cells*mat + cell] += atoms::x_spin_array[atom];
 				mag_y[num_dw_cells*mat + cell] += atoms::y_spin_array[atom];
 				mag_z[num_dw_cells*mat + cell] += atoms::z_spin_array[atom];
 			}
 
-
 			#ifdef MPICF
 			MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 			MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 			MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*mp::num_materials,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+			MPI_Allreduce(MPI_IN_PLACE, &minima_x, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 			#endif
-			//	 std::cout << "a" <<std::endl;
+		
+			
+			sim::domain_wall_velocity = 1.0e-10* std::abs((minima_x[0]/minima_x[1]) - 10.0*sim::domain_wall_centre)/(sim::partial_time*mp::dt_SI); //A/0.1ft -> e16/ e10 -> m/s
+			sim::domain_wall_centre  = 0.1*minima_x[0]/minima_x[1];
 
-			double position = 0.0;
-			double width = 0.0;
+		if(vmpi::my_rank == 0) {
+			//domain wall centre only for Neel orientation on y axis and 180 degree; finds minima of x magnetisation
+
 			for (int cell = 0; cell < num_dw_cells; cell++) {
 				for (int mat = 0; mat < mp::num_materials; mat ++) {
-					if (num_atoms_in_cell[num_dw_cells*mat + cell] > 0) {
-			
-						myfile << cell <<"\t" <<  mat << '\t' << mag_x[num_dw_cells*mat + cell] /num_atoms_in_cell[num_dw_cells*mat + cell]  << "\t" << mag_y[num_dw_cells*mat + cell] /num_atoms_in_cell[num_dw_cells*mat + cell]  << "\t" << mag_z[num_dw_cells*mat + cell]/num_atoms_in_cell[num_dw_cells*mat + cell]  << "\t" << num_atoms_in_cell[num_dw_cells*mat + cell]  <<  std::endl;
-					}
+					if (num_atoms_in_cell[num_dw_cells*mat + cell] > 0) myfile << cell <<"\t" <<  mat << '\t' << mag_x[num_dw_cells*mat + cell] /num_atoms_in_cell[num_dw_cells*mat + cell]  << "\t" << mag_y[num_dw_cells*mat + cell] /num_atoms_in_cell[num_dw_cells*mat + cell]  << "\t" << mag_z[num_dw_cells*mat + cell]/num_atoms_in_cell[num_dw_cells*mat + cell]  << "\t" << num_atoms_in_cell[num_dw_cells*mat + cell]  <<  std::endl;
 				}
 			}
+			
+			
 			myfile.close();
+		}
 			// Output data
 			vout::data();
-
 		}
-
-
-
 	}
 
 }//end of namespace program

@@ -228,6 +228,7 @@ namespace sim{
 
 	extern int domain_wall_axis;
 	extern double domain_wall_position;
+	extern double domain_wall_velocity;
 	extern double domain_wall_discretisation;
 	extern double domain_wall_centre;
 	extern double domain_wall_width;

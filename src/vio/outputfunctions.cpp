@@ -434,8 +434,8 @@ namespace vout{
    }
 
    // Output Function 67
-   void domain_wall_position(std::ostream& stream, bool header){
-      stream << sim::domain_wall_centre;
+   void domain_wall_position(std::ostream& stream, bool header) {
+      stream << generic_output_double("domain_wall_centre", sim::domain_wall_centre, header);
    }
 
    // Output Function 68
@@ -483,4 +483,8 @@ namespace vout{
       stream << generic_output_double("frac_voltage", sim::laser_torque_strength, header);
    }
 
+    // Output Function 74
+   void domain_wall_velocity(std::ostream& stream, bool header) {
+      stream << generic_output_double("domain_wall_velocity", sim::domain_wall_velocity, header);
+   }
 }

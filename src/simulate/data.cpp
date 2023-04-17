@@ -68,6 +68,7 @@ namespace sim{
    
    int domain_wall_axis = 0;
    double domain_wall_position = 0.25;
+   double domain_wall_velocity = 0.0;
    double domain_wall_discretisation = 10;
    double domain_wall_centre = 0;
    double domain_wall_width = 10.0;

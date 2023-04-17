@@ -178,6 +178,7 @@ namespace vout{
    void resistance(std::ostream& stream, bool header);
    void current(std::ostream& stream, bool header);
    void domain_wall_position(std::ostream& stream,bool header);
+   void domain_wall_velocity(std::ostream& stream,bool header);
    void MRresistance(std::ostream& stream, bool header);
 
    //-------------------------------------------------------------------------
