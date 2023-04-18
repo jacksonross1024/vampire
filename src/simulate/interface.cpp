@@ -234,7 +234,7 @@ namespace sim{
       test="domain-wall-width";
       if(word==test){
          double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 0, 1000,"input","0 - 1 A");
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 0, 10000,"input","0 - 1000 A");
          sim::domain_wall_width = tt;
          return true;
       }

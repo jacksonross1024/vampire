@@ -527,7 +527,8 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		const double sotpj = sot_pj[material];
 
 		const double sot_lambda = sot_asm[material];
-		double sot_factor = sim::internal::electrical_pulse_strength* program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*1.0 + sy*1.0 + sz*sotpz) );
+		double sot_factor = 0.50 / (1.0 + sot_lambda*(sx*1.0 + sy*1.0 + sz*sotpz) );
+		if(sim::time > 30000.0) sot_factor = 0.0;
 		if(sot_factor != sot_factor) sot_factor = 0.0;
 		//  if(sot_factor < 0) std::cout << hx << ", " << hy << ", " << hz << ", " << sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy ) << std::endl;
 		// calculate field
@@ -535,7 +536,10 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );
 		hz += sot_factor * ( (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz );
 		
-		 double lotlt = sim::laser_torque_strength* sin(2.0*atan2(sy, sx))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;// *;//hardcode Mn2Au 110 assymetry factor
+		double phi = atan2(sy, sx);
+			if(phi != phi) phi = 0.0;
+		double lotlt = sim::laser_torque_strength* (cos(2.0*phi))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;// *;//hardcode Mn2Au 110 assymetry factor
+		
 		// if(sim::laser_torque_strength == 0.0) lotlt = 0.0;
 		// if(atom==1) std::cout << lotlt << ", " << sim::laser_torque_strength << ", " << std::abs(sin(2.0*atan2(sy, sx))) << ", " << lot_lt[material] << ", " << (1e-24/mp::material[material].mu_s_SI ) << std::endl;
 		const double lotx = lot_unit_vector[0];

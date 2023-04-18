@@ -71,14 +71,17 @@ namespace program{
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
 					if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
 						int mat = atoms::type_array[atom];
-						double pos = std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
-						//volatile double pos_x = std::cos(pos);
-						//volatile double pos_y = std::sin(pos); //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
-					
 						double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
+
+						//180 degree:
+						// double pos = std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
+						//90 degree: 
+						double pos = 0.0*M_PI + 0.25*M_PI*std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
+						double pos_x = std::cos(pos)*mod;
+						double pos_y = -std::sin(pos)*mod; //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
 					
-						atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* sqrt(1.0-pos*pos)*mod;
-						atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos*mod;
+						atoms::x_spin_array[atom] =  (mat==2?1.0:-1.0)* pos_x;
+						atoms::y_spin_array[atom] =  (mat==2?1.0:-1.0)* pos_y;
 						atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*pos;
 			
 					}
@@ -465,7 +468,7 @@ namespace program{
 			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
 				int mat = atoms::type_array[atom];
-				if(mat == 1 && atoms::x_spin_array[atom] > 0.90) {
+				if(mat == 2 && atoms::x_spin_array[atom] > 0.97) {
 					minima_x[0] += atoms::x_coord_array[atom]*atoms::x_spin_array[atom]; 
 					minima_x[1]++;
 				}
