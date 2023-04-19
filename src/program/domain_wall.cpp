@@ -416,10 +416,18 @@ namespace program{
 
 			double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
 			const double i_pump_time = 1.0/sim::pump_time;
-  		 	const double reduced_time = (ftime-3.*sim::pump_time)*i_pump_time;
+  		 	double reduced_time = (ftime-3.*sim::pump_time)*i_pump_time;
    			const double four_ln_2 = 2.77258872224; // 4 ln 2
-   			const double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
-			if(sim::enable_laser_torque_fields) sim::laser_torque_strength = gaussian;
+   			double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+			if(sim::enable_laser_torque_fields) {
+				if(ftime < 3.*sim::pump_time) sim::laser_torque_strength = gaussian;
+				else if (ftime < 3.*sim::pump_time + sim::double_pump_delay) sim::laser_torque_strength = 1.0;
+				else {
+					reduced_time = (ftime-3.*sim::pump_time-sim::double_pump_delay)*i_pump_time;
+					gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+					sim::laser_torque_strength = gaussian;
+				}
+			}
    			const double two_delta_sqrt_pi_ln_2 = 9394372.787;
 	
    			const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time;
@@ -468,8 +476,8 @@ namespace program{
 			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
 				int mat = atoms::type_array[atom];
-				if(mat == 2 && atoms::x_spin_array[atom] > 0.97) {
-					minima_x[0] += atoms::x_coord_array[atom]*atoms::x_spin_array[atom]; 
+				if(mat == 2 && atoms::y_spin_array[atom] > -0.1 && atoms::y_spin_array[atom] < 0.1) {
+					minima_x[0] += atoms::x_coord_array[atom]; 
 					minima_x[1]++;
 				}
 				mag_x[num_dw_cells*mat + cell] += atoms::x_spin_array[atom];
