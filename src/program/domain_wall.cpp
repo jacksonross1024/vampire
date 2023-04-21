@@ -562,13 +562,13 @@ namespace program{
 						}
 					}
 					
-					if (num_atoms_in_cell[num_dw_cells*cat + cell] > 0 && print) {
+					if (num_atoms_in_cell[num_dw_cells*cat + cell] > 0) {
 						volatile double num = num_atoms_in_cell[num_dw_cells*cat + cell];
 						double tpcg = (std::abs(d_topological_charge[cat]) < 1e-5) ? 0.0:d_topological_charge[cat];
 						if(tpcg > M_PI*0.5) tpcg -= 2.0*M_PI;
 						else if (tpcg < -M_PI*0.5) tpcg += 2.0*M_PI;
 						d_topological_charge_acc[cat] += tpcg;
-						dw_res << cell <<"\t" <<  cat << '\t' << mag_x[num_dw_cells*cat + cell] / num_atoms_in_cell[num_dw_cells*cat + cell] << "\t" << mag_y[num_dw_cells*cat + cell] /num_atoms_in_cell[num_dw_cells*cat + cell] << "\t" << mag_z[num_dw_cells*cat + cell]/num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << tpcg << "\t"  << d_topological_charge_acc[cat] << "\t" << num_atoms_in_cell[num_dw_cells*cat + cell]  <<  "\n";
+						if(print) dw_res << cell <<"\t" <<  cat << '\t' << mag_x[num_dw_cells*cat + cell] / num_atoms_in_cell[num_dw_cells*cat + cell] << "\t" << mag_y[num_dw_cells*cat + cell] /num_atoms_in_cell[num_dw_cells*cat + cell] << "\t" << mag_z[num_dw_cells*cat + cell]/num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << tpcg << "\t"  << d_topological_charge_acc[cat] << "\t" << num_atoms_in_cell[num_dw_cells*cat + cell]  <<  "\n";
 					}
 				}
 			}
