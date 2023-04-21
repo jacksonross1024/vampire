@@ -538,17 +538,28 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		
 		double phi = atan2(sy, sx);
 			if(phi != phi) phi = 0.0;
-		double lotlt = sim::laser_torque_strength* (cos(2.0*phi))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;// *;//hardcode Mn2Au 110 assymetry factor
+		//T_z e||xy -> torque asymmetry sin(2(phi-pi/4))
+		double lotlt_z = sim::laser_torque_strength* (cos(2.0*phi))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;
 		
+		//T_y e||xz -> Torque asymmetry cos(phi)cos(phi)
+		// double lotlt_y = 0.25*sim::laser_torque_strength* (cos(phi)*cos(phi))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;
 		// if(sim::laser_torque_strength == 0.0) lotlt = 0.0;
 		// if(atom==1) std::cout << lotlt << ", " << sim::laser_torque_strength << ", " << std::abs(sin(2.0*atan2(sy, sx))) << ", " << lot_lt[material] << ", " << (1e-24/mp::material[material].mu_s_SI ) << std::endl;
-		const double lotx = lot_unit_vector[0];
-		const double loty = lot_unit_vector[1];
-		const double lotz = lot_unit_vector[2];
+		 double lotx = lot_unit_vector[0];
+		 double loty = lot_unit_vector[1];
+		 double lotz = lot_unit_vector[2];
 
-		hx += lotlt * (loty*sz - sy*lotz);
-		hy += lotlt * (lotz*sx - sz*lotx);
-		hz += lotlt * (lotx*sy - sx*loty);
+		hx += lotlt_z * (loty*sz - sy*lotz);
+		hy += lotlt_z * (lotz*sx - sz*lotx);
+		hz += lotlt_z * (lotx*sy - sx*loty);
+
+		// lotx = 0.0;
+		// loty = -1.0;
+		// lotz = 0.0;
+
+		// hx += lotlt_y * (loty*sz - sy*lotz);
+		// hy += lotlt_y * (lotz*sx - sz*lotx);
+		// hz += lotlt_y * (lotx*sy - sx*loty);
 
 		// hy += sotrj*sotpy*sy;
 		

@@ -232,6 +232,10 @@ namespace sim{
 	extern double domain_wall_discretisation;
 	extern double domain_wall_centre;
 	extern double domain_wall_width;
+	extern int domain_wall_angle;
+	extern double unit_cell_x;
+    extern double unit_cell_y;
+    extern double unit_cell_z;
 	extern std::vector < bool > anti_PBC;
 
 	extern std::vector < double > domain_wall_second_vector_x;

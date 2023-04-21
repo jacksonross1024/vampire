@@ -15,7 +15,7 @@
 
 // Vampire headers
 #include "unitcell.hpp"
-
+#include "sim.hpp"
 // unitcell module headers
 #include "internal.hpp"
 
@@ -109,6 +109,10 @@ void build_mn2au(unitcell::unit_cell_t& unit_cell) {
    unit_cell.dimensions[0] *= unitcell::internal::unit_cell_size_x;
    unit_cell.dimensions[1] *= unitcell::internal::unit_cell_size_y;
    unit_cell.dimensions[2] *= unitcell::internal::unit_cell_size_x;
+
+   sim::unit_cell_x = unitcell::internal::unit_cell_size_x;
+   sim::unit_cell_y = unitcell::internal::unit_cell_size_y;
+   sim::unit_cell_z = unitcell::internal::unit_cell_size_z;
 
    return;
 

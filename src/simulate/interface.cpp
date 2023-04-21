@@ -197,7 +197,7 @@ namespace sim{
       test="domain-wall-discretisation";
       if(word==test){
          double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 10, 1000,"input","10 - 1 A");
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 1, 100,"input","1 - 100 A");
          sim::domain_wall_discretisation = tt;
          return true;
       }
@@ -237,6 +237,15 @@ namespace sim{
          vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 0, 10000,"input","0 - 1000 A");
          sim::domain_wall_width = tt;
          return true;
+      }
+      test="domain-wall-angle";
+      if(word==test) {
+         double tt = atof(value.c_str()); // convert string to uint64_t
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "degree", 90, 180,"input","90 or 180 degrees");
+         if(tt == 90) sim::domain_wall_angle = 0;
+         else if (tt ==180) sim::domain_wall_angle = 1;
+         if(sim::domain_wall_angle < 0) return false;
+         else return true;
       }
       //--------------------------------------------------------------------
       // input parameter not found here

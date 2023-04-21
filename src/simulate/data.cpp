@@ -72,6 +72,10 @@ namespace sim{
    double domain_wall_discretisation = 10;
    double domain_wall_centre = 0;
    double domain_wall_width = 10.0;
+   int domain_wall_angle = -1;
+   double unit_cell_x;
+   double unit_cell_y;
+   double unit_cell_z;
    std::vector <bool > anti_PBC(3,false);
    std::vector < double > domain_wall_second_vector_x(100,0);
    std::vector < double > domain_wall_second_vector_y(100,0);
