@@ -296,7 +296,7 @@ namespace CASTLE {
 //     std::uniform_int_distribution<> test_int(0, conduction_electrons -1);
    //std::vector<MTRand> omp_gaussian_random(omp_get_num_threads());
     //outputs
-   
+   double total_TEKE = 0.0;
    double TEPE; //Angstroms
    double TEKE; //Angstroms
    double TLE;

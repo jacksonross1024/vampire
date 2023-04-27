@@ -301,7 +301,7 @@ void update_dynamics() {
 
    pump = 0.0;
 
-    #pragma omp parallel for schedule(dynamic, 4)
+    #pragma omp parallel for schedule(dynamic, 4) reduction(+:external_potential)
     for (int e = 0; e < conduction_electrons; e++) {
       // if(electron_potential[e] < (E_f_A-24.25)) continue;
       const int array_index = 3*e;
@@ -330,11 +330,12 @@ void update_dynamics() {
      
     ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;  
-    if(!equilibrium_step) d_Tp =  a_heat_capacity_i*TLE *n_f*4.087312/conduction_electrons + Tp;
+    if(!equilibrium_step) d_Tp = a_heat_capacity_i*TLE *n_f*4.087312/conduction_electrons + Tp;
     else d_Tp = sim::temperature;
 
     d_Te = (e_heat_capacity_i*TEKE*n_f*4.087312/conduction_electrons/abs(Te)) + (dt*e_heat_capacity_i*pump/abs(Te)) + Te;
  
+   total_TEKE += TEKE;
         if (err::check) std::cout << "reset scattering." << std::endl;
        
 }

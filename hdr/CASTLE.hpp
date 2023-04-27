@@ -178,6 +178,7 @@ namespace CASTLE {
     extern std::vector<MTRand_int32> omp_int_random;
     //outputs
    
+    extern double total_TEKE;
     extern double TEPE; //Angstroms
     extern double TEKE; //Angstroms
     extern double TLE; //Angstroms
