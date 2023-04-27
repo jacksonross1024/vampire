@@ -241,6 +241,7 @@ namespace CASTLE {
    double ea_coupling_strength;
    double ee_scattering_angle;
    double q_sq;
+   double m_eff_ratio;
 
     int x_omp_cells;// = int(floor(lattice_width / 15.0));
     int y_omp_cells;// = int(floor(lattice_depth / 15.0));
@@ -375,5 +376,6 @@ namespace CASTLE {
    double return_dWdE(const double e_energy); //energy -> momentum 
    double return_dWdE_i(const double e_mom); // momentum -> energy
    double return_vel(const double energy); //inverse slope of dWdE / hbar_r
+   double return_m_e_r(const double energy);
    double k_sq();
 }

@@ -191,12 +191,12 @@ void initialize () {
     i_phonon_energy = 1.0/phonon_energy;
         if(err::check) std::cout << "phonon occupation test and DoS offset discretisation: " << return_BE_distribution(2*phonon_energy, Te) << ", " << int(floor(1.5*constants::eV_to_AJ*i_phonon_energy)) << std::endl;
     // std::cout << "phonon energy " << phonon_energy << std::endl;
-    dos_size = int(floor((60.0*i_phonon_energy)/1.0))+1;
+    dos_size = int(floor((20.0*i_phonon_energy)/1.0))+1;
 
     dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
     TTMe = TTMp = d_TTMe = d_TTMp = Tp = Te = d_Tp = d_Te = sim::temperature;
 
-    DoS_cutoff = phonon_energy* int(floor(1.5*constants::eV_to_AJ*i_phonon_energy));
+    DoS_cutoff = phonon_energy* int(floor(0.315*constants::eV_to_AJ*i_phonon_energy));
     
       char directory [256];
       if(getcwd(directory, sizeof(directory)) == NULL){
@@ -264,7 +264,7 @@ void initialize () {
       }
       conduction_electrons = int(round(total_e*lattice_atoms));
       // total_e /= constants::eV_to_AJ;
-      if(err::check)   std::cout << "total e- dos: " << total_e << ", (e-/Fermi window/atom); full lattice: " << conduction_electrons << std::endl;
+     std::cout << "total e- dos: " << total_e << ", (e-/Fermi window/atom); full lattice: " << conduction_electrons << std::endl;
 
     CASTLE_output_rate = sim::partial_time;
     
@@ -304,8 +304,8 @@ void initialize () {
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
     applied_voltage = sqrt(1.60218e-19*2.0*sim::applied_voltage/constants::eps_0/(1e-30*lattice_width * lattice_height * lattice_depth)); //eV -> V/m
     n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/4.087312; // e- / A**3 -> e-/m**3
-    E_f = constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
-    E_f_A = E_f*1e20; //AJ
+    E_f = 106.68e-20;// constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
+    E_f_A = 106.68;// E_f*1e20; //AJ
     mu_f = 5.0 * E_f_A / (3.0 * conduction_electrons);//Fermi-level
     v_f = sqrt(2.0 * E_f_A * constants::m_e_r_i); // A/fs
 
@@ -459,11 +459,14 @@ void initialize () {
         dWdE_standard[d] = (dWdE_standard[d]+dWdE_standard[d+1]+dWdE_standard[d-1])/3.0;
         dWdE_standard_output << (d*phonon_energy - E_f_A + DoS_cutoff) << ", " << dWdE_standard[d] << ", " << \
                                 return_dWdE(d*phonon_energy + DoS_cutoff) << ", " << \
-                                return_dWdE_i(return_dWdE(d*phonon_energy + DoS_cutoff))-E_f_A << ", " << \
                                 return_vel(d*phonon_energy+DoS_cutoff) << ", " <<\
-                                return_vel(return_dWdE_i(return_dWdE(d*phonon_energy + DoS_cutoff))) <<  '\n';
+                                return_m_e_r(d*phonon_energy + DoS_cutoff)/constants::m_e_r <<  '\n';
       }
-
+      dWdE_standard_output.close();
+    // kg = kg fs / A  1e30 
+    // m  = hbar k/v
+    //  m_eff_ratio = return_dWdE(E_f_A+5.0)*return_vel(E_f_A)/return_vel(E_f_A+5.0)/return_dWdE(E_f_A);
+     std::cout << "m_ee ratio: " << m_eff_ratio << std::endl;
    // temp_data.open(string(directory) + "/temp_data.csv");
     mean_data.open(string(directory) + "/mean_data.csv");
     mean_data << "time, step, mean-EKE, mean-LE, mean-Te, mean-Tp,  mean-radius, mean-e-a-collisions, mean-e-e-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
@@ -1518,6 +1521,11 @@ double return_dWdE_i(const double momentum) {
 double return_vel(const double energy) {
   if(energy > (E_f_A+4.86166)) return 1.0/(constants::hbar_r*0.00275775);
   else return 1.0/(constants::hbar_r*0.0244961);
+}
+
+double return_m_e_r(const double energy) {
+  if(energy > (E_f_A+4.86166)) return constants::hbar_r*constants::hbar_r*0.00275775*(0.00275775*(energy-E_f_A) + 3.81605);
+  else return  (0.0244961*(energy-E_f_A) + 3.71037)*constants::hbar_r*0.0244961*constants::hbar_r;
 }
 
 void output_data() {

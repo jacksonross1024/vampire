@@ -123,7 +123,8 @@ namespace CASTLE {
     extern double ee_coupling_strength;
     extern double ea_coupling_strength;
     extern double ee_scattering_angle;
-    extern double q_sq;
+    extern double q_sq; 
+    extern double m_eff_ratio;
 
     extern double e_e_integration_cutoff;
     extern double e_e_neighbor_cutoff;
@@ -261,6 +262,8 @@ namespace CASTLE {
     extern double return_dWdE_i(const double e_mom); // momentum -> energy
   
     extern double return_vel(const double energy); //inverse slope of dWdE / hbar_r
+
+    extern double return_m_e_r(const double energy);
     extern double k_sq();
 }
 

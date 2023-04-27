@@ -217,7 +217,7 @@ void update_position() {
       }
    } 
    }
-      if(err::check) std::cout << "global dos updated. catching escaped electrons: " << escaping_electrons[0] << std::endl;
+      if(err::check) std::cout << "global dos updated. catching escaped electrons: " << escaping_electrons[0] -1<< std::endl;
   if(total != conduction_electrons || total_1 != conduction_electrons) std::cout << total << ", " << conduction_electrons << std::endl;
    if(current_time_step % half_int_var == 0) {    
     const int size = escaping_electrons[0];
@@ -299,6 +299,7 @@ void update_dynamics() {
     Te = d_Te;
       if(err::check) std::cout << "conditions set; updating dos " << std::endl;
 
+   pump = 0.0;
 
     #pragma omp parallel for schedule(dynamic, 4)
     for (int e = 0; e < conduction_electrons; e++) {
@@ -309,20 +310,21 @@ void update_dynamics() {
       // else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
       else  neighbor_e_e_coulomb(e, array_index);
 
-      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-        #pragma omp atomic
-        count++;
-        // pump += external_potential;
-        electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
-      }
+      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+      //   #pragma omp atomic
+      //   count++;
+      //   // pump += external_potential;
+      //   electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
+      // }
       
-      // if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, photon_energy);
+      // if(!equilibrium_step) 
+      external_potential += electron_applied_voltage(e, array_index, photon_energy);
       // if(equilibrium_step && electron_potential[e] > 0.8*E_f_A) ea_scattering(e, array_index, omp_get_thread_num());
       ea_scattering(e, array_index, omp_get_thread_num());
     }
 
     if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
-      //  TEKE += external_potential;
+       TEKE += external_potential;
         if(err::check) std::cout << "dos updated. ee scattering step..." << std::endl;
       q_sq = k_sq();
      
@@ -482,13 +484,14 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
 
 double electron_applied_voltage(const int e, const int array_index, double& external_potential) {
 
-  electron_velocity[array_index] += 5e-11*dt*applied_voltage*constants::e_A*constants::m_e_r_i; //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
-  const double deltaE = 0.5*constants::m_e_r*((electron_velocity[array_index]*electron_velocity[array_index])\
-  +(electron_velocity[array_index+1]*electron_velocity[array_index+1])+(electron_velocity[array_index+2]*electron_velocity[array_index+2])) - electron_potential[e];
-
-  electron_potential[e] += deltaE;
- 
-  return deltaE;
+   const double energy = electron_potential[e];
+   const double d_energy = return_dWdE_i(return_dWdE(energy)+1e-10*dt*applied_voltage*constants::e/(return_m_e_r(energy)*constants::hbar_r)); //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
+   const double deltaE = d_energy - energy;
+   if(deltaE > 1.0) std::cout << d_energy - energy << std::endl;
+   if(d_energy < core_cutoff) return 0.0;
+   if(d_energy > core_cutoff+60.0) return 0.0;
+   
+   return deltaE;
 }
 
 void ea_scattering(const int e, const int array_index, const int thread) {
@@ -705,14 +708,17 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
    const double d_k_y_2 = k_y_2 + y_distance*v_x_dot_product;
    const double d_k_z_2 = k_z_2 + z_distance*v_x_dot_product;
 
+
    double d_k_1 = sqrt(d_k_x_1*d_k_x_1 + d_k_y_1*d_k_y_1 + d_k_z_1*d_k_z_1);
    double d_k_2 = sqrt(d_k_x_2*d_k_x_2 + d_k_y_2*d_k_y_2 + d_k_z_2*d_k_z_2);
-        
+      
+   
    double d_e_1 = return_dWdE_i(d_k_1);
    double d_e_2 = return_dWdE_i(d_k_2);
 
    double deltaE = e_energy+d_e_energy - d_e_1 - d_e_2;
    const double deltaK = (k_1 - d_k_1)*(k_1 - d_k_1);
+   // if(d_e_1 > (E_f_A+4.8) || d_e_2 > (E_f_A+4.8)) std::cout << d_e_1 << ", " << d_k_1 << ", " << d_e_2 << ", "  << d_k_2 << ", " << deltaE << ", " << deltaK << std::endl;
    double a_factor = abs((k_1*k_1 + k_2*k_2 - d_k_1*d_k_1 - d_k_2*d_k_2)/(2.0*d_k_1*d_k_2));
    double b_factor = k_1*k_2/(d_k_1*d_k_2);
 
@@ -816,7 +822,7 @@ void inelastic_scattering(int thread, int e, int array_index, int d_e, int array
    const int d_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_2 - DoS_cutoff)*i_phonon_energy))));
    if ( d_e_2 > transport_cutoff)  d_d_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_index][0])/(dos_standard[d_index]*phonon_energy));  
    else d_d_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_index][0]) / double(global_e_dos[d_index][1])); 
-   double occupation_factor = 0.01* ee_rate*d_e_occupation*d_d_occupation/(q_sq*q_sq);///((q_sq+(deltaK))*(q_sq+(deltaK)));//*exp(0.15*(d_occupation*e_occupation-1.0));
+   double occupation_factor = sim::ee_coupling_strength* ee_rate*d_e_occupation*d_d_occupation/(q_sq*q_sq);///((q_sq+(deltaK))*(q_sq+(deltaK)));//*exp(0.15*(d_occupation*e_occupation-1.0));
 
       global_tau_ee[e_index] += occupation_factor;
       global_tau_ee[d_index] += occupation_factor;
@@ -888,7 +894,7 @@ double k_sq() {
             // s^2 /  fs^2
   }
 
-  return pow(sqrt(constants::K* q_sq) + (11.9-4.569471), 2.0);
+  return pow(sqrt(constants::K* q_sq) + (11.9-3.369471), 2.0);
 }
 
 } //end CASTLE namespace
