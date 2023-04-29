@@ -317,13 +317,12 @@ void update_dynamics() {
       //   electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
       // }
       
-      // if(!equilibrium_step) 
-      external_potential += electron_applied_voltage(e, array_index, photon_energy);
+      if(!equilibrium_step)  external_potential += electron_applied_voltage(e, array_index, photon_energy);
       // if(equilibrium_step && electron_potential[e] > 0.8*E_f_A) ea_scattering(e, array_index, omp_get_thread_num());
       ea_scattering(e, array_index, omp_get_thread_num());
     }
 
-    if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
+    // if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
        TEKE += external_potential;
         if(err::check) std::cout << "dos updated. ee scattering step..." << std::endl;
       q_sq = k_sq();
@@ -486,12 +485,12 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
 double electron_applied_voltage(const int e, const int array_index, double& external_potential) {
 
    const double energy = electron_potential[e];
-   const double d_energy = return_dWdE_i(return_dWdE(energy)+1e-10*dt*applied_voltage*constants::e/(return_m_e_r(energy)*constants::hbar_r)); //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
+   const double d_energy = return_dWdE_i(return_dWdE(energy)+1e10*dt*applied_voltage*constants::e/constants::hbar_r); //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
    const double deltaE = d_energy - energy;
    if(deltaE > 1.0) std::cout << d_energy - energy << std::endl;
    if(d_energy < core_cutoff) return 0.0;
    if(d_energy > core_cutoff+60.0) return 0.0;
-   
+   electron_potential[e] += deltaE;
    return deltaE;
 }
 
@@ -727,7 +726,7 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
       if( d_e_1 > (core_cutoff+60.0) || d_e_2 > (core_cutoff+60.0)) return;
       if(abs(deltaE) > 0.01) return; //std::cout << "ee collision deltaE: " << deltaE << ", " << e_energy << ", " << d_e_energy << ", " << d_e_1 << ", " << d_e_2 << std::endl;
       if(a_factor > (b_factor+1)) {
-          std::cout << a_factor << ", " <<  b_factor << std::endl;
+          std::cout << " a/b factor " << a_factor << ", " <<  b_factor << ", " << k_1 << ", " << k_2 << ", " << d_k_1 << ", " << d_k_2 << std::endl;
           return;}
        
       double d_e_occupation;  
