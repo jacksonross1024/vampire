@@ -830,10 +830,10 @@ void initialize_electrons() {
     #pragma omp parallel for schedule(static) 
     for (int e = 0; e < conduction_electrons; e++) {
 
-        electron_integration_list.at(e).resize(e_density, 0);
+        electron_integration_list[e].resize(e_density, 0);
         // electron_nearest_electron_list.at(e).resize(ee_density, 0);
-        electron_ee_scattering_list.at(e).resize(ee_scattering, 0);
-        electron_ea_scattering_list.at(e).resize(2,0);
+        electron_ee_scattering_list[e].resize(ee_scattering, 0);
+        electron_ea_scattering_list[e].resize(2,0);
         
         relaxation_time_hist_ee[3*e].resize(4*60,0);
         relaxation_time_hist_ee[3*e+1].resize(4*60,0);
@@ -845,9 +845,9 @@ void initialize_electrons() {
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
         const int array_index = 3*e;
-        electron_position.at(array_index)     = atoms::x_coord_array.at(e%int(lattice_atoms)) + 0.5*x_unit_size;
-        electron_position.at(array_index + 1) = atoms::y_coord_array.at(e%int(lattice_atoms)) + 0.5*y_unit_size;
-        electron_position.at(array_index + 2) = atoms::z_coord_array.at(e%int(lattice_atoms)) + 0.5*z_unit_size;
+        electron_position[array_index]     = atoms::x_coord_array.at(e%int(lattice_atoms)) + 0.5*x_unit_size;
+        electron_position[array_index + 1] = atoms::y_coord_array.at(e%int(lattice_atoms)) + 0.5*y_unit_size;
+        electron_position[array_index + 2] = atoms::z_coord_array.at(e%int(lattice_atoms)) + 0.5*z_unit_size;
         //initialize and output electron posititons
       //  = atom_anchor_position.at(3*(e%lattice_atoms));//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
        // electron_position.at(array_index + 2) = atom_anchor_position.at(3*(e%lattice_atoms)+2);// + cos(phi)*screening_depth;//*radius_mod(gen);

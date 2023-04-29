@@ -317,7 +317,7 @@ void update_dynamics() {
       //   electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
       // }
       
-      if(!equilibrium_step)  external_potential += electron_applied_voltage(e, array_index, photon_energy);
+      if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, photon_energy);
       // if(equilibrium_step && electron_potential[e] > 0.8*E_f_A) ea_scattering(e, array_index, omp_get_thread_num());
       ea_scattering(e, array_index, omp_get_thread_num());
     }
@@ -364,7 +364,7 @@ void e_e_coulomb(const int e, const int array_index) {
    // double scattering_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 49.0;
    double integration_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 100.0;
    // int e_size = 6*round(pow(scattering_range, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
-   int i_size = 3*round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
+   int i_size = 3*round(pow(integration_range,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
    // if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
    if(electron_integration_list[e].size() < i_size) electron_integration_list[e].resize(i_size, 0);
    int cells = (i_size > e_e_integration_cutoff) ? 125 : 27;
@@ -487,7 +487,7 @@ double electron_applied_voltage(const int e, const int array_index, double& exte
    const double energy = electron_potential[e];
    const double d_energy = return_dWdE_i(return_dWdE(energy)+1e10*dt*applied_voltage*constants::e/constants::hbar_r); //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
    const double deltaE = d_energy - energy;
-   if(deltaE > 1.0) std::cout << d_energy - energy << std::endl;
+   if(deltaE > 1.0) std::cout <<"deltaE " <<  d_energy - energy << std::endl;
    if(d_energy < core_cutoff) return 0.0;
    if(d_energy > core_cutoff+60.0) return 0.0;
    electron_potential[e] += deltaE;
