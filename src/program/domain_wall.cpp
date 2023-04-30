@@ -512,7 +512,7 @@ namespace program{
 			//sim::domain_wall_centre  = 0.1*minima_x[0]/minima_x[1];
 
 		if(vmpi::my_rank == 0) {
-			bool print = (sim::time % 10000 == 0) ? true : false;
+			bool print = (sim::time % 500 == 0) ? true : false;
 			std::ofstream dw_res;
 			string filename = "/dw/dw-" + std::to_string(sim::time) + ".txt";
 			if(print) dw_res.open (string(directory) + filename);
