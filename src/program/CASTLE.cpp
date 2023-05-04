@@ -191,12 +191,12 @@ void initialize () {
     i_phonon_energy = 1.0/phonon_energy;
         if(err::check) std::cout << "phonon occupation test and DoS offset discretisation: " << return_BE_distribution(2*phonon_energy, Te) << ", " << int(floor(1.5*constants::eV_to_AJ*i_phonon_energy)) << std::endl;
     // std::cout << "phonon energy " << phonon_energy << std::endl;
-    dos_size = int(floor((20.0*i_phonon_energy)/1.0))+1;
+    dos_size = int(floor((60.0*i_phonon_energy)/1.0))+1;
 
     dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
     TTMe = TTMp = d_TTMe = d_TTMp = Tp = Te = d_Tp = d_Te = sim::temperature;
 
-    DoS_cutoff = phonon_energy* int(floor(0.315*constants::eV_to_AJ*i_phonon_energy));
+    DoS_cutoff = phonon_energy* int(floor(0.68*constants::eV_to_AJ*i_phonon_energy));
     
       char directory [256];
       if(getcwd(directory, sizeof(directory)) == NULL){
@@ -228,9 +228,10 @@ void initialize () {
       double min = -1.0*DoS_cutoff;
       
       dos_standard.resize(dos_size, dos_scale[50][1]/ constants::eV_to_AJ);
-
+      int l = int(ceil(min - dos_scale[0][0]));
+      std::cout << l << ", " << min << ", " << dos_scale[0][0] << ", " << min - dos_scale[0][0] << std::endl;
       int d_count = 0;
-      for(int l = 0; l < 51; l++) {
+      for(l; l < 51; l++) {
 
         int count = 0;
         double avg = 0.0;
@@ -302,8 +303,8 @@ void initialize () {
 
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
-    applied_voltage = sqrt(1.60218e-19*2.0*sim::applied_voltage/constants::eps_0/(1e-30*lattice_width * lattice_height * lattice_depth)); //eV -> V/m
-    n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/4.087312; // e- / A**3 -> e-/m**3
+    applied_voltage = sim::applied_voltage;
+    n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/1.087312; // e- / A**3 -> e-/m**3
     E_f = 106.68e-20;// constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A = 106.68;// E_f*1e20; //AJ
     mu_f = 5.0 * E_f_A / (3.0 * conduction_electrons);//Fermi-level
@@ -749,7 +750,7 @@ void initialize_positions() {
 
    // initialize_lattice();
 
-     if (err::check)  std::cout << "Lattice" << std::endl;
+    // if (err::check)  std::cout << "Lattice" << std::endl;
 
     initialize_electrons();
 
@@ -784,15 +785,10 @@ void initialize_electrons() {
     // Initialize arrays for holding electron variables
     //      Arrays in super array format to take advantage of caching
     //========
-    electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
-    electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
-    electron_potential.resize(conduction_electrons, 0);
-    // ee_dos_hist.resize(conduction_electrons);
-    relaxation_time_hist_ee.resize(3*conduction_electrons);
-    // relaxation_time_hist_ea.resize(3*conduction_electrons);
+  
 
     // temp_Map.resize(8);
-    flux_index.resize(100,0); 
+  
  
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
@@ -800,7 +796,7 @@ void initialize_electrons() {
     ee_core_scattering_count = 0;
     ea_transport_scattering_count = 0;
     ea_core_scattering_count = 0;
-    ee_scattering_angle = sim::ee_scattering_angle;
+    // ee_scattering_angle = sim::ee_scattering_angle;
     // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     
     half_int_var =  4;
@@ -808,6 +804,13 @@ void initialize_electrons() {
     e_e_integration_cutoff = pow(lattice_width/8.0,2.0);
     e_e_coulomb_cutoff = pow(7.0, 2.0);
     
+      if (err::check) std::cout << "Prepare to set arrays: " << std::endl;
+      electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
+    electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
+    electron_potential.resize(conduction_electrons, 0);
+    // ee_dos_hist.resize(conduction_electrons);
+    relaxation_time_hist_ee.resize(3*conduction_electrons);
+    // relaxation_time_hist_ea.resize(3*conduction_electrons);
    // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
     // electron_transport_list.resize(conduction_electrons, false);
     electron_integration_list.resize(conduction_electrons);
@@ -815,22 +818,22 @@ void initialize_electrons() {
   
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
-
+      flux_index.resize(100,0); 
     global_tau_ep.resize(dos_size*2, 0.0);
     global_tau_ee.resize(dos_size, 0.0);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-    const int e_density =   int(round(3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 3.8*n_f * 1e-3))));
-     ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3));
-    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 3.8*n_f * 1e-3));
-        if (err::check)  std::cout << e_density << ", " << ee_density << ", " << ee_scattering << std::endl;
+     ee_density =   3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.08*n_f * 1e-3));
+    //  ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3));
+    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.08*n_f * 1e-3));
+        if (err::check)  std::cout << ee_density << ", " << ee_scattering << std::endl;
     
     omp_set_dynamic(0);
     omp_set_num_threads(omp_threads);
-    #pragma omp parallel for schedule(static) 
+    #pragma omp parallel for schedule(dynamic,4) 
     for (int e = 0; e < conduction_electrons; e++) {
 
-        electron_integration_list[e].resize(e_density, 0);
+        electron_integration_list[e].resize(ee_density, 0);
         // electron_nearest_electron_list.at(e).resize(ee_density, 0);
         electron_ee_scattering_list[e].resize(ee_scattering, 0);
         electron_ea_scattering_list[e].resize(2,0);

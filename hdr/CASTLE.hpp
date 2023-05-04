@@ -245,7 +245,7 @@ namespace CASTLE {
     extern void neighbor_e_e_coulomb(const int e, const int array_index);
     extern void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread);
  
-    extern double electron_applied_voltage(const int e, const int array_index, double& external_potential);
+    extern double electron_applied_voltage(const int e, const int array_index);
  
     extern void ea_scattering(const int e, const int array_index, const int thread);
     extern void ee_scattering();

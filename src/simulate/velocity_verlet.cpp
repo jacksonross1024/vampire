@@ -297,7 +297,7 @@ void update_dynamics() {
       //  pump = 0.0;
     Tp = d_Tp;
     Te = d_Te;
-      if(err::check) std::cout << "conditions set; updating dos " << std::endl;
+      if(err::check) std::cout << "conditions set; updating scattering lists" << std::endl;
 
    pump = 0.0;
 
@@ -317,22 +317,22 @@ void update_dynamics() {
       //   electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
       // }
       
-      if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index, photon_energy);
+      if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index);
       // if(equilibrium_step && electron_potential[e] > 0.8*E_f_A) ea_scattering(e, array_index, omp_get_thread_num());
       ea_scattering(e, array_index, omp_get_thread_num());
     }
 
     // if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
        TEKE += external_potential;
-        if(err::check) std::cout << "dos updated. ee scattering step..." << std::endl;
+        if(err::check) std::cout << "lists updated. ee scattering step..." << std::endl;
       q_sq = k_sq();
      
     ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;  
-    if(!equilibrium_step) d_Tp = a_heat_capacity_i*TLE *n_f*4.087312/conduction_electrons + Tp;
+    if(!equilibrium_step) d_Tp = a_heat_capacity_i*TLE *n_f*1.087312/conduction_electrons + Tp;
     else d_Tp = sim::temperature;
 
-    d_Te = (e_heat_capacity_i*TEKE*n_f*4.087312/conduction_electrons/abs(Te)) + (dt*e_heat_capacity_i*pump/abs(Te)) + Te;
+    d_Te = (e_heat_capacity_i*TEKE*n_f*1.087312/conduction_electrons/abs(Te)) + (dt*e_heat_capacity_i*pump/abs(Te)) + Te;
  
    total_TEKE += TEKE;
         if (err::check) std::cout << "reset scattering." << std::endl;
@@ -364,10 +364,11 @@ void e_e_coulomb(const int e, const int array_index) {
    // double scattering_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 49.0;
    double integration_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 100.0;
    // int e_size = 6*round(pow(scattering_range, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
-   int i_size = 3*round(pow(integration_range,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
+   int i_size = 3*round(pow(integration_range,1.5)*1.25*M_PI * 1.08*n_f * 1e-3);
    // if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
-   if(electron_integration_list[e].size() < i_size) electron_integration_list[e].resize(i_size, 0);
-   int cells = (i_size > e_e_integration_cutoff) ? 125 : 27;
+   if(electron_integration_list[e].size() < i_size+1) electron_integration_list[e].resize(i_size+1, 0);
+   int cells = (i_size > ee_density) ? 125 : 27;
+  //  if(cells > 27) std::cout << i_size << ", " << ee_density << ", " << electron_potential[e] << std::endl;
    std::vector<int> integration_list;
    integration_list = (cells > 27) ? cell_lr_neighbor_list[cell] : cell_nearest_neighbor_list[cell];
 
@@ -402,7 +403,7 @@ void e_e_coulomb(const int e, const int array_index) {
         electron_position[array_index] << ", " << electron_position[array_index_i] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index_i + 1] << ", " <<\
         electron_position[array_index+2] << ", " <<  electron_position[array_index_i + 2] << std::endl;
         
-        if(length > e_e_integration_cutoff) continue;
+        if(length > integration_range) continue;
         electron_integration_list[e][ee_integration_count] = array_index_i;
           if(ee_integration_count >= electron_integration_list[e].size() - 2) {std::cout << e << " ee integration " << ee_integration_count << " > " << electron_integration_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
           break; }
@@ -435,10 +436,10 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
    const int size = electron_integration_list[e][0];
    int neighbor_count = 1;
    int scattering_count = 1;
-   int s_size = 3*round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
+   // int s_size = 3*round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
    // int l_size = 3*round(pow(400.0,1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
 
-   double scattering_range = (electron_integration_list[e].size() > s_size) ? 400.0 : 49.0;
+   // double scattering_range = (electron_integration_list[e].size() > s_size) ? 400.0 : 49.0;
     for (int i = 1; i < size; i++) {
         const int array_index_i = electron_integration_list[e][i];
         const int electron = array_index_i/3;
@@ -471,7 +472,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
       //   if(neighbor_count >= electron_nearest_electron_list[e].size() - 2) {std::cout << e << ", " << neighbor_count << " > " << electron_nearest_electron_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
       //   break; }
 
-        if (length > scattering_range) continue; 
+        if (length > e_e_coulomb_cutoff) continue; 
         electron_ee_scattering_list[e][scattering_count*2] = array_index_i/3;
         electron_ee_scattering_list[e][scattering_count*2 +1] = length;
         scattering_count++;
@@ -482,15 +483,37 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
     //  if(e == 0 ) std::cout << size << ", " << neighbor_count << ", " << scattering_count << std::endl;
 }
 
-double electron_applied_voltage(const int e, const int array_index, double& external_potential) {
+double electron_applied_voltage(const int e, const int array_index) {
 
    const double energy = electron_potential[e];
-   const double d_energy = return_dWdE_i(return_dWdE(energy)+1e10*dt*applied_voltage*constants::e/constants::hbar_r); //V/m * q = F_x/kg = 0.5*a_x*dt = d_v_x
-   const double deltaE = d_energy - energy;
-   if(deltaE > 1.0) std::cout <<"deltaE " <<  d_energy - energy << std::endl;
-   if(d_energy < core_cutoff) return 0.0;
+   double k = return_dWdE(energy);
+   double k_1 = electron_velocity[array_index]*k;
+   double k_2 = electron_velocity[array_index+1]*k;
+   double k_3 = electron_velocity[array_index+2]*k;
+
+   double d_k_1 = k_1+1e10*dt*applied_voltage*constants::e/constants::hbar_r; 
+   // e-4  / A
+   double d_k = sqrt(d_k_1*d_k_1 + k_2*k_2 + k_3*k_3);
+   
+   double d_energy = return_dWdE_i(d_k);
+   double deltaE = d_energy - energy;
+   // const double deltaE = 1e10*dt*applied_voltage*constants::e*k_1*return_vel(energy)/k;
+   // if(energy > E_f_A+4.8) std::cout <<"deltaE " <<  d_energy << ", " << deltaE << ", " << d_k << ", " << k << ", " << d_k_1 << ", " << k_1 << std::endl;
    if(d_energy > core_cutoff+60.0) return 0.0;
-   electron_potential[e] += deltaE;
+   if(d_energy < core_cutoff) {
+      electron_velocity[array_index] *= -1.0;
+      electron_velocity[array_index+1] *= -1.0;
+      electron_velocity[array_index+2] *= -1.0;
+      return 0.0;
+   }
+
+   double theta = atan2(k_2, d_k_1);
+      if(theta != theta) theta = 0.0;
+   double phi = acos(k_3/d_k);
+   electron_velocity[array_index]   = cos(theta)*sin(phi);
+   electron_velocity[array_index+1] = sin(theta)*sin(phi);
+   electron_velocity[array_index+2] = cos(phi);
+   electron_potential[e] = d_energy;
    return deltaE;
 }
 
