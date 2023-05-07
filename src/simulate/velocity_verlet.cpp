@@ -497,8 +497,6 @@ double electron_applied_voltage(const int e, const int array_index) {
    
    double d_energy = return_dWdE_i(d_k);
    double deltaE = d_energy - energy;
-   // const double deltaE = 1e10*dt*applied_voltage*constants::e*k_1*return_vel(energy)/k;
-   // if(energy > E_f_A+4.8) std::cout <<"deltaE " <<  d_energy << ", " << deltaE << ", " << d_k << ", " << k << ", " << d_k_1 << ", " << k_1 << std::endl;
    if(d_energy > core_cutoff+60.0) return 0.0;
    if(d_energy < core_cutoff) {
       electron_velocity[array_index] *= -1.0;

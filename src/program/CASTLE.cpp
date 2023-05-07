@@ -1063,13 +1063,13 @@ void initialize_velocities() {
           if(theta != theta || phi != phi || vel != vel) std::cout << theta << ", " << phi << ", " << vel << ", " << energy << std::endl;
       
             if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
-        electron_velocity.at(array_index)     = cos(theta)*sin(phi); 
-        electron_velocity.at(array_index + 1) = sin(theta)*sin(phi);
-        electron_velocity.at(array_index + 2) = cos(phi); 
+        electron_velocity[array_index]     = cos(theta)*sin(phi); 
+        electron_velocity[array_index + 1] = sin(theta)*sin(phi);
+        electron_velocity[array_index + 2] = cos(phi); 
         
-        p_x += electron_velocity.at(array_index)*vel;
-        p_y += electron_velocity.at(array_index+1)*vel;
-        p_z += electron_velocity.at(array_index+2)*vel;
+        p_x += electron_velocity[array_index]*vel;
+        p_y += electron_velocity[array_index+1]*vel;
+        p_z += electron_velocity[array_index+2]*vel;
       }
     }
 
@@ -1089,11 +1089,11 @@ void initialize_velocities() {
     #pragma omp for schedule(dynamic, 4) nowait
     for(int e = 0; e < conduction_electrons; e++) {
       double energy = electron_potential[e];
-      double vel = return_vel(energy);
+      // double vel = return_vel(energy);
       local_e_dos[int(std::min(dos_size-1.0, std::max(0.0, floor((energy - DoS_cutoff)*i_phonon_energy))))]++;
-      electron_velocity[3*e]   -= p_x/vel;
-      electron_velocity[3*e+1] -= p_y/vel;
-      electron_velocity[3*e+2] -= p_z/vel;
+      // electron_velocity[3*e]   -= p_x/vel;
+      // electron_velocity[3*e+1] -= p_y/vel;
+      // electron_velocity[3*e+2] -= p_z/vel;
     }
     
     #pragma omp critical 
