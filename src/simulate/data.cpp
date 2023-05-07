@@ -123,6 +123,7 @@ namespace sim{
    double ea_coupling_strength = 0.0;
    double ee_scattering_angle = 0.1;
    
+   double photon_energy = 0.0;
 
    namespace internal{
 
@@ -232,7 +233,8 @@ namespace CASTLE {
 
    double applied_voltage = 0.0;
    double power_density = 0.0;
-   
+   double photon_energy = 0.0;
+
    bool ee_coupling = false;
    bool ea_coupling = false;
    double ee_rate;

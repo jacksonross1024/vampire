@@ -277,7 +277,8 @@ void initialize () {
   
     applied_voltage_sim = sim::applied_voltage_sim;
     heat_pulse_sim = sim::heat_pulse_sim;
-     //V/m
+
+    photon_energy = sim::photon_energy * constants::eV_to_AJ;
 
     ee_coupling = sim::ee_coupling;
     ea_coupling = sim::ea_coupling;
@@ -303,7 +304,7 @@ void initialize () {
 
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
-    applied_voltage = sim::applied_voltage;
+    applied_voltage = sim::applied_voltage; //V/m
     n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/1.087312; // e- / A**3 -> e-/m**3
     E_f = 106.68e-20;// constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A = 106.68;// E_f*1e20; //AJ
@@ -324,7 +325,7 @@ void initialize () {
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
     power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
-    
+    if(photon_energy == 0.0) std::cerr << "sim error: photon energy gives infinite intensity " << std::endl;
     const static double tau = 3.0*E_f_A /(M_PI*ea_coupling_strength); // fs/AJ
     G = 300.0*e_heat_capacity*E_f_A*3.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
