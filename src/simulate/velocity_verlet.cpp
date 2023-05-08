@@ -338,18 +338,17 @@ void update_dynamics() {
 
 void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread) {       
     
-    const double theta = omp_uniform_random[thread]() * 2.0 * M_PI;
-    const double phi   = omp_uniform_random[thread]() * M_PI; 
+   const double theta = omp_uniform_random[thread]() * 2.0 * M_PI;
+   const double phi   = omp_uniform_random[thread]() * M_PI; 
 
-    electron_potential[e] += EKE;
+   electron_potential[e] += EKE;
   
-    electron_velocity[array_index]   = cos(theta)*sin(phi);
-    electron_velocity[array_index+1] = sin(theta)*sin(phi);
-    electron_velocity[array_index+2] = cos(phi);
+   electron_velocity[array_index]   = cos(theta)*sin(phi);
+   electron_velocity[array_index+1] = sin(theta)*sin(phi);
+   electron_velocity[array_index+2] = cos(phi);
 
-  //  electron_ee_scattering_list[e][0] = 1;
-    electron_ea_scattering_list[e][0] = 1;
- 
+   electron_ea_scattering_list[e][0] = 1;
+   return;
 }
 
 void e_e_coulomb(const int e, const int array_index) {
@@ -494,9 +493,7 @@ double electron_applied_voltage(const int e, const int array_index) {
    
    double d_energy = return_dWdE_i(d_k);
    double deltaE = d_energy - energy;
-   if(applied_voltage == 0.0 || deltaE == 0.0) std::cout << "energy leak " << d_energy << ", " << energy << ", " << applied_voltage << std::endl;
-   // const double deltaE = 1e10*dt*applied_voltage*constants::e*k_1*return_vel(energy)/k;
-   // if(energy > E_f_A+4.8) std::cout <<"deltaE " <<  d_energy << ", " << deltaE << ", " << d_k << ", " << k << ", " << d_k_1 << ", " << k_1 << std::endl;
+   
    if(d_energy > core_cutoff+60.0) return 0.0;
    if(d_energy < core_cutoff) {
       electron_velocity[array_index] *= -1.0;
