@@ -277,7 +277,8 @@ void initialize () {
   
     applied_voltage_sim = sim::applied_voltage_sim;
     heat_pulse_sim = sim::heat_pulse_sim;
-     //V/m
+
+    photon_energy = sim::photon_energy * constants::eV_to_AJ;
 
     ee_coupling = sim::ee_coupling;
     ea_coupling = sim::ea_coupling;
@@ -304,7 +305,7 @@ void initialize () {
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
     applied_voltage = sim::applied_voltage;
-    n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/total_e_scaling; // e- / A**3 -> e-/m**3
+    n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/1.087312; // e- / A**3 -> e-/m**3
     E_f = 106.68e-20;// constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A = 106.68;// E_f*1e20; //AJ
     mu_f = 5.0 * E_f_A / (3.0 * conduction_electrons);//Fermi-level
@@ -324,7 +325,7 @@ void initialize () {
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
     power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
-    
+    if(photon_energy == 0.0) std::cerr << "sim error: photon energy gives infinite intensity " << std::endl;
     const static double tau = 3.0*E_f_A /(M_PI*ea_coupling_strength); // fs/AJ
     G = 300.0*e_heat_capacity*E_f_A*3.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
@@ -1062,13 +1063,13 @@ void initialize_velocities() {
           if(theta != theta || phi != phi || vel != vel) std::cout << theta << ", " << phi << ", " << vel << ", " << energy << std::endl;
       
             if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
-        electron_velocity.at(array_index)     = cos(theta)*sin(phi); 
-        electron_velocity.at(array_index + 1) = sin(theta)*sin(phi);
-        electron_velocity.at(array_index + 2) = cos(phi); 
+        electron_velocity[array_index]     = cos(theta)*sin(phi); 
+        electron_velocity[array_index + 1] = sin(theta)*sin(phi);
+        electron_velocity[array_index + 2] = cos(phi); 
         
-        p_x += electron_velocity.at(array_index)*vel;
-        p_y += electron_velocity.at(array_index+1)*vel;
-        p_z += electron_velocity.at(array_index+2)*vel;
+        p_x += electron_velocity[array_index]*vel;
+        p_y += electron_velocity[array_index+1]*vel;
+        p_z += electron_velocity[array_index+2]*vel;
       }
     }
 
@@ -1088,11 +1089,11 @@ void initialize_velocities() {
     #pragma omp for schedule(dynamic, 4) nowait
     for(int e = 0; e < conduction_electrons; e++) {
       double energy = electron_potential[e];
-      double vel = return_vel(energy);
+      // double vel = return_vel(energy);
       local_e_dos[int(std::min(dos_size-1.0, std::max(0.0, floor((energy - DoS_cutoff)*i_phonon_energy))))]++;
-      electron_velocity[3*e]   -= p_x/vel;
-      electron_velocity[3*e+1] -= p_y/vel;
-      electron_velocity[3*e+2] -= p_z/vel;
+      // electron_velocity[3*e]   -= p_x/vel;
+      // electron_velocity[3*e+1] -= p_y/vel;
+      // electron_velocity[3*e+2] -= p_z/vel;
     }
     
     #pragma omp critical 

@@ -253,7 +253,7 @@ void update_position() {
 void update_dynamics() {
   
   //  int array_index;
-    double photon_energy = sim::applied_voltage*constants::eV_to_AJ; //AJ/hv
+   //  double photon_energy = sim::applied_voltage*constants::eV_to_AJ; //AJ/hv
     //AJ/fs/nm**2 -> [1e-3volume(A**3)/(AJ/hv)) hv/fs 
     const static double photon_rate = 1e-2*power_density*lattice_width*lattice_depth/photon_energy; //hv/fs
     int photons_at_dt = 0; //hv*dt
@@ -307,15 +307,15 @@ void update_dynamics() {
       // else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
       else  neighbor_e_e_coulomb(e, array_index);
 
-      // if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
-      //   #pragma omp atomic
-      //   count++;
-      //   // pump += external_potential;
-      //   electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
-      // }
+      if(photons_at_dt > 0 && std::end(chosen) != std::find(chosen.begin(), chosen.end(), e)) {
+        #pragma omp atomic
+        count++;
+        // pump += external_potential;
+        electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
+      }
       
-      if(!equilibrium_step) external_potential += electron_applied_voltage(e, array_index);
-      // if(equilibrium_step && electron_potential[e] > 0.8*E_f_A) ea_scattering(e, array_index, omp_get_thread_num());
+      if(!equilibrium_step && applied_voltage_sim) external_potential += electron_applied_voltage(e, array_index);
+      if(equilibrium_step && heat_pulse_sim) ea_scattering(e, array_index, omp_get_thread_num());
       ea_scattering(e, array_index, omp_get_thread_num());
     }
 

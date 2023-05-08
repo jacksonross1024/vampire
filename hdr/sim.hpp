@@ -300,6 +300,8 @@ namespace sim{
 	extern double ee_coupling_strength;
 	extern double ea_coupling_strength;
 	extern double ee_scattering_angle;
+
+	extern double photon_energy;
 	//------------------------------------------------------------------------
    // getter functions to give access to internal sim variables
    //------------------------------------------------------------------------

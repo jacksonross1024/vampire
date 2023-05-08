@@ -271,6 +271,13 @@ namespace sim{
          sim::fluence = c;
          return true;
       }
+      test = "photon-energy";
+      if(word == test) {
+         double c = atof(value.c_str());
+         vin::check_for_valid_value(c, word, line, prefix, unit, "eV", 0.0, 1e10, "input", "0-1e10");
+         sim::photon_energy = c;
+         return true;
+      }
 
       test = "x_vector";
       if(word == test) {
