@@ -196,7 +196,7 @@ void initialize () {
     dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
     TTMe = TTMp = d_TTMe = d_TTMp = Tp = Te = d_Tp = d_Te = sim::temperature;
 
-    DoS_cutoff = phonon_energy* int(floor(0.68*constants::eV_to_AJ*i_phonon_energy));
+    DoS_cutoff = phonon_energy* int(floor(0.67*constants::eV_to_AJ*i_phonon_energy));
     
       char directory [256];
       if(getcwd(directory, sizeof(directory)) == NULL){
@@ -229,7 +229,7 @@ void initialize () {
       
       dos_standard.resize(dos_size, dos_scale[50][1]/ constants::eV_to_AJ);
       int l = int(ceil(min - dos_scale[0][0]));
-      std::cout << l << ", " << min << ", " << dos_scale[0][0] << ", " << min - dos_scale[0][0] << std::endl;
+      // std::cout << l << ", " << min << ", " << dos_scale[0][0] << ", " << min - dos_scale[0][0] << std::endl;
       int d_count = 0;
       for(l; l < 51; l++) {
 
@@ -259,13 +259,14 @@ void initialize () {
       for(int d = 1; d < dos_size-2; d++) {
         // dos_standard[d] = return_fermi_distribution(d*phonon_energy+87.5561-E_f_A, Te)*
         
-        if(d*phonon_energy - DoS_cutoff > - 1.4*constants::eV_to_AJ) total_e_scaling += phonon_energy*dos_standard[d]*(return_fermi_distribution(d*phonon_energy-DoS_cutoff, 0)+4.0*return_fermi_distribution(d*phonon_energy + 0.5*phonon_energy -DoS_cutoff, 0) + return_fermi_distribution(d*phonon_energy + phonon_energy -DoS_cutoff, 0))/6.0; //e-/atom for Fermi window
+        // if(d*phonon_energy -DoS_cutoff >  dos_scale[0][0]) 
+        total_e_scaling += phonon_energy*dos_standard[d]*(return_fermi_distribution(d*phonon_energy-DoS_cutoff, 0)+4.0*return_fermi_distribution(d*phonon_energy + 0.5*phonon_energy -DoS_cutoff, 0) + return_fermi_distribution(d*phonon_energy + phonon_energy -DoS_cutoff, 0))/6.0; //e-/atom for Fermi window
         dos_standard[d] = lattice_atoms*dos_standard[d]; //e-/AJ for Fermi window for whole lattice 
         dos_standard_output << d*phonon_energy-DoS_cutoff << ", " << dos_standard[d]*phonon_energy << ", " << 0.5*(dos_standard[d+1]-dos_standard[d-1])/lattice_atoms/phonon_energy << '\n';
       }
       conduction_electrons = int(round(total_e_scaling*lattice_atoms));
       // total_e /= constants::eV_to_AJ;
-     std::cout << "total e- dos: " << total_e_scaling << ", (e-/Fermi window/atom); full lattice: " << conduction_electrons << std::endl;
+     std::cout << "total e- dos: " << total_e_scaling << ", (e-/Fermi window/atom); full lattice: " << conduction_electrons << " @ 0K from " << -DoS_cutoff << " to 0 " << std::endl;
 
     CASTLE_output_rate = sim::partial_time;
     
@@ -661,7 +662,7 @@ void initialize_cell_omp() {
     //number of cells each thread takes in each lattice direction
     const int max_x_threads = 4;
     const int max_y_threads = 4;
-    const int max_z_threads = 2;  
+    const int max_z_threads = 4;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -1126,14 +1127,14 @@ void initialize_velocities() {
     std::cout << "core cutoff: " << core_cutoff << ", transport cutoff: " << transport_cutoff << ", ballistic cutoff: " << E_f_A+4.86166 << std::endl;
       if(err::check)  std::cout << "center of mass adjustment: " << p_x << ", " << p_y << ", " << p_z << std::endl;
    
-    for(int e = 0; e < conduction_electrons; e++) {
-      double energy =  (electron_potential[e]);
-      double vel =  return_vel(energy);
-      double theta = atan2(electron_velocity[3*e+1], electron_velocity[3*e]);
-        if(theta != theta) theta  = 0.0;
-      double phi = acos(electron_velocity[3*e+2]);
-      Init_E_vel << e << ", " << energy << ", " << vel << ", " << theta  << ", " << phi << "\n";
-    }
+    // for(int e = 0; e < conduction_electrons; e++) {
+    //   double energy =  (electron_potential[e]);
+    //   double vel =  return_vel(energy);
+    //   double theta = atan2(electron_velocity[3*e+1], electron_velocity[3*e]);
+    //     if(theta != theta) theta  = 0.0;
+    //   double phi = acos(electron_velocity[3*e+2]);
+    //   Init_E_vel << e << ", " << energy << ", " << vel << ", " << theta  << ", " << phi << "\n";
+    // }
 
        if (err::check)  std::cout << "distribution output" << std::endl;
     
@@ -1352,6 +1353,7 @@ void create_defined_fermi_distribution(const std::string& name, std::vector<doub
   double zero_temp = 84.319184;
   int finite_electron_number = 0;
   double mu = 0.0;
+  double mu_Ni = 0.0;
   // epsilon = max;
   if(temp <= 1) {
     for(int h = 0; h < hist_sub_E_f && !full; h++) {
@@ -1384,10 +1386,12 @@ void create_defined_fermi_distribution(const std::string& name, std::vector<doub
     if(count != conduction_electrons) std::cout << "potential early break: " << count << " rather than " << conduction_electrons << std::endl;
     // E_f_A = epsilon;
   } else {
+    // double u_Ni = 0.0;
+    mu_Ni = (temp < 400.0) ? 2.42*temp/1250.0 : 2.42*(1.0+ temp-400.0)/225.0;
     epsilon = E_f_A + 0.0000001;// + step_size*energy_step;
     for(int h = 0; h < hist_super_E_f; h++) {
      
-      const double DoS_occupation = phonon_energy* dos_standard[int(floor((epsilon-min)*i_phonon_energy))]*(return_fermi_distribution(epsilon-E_f_A-mu,temp)+return_fermi_distribution(epsilon+step_size-E_f_A-mu,temp)+4.0*return_fermi_distribution(epsilon+0.5*step_size-E_f_A-mu,temp))/6.0;
+      const double DoS_occupation = phonon_energy* dos_standard[int(floor((epsilon-min)*i_phonon_energy))]*(return_fermi_distribution(epsilon-E_f_A-mu_Ni,temp)+return_fermi_distribution(epsilon+step_size-E_f_A-mu_Ni,temp)+4.0*return_fermi_distribution(epsilon+0.5*step_size-E_f_A-mu_Ni,temp))/6.0;
       if(DoS_occupation < 1) break;
       const int step_occupation = int(floor(DoS_occupation/double(steps)));
       int small_adjust = int(round(DoS_occupation - step_occupation*steps)) % steps;
@@ -1413,7 +1417,7 @@ void create_defined_fermi_distribution(const std::string& name, std::vector<doub
     epsilon = E_f_A - 0.000001;
     for(int h = 0; h < hist_sub_E_f && !full; h++) {
      
-      const double DoS_occupation = phonon_energy* dos_standard[int(floor((epsilon-min)*i_phonon_energy))]*(return_fermi_distribution(epsilon-E_f_A-mu,temp)+return_fermi_distribution(epsilon-step_size-E_f_A-mu,temp)+4.0*return_fermi_distribution(epsilon-0.5*step_size-E_f_A-mu,temp))/6.0;
+      const double DoS_occupation = phonon_energy* dos_standard[int(floor((epsilon-min)*i_phonon_energy))]*(return_fermi_distribution(epsilon-E_f_A-mu_Ni,temp)+return_fermi_distribution(epsilon-step_size-E_f_A-mu_Ni,temp)+4.0*return_fermi_distribution(epsilon-0.5*step_size-E_f_A-mu_Ni,temp))/6.0;
       const int step_occupation = int(floor(DoS_occupation/double(steps)));
       int small_adjust = int(round(DoS_occupation - step_occupation*steps)) % steps;
       int offset = 0;
@@ -1431,7 +1435,7 @@ void create_defined_fermi_distribution(const std::string& name, std::vector<doub
            break;}
         }
         // energy_step++;
-        if(return_fermi_distribution(epsilon - E_f_A, temp) < 1.0-1e-3) transport_cutoff = epsilon;
+        if(return_fermi_distribution(epsilon - E_f_A-mu_Ni, temp) < 1.0-1e-3) transport_cutoff = epsilon;
         epsilon -= step_size;
         if(epsilon >= zero_temp) finite_electron_number = count;
       }
@@ -1442,9 +1446,8 @@ void create_defined_fermi_distribution(const std::string& name, std::vector<doub
 
   // transport_cutoff = E_f_A;
   std::cout << "Discrete DoS_cutoff at " << DoS_cutoff << ", offset " << floor((core_cutoff-DoS_cutoff)*i_phonon_energy) << std::endl;
-  std::cout << "mu cutoff error at " << conduction_electrons - count << " electrons. % = " << 100.0*double(conduction_electrons-count)/double(conduction_electrons) << \
-  ". Estimated mu_feg (AJ): " <<  -1.0* pow(M_PI*constants::kB_r*temp/E_f_A, 2.0)/12.0 <<\
-  "; mu_dos (AJ @ 300K): 0.8" << std::endl;
+  std::cout << "mu cutoff error gives " << conduction_electrons - count << " electrons. % = " << 100.0*double(conduction_electrons-count)/double(conduction_electrons) << \
+  ". Estimated mu_feg (AJ): " <<  -1.0* pow(M_PI*constants::kB_r*temp/E_f_A, 2.0)/12.0 << ", used: " << mu_Ni << std::endl;
   distrib.close();
 }
 /*

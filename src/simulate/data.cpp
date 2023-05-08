@@ -207,7 +207,7 @@ namespace CASTLE {
    double mu_r; //inverse reduced mass in reduced units
    double combined_mass; //inverse with reduced units
    double Tr; // inverse seconds
-   double total_e_scaling = 1.0;
+   double total_e_scaling = 0.0;
    double a_heat_capacity;
    double e_heat_capacity;
    double a_heat_capacity_i;
