@@ -95,6 +95,7 @@ namespace CASTLE {
     extern double atomic_mass;
     extern double mu_r; //inverse reduced mass in reduced units
     extern double combined_mass; //inverse with reduced units
+    extern double total_e_scaling;
     extern double Tr; // inverse seconds
     extern double a_heat_capacity; // AJ/K/mol -> AJ/K
     extern double e_heat_capacity; // AJ/K/mol -> AJ/K
@@ -173,7 +174,7 @@ namespace CASTLE {
     extern std::vector< int> escaping_electrons;
     extern std::vector<std::vector< int> > relaxation_time_hist_ee;
     // extern std::vector<std::vector< int> > relaxation_time_hist_ea;
-    extern std::vector< int> flux_index;
+    extern std::vector< double> flux_index;
     extern std::vector<MTRand> omp_uniform_random;
     extern std::vector<MTRand_int32> omp_int_random;
     //outputs

@@ -206,6 +206,7 @@ namespace CASTLE {
    double mu_r; //inverse reduced mass in reduced units
    double combined_mass; //inverse with reduced units
    double Tr; // inverse seconds
+   double total_e_scaling = 1.0;
    double a_heat_capacity;
    double e_heat_capacity;
    double a_heat_capacity_i;
@@ -283,7 +284,7 @@ namespace CASTLE {
    std::vector< int> escaping_electrons;
    std::vector<std::vector< int> > relaxation_time_hist_ee;
    // std::vector<std::vector< int> > relaxation_time_hist_ea;
-   std::vector<int> flux_index;
+   std::vector<double> flux_index;
 //    MTRand_closed uniform_random;
 //    MTRand_int32 int_random;
     std::vector<MTRand> omp_uniform_random(32);

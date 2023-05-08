@@ -254,18 +254,18 @@ void initialize () {
 
       std::ofstream dos_standard_output;
       dos_standard_output.open(string(directory) + "/dos_standard.csv");
-      double total_e = 0.0;
+      
       // min = DoS_cutoff;
       for(int d = 1; d < dos_size-2; d++) {
         // dos_standard[d] = return_fermi_distribution(d*phonon_energy+87.5561-E_f_A, Te)*
         
-        if(d*phonon_energy - DoS_cutoff > - 1.4*constants::eV_to_AJ) total_e += phonon_energy*dos_standard[d]*(return_fermi_distribution(d*phonon_energy-DoS_cutoff, 0)+4.0*return_fermi_distribution(d*phonon_energy + 0.5*phonon_energy -DoS_cutoff, 0) + return_fermi_distribution(d*phonon_energy + phonon_energy -DoS_cutoff, 0))/6.0; //e-/atom for Fermi window
+        if(d*phonon_energy - DoS_cutoff > - 1.4*constants::eV_to_AJ) total_e_scaling += phonon_energy*dos_standard[d]*(return_fermi_distribution(d*phonon_energy-DoS_cutoff, 0)+4.0*return_fermi_distribution(d*phonon_energy + 0.5*phonon_energy -DoS_cutoff, 0) + return_fermi_distribution(d*phonon_energy + phonon_energy -DoS_cutoff, 0))/6.0; //e-/atom for Fermi window
         dos_standard[d] = lattice_atoms*dos_standard[d]; //e-/AJ for Fermi window for whole lattice 
         dos_standard_output << d*phonon_energy-DoS_cutoff << ", " << dos_standard[d]*phonon_energy << ", " << 0.5*(dos_standard[d+1]-dos_standard[d-1])/lattice_atoms/phonon_energy << '\n';
       }
-      conduction_electrons = int(round(total_e*lattice_atoms));
+      conduction_electrons = int(round(total_e_scaling*lattice_atoms));
       // total_e /= constants::eV_to_AJ;
-     std::cout << "total e- dos: " << total_e << ", (e-/Fermi window/atom); full lattice: " << conduction_electrons << std::endl;
+     std::cout << "total e- dos: " << total_e_scaling << ", (e-/Fermi window/atom); full lattice: " << conduction_electrons << std::endl;
 
     CASTLE_output_rate = sim::partial_time;
     
@@ -304,7 +304,7 @@ void initialize () {
     mu_r = (atomic_mass + constants::m_e_r) / (atomic_mass * constants::m_e_r );
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
     applied_voltage = sim::applied_voltage;
-    n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/1.087312; // e- / A**3 -> e-/m**3
+    n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/total_e_scaling; // e- / A**3 -> e-/m**3
     E_f = 106.68e-20;// constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A = 106.68;// E_f*1e20; //AJ
     mu_f = 5.0 * E_f_A / (3.0 * conduction_electrons);//Fermi-level
@@ -335,7 +335,7 @@ void initialize () {
     // AJ
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
-    ee_rate = -10.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*3.54*3.54*3.54), 2.0)/constants::hbar_r; // AJ/A^4
+    ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*3.54*3.54*3.54), 2.0)/constants::hbar_r; // AJ/A^4
     E_f_A -= ((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy - floor((E_f_A - 1.5*constants::eV_to_AJ)*i_phonon_energy))*phonon_energy;
     // core_cutoff = E_f_A - DoS_cutoff;
      std::cout << "E_f(AJ): " << E_f*1e20 << ", discretised (AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
@@ -467,7 +467,7 @@ void initialize () {
     // kg = kg fs / A  1e30 
     // m  = hbar k/v
     //  m_eff_ratio = return_dWdE(E_f_A+5.0)*return_vel(E_f_A)/return_vel(E_f_A+5.0)/return_dWdE(E_f_A);
-     std::cout << "m_ee ratio: " << m_eff_ratio << std::endl;
+    //  std::cout << "m_ee ratio: " << m_eff_ratio << std::endl;
    // temp_data.open(string(directory) + "/temp_data.csv");
     mean_data.open(string(directory) + "/mean_data.csv");
     mean_data << "time, step, mean-EKE, mean-LE, mean-Te, mean-Tp,  mean-radius, mean-e-a-collisions, mean-e-e-collisions, mean-x_flux, mean-y_flux, mean-z_flux" << "\n";
@@ -818,14 +818,14 @@ void initialize_electrons() {
   
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
-      flux_index.resize(100,0); 
+      flux_index.resize(dos_size,0); 
     global_tau_ep.resize(dos_size*2, 0.0);
     global_tau_ee.resize(dos_size, 0.0);
 
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
-     ee_density =   3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * 1.08*n_f * 1e-3));
+     ee_density =   3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3));
     //  ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3));
-    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * 1.08*n_f * 1e-3));
+    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3));
         if (err::check)  std::cout << ee_density << ", " << ee_scattering << std::endl;
     
     omp_set_dynamic(0);
@@ -1646,8 +1646,9 @@ void output_data() {
       relaxation_time.open(string(directory)  + "/relaxation_time/" + time_stamp);
 
     // std::cout << "why?" << std::endl;
+     double normalise = 1.0/(double(CASTLE_output_rate * CASTLE_MD_rate)*lattice_depth*lattice_height*lattice_width);
       for(int e = 0; e < flux_index.size(); e++) {
-        flux_hist << e << ", " << flux_index[e] << "\n";
+        flux_hist << e << ", " << flux_index[e]*normalise << "\n";
         flux_index[e] = 0;
       }
       flux_hist.close();

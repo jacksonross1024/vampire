@@ -100,6 +100,8 @@ void update_position() {
   {
     std::vector<int> local_e_dos;
     local_e_dos.resize(dos_size,0);
+    std::vector<double> local_x_dos;
+    local_x_dos.resize(dos_size,0.0);
     const int thread = omp_get_thread_num();
     //if(omp_get_num_threads() != omp_threads) std::cout << "omp pragma error " << omp_get_num_threads() << " != " << omp_threads << std::endl;
     int local = 0;
@@ -147,19 +149,13 @@ void update_position() {
         if (x_pos < 0.0) {
           x_pos += lattice_width; 
           x_flux--;
-          if (current_time_step % CASTLE_output_rate == 0) {
-            #pragma omp atomic
-            flux_index[int(std::max(0.0, std::min(99.0, floor((energy - DoS_cutoff)/1.0))))]--;
-          }
         } else if (x_pos > lattice_width) {
           x_pos -= lattice_width; 
-          x_flux++;
-          if (current_time_step % CASTLE_output_rate == 0) {
-            #pragma omp atomic
-            flux_index[int(std::max(0.0, std::min(99.0, floor((energy - DoS_cutoff)/1.0))))]++; 
-          } 
+          x_flux++; 
         }
-
+      
+        local_x_dos[int(std::max(0.0, std::min(dos_size-1.0, floor((energy - DoS_cutoff)*i_phonon_energy))))] += electron_velocity[array_index]*return_dWdE(energy);
+          
         if (y_pos < 0.0) {y_pos += lattice_depth; y_flux--;}
         else if (y_pos > lattice_depth) {y_pos -= lattice_depth; y_flux++;}
 
@@ -212,6 +208,7 @@ void update_position() {
       total += local;
 
       for (int h = 0; h < dos_size; h++) {
+         flux_index[h] += local_x_dos[h];
          global_e_dos[h][0] += local_e_dos[h];
          total_1 += local_e_dos[h];
       }
@@ -329,10 +326,10 @@ void update_dynamics() {
      
     ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;  
-    if(!equilibrium_step) d_Tp = a_heat_capacity_i*TLE *n_f*1.087312/conduction_electrons + Tp;
+    if(!equilibrium_step) d_Tp = a_heat_capacity_i*TLE *n_f*total_e_scaling/conduction_electrons + Tp;
     else d_Tp = sim::temperature;
 
-    d_Te = (e_heat_capacity_i*TEKE*n_f*1.087312/conduction_electrons/abs(Te)) + (dt*e_heat_capacity_i*pump/abs(Te)) + Te;
+    d_Te = (e_heat_capacity_i*TEKE*n_f*total_e_scaling/conduction_electrons/abs(Te)) + (dt*e_heat_capacity_i*pump/abs(Te)) + Te;
  
    total_TEKE += TEKE;
         if (err::check) std::cout << "reset scattering." << std::endl;
@@ -361,10 +358,10 @@ void e_e_coulomb(const int e, const int array_index) {
    int ee_dos_count = 1;
    int ee_integration_count = 1;
    int ee_scattering_list = 1;
-   // double scattering_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 49.0;
+
    double integration_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 100.0;
-   // int e_size = 6*round(pow(scattering_range, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3);
-   int i_size = 3*round(pow(integration_range,1.5)*1.25*M_PI * 1.08*n_f * 1e-3);
+   
+   int i_size = 3*round(pow(integration_range,1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3);
    // if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
    if(electron_integration_list[e].size() < i_size+1) electron_integration_list[e].resize(i_size+1, 0);
    int cells = (i_size > ee_density) ? 125 : 27;
@@ -497,6 +494,7 @@ double electron_applied_voltage(const int e, const int array_index) {
    
    double d_energy = return_dWdE_i(d_k);
    double deltaE = d_energy - energy;
+   if(applied_voltage == 0.0 || deltaE == 0.0) std::cout << "energy leak " << d_energy << ", " << energy << ", " << applied_voltage << std::endl;
    // const double deltaE = 1e10*dt*applied_voltage*constants::e*k_1*return_vel(energy)/k;
    // if(energy > E_f_A+4.8) std::cout <<"deltaE " <<  d_energy << ", " << deltaE << ", " << d_k << ", " << k << ", " << d_k_1 << ", " << k_1 << std::endl;
    if(d_energy > core_cutoff+60.0) return 0.0;
