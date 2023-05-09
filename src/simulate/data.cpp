@@ -366,7 +366,7 @@ namespace CASTLE {
    void neighbor_e_e_coulomb(const int e, const int array_index);
 
    void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread);
-   double electron_applied_voltage(const int e, const int array_index);
+   double electron_applied_voltage(const int e, const int array_index, const double potential);
    void ea_scattering(const int e, const int array_index, const int thread);
    void ee_scattering();
    void elastic_scattering(int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy );

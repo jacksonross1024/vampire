@@ -277,7 +277,12 @@ void update_dynamics() {
         d_TTMp = ( G*(TTMe - TTMp)      *dt*a_heat_capacity_i)      + TTMp;
       }
     }
-      
+   double potential = 0.0;
+      if(!equilibrium_step && applied_voltage_sim) {
+         potential = applied_voltage *std::min(((current_time_step-sim::equilibration_time) /10000.0), 1.0);
+         // std::cout << potential << ", " << (current_time_step-sim::equilibration_time) /100.0 << std::endl;
+      } 
+
     omp_set_dynamic(0);
     omp_set_num_threads(omp_threads);
     std::vector<int> chosen;
@@ -314,8 +319,8 @@ void update_dynamics() {
         electron_thermal_field(e, array_index, photon_energy, omp_get_thread_num());
       }
       
-      if(!equilibrium_step && applied_voltage_sim) external_potential += electron_applied_voltage(e, array_index);
-      if(equilibrium_step && heat_pulse_sim) ea_scattering(e, array_index, omp_get_thread_num());
+      if(!equilibrium_step && applied_voltage_sim) external_potential += electron_applied_voltage(e, array_index, potential);
+      //if(equilibrium_step && heat_pulse_sim) ea_scattering(e, array_index, omp_get_thread_num());
       ea_scattering(e, array_index, omp_get_thread_num());
     }
 
@@ -326,8 +331,9 @@ void update_dynamics() {
      
     ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;  
-    if(!equilibrium_step) d_Tp = a_heat_capacity_i*TLE *n_f*total_e_scaling/conduction_electrons + Tp;
-    else d_Tp = sim::temperature;
+   //  if(!equilibrium_step) 
+    d_Tp = a_heat_capacity_i*TLE *n_f*total_e_scaling/conduction_electrons + Tp;
+   //  else d_Tp = sim::temperature;
 
     d_Te = (e_heat_capacity_i*TEKE*n_f*total_e_scaling/conduction_electrons/abs(Te)) + (dt*e_heat_capacity_i*pump/abs(Te)) + Te;
  
@@ -479,7 +485,7 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
     //  if(e == 0 ) std::cout << size << ", " << neighbor_count << ", " << scattering_count << std::endl;
 }
 
-double electron_applied_voltage(const int e, const int array_index) {
+double electron_applied_voltage(const int e, const int array_index, const double potential) {
 
    const double energy = electron_potential[e];
    double k = return_dWdE(energy);
@@ -487,7 +493,7 @@ double electron_applied_voltage(const int e, const int array_index) {
    double k_2 = electron_velocity[array_index+1]*k;
    double k_3 = electron_velocity[array_index+2]*k;
 
-   double d_k_1 = k_1+1e10*dt*applied_voltage*constants::e/constants::hbar_r; 
+   double d_k_1 = k_1+1e10*dt*potential*constants::e/constants::hbar_r; 
    // e-4  / A
    double d_k = sqrt(d_k_1*d_k_1 + k_2*k_2 + k_3*k_3);
    
