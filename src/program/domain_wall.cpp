@@ -72,46 +72,42 @@ namespace program{
 		//reverses the magentisation of atoms further away than the domain wall distance.
 		if (!sim::load_checkpoint_flag){
 			if (sim::domain_wall_axis == 0){
+				//90 degree 
 				if(sim::domain_wall_angle == 0) {
 					for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
-						if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
+						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*30.0) {
 							int mat = atoms::type_array[atom];
 							double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
 
-						//180 degree:
-						// double pos = std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
-						//90 degree: 
-						// double theta = 0.5*std::atan(std::sinh(2.0*(atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width));
-							double theta = 0.25*M_PI*std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
+							double theta = std::atan(exp(-1.0*(atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)/sim::domain_wall_width)) -M_PI*0.25;
 							double pos_x = std::cos(theta)*mod;
-							double pos_y = -std::sin(theta)*mod; //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
+							double pos_y = std::sin(theta)*mod; //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
 					
-							atoms::x_spin_array[atom] =  (mat==2?1.0:-1.0)* pos_x;
-							atoms::y_spin_array[atom] =  (mat==2?1.0:-1.0)* pos_y;
-							atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
-						}
+							atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_x;
+							atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_y;
+							atoms::z_spin_array[atom] = 0.0;// (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
+						// }
 					}
 				}
+				//180 degree:
 				else if(sim::domain_wall_angle == 1) {
 					for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
-						if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
+						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
 							int mat = atoms::type_array[atom];
 							double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
 
-						//180 degree:
-						// double pos = std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
-						//90 degree: 
-						// double theta = 0.5*std::atan(std::sinh(2.0*(atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width));
-							double theta = 0.5*M_PI + 0.5*M_PI*std::tanh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)*M_PI/sim::domain_wall_width);
-							double pos_x = -std::sin(theta)*mod; 
-							double pos_y = std::cos(theta)*mod;
+					
+							double theta = -std::atan(std::sinh((atoms::x_coord_array[atom] - cs::system_dimensions[0]*sim::domain_wall_position)/sim::domain_wall_width));
+							
+							double pos_x = std::cos(theta)*mod; 
+							double pos_y = std::sin(theta)*mod;
 					
 							atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_x;
-							atoms::y_spin_array[atom] =  (mat==2?1.0:-1.0)* pos_y;
+							atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_y;
 							atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
-						}
+						// }
 					}
 				}
 			}
@@ -339,7 +335,7 @@ namespace program{
 		
 		
 
-			for(int atom=0;atom<num_local_atoms;atom++){
+			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
 				int cat = atoms::category_array[atom];
 				mag_x[num_dw_cells*cat + cell] += atoms::x_spin_array[atom];
@@ -357,7 +353,7 @@ namespace program{
 			// MPI_Allreduce(MPI_IN_PLACE, &topological_charge[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 			#endif
 			//	 std::cout << "a" <<std::endl;
-		if(vmpi::my_rank==0) {
+		if(vmpi::my_rank==0) { 
 			std::ofstream myfile;
 			string filename = "/dw/dw-0.txt";
 			myfile.open (string(directory) + filename);
@@ -376,7 +372,7 @@ namespace program{
 			vout::data();
 
 		// Equilibrate system
-		while(sim::time<sim::equilibration_time){
+		while(sim::time<sim::equilibration_time) {
 
 			sim::integrate(sim::partial_time);
 
@@ -549,8 +545,8 @@ namespace program{
 					
 					if((mag_y_2[cat] != 0.0 || mag_x_2[cat] != 0.0) && (mag_y_1[cat] != 0.0 || mag_x_1[cat] != 0.0) ) d_topological_charge[cat] =  atan2(mag_y_1[cat], mag_x_1[cat]) -atan2(mag_y_2[cat], mag_x_2[cat]);
 					//if(std::abs(d_x) > 1e-4 || std::abs(d_y) > 1e-4) topological_charge_1[cat] = atan2(d_y,d_x);
-					if( mag_x_1[cat]*mag_x_2[cat] < 0.0 || mag_y_1[cat]*mag_y_2[cat] < 0.0  && (mag_x_1[cat]*mag_x_2[cat] < 0.0 != mag_y_1[cat]*mag_y_2[cat] < 0.0 )) {
-						  //90 degree wall only
+					if( mag_y_1[cat]*mag_y_2[cat] < 0.0  ) {
+						  //90 degree wall only&& (mag_x_1[cat]*mag_x_2[cat] < 0.0 != mag_y_1[cat]*mag_y_2[cat] < 0.0 )
 						double location = cell*sim::unit_cell_x*0.5 - sl_offset[cat];
 						if(domain_counter < 5) {
 							domain_tracks.push_back(location);
