@@ -52,26 +52,29 @@ namespace program{
 		num_averages = num_averages/2.0;
 		sim::domain_wall_centre = 0.1*cs::system_dimensions[0]*sim::domain_wall_position;
 		sim::domain_wall_velocity = 0.0;
-		if(sim::domain_wall_discretisation == 1) sim::domain_wall_discretisation = 0.5*sim::unit_cell_x + 0.01;
+		if(sim::domain_wall_discretisation == 1) sim::domain_wall_discretisation = 0.5*sim::unit_cell_x + 0.0001;
+		
 		int num_dw_cells = (cs::system_dimensions[sim::domain_wall_axis]/sim::domain_wall_discretisation) + 1;
+		std::cout << "discretisation cells: " << sim::domain_wall_discretisation << ", num cells: " << num_dw_cells << std::endl;
 		int num_categories = 6;
 		std::vector <double > atom_to_cell_array(num_local_atoms,0);
 		std::vector  < double > mag_x(num_categories*num_dw_cells,0.0);
 		std::vector  < double > mag_y(num_categories*num_dw_cells,0.0);
 		std::vector  < double > mag_z(num_categories*num_dw_cells,0.0);
 
-		std::vector < int > num_atoms_in_cell(num_categories*num_dw_cells,0.0);
+		std::vector < int > num_atoms_in_cell(num_categories*num_dw_cells,0);
 		// std::vector<double> topological_charge(num_categories*num_dw_cells,0.0);
 
 		for (int mat = 0; mat < mp::num_materials; mat ++){
-			std::cout <<mat << "\t" <<  sim::domain_wall_second_vector_x[mat] << "\t" <<sim::domain_wall_second_vector_y[mat] << "\t" <<sim::domain_wall_second_vector_z[mat] << "\t" << std::endl;
+			if(sim::domain_wall_angle == 0) std::cout <<mat << " 90 degree wall " <<  sim::domain_wall_second_vector_x[mat] << "\t" <<sim::domain_wall_second_vector_y[mat] << "\t" <<sim::domain_wall_second_vector_z[mat] << "\t" << std::endl;
+			if(sim::domain_wall_angle == 1) std::cout <<mat << " 180 degree wall " <<  sim::domain_wall_second_vector_x[mat] << "\t" <<sim::domain_wall_second_vector_y[mat] << "\t" <<sim::domain_wall_second_vector_z[mat] << "\t" << std::endl;
 			// sim::domain_wall_second_vector_x[0] = -sim::domain_wall_second_vector_x[1];
 			// sim::domain_wall_second_vector_y[0] = -sim::domain_wall_second_vector_y[1];
 			// 	sim::domain_wall_second_vector_z[0] = -sim::domain_wall_second_vector_z[1];
 		}
 		//reverses the magentisation of atoms further away than the domain wall distance.
 		if (!sim::load_checkpoint_flag){
-			if (sim::domain_wall_axis == 0){
+			if (sim::domain_wall_axis == 0) {
 				//90 degree 
 				if(sim::domain_wall_angle == 0) {
 					for(int atom=0;atom<num_local_atoms;atom++) {
@@ -87,7 +90,12 @@ namespace program{
 							atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_x;
 							atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_y;
 							atoms::z_spin_array[atom] = 0.0;// (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
-						// }
+						int cat = atoms::category_array[atom];
+						int cell = atoms::x_coord_array[atom]/sim::domain_wall_discretisation;
+				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
+						atom_to_cell_array[atom] = cell;
+						num_atoms_in_cell[num_dw_cells*cat + cell] ++;
+						if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0 || num_atoms_in_cell[num_dw_cells*cat + cell] > 20) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
 					}
 				}
 				//180 degree:
@@ -264,26 +272,26 @@ namespace program{
 		//is along x or y or z
 
 
-		if (sim::domain_wall_axis == 0){
-			for(int atom=0;atom<num_local_atoms;atom++){
-				int cat = atoms::category_array[atom];
-				int cell = atoms::x_coord_array[atom]/sim::domain_wall_discretisation;
-				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
-				atom_to_cell_array[atom] = cell;
-				num_atoms_in_cell[num_dw_cells*cat + cell] ++;
+		// if (sim::domain_wall_axis == 0){
+		// 	for(int atom=0;atom<num_local_atoms;atom++){
+		// 		int cat = atoms::category_array[atom];
+		// 		int cell = atoms::x_coord_array[atom]/sim::domain_wall_discretisation;
+		// 		//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
+		// 		atom_to_cell_array[atom] = cell;
+		// 		num_atoms_in_cell[num_dw_cells*cat + cell] ++;
 
-				//	if (cell > num_dw_cells) std::cout << atoms::x_coord_array[atom] << '\t' << sim::domain_wall_discretisation <<std::endl;
-			}
+		// 		//	if (cell > num_dw_cells) std::cout << atoms::x_coord_array[atom] << '\t' << sim::domain_wall_discretisation <<std::endl;
+		// 	}
 
-		}
+		// }
 		if (sim::domain_wall_axis == 1){
 			for(int atom=0;atom<num_local_atoms;atom++){
-				int mat = atoms::type_array[atom];
+				int cat = atoms::category_array[atom];
 				int cell = atoms::y_coord_array[atom]/sim::domain_wall_discretisation;
 				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
 				atom_to_cell_array[atom] = cell;
-				num_atoms_in_cell[num_dw_cells*mat + cell] ++;
-
+				num_atoms_in_cell[num_dw_cells*cat + cell] ++;
+				if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0 || num_atoms_in_cell[num_dw_cells*cat + cell] > 20) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
 				//	if (cell > num_dw_cells) std::cout << atoms::x_coord_array[atom] << '\t' << sim::domain_wall_discretisation <<std::endl;
 			}
 		}
@@ -305,7 +313,7 @@ namespace program{
 		// }
 
 		#ifdef MPICF
-		MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],     num_dw_cells*num_categories,    MPI_INT,    MPI_SUM, MPI_COMM_WORLD);
+		MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],  num_dw_cells*num_categories,    MPI_INT,    MPI_SUM, MPI_COMM_WORLD);
 		#endif
 
 
@@ -316,7 +324,7 @@ namespace program{
 			sim::temperature=sim::Teq;
 		}
 		for (int cell = 0; cell < num_dw_cells; cell++){
-			for (int cat = 1; cat < num_categories; cat ++){
+			for (int cat = 1; cat < num_categories; cat ++) {
 				if( cat == 3) continue;
 				// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
 				mag_x[num_dw_cells*cat + cell] = 0.0;
@@ -334,7 +342,6 @@ namespace program{
 			// #endif
 		
 		
-
 			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
 				int cat = atoms::category_array[atom];
@@ -357,7 +364,7 @@ namespace program{
 			std::ofstream myfile;
 			string filename = "/dw/dw-0.txt";
 			myfile.open (string(directory) + filename);
-			for (int cell = 0; cell < num_dw_cells; cell++){
+			for (int cell = 2; cell < num_dw_cells; cell++){
 				for (int cat = 1; cat < num_categories; cat ++){
 					if(cat==3) continue;
 					if (num_atoms_in_cell[num_dw_cells*cat + cell] > 0){
@@ -378,10 +385,10 @@ namespace program{
 
 			// Calculate magnetisation statistics
 			stats::update();
-
-			for (int cell = 0; cell < num_dw_cells; cell++){
-				for (int cat = 1; cat < num_categories; cat ++){
+			for (int cat = 1; cat < num_categories; cat ++){
 					if( cat == 3) continue;
+				for (int cell = 0; cell < num_dw_cells; cell++){
+				
 				// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
 					mag_x[num_dw_cells*cat + cell] = 0.0;
 					mag_y[num_dw_cells*cat + cell] = 0.0;
@@ -458,10 +465,10 @@ namespace program{
 			if(Te>1.0) sim::TTTe = (-G*(Te-Tp)+pump)*dt/(Ce*Te) + Te;
 			else sim::TTTe =       (-G*(Te-Tp)+pump)*dt/Ce + Te;
 			sim::TTTp =            ( G*(Te-Tp)     )*dt/Cl + Tp - (Tp-sim::Teq)*sim::HeatSinkCouplingConstant*dt;
-
+		for (int cat = 1; cat < num_categories; cat ++) {
+				if(cat == 3) continue;
 			for (int cell = 0; cell < num_dw_cells; cell++){
-				for (int cat = 1; cat < num_categories; cat ++) {
-					if(cat == 3) continue;
+				
 					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
 					mag_x[num_dw_cells*cat + cell] = 0.0;
 					mag_y[num_dw_cells*cat + cell] = 0.0;
@@ -535,9 +542,10 @@ namespace program{
 			// double topological_charge_1[num_categories] = {0.0};
 			double d_topological_charge_acc[num_categories] = {0.0};
 			// double topological_charge_acc_1[num_categories] = {0.0};
-			for (int cell = 2; cell < num_dw_cells; cell++) {
-				for (int cat = 1; cat < num_categories; cat ++) {
+			for (int cat = 1; cat < num_categories; cat ++) {
 					if( cat == 3 ) continue;
+				for (int cell = 2; cell < num_dw_cells; cell++) {
+				
 					mag_x_1[cat] = mag_x[num_dw_cells*cat + cell-2] / std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
 					mag_y_1[cat] = mag_y[num_dw_cells*cat + cell-2] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
 					mag_x_2[cat] = mag_x[num_dw_cells*cat + cell] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
@@ -559,7 +567,7 @@ namespace program{
 					}
 					
 					if (num_atoms_in_cell[num_dw_cells*cat + cell] > 0) {
-						volatile double num = num_atoms_in_cell[num_dw_cells*cat + cell];
+						double num = num_atoms_in_cell[num_dw_cells*cat + cell];
 						double tpcg = (std::abs(d_topological_charge[cat]) < 1e-5) ? 0.0:d_topological_charge[cat];
 						if(tpcg > M_PI*0.5) tpcg -= 2.0*M_PI;
 						else if (tpcg < -M_PI*0.5) tpcg += 2.0*M_PI;
