@@ -90,12 +90,13 @@ namespace program{
 							atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_x;
 							atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_y;
 							atoms::z_spin_array[atom] = 0.0;// (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
-						int cat = atoms::category_array[atom];
+						int cat = atoms::sublayer_array[atom];
+						if(cat > 5) std::cout << cat << std::endl;
 						int cell = atoms::x_coord_array[atom]/sim::domain_wall_discretisation;
 				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
 						atom_to_cell_array[atom] = cell;
 						num_atoms_in_cell[num_dw_cells*cat + cell] ++;
-						if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0 || num_atoms_in_cell[num_dw_cells*cat + cell] > 20) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
+						if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
 					}
 				}
 				//180 degree:
@@ -286,7 +287,7 @@ namespace program{
 		// }
 		if (sim::domain_wall_axis == 1){
 			for(int atom=0;atom<num_local_atoms;atom++){
-				int cat = atoms::category_array[atom];
+				int cat = atoms::sublayer_array[atom];
 				int cell = atoms::y_coord_array[atom]/sim::domain_wall_discretisation;
 				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
 				atom_to_cell_array[atom] = cell;
@@ -344,7 +345,7 @@ namespace program{
 		
 			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
-				int cat = atoms::category_array[atom];
+				int cat = atoms::sublayer_array[atom];
 				mag_x[num_dw_cells*cat + cell] += atoms::x_spin_array[atom];
 				mag_y[num_dw_cells*cat + cell] += atoms::y_spin_array[atom];
 				mag_z[num_dw_cells*cat + cell] += atoms::z_spin_array[atom];
@@ -495,7 +496,7 @@ namespace program{
 		
 			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
-				int cat = atoms::category_array[atom];
+				int cat = atoms::sublayer_array[atom];
 				
 				mag_x[num_dw_cells*cat + cell] += atoms::x_spin_array[atom];
 				mag_y[num_dw_cells*cat + cell] += atoms::y_spin_array[atom];
