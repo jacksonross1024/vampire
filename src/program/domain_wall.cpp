@@ -91,12 +91,12 @@ namespace program{
 							atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_y;
 							atoms::z_spin_array[atom] = 0.0;// (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
 						int cat = atoms::sublayer_array[atom];
-						if(cat > 5) std::cout << cat << std::endl;
+						// if(cat > 5) std::cout << cat << std::endl;
 						int cell = atoms::x_coord_array[atom]/sim::domain_wall_discretisation;
 				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
 						atom_to_cell_array[atom] = cell;
 						num_atoms_in_cell[num_dw_cells*cat + cell] ++;
-						if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
+						// if (num_atoms_in_cell[num_dw_cells*cat + cell] < 0) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
 					}
 				}
 				//180 degree:
@@ -543,10 +543,10 @@ namespace program{
 			// double topological_charge_1[num_categories] = {0.0};
 			double d_topological_charge_acc[num_categories] = {0.0};
 			// double topological_charge_acc_1[num_categories] = {0.0};
-			for (int cat = 1; cat < num_categories; cat ++) {
-					if( cat == 3 ) continue;
+			
 				for (int cell = 2; cell < num_dw_cells; cell++) {
-				
+					for (int cat = 1; cat < num_categories; cat ++) {
+					if( cat == 3 ) continue;
 					mag_x_1[cat] = mag_x[num_dw_cells*cat + cell-2] / std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
 					mag_y_1[cat] = mag_y[num_dw_cells*cat + cell-2] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
 					mag_x_2[cat] = mag_x[num_dw_cells*cat + cell] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
