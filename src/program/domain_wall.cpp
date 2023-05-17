@@ -58,9 +58,20 @@ namespace program{
 		std::cout << "discretisation cells: " << sim::domain_wall_discretisation << ", num cells: " << num_dw_cells << std::endl;
 		int num_categories = 6;
 		std::vector <double > atom_to_cell_array(num_local_atoms,0);
+		int horizontal_range = 200; //number of discrete units tall
+		int depth_range = -1; //-1 for maximum
+		int vertical_range = -1;  //-1 for maximum
+
+		depth_range = ceil(2.0*cs::system_dimensions[1]/sim::unit_cell_y);
+		vertical_range = ceil(4.0*cs::system_dimensions[2]/sim::unit_cell_z);
+		std::vector  < double > mag(num_categories*num_dw_cells*3,0.0);
 		std::vector  < double > mag_x(num_categories*num_dw_cells,0.0);
 		std::vector  < double > mag_y(num_categories*num_dw_cells,0.0);
 		std::vector  < double > mag_z(num_categories*num_dw_cells,0.0);
+
+
+		std::vector<std::vector<int> > cell_to_atom_array(num_categories*num_dw_cells, std::vector<int> (depth_range*vertical_range, 0));
+		//std::vector<std::vector<int> > cell_to_atom_array_z(num_categories*num_dw_cells, std::vector<int> (int(ceil(4.0*cs::system_dimensions[2]/sim::unit_cell_z))));
 
 		std::vector < int > num_atoms_in_cell(num_categories*num_dw_cells,0);
 		// std::vector<double> topological_charge(num_categories*num_dw_cells,0.0);
@@ -96,6 +107,7 @@ namespace program{
 				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
 						atom_to_cell_array[atom] = cell;
 						num_atoms_in_cell[num_dw_cells*cat + cell] ++;
+						cell_to_atom_array[cat*num_dw_cells + cell][int(vertical_range* floor(atoms::y_coord_array[atom]/sim::unit_cell_y)) + int(floor(atoms::z_coord_array[atom]/sim::unit_cell_z))] = atom;
 						if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
 					}
 				}
@@ -268,11 +280,8 @@ namespace program{
 		//     }
 		//   }
 		// }
-
 		//works out which atoms are in which cells and sets cells based on wether the domain wall
 		//is along x or y or z
-
-
 		// if (sim::domain_wall_axis == 0){
 		// 	for(int atom=0;atom<num_local_atoms;atom++){
 		// 		int cat = atoms::category_array[atom];
@@ -280,10 +289,8 @@ namespace program{
 		// 		//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
 		// 		atom_to_cell_array[atom] = cell;
 		// 		num_atoms_in_cell[num_dw_cells*cat + cell] ++;
-
 		// 		//	if (cell > num_dw_cells) std::cout << atoms::x_coord_array[atom] << '\t' << sim::domain_wall_discretisation <<std::endl;
 		// 	}
-
 		// }
 		if (sim::domain_wall_axis == 1){
 			for(int atom=0;atom<num_local_atoms;atom++){
@@ -328,9 +335,9 @@ namespace program{
 			for (int cat = 1; cat < num_categories; cat ++) {
 				if( cat == 3) continue;
 				// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
-				mag_x[num_dw_cells*cat + cell] = 0.0;
-				mag_y[num_dw_cells*cat + cell] = 0.0;
-				mag_z[num_dw_cells*cat + cell] = 0.0;
+				mag[3*num_dw_cells*cat + 3*cell+0] = 0.0;
+				mag[3*num_dw_cells*cat + 3*cell +1] = 0.0;
+				mag[3*num_dw_cells*cat + 3*cell +2] = 0.0;
 				// topological_charge[num_dw_cells*cat + cell] = 0.0;
 			}
 		}
@@ -346,18 +353,18 @@ namespace program{
 			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
 				int cat = atoms::sublayer_array[atom];
-				mag_x[num_dw_cells*cat + cell] += atoms::x_spin_array[atom];
-				mag_y[num_dw_cells*cat + cell] += atoms::y_spin_array[atom];
-				mag_z[num_dw_cells*cat + cell] += atoms::z_spin_array[atom];
+				mag[3*num_dw_cells*cat + 3*cell] += atoms::x_spin_array[atom];
+				mag[3*num_dw_cells*cat + 3*cell+1] += atoms::y_spin_array[atom];
+				mag[3*num_dw_cells*cat + 3*cell+2] += atoms::z_spin_array[atom];
 
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*0.5 - atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]);
 			}
 
 
 			#ifdef MPICF
-			MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+			MPI_Allreduce(MPI_IN_PLACE, &mag[0], 3*num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+		//	MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+		//	MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 			// MPI_Allreduce(MPI_IN_PLACE, &topological_charge[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 			#endif
 			//	 std::cout << "a" <<std::endl;
@@ -370,7 +377,7 @@ namespace program{
 					if(cat==3) continue;
 					if (num_atoms_in_cell[num_dw_cells*cat + cell] > 0){
 					
-						myfile << cell <<"\t" <<  cat << '\t' << mag_x[num_dw_cells*cat + cell] /num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << mag_y[num_dw_cells*cat + cell] /num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << mag_z[num_dw_cells*cat + cell]/num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << num_atoms_in_cell[num_dw_cells*cat + cell]  <<  std::endl; 
+						myfile << cell <<"\t" <<  cat << '\t' << mag[3*num_dw_cells*cat + 3*cell] /num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << mag[3*num_dw_cells*cat + 3*cell+1] /num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << mag_z[2*num_dw_cells*cat + 3*cell+2]/num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << num_atoms_in_cell[num_dw_cells*cat + cell]  <<  std::endl; 
 					}
 				}
 			}
@@ -391,9 +398,9 @@ namespace program{
 				for (int cell = 0; cell < num_dw_cells; cell++){
 				
 				// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
-					mag_x[num_dw_cells*cat + cell] = 0.0;
-					mag_y[num_dw_cells*cat + cell] = 0.0;
-					mag_z[num_dw_cells*cat + cell] = 0.0;
+					mag[3*num_dw_cells*cat + 3*cell+0] = 0.0;
+					mag[3*num_dw_cells*cat + 3*cell +1] = 0.0;
+					mag[3*num_dw_cells*cat + 3*cell +2] = 0.0;
 					// topological_charge[num_dw_cells*cat + cell] = 0.0;
 				}
 			}
@@ -471,9 +478,9 @@ namespace program{
 			for (int cell = 0; cell < num_dw_cells; cell++){
 				
 					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
-					mag_x[num_dw_cells*cat + cell] = 0.0;
-					mag_y[num_dw_cells*cat + cell] = 0.0;
-					mag_z[num_dw_cells*cat + cell] = 0.0;
+					mag[3*num_dw_cells*cat + 3*cell+0] = 0.0;
+					mag[3*num_dw_cells*cat + 3*cell +1] = 0.0;
+					mag[3*num_dw_cells*cat + 3*cell +2] = 0.0;
 					// topological_charge[num_dw_cells*cat + cell] = 0.0;
 				}
 			}
@@ -498,34 +505,33 @@ namespace program{
 				int cell = atom_to_cell_array[atom];
 				int cat = atoms::sublayer_array[atom];
 				
-				mag_x[num_dw_cells*cat + cell] += atoms::x_spin_array[atom];
-				mag_y[num_dw_cells*cat + cell] += atoms::y_spin_array[atom];
-				mag_z[num_dw_cells*cat + cell] += atoms::z_spin_array[atom];
+				mag[3*num_dw_cells*cat + 3*cell] += atoms::x_spin_array[atom];
+				mag[3*num_dw_cells*cat + 3*cell+1] += atoms::y_spin_array[atom];
+				mag[3*num_dw_cells*cat + 3*cell+2] += atoms::z_spin_array[atom];
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*1.5 - (M_PI+atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]));
 			}
 
 			#ifdef MPICF
-			MPI_Allreduce(MPI_IN_PLACE, &mag_x[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
-			MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+			MPI_Allreduce(MPI_IN_PLACE, &mag[0], 3*num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+		//	MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+		//	MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 			// MPI_Allreduce(MPI_IN_PLACE, &topological_charge[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 			#endif
 		
 			
 			//sim::domain_wall_velocity = 1.0e-10* std::abs((minima_x[0]/minima_x[1]) - 10.0*sim::domain_wall_centre)/(sim::partial_time*mp::dt_SI); //A/0.1ft -> e16/ e10 -> m/s
 			//sim::domain_wall_centre  = 0.1*minima_x[0]/minima_x[1];
-
+		bool print = (sim::time % 500 == 0) ? true : false;
+		std::vector< double> domain_tracks;
+		int domain_counter = 0;
 		if(vmpi::my_rank == 0) {
-			bool print = (sim::time % 500 == 0) ? true : false;
+			
 			std::ofstream dw_res;
 			string filename = "/dw/dw-" + std::to_string(sim::time) + ".txt";
 			if(print) dw_res.open (string(directory) + filename);
 			if(print) if(!dw_res.is_open()) {
 				std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
 			}
-			
-			std::vector< double> domain_tracks;
-			int domain_counter = 0;
 			
 			double mag_x_1[num_categories] = {1.0};
 			double mag_y_1[num_categories] = {1.0};
@@ -547,10 +553,10 @@ namespace program{
 					if( cat == 3 ) continue;
 				for (int cell = 2; cell < num_dw_cells; cell++) {
 				
-					mag_x_1[cat] = mag_x[num_dw_cells*cat + cell-2] / std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
-					mag_y_1[cat] = mag_y[num_dw_cells*cat + cell-2] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
-					mag_x_2[cat] = mag_x[num_dw_cells*cat + cell] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
-					mag_y_2[cat] = mag_y[num_dw_cells*cat + cell] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
+					mag_x_1[cat] = mag[3*num_dw_cells*cat + 3*cell-2] / std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
+					mag_y_1[cat] = mag[3*num_dw_cells*cat + 3*cell-2 + 1] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
+					mag_x_2[cat] = mag[3*num_dw_cells*cat + 3*cell] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
+					mag_y_2[cat] = mag[3*num_dw_cells*cat + 3*cell+1] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
 					
 					if((mag_y_2[cat] != 0.0 || mag_x_2[cat] != 0.0) && (mag_y_1[cat] != 0.0 || mag_x_1[cat] != 0.0) ) d_topological_charge[cat] =  atan2(mag_y_1[cat], mag_x_1[cat]) -atan2(mag_y_2[cat], mag_x_2[cat]);
 					//if(std::abs(d_x) > 1e-4 || std::abs(d_y) > 1e-4) topological_charge_1[cat] = atan2(d_y,d_x);
@@ -573,10 +579,11 @@ namespace program{
 						if(tpcg > M_PI*0.5) tpcg -= 2.0*M_PI;
 						else if (tpcg < -M_PI*0.5) tpcg += 2.0*M_PI;
 						d_topological_charge_acc[cat] += tpcg;
-						if(print) dw_res << cell <<"\t" <<  cat << '\t' << mag_x[num_dw_cells*cat + cell] / num_atoms_in_cell[num_dw_cells*cat + cell] << "\t" << mag_y[num_dw_cells*cat + cell] /num_atoms_in_cell[num_dw_cells*cat + cell] << "\t" << mag_z[num_dw_cells*cat + cell]/num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << tpcg << "\t"  << d_topological_charge_acc[cat] << "\t" << num_atoms_in_cell[num_dw_cells*cat + cell]  <<  "\n";
+						if(print) dw_res << cell <<"\t" <<  cat << '\t' << mag[3*num_dw_cells*cat + 3*cell] / num_atoms_in_cell[num_dw_cells*cat + cell] << "\t" << mag[3*num_dw_cells*cat + 3*cell + 1] /num_atoms_in_cell[num_dw_cells*cat + cell] << "\t" << mag_z[3*num_dw_cells*cat + 3*cell+2]/num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << tpcg << "\t"  << d_topological_charge_acc[cat] << "\t" << num_atoms_in_cell[num_dw_cells*cat + cell]  <<  "\n";
 					}
 				}
 			}
+			
 			if(print) dw_res.close();
 			dw_pos << sim::time << "\t" << d_topological_charge_acc[2] << "\t" << domain_counter/4 << "\t";
 			std::sort(domain_tracks.begin(), domain_tracks.end(), std::greater<double>());
@@ -584,9 +591,67 @@ namespace program{
 				if(domain_counter == 0) break;
 				dw_pos << domain_tracks[d] << "\t";
 			} dw_pos << std::endl;
+			if(print && domain_counter == 4) {
+				#ifdef MPICF
+				MPI_Allreduce(MPI_IN_PLACE, &domain_counter, 1,    MPI_INT,    MPI_SUM, MPI_COMM_WORLD);
+				#endif
+			}
 		}
 			// Output data
 			vout::data();
+		
+
+		if(domain_counter == 4 && print) {
+				std::ofstream dw_3d;
+				string filename;
+				if(vmpi::my_rank = 0) {filename = "/dw/dw-3d-" + std::to_string(sim::time) + ".txt";
+					if(print) dw_3d.open (string(directory) + filename);
+					if(print) if(!dw_3d.is_open()) {
+						std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
+					}
+				}
+				if(vmpi::my_rank)
+				int cell = (domain_tracks[2] + sim::unit_cell_x*0.5)/sim::unit_cell_x;
+				int start_cell = cell - horizontal_range/2;
+				int end_cell = cell + horizontal_range/2;
+				for(int cat = 1; cat < num_categories; cat++) {
+					if(cat == 3) continue;
+					for(cell = start_cell; cell < end_cell; cell++) {
+						for(int y_cell = 0; y_cell < depth_range; y_cell++) {
+							for(int z_cell = 0; z_cell < depth_range; z_cell++) {
+								int atom = cell_to_atom_array[num_dw_cells*cat + cell][vertical_range*y_cell + z_cell];
+								mag_x[num_dw_cells*cat + cell] += atoms::x_spin_array[atom];
+								mag_y[num_dw_cells*cat + cell] += atoms::y_spin_array[atom];
+								mag_z[num_dw_cells*cat + cell] += atoms::z_spin_array[atom];
+							}
+						}
+					}
+				}
+
+				#ifdef MPICF 
+				MPI_Allreduce(MPI_IN_PLACE, &mag_x[0], num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+				MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+				MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+				#endif
+
+			if(vmpi::my_rank==0) {
+				for(int cat = 1; cat < num_categories; cat++) {
+					if(cat == 3) continue;
+					for(cell = start_cell; cell < end_cell; cell++) {
+						for(int y_cell = 0; y_cell < depth_range; y_cell++) {
+							for(int z_cell = 0; z_cell < depth_range; z_cell++) {
+								if(num_atoms_in_cell[num_dw_cells*cat +cell] > 0) {
+									dw_3d << cat << ", " << cell << ", " << y_cell << ", " << z_cell << ", " << mag_x[num_dw_cells*cat + cell] << ", " << mag_x[num_dw_cells*cat + cell] << ", " << mag_x[num_dw_cells*cat + cell] << "\n";
+								}
+							}
+						}
+					}
+				}
+			}
+				
+			dw_3d.close();
+			}
+
 		}
 		if(vmpi::my_rank==0) dw_pos.close();
 	}
