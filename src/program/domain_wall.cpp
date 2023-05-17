@@ -102,13 +102,12 @@ namespace program{
 							atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_y;
 							atoms::z_spin_array[atom] = 0.0;// (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
 						int cat = atoms::sublayer_array[atom];
-						if(cat > 5) std::cout << cat << std::endl;
+						// if(cat > 5) std::cout << cat << std::endl;
 						int cell = atoms::x_coord_array[atom]/sim::domain_wall_discretisation;
 				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
 						atom_to_cell_array[atom] = cell;
 						num_atoms_in_cell[num_dw_cells*cat + cell] ++;
-						cell_to_atom_array[cat*num_dw_cells + cell][int(vertical_range* floor(atoms::y_coord_array[atom]/sim::unit_cell_y)) + int(floor(atoms::z_coord_array[atom]/sim::unit_cell_z))] = atom;
-						if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
+						// if (num_atoms_in_cell[num_dw_cells*cat + cell] < 0) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
 					}
 				}
 				//180 degree:
@@ -549,7 +548,9 @@ namespace program{
 			// double topological_charge_1[num_categories] = {0.0};
 			double d_topological_charge_acc[num_categories] = {0.0};
 			// double topological_charge_acc_1[num_categories] = {0.0};
-			for (int cat = 1; cat < num_categories; cat ++) {
+			
+				for (int cell = 2; cell < num_dw_cells; cell++) {
+					for (int cat = 1; cat < num_categories; cat ++) {
 					if( cat == 3 ) continue;
 				for (int cell = 2; cell < num_dw_cells; cell++) {
 				
@@ -632,7 +633,6 @@ namespace program{
 		// 		MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 		// 		MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 		// 		#endif
-
 		// 	if(vmpi::my_rank==0) {
 		// 		for(int cat = 1; cat < num_categories; cat++) {
 		// 			if(cat == 3) continue;
@@ -651,6 +651,7 @@ namespace program{
 		// 	}
 		// }
 		if(vmpi::my_rank==0) dw_pos.close();
+	}
 	}
 	}
 

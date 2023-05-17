@@ -527,7 +527,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		const double sotpj = sot_pj[material];
 
 		const double sot_lambda = sot_asm[material];
-		double sot_factor = 1.0 / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
+		double sot_factor = program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
 		// if(sim::time > 30000.0) sot_factor = 0.0;
 		if(sot_factor != sot_factor) sot_factor = 0.0;
 		//  if(sot_factor < 0) std::cout << hx << ", " << hy << ", " << hz << ", " << sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy ) << std::endl;
@@ -536,32 +536,21 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );
 		hz += sot_factor * ( (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz );
 		
+		//get spin angle
 		double phi = atan2(sy, sx);
 			if(phi != phi) phi = 0.0;
+
 		//T_z e||xy -> torque asymmetry sin(2(phi-pi/4))
 		double lotlt_z = sim::laser_torque_strength* (cos(phi*2.0))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;
 		
-		//T_y e||xz -> Torque asymmetry cos(phi)cos(phi)
-		// double lotlt_y = 0.25*sim::laser_torque_strength* (cos(phi)*cos(phi))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;
-		// if(sim::laser_torque_strength == 0.0) lotlt = 0.0;
-		// if(atom==1) std::cout << lotlt << ", " << sim::laser_torque_strength << ", " << std::abs(sin(2.0*atan2(sy, sx))) << ", " << lot_lt[material] << ", " << (1e-24/mp::material[material].mu_s_SI ) << std::endl;
-		 double lotx = lot_unit_vector[0];
-		 double loty = lot_unit_vector[1];
-		 double lotz = lot_unit_vector[2];
+		double lotx = lot_unit_vector[0];
+		double loty = lot_unit_vector[1];
+		double lotz = lot_unit_vector[2];
 
 		hx += lotlt_z * (loty*sz - sy*lotz);
 		hy += lotlt_z * (lotz*sx - sz*lotx);
 		hz += lotlt_z * (lotx*sy - sx*loty);
 
-		// lotx = 0.0;
-		// loty = -1.0;
-		// lotz = 0.0;
-
-		// hx += lotlt_y * (loty*sz - sy*lotz);
-		// hy += lotlt_y * (lotz*sx - sz*lotx);
-		// hz += lotlt_y * (lotx*sy - sx*loty);
-
-		// hy += sotrj*sotpy*sy;
 		
 		//----------------------------------------------------------------------------------
 		// VCMA field

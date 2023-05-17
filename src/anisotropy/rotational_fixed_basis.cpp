@@ -73,9 +73,9 @@ namespace anisotropy{
             const double sy2 = sy*sy;
             const double sz2 = sz*sz;
 
-            field_array_x[atom] += k4r * 8.0 * sx * (1.0 - sz2 - 2.0 * sx2)*16.0/16.0;
-            field_array_y[atom] += k4r * 8.0 * sy * (1.0 - sz2 - 2.0 * sy2)*16.0/16.0;
-            field_array_z[atom] += k4r * 2.0 * sz * (1.0 - 2.0 * sz2 - 4.0 * sx2 - 4.0 * sy2)*16.0/16.0;
+            field_array_x[atom] += k4r * 8.0 * sx * (1.0 - sz2 - 2.0 * sx2)*3.0/16.0;
+            field_array_y[atom] += k4r * 8.0 * sy * (1.0 - sz2 - 2.0 * sy2)*3.0/16.0;
+            field_array_z[atom] += k4r * 2.0 * sz * (1.0 - 2.0 * sz2 - 4.0 * sx2 - 4.0 * sy2)*3.0/16.0;
 
         }
          return;

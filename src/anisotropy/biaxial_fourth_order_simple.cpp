@@ -108,9 +108,15 @@ namespace anisotropy{
 
             // calculate field (double negative from scale factor and negative derivative)
 
-            field_array_x[atom] += (M_PI*0.5*ku4)*(u1x*sdotu13+u2x*sdotu23+u3x*sdotu33+u4x*sdotu43);
-            field_array_y[atom] += (M_PI*0.5*ku4)*(u1y*sdotu13+u2y*sdotu23+u3y*sdotu33+u4y*sdotu43);
-            field_array_z[atom] += (M_PI*0.5*ku4)*(u1z*sdotu13+u2z*sdotu23+u3z*sdotu33+u4z*sdotu43);
+            field_array_x[atom] += (2*ku4)*(u1x*sdotu13+u2x*sdotu23+u3x*sdotu33+u4x*sdotu43);
+            field_array_y[atom] += (2*ku4)*(u1y*sdotu13+u2y*sdotu23+u3y*sdotu33+u4y*sdotu43);
+            field_array_z[atom] += (2*ku4)*(u1z*sdotu13+u2z*sdotu23+u3z*sdotu33+u4z*sdotu43);
+
+            // field_array_x[atom] += (ku4)*(sx*sx*sx + 4.0*sy*sy*sx);
+            // field_array_y[atom] += (2*ku4)*(u1y*sdotu13+u2y*sdotu23+u3y*sdotu33+u4y*sdotu43);
+            // field_array_z[atom] += (2*ku4)*(u1z*sdotu13+u2z*sdotu23+u3z*sdotu33+u4z*sdotu43);
+
+
 
          }
 
