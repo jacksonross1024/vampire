@@ -601,59 +601,57 @@ namespace program{
 			vout::data();
 		
 
-		if(domain_counter == 4 && print) {
-				std::ofstream dw_3d;
-				string filename;
-				if(vmpi::my_rank = 0) {filename = "/dw/dw-3d-" + std::to_string(sim::time) + ".txt";
-					if(print) dw_3d.open (string(directory) + filename);
-					if(print) if(!dw_3d.is_open()) {
-						std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
-					}
-				}
-				if(vmpi::my_rank)
-				int cell = (domain_tracks[2] + sim::unit_cell_x*0.5)/sim::unit_cell_x;
-				int start_cell = cell - horizontal_range/2;
-				int end_cell = cell + horizontal_range/2;
-				for(int cat = 1; cat < num_categories; cat++) {
-					if(cat == 3) continue;
-					for(cell = start_cell; cell < end_cell; cell++) {
-						for(int y_cell = 0; y_cell < depth_range; y_cell++) {
-							for(int z_cell = 0; z_cell < depth_range; z_cell++) {
-								int atom = cell_to_atom_array[num_dw_cells*cat + cell][vertical_range*y_cell + z_cell];
-								mag_x[num_dw_cells*cat + cell] += atoms::x_spin_array[atom];
-								mag_y[num_dw_cells*cat + cell] += atoms::y_spin_array[atom];
-								mag_z[num_dw_cells*cat + cell] += atoms::z_spin_array[atom];
-							}
-						}
-					}
-				}
+		// if(domain_counter == 4 && print) {
+		// 		std::ofstream dw_3d;
+		// 		string filename;
+		// 		if(vmpi::my_rank = 0) {filename = "/dw/dw-3d-" + std::to_string(sim::time) + ".txt";
+		// 			if(print) dw_3d.open (string(directory) + filename);
+		// 			if(print) if(!dw_3d.is_open()) {
+		// 				std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
+		// 			}
+		// 		}
+		// 		// if(vmpi::my_rank)
+		// 		int cell = (domain_tracks[2] + sim::unit_cell_x*0.5)/sim::unit_cell_x;
+		// 		int start_cell = cell - horizontal_range/2;
+		// 		int end_cell = cell + horizontal_range/2;
+		// 		for(int cat = 1; cat < num_categories; cat++) {
+		// 			if(cat == 3) continue;
+		// 			for(cell = start_cell; cell < end_cell; cell++) {
+		// 				for(int y_cell = 0; y_cell < depth_range; y_cell++) {
+		// 					for(int z_cell = 0; z_cell < depth_range; z_cell++) {
+		// 						int atom = cell_to_atom_array[num_dw_cells*cat + cell][vertical_range*y_cell + z_cell];
+		// 						mag_x[num_dw_cells*cat + cell] += atoms::x_spin_array[atom];
+		// 						mag_y[num_dw_cells*cat + cell] += atoms::y_spin_array[atom];
+		// 						mag_z[num_dw_cells*cat + cell] += atoms::z_spin_array[atom];
+		// 					}
+		// 				}
+		// 			}
+		// 		}
+		// 		#ifdef MPICF 
+		// 		MPI_Allreduce(MPI_IN_PLACE, &mag_x[0], num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+		// 		MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+		// 		MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
+		// 		#endif
 
-				#ifdef MPICF 
-				MPI_Allreduce(MPI_IN_PLACE, &mag_x[0], num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
-				MPI_Allreduce(MPI_IN_PLACE, &mag_y[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
-				MPI_Allreduce(MPI_IN_PLACE, &mag_z[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
-				#endif
-
-			if(vmpi::my_rank==0) {
-				for(int cat = 1; cat < num_categories; cat++) {
-					if(cat == 3) continue;
-					for(cell = start_cell; cell < end_cell; cell++) {
-						for(int y_cell = 0; y_cell < depth_range; y_cell++) {
-							for(int z_cell = 0; z_cell < depth_range; z_cell++) {
-								if(num_atoms_in_cell[num_dw_cells*cat +cell] > 0) {
-									dw_3d << cat << ", " << cell << ", " << y_cell << ", " << z_cell << ", " << mag_x[num_dw_cells*cat + cell] << ", " << mag_x[num_dw_cells*cat + cell] << ", " << mag_x[num_dw_cells*cat + cell] << "\n";
-								}
-							}
-						}
-					}
-				}
-			}
-				
-			dw_3d.close();
-			}
-
-		}
+		// 	if(vmpi::my_rank==0) {
+		// 		for(int cat = 1; cat < num_categories; cat++) {
+		// 			if(cat == 3) continue;
+		// 			for(cell = start_cell; cell < end_cell; cell++) {
+		// 				for(int y_cell = 0; y_cell < depth_range; y_cell++) {
+		// 					for(int z_cell = 0; z_cell < depth_range; z_cell++) {
+		// 						if(num_atoms_in_cell[num_dw_cells*cat +cell] > 0) {
+		// 							dw_3d << cat << ", " << cell << ", " << y_cell << ", " << z_cell << ", " << mag_x[num_dw_cells*cat + cell] << ", " << mag_x[num_dw_cells*cat + cell] << ", " << mag_x[num_dw_cells*cat + cell] << "\n";
+		// 						}
+		// 					}
+		// 				}
+		// 			}
+		// 		}
+		// 	}	
+		// 	dw_3d.close();
+		// 	}
+		// }
 		if(vmpi::my_rank==0) dw_pos.close();
 	}
+	}
 
-}//end of namespace program
+} //end of namespace program
