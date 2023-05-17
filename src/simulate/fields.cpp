@@ -527,7 +527,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		const double sotpj = sot_pj[material];
 
 		const double sot_lambda = sot_asm[material];
-		double sot_factor = 1.0 / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
+		double sot_factor = program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
 		// if(sim::time > 30000.0) sot_factor = 0.0;
 		if(sot_factor != sot_factor) sot_factor = 0.0;
 		//  if(sot_factor < 0) std::cout << hx << ", " << hy << ", " << hz << ", " << sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy ) << std::endl;
