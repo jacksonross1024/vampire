@@ -333,7 +333,7 @@ namespace sim{
       test = "omp-threads";
       if(word == test) {
          int t = atoi(value.c_str());
-         vin::check_for_valid_int(t, word, line, prefix, 1, 32, "input", "1, 8 or 32");
+         vin::check_for_valid_int(t, word, line, prefix, 1, 64, "input", "1, 8 or 64");
          sim::CASTLE_omp_threads = t;
          return true;
       }
