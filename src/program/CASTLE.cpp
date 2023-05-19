@@ -808,13 +808,13 @@ void initialize_electrons() {
     
     half_int_var =  4;
     
-    e_e_integration_cutoff = pow(lattice_width/8.0,2.0);
+    e_e_integration_cutoff = pow(lattice_width/6.0,2.0);
     
     e_e_coulomb_cutoff = 6.0;
-    std::cout << "band 1 velocity(A/fs): " << return_vel(E_f_A) << ", minimun separation criteria(dt): " << floor(e_e_coulomb_cutoff/(2*return_vel(E_f_A))/(dt*half_int_var)) << "...";
+    std::cout << "band 1 velocity(A/fs): " << return_vel(E_f_A) << ", minimun separation criteria(dt): " << floor(e_e_coulomb_cutoff/(2*return_vel(E_f_A)*dt)) << "...";
     if( (4*return_vel(E_f_A)*dt*half_int_var) < e_e_coulomb_cutoff) {
       terminaltextcolor(GREEN);
-       std::cout << "criteria exceeded. Consider increasing stride to " << floor(e_e_coulomb_cutoff/(2*return_vel(E_f_A)*dt*half_int_var)) << std::endl;
+       std::cout << "criteria exceeded. Consider increasing stride to " << floor(e_e_coulomb_cutoff/(2*return_vel(E_f_A)*dt)) << std::endl;
       terminaltextcolor(WHITE);
     }
     else if ( (2*return_vel(E_f_A)*dt*half_int_var) < e_e_coulomb_cutoff)  std::cout << "criteria met" << std::endl;
