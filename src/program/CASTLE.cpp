@@ -488,6 +488,7 @@ void initialize_cell_omp() {
   x_step_size = lattice_width / double(x_omp_cells);
   y_step_size = lattice_depth / double(y_omp_cells);
   z_step_size = lattice_height/ double(z_omp_cells);
+      if(err::check) std::cout << "step sizes(A): " << x_step_size << ", " << y_step_size << ", " << z_step_size << std::endl;
   boundary_conditions_cutoff = fmax(x_step_size, fmax(y_step_size, z_step_size));
   cell_integration_lists.resize(total_cells);
   old_cell_integration_lists.resize(total_cells);
@@ -660,8 +661,8 @@ void initialize_cell_omp() {
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
     //number of cells each thread takes in each lattice direction
-    const int max_x_threads = 4;
-    const int max_y_threads = 4;
+    const int max_x_threads = 2;
+    const int max_y_threads = 2;
     const int max_z_threads = 4;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
@@ -680,6 +681,10 @@ void initialize_cell_omp() {
     {
     const int thread = omp_get_thread_num();
     for(int l = 0; l < cells_per_thread; l++) {
+      if(err::check && l==0) {
+        #pragma omp critical 
+        std::cout << "thread: " << thread << ", x_offset: " << (thread*max_x_threads)%x_omp_cells << ", y offset: " << (max_y_threads)*(int(floor(thread*max_x_threads/(x_omp_cells)))%(y_omp_cells/ max_y_threads)) << ", z offset: " << (max_z_threads)*floor(thread/(x_omp_cells*y_omp_cells/(max_x_threads*max_y_threads))) << std::endl;
+      }
       // #pragma omp critical
       // std::cout << omp_get_thread_num() << ", " << (omp_get_thread_num()*2)%x_omp_cells + floor(l/z_omp_cells) << ", " << (int(floor(omp_get_thread_num()*2/x_omp_cells)*2)%(y_omp_cells)) + int(floor(l/(z_omp_cells/2)))%2 << ", " << 4*floor(omp_get_thread_num()/(2*y_omp_cells)) + (l % (z_omp_cells/2)) << std::endl;
       
@@ -804,7 +809,20 @@ void initialize_electrons() {
     half_int_var =  4;
     
     e_e_integration_cutoff = pow(lattice_width/8.0,2.0);
-    e_e_coulomb_cutoff = pow(7.0, 2.0);
+    
+    e_e_coulomb_cutoff = 6.0;
+    std::cout << "band 1 velocity(A/fs): " << return_vel(E_f_A) << ", minimun separation criteria(dt): " << floor(e_e_coulomb_cutoff/(2*return_vel(E_f_A))/(dt*half_int_var)) << "...";
+    if( (4*return_vel(E_f_A)*dt*half_int_var) < e_e_coulomb_cutoff) {
+      terminaltextcolor(GREEN);
+       std::cout << "criteria exceeded. Consider increasing stride to " << floor(e_e_coulomb_cutoff/(2*return_vel(E_f_A)*dt*half_int_var)) << std::endl;
+      terminaltextcolor(WHITE);
+    }
+    else if ( (2*return_vel(E_f_A)*dt*half_int_var) < e_e_coulomb_cutoff)  std::cout << "criteria met" << std::endl;
+    else {
+      terminaltextcolor(RED);
+      std::cerr << "criteria not met: " << e_e_coulomb_cutoff << " < " << 2*return_vel(E_f_A)*dt*half_int_var << std::endl;
+    }
+    e_e_coulomb_cutoff = pow(6.0, 2.0);
     
       if (err::check) std::cout << "Prepare to set arrays: " << std::endl;
       electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
@@ -827,7 +845,7 @@ void initialize_electrons() {
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
      ee_density =   3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3));
     //  ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3));
-    const int ee_scattering = int(6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3));
+    const int ee_scattering = 6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3);
         if (err::check)  std::cout << ee_density << ", " << ee_scattering << std::endl;
     
     omp_set_dynamic(0);
