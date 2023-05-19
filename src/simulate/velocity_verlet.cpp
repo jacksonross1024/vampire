@@ -544,7 +544,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
      r_e_occupation = std::min(1.0, double(global_e_dos[r_e_index][0]) / std::max(1.0, double(global_e_dos[r_e_index][1]))); 
     }
     
-   const double thermal_factor = return_BE_distribution(phonon_factor, TTMp);
+   const double thermal_factor = return_BE_distribution(phonon_factor, Tp);
    const double f_factor = thermal_factor*(1.0 - f_e_occupation);// - f_e_occupation*(1.0-e_occupation);
    const double r_factor = (thermal_factor + 1.0) *(1.0-r_e_occupation);
    global_tau_ep[2*e_index] += ea_rate*(f_factor);
