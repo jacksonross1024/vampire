@@ -57,7 +57,7 @@ namespace program{
 		int num_dw_cells = (cs::system_dimensions[sim::domain_wall_axis]/sim::domain_wall_discretisation) + 1;
 		std::cout << "discretisation cells: " << sim::domain_wall_discretisation << ", num cells: " << num_dw_cells << std::endl;
 		int num_categories = 6;
-		std::vector <double > atom_to_cell_array(num_local_atoms,0);
+		std::vector <double > atom_to_cell_array(num_local_atoms,0.0);
 		int horizontal_range = 200; //number of discrete units tall
 		int depth_range = -1; //-1 for maximum
 		int vertical_range = -1;  //-1 for maximum
@@ -70,7 +70,7 @@ namespace program{
 		std::vector  < double > mag_z(num_categories*num_dw_cells,0.0);
 
 
-		std::vector<std::vector<int> > cell_to_atom_array(num_categories*num_dw_cells, std::vector<int> (depth_range*vertical_range, 0));
+		// std::vector<std::vector<int> > cell_to_atom_array(num_categories*num_dw_cells, std::vector<int> (depth_range*vertical_range, 0));
 		//std::vector<std::vector<int> > cell_to_atom_array_z(num_categories*num_dw_cells, std::vector<int> (int(ceil(4.0*cs::system_dimensions[2]/sim::unit_cell_z))));
 
 		std::vector < int > num_atoms_in_cell(num_categories*num_dw_cells,0);
@@ -298,7 +298,7 @@ namespace program{
 				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
 				atom_to_cell_array[atom] = cell;
 				num_atoms_in_cell[num_dw_cells*cat + cell] ++;
-				if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0 || num_atoms_in_cell[num_dw_cells*cat + cell] > 20) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
+				// if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0 || num_atoms_in_cell[num_dw_cells*cat + cell] > 20) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
 				//	if (cell > num_dw_cells) std::cout << atoms::x_coord_array[atom] << '\t' << sim::domain_wall_discretisation <<std::endl;
 			}
 		}
@@ -353,9 +353,9 @@ namespace program{
 			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
 				int cat = atoms::sublayer_array[atom];
-				mag[3*num_dw_cells*cat + 3*cell] += atoms::x_spin_array[atom];
-				mag[3*num_dw_cells*cat + 3*cell+1] += atoms::y_spin_array[atom];
-				mag[3*num_dw_cells*cat + 3*cell+2] += atoms::z_spin_array[atom];
+				mag[3*num_dw_cells*cat + (3*cell)] += atoms::x_spin_array[atom];
+				mag[3*num_dw_cells*cat + (3*cell)+1] += atoms::y_spin_array[atom];
+				mag[3*num_dw_cells*cat + (3*cell)+2] += atoms::z_spin_array[atom];
 
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*0.5 - atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]);
 			}
@@ -478,7 +478,7 @@ namespace program{
 			for (int cell = 0; cell < num_dw_cells; cell++){
 				
 					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
-					mag[3*num_dw_cells*cat + 3*cell+0] = 0.0;
+					mag[3*num_dw_cells*cat + 3*cell +0] = 0.0;
 					mag[3*num_dw_cells*cat + 3*cell +1] = 0.0;
 					mag[3*num_dw_cells*cat + 3*cell +2] = 0.0;
 					// topological_charge[num_dw_cells*cat + cell] = 0.0;
