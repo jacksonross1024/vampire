@@ -58,16 +58,16 @@ namespace program{
 		std::cout << "discretisation cells: " << sim::domain_wall_discretisation << ", num cells: " << num_dw_cells << std::endl;
 		int num_categories = 6;
 		std::vector <double > atom_to_cell_array(num_local_atoms,0.0);
-		int horizontal_range = 200; //number of discrete units tall
-		int depth_range = -1; //-1 for maximum
-		int vertical_range = -1;  //-1 for maximum
+		// int horizontal_range = 200; //number of discrete units tall
+		// int depth_range = -1; //-1 for maximum
+		// int vertical_range = -1;  //-1 for maximum
 
-		depth_range = ceil(2.0*cs::system_dimensions[1]/sim::unit_cell_y);
-		vertical_range = ceil(4.0*cs::system_dimensions[2]/sim::unit_cell_z);
-		std::vector  < double > mag(num_categories*num_dw_cells*3,0.0);
-		std::vector  < double > mag_x(num_categories*num_dw_cells,0.0);
-		std::vector  < double > mag_y(num_categories*num_dw_cells,0.0);
-		std::vector  < double > mag_z(num_categories*num_dw_cells,0.0);
+		// depth_range = ceil(2.0*cs::system_dimensions[1]/sim::unit_cell_y);
+		// vertical_range = ceil(4.0*cs::system_dimensions[2]/sim::unit_cell_z);
+		std::vector  < double > mag(num_categories*num_dw_cells*3, 0.0);
+		// std::vector  < double > mag_x(num_categories*num_dw_cells,0.0);
+		// std::vector  < double > mag_y(num_categories*num_dw_cells,0.0);
+		// std::vector  < double > mag_z(num_categories*num_dw_cells,0.0);
 
 
 		// std::vector<std::vector<int> > cell_to_atom_array(num_categories*num_dw_cells, std::vector<int> (depth_range*vertical_range, 0));
@@ -377,7 +377,7 @@ namespace program{
 					if(cat==3) continue;
 					if (num_atoms_in_cell[num_dw_cells*cat + cell] > 0){
 					
-						myfile << cell <<"\t" <<  cat << '\t' << mag[3*num_dw_cells*cat + 3*cell] /num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << mag[3*num_dw_cells*cat + 3*cell+1] /num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << mag[2*num_dw_cells*cat + 3*cell+2]/num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << num_atoms_in_cell[num_dw_cells*cat + cell]  <<  std::endl; 
+						myfile << cell <<"\t" <<  cat << '\t' << mag[3*num_dw_cells*cat + 3*cell] /num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << mag[3*num_dw_cells*cat + 3*cell+1] /num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << mag[3*num_dw_cells*cat + (3*cell)+2]/num_atoms_in_cell[num_dw_cells*cat + cell]  << "\t" << num_atoms_in_cell[num_dw_cells*cat + cell]  <<  std::endl; 
 					}
 				}
 			}
@@ -580,7 +580,7 @@ namespace program{
 						if(tpcg > M_PI*0.5) tpcg -= 2.0*M_PI;
 						else if (tpcg < -M_PI*0.5) tpcg += 2.0*M_PI;
 						d_topological_charge_acc[cat] += tpcg;
-						if(print) dw_res << cell <<"\t" <<  cat << '\t' << mag[3*num_dw_cells*cat + 3*cell] / num << "\t" << mag[3*num_dw_cells*cat + 3*cell + 1] /num << "\t" << mag[3*num_dw_cells*cat + 3*cell +2]/num  << "\t" << tpcg << "\t"  << d_topological_charge_acc[cat] << "\t" << num  <<  "\n";
+						if(print) dw_res << cell <<"\t" <<  cat << '\t' << mag[3*num_dw_cells*cat + 3*cell] / num << "\t" << mag[3*num_dw_cells*cat + (3*cell) + 1] /num << "\t" << mag[3*num_dw_cells*cat + (3*cell) +2]/num  << "\t" << tpcg << "\t"  << d_topological_charge_acc[cat] << "\t" << num  <<  "\n";
 					}
 				}
 			}
