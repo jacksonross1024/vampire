@@ -491,9 +491,9 @@ namespace program{
 			if(Te>1.0) sim::TTTe = (-G*(Te-Tp)+pump)*dt/(Ce*Te) + Te;
 			else sim::TTTe =       (-G*(Te-Tp)+pump)*dt/Ce + Te;
 			sim::TTTp =            ( G*(Te-Tp)     )*dt/Cl + Tp - (Tp-sim::Teq)*sim::HeatSinkCouplingConstant*dt;
-		for (int cat = 1; cat < num_categories; cat ++) {
+			for (int cat = 1; cat < num_categories; cat ++) {
 				if(cat == 3) continue;
-			for (int cell = 0; cell < num_dw_cells; cell++){
+				for (int cell = 0; cell < num_dw_cells; cell++){
 				
 					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
 					mag[num_mag_cat*num_dw_cells*cat + num_mag_cat*cell +0] = 0.0;
@@ -521,7 +521,6 @@ namespace program{
 			stats::update();
 
 			// std::ofstream myfile_1;
-			
 		
 			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = atom_to_cell_array[atom];
@@ -548,10 +547,10 @@ namespace program{
 			//sim::domain_wall_velocity = 1.0e-10* std::abs((minima_x[0]/minima_x[1]) - 10.0*sim::domain_wall_centre)/(sim::partial_time*mp::dt_SI); //A/0.1ft -> e16/ e10 -> m/s
 			//sim::domain_wall_centre  = 0.1*minima_x[0]/minima_x[1];
 		bool print = (sim::time % 500 == 0) ? true : false;
-		std::vector< double> domain_tracks;
-		int domain_counter = 0;
+		
 		if(vmpi::my_rank == 0) {
-			
+			std::vector< double> domain_tracks;
+		int domain_counter = 0;
 			std::ofstream dw_res;
 			string filename = "/dw/dw-" + std::to_string(sim::time) + ".txt";
 			if(print) dw_res.open (string(directory) + filename);
@@ -576,20 +575,19 @@ namespace program{
 			double d_topological_charge_acc[num_categories] = {0.0};
 			// double topological_charge_acc_1[num_categories] = {0.0};
 			
-
-				for (int cell = 2; cell < num_dw_cells; cell++) {
-					for (int cat = 1; cat < num_categories; cat ++) {
-						if( cat == 3 ) continue;
+			for (int cell = 2; cell < num_dw_cells; cell++) {
+				for (int cat = 1; cat < num_categories; cat ++) {
+					if( cat == 3 ) continue;
 				
 					mag_x_1[cat] = mag[num_mag_cat*num_dw_cells*cat + num_mag_cat*(cell-2)] / std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
 					mag_y_1[cat] = mag[num_mag_cat*num_dw_cells*cat + num_mag_cat*(cell-2) + 1] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
-					mag_x_2[cat] = mag[num_mag_cat*num_dw_cells*cat + num_mag_cat*cell] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
-					mag_y_2[cat] = mag[num_mag_cat*num_dw_cells*cat + num_mag_cat*cell+1] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell-2]));
+					mag_x_2[cat] = mag[num_mag_cat*num_dw_cells*cat + num_mag_cat*cell] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell]));
+					mag_y_2[cat] = mag[num_mag_cat*num_dw_cells*cat + num_mag_cat*cell+1] /std::max(1.0, double(num_atoms_in_cell[num_dw_cells*cat + cell]));
 					
 					if((mag_y_2[cat] != 0.0 || mag_x_2[cat] != 0.0) && (mag_y_1[cat] != 0.0 || mag_x_1[cat] != 0.0) ) d_topological_charge[cat] =  atan2(mag_y_1[cat], mag_x_1[cat]) -atan2(mag_y_2[cat], mag_x_2[cat]);
 					//if(std::abs(d_x) > 1e-4 || std::abs(d_y) > 1e-4) topological_charge_1[cat] = atan2(d_y,d_x);
-					if( mag_y_1[cat]*mag_y_2[cat] < 0.0  ) {
-						  //90 degree wall only&& (mag_x_1[cat]*mag_x_2[cat] < 0.0 != mag_y_1[cat]*mag_y_2[cat] < 0.0 )
+					if( mag_x_1[cat]*mag_x_2[cat] < 0.0 != mag_y_1[cat]*mag_y_2[cat] < 0.0 ) {
+						  //90 degree wall only&& 
 						double location = cell*sim::unit_cell_x*0.5 - sl_offset[cat];
 						if(domain_counter < 5) {
 							domain_tracks.push_back(location);
@@ -626,12 +624,8 @@ namespace program{
 			for(int d = 0; d < domain_counter; d++) {
 				if(domain_counter == 0) break;
 				dw_pos << domain_tracks[d] << "\t";
-			} dw_pos << std::endl;
-			// if(print && domain_counter == 4) {
-			// 	#ifdef MPICF
-			// 	MPI_Allreduce(MPI_IN_PLACE, &domain_counter, 1,    MPI_INT,    MPI_SUM, MPI_COMM_WORLD);
-			// 	#endif
-			// }
+				if(d == domain_counter-1) dw_pos << std::endl;
+			} 
 		}
 			// Output data
 			vout::data();
@@ -685,8 +679,9 @@ namespace program{
 		// 	dw_3d.close();
 		// 	}
 		// }
-		if(vmpi::my_rank==0) dw_pos.close();
+		
 		}
+		if(vmpi::my_rank==0) dw_pos.close();
 	}
 
 } //end of namespace program
