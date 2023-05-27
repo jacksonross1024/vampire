@@ -25,7 +25,7 @@
 #include "../exchange/internal.hpp"
 #include "anisotropy.hpp"
 #include "../simulate/internal.hpp"
-
+#include "../program/internal.hpp"
 namespace program{
 
 	//------------------------------------------------------------------------------
@@ -491,6 +491,25 @@ namespace program{
 			if(Te>1.0) sim::TTTe = (-G*(Te-Tp)+pump)*dt/(Ce*Te) + Te;
 			else sim::TTTe =       (-G*(Te-Tp)+pump)*dt/Ce + Te;
 			sim::TTTp =            ( G*(Te-Tp)     )*dt/Cl + Tp - (Tp-sim::Teq)*sim::HeatSinkCouplingConstant*dt;
+
+			  double time_from_start = mp::dt_SI * double(sim::time-program::internal::electrical_pulse_time);
+
+   		if( time_from_start < program::internal::electrical_pulse_rise_time ){
+      		program::fractional_electric_field_strength = time_from_start / program::internal::electrical_pulse_rise_time;
+   		}
+   // implement continuous current
+   		else if( time_from_start < program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time ){
+     		 program::fractional_electric_field_strength = 1.0;
+   		}
+   // implement fall time
+   		else if( time_from_start < program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time + program::internal::electrical_pulse_fall_time) {
+    	  const double fractional_fall_time = time_from_start - (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time);
+    	  program::fractional_electric_field_strength = 1.0 - fractional_fall_time / program::internal::electrical_pulse_fall_time;
+   		}
+   // after pulse current = 0
+   		else{
+      		program::fractional_electric_field_strength = 0.0;
+   		}
 			for (int cat = 1; cat < num_categories; cat ++) {
 				if(cat == 3) continue;
 				for (int cell = 0; cell < num_dw_cells; cell++){
@@ -532,7 +551,7 @@ namespace program{
 				mag[num_mag_cat*num_dw_cells*cat + (num_mag_cat*cell)+2] += S[2];
 				mag[num_mag_cat*num_dw_cells*cat + (num_mag_cat*cell)+3] += exchange::single_spin_energy(atom, S[0], S[1], S[2]);
 				mag[num_mag_cat*num_dw_cells*cat + (num_mag_cat*cell)+4] += anisotropy::single_spin_energy(atom,mat , S[0], S[1], S[2], sim::temperature);
-				mag[num_mag_cat*num_dw_cells*cat + (num_mag_cat*cell)+5] +=  sim::laser_torque_strength*(cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt[mat];
+				mag[num_mag_cat*num_dw_cells*cat + (num_mag_cat*cell)+5] +=  program::fractional_electric_field_strength*(cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt[mat];
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*1.5 - (M_PI+atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]));
 			}
 
