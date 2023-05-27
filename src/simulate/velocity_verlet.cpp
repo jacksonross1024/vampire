@@ -501,21 +501,37 @@ double electron_applied_voltage(const int e, const int array_index, const double
    double deltaE = d_energy - energy;
    
    if(d_energy > core_cutoff+60.0) return 0.0;
-   if(d_energy < core_cutoff) {
-      electron_velocity[array_index] *= -1.0;
-      electron_velocity[array_index+1] *= -1.0;
-      electron_velocity[array_index+2] *= -1.0;
-      return 0.0;
-   }
+   else if(d_energy < core_cutoff) return 0.0; 
+   else if (d_energy > transport_cutoff) {
+      const int d_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((d_energy - DoS_cutoff)*i_phonon_energy))));
+      double e_occupation   = std::min(1.0, double(global_e_dos[d_index  ][0]) / (dos_standard[d_index]*phonon_energy));
+      if(e_occupation < 1.0) {
+         double theta = atan2(k_2, d_k_1);
+         if(theta != theta) theta = 0.0;
+         double phi = acos(k_3/d_k);
+         electron_velocity[array_index]   = cos(theta)*sin(phi);
+         electron_velocity[array_index+1] = sin(theta)*sin(phi);
+         electron_velocity[array_index+2] = cos(phi);
+         electron_potential[e] = d_energy;
 
-   double theta = atan2(k_2, d_k_1);
-      if(theta != theta) theta = 0.0;
-   double phi = acos(k_3/d_k);
-   electron_velocity[array_index]   = cos(theta)*sin(phi);
-   electron_velocity[array_index+1] = sin(theta)*sin(phi);
-   electron_velocity[array_index+2] = cos(phi);
-   electron_potential[e] = d_energy;
-   return deltaE;
+         return deltaE;   
+      }
+   } else {
+      const int d_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((d_energy - DoS_cutoff)*i_phonon_energy))));
+      double e_occupation   = std::min(1.0, double(global_e_dos[d_index  ][0]) / (global_e_dos[d_index][1]));
+      if(e_occupation < 1.0) {
+         double theta = atan2(k_2, d_k_1);
+            if(theta != theta) theta = 0.0;
+         double phi = acos(k_3/d_k);
+         electron_velocity[array_index]   = cos(theta)*sin(phi);
+         electron_velocity[array_index+1] = sin(theta)*sin(phi);
+         electron_velocity[array_index+2] = cos(phi);
+         electron_potential[e] = d_energy;
+
+         return deltaE;
+      }
+   }
+   return 0.0;
 }
 
 void ea_scattering(const int e, const int array_index, const int thread) {
