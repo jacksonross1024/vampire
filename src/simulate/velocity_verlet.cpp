@@ -721,9 +721,18 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
    if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance += lattice_height;
    else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance -= lattice_height;
 
-   double length  = (x_distance*x_distance + y_distance*y_distance + z_distance*z_distance);
+   double length  = sqrt(x_distance*x_distance + y_distance*y_distance + z_distance*z_distance);
    if(length == 0.0) return;
         
+  double l_theta = atan2(y_distance,x_distance);
+    if(l_theta!=l_theta) l_theta = 0.0;
+  double l_phi = acos(z_distance/length);
+
+  x_distance = 3.54*cos(l_theta)*sin(l_phi);
+  y_distance = 3.54*sin(l_theta)*sin(l_phi);
+  z_distance = 3.54*cos(l_phi);
+  length = 3.54*3.54;
+  
    const double k_1 = return_dWdE(e_energy);
    const double k_2 = return_dWdE(d_e_energy);
 
@@ -748,11 +757,9 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
    const double d_k_y_2 = k_y_2 + y_distance*v_x_dot_product;
    const double d_k_z_2 = k_z_2 + z_distance*v_x_dot_product;
 
-
    double d_k_1 = sqrt(d_k_x_1*d_k_x_1 + d_k_y_1*d_k_y_1 + d_k_z_1*d_k_z_1);
    double d_k_2 = sqrt(d_k_x_2*d_k_x_2 + d_k_y_2*d_k_y_2 + d_k_z_2*d_k_z_2);
       
-   
    double d_e_1 = return_dWdE_i(d_k_1);
    double d_e_2 = return_dWdE_i(d_k_2);
 
