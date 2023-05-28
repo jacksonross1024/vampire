@@ -189,14 +189,27 @@ void initialize () {
     lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
     phonon_energy = 0.25*1e-3*sqrt(sim::ea_coupling_strength/0.084)*constants::eV_to_AJ; // meV [e-3] AJ
     i_phonon_energy = 1.0/phonon_energy;
-        if(err::check) std::cout << "phonon occupation test and DoS offset discretisation: " << return_BE_distribution(2*phonon_energy, Te) << ", " << int(floor(1.5*constants::eV_to_AJ*i_phonon_energy)) << std::endl;
+       
     // std::cout << "phonon energy " << phonon_energy << std::endl;
-    dos_size = int(floor((60.0*i_phonon_energy)/1.0))+1;
+    min_as = sim::CASTLE_min_as*constants::eV_to_AJ;
+    max_as = sim::CASTLE_max_as*constants::eV_to_AJ;
+    DoS_cutoff = phonon_energy* int(floor(-1.0*min_as*i_phonon_energy));
+    dos_size = int(floor(((max_as-min_as)*i_phonon_energy)/1.0))+1;
 
+     E_f = 106.68e-20;// constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
+    E_f_A = 106.68;// E_f*1e20; //AJ
+
+    lattice_width = cs::system_dimensions[0]+x_unit_size; //A
+    lattice_depth  = cs::system_dimensions[1]+y_unit_size; // A
+    lattice_height  = cs::system_dimensions[2]+z_unit_size; // A
+
+           std::cout << "Initialising lattice: " << lattice_depth*lattice_height*lattice_width*1e-3 << " nm^3; active space range (AJ): " <<E_f_A+ min_as << " <> " << E_f_A+ max_as << ", (" << max_as-min_as << " AJ). Resultant resolution: " << phonon_energy << " for " << dos_size << " bins" << std::endl;
+    
     dt = mp::dt_SI * 1e15;//-4; //S -> femptoSeconds
     TTMe = TTMp = d_TTMe = d_TTMp = Tp = Te = d_Tp = d_Te = sim::temperature;
 
-    DoS_cutoff = phonon_energy* int(floor(0.67*constants::eV_to_AJ*i_phonon_energy));
+         if(err::check) std::cout << "phonon occupation test and DoS offset discretisation: " << return_BE_distribution(2*phonon_energy, Te) << ", " << int(floor(1.5*constants::eV_to_AJ*i_phonon_energy)) << std::endl;
+
     
       char directory [256];
       if(getcwd(directory, sizeof(directory)) == NULL){
@@ -264,6 +277,7 @@ void initialize () {
         dos_standard[d] = lattice_atoms*dos_standard[d]; //e-/AJ for Fermi window for whole lattice 
         dos_standard_output << d*phonon_energy-DoS_cutoff << ", " << dos_standard[d]*phonon_energy << ", " << 0.5*(dos_standard[d+1]-dos_standard[d-1])/lattice_atoms/phonon_energy << '\n';
       }
+      dos_standard_output.close();
       conduction_electrons = int(round(total_e_scaling*lattice_atoms));
       // total_e /= constants::eV_to_AJ;
      std::cout << "total e- dos: " << total_e_scaling << ", (e-/Fermi window/atom); full lattice: " << conduction_electrons << " @ 0K from " << -DoS_cutoff << " to 0 " << std::endl;
@@ -287,14 +301,7 @@ void initialize () {
     //========
     // Initialzie variables used by all functions
     //========
-    lattice_width = cs::system_dimensions[0]+x_unit_size; //A
-    lattice_depth  = cs::system_dimensions[1]+y_unit_size; // A
-    lattice_height  = cs::system_dimensions[2]+z_unit_size; // A
-
-    // if( lattice_height < 26 || lattice_depth < 26 || lattice_width < 26) {
-    //   std::cerr << "Lattice dimension Error: castle must be 4.5x4.5x4.5 nm^3 minimum" << std::endl;
-    // }
-
+    
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
@@ -307,11 +314,10 @@ void initialize () {
     combined_mass = 1 / (atomic_mass + constants::m_e_r);
     applied_voltage = sim::applied_voltage;
     n_f = 1.0e3 * conduction_electrons / (lattice_width * lattice_height * lattice_depth)/total_e_scaling; // e- / A**3 -> e-/m**3
-    E_f = 106.68e-20;// constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
-    E_f_A = 106.68;// E_f*1e20; //AJ
+   
     mu_f = 5.0 * E_f_A / (3.0 * conduction_electrons);//Fermi-level
     v_f = sqrt(2.0 * E_f_A * constants::m_e_r_i); // A/fs
-
+ 
     a_specific_heat = 25.0 /6.02e3; // //sim::TTCl; //J/K/mol -> .at(e20/Na) AJ/K/e-   
     a_specific_heat_i = 1.0 / a_specific_heat;
     a_heat_capacity = 1.14*a_specific_heat * n_f; //AJ/K/particle .at() AJ/K/nm**3
@@ -327,7 +333,7 @@ void initialize () {
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
     power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
     if(photon_energy == 0.0) std::cerr << "sim error: photon energy gives infinite intensity " << std::endl;
-    const static double tau = 3.0*E_f_A /(M_PI*ea_coupling_strength); // fs/AJ
+    const double tau = 3.0*E_f_A /(M_PI*ea_coupling_strength); // fs/AJ
     G = 300.0*e_heat_capacity*E_f_A*3.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
@@ -342,7 +348,7 @@ void initialize () {
     // core_cutoff = E_f_A - DoS_cutoff;
      std::cout << "E_f(AJ): " << E_f*1e20 << ", discretised (AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
     ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau_ep(fs/AJ): " << 1.0/(-1.0*ea_rate/dt) << ", ee_rate(J/s/K/m^3): " << -1e22*ee_rate*n_f/dt/300.0 << ", tau_ee(fs/AJ): " << 1.0/((-1.0/(11.9*11.9))*ee_rate/dt) << \
-    ", phonon energy: " << 4*phonon_energy << ", dos width: " << phonon_energy <<  std::fixed << std::endl;
+    ", phonon energy: " << 4*phonon_energy << std::fixed << std::endl;
 
     omp_set_num_threads(omp_threads);
   // omp_uniform_random(omp_threads);
@@ -792,11 +798,7 @@ void initialize_electrons() {
     // Initialize arrays for holding electron variables
     //      Arrays in super array format to take advantage of caching
     //========
-  
 
-    // temp_Map.resize(8);
-  
- 
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
     ee_transport_scattering_count = 0;
@@ -806,39 +808,52 @@ void initialize_electrons() {
     // ee_scattering_angle = sim::ee_scattering_angle;
     // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     
-    half_int_var =  4;
+    half_int_var[0] =  10;
+    half_int_var[1] =  3;
     
-    e_e_integration_cutoff = pow(lattice_width/6.0,2.0);
-    
+    e_e_integration_cutoff = lattice_width/6.0;
     e_e_coulomb_cutoff = 6.0;
-    std::cout << "band 1 velocity(A/fs): " << return_vel(E_f_A) << ", minimun separation criteria(dt): " << floor(e_e_coulomb_cutoff/(2*return_vel(E_f_A)*dt)) << "...";
-    if( (4*return_vel(E_f_A)*dt*half_int_var) < e_e_coulomb_cutoff) {
+    double deltaX = e_e_integration_cutoff-e_e_coulomb_cutoff;
+    std::cout << "band 1 velocity(A/fs): " << return_vel(E_f_A) << ", minimun separation criteria(dt): " << floor(deltaX/(2*return_vel(E_f_A)*dt)) << "...";
+    if( (4*return_vel(E_f_A)*dt*half_int_var[0]) < deltaX) {
       terminaltextcolor(GREEN);
-       std::cout << "criteria exceeded. Consider increasing stride to " << floor(e_e_coulomb_cutoff/(2*return_vel(E_f_A)*dt)) << std::endl;
+       std::cout << "criteria exceeded. Consider increasing stride to " << floor(deltaX/(2*return_vel(E_f_A)*dt)) << std::endl;
       terminaltextcolor(WHITE);
     }
-    else if ( (2*return_vel(E_f_A)*dt*half_int_var) < e_e_coulomb_cutoff)  std::cout << "criteria met" << std::endl;
+    else if ( (2*return_vel(E_f_A)*dt*half_int_var[0]) < deltaX)  std::cout << "criteria met" << std::endl;
     else {
       terminaltextcolor(RED);
-      std::cerr << "criteria not met: " << e_e_coulomb_cutoff << " < " << 2*return_vel(E_f_A)*dt*half_int_var << std::endl;
+      std::cerr << "criteria not met: " << deltaX << " < " << 2*return_vel(E_f_A)*dt*half_int_var[0] << std::endl;
     }
+    deltaX = 2*e_e_integration_cutoff - e_e_coulomb_cutoff;
+    std::cout << "band 2 velocity(A/fs): " << return_vel(E_f_A+5.0) << ", minimun separation criteria(dt): " << floor(deltaX/(2*return_vel(E_f_A+5.0)*dt)) << "...";
+    if( (4*return_vel(E_f_A+5.0)*dt*half_int_var[1]) < deltaX) {
+      terminaltextcolor(GREEN);
+       std::cout << "criteria exceeded. Consider increasing stride to " << floor(deltaX/(2*return_vel(E_f_A+5.0)*dt)) << std::endl;
+      terminaltextcolor(WHITE);
+    }
+    else if ( (2*return_vel(E_f_A+5.0)*dt*half_int_var[1]) < deltaX)  std::cout << "criteria met" << std::endl;
+    else {
+      terminaltextcolor(RED);
+      std::cerr << "criteria not met: " << deltaX << " < " << 2*return_vel(E_f_A+5.0)*dt*half_int_var[1] << std::endl;
+    }
+
+    e_e_integration_cutoff = pow(e_e_integration_cutoff,2.0);
     e_e_coulomb_cutoff = pow(6.0, 2.0);
     
       if (err::check) std::cout << "Prepare to set arrays: " << std::endl;
-      electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
+    
+    electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
     electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
     electron_potential.resize(conduction_electrons, 0);
-    // ee_dos_hist.resize(conduction_electrons);
+
     relaxation_time_hist_ee.resize(3*conduction_electrons);
-    // relaxation_time_hist_ea.resize(3*conduction_electrons);
-   // std::cout << half_int_var << ", " << full_int_var << ", " << boundary_conditions_cutoff << ", " << e_e_integration_cutoff << std::endl;
-    // electron_transport_list.resize(conduction_electrons, false);
+
     electron_integration_list.resize(conduction_electrons);
-    // electron_nearest_electron_list.resize(conduction_electrons);
-  
+   
     electron_ee_scattering_list.resize(conduction_electrons);
     electron_ea_scattering_list.resize(conduction_electrons);
-      flux_index.resize(dos_size,0); 
+    flux_index.resize(dos_size,0.0); 
     global_tau_ep.resize(dos_size*2, 0.0);
     global_tau_ee.resize(dos_size, 0.0);
 
@@ -1145,14 +1160,6 @@ void initialize_velocities() {
     std::cout << "core cutoff: " << core_cutoff << ", transport cutoff: " << transport_cutoff << ", ballistic cutoff: " << E_f_A+4.86166 << std::endl;
       if(err::check)  std::cout << "center of mass adjustment: " << p_x << ", " << p_y << ", " << p_z << std::endl;
    
-    // for(int e = 0; e < conduction_electrons; e++) {
-    //   double energy =  (electron_potential[e]);
-    //   double vel =  return_vel(energy);
-    //   double theta = atan2(electron_velocity[3*e+1], electron_velocity[3*e]);
-    //     if(theta != theta) theta  = 0.0;
-    //   double phi = acos(electron_velocity[3*e+2]);
-    //   Init_E_vel << e << ", " << energy << ", " << vel << ", " << theta  << ", " << phi << "\n";
-    // }
 
        if (err::check)  std::cout << "distribution output" << std::endl;
     

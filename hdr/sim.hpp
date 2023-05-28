@@ -238,8 +238,6 @@ namespace sim{
 	extern unsigned int convergence_check;
 	extern bool output_convergence_counter;
 
-
-
 	//Fermi Gas models
 
 	
@@ -265,12 +263,10 @@ namespace sim{
 	extern double fermi_density;	// electrons / volume
 	extern double conduction_electrons; //conduting electron sper atom
 
-
 	extern bool fermi_function; //bool for calculating and outputing fermi distribution
 	extern bool fermi_energy; // bool for calculating and outputing fermi energy
 	extern bool fermi_Cv;
 	extern bool fermi_pressure;
-
 
 	extern std::string output_fermi_energy();
 	extern std::string output_fermi_Cv();
@@ -302,6 +298,9 @@ namespace sim{
 	extern double ee_scattering_angle;
 
 	extern double photon_energy;
+
+	extern double CASTLE_min_as; //eV
+    extern double CASTLE_max_as; //eV
 	//------------------------------------------------------------------------
    // getter functions to give access to internal sim variables
    //------------------------------------------------------------------------

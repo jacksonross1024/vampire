@@ -337,6 +337,20 @@ namespace sim{
          sim::CASTLE_omp_threads = t;
          return true;
       }
+      test = "CASTLE-min-as";
+      if(word == test) {
+         double t = atof(value.c_str());
+         vin::check_for_valid_value(t, word, line, prefix, unit, "eV", 0.50, 3.50, "input", "bottom of active space (eV); -3 <> -0.5");
+         sim::CASTLE_min_as = t;
+         return true;
+      }
+      test = "CASTLE-max-as";
+      if(word == test) {
+         double t = atof(value.c_str());
+         vin::check_for_valid_value(t, word, line, prefix, unit, "eV", 0.5, 3.0, "input", "top of active space (eV); 0.5 <> 3");
+         sim::CASTLE_max_as = t;
+         return true;
+      }
       //--------------------------------------------------------------------
       // input parameter not found here
       return false;

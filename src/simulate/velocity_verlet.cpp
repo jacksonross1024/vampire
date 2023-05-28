@@ -84,7 +84,7 @@ void update_position() {
     omp_set_dynamic(0);
     omp_set_num_threads(omp_threads);
     
-    if(current_time_step % half_int_var == 0) {
+    if(current_time_step % half_int_var[1] == 0) {
       cell_integration_lists.swap(old_cell_integration_lists);
      
       for(int c = 0; c < total_cells; c++) {
@@ -110,11 +110,11 @@ void update_position() {
       // #pragma omp critical
       // std::cout << "cell " << cell << " done by thread " << thread << std::endl;
       int size;
-      if(current_time_step % half_int_var == 0) size = old_cell_integration_lists[cell][0];
+      if(current_time_step % half_int_var[1] == 0) size = old_cell_integration_lists[cell][0];
       else  size = cell_integration_lists[cell][0];
 
       std::vector<int> cell_integration_list;
-      cell_integration_list = (current_time_step % half_int_var == 0) ? old_cell_integration_lists[cell] : cell_integration_lists[cell];
+      cell_integration_list = (current_time_step % half_int_var[1] == 0) ? old_cell_integration_lists[cell] : cell_integration_lists[cell];
       local += size - 1;
   //  if((current_time_step % half_int_var) == 0 && ( (l % ((z_omp_cells/2)-1) )== 0 || (l % (z_omp_cells/2)) == 0) ) {
       #pragma omp barrier
@@ -166,7 +166,7 @@ void update_position() {
         electron_position[array_index+1] = y_pos;
         electron_position[array_index+2] = z_pos;
     
-      if(current_time_step % half_int_var == 0) {
+      if(current_time_step % half_int_var[1] == 0) {
           
            int x_cell = int(floor(x_pos / x_step_size));
 
@@ -216,7 +216,7 @@ void update_position() {
    }
       if(err::check) std::cout << "global dos updated. catching escaped electrons: " << escaping_electrons[0] -1<< std::endl;
   if(total != conduction_electrons || total_1 != conduction_electrons) std::cout << total << ", " << conduction_electrons << std::endl;
-   if(current_time_step % half_int_var == 0) {    
+   if(current_time_step % half_int_var[1] == 0) {    
     const int size = escaping_electrons[0];
   //  std::cout << "escaping electrons " << size-1 << ", " << escaping_electrons.size() << std::endl;
     
@@ -290,7 +290,7 @@ void update_dynamics() {
     while(count < photons_at_dt) {
       int select = int(omp_uniform_random[omp_get_thread_num()]()*2147483647) % (conduction_electrons);
       double e_energy = electron_potential[select];
-      if(e_energy > (DoS_cutoff+2.0*phonon_energy) && return_fermi_distribution(e_energy+photon_energy-E_f_A, Te) < (1.0-1e-2) && (e_energy+photon_energy < core_cutoff+59.0)) {
+      if(e_energy > (DoS_cutoff+2.0*phonon_energy) && return_fermi_distribution(e_energy+photon_energy-E_f_A, Te) < (1.0-1e-2) && (e_energy+photon_energy < E_f_A+ max_as)) {
         chosen[count] = select;
         count++;
       }
@@ -308,7 +308,7 @@ void update_dynamics() {
       // if(electron_potential[e] < (E_f_A-24.25)) continue;
       const int array_index = 3*e;
       
-      if(current_time_step % half_int_var == 0) e_e_coulomb(e, array_index);
+      if(current_time_step % half_int_var[(electron_potential[e]<(E_f_A+4.8) ? 0 : 1)] == 0) e_e_coulomb(e, array_index);
       // else if (current_time_step % half_int_ == 0 && electron_transport_list[e]) e_e_coulomb(e, array_index);
       else  neighbor_e_e_coulomb(e, array_index);
 
@@ -364,17 +364,20 @@ void e_e_coulomb(const int e, const int array_index) {
    int ee_integration_count = 1;
    int ee_scattering_list = 1;
 
-   double integration_range = (electron_potential[e] > E_f_A+4.8) ? 400.0 : 100.0;
-   
+   double integration_range = (electron_potential[e] > E_f_A+4.8) ? e_e_integration_cutoff*2.0: e_e_integration_cutoff;
    int i_size = 3*round(pow(integration_range,1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3);
    // if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
-   if(electron_integration_list[e].size() < i_size+1) electron_integration_list[e].resize(i_size+1, 0);
+   if(electron_integration_list[e].size() < i_size) {
+      std::cout << "resize. energy better be > " << electron_potential[e] << " > " << E_f_A+4.8 << std::endl;
+      electron_integration_list[e].resize(i_size, 0);
+   }
    int cells = (i_size > ee_density) ? 125 : 27;
   //  if(cells > 27) std::cout << i_size << ", " << ee_density << ", " << electron_potential[e] << std::endl;
    std::vector<int> integration_list;
    integration_list = (cells > 27) ? cell_lr_neighbor_list[cell] : cell_nearest_neighbor_list[cell];
 
     for(int s = 0; s < cells; s++) {
+      if(s > 27) std::cout << "energy better be > " << E_f_A+4.8 << ": " << electron_potential[e] << std::endl;
       const int int_cell = integration_list[s];
       const int size = cell_integration_lists[int_cell][0];
       if(size != size || size < 1  ) std::cout << size << std::endl;
@@ -500,7 +503,7 @@ double electron_applied_voltage(const int e, const int array_index, const double
    double d_energy = return_dWdE_i(d_k);
    double deltaE = d_energy - energy;
    
-   if(d_energy > core_cutoff+60.0) return 0.0;
+   if(d_energy > E_f_A+ max_as) return 0.0;
    else if(d_energy < core_cutoff) return 0.0; 
    else if (d_energy > transport_cutoff) {
       const int d_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((d_energy - DoS_cutoff)*i_phonon_energy))));
@@ -568,7 +571,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
    if(f_factor > 0.0 && omp_uniform_random[thread]() > exp(ea_rate*f_factor)) {
       double deltaE = phonon_factor;
       
-      if( e_energy + deltaE > (core_cutoff+60.0) ) return;
+      if( e_energy + deltaE > (E_f_A+ max_as) ) return;
       // if(omp_uniform_random[thread]()*factor < r_factor) deltaE *= -1.0;
       //  std::cout << e_occupation << ", " << d_e_occupation << ", " << double(e_index+1)+DoS_cutoff - e_energy << ", " << thermal_factor << ", "<< return_BE_integrand(abs(deltaE),Tp)*(e_occupation-d_e_occupation) << ", " << d_e_occupation*(1.0-e_occupation) << ", " << exp(ea_rate*abs(thermal_factor)) << std::endl;  
       relaxation_time_hist_ee[array_index].at(int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25)))) )++;
@@ -770,7 +773,7 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
    double b_factor = k_1*k_2/(d_k_1*d_k_2);
 
       if(d_e_1 < core_cutoff || d_e_2 < core_cutoff) return;
-      if( d_e_1 > (core_cutoff+60.0) || d_e_2 > (core_cutoff+60.0)) return;
+      if( d_e_1 > (E_f_A+ max_as) || d_e_2 > (E_f_A+ max_as)) return;
       if(abs(deltaE) > 0.01) return; //std::cout << "ee collision deltaE: " << deltaE << ", " << e_energy << ", " << d_e_energy << ", " << d_e_1 << ", " << d_e_2 << std::endl;
       if(a_factor > (b_factor+1)) {
           std::cout << " a/b factor " << a_factor << ", " <<  b_factor << ", " << k_1 << ", " << k_2 << ", " << d_k_1 << ", " << d_k_2 << std::endl;
@@ -795,12 +798,14 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
 
    if(omp_uniform_random[thread]() > exp(occupation_factor)) {
           
+          int e_relax_index = int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25))));
+          int d_relax_index = int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_energy-DoS_cutoff)/0.25))));
           // if(a_factor > (b_factor+1.0) || abs(deltaE) < 0.1) std::cout << a_factor << " > " << b_factor+1 << ", dE: "<< deltaE << ", " << k_1 << ", " << k_2 << ", " << d_k_1 << ", " << d_k_2 << ", " << e_energy << ", " << d_e_energy << ", " << d_e_1 << ", " << d_e_2 << std::endl;
-          relaxation_time_hist_ee[array_index][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25))))]++;
-          relaxation_time_hist_ee[array_index_i][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_energy-DoS_cutoff)/0.25))))]++;
+          relaxation_time_hist_ee[array_index][e_relax_index]++;
+          relaxation_time_hist_ee[array_index_i][d_relax_index]++;
         
-          relaxation_time_hist_ee[array_index + 2][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25))))] += current_time_step - relaxation_time_hist_ee[array_index + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25))))];
-          relaxation_time_hist_ee[array_index_i + 2][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_energy-DoS_cutoff)/0.25))))] += current_time_step - relaxation_time_hist_ee[array_index_i + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_energy-DoS_cutoff)/0.25))))];
+          relaxation_time_hist_ee[array_index + 2][e_relax_index] += current_time_step - relaxation_time_hist_ee[array_index + 1][e_relax_index];
+          relaxation_time_hist_ee[array_index_i + 2][d_relax_index] += current_time_step - relaxation_time_hist_ee[array_index_i + 1][d_relax_index];
         
           electron_potential[e] = d_e_1;
           electron_potential[d_e] = d_e_2;
@@ -832,15 +837,16 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
           if(deltaE > 0.001) full_int_var++;
           else if (deltaE < -0.001) full_int_var--;
           
-          if (electron_potential[e] < transport_cutoff) ee_core_scattering_count++;
-          else ee_transport_scattering_count++;
-          if (electron_potential[d_e] < transport_cutoff) ee_core_scattering_count++;
-          else ee_transport_scattering_count++;
+         //  if (electron_potential[e] < transport_cutoff) ee_core_scattering_count++;
+         //  else ee_transport_scattering_count++;
+         //  if (electron_potential[d_e] < transport_cutoff) ee_core_scattering_count++;
+         //  else ee_transport_scattering_count++;
           // lattice_output << e_e_scattering_count << ", " << electron << ", " << electron_collision << ", " \
                          << x_distance*v_x_dot_product << ", " << y_distance*v_x_dot_product << ", " << z_distance*v_x_dot_product << ", " \
                          << deltaE << ", " << deltaK << ", "  << sqrt(length) << ", " << v_x_dot_product << ", " \
                          << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))) << ", " << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaE*deltaE))*(0.25+(deltaE*deltaE))) << ", " << rspace_Hsr << std::endl;
           e_e_scattering_count += 2;
+          ee_core_scattering_count += 2;
           //if(electron_potential[electron] > transport_cutoff || electron_potential[electron_collision] > transport_cutoff )lattice_output <<\
             electron << ", " << e_occupation << ", " << d_e_occupation << ", " << 1.0/((q_sq+(deltaK*deltaK))*(q_sq+(deltaK*deltaK))) << ", " << deltaK << ", " << deltaE << ", " << e_energy<< ", " << d_e_energy << ", " <<\
             1-return_fermi_distribution(e_index*phonon_energy+deltaE+core_cutoff-E_f_A,constants::kB_r*Te) << ", " << 1-return_fermi_distribution(d_index*phonon_energy+core_cutoff-E_f_A-deltaE,constants::kB_r*Te) << ", " <<\
@@ -860,7 +866,7 @@ void inelastic_scattering(int thread, int e, int array_index, int d_e, int array
    double d_e_2 = d_e_energy+deltaE;
    
    if(d_e_1 < core_cutoff || d_e_2 < core_cutoff) return;
-   if( d_e_1 > (core_cutoff+60.0) || d_e_2 > (core_cutoff+60.0)) return;
+   if( d_e_1 > (E_f_A+ max_as) || d_e_2 > (E_f_A+ max_as)) return;
 
    const int e_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_1 - DoS_cutoff)*i_phonon_energy))));
    if ( d_e_1 > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/(dos_standard[e_index]*phonon_energy));  
@@ -876,17 +882,20 @@ void inelastic_scattering(int thread, int e, int array_index, int d_e, int array
 
    if(omp_uniform_random[thread]() > exp(occupation_factor)) {
           
-      relaxation_time_hist_ee[array_index][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25))))]++;
-      relaxation_time_hist_ee[array_index_i][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_energy-DoS_cutoff)/0.25))))]++;
+      int e_relax_index = int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25))));
+          int d_relax_index = int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_energy-DoS_cutoff)/0.25))));
+          // if(a_factor > (b_factor+1.0) || abs(deltaE) < 0.1) std::cout << a_factor << " > " << b_factor+1 << ", dE: "<< deltaE << ", " << k_1 << ", " << k_2 << ", " << d_k_1 << ", " << d_k_2 << ", " << e_energy << ", " << d_e_energy << ", " << d_e_1 << ", " << d_e_2 << std::endl;
+          relaxation_time_hist_ee[array_index][e_relax_index]++;
+          relaxation_time_hist_ee[array_index_i][d_relax_index]++;
         
-      relaxation_time_hist_ee[array_index + 2][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25))))] += current_time_step - relaxation_time_hist_ee[array_index + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25))))];
-      relaxation_time_hist_ee[array_index_i + 2][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_energy-DoS_cutoff)/0.25))))] += current_time_step - relaxation_time_hist_ee[array_index_i + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_energy-DoS_cutoff)/0.25))))];
+          relaxation_time_hist_ee[array_index + 2][e_relax_index] += current_time_step - relaxation_time_hist_ee[array_index + 1][e_relax_index];
+          relaxation_time_hist_ee[array_index_i + 2][d_relax_index] += current_time_step - relaxation_time_hist_ee[array_index_i + 1][d_relax_index];
         
-      electron_potential[e] = d_e_1;
-      electron_potential[d_e] = d_e_2;
+          electron_potential[e] = d_e_1;
+          electron_potential[d_e] = d_e_2;
 
-      relaxation_time_hist_ee[array_index + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_1-DoS_cutoff)/0.25))))] = current_time_step;
-      relaxation_time_hist_ee[array_index_i + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_2-DoS_cutoff)/0.25))))] = current_time_step;
+          relaxation_time_hist_ee[array_index + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_1-DoS_cutoff)/0.25))))] = current_time_step;
+          relaxation_time_hist_ee[array_index_i + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((d_e_2-DoS_cutoff)/0.25))))] = current_time_step;
 
       electron_ee_scattering_list[e][0] = 1;
       electron_ee_scattering_list[d_e][0] = 1;
@@ -906,15 +915,16 @@ void inelastic_scattering(int thread, int e, int array_index, int d_e, int array
           {
           if(deltaE > 0.001) full_int_var++;
           else if (deltaE < -0.001) full_int_var--;
-          if (electron_potential[e] < transport_cutoff) ee_core_scattering_count++;
-          else ee_transport_scattering_count++;
-          if (electron_potential[d_e] < transport_cutoff) ee_core_scattering_count++;
-          else ee_transport_scattering_count++;
+         //  if (electron_potential[e] < transport_cutoff) ee_core_scattering_count++;
+         //  else ee_transport_scattering_count++;
+         //  if (electron_potential[d_e] < transport_cutoff) ee_core_scattering_count++;
+         //  else ee_transport_scattering_count++;
           // lattice_output << e_e_scattering_count << ", " << electron << ", " << electron_collision << ", " \
                          << x_distance*v_x_dot_product << ", " << y_distance*v_x_dot_product << ", " << z_distance*v_x_dot_product << ", " \
                          << deltaE << ", " << deltaK << ", "  << sqrt(length) << ", " << v_x_dot_product << ", " \
                          << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))) << ", " << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaE*deltaE))*(0.25+(deltaE*deltaE))) << ", " << rspace_Hsr << std::endl;
           e_e_scattering_count += 2;
+          ee_transport_scattering_count += 2;
           //if(electron_potential[electron] > transport_cutoff || electron_potential[electron_collision] > transport_cutoff )lattice_output <<\
             electron << ", " << e_occupation << ", " << d_e_occupation << ", " << 1.0/((q_sq+(deltaK*deltaK))*(q_sq+(deltaK*deltaK))) << ", " << deltaK << ", " << deltaE << ", " << e_energy<< ", " << d_e_energy << ", " <<\
             1-return_fermi_distribution(e_index*phonon_energy+deltaE+core_cutoff-E_f_A,constants::kB_r*Te) << ", " << 1-return_fermi_distribution(d_index*phonon_energy+core_cutoff-E_f_A-deltaE,constants::kB_r*Te) << ", " <<\
@@ -941,7 +951,7 @@ double k_sq() {
             // s^2 /  fs^2
   }
 
-  return pow(sqrt(constants::K* q_sq) + (11.9-3.369471), 2.0);
+  return 11.9*11.9;// pow(sqrt(constants::K* q_sq) + (11.9-5.369471), 2.0);
 }
 
 } //end CASTLE namespace

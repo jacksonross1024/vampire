@@ -125,6 +125,8 @@ namespace sim{
    
    double photon_energy = 0.0;
 
+   double CASTLE_min_as = -0.5;
+   double CASTLE_max_as = 0.5;
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -184,6 +186,9 @@ namespace CASTLE {
    double atomic_size;    //Angstroms
    double screening_depth;//Angstroms
 
+   double min_as;
+   double max_as;
+
    double x_unit_size;
    double y_unit_size;
    double z_unit_size;
@@ -195,7 +200,7 @@ namespace CASTLE {
     int CASTLE_MD_rate;
 
     int full_int_var = 0;
-    int half_int_var;
+    int half_int_var[2];
    double boundary_conditions_cutoff;
    double dt;
    double v_f; //meters
@@ -312,9 +317,9 @@ namespace CASTLE {
    double MEKE; //meters
    double MLE;
 
-   long int x_flux;
-   long int y_flux;
-   long int z_flux;
+    int x_flux;
+    int y_flux;
+    int z_flux;
    double p_x;
    double p_y;
    double p_z;

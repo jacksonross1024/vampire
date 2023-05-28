@@ -73,6 +73,9 @@ namespace CASTLE {
     extern double atomic_size;    //Angstroms
     extern double screening_depth;//Angstroms
 
+    extern double min_as; //AJ
+    extern double max_as; //AJ
+
     extern double x_unit_size;
     extern double y_unit_size;
     extern double z_unit_size;
@@ -84,7 +87,7 @@ namespace CASTLE {
     extern int CASTLE_MD_rate; //output velocity and position data at this multiple
   
     extern int full_int_var;
-    extern int half_int_var;
+    extern int half_int_var[2];
     extern double boundary_conditions_cutoff;
     extern double dt;
     extern double v_f; //meters
@@ -192,9 +195,9 @@ namespace CASTLE {
     extern double MEKE; //meters
     extern double MLE; //meters
 
-    extern long int x_flux;
-    extern long int y_flux;
-    extern long int z_flux;
+    extern int x_flux;
+    extern int y_flux;
+    extern int z_flux;
     extern double p_x;
     extern double p_y;
     extern double p_z;
