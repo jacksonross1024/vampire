@@ -21,25 +21,28 @@ material:file = Co.mat
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
-sim:temperature = 300.0
+sim:temperature = 300.0 # 198415 300: 196788
 sim:time-steps-increment = 100
 sim:equilibration-time-steps = 1000
-sim:loop-time-steps = 40000
-sim:time-step = 1e-1 !fs
+sim:loop-time-steps = 50000
+sim:time-step= 1e-1 !fs
 
-sim:applied-voltage = 1.6
-sim:fluence= 4
-#sim:heat-pulse = 2.0
-sim:e-e_coupling = 8e3
+sim:applied-voltage = 5e5 #eV/hv <or> 1e1 V/m * C/e- -> kg m^2 / s^2 / J s
+#sim:fluence = 1.4 #mJ/cm**2
+#sim:photon-energy = 1.5
+sim:e-e_coupling = 1e-4 
 sim:e-a_coupling = 49.6
-sim:two-temperature-electron-phonon-coupling=1.2e18
+sim:two-temperature-electron-phonon-coupling = 1.06e17
 
-sim:CASTLE-MD-rate = 1
-sim:ee-scattering-angle= 0.1
+sim:omp-threads= 8
+sim:CASTLE-MD-rate = 10
+sim:ee-scattering-angle= 1
 sim:x_vector = -1
 sim:y_vector = -1
 sim:z_vector = -1
 
+sim:CASTLE-min-as = -0.66
+sim:CASTLE-max-as = 1.0
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
@@ -54,3 +57,4 @@ output:magnetisation
 
 screen:time-steps
 screen:magnetisation-length
+
