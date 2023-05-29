@@ -264,7 +264,7 @@ void initialize () {
           d_count++;
         }
       }
-
+      dos_file.close();
       std::ofstream dos_standard_output;
       dos_standard_output.open(string(directory) + "/dos_standard.csv");
       
@@ -277,7 +277,7 @@ void initialize () {
         dos_standard[d] = lattice_atoms*dos_standard[d]; //e-/AJ for Fermi window for whole lattice 
         dos_standard_output << d*phonon_energy-DoS_cutoff << ", " << dos_standard[d]*phonon_energy << ", " << 0.5*(dos_standard[d+1]-dos_standard[d-1])/lattice_atoms/phonon_energy << '\n';
       }
-      dos_standard_output.close();
+      // dos_standard_output.close();
       conduction_electrons = int(round(total_e_scaling*lattice_atoms));
       // total_e /= constants::eV_to_AJ;
      std::cout << "total e- dos: " << total_e_scaling << ", (e-/Fermi window/atom); full lattice: " << conduction_electrons << " @ 0K from " << -DoS_cutoff << " to 0 " << std::endl;
