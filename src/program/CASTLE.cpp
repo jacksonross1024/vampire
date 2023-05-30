@@ -215,6 +215,7 @@ void initialize () {
       if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog. fermi dist" << std::endl;
       }
+        std::cout << min_as << "2< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
     std::string dos_name = "Ni-DoS.csv";
     std::vector<std::vector< double> > dos_scale;
     dos_scale.resize(51);
@@ -237,29 +238,31 @@ void initialize () {
           }
         }
       } else std::cout << dos_name << " did not open" << std::endl;
-
+     
       double min = -1.0*DoS_cutoff;
       
       dos_standard.resize(dos_size, dos_scale[50][1]/ constants::eV_to_AJ);
       int l = int(ceil(min - dos_scale[0][0]));
-      // std::cout << l << ", " << min << ", " << dos_scale[0][0] << ", " << min - dos_scale[0][0] << std::endl;
+      if(l < 0) std::cout << min << ", " << dos_scale[0][0] << std::endl;
+      std::cout << l << ", " << min << ", " << dos_scale[l][0] << ", " << min - dos_scale[0][0] << std::endl;
       int d_count = 0;
-      for(l; l < 51; l++) {
+      
+      for(l; l < 51 && d_count < (dos_size-2); l++) {
 
         int count = 0;
         double avg = 0.0;
-
-        while(dos_scale[l][0] > min) {
+      
+        while(dos_scale[l][0] > min && d_count < (dos_size-2) ) {
           avg += dos_scale[l][1]; //e-/eV/m^3
           min += phonon_energy;
           count++;
           d_count++;
           // avg /= count;
-          dos_standard[d_count-1] = avg / count / constants::eV_to_AJ; //avg e-/AJ/m^3
+          dos_standard.at(d_count-1) = avg / count / constants::eV_to_AJ; //avg e-/AJ/m^3
           // std::cout << d_count-1 << ", " << avg / count << std::endl;
         }
         if(count == 0)  {
-          dos_standard[d_count] = dos_scale[l][1] / constants::eV_to_AJ; //e-/AJ/m^3
+          dos_standard.at(d_count) = dos_scale[l][1] / constants::eV_to_AJ; //e-/AJ/m^3
           min += phonon_energy;
           d_count++;
         }
@@ -267,7 +270,7 @@ void initialize () {
       dos_file.close();
       std::ofstream dos_standard_output;
       dos_standard_output.open(string(directory) + "/dos_standard.csv");
-      
+        std::cout << min_as << "< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
       // min = DoS_cutoff;
       for(int d = 1; d < dos_size-2; d++) {
         // dos_standard[d] = return_fermi_distribution(d*phonon_energy+87.5561-E_f_A, Te)*
@@ -275,9 +278,10 @@ void initialize () {
         // if(d*phonon_energy -DoS_cutoff >  dos_scale[0][0]) 
         total_e_scaling += phonon_energy*dos_standard[d]*(return_fermi_distribution(d*phonon_energy-DoS_cutoff, 0)+4.0*return_fermi_distribution(d*phonon_energy + 0.5*phonon_energy -DoS_cutoff, 0) + return_fermi_distribution(d*phonon_energy + phonon_energy -DoS_cutoff, 0))/6.0; //e-/atom for Fermi window
         dos_standard[d] = lattice_atoms*dos_standard[d]; //e-/AJ for Fermi window for whole lattice 
+        // std::cout << d*phonon_energy-DoS_cutoff << ", " << dos_standard[d]*phonon_energy << ", " << 0.5*(dos_standard[d+1]-dos_standard[d-1])/lattice_atoms/phonon_energy << '\n';
         dos_standard_output << d*phonon_energy-DoS_cutoff << ", " << dos_standard[d]*phonon_energy << ", " << 0.5*(dos_standard[d+1]-dos_standard[d-1])/lattice_atoms/phonon_energy << '\n';
       }
-      // dos_standard_output.close();
+      dos_standard_output.close();
       conduction_electrons = int(round(total_e_scaling*lattice_atoms));
       // total_e /= constants::eV_to_AJ;
      std::cout << "total e- dos: " << total_e_scaling << ", (e-/Fermi window/atom); full lattice: " << conduction_electrons << " @ 0K from " << -DoS_cutoff << " to 0 " << std::endl;
@@ -349,7 +353,7 @@ void initialize () {
      std::cout << "E_f(AJ): " << E_f*1e20 << ", discretised (AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
     ", ea_rate@300K(J/s/K/m**3): " << -1e22*ea_rate*n_f/300.0 <<  ", tau_ep(fs/AJ): " << 1.0/(-1.0*ea_rate/dt) << ", ee_rate(J/s/K/m^3): " << -1e22*ee_rate*n_f/dt/300.0 << ", tau_ee(fs/AJ): " << 1.0/((-1.0/(11.9*11.9))*ee_rate/dt) << \
     ", phonon energy: " << 4*phonon_energy << std::fixed << std::endl;
-
+        
     omp_set_num_threads(omp_threads);
   // omp_uniform_random(omp_threads);
   //  int_random.seed(omp_threads);
@@ -369,7 +373,7 @@ void initialize () {
     //   omp_int_random.at(i).seed(i);
     }
     }
-
+       
    
     // co/nduction_electrons = round(0.5*conduction_electrons);
 
@@ -430,7 +434,7 @@ void initialize () {
             }
         }
       } else std::cout << dWdE_name << " did not open" << std::endl;
-      
+      dWdE_file.close();
       dWdE_standard.resize(dos_size, dWdE_scale[24][1]);
       dWdE_standard_i.resize(dos_size, 0.0);
        d_count = 0;
@@ -798,7 +802,7 @@ void initialize_electrons() {
     // Initialize arrays for holding electron variables
     //      Arrays in super array format to take advantage of caching
     //========
-
+      
     e_a_scattering_count = 0;
     e_e_scattering_count = 0;
     ee_transport_scattering_count = 0;
@@ -807,7 +811,7 @@ void initialize_electrons() {
     ea_core_scattering_count = 0;
     // ee_scattering_angle = sim::ee_scattering_angle;
     // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
-    
+    half_int_var.resize(2,0);
     half_int_var[0] =  10;
     half_int_var[1] =  3;
     
@@ -842,11 +846,11 @@ void initialize_electrons() {
     e_e_coulomb_cutoff = pow(6.0, 2.0);
     
       if (err::check) std::cout << "Prepare to set arrays: " << std::endl;
-    
+          
     electron_position.resize(conduction_electrons * 3, 0); // ""'Memory is cheap. Time is expensive' -Steve Jobs; probably" -Michael Scott." -Headcannon.
     electron_velocity.resize(conduction_electrons * 3, 0); //Angstroms
     electron_potential.resize(conduction_electrons, 0);
-
+            
     relaxation_time_hist_ee.resize(3*conduction_electrons);
 
     electron_integration_list.resize(conduction_electrons);
@@ -905,57 +909,57 @@ void initialize_forces() {
 }
 
 void initialize_electron_interactions() {
-  omp_set_dynamic(0);
-       omp_set_num_threads(omp_threads);
-    #pragma omp parallel for schedule(static)
-    for (int e = 0; e < conduction_electrons; e++) {
-      int array_index_i;
+  // omp_set_dynamic(0);
+  //      omp_set_num_threads(omp_threads);
+  //   #pragma omp parallel for schedule(static)
+  //   for (int e = 0; e < conduction_electrons; e++) {
+  //     int array_index_i;
      
-      double x_distance,y_distance,z_distance, length;
-      int array_index = 3*e;
-      int integration_count = 1;
-      int neighbor_count = 1;
-      int scattering_count = 2;
-                if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
+  //     double x_distance,y_distance,z_distance, length;
+  //     int array_index = 3*e;
+  //     int integration_count = 1;
+  //     int neighbor_count = 1;
+  //     int scattering_count = 2;
+  //               if (err::check) if(e ==0) std::cout << "Calculating conduction electron repulsion" << std::endl;
 
-        for (int i = 0; i < conduction_electrons; i++) {
-            if (i == e) continue; //no self repulsion
+  //       for (int i = 0; i < conduction_electrons; i++) {
+  //           if (i == e) continue; //no self repulsion
 
-            array_index_i = 3*i;
-            x_distance = electron_position.at(array_index)     - electron_position.at(array_index_i);
-            y_distance = electron_position.at(array_index + 1) - electron_position.at(array_index_i + 1);
-            z_distance = electron_position.at(array_index + 2) - electron_position.at(array_index_i + 2);
+  //           array_index_i = 3*i;
+  //           x_distance = electron_position.at(array_index)     - electron_position.at(array_index_i);
+  //           y_distance = electron_position.at(array_index + 1) - electron_position.at(array_index_i + 1);
+  //           z_distance = electron_position.at(array_index + 2) - electron_position.at(array_index_i + 2);
             
-            if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance = x_distance + lattice_width;
-            else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance = x_distance - lattice_width;
+  //           if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance = x_distance + lattice_width;
+  //           else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance = x_distance - lattice_width;
 
-            if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance = y_distance + lattice_depth;
-            else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance = y_distance - lattice_depth;
+  //           if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance = y_distance + lattice_depth;
+  //           else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance = y_distance - lattice_depth;
 
-            if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
-            else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
+  //           if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
+  //           else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
 
-            length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
+  //           length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
 
-            if(length > e_e_integration_cutoff) continue;
-            electron_integration_list.at(e).at(integration_count) = array_index_i;
-            integration_count++;
+  //           if(length > e_e_integration_cutoff) continue;
+  //           electron_integration_list.at(e).at(integration_count) = array_index_i;
+  //           integration_count++;
 
-            // if (length > e_e_neighbor_cutoff) continue;
-            // electron_nearest_electron_list.at(e).at(neighbor_count) = array_index_i/3;
-            // neighbor_count++;
+  //           // if (length > e_e_neighbor_cutoff) continue;
+  //           // electron_nearest_electron_list.at(e).at(neighbor_count) = array_index_i/3;
+  //           // neighbor_count++;
 
-            if(length > e_e_coulomb_cutoff) {
+  //           if(length > e_e_coulomb_cutoff) {
               
-              continue; }
-              //std::cout << e << ", " << i << ", " << length << std::endl;
-            electron_ee_scattering_list.at(e).at(scattering_count) = array_index_i/3;
-            scattering_count++;
-        }
-        electron_integration_list.at(e)[0] = integration_count;
-        // electron_nearest_electron_list.at(e)[0] = neighbor_count;
-        electron_ee_scattering_list.at(e)[1] = scattering_count;
-     }
+  //             continue; }
+  //             //std::cout << e << ", " << i << ", " << length << std::endl;
+  //           electron_ee_scattering_list.at(e).at(scattering_count) = array_index_i/3;
+  //           scattering_count++;
+  //       }
+  //       electron_integration_list.at(e)[0] = integration_count;
+  //       // electron_nearest_electron_list.at(e)[0] = neighbor_count;
+  //       electron_ee_scattering_list.at(e)[1] = scattering_count;
+  //    }
   }
 /*
 // void initialize_atomic_interactions() {
@@ -1070,16 +1074,11 @@ void initialize_velocities() {
       for(int e = 0; e < conduction_electrons; e++) {
         double phi;
         double theta;
-        double sign;
         const int array_index = 3*e;
    
         const double energy = electron_potential[e];
-        //[int(omp_uniform_random[thread]()*2147483647)%conduction_electrons];
-        //  if(energy > transport_cutoff) electron_transport_list.at(e) = true;
         
-        double vel;
-        
-        vel = return_vel(energy);
+        double mom = return_dWdE(energy);
         // if(vel < min) min = vel;
 
         if(sim::CASTLE_x_vector < 0.0 && sim::CASTLE_y_vector < 0.0 && sim::CASTLE_z_vector < 0.0) {
@@ -1094,16 +1093,16 @@ void initialize_velocities() {
          // if(sim::CASTLE_z_vector < 0.0) theta += M_PI;
         }
 
-          if(theta != theta || phi != phi || vel != vel) std::cout << theta << ", " << phi << ", " << vel << ", " << energy << std::endl;
+          if(theta != theta || phi != phi || mom != mom) std::cout << theta << ", " << phi << ", " << mom << ", " << energy << std::endl;
       
             if (err::check) if(e==0) std::cout << "Electron velocity ready..." << std::endl;
         electron_velocity[array_index]     = cos(theta)*sin(phi); 
         electron_velocity[array_index + 1] = sin(theta)*sin(phi);
         electron_velocity[array_index + 2] = cos(phi); 
         
-        p_x += electron_velocity[array_index]*vel;
-        p_y += electron_velocity[array_index+1]*vel;
-        p_z += electron_velocity[array_index+2]*vel;
+        p_x += electron_velocity[array_index]*mom;
+        p_y += electron_velocity[array_index+1]*mom;
+        p_z += electron_velocity[array_index+2]*mom;
       }
     }
 
@@ -1116,18 +1115,33 @@ void initialize_velocities() {
       std::ofstream Init_E_vel;
       Init_E_vel.open("Init_E_vel");
 
+  double n_p_x = 0.0;
+  double n_p_y = 0.0;
+  double n_p_z = 0.0;
   #pragma omp parallel 
   {
     std::vector<int> local_e_dos;
     local_e_dos.resize(dos_size,0);
-    #pragma omp for schedule(dynamic, 4) nowait
+    #pragma omp for schedule(dynamic, 4) nowait reduction(+:n_p_x,n_p_y,n_p_z)
     for(int e = 0; e < conduction_electrons; e++) {
+      int array_index = 3*e;
       double energy = electron_potential[e];
-      // double vel = return_vel(energy);
+      double mom = return_dWdE(energy);
       local_e_dos[int(std::min(dos_size-1.0, std::max(0.0, floor((energy - DoS_cutoff)*i_phonon_energy))))]++;
-      // electron_velocity[3*e]   -= p_x/vel;
-      // electron_velocity[3*e+1] -= p_y/vel;
-      // electron_velocity[3*e+2] -= p_z/vel;
+     
+      double v_x = electron_velocity[array_index] - p_x/mom;
+      double v_y = electron_velocity[array_index+1] - p_y/mom;
+      double v_z = electron_velocity[array_index+2] - p_z/mom;
+
+      double v_mod = 1/sqrt(v_x*v_x + v_y*v_y + v_z*v_z);
+
+      electron_velocity[array_index]   = v_x*v_mod;
+      electron_velocity[array_index+1] = v_y*v_mod;
+      electron_velocity[array_index+2] = v_z*v_mod;
+
+      n_p_x += v_x*v_mod;
+      n_p_y += v_y*v_mod;
+      n_p_z += v_z*v_mod;
     }
     
     #pragma omp critical 
@@ -1138,8 +1152,25 @@ void initialize_velocities() {
       }
     }
   }
+
+  double q = 0.0;
+  double f_0;
+  // double f_2;
+  double k;
+  double df_dE;
+  for(int h = int(floor((core_cutoff-DoS_cutoff)*i_phonon_energy)); h < dos_size-2; h++) {
+  
+    if( ((h)*phonon_energy+DoS_cutoff) > transport_cutoff) f_0 = double(global_e_dos[h][0])/(dos_standard[h]*phonon_energy);
+    else f_0 = double(global_e_dos[h][0])/double(global_e_dos[h][1]);
+
+    k = return_dWdE(h*phonon_energy + DoS_cutoff);
+    q += phonon_energy*dos_standard[h]*f_0*1.0/(k*k*lattice_atoms*x_unit_size*y_unit_size*z_unit_size);
+            // s^2 /  fs^2
+  }
+  q_offset = 11.9 - sqrt(constants::K* q);
+
     q_sq = k_sq();
-    std::cout << "screening: " << q_sq << ", " <<  sqrt(q_sq) << std::endl;
+    std::cout << "screening: " << q_sq << ", " <<  sqrt(q_sq) << ", q_offset: " << q_offset << std::endl;
     char directory [256];
       if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog. time stamps" << std::endl;
@@ -1158,7 +1189,7 @@ void initialize_velocities() {
     if(total != conduction_electrons) std::cout <<"hist problem " << total << ", " << conduction_electrons << std::endl;
 
     std::cout << "core cutoff: " << core_cutoff << ", transport cutoff: " << transport_cutoff << ", ballistic cutoff: " << E_f_A+4.86166 << std::endl;
-      if(err::check)  std::cout << "center of mass adjustment: " << p_x << ", " << p_y << ", " << p_z << std::endl;
+    std::cout << "center of mass adjustment: <" << p_x << "," << p_y << "," << p_z << "> -> <" << n_p_x/double(conduction_electrons) << "," << n_p_y/double(conduction_electrons) << "," << n_p_z/double(conduction_electrons) <<  std::endl;
    
 
        if (err::check)  std::cout << "distribution output" << std::endl;
@@ -1618,7 +1649,7 @@ void output_data() {
 
     double tau_ep = 0.0;
     double tau_ee = 0.0;
-    for(double u_e = core_cutoff; u_e < (core_cutoff+59.0); u_e += phonon_energy) {
+    for(double u_e = core_cutoff; u_e < (E_f_A+max_as); u_e += phonon_energy) {
       
       const int index = std::min(dos_size-1.0, floor((u_e-DoS_cutoff)*i_phonon_energy));
       tau_ep += global_tau_ep[index];

@@ -87,7 +87,8 @@ namespace CASTLE {
     extern int CASTLE_MD_rate; //output velocity and position data at this multiple
   
     extern int full_int_var;
-    extern int half_int_var[2];
+    extern std::vector<int> half_int_var;
+    // [2];
     extern double boundary_conditions_cutoff;
     extern double dt;
     extern double v_f; //meters
@@ -128,6 +129,7 @@ namespace CASTLE {
     extern double ea_coupling_strength;
     extern double ee_scattering_angle;
     extern double q_sq; 
+    extern double q_offset;
     extern double m_eff_ratio;
 
     extern double e_e_integration_cutoff;

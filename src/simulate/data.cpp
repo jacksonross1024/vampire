@@ -200,7 +200,7 @@ namespace CASTLE {
     int CASTLE_MD_rate;
 
     int full_int_var = 0;
-    int half_int_var[2];
+    std::vector<int> half_int_var;//[2];
    double boundary_conditions_cutoff;
    double dt;
    double v_f; //meters
@@ -249,6 +249,7 @@ namespace CASTLE {
    double ea_coupling_strength;
    double ee_scattering_angle;
    double q_sq;
+   double q_offset;
    double m_eff_ratio;
 
     int x_omp_cells;// = int(floor(lattice_width / 15.0));
