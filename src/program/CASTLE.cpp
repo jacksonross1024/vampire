@@ -215,7 +215,7 @@ void initialize () {
       if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog. fermi dist" << std::endl;
       }
-        std::cout << min_as << "2< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
+        // std::cout << min_as << "2< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
     std::string dos_name = "Ni-DoS.csv";
     std::vector<std::vector< double> > dos_scale;
     dos_scale.resize(51);
@@ -244,7 +244,7 @@ void initialize () {
       dos_standard.resize(dos_size, dos_scale[50][1]/ constants::eV_to_AJ);
       int l = int(ceil(min - dos_scale[0][0]));
       if(l < 0) std::cout << min << ", " << dos_scale[0][0] << std::endl;
-      std::cout << l << ", " << min << ", " << dos_scale[l][0] << ", " << min - dos_scale[0][0] << std::endl;
+      // std::cout << l << ", " << min << ", " << dos_scale[l][0] << ", " << min - dos_scale[0][0] << std::endl;
       int d_count = 0;
       
       for(l; l < 51 && d_count < (dos_size-2); l++) {
@@ -270,7 +270,7 @@ void initialize () {
       dos_file.close();
       std::ofstream dos_standard_output;
       dos_standard_output.open(string(directory) + "/dos_standard.csv");
-        std::cout << min_as << "< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
+        // std::cout << min_as << "< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
       // min = DoS_cutoff;
       for(int d = 1; d < dos_size-2; d++) {
         // dos_standard[d] = return_fermi_distribution(d*phonon_energy+87.5561-E_f_A, Te)*
@@ -673,7 +673,7 @@ void initialize_cell_omp() {
     //number of cells each thread takes in each lattice direction
     const int max_x_threads = 2;
     const int max_y_threads = 2;
-    const int max_z_threads = 4;  
+    const int max_z_threads = 2;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
