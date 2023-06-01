@@ -255,9 +255,9 @@ void update_dynamics() {
     int photons_at_dt = 0; //hv*dt
     double pump = 0.0; // AJ / fs
     double external_potential = 0.0; //AJ/e-
-    const static double sigma = dt * 0.1;
+    const static double sigma = 1e-15 / sim::pump_time;
     int count = 0;
-
+    std::cout << sigma << std::endl;
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
