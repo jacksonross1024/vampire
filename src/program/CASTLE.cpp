@@ -215,7 +215,7 @@ void initialize () {
       if(getcwd(directory, sizeof(directory)) == NULL){
             std::cerr << "Fatal getcwd error in datalog. fermi dist" << std::endl;
       }
-        std::cout << min_as << "2< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
+        // std::cout << min_as << "2< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
     std::string dos_name = "Ni-DoS.csv";
     std::vector<std::vector< double> > dos_scale;
     dos_scale.resize(51);
@@ -244,7 +244,7 @@ void initialize () {
       dos_standard.resize(dos_size, dos_scale[50][1]/ constants::eV_to_AJ);
       int l = int(ceil(min - dos_scale[0][0]));
       if(l < 0) std::cout << min << ", " << dos_scale[0][0] << std::endl;
-      std::cout << l << ", " << min << ", " << dos_scale[l][0] << ", " << min - dos_scale[0][0] << std::endl;
+      // std::cout << l << ", " << min << ", " << dos_scale[l][0] << ", " << min - dos_scale[0][0] << std::endl;
       int d_count = 0;
       
       for(l; l < 51 && d_count < (dos_size-2); l++) {
@@ -270,7 +270,7 @@ void initialize () {
       dos_file.close();
       std::ofstream dos_standard_output;
       dos_standard_output.open(string(directory) + "/dos_standard.csv");
-        std::cout << min_as << "< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
+        // std::cout << min_as << "< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
       // min = DoS_cutoff;
       for(int d = 1; d < dos_size-2; d++) {
         // dos_standard[d] = return_fermi_distribution(d*phonon_energy+87.5561-E_f_A, Te)*
@@ -329,7 +329,7 @@ void initialize () {
 
     e_specific_heat = 0.5*M_PI*M_PI*constants::kB*constants::kB/E_f; // gamma; //J/K**2/e- 
     e_specific_heat_i = 1.0 / e_specific_heat;
-    e_heat_capacity = (10.0)*(1.0+0.084)*1e20*e_specific_heat * n_f; //J/K/e- -> AJ/K**2/nm**3
+    e_heat_capacity = (13.5)*(1.0+0.084)*1e20*e_specific_heat * n_f; //J/K/e- -> AJ/K**2/nm**3 -> [e27/e20] -> J/K**2/m**3
     e_heat_capacity_i = 1.0 / e_heat_capacity;
 
     ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/constants::hbar_r; // meV**2 -> AJ/fs

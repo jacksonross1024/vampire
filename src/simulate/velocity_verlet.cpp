@@ -255,9 +255,9 @@ void update_dynamics() {
     int photons_at_dt = 0; //hv*dt
     double pump = 0.0; // AJ / fs
     double external_potential = 0.0; //AJ/e-
-    const static double sigma = dt * 0.1;
+    const static double sigma = 1e-15 / sim::pump_time;
     int count = 0;
-
+    std::cout << sigma << std::endl;
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
@@ -365,7 +365,7 @@ void e_e_coulomb(const int e, const int array_index) {
    int i_size = 3*round(pow(integration_range,1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3);
    // if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
    if(electron_integration_list[e].size() < i_size) {
-      std::cout << "resize. energy better be > " << electron_potential[e] << " > " << E_f_A+4.8 << std::endl;
+      // std::cout << "resize. energy better be > " << electron_potential[e] << " > " << E_f_A+4.8 << std::endl;
       electron_integration_list[e].resize(i_size, 0);
    }
    int cells = (i_size > ee_density) ? 125 : 27;
@@ -374,7 +374,7 @@ void e_e_coulomb(const int e, const int array_index) {
    integration_list = (cells > 27) ? cell_lr_neighbor_list[cell] : cell_nearest_neighbor_list[cell];
 
     for(int s = 0; s < cells; s++) {
-      if(s > 27) std::cout << "energy better be > " << E_f_A+4.8 << ": " << electron_potential[e] << std::endl;
+      // if(s > 27) std::cout << "energy better be > " << E_f_A+4.8 << ": " << electron_potential[e] << std::endl;
       const int int_cell = integration_list[s];
       const int size = cell_integration_lists[int_cell][0];
       if(size != size || size < 1  ) std::cout << size << std::endl;
