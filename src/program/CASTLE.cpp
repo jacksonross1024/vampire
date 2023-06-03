@@ -671,8 +671,8 @@ void initialize_cell_omp() {
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
     //number of cells each thread takes in each lattice direction
-    const int max_x_threads = 2;
-    const int max_y_threads = 2;
+    const int max_x_threads = 4;
+    const int max_y_threads = 4;
     const int max_z_threads = 4;  
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
@@ -1241,6 +1241,7 @@ void initialize_velocities() {
       double U_int_Ni = 0.0;
       double U_int_temp_Ni = 0.0;
 
+      double transient_entropy = 0.0;
       for( double e = core_cutoff; e < E_f_A+10.0*constants::kB_r*t; e += phonon_energy) {
         int index  = int(floor((e-DoS_cutoff)*i_phonon_energy));
         //Ni
@@ -1258,6 +1259,12 @@ void initialize_velocities() {
         else dU_feg += feg_dos*sqrt(e/E_f_A)*phonon_energy*(e-E_f_A)*(return_fermi_distribution(e-E_f_A -u_feg, t)+4.0*return_fermi_distribution(e + 0.5*phonon_energy-E_f_A-u_feg,t)+return_fermi_distribution(e + phonon_energy-E_f_A-u_feg,t))/6.0;
         U_int_feg += lattice_atoms*feg_dos*sqrt(e/E_f_A)*e*phonon_energy*(return_fermi_distribution(e-E_f_A -u_feg, t)+4.0*return_fermi_distribution(e + 0.5*phonon_energy-E_f_A-u_feg,t)+return_fermi_distribution(e + phonon_energy-E_f_A-u_feg,t))/6.0;
 
+        double dos = dos_standard[index]/lattice_atoms;
+        double fermi_dist = return_fermi_distribution(e -E_f_A - u_Ni,t);
+        double onemin_fermi_dist = 1 - fermi_dist;
+     
+        transient_entropy += phonon_energy*dos*(fermi_dist*log(fermi_dist) + ((onemin_fermi_dist == 0) ? 0.0 : onemin_fermi_dist*log(onemin_fermi_dist)));
+          
       }
       //Ni
       int mu_index  = int(floor((E_f_A + u_Ni -DoS_cutoff)*i_phonon_energy));
@@ -1270,7 +1277,7 @@ void initialize_velocities() {
       U_int_min_Ni = U_int_zero_Ni - u_Ni*E_f_A*dos_e_f/lattice_atoms;
 
       U_int_temp_Ni = sqrt(6.0*std::max(0.0, U_int_Ni-U_int_min_Ni)/(M_PI*M_PI*constants::kB_r*constants::kB_r*abs(E_f_A*delta_dos_Ni + dos_e_f)/lattice_atoms));
-      d_U_output_Ni << t << ", " << dU_Ni <<  ", " << sqrt(std::max(0.0,6.0*dU_Ni))/M_PI/constants::kB_r << ", "  << U_int_Ni << ", " << U_int_temp_Ni << std::endl;
+      d_U_output_Ni << t << ", " << dU_Ni <<  ", " << sqrt(std::max(0.0,6.0*dU_Ni))/M_PI/constants::kB_r << ", "  << U_int_Ni << ", " << U_int_temp_Ni <<  ", " << transient_entropy << std::endl;
       
       //Ag
       dU_Ag /= lattice_atoms;
