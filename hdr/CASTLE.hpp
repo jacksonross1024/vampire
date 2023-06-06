@@ -95,7 +95,7 @@ namespace CASTLE {
     extern double E_f; //meters
     extern double E_f_A;
     extern double mu_f; //meters
-    extern double n_f; //meters
+    extern double n_f; //atoms/nm^3
     extern double atomic_mass;
     extern double mu_r; //inverse reduced mass in reduced units
     extern double combined_mass; //inverse with reduced units

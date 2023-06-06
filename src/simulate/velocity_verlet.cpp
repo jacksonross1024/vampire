@@ -257,7 +257,7 @@ void update_dynamics() {
     double external_potential = 0.0; //AJ/e-
     const static double sigma = 1e-15 / sim::pump_time;
     int count = 0;
-    std::cout << sigma << std::endl;
+    // std::cout << sigma << std::endl;
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
@@ -935,7 +935,7 @@ double k_sq() {
   double f_0;
   // double f_2;
   double k;
-  double df_dE;
+ 
   for(int h = int(floor((core_cutoff-DoS_cutoff)*i_phonon_energy)); h < dos_size-2; h++) {
   
     if( ((h)*phonon_energy+DoS_cutoff) > transport_cutoff) f_0 = double(global_e_dos[h][0])/(dos_standard[h]*phonon_energy);
