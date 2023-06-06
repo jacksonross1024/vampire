@@ -399,7 +399,7 @@ namespace program{
 		}
 			// Output data
 			vout::data();
-
+		program::fractional_electric_field_strength = 0.0;
 		// Equilibrate system
 		while(sim::time<sim::equilibration_time) {
 
@@ -496,15 +496,18 @@ namespace program{
 
    		if( time_from_start < program::internal::electrical_pulse_rise_time ){
       		program::fractional_electric_field_strength = time_from_start / program::internal::electrical_pulse_rise_time;
+			// if(program::fractional_electric_field_strength > 0.0) std::cout << program::fractional_electric_field_strength << std::endl;
    		}
    // implement continuous current
    		else if( time_from_start < program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time ){
      		 program::fractional_electric_field_strength = 1.0;
+			//  std::cout << program::fractional_electric_field_strength << std::endl;
    		}
    // implement fall time
    		else if( time_from_start < program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time + program::internal::electrical_pulse_fall_time) {
     	  const double fractional_fall_time = time_from_start - (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time);
     	  program::fractional_electric_field_strength = 1.0 - fractional_fall_time / program::internal::electrical_pulse_fall_time;
+		//   if(program  ::fractional_electric_field_strength) std::cout << program::fractional_electric_field_strength << std::endl;
    		}
    // after pulse current = 0
    		else{
