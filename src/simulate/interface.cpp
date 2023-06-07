@@ -340,7 +340,7 @@ namespace sim{
       test = "CASTLE-min-as";
       if(word == test) {
          double t = atof(value.c_str());
-         vin::check_for_valid_value(t, word, line, prefix, unit, "eV", 0.50, 13.50, "input", "bottom of active space (eV); -3 <> -0.5");
+         vin::check_for_valid_value(t, word, line, prefix, unit, "eV", 0.10, 13.50, "input", "bottom of active space (eV); -3 <> -0.5");
          sim::CASTLE_min_as = t;
          return true;
       }

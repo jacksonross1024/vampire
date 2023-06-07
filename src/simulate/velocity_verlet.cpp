@@ -324,7 +324,7 @@ void update_dynamics() {
     // if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
        TEKE += external_potential;
         if(err::check) std::cout << "lists updated. ee scattering step..." << std::endl;
-      q_sq = k_sq();
+     // q_sq = k_sq();
      
     ee_scattering();
    // pump /= 1e-3*lattice_depth*lattice_height*lattice_width;  
@@ -496,12 +496,12 @@ double electron_applied_voltage(const int e, const int array_index, const double
    double d_k_1 = k_1+1e10*dt*potential*constants::e/constants::hbar_r; 
    // e-4  / A
    double d_k = sqrt(d_k_1*d_k_1 + k_2*k_2 + k_3*k_3);
-   
+
    double d_energy = return_dWdE_i(d_k);
    double deltaE = d_energy - energy;
    
    if(d_energy > E_f_A+ max_as) return 0.0;
-   else if(d_energy < core_cutoff) return 0.0; 
+   else if(d_energy < transport_cutoff) return 0.0; 
    else if (d_energy > transport_cutoff) {
       const int d_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((d_energy - DoS_cutoff)*i_phonon_energy))));
       double e_occupation   = std::min(1.0, double(global_e_dos[d_index  ][0]) / (dos_standard[d_index]*phonon_energy));
@@ -516,21 +516,22 @@ double electron_applied_voltage(const int e, const int array_index, const double
 
          return deltaE;   
       }
-   } else {
-      const int d_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((d_energy - DoS_cutoff)*i_phonon_energy))));
-      double e_occupation   = std::min(1.0, double(global_e_dos[d_index  ][0]) / (global_e_dos[d_index][1]));
-      if(e_occupation < 1.0) {
-         double theta = atan2(k_2, d_k_1);
-            if(theta != theta) theta = 0.0;
-         double phi = acos(k_3/d_k);
-         electron_velocity[array_index]   = cos(theta)*sin(phi);
-         electron_velocity[array_index+1] = sin(theta)*sin(phi);
-         electron_velocity[array_index+2] = cos(phi);
-         electron_potential[e] = d_energy;
+   } 
+  //  else {
+  //     const int d_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((d_energy - DoS_cutoff)*i_phonon_energy))));
+  //     double e_occupation   = std::min(1.0, double(global_e_dos[d_index  ][0]) / (global_e_dos[d_index][1]));
+  //     if(e_occupation < 1.0) {
+  //        double theta = atan2(k_2, d_k_1);
+  //           if(theta != theta) theta = 0.0;
+  //        double phi = acos(k_3/d_k);
+  //        electron_velocity[array_index]   = cos(theta)*sin(phi);
+  //        electron_velocity[array_index+1] = sin(theta)*sin(phi);
+  //        electron_velocity[array_index+2] = cos(phi);
+  //        electron_potential[e] = d_energy;
 
-         return deltaE;
-      }
-   }
+  //        return deltaE;
+  //     }
+  //  }
    return 0.0;
 }
 
@@ -542,7 +543,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double e_occupation;
     double f_e_occupation;
     double r_e_occupation;
-    const double phonon_factor = 4.0*phonon_energy + (phonon_energy*mtrandom::gaussianc(omp_uniform_random[thread])/1.0);// ;//+ 0.16*abs(mtrandom::gaussianc(omp_uniform_random[thread]));// ;//
+    const double phonon_factor = 8.0*phonon_energy + (2.0*phonon_energy*mtrandom::gaussianc(omp_uniform_random[thread])/1.0);// ;//+ 0.16*abs(mtrandom::gaussianc(omp_uniform_random[thread]));// ;//
     const int e_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - DoS_cutoff)*i_phonon_energy))));
     const int f_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy + phonon_factor - DoS_cutoff)*i_phonon_energy))));
     const int r_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - phonon_factor - DoS_cutoff)*i_phonon_energy))));
