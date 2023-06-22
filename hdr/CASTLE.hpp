@@ -73,6 +73,8 @@ namespace CASTLE {
     extern double atomic_size;    //Angstroms
     extern double screening_depth;//Angstroms
 
+    extern double dos_en_step;
+    extern double i_dos_en_step;
     extern double min_as; //AJ
     extern double max_as; //AJ
 

@@ -186,6 +186,8 @@ namespace CASTLE {
    double atomic_size;    //Angstroms
    double screening_depth;//Angstroms
 
+   double dos_en_step;
+   double i_dos_en_step;
    double min_as;
    double max_as;
 
