@@ -275,7 +275,7 @@ void update_dynamics() {
     }
    double potential = 0.0;
       if(!equilibrium_step && applied_voltage_sim) {
-         potential = applied_voltage *std::min(((current_time_step-sim::equilibration_time) /10000.0), 1.0);
+         potential = 1e10*dt*constants::e*applied_voltage *std::min(((current_time_step-sim::equilibration_time) /10000.0), 1.0)/constants::hbar_r;
          // std::cout << potential << ", " << (current_time_step-sim::equilibration_time) /100.0 << std::endl;
       } 
 
@@ -384,24 +384,24 @@ void e_e_coulomb(const int e, const int array_index) {
         // if(electron_potential[electron] < (E_f_A-24.25)) continue;
         const int array_index_i = 3*electron;
 
-        double x_distance = electron_position[array_index]   - electron_position[array_index_i];
-        double y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
-        double z_distance = electron_position[array_index+2] - electron_position[array_index_i + 2]; 
+        double distance[3] = {electron_position[array_index]  - electron_position[array_index_i], \
+                         electron_position[array_index+1]- electron_position[array_index_i+1],\
+                         electron_position[array_index+2]- electron_position[array_index_i+2]};
     
-        if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance += lattice_width;
-        else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance -= lattice_width;
-
-        if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance += lattice_depth;
-        else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance -= lattice_depth;
-
-        if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance += lattice_height;
-        else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance -= lattice_height;
+      	if (distance[0] < -1.0*boundary_conditions_cutoff)  distance[0]  += lattice_width;
+   		else if (distance[0]  > boundary_conditions_cutoff) distance[0]  -= lattice_width;
+   
+   		if (distance[1]  < -1.0*boundary_conditions_cutoff) distance[1] += lattice_depth;
+   		else if (distance[1] > boundary_conditions_cutoff)  distance[1] -= lattice_depth;    
+   
+   		if (distance[2] <  -1.0*boundary_conditions_cutoff) distance[2] += lattice_height;
+   		else if (distance[2] > boundary_conditions_cutoff)  distance[2] -= lattice_height;
         
-        const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
-            
-        if(length == 0.0) continue;
-       
-            if (length != length) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+        double length  = (distance[0] *distance[0]  + distance[1]*distance[1] + distance[2]*distance[2]);
+   		if(length == 0.0) return ;
+        
+      
+		  if(length != length) std::cout << distance[0] << ", " << distance[1] << ", " << distance[2] <<  ", " << \
         electron_position[array_index] << ", " << electron_position[array_index_i] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index_i + 1] << ", " <<\
         electron_position[array_index+2] << ", " <<  electron_position[array_index_i + 2] << std::endl;
         
@@ -447,23 +447,23 @@ void neighbor_e_e_coulomb(const int e, const int array_index) {
         const int electron = array_index_i/3;
         // if(electron_potential[electron] < (E_f_A-24.25)) continue;
 
-        double x_distance = electron_position[array_index]   - electron_position[array_index_i];
-        double y_distance = electron_position[array_index+1] - electron_position[array_index_i + 1];
-        double z_distance = electron_position[array_index+2] - electron_position[array_index_i + 2]; 
+        double distance[3] = {electron_position[array_index]  - electron_position[array_index_i], \
+                         electron_position[array_index+1]- electron_position[array_index_i+1],\
+                         electron_position[array_index+2]- electron_position[array_index_i+2]};
     
-        if (x_distance < (boundary_conditions_cutoff - lattice_width))       x_distance = x_distance + lattice_width;
-        else if (x_distance > (lattice_width - boundary_conditions_cutoff))  x_distance = x_distance - lattice_width;
-
-        if (y_distance < (boundary_conditions_cutoff - lattice_depth))       y_distance = y_distance + lattice_depth;
-        else if (y_distance > (lattice_depth - boundary_conditions_cutoff))  y_distance = y_distance - lattice_depth;
-
-        if (z_distance <  (boundary_conditions_cutoff - lattice_height))     z_distance = z_distance + lattice_height;
-        else if (z_distance > (lattice_height - boundary_conditions_cutoff)) z_distance = z_distance - lattice_height;
+      	if (distance[0] < -1.0*boundary_conditions_cutoff)  distance[0]  += lattice_width;
+   		else if (distance[0]  > boundary_conditions_cutoff) distance[0]  -= lattice_width;
+   
+   		if (distance[1]  < -1.0*boundary_conditions_cutoff) distance[1] += lattice_depth;
+   		else if (distance[1] > boundary_conditions_cutoff)  distance[1] -= lattice_depth;    
+   
+   		if (distance[2] <  -1.0*boundary_conditions_cutoff) distance[2] += lattice_height;
+   		else if (distance[2] > boundary_conditions_cutoff)  distance[2] -= lattice_height;
         
-        const double length = (x_distance*x_distance) + (y_distance*y_distance) + (z_distance*z_distance);
-        if(length == 0.0) continue;
+        double length  = (distance[0] *distance[0]  + distance[1]*distance[1] + distance[2]*distance[2]);
+   		if(length == 0.0) return ;
         
-       if (length != length) std::cout << x_distance << ", " << y_distance << ", " << z_distance <<  ", " << \
+       if (length != length) std::cout << distance[0] << ", " << distance[1] << ", " << distance[2] <<  ", " << \
         electron_position[array_index] << ", " << electron_position[array_index_i] << ", " << electron_position[array_index+1] << ", " << electron_position[array_index_i + 1] << ", " <<\
         electron_position[array_index+2] << ", " <<  electron_position[array_index_i + 2] << std::endl;
         
@@ -493,7 +493,7 @@ double electron_applied_voltage(const int e, const int array_index, const double
    double k_2 = electron_velocity[array_index+1]*k;
    double k_3 = electron_velocity[array_index+2]*k;
 
-   double d_k_1 = k_1+1e10*dt*potential*constants::e/constants::hbar_r; 
+   double d_k_1 = k_1+potential; 
    // e-4  / A
    double d_k = sqrt(d_k_1*d_k_1 + k_2*k_2 + k_3*k_3);
 
@@ -504,8 +504,8 @@ double electron_applied_voltage(const int e, const int array_index, const double
    else if(d_energy < transport_cutoff) return 0.0; 
    else if (d_energy > transport_cutoff) {
       const int d_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((d_energy - DoS_cutoff)*i_dos_en_step))));
-      double e_occupation   = std::min(1.0, double(global_e_dos[d_index  ][0]) / (dos_standard[d_index]*dos_en_step));
-      if(e_occupation < 1.0) {
+      double e_occupation   = std::min(1.0, double(global_e_dos[d_index][0]) / (dos_standard[d_index]*dos_en_step));
+      if(e_occupation < 0.99) {
          double theta = atan2(k_2, d_k_1);
          if(theta != theta) theta = 0.0;
          double phi = acos(k_3/d_k);
@@ -517,21 +517,6 @@ double electron_applied_voltage(const int e, const int array_index, const double
          return deltaE;   
       }
    } 
-  //  else {
-  //     const int d_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((d_energy - DoS_cutoff)*i_dos_en_step))));
-  //     double e_occupation   = std::min(1.0, double(global_e_dos[d_index  ][0]) / (global_e_dos[d_index][1]));
-  //     if(e_occupation < 1.0) {
-  //        double theta = atan2(k_2, d_k_1);
-  //           if(theta != theta) theta = 0.0;
-  //        double phi = acos(k_3/d_k);
-  //        electron_velocity[array_index]   = cos(theta)*sin(phi);
-  //        electron_velocity[array_index+1] = sin(theta)*sin(phi);
-  //        electron_velocity[array_index+2] = cos(phi);
-  //        electron_potential[e] = d_energy;
-
-  //        return deltaE;
-  //     }
-  //  }
    return 0.0;
 }
 
@@ -545,7 +530,6 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double r_e_occupation;
     const double phonon_factor = phonon_energy + (1.0*phonon_energy*mtrandom::gaussianc(omp_uniform_random[thread])/2.0);// ;//+ 0.16*abs(mtrandom::gaussianc(omp_uniform_random[thread]));// ;//
     const int e_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - DoS_cutoff)*i_dos_en_step))));
-   
     const int f_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy + phonon_factor - DoS_cutoff)*i_dos_en_step))));
     const int r_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - phonon_factor - DoS_cutoff)*i_dos_en_step))));
     //  std::cout << e_index << ", " << f_e_index << ", " << r_e_index << std::endl;
@@ -697,8 +681,9 @@ void ee_scattering() {
          bool e_ballistic = (e_energy > (E_f_A+4.8)) ? true : false;
          bool d_e_ballistic = (d_e_energy > (E_f_A+4.8)) ? true : false;
 
-         if((e_ballistic != d_e_ballistic) && (e_ballistic || d_e_ballistic) ) inelastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy);
-         else elastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy);
+         
+         if(!elastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy) && (e_ballistic != d_e_ballistic) && (e_ballistic || d_e_ballistic) ) \
+           inelastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy);
 
       }
     } 
@@ -707,23 +692,23 @@ void ee_scattering() {
   
 }
 
-void elastic_scattering(int thread, int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy ) {
+bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy ) {
    
    double distance[3] = {electron_position[array_index]  - electron_position[array_index_i], \
                          electron_position[array_index+1]- electron_position[array_index_i+1],\
                          electron_position[array_index+2]- electron_position[array_index_i+2]};
 
-   if (distance[0] < (boundary_conditions_cutoff - lattice_width))       distance[0]  += lattice_width;
-   else if (distance[0]  > (lattice_width - boundary_conditions_cutoff))  distance[0]  -= lattice_width;
+   if (distance[0] < -1.0*boundary_conditions_cutoff)  distance[0]  += lattice_width;
+   else if (distance[0]  > boundary_conditions_cutoff) distance[0]  -= lattice_width;
    
-   if (distance[1]  < (boundary_conditions_cutoff - lattice_depth))       distance[1] += lattice_depth;
-   else if (distance[1] > (lattice_depth - boundary_conditions_cutoff))  distance[1] -= lattice_depth;    
+   if (distance[1]  < -1.0*boundary_conditions_cutoff) distance[1] += lattice_depth;
+   else if (distance[1] > boundary_conditions_cutoff)  distance[1] -= lattice_depth;    
    
-   if (distance[2] <  (boundary_conditions_cutoff - lattice_height))     distance[2] += lattice_height;
-   else if (distance[2] > (lattice_height - boundary_conditions_cutoff)) distance[2] -= lattice_height;
+   if (distance[2] <  -1.0*boundary_conditions_cutoff) distance[2] += lattice_height;
+   else if (distance[2] > boundary_conditions_cutoff)  distance[2] -= lattice_height;
 
    double length  = sqrt(distance[0] *distance[0]  + distance[1]*distance[1] + distance[2]*distance[2]);
-   if(length == 0.0) return;
+   if(length == 0.0) return false;
         
   double l_theta = atan2(distance[1],distance[0] );
     if(l_theta!=l_theta) l_theta = 0.0;
@@ -749,7 +734,7 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
                                  + (k_y_1 - k_y_2)*distance[1]\
                                  + (k_z_1 - k_z_2)*distance[2]) /length;
 
-          if(v_x_dot_product != v_x_dot_product) {std::cout << "ee error: " << v_x_dot_product << std::endl; return;}
+          if(v_x_dot_product != v_x_dot_product) {std::cout << "ee error: " << v_x_dot_product << std::endl; return false;}
         
    const double d_k_x_1 = k_x_1 - distance[0] *v_x_dot_product;
    const double d_k_y_1 = k_y_1 - distance[1]*v_x_dot_product;
@@ -770,12 +755,13 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
    double a_factor = abs((k_1*k_1 + k_2*k_2 - d_k_1*d_k_1 - d_k_2*d_k_2)/(2.0*d_k_1*d_k_2));
    double b_factor = k_1*k_2/(d_k_1*d_k_2);
 
-      if(d_e_1 < core_cutoff || d_e_2 < core_cutoff) return;
-      if( d_e_1 > (E_f_A+ max_as) || d_e_2 > (E_f_A+ max_as)) return;
-      if(abs(deltaE) > 0.01) return; //std::cout << "ee collision deltaE: " << deltaE << ", " << e_energy << ", " << d_e_energy << ", " << d_e_1 << ", " << d_e_2 << std::endl;
-      if(a_factor > (b_factor+1)) {
-          std::cout << " a/b factor " << a_factor << ", " <<  b_factor << ", " << k_1 << ", " << k_2 << ", " << d_k_1 << ", " << d_k_2 << std::endl;
-          return;}
+      if(d_e_1 < core_cutoff || d_e_2 < core_cutoff) return false;
+      if( d_e_1 > (E_f_A+ max_as) || d_e_2 > (E_f_A+ max_as)) return false;
+      if(abs(deltaE) > 0.01) return false; //std::cout << "ee collision deltaE: " << deltaE << ", " << e_energy << ", " << d_e_energy << ", " << d_e_1 << ", " << d_e_2 << std::endl;
+     // if(a_factor > (b_factor+1)) {
+      //#//pragma omp critical 
+      //    std::cout << " a/b factor " << a_factor << ", " <<  b_factor << ", " << k_1  +k_2 << ", " << d_k_1 + d_k_2 << std::endl;
+        //  return false;}
        
       double d_e_occupation;  
       double d_d_occupation;
@@ -788,8 +774,9 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
       else d_d_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_index][0]) / double(global_e_dos[d_index][1])); 
       double occupation_factor = ee_rate*d_e_occupation*d_d_occupation;///((q_sq+(deltaK))*(q_sq+(deltaK)));//*exp(0.15*(d_occupation*e_occupation-1.0));
 
-      if(e_energy > E_f_A+4.8 || d_e_energy > E_f_A+4.8) occupation_factor /= q_sq*q_sq;
-      else occupation_factor /= (q_sq+deltaK)*(q_sq+deltaK);
+      // if(e_energy > E_f_A+4.8 || d_e_energy > E_f_A+4.8) occupation_factor /= q_sq*q_sq;
+      // else
+       occupation_factor /= (q_sq+deltaK)*(q_sq+deltaK);
 
       global_tau_ee[e_index] += occupation_factor;
       global_tau_ee[d_index] += occupation_factor;
@@ -851,8 +838,8 @@ void elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
             sqrt(2.0*constants::m_e_r_i*e_energy/constants::hbar_r/constants::hbar_r) << ", " << sqrt(2.0*constants::m_e_r_i*(e_energy+deltaE)/constants::hbar_r/constants::hbar_r) << ", " << constants::m_over_hbar_sqrt*sqrt(v_x*v_x + v_y*v_y + v_z*v_z) << ", " << constants::m_over_hbar_sqrt*sqrt(d_v_x_2*d_v_x_2 + d_v_y_2*d_v_y_2 + d_v_z_2*d_v_z_2) << std::endl;
           // if(e_back_pressure > 1.0) e_e_scattering_count += 2;
           }
-      return;
-   }
+      return true;
+   } else return false;
 }
 
 void inelastic_scattering(int thread, int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy) {

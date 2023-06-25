@@ -257,7 +257,7 @@ namespace CASTLE {
  
     extern void ea_scattering(const int e, const int array_index, const int thread);
     extern void ee_scattering();
-    extern void elastic_scattering(int thread, int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy );
+    extern bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy );
     extern void inelastic_scattering(int thread, int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy);
     extern double B_E_distrib(const double& epsilon);
     extern void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);

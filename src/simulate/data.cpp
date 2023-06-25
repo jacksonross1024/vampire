@@ -377,7 +377,7 @@ namespace CASTLE {
    double electron_applied_voltage(const int e, const int array_index, const double potential);
    void ea_scattering(const int e, const int array_index, const int thread);
    void ee_scattering();
-   void elastic_scattering(int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy );
+   bool elastic_scattering(int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy );
    void inelastic_scattering(int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy);
    void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);
    void create_defined_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp);

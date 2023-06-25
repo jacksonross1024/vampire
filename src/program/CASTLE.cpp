@@ -187,7 +187,7 @@ void initialize () {
     // Grab simulation variables from VAMPIRE
     //=========
     lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
-    phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.084)*constants::eV_to_AJ;
+    phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.12)*constants::eV_to_AJ;
     dos_en_step = phonon_energy/4.0;
     i_dos_en_step = 1.0/dos_en_step;
      // meV [e-3] AJ
@@ -199,9 +199,9 @@ void initialize () {
     DoS_cutoff = dos_en_step* int(floor(-1.0*min_as*i_dos_en_step)); // E_f_A - min
     dos_size = int(floor(((max_as-min_as)*i_dos_en_step)/1.0))+1;
 
-     E_f = 8.76*constants::eV_to_AJ*1e-20;// constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
+     E_f = 8.0*constants::eV_to_AJ*1e-20;// constants::h * constants::h * pow(3.0 * M_PI * M_PI * n_f*1e27, 0.66666666666666666666666667) / (8.0 * M_PI * M_PI * constants::m_e); //Fermi-energy
     E_f_A =  E_f*1e20; //AJ
-      mu_f = 0.0800; //mu adjust at 300K
+      mu_f = 0.00; //mu adjust at 300K
     lattice_width = cs::system_dimensions[0]+x_unit_size; //A
     lattice_depth  = cs::system_dimensions[1]+y_unit_size; // A
     lattice_height  = cs::system_dimensions[2]+z_unit_size; // A
@@ -220,9 +220,9 @@ void initialize () {
             std::cerr << "Fatal getcwd error in datalog. fermi dist" << std::endl;
       }
         // std::cout << min_as << "2< " << max_as << ", " << DoS_cutoff << ", " << dos_size << std::endl;
-    std::string dos_name = "Ni-DoS-sorted.csv";
+    std::string dos_name = "Ag-DoS-sorted.csv";
     std::vector<std::vector< double> > dos_scale;
-    int dos_intput_size = 145;
+    int dos_intput_size = 281;
     dos_scale.resize(dos_intput_size);
     std::fstream dos_file (dos_name, std::ios::in);
     std::string line;
@@ -292,7 +292,7 @@ void initialize () {
       conduction_electrons = int(round(total_e_scaling*lattice_atoms));
 
       // total_e /= constants::eV_to_AJ;
-    DoS_cutoff *= 1.01;
+    // DoS_cutoff *= 1.01;
     
      std::cout << "total e- dos: " << total_e_scaling << " (e-/Fermi window/atom); full lattice: " << conduction_electrons << " @ 0K from " << -DoS_cutoff << " to 0 " << std::endl;
 
@@ -339,7 +339,7 @@ void initialize () {
 
     e_specific_heat = 0.5*M_PI*M_PI*constants::kB*constants::kB/E_f; // gamma; //J/K**2/e- 
     e_specific_heat_i = 1.0 / e_specific_heat;
-    e_heat_capacity = 1077.8*1e-7;// (13.5)*(1.0+0.084)*1e20*e_specific_heat * n_f; //J/K/e- -> AJ/K**2/nm**3 -> [e27/e20] -> J/K**2/m**3
+    e_heat_capacity = 63.3*1e-7;// (13.5)*(1.0+0.084)*1e20*e_specific_heat * n_f; //J/K/e- -> AJ/K**2/nm**3 -> [e27/e20] -> J/K**2/m**3
     e_heat_capacity_i = 1.0 / e_heat_capacity;
 
     ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/constants::hbar_r; // meV**2 -> AJ/fs
@@ -352,8 +352,8 @@ void initialize () {
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
     ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
-    double p = phonon_energy/(constants::hbar_r*6040.0*1e-5); // A^-1
-    ea_rate = -1.0*dt*2.0*phonon_energy*M_PI*constants::K/(3.54*3.54*3.54*(p*p + 11.9*11.9))/constants::hbar_r;
+    double p = phonon_energy/(constants::hbar_r*3650.0*1e-5); // A^-1;  E_D = p * c_s * hbar
+    ea_rate = -1.0*dt*phonon_energy*M_PI*constants::K/(3.54*3.54*3.54*(p*p + 11.9*11.9))/constants::hbar_r;
     // AJ
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
@@ -555,7 +555,7 @@ void initialize_cell_omp() {
   y_step_size = lattice_depth / double(y_omp_cells);
   z_step_size = lattice_height/ double(z_omp_cells);
       if(err::check) std::cout << "step sizes(A): " << x_step_size << ", " << y_step_size << ", " << z_step_size << std::endl;
-  boundary_conditions_cutoff = fmax(x_step_size, fmax(y_step_size, z_step_size));
+  boundary_conditions_cutoff = 2.0*fmax(x_step_size, fmax(y_step_size, z_step_size));
   cell_integration_lists.resize(total_cells);
   old_cell_integration_lists.resize(total_cells);
 
@@ -1491,7 +1491,7 @@ void create_defined_fermi_distribution(const std::string& name, std::vector<doub
     // E_f_A = epsilon;
   } else {
     // double u_Ni = 0.0;
-    mu_Ni = (temp < 400.0) ? 2.42*temp/1250.0 : 2.42*(1.0+ temp-400.0)/225.0;
+    mu_Ni = 0.0;//(temp < 400.0) ? 2.42*temp/1250.0 : 2.42*(1.0+ temp-400.0)/225.0;
     epsilon = E_f_A + 0.0000001;// + step_size*energy_step;
     for(int h = 0; h < hist_super_E_f; h++) {
      
@@ -1818,7 +1818,12 @@ void output_data() {
     for(int i = 0; i < dos_size; i++) {
      // if(i == 11) temp_map_0 << i << ", " << temp_Map[0].at(i) << "\n";
      // if(i < output_count_lr) { 
-      temp_map << i*dos_en_step + DoS_cutoff << ", " << global_e_dos[i][0] << ", " << global_e_dos[i][1] << "\n";
+      temp_map << i*dos_en_step + DoS_cutoff << ", " << global_e_dos[i][0] << ", " << global_e_dos[i][1] << ", " << dos_standard[i]*dos_en_step << "\n";
+      if(global_e_dos[i][0]/(dos_standard[i]*dos_en_step) > 1.02) {
+        terminaltextcolor(RED);
+        std::cout << "DoS violation at " << i*dos_en_step+DoS_cutoff << ", " << global_e_dos[i][0] << " over " << dos_standard[i]*dos_en_step << std::endl;
+        terminaltextcolor(WHITE);
+      }
     }
     // std::cout << "why not" << std::endl;
     temp_map.close();
@@ -1836,7 +1841,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << sqrt(6.0*global_d_U)/M_PI/constants::kB_r << ", "  << sqrt(6.0*global_d_U)/M_PI/constants::kB_r << ", " <<  global_d_U << ", "// (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << Te << ", " << Tp << ", " << -1.0*transient_entropy << ", " << total_TEKE << ", " 
-      << d_TTMe << ", " << d_TTMp << ", " <<  I*double(CASTLE_output_rate) << ", " << e_size << ", " << sqrt(q_sq) << ", " << scat_size << ", " << tau_ee << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
+      << d_TTMe << ", " << d_TTMp << ", " <<  I*double(CASTLE_output_rate) << ", " << e_size << ", " << e_stddev << ", " << scat_size << ", " << scat_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / 1 << ", " << double(e_e_scattering_count) / double(1) << ", " << \
       double(ee_core_scattering_count) / double(1) << ", " << double(ee_transport_scattering_count) / double(1) << ", " <<\
       double(ea_core_scattering_count) / double(1) << ", " << double(ea_transport_scattering_count) / double(1) << ", " <<\
@@ -1846,7 +1851,7 @@ void output_data() {
     mean_data << CASTLE_real_time << ", " << current_time_step << ", " 
       << sqrt(6.0*global_d_U)/M_PI/constants::kB_r << ", " << sqrt(6.0*global_d_U)/M_PI/constants::kB_r << ", " << global_d_U << ", " //<<  (d_Te*d_Te*e_heat_capacity +Tp*a_heat_capacity) << ", " 
       << d_Te << ", " << d_Tp << ", " << -1.0*transient_entropy << ", " << total_TEKE << ", " 
-      << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << e_size << ", " << sqrt(q_sq) << ", " << scat_size << ", " << tau_ee << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
+      << d_TTMe << ", " << d_TTMp << ", " <<  I << ", " << e_size << ", " << e_stddev << ", " << scat_size << ", " << scat_stddev << ", " << p_x/double(conduction_electrons) << ", " << p_y/double(conduction_electrons) << ", " << p_z/double(conduction_electrons) << ", " 
       << std::fixed; mean_data.precision(1); mean_data << double(e_a_scattering_count) / CASTLE_output_rate << ", " << double(e_e_scattering_count) / double(CASTLE_output_rate) << ", " << \
       double(ee_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ee_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
       double(ea_core_scattering_count) / double(CASTLE_output_rate) << ", " << double(ea_transport_scattering_count) / double(CASTLE_output_rate) << ", " <<\
