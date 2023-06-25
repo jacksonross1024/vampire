@@ -361,13 +361,13 @@ void e_e_coulomb(const int e, const int array_index) {
    int ee_integration_count = 1;
    int ee_scattering_list = 1;
 
-   double integration_range = (electron_potential[e] > E_f_A+4.8) ? e_e_integration_cutoff*2.0: e_e_integration_cutoff;
+   double integration_range = e_e_integration_cutoff; //(electron_potential[e] > E_f_A+4.8) ? e_e_integration_cutoff*2.0: e_e_integration_cutoff;
    int i_size = 3*round(pow(integration_range,1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3);
    // if(electron_ee_scattering_list[e].size() < e_size) electron_ee_scattering_list[e].resize(e_size, 0);
-   if(electron_integration_list[e].size() < i_size) {
-      // std::cout << "resize. energy better be > " << electron_potential[e] << " > " << E_f_A+4.8 << std::endl;
-      electron_integration_list[e].resize(i_size, 0);
-   }
+   // if(electron_integration_list[e].size() < i_size) {
+   //    // std::cout << "resize. energy better be > " << electron_potential[e] << " > " << E_f_A+4.8 << std::endl;
+   //    electron_integration_list[e].resize(i_size, 0);
+   // }
    int cells = (i_size > ee_density) ? 125 : 27;
   //  if(cells > 27) std::cout << i_size << ", " << ee_density << ", " << electron_potential[e] << std::endl;
    std::vector<int> integration_list;
@@ -421,7 +421,7 @@ void e_e_coulomb(const int e, const int array_index) {
         if (length > e_e_coulomb_cutoff) continue; 
         electron_ee_scattering_list[e][ee_scattering_list*2] = electron;
         electron_ee_scattering_list[e][ee_scattering_list*2 +1] = length;
-        if(ee_scattering_list >= electron_ee_scattering_list[e].size() - 3) {std::cout << e << " ee scattering " << ee_scattering_list << " > " << electron_ee_scattering_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
+        if(ee_scattering_list >= electron_ee_scattering_list[e].size() - 1) {std::cout << e << " ee scattering " << ee_scattering_list << " > " << electron_ee_scattering_list[e].size() << ", " << length << ", " << electron_potential[e]  << std::endl;
           break; }
 
         ee_scattering_list++;
@@ -678,12 +678,13 @@ void ee_scattering() {
          const double d_e_energy = electron_potential[electron_collision];
         
          const int array_index_i = 3*electron_collision;
-         bool e_ballistic = (e_energy > (E_f_A+4.8)) ? true : false;
-         bool d_e_ballistic = (d_e_energy > (E_f_A+4.8)) ? true : false;
+         // bool e_ballistic = (e_energy > (E_f_A+4.8)) ? true : false;
+         // bool d_e_ballistic = (d_e_energy > (E_f_A+4.8)) ? true : false;
 
          
-         if(!elastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy) && (e_ballistic != d_e_ballistic) && (e_ballistic || d_e_ballistic) ) \
-           inelastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy);
+         // if(!
+         elastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy);// && (e_ballistic != d_e_ballistic) && (e_ballistic || d_e_ballistic) ) \
+         //   inelastic_scattering(thread, electron, array_index, electron_collision, array_index_i, e_energy, d_e_energy);
 
       }
     } 
@@ -714,10 +715,10 @@ bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
     if(l_theta!=l_theta) l_theta = 0.0;
   double l_phi = acos(distance[2]/length);
 
-  distance[0]  = 3.54*cos(l_theta)*sin(l_phi);
-  distance[1] = 3.54*sin(l_theta)*sin(l_phi);
-  distance[2] = 3.54*cos(l_phi);
-  length = 3.54*3.54;
+  distance[0]  = 4.16*cos(l_theta)*sin(l_phi);
+  distance[1] = 4.16*sin(l_theta)*sin(l_phi);
+  distance[2] = 4.16*cos(l_phi);
+  length = 4.16*4.16;
   
    const double k_1 = return_dWdE(e_energy);
    const double k_2 = return_dWdE(d_e_energy);
@@ -752,8 +753,8 @@ bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
    double deltaE = e_energy+d_e_energy - d_e_1 - d_e_2;
    const double deltaK = (k_1 - d_k_1)*(k_1 - d_k_1);
    // if(d_e_1 > (E_f_A+4.8) || d_e_2 > (E_f_A+4.8)) std::cout << d_e_1 << ", " << d_k_1 << ", " << d_e_2 << ", "  << d_k_2 << ", " << deltaE << ", " << deltaK << std::endl;
-   double a_factor = abs((k_1*k_1 + k_2*k_2 - d_k_1*d_k_1 - d_k_2*d_k_2)/(2.0*d_k_1*d_k_2));
-   double b_factor = k_1*k_2/(d_k_1*d_k_2);
+   // double a_factor = abs((k_1*k_1 + k_2*k_2 - d_k_1*d_k_1 - d_k_2*d_k_2)/(2.0*d_k_1*d_k_2));
+   // double b_factor = k_1*k_2/(d_k_1*d_k_2);
 
       if(d_e_1 < core_cutoff || d_e_2 < core_cutoff) return false;
       if( d_e_1 > (E_f_A+ max_as) || d_e_2 > (E_f_A+ max_as)) return false;

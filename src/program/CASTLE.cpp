@@ -188,7 +188,7 @@ void initialize () {
     //=========
     lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
     phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.12)*constants::eV_to_AJ;
-    dos_en_step = phonon_energy/4.0;
+    dos_en_step = phonon_energy/2.0;
     i_dos_en_step = 1.0/dos_en_step;
      // meV [e-3] AJ
     i_phonon_energy = 1.0/phonon_energy;
@@ -353,11 +353,11 @@ void initialize () {
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
     ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     double p = phonon_energy/(constants::hbar_r*3650.0*1e-5); // A^-1;  E_D = p * c_s * hbar
-    ea_rate = -1.0*dt*phonon_energy*M_PI*constants::K/(3.54*3.54*3.54*(p*p + 11.9*11.9))/constants::hbar_r;
+    ea_rate = -1.0*dt*phonon_energy*M_PI*constants::K/(4.16*4.16*4.16*(p*p + 2.5*2.5))/constants::hbar_r;
     // AJ
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
-    ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*3.54*3.54*3.54), 2.0)/constants::hbar_r; // AJ/A^4
+    ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*4.16*4.16*4.16), 2.0)/constants::hbar_r; // AJ/A^4
     E_f_A -= ((E_f_A - 1.5*constants::eV_to_AJ)*i_dos_en_step - floor((E_f_A - 1.5*constants::eV_to_AJ)*i_dos_en_step))*dos_en_step;
     // core_cutoff = E_f_A - DoS_cutoff;
      std::cout << "E_f(AJ): " << E_f*1e20 << ", discretised (AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
@@ -436,7 +436,7 @@ void initialize () {
             // s^2 /  fs^2
     q_2 += dos_en_step*dos_standard[h]*(return_fermi_distribution((h+1)*dos_en_step - DoS_cutoff, 0.0)-return_fermi_distribution((h-1)*dos_en_step - DoS_cutoff, 0.0))/(2.0*dos_en_step);
   }
-
+	DoS_cutoff += dos_en_step;
   q = sqrt(constants::K*q);
   q_1 = sqrt(constants::K*q_1);
   q_2 = sqrt(constants::K*constants::K*abs(q_2));
@@ -444,7 +444,7 @@ void initialize () {
 
   //  q_sq = k_sq();
    if(err::check) std::cout << "q: " << q << ", q_1 " <<  q_1 << ", q_2: " << q_2 << std::endl;
-  q_sq = 11.9*11.9;
+  q_sq = 2.5*2.5;//11.9*11.9;
     //========
     initialize_positions();
             if (err::check) std::cout << "Lattice built " << std::endl;
@@ -531,7 +531,6 @@ void initialize () {
    
     
     // double k_ffset = 3.4
-   
     // kg = kg fs / A  1e30 
     // m  = hbar k/v
     //  m_eff_ratio = return_dWdE(E_f_A+5.0)*return_vel(E_f_A)/return_vel(E_f_A+5.0)/return_dWdE(E_f_A);
@@ -555,7 +554,7 @@ void initialize_cell_omp() {
   y_step_size = lattice_depth / double(y_omp_cells);
   z_step_size = lattice_height/ double(z_omp_cells);
       if(err::check) std::cout << "step sizes(A): " << x_step_size << ", " << y_step_size << ", " << z_step_size << std::endl;
-  boundary_conditions_cutoff = 2.0*fmax(x_step_size, fmax(y_step_size, z_step_size));
+  boundary_conditions_cutoff = 1.0*fmax(x_step_size, fmax(y_step_size, z_step_size));
   cell_integration_lists.resize(total_cells);
   old_cell_integration_lists.resize(total_cells);
 
@@ -852,7 +851,6 @@ void initialize_lattice() {
 //====================================
 void initialize_electrons() {
 
-
             if (err::check) std::cout << "Lattice output file and electron position file opened..." << std::endl;
     //=========
     // Initialize arrays for holding electron variables
@@ -868,38 +866,38 @@ void initialize_electrons() {
     // ee_scattering_angle = sim::ee_scattering_angle;
     // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     half_int_var.resize(2,0);
-    half_int_var[0] =  10;
-    half_int_var[1] =  3;
+    half_int_var[0] =  6;
+    half_int_var[1] =  6;
     
-    e_e_integration_cutoff = lattice_width/6.0;
-    e_e_coulomb_cutoff = 6.0;
+    e_e_integration_cutoff = lattice_width/4.0; //
+    e_e_coulomb_cutoff = 4.16*2.0; //
     double deltaX = e_e_integration_cutoff-e_e_coulomb_cutoff;
-    std::cout << "band 1 velocity(A/fs): " << return_vel(E_f_A) << ", minimun separation criteria(dt): " << floor(deltaX/(2*return_vel(E_f_A)*dt)) << "...";
+    std::cout << "band 1 velocity(A/fs): " << return_vel(E_f_A) << ", minimun separation criteria(dt): " << floor(deltaX/(2.0*return_vel(E_f_A)*dt)) << "...";
     if( (4*return_vel(E_f_A)*dt*half_int_var[0]) < deltaX) {
       terminaltextcolor(GREEN);
        std::cout << "criteria exceeded. Consider increasing stride to " << floor(deltaX/(2*return_vel(E_f_A)*dt)) << std::endl;
       terminaltextcolor(WHITE);
     }
-    else if ( (2*return_vel(E_f_A)*dt*half_int_var[0]) < deltaX)  std::cout << "criteria met" << std::endl;
+    else if ( (2*return_vel(E_f_A)*dt*half_int_var[0]) < deltaX)  std::cout << "criteria met: " << deltaX/(2*return_vel(E_f_A)*dt*half_int_var[0]) << std::endl;
     else {
       terminaltextcolor(RED);
       std::cerr << "criteria not met: " << deltaX << " < " << 2*return_vel(E_f_A)*dt*half_int_var[0] << std::endl;
-    }
-    deltaX = 2*e_e_integration_cutoff - e_e_coulomb_cutoff;
-    std::cout << "band 2 velocity(A/fs): " << return_vel(E_f_A+5.0) << ", minimun separation criteria(dt): " << floor(deltaX/(2*return_vel(E_f_A+5.0)*dt)) << "...";
-    if( (4*return_vel(E_f_A+5.0)*dt*half_int_var[1]) < deltaX) {
-      terminaltextcolor(GREEN);
-       std::cout << "criteria exceeded. Consider increasing stride to " << floor(deltaX/(2*return_vel(E_f_A+5.0)*dt)) << std::endl;
-      terminaltextcolor(WHITE);
-    }
-    else if ( (2*return_vel(E_f_A+5.0)*dt*half_int_var[1]) < deltaX)  std::cout << "criteria met" << std::endl;
-    else {
-      terminaltextcolor(RED);
-      std::cerr << "criteria not met: " << deltaX << " < " << 2*return_vel(E_f_A+5.0)*dt*half_int_var[1] << std::endl;
-    }
+    } 
+   //  deltaX = 2*e_e_integration_cutoff - e_e_coulomb_cutoff;
+   //  std::cout << "band 2 velocity(A/fs): " << return_vel(E_f_A+5.0) << ", minimun separation criteria(dt): " << floor(deltaX/(2*return_vel(E_f_A+5.0)*dt)) << "...";
+   //  if( (4*return_vel(E_f_A+5.0)*dt*half_int_var[1]) < deltaX) {
+   //    terminaltextcolor(GREEN);
+   //     std::cout << "criteria exceeded. Consider increasing stride to " << floor(deltaX/(2*return_vel(E_f_A+5.0)*dt)) << std::endl;
+   //    terminaltextcolor(WHITE);
+   //  }
+   //  else if ( (2*return_vel(E_f_A+5.0)*dt*half_int_var[1]) < deltaX)  std::cout << "criteria met" << std::endl;
+   //  else {
+   //    terminaltextcolor(RED);
+   //    std::cerr << "criteria not met: " << deltaX << " < " << 2*return_vel(E_f_A+5.0)*dt*half_int_var[1] << std::endl;
+   //  }
 
     e_e_integration_cutoff = pow(e_e_integration_cutoff,2.0);
-    e_e_coulomb_cutoff = pow(6.0, 2.0);
+    e_e_coulomb_cutoff = pow(e_e_coulomb_cutoff, 2.0);
     
       if (err::check) std::cout << "Prepare to set arrays: " << std::endl;
           
@@ -920,7 +918,7 @@ void initialize_electrons() {
         if (err::check) std::cout << "Prepare to set position: " << std::endl;
      ee_density =   3*int(round(pow(e_e_integration_cutoff,1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3));
     //  ee_density =  3*int(round(pow(e_e_neighbor_cutoff, 1.5)*1.25*M_PI * 3.8*n_f * 1e-3));
-    const int ee_scattering = 6*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3);
+    const int ee_scattering = 12*round(pow(e_e_coulomb_cutoff,   1.5)*1.25*M_PI * total_e_scaling*n_f * 1e-3);
         if (err::check)  std::cout << ee_density << ", " << ee_scattering << std::endl;
     
     omp_set_dynamic(0);
@@ -943,9 +941,9 @@ void initialize_electrons() {
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
         const int array_index = 3*e;
-        electron_position[array_index]     = atoms::x_coord_array.at(e%int(lattice_atoms)) + 0.5*x_unit_size;
-        electron_position[array_index + 1] = atoms::y_coord_array.at(e%int(lattice_atoms)) + 0.5*y_unit_size;
-        electron_position[array_index + 2] = atoms::z_coord_array.at(e%int(lattice_atoms)) + 0.5*z_unit_size;
+        electron_position[array_index]     = atoms::x_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*x_unit_size;
+        electron_position[array_index + 1] = atoms::y_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*y_unit_size;
+        electron_position[array_index + 2] = atoms::z_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*z_unit_size;
         //initialize and output electron posititons
       //  = atom_anchor_position.at(3*(e%lattice_atoms));//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
        // electron_position.at(array_index + 2) = atom_anchor_position.at(3*(e%lattice_atoms)+2);// + cos(phi)*screening_depth;//*radius_mod(gen);
@@ -1227,7 +1225,7 @@ void initialize_velocities() {
     if(total != conduction_electrons) std::cout <<"hist problem " << total << ", " << conduction_electrons << std::endl;
 
     std::cout << "core cutoff: " << core_cutoff << ", transport cutoff: " << transport_cutoff << ", ballistic cutoff: " << E_f_A+4.86166 << std::endl;
-    std::cout << "center of mass adjustment: <" << p_x << "," << p_y << "," << p_z << "> -> <" << n_p_x/double(conduction_electrons) << "," << n_p_y/double(conduction_electrons) << "," << n_p_z/double(conduction_electrons) <<  std::endl;
+    std::cout << "center of mass adjustment: <" << p_x << "," << p_y << "," << p_z << "> -> <" << n_p_x/double(conduction_electrons) << "," << n_p_y/double(conduction_electrons) << "," << n_p_z/double(conduction_electrons) << ">" <<  std::endl;
    
 
        if (err::check)  std::cout << "distribution output" << std::endl;
@@ -1621,18 +1619,21 @@ double return_BE_distribution(const double phonon_e, const double temperature) {
 }
 
 double return_dWdE(const double e_energy) {
-  if(e_energy > (E_f_A+4.86166)) return 0.00275775*(e_energy-E_f_A) + 3.81605;
-  else return 0.0244961*(e_energy-E_f_A) + 3.71037;
+	 return 0.0013937*(e_energy-E_f_A) + 2.3893;
+//   if(e_energy > (E_f_A+4.86166)) return 0.00275775*(e_energy-E_f_A) + 3.81605;
+//   else return 0.0244961*(e_energy-E_f_A) + 3.71037;
 }
 
 double return_dWdE_i(const double momentum) {
-  if(momentum > 3.82946) return E_f_A + ((momentum-3.81605)/0.00275775);
-  else return E_f_A + ((momentum- 3.71037)/0.0244961);
+	 return E_f_A + ((momentum-2.3893)/0.0013937);
+//   if(momentum > 3.82946) return E_f_A + ((momentum-3.81605)/0.00275775);
+//   else return E_f_A + ((momentum- 3.71037)/0.0244961);
 }
 
 double return_vel(const double energy) {
-  if(energy > (E_f_A+4.86166)) return 1.0/(constants::hbar_r*0.00275775);
-  else return 1.0/(constants::hbar_r*0.0244961);
+	 return 1.0/(constants::hbar_r*0.0013937);
+//   if(energy > (E_f_A+4.86166)) return 1.0/(constants::hbar_r*0.00275775);
+//   else return 1.0/(constants::hbar_r*0.0244961);
 }
 
 double return_m_e_r(const double energy) {
