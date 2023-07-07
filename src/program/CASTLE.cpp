@@ -188,7 +188,7 @@ void initialize () {
     //=========
     lattice_atoms = atoms::num_atoms; //Better lattice creation will come from VAMPIRE in future
     phonon_energy = 1e-3*sqrt(sim::ea_coupling_strength/0.12)*constants::eV_to_AJ;
-    dos_en_step = phonon_energy/2.0;
+    dos_en_step = phonon_energy/4.0;
     i_dos_en_step = 1.0/dos_en_step;
      // meV [e-3] AJ
     i_phonon_energy = 1.0/phonon_energy;
@@ -345,16 +345,16 @@ void initialize () {
     ea_coupling_strength = 1e-6*sim::ea_coupling_strength*constants::eV_to_AJ*constants::eV_to_AJ/constants::hbar_r; // meV**2 -> AJ/fs
 
     atomic_mass = 58.69 * 1.6726219e3; // kg * 1e30 for reduced units
-    power_density = 1e1*sim::fluence; // mJ/cm**2 -> .at(e17/e14/e2(fs)) AJ/fs/nm**2
+    fluence = 1e3*sim::fluence; // mJ/cm**2 -> 1e4/1e3 J/m^2 -> 1e20/1e18 AJ/nm**2 
     if(photon_energy == 0.0) std::cout << "sim error: photon energy gives infinite intensity " << std::endl;
     const double tau = 3.0*E_f_A /(M_PI*ea_coupling_strength); // fs/AJ
     G = 300.0*e_heat_capacity*E_f_A*3.0/tau; //AJ/fs/K/nm**3 [e-20*e27*e15 = e22]  
     //G = sim::TTG*1e-23;
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
     ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
-    double p = phonon_energy/(constants::hbar_r*3650.0*1e-5); // A^-1;  E_D = p * c_s * hbar
-    ea_rate = -1.0*dt*phonon_energy*M_PI*constants::K/(4.16*4.16*4.16*(p*p + 2.5*2.5))/constants::hbar_r;
-    // AJ
+    double p = phonon_energy/(constants::hbar_r*3650.0*1e5); // A^-1;  E_D = p * c_s * hbar //  1e15 / A1e10 = 1/A
+    ea_rate = -0.03*1*dt*phonon_energy*M_PI*constants::K/(4.16*4.16*4.16*(p*p + 2.5*2.5))/constants::hbar_r;
+    // modifier: 0.02
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
     ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*4.16*4.16*4.16), 2.0)/constants::hbar_r; // AJ/A^4
@@ -866,8 +866,8 @@ void initialize_electrons() {
     // ee_scattering_angle = sim::ee_scattering_angle;
     // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     half_int_var.resize(2,0);
-    half_int_var[0] =  6;
-    half_int_var[1] =  6;
+    half_int_var[0] =  4;
+    half_int_var[1] =  4;
     
     e_e_integration_cutoff = lattice_width/4.0; //
     e_e_coulomb_cutoff = 4.16*2.0; //
@@ -941,9 +941,9 @@ void initialize_electrons() {
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
         const int array_index = 3*e;
-        electron_position[array_index]     = atoms::x_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*x_unit_size;
-        electron_position[array_index + 1] = atoms::y_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*y_unit_size;
-        electron_position[array_index + 2] = atoms::z_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*z_unit_size;
+        electron_position[array_index]     = atoms::x_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*x_unit_size;
+        electron_position[array_index + 1] = atoms::y_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*y_unit_size;
+        electron_position[array_index + 2] = atoms::z_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*z_unit_size;
         //initialize and output electron posititons
       //  = atom_anchor_position.at(3*(e%lattice_atoms));//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
        // electron_position.at(array_index + 2) = atom_anchor_position.at(3*(e%lattice_atoms)+2);// + cos(phi)*screening_depth;//*radius_mod(gen);

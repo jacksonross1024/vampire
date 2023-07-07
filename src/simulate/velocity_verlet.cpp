@@ -248,21 +248,22 @@ void update_position() {
 
 void update_dynamics() {
   
-  //  int array_index;
-   //  double photon_energy = sim::applied_voltage*constants::eV_to_AJ; //AJ/hv
-    //AJ/fs/nm**2 -> [1e-3volume(A**3)/(AJ/hv)) hv/fs 
-    const static double photon_rate = 1e-2*power_density*lattice_width*lattice_depth/photon_energy; //hv/fs
+
+    //I(t) = 0.94 F/(t_p * L_z) AJ/nm^2 / fs / A
+    const double intesnity = 0.94e-14*fluence/sim::pump_time/lattice_height; //AJ/nm^2/A/s -> e1/e15 AJ/nm^3/fs
     int photons_at_dt = 0; //hv*dt
     double pump = 0.0; // AJ / fs
     double external_potential = 0.0; //AJ/e-
-    const static double sigma = 1e-15 / sim::pump_time;
+    const static double sigma = 1e-15 / sim::pump_time; // 1/s -> 1e-15 -> 1/fs
+	  const double four_ln_2 = 2.77258872224;
+
     int count = 0;
     // std::cout << sigma << std::endl;
     if(!equilibrium_step) {
       if(heat_pulse_sim) {
         //hv(dt)/fs
-        photons_at_dt = int(round(photon_rate*dt*exp(-0.5*sigma*sigma*((double(current_time_step) - ((40.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((40.0 / dt)+sim::equilibration_time)))))); // AJ/fs/nm**3
-        pump = 1e3*photons_at_dt*photon_energy/(dt*lattice_depth*lattice_height*lattice_width); //AJ/fs/nm**3
+        pump = intesnity*exp(-four_ln_2*sigma*sigma*((double(current_time_step) - ((40.0/dt)+sim::equilibration_time))*(double(current_time_step) - ((40.0 / dt)+sim::equilibration_time)))); // AJ/fs/nm**3
+        photons_at_dt = 1e-3*pump*dt*lattice_depth*lattice_height*lattice_width/photon_energy; //AJ/fs/nm^3 * A^3(1e-3 nm^3/A^3) * dt -> AJ / AJ/gamma
         //external_potential = photon_energy; //AJ/hv     ;//1e27*pump*dt/ n_f; // AJ / particle
      //   std::cout << photons_at_dt << std::endl;
         TTMe = d_TTMe;
@@ -528,7 +529,7 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double e_occupation;
     double f_e_occupation;
     double r_e_occupation;
-    const double phonon_factor = phonon_energy + (1.0*phonon_energy*mtrandom::gaussianc(omp_uniform_random[thread])/2.0);// ;//+ 0.16*abs(mtrandom::gaussianc(omp_uniform_random[thread]));// ;//
+    const double phonon_factor = phonon_energy + (1.0*phonon_energy*mtrandom::gaussianc(omp_uniform_random[thread])/4.0);// ;//+ 0.16*abs(mtrandom::gaussianc(omp_uniform_random[thread]));// ;//
     const int e_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - DoS_cutoff)*i_dos_en_step))));
     const int f_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy + phonon_factor - DoS_cutoff)*i_dos_en_step))));
     const int r_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - phonon_factor - DoS_cutoff)*i_dos_en_step))));

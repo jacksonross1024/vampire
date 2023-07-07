@@ -240,7 +240,7 @@ namespace CASTLE {
    double e_e_coulomb_cutoff;
 
    double applied_voltage = 0.0;
-   double power_density = 0.0;
+   double fluence = 0.0;
    double photon_energy = 0.0;
 
    bool ee_coupling = false;

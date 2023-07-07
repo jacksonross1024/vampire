@@ -149,7 +149,7 @@ namespace CASTLE {
     extern double z_step_size;// = lattice_height/ double(z_omp_cells);
  
     extern double applied_voltage;
-    extern double power_density;
+    extern double fluence;
     extern double photon_energy;
     //integration variables
     extern long long int current_time_step;
