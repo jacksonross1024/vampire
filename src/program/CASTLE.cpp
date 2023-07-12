@@ -353,7 +353,7 @@ void initialize () {
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
     ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     double p = phonon_energy/(constants::hbar_r*3650.0*1e5); // A^-1;  E_D = p * c_s * hbar //  1e15 / A1e10 = 1/A
-    ea_rate = -0.03*1*dt*phonon_energy*M_PI*constants::K/(4.16*4.16*4.16*(p*p + 2.5*2.5))/constants::hbar_r;
+    ea_rate = -sim::ee_coupling_strength*dt*phonon_energy*M_PI*constants::K/(4.16*4.16*4.16*(p*p + 2.5*2.5))/constants::hbar_r;
     // modifier: 0.02
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
@@ -941,9 +941,9 @@ void initialize_electrons() {
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
         const int array_index = 3*e;
-        electron_position[array_index]     = atoms::x_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*x_unit_size;
-        electron_position[array_index + 1] = atoms::y_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*y_unit_size;
-        electron_position[array_index + 2] = atoms::z_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*z_unit_size;
+        electron_position[array_index]     = atoms::x_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*x_unit_size;
+        electron_position[array_index + 1] = atoms::y_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*y_unit_size;
+        electron_position[array_index + 2] = atoms::z_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*z_unit_size;
         //initialize and output electron posititons
       //  = atom_anchor_position.at(3*(e%lattice_atoms));//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
        // electron_position.at(array_index + 2) = atom_anchor_position.at(3*(e%lattice_atoms)+2);// + cos(phi)*screening_depth;//*radius_mod(gen);
