@@ -61,11 +61,33 @@ namespace exchange{
    									atoms::v_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[1],
    									atoms::v_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[2]};
 
-         // note: sum over j only (not sum over i for j) leads to a silent factor 1/2 in exchange energy value
-         //       - must be normalised in statistics to account for double sum
-   		energy -= ( Jij[0] * atoms::x_spin_array[natom] * sx +
+         if(atoms::x_coord_array[natom] < -0.1) {
+                  
+                      energy -= ( -Jij[0] * atoms::y_spin_array[natom] * sx +
+                     Jij[1] * atoms::x_spin_array[natom] * sy +
+                     Jij[2] * atoms::z_spin_array[natom] * sz);
+                  //   count++;
+                   // if(atom==1) std::cout <<Jij[0] << " 0 <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << -spin_array_y[natom] << ", " << spin_array_x[natom] << std::endl;
+                  }
+         
+                  else if (atoms::x_coord_array[natom] > cs::system_dimensions[0]-0.01) {
+                    
+                     energy -= ( Jij[0] * atoms::y_spin_array[natom] * sx -
+                     Jij[1] * atoms::x_spin_array[natom] * sy +
+                     Jij[2] * atoms::z_spin_array[natom] * sz);
+                  
+                  }
+                
+                  else 
+                  {
+                     energy -= ( Jij[0] * atoms::x_spin_array[natom] * sx +
                      Jij[1] * atoms::y_spin_array[natom] * sy +
                      Jij[2] * atoms::z_spin_array[natom] * sz);
+                  }
+   				
+         // note: sum over j only (not sum over i for j) leads to a silent factor 1/2 in exchange energy value
+         //       - must be normalised in statistics to account for double sum
+   		
 
    	}
 

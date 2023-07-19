@@ -541,7 +541,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 			if(phi != phi) phi = 0.0;
 
 		//T_z e||xy -> torque asymmetry sin(2(phi-pi/4))
-		double lotlt_z = program::fractional_electric_field_strength* (cos(phi*2.0))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;
+		double lotlt_z = sim::laser_torque_strength* (cos(phi*2.0))*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;
 		// if(program::fractional_electric_field_strength > 0.0) std::cout << program::fractional_electric_field_strength << std::endl;
 		double lotx = lot_unit_vector[0];
 		double loty = lot_unit_vector[1];

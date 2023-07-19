@@ -226,7 +226,7 @@ namespace sim{
       test="domain-wall-position";
       if(word==test){
          double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "none", 0, 1,"input","0 - 1");
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "none", 0, 1e10,"input","0 - l_x");
          sim::domain_wall_position = tt;
          return true;
       }
