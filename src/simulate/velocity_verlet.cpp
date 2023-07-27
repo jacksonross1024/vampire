@@ -69,7 +69,7 @@ int velocity_verlet_step(double time_step) {
     }
 
     
-   //  if(total_1 != conduction_electrons) std::cout << "hist problem " << total_1 << " != " << conduction_electrons << " != " << total_2 << std::endl;
+    if(total_1 != conduction_electrons) std::cout << "hist problem " << total_1 << " != " << conduction_electrons << " != " << total_2 << std::endl;
     
     //reset integration
     CASTLE_real_time += dt;
@@ -121,12 +121,12 @@ void update_position() {
   
       for (int e = 1; e < size; e++) { 
          int electron = cell_integration_list[e];
-     
+         int index = int(std::min(dos_size-1.0, std::max(0.0, floor((energy - DoS_cutoff)*i_dos_en_step))));
          const double energy = electron_potential[electron];
    
          const double vel = return_vel(energy);
          const double mom = return_dWdE(energy);
-         local_e_dos[int(std::min(dos_size-1.0, std::max(0.0, floor((energy - DoS_cutoff)*i_dos_en_step))))]++;
+         local_e_dos[index]++;
          const int array_index = 3*electron;
 
          double pos[3] = {electron_position[array_index], electron_position[array_index+1], electron_position[array_index+2]};
@@ -150,7 +150,7 @@ void update_position() {
           x_flux++; 
         }
       
-        local_x_dos[int(std::max(0.0, std::min(dos_size-1.0, floor((energy - DoS_cutoff)*i_dos_en_step))))] += electron_velocity[array_index]*return_dWdE(energy);
+        local_x_dos[index] += electron_velocity[array_index]*return_dWdE(energy);
           
         if (pos[1] < 0.0) {pos[1] += lattice_depth; y_flux--;}
         else if (pos[1] > lattice_depth) {pos[1] -= lattice_depth; y_flux++;}
@@ -276,6 +276,7 @@ void update_dynamics() {
     }
    double potential = 0.0;
       if(!equilibrium_step && applied_voltage_sim) {
+         //
          potential = 1e10*dt*constants::e*applied_voltage *std::min(((current_time_step-sim::equilibration_time) /10000.0), 1.0)/constants::hbar_r;
          // std::cout << potential << ", " << (current_time_step-sim::equilibration_time) /100.0 << std::endl;
       } 
@@ -494,7 +495,7 @@ double electron_applied_voltage(const int e, const int array_index, const double
    double k_2 = electron_velocity[array_index+1]*k;
    double k_3 = electron_velocity[array_index+2]*k;
 
-   double d_k_1 = k_1+potential; 
+   double d_k_1 = k_1-potential; 
    // e-4  / A
    double d_k = sqrt(d_k_1*d_k_1 + k_2*k_2 + k_3*k_3);
 
@@ -502,11 +503,18 @@ double electron_applied_voltage(const int e, const int array_index, const double
    double deltaE = d_energy - energy;
    
    if(d_energy > E_f_A+ max_as) return 0.0;
-   else if(d_energy < transport_cutoff) return 0.0; 
-   else if (d_energy > transport_cutoff) {
+   else if(d_energy <= transport_cutoff) {
+    
+         electron_velocity[array_index]   *= -1.0;//cos(theta)*sin(phi);
+         electron_velocity[array_index+1] *= -1.0;// sin(theta)*sin(phi);
+         electron_velocity[array_index+2] *= -1.0;//cos(phi);
+        //  electron_potential[e] = d_energy;
+    return 0.0;
+   } 
+  // else if (d_energy > transport_cutoff) {
       const int d_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((d_energy - DoS_cutoff)*i_dos_en_step))));
       double e_occupation   = std::min(1.0, double(global_e_dos[d_index][0]) / (dos_standard[d_index]*dos_en_step));
-      if(e_occupation < 0.99) {
+     // if(e_occupation < 0.99) {
          double theta = atan2(k_2, d_k_1);
          if(theta != theta) theta = 0.0;
          double phi = acos(k_3/d_k);
@@ -516,9 +524,9 @@ double electron_applied_voltage(const int e, const int array_index, const double
          electron_potential[e] = d_energy;
 
          return deltaE;   
-      }
-   } 
-   return 0.0;
+     // }
+  // } 
+  //  return 0.0;
 }
 
 void ea_scattering(const int e, const int array_index, const int thread) {
@@ -774,11 +782,11 @@ bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
       const int d_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_2 - DoS_cutoff)*i_dos_en_step))));
       if ( d_e_2 > transport_cutoff)  d_d_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_index][0])/(dos_standard[d_index]*dos_en_step));  
       else d_d_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_index][0]) / double(global_e_dos[d_index][1])); 
-      double occupation_factor = ee_rate*d_e_occupation*d_d_occupation;///((q_sq+(deltaK))*(q_sq+(deltaK)));//*exp(0.15*(d_occupation*e_occupation-1.0));
+      double occupation_factor = ee_rate*d_e_occupation*d_d_occupation/(q_sq+deltaK)*(q_sq+deltaK);///((q_sq+(deltaK))*(q_sq+(deltaK)));//*exp(0.15*(d_occupation*e_occupation-1.0));
 
       // if(e_energy > E_f_A+4.8 || d_e_energy > E_f_A+4.8) occupation_factor /= q_sq*q_sq;
       // else
-       occupation_factor /= (q_sq+deltaK)*(q_sq+deltaK);
+      // occupation_factor /= (q_sq+deltaK)*(q_sq+deltaK);
 
       global_tau_ee[e_index] += occupation_factor;
       global_tau_ee[d_index] += occupation_factor;
@@ -824,16 +832,16 @@ bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
           if(deltaE > 0.001) full_int_var++;
           else if (deltaE < -0.001) full_int_var--;
           
-         //  if (electron_potential[e] < transport_cutoff) ee_core_scattering_count++;
-         //  else ee_transport_scattering_count++;
-         //  if (electron_potential[d_e] < transport_cutoff) ee_core_scattering_count++;
-         //  else ee_transport_scattering_count++;
+          if (electron_potential[e] < E_f_A + 4.8) ee_core_scattering_count++;
+          else ee_transport_scattering_count++;
+          if (electron_potential[d_e] < E_f_A + 4.8) ee_core_scattering_count++;
+          else ee_transport_scattering_count++;
           // lattice_output << e_e_scattering_count << ", " << electron << ", " << electron_collision << ", " \
                          << x_distance*v_x_dot_product << ", " << y_distance*v_x_dot_product << ", " << z_distance*v_x_dot_product << ", " \
                          << deltaE << ", " << deltaK << ", "  << sqrt(length) << ", " << v_x_dot_product << ", " \
                          << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaK))*(0.25+(deltaK))) << ", " << ee_rate*e_occupation*d_e_occupation/((0.25+(deltaE*deltaE))*(0.25+(deltaE*deltaE))) << ", " << rspace_Hsr << std::endl;
           e_e_scattering_count += 2;
-          ee_core_scattering_count += 2;
+          // ee_core_scattering_count += 2;
           //if(electron_potential[electron] > transport_cutoff || electron_potential[electron_collision] > transport_cutoff )lattice_output <<\
             electron << ", " << e_occupation << ", " << d_e_occupation << ", " << 1.0/((q_sq+(deltaK*deltaK))*(q_sq+(deltaK*deltaK))) << ", " << deltaK << ", " << deltaE << ", " << e_energy<< ", " << d_e_energy << ", " <<\
             1-return_fermi_distribution(e_index*dos_en_step+deltaE+core_cutoff-E_f_A,constants::kB_r*Te) << ", " << 1-return_fermi_distribution(d_index*dos_en_step+core_cutoff-E_f_A-deltaE,constants::kB_r*Te) << ", " <<\
