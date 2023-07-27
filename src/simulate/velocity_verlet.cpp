@@ -121,8 +121,9 @@ void update_position() {
   
       for (int e = 1; e < size; e++) { 
          int electron = cell_integration_list[e];
-         int index = int(std::min(dos_size-1.0, std::max(0.0, floor((energy - DoS_cutoff)*i_dos_en_step))));
          const double energy = electron_potential[electron];
+         int index = int(std::min(dos_size-1.0, std::max(0.0, floor((energy - DoS_cutoff)*i_dos_en_step))));
+         
    
          const double vel = return_vel(energy);
          const double mom = return_dWdE(energy);
