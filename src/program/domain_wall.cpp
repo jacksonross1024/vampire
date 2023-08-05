@@ -520,14 +520,14 @@ namespace program{
 
 			double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
 			const double i_pump_time = 1.0/sim::pump_time;
-  		 	double reduced_time = (ftime-3.*sim::pump_time)*i_pump_time;
+  		 	double reduced_time = (ftime-2.0*sim::pump_time)*i_pump_time;
    			const double four_ln_2 = 2.77258872224; // 4 ln 2
    			double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
 			if(sim::enable_laser_torque_fields) {
-				if(ftime < 3.*sim::pump_time) sim::laser_torque_strength = gaussian;
-				else if (ftime < 3.*sim::pump_time + sim::double_pump_delay) sim::laser_torque_strength = 1.0;
+				if(ftime < 2.0*sim::pump_time) sim::laser_torque_strength = gaussian;
+				else if (ftime < 2.0*sim::pump_time + sim::double_pump_delay) sim::laser_torque_strength = 1.0;
 				else {
-					reduced_time = (ftime-3.*sim::pump_time-sim::double_pump_delay)*i_pump_time;
+					reduced_time = (ftime-2.0*sim::pump_time-sim::double_pump_delay)*i_pump_time;
 					gaussian = exp(-four_ln_2*reduced_time*reduced_time);
 					sim::laser_torque_strength = gaussian;
 				}
@@ -547,19 +547,19 @@ namespace program{
 			else sim::TTTe =       (-G*(Te-Tp)+pump)*dt/Ce + Te;
 			sim::TTTp =            ( G*(Te-Tp)     )*dt/Cl + Tp - (Tp-sim::Teq)*sim::HeatSinkCouplingConstant*dt;
 
-			  double time_from_start = mp::dt_SI * double(sim::time-program::internal::electrical_pulse_time);
+			  double time_from_start = mp::dt_SI * double(sim::time-sim::equilibration_time);
 
-   		if( time_from_start < program::internal::electrical_pulse_rise_time ){
+   		if(time_from_start < program::internal::electrical_pulse_rise_time ) {
       		program::fractional_electric_field_strength = time_from_start / program::internal::electrical_pulse_rise_time;
 			// if(program::fractional_electric_field_strength > 0.0) std::cout << program::fractional_electric_field_strength << std::endl;
    		}
    // implement continuous current
-   		else if( time_from_start < program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time ){
+   		else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time) ){
      		 program::fractional_electric_field_strength = 1.0;
 			//  std::cout << program::fractional_electric_field_strength << std::endl;
    		}
    // implement fall time
-   		else if( time_from_start < program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time + program::internal::electrical_pulse_fall_time) {
+   		else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time + program::internal::electrical_pulse_fall_time)) {
     	  const double fractional_fall_time = time_from_start - (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time);
     	  program::fractional_electric_field_strength = 1.0 - fractional_fall_time / program::internal::electrical_pulse_fall_time;
 		//   if(program  ::fractional_electric_field_strength) std::cout << program::fractional_electric_field_strength << std::endl;
