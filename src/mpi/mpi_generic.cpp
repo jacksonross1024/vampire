@@ -71,11 +71,10 @@ void initialise(int argc, char *argv[]){
    if(vmpi::my_rank == 0) vmpi::master = true;
 
 	MPI_Get_processor_name(name, &resultlen);
-	hostname = name;
 	//IOCommunicator(num_io_processors);
 	// Start MPI Timer
 	vmpi::start_time = MPI_Wtime();
-
+	hostname = name;
 #else
 
    // set master flag on master (root) process (serial)
