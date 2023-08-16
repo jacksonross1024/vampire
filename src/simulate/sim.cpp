@@ -98,6 +98,7 @@ namespace sim{
 	double Hmax=+1.0; // T
 	double Hinc= 0.1; // T
 	double Heq=0.0;
+	double H_actual = 0.0;
 	double applied_field_angle_phi=0.0;
 	double applied_field_angle_theta=0.0;
 	bool applied_field_set_by_angle=false;
@@ -312,6 +313,8 @@ int run(){
    // Precondition spins at equilibration temperature
    montecarlo::monte_carlo_preconditioning();
 
+	if(stats::calculate_spinwaves) stats::spinwaves.reset();
+	
    // For MPI version, calculate initialisation time
    if(vmpi::my_rank==0){
 		std::cout << "Starting Simulation with Program ";
@@ -574,6 +577,7 @@ int run(){
 
    // De-initialize GPU
    if(gpu::acceleration) gpu::finalize();
+	if(stats::calculate_spinwaves) stats::spinwaves.finalize();
 
    // optionally save checkpoint file
    if(sim::save_checkpoint_flag && !sim::save_checkpoint_continuous_flag) save_checkpoint();

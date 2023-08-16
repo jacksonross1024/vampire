@@ -43,6 +43,7 @@ public:
    int material;              // atom material belongs to
    int uc_category;           // atom category within unit cell
    int lh_category;           // atom height category within unit cell
+   int sl_category; 
    int grain;                 // grain id of atom
    //int supercell;       // supercell id of atom
    int mpi_type;              // mpi category of atom (core, boundary or halo)
@@ -69,6 +70,7 @@ public:
       material(0),
       uc_category(0),
       lh_category(0),
+      sl_category(0),
       grain(0),
       //supercell(0),
       mpi_type(0),

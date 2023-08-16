@@ -67,6 +67,10 @@ namespace anisotropy{
          internal::ku2.resize(num_materials);
          for(int m = 0; m < num_materials; m++) internal::ku2[m] = internal::mp[m].ku2 * inverse_mu_s[m];
       }
+      if(internal::enable_uniaxial_inplane_second_order){
+         internal::ku2_para.resize(num_materials);
+         for(int m = 0; m < num_materials; m++) internal::ku2_para[m] = internal::mp[m].ku2_para * inverse_mu_s[m];
+      }
       // Fourth order uniaxial
       if(internal::enable_uniaxial_fourth_order){
          internal::ku4.resize(num_materials);
@@ -355,6 +359,17 @@ namespace anisotropy{
          internal::ku_vector[m].x = internal::mp[m].ku_vector[0];
          internal::ku_vector[m].y = internal::mp[m].ku_vector[1];
          internal::ku_vector[m].z = internal::mp[m].ku_vector[2];
+
+      }
+
+      internal::ku_para_vector.resize(num_materials);
+
+      for(int m = 0; m < num_materials; m++){
+
+         // unroll uniaxial easy axes
+         internal::ku_para_vector[m].x = internal::mp[m].ku_para_vector[0];
+         internal::ku_para_vector[m].y = internal::mp[m].ku_para_vector[1];
+         internal::ku_para_vector[m].z = internal::mp[m].ku_para_vector[2];
 
       }
 

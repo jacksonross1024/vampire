@@ -119,6 +119,7 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 							catom_array[atom].material=unit_cell.atom[uca].mat;
 							catom_array[atom].uc_id=uca;
 							catom_array[atom].lh_category=unit_cell.atom[uca].hc+z*maxlh;
+							catom_array[atom].sl_category=unit_cell.atom[uca].hc;
 							catom_array[atom].uc_category=unit_cell.atom[uca].mat; // determine initial material (uc_category) for unit cell
 							catom_array[atom].scx=x;
 							catom_array[atom].scy=y;
@@ -137,6 +138,7 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 							catom_array[atom].material=unit_cell.atom[uca].mat;
 							catom_array[atom].uc_id=uca;
 							catom_array[atom].lh_category=unit_cell.atom[uca].hc+z*maxlh;
+							catom_array[atom].sl_category=unit_cell.atom[uca].hc;
 							catom_array[atom].uc_category=unit_cell.atom[uca].mat; // determine initial material (uc_category) for unit cell
 							catom_array[atom].scx=x;
 							catom_array[atom].scy=y;

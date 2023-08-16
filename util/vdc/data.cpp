@@ -24,6 +24,7 @@ namespace vdc{
    bool verbose  = false; // flag to specify verbosity of output to user
    bool xyz      = false; // flag to specify crystal.xyz file output
    bool povray   = false; // flag to specify povray file output
+   bool track    = false;
    bool povcells = false; // flag to specify povray cells output
    bool cells    = false; // flag to specify cells output
    bool cellsf   = false; // flag to output cell file

@@ -20,7 +20,7 @@
 #include "material.hpp"
 #include "create.hpp"
 #include <complex>
-
+#include "program.hpp"
 
 // Spin Torque headers
 #include "internal.hpp"
@@ -52,7 +52,7 @@ namespace st{
          st::internal::three_vector_t b3(0.0,0.0,1.0);
 
          // set local constants
-         double je = st::internal::je; // current (C/s)
+         double je = program::fractional_electric_field_strength* st::internal::je; // current (C/s)
 
          //---------------------------------------------------------------------------------------------------
          //set parameters for TMR calculation
@@ -117,12 +117,13 @@ namespace st{
 
          const double i_muB = 1.0/9.274e-24; // J/T
          const double i_e = 1.0/1.60217662e-19; // electronic charge (Coulombs)
-         const double microcell_volume = (st::internal::micro_cell_size *
-                                          st::internal::micro_cell_size *
+         const double microcell_volume = (st::internal::micro_cell_size[0] *
+                                          st::internal::micro_cell_size[1] *
                                           st::internal::micro_cell_thickness)*1.e-30; // m^3
 
          // loop over all 1D stacks (in parallel)
-         for(int stack=0; stack <num_stacks; ++stack){
+         for(int stack=1; stack <num_stacks; ++stack) {
+            if(stack%3 == 0) continue;
             // determine starting cell in stack
             const int idx = stack_index[stack];
 
@@ -131,11 +132,11 @@ namespace st{
             st::internal::sa[3*idx+1] = 0.0;
             st::internal::sa[3*idx+2] = 0.0; //10.e6;// st::internal::default_properties.sa_infinity;
 
-            st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::initial_m[0];
-            st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::initial_m[1];
-            st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::initial_m[2];
+            st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::stack_init_mag[stack*3 +0];
+            st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::stack_init_mag[stack*3 +1];
+            st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::stack_init_mag[stack*3 +2];
 
-//            std::cout<< st::internal::initial_beta << "\t" << st::internal::j[0] << "\t" << st::internal::j[1]  << "\t" << st::internal::j[2]  << "\t" << std::endl;
+          // std::cout<< st::internal::initial_beta << "\t" << st::internal::j[0] << "\t" << je << "\t" << st::internal::stack_init_mag[stack*3] << "\t" << std::endl;
 
             // loop over all cells in stack after first (idx+1)
             for(int cell=idx+1; cell<idx+num_microcells_per_stack; ++cell){

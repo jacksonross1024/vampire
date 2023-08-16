@@ -73,14 +73,12 @@ namespace anisotropy{
             const double sy2 = sy*sy;
             const double sz2 = sz*sz;
 
-            field_array_x[atom] += k4r * 8.0 * sx * (1.0 - sz2 - 2.0 * sx2);
-            field_array_y[atom] += k4r * 8.0 * sy * (1.0 - sz2 - 2.0 * sy2);
-            field_array_z[atom] += k4r * 2.0 * sz * (1.0 - 2.0 * sz2 - 4.0 * sx2 - 4.0 * sy2);
+            field_array_x[atom] += k4r * 1.0 * sx * (1.0 - sz2 - 2.0 * sx2)*1;
+            field_array_y[atom] += k4r * 1.0 * sy * (1.0 - sz2 - 2.0 * sy2)*1;
+            field_array_z[atom] += k4r * 0.50 * sz * (1.0 - 2.0 * sz2 - 4.0 * sx2 - 4.0 * sy2)*1;
 
         }
-
          return;
-
       }
 
       //---------------------------------------------------------------------------------
@@ -103,7 +101,10 @@ namespace anisotropy{
          const double sz4 = sz2*sz2;
 
          const double energy = k4r*(1.0 + sz4 - 8.0*sx2 + 8.0*sx2*sz2 + 8.0*sx4-2.0*sz2);
-
+         //dE/dS_x = k4r*(-16 s_x +16 s_x*s_z^2 + 32 s_x^3)
+         //        =-k4r*8.0*s_x(1-s_z^2 - 2s_x^2)
+         //
+         //
          return energy;
 
       }

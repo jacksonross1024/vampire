@@ -98,6 +98,7 @@ namespace sim{
 	extern double Hmax; // T
 	extern double Hinc; // T
 	extern double Heq; // T
+	extern double H_actual;
 	extern double applied_field_angle_phi;
 	extern double applied_field_angle_theta;
 	extern bool applied_field_set_by_angle;
@@ -134,7 +135,8 @@ namespace sim{
 	// extern double head_position[2];
 	// extern double head_speed;
 	// extern bool   head_laser_on;
-
+	extern bool enable_laser_torque_fields;
+	extern double laser_torque_strength; //0-1 
 	extern double cooling_time;
 	extern int cooling_function_flag;
 	extern pump_functions_t pump_function;
@@ -151,6 +153,10 @@ namespace sim{
 	extern double TTTe; /// electron temperature
 	extern double TTTp; /// phonon temperature
 
+	extern double piezomagnetic_dipole_time;
+	extern bool piezomagnetic_dipole_field;
+	extern double piezomagnetic_dipole_field_strength;
+	
 	extern int system_simulation_flags;
 	extern int hamiltonian_simulation_flags[10];
 
@@ -206,7 +212,7 @@ namespace sim{
 
 	void calculate_spin_fields(const int start_index,const int end_index);
 	void calculate_external_fields(const int start_index,const int end_index);
-
+	void calculate_piezomagnetic_dipole(const int start_index,const int end_index);
    // LaGrange multiplier variables
    extern double lagrange_lambda_x;
    extern double lagrange_lambda_y;
@@ -222,9 +228,14 @@ namespace sim{
 
 	extern int domain_wall_axis;
 	extern double domain_wall_position;
+	extern double domain_wall_velocity;
 	extern double domain_wall_discretisation;
 	extern double domain_wall_centre;
 	extern double domain_wall_width;
+	extern int domain_wall_angle;
+	extern double unit_cell_x;
+    extern double unit_cell_y;
+    extern double unit_cell_z;
 	extern std::vector < bool > anti_PBC;
 
 	extern std::vector < double > domain_wall_second_vector_x;

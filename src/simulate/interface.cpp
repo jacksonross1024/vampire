@@ -57,6 +57,23 @@ namespace sim{
          sim::internal::sot_polarization_unit_vector = u;
          return true;
       }
+      test="laser-torque-unit-vector";
+      if(word==test){
+         std::vector<double> u(3);
+         u=vin::doubles_from_string(value);
+         // Test for valid range
+         vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
+         // save sanitized unit vector
+         sim::internal::lot_unit_vector = u;
+         return true;
+      }
+      test="electrical-pulse-strength";
+      if(word==test){
+         double E = atof(value.c_str());
+         vin::check_for_valid_value(E, word, line, prefix, unit, "V / 10^7 ", 0, 1e6,"input","0 - 1e6 V/10^7");
+         sim::internal::electrical_pulse_strength = E;
+         return true;
+      }
       //-------------------------------------------------------------------
       test="preconditioning-steps";
       if(word==test){
@@ -180,7 +197,7 @@ namespace sim{
       test="domain-wall-discretisation";
       if(word==test){
          double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 10, 1000,"input","10 - 1 A");
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 1, 100,"input","1 - 100 A");
          sim::domain_wall_discretisation = tt;
          return true;
       }
@@ -209,7 +226,7 @@ namespace sim{
       test="domain-wall-position";
       if(word==test){
          double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "none", 0, 1,"input","0 - 1");
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "none", 0, 1e10,"input","0 - l_x");
          sim::domain_wall_position = tt;
          return true;
       }
@@ -217,9 +234,18 @@ namespace sim{
       test="domain-wall-width";
       if(word==test){
          double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 0, 1000,"input","0 - 1 A");
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 0, 10000,"input","0 - 1000 A");
          sim::domain_wall_width = tt;
          return true;
+      }
+      test="domain-wall-angle";
+      if(word==test) {
+         double tt = atof(value.c_str()); // convert string to uint64_t
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "degree", 90, 180,"input","90 or 180 degrees");
+         if(tt == 90) sim::domain_wall_angle = 0;
+         else if (tt ==180) sim::domain_wall_angle = 1;
+         if(sim::domain_wall_angle < 0) return false;
+         else return true;
       }
       //--------------------------------------------------------------------
       // input parameter not found here
@@ -310,6 +336,15 @@ namespace sim{
          vin::check_for_valid_value(bj, word, line, prefix, unit, "field", -1.0e2, 1.0e2,"input","-100 - 100T");
          sim::internal::mp[super_index].sot_pj.set(bj);
          sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
+      test = "optical-torque";
+      if( word==test ){
+         double lt = atof(value.c_str());
+         // Test for valid range
+         vin::check_for_valid_value(lt, word, line, prefix, unit, "yJ", -1.0e6, 1.0e6,"input","-100 - 100yJ");
+         sim::internal::mp[super_index].lt.set(lt);
+         enable_laser_torque_fields = true;
          return true;
       }
       //------------------------------------------------------------

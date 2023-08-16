@@ -85,6 +85,7 @@ namespace anisotropy{
 
             // variables
             double ku2; // second order uniaxial anisotropy constant (Ku1)
+            double ku2_para; // second order uniaxial anisotropy constant (Ku1)
             double ku4; // fourth order uniaxial anisotropy constant (Ku2)
             double ku6; // sixth order uniaxial anisotropy constant  (Ku3)
 
@@ -98,7 +99,7 @@ namespace anisotropy{
             std::vector<double> kij; // surface/Neel anisotropy pair constant
 
             std::vector<double> ku_vector; // unit vector defining axis for uniaxial anisotropy
-
+            std::vector<double> ku_para_vector;
             std::vector<double> u1_vector; // unit vector defining axis for uniaxial anisotropy
             std::vector<double> u2_vector; // unit vector defining axis for uniaxial anisotropy
 
@@ -117,6 +118,7 @@ namespace anisotropy{
             // constructor
             mp_t (const unsigned int max_materials = 100):
             	ku2(0.0), // set initial value of ku2 to zero
+               ku2_para(0.0),
                ku4(0.0), // set initial value of ku4 to zero
                ku6(0.0), // set initial value of ku6 to zero
                kc4(0.0), // set initial value of kc4 to zero
@@ -135,6 +137,11 @@ namespace anisotropy{
                ku_vector[0] = 0.0; // set direction along [0,0,1]
                ku_vector[1] = 0.0;
                ku_vector[2] = 1.0;
+
+               ku_para_vector.resize(3);
+               ku_para_vector[0] = 0.0; // set direction along [0,0,1]
+               ku_para_vector[1] = 1.0;
+               ku_para_vector[2] = 0.0;
 
                const double oneosqrt2 = 1.0/sqrt(2.0);
 
@@ -183,6 +190,7 @@ namespace anisotropy{
       extern bool initialised; // check module has been initialised
 
       extern bool enable_uniaxial_second_order; // Flag to enable calculation of second order uniaxial anisotropy
+      extern bool enable_uniaxial_inplane_second_order;
       extern bool enable_uniaxial_fourth_order; // Flag to enable calculation of fourth order uniaxial anisotropy
       extern bool enable_biaxial_fourth_order_simple; // Flag to enable calculation of simplified fourth order biaxial anisotropy
       extern bool enable_uniaxial_sixth_order;  // Flag to enable calculation of sixth order uniaxial anisotropy
@@ -207,6 +215,7 @@ namespace anisotropy{
 
       // arrays for storing unrolled anisotropy constants in Tesla
       extern std::vector<double> ku2;
+      extern std::vector<double> ku2_para;
       extern std::vector<double> ku4;
       extern std::vector<double> ku6;
       extern std::vector<double> kc4;
@@ -215,7 +224,7 @@ namespace anisotropy{
 
       // unrolled arrays for storing easy axes for each material
       extern std::vector<evec_t> ku_vector; // 001 easy axis direction
-
+      extern std::vector<evec_t> ku_para_vector; // 010 easy axis direction
       extern bool native_neel_anisotropy_threshold;  // enables site-dependent surface threshold
       extern unsigned int neel_anisotropy_threshold; // global threshold for surface atoms
       extern double nearest_neighbour_distance;      // Control surface anisotropy nearest neighbour distance
@@ -277,6 +286,15 @@ namespace anisotropy{
                                         const int start_index,
                                         const int end_index);
 
+      void uniaxial_inplane_second_order_fields(std::vector<double>& spin_array_x,
+                                        std::vector<double>& spin_array_y,
+                                        std::vector<double>& spin_array_z,
+                                        std::vector<int>&    atom_material_array,
+                                        std::vector<double>& field_array_x,
+                                        std::vector<double>& field_array_y,
+                                        std::vector<double>& field_array_z,
+                                        const int start_index,
+                                        const int end_index);
 
       void triaxial_second_order_fields_fixed_basis(std::vector<double>& spin_array_x,
                                                      std::vector<double>& spin_array_y,
@@ -410,6 +428,12 @@ namespace anisotropy{
                           const double temperature);
 
       double uniaxial_second_order_energy( const int atom,
+                                           const int mat,
+                                           const double sx,
+                                           const double sy,
+                                           const double sz);
+
+      double uniaxial_inplane_second_order_energy( const int atom,
                                            const int mat,
                                            const double sx,
                                            const double sy,

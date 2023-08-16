@@ -285,6 +285,7 @@ namespace stats{
       if(stats::calculate_system_binder_cumulant) stats::system_binder_cumulant.initialize(stats::system_magnetization);
       if(stats::calculate_material_binder_cumulant) stats::material_binder_cumulant.initialize(stats::material_magnetization);
 
+      if(stats::calculate_spinwaves)   stats::spinwaves.initialize();
       return;
 
    }

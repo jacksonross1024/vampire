@@ -114,12 +114,22 @@ double two_temperature_function(double ftime){
 
    const double i_pump_time = 1.0/sim::pump_time;
    const double reduced_time = (ftime-3.*sim::pump_time)*i_pump_time;
+   const double reduced_time_1 = (ftime-3.*sim::pump_time-sim::double_pump_delay)*i_pump_time;
+   const double reduced_time_2 = (ftime-3.*sim::pump_time-sim::double_pump_delay*2)*i_pump_time;
+   const double reduced_time_3 = (ftime-3.*sim::pump_time-sim::double_pump_delay*3)*i_pump_time;
    const double four_ln_2 = 2.77258872224; // 4 ln 2
-   // 2/(delta sqrt(pi/ln 2))*0.1, delta = 10 nm, J/m^2 -> mJ/cm^2 (factor 0.1)
-   const double two_delta_sqrt_pi_ln_2 = 9394372.787;
-   const double pump=sim::pump_power*two_delta_sqrt_pi_ln_2*
-   						exp(-four_ln_2*reduced_time*reduced_time)*i_pump_time;
-
+   // 2/(delta sqrt(pi/ln 2)), delta = 10 nm, J/m^2
+   const double two_delta_sqrt_pi_ln_2 = 93943727.87;
+   const double gaussian = exp(-four_ln_2*reduced_time*reduced_time)+\
+   						  +exp(-four_ln_2*reduced_time_1*reduced_time_1)\
+						  +exp(-four_ln_2*reduced_time_2*reduced_time_2)\
+						  +exp(-four_ln_2*reduced_time_3*reduced_time_3);
+   if(sim::enable_laser_torque_fields) {
+		sim::laser_torque_strength = gaussian;
+		// if(gaussian > 1.0) std::cout << gaussian << std::endl;
+	}
+	
+   const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time;
    const double Te = sim::TTTe;
    const double Tp = sim::TTTp;
    const double G  = sim::TTG;
@@ -139,7 +149,15 @@ double two_temperature_function(double ftime){
          else mp::material[mat].temperature=sim::TTTe;
       }
    }
-
+	
+	if(sim::piezomagnetic_dipole_field ) {
+		sim::piezomagnetic_dipole_time = ftime;
+		if(ftime < sim::double_pump_delay)  sim::piezomagnetic_dipole_field_strength = 0.0;//4.8e1;//*exp(-1.0e11*ftime)
+		else sim::piezomagnetic_dipole_field_strength = 4.8e1*exp(-1.0e11*(ftime-sim::double_pump_delay));
+	
+   						//exp(-four_ln_2*reduced_time*reduced_time)*i_pump_time/four_ln_2;
+		// if(ftime > sim::pump_time) sim::piezomagnetic_dipole_field = false;
+	}
    return sim::TTTe;
 
 }
@@ -181,6 +199,12 @@ double double_pump_two_temperature_function(double ftime){
          }
       }
 
+	if(sim::piezomagnetic_dipole_field) {
+		sim::piezomagnetic_dipole_time = ftime;
+		sim::piezomagnetic_dipole_field_strength = 2.4*(
+							exp(-four_ln_2*reduced_time1*reduced_time1)*i_pump_time1 + 
+							exp(-four_ln_2*reduced_time2*reduced_time2)*i_pump_time2); 
+	}
 		return sim::TTTe;
 }
 
@@ -262,7 +286,8 @@ void temperature_pulse(){
          else mp::material[mat].temperature=sim::TTTe;
       }
    }
-
+	sim::H_actual = sim::Heq;
+	// std::cout << sim::H_actual << std::endl;
    // Equilibrate system
 	while(sim::time<sim::equilibration_time){
 
@@ -274,7 +299,9 @@ void temperature_pulse(){
 		// Output data
 		vout::data();
 	}
-
+	if(stats::calculate_spinwaves) stats::spinwaves.reset();
+	// sim::H_actual = sim::H_applied;
+	// std::cout << sim::H_actual << std::endl;
 	//loop sim::runs times
 	for(int r=0; r<sim::runs;r++){
 
@@ -285,11 +312,12 @@ void temperature_pulse(){
 	while(sim::time<sim::total_time+start_time){
 
 		// loop over partial_time to update temperature every time
-		for(uint64_t tt=0; tt < sim::partial_time; tt++){
+		for(uint64_t tt=0; tt < sim::partial_time; tt++) {
 
 			// Calculate time from pulse
 			double time_from_start=mp::dt_SI*double(sim::time-start_time);
-
+			if(time_from_start > 12e-12) sim::H_actual = sim::H_applied;
+			if (time_from_start > 20e-12) sim::H_actual = sim::Heq;
 			// Calculate temperature
 			sim::temperature=temperature_pulse_function(time_from_start);
 

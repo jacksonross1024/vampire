@@ -114,6 +114,7 @@ namespace vout{
    void real_time(std::ostream& stream,bool header);
    void temperature(std::ostream& stream,bool header);
    void Happ(std::ostream& stream,bool header);
+   void lot_strength(std::ostream& stream,bool header);
    void Hvec(std::ostream& stream,bool header);
    void mvec(std::ostream& stream,bool header);
    void magm(std::ostream& stream,bool header);
@@ -177,6 +178,7 @@ namespace vout{
    void resistance(std::ostream& stream, bool header);
    void current(std::ostream& stream, bool header);
    void domain_wall_position(std::ostream& stream,bool header);
+   void domain_wall_velocity(std::ostream& stream,bool header);
    void MRresistance(std::ostream& stream, bool header);
 
    //-------------------------------------------------------------------------

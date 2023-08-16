@@ -62,16 +62,28 @@ namespace sim{
    uint64_t partial_time = 1000; // same as time-step-increment
    uint64_t equilibration_time = 0; // equilibration time steps
 
+   double piezomagnetic_dipole_time = 0;
+   double piezomagnetic_dipole_field_strength = 0.0;
+   bool piezomagnetic_dipole_field = false;
+   
    int domain_wall_axis = 0;
    double domain_wall_position = 0.25;
+   double domain_wall_velocity = 0.0;
    double domain_wall_discretisation = 10;
    double domain_wall_centre = 0;
    double domain_wall_width = 10.0;
+   int domain_wall_angle = -1;
+   double unit_cell_x;
+   double unit_cell_y;
+   double unit_cell_z;
    std::vector <bool > anti_PBC(3,false);
    std::vector < double > domain_wall_second_vector_x(100,0);
    std::vector < double > domain_wall_second_vector_y(100,0);
    std::vector < double > domain_wall_second_vector_z(100,1.0);
-
+   
+   bool enable_laser_torque_fields = false;
+   double laser_torque_strength = 0.0;
+   
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -80,6 +92,9 @@ namespace sim{
       bool enable_spin_torque_fields = false; // flag to enable spin torque fields
       bool enable_vcma_fields        = false; // flag to enable voltage-controlled anisotropy fields
 
+      
+      std::vector<double> lot_unit_vector(3, 0.0);
+      std::vector<double> lot_lt;
       std::vector<sim::internal::mp_t> mp; // array of material properties
 
       std::vector<double> stt_asm; // array of spin transfer torque asymmetry
@@ -91,7 +106,7 @@ namespace sim{
       std::vector<double> sot_rj;  // array of adiabatic spin torques
       std::vector<double> sot_pj;  // array of non-adiabatic spin torques
       std::vector<double> sot_polarization_unit_vector(3,0.0); // sot spin polarization direction
-
+      double electrical_pulse_strength = 0;
       std::vector<double> vcmak;   // voltage controlled anisotropy coefficient
 
    } // end of internal namespace

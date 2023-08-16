@@ -19,15 +19,14 @@ export OMPI_CXX=g++ -std=c++11
 
 # Compilers
 ICC=icc -std=c++11 -DCOMP='"Intel C++ Compiler"'
-GCC=g++ -std=c++11 -DCOMP='"GNU C++ Compiler"'
+GCC=g++ -std=c++11 -DCOMP='"GNU C++ Compiler"' -fopenmp
 LLVM=g++ -std=c++11 -DCOMP='"LLVM C++ Compiler"'
 PCC=pathCC -DCOMP='"Pathscale C++ Compiler"'
 IBM=bgxlc++ -DCOMP='"IBM XLC++ Compiler"'
 MPICC=mpicxx -DMPICF
 MPIICC=mpiicpc -DMPICF
 
-LIBS= -lstdc++
-#-lm $(FFTLIBS) -L/opt/local/lib/
+LIBS= -lstdc++ $(FFTLIBS)  -lm -L/opt/local/lib/ 
 
 CCC_CFLAGS=-I./hdr -I./src/qvoronoi -O0
 CCC_LDFLAGS=-I./hdr -I./src/qvoronoi -O0
@@ -63,8 +62,8 @@ ICC_LDFLAGS= -I./hdr -I./src/qvoronoi -axCORE-AVX2
 LLVM_CFLAGS= -Wall -pedantic -O3 -mtune=native -funroll-loops -I./hdr -I./src/qvoronoi
 LLVM_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi
 
-GCC_CFLAGS=-O3 -mtune=native -funroll-all-loops -fexpensive-optimizations -funroll-loops -I./hdr -I./src/qvoronoi -std=c++11 -Wsign-compare
-GCC_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi -Wsign-compare
+GCC_CFLAGS=-O3 -mtune=native -funroll-all-loops -fexpensive-optimizations -funroll-loops -I./hdr -I./src/qvoronoi -std=c++11 -Wsign-compare -I/opt/local/include/
+GCC_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi -Wsign-compare -I/opt/local/include/
 
 PCC_CFLAGS=-O2 -march=barcelona -ipa -I./hdr -I./src/qvoronoi
 PCC_LDFLAGS= -I./hdr -I./src/qvoronoi -O2 -march=barcelona -ipa
