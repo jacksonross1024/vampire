@@ -43,10 +43,12 @@ namespace st{
             if(sim::time%(ST_output_rate) ==0){
                zlog << zTs() << "Outputting ST base microcell data" << std::endl;
                std::ofstream ofile;
-               ofile.open("st-microcells-base.cfg");
+               ofile.open("spin-acc/st-microcells-base.cfg");
                ofile << num_cells << std::endl;
+               ofile << num_stacks << std::endl;
                for(int cell=0; cell < num_cells; ++cell){
-	               ofile << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2];
+                    if( (st::internal::cell_stack_index[cell]-1)%3 == 0) continue;
+	               ofile << cell_stack_index[cell] << "\t" << "\t" << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2];
 	               ofile << "\t" << beta_cond[cell] << "\t" << beta_diff[cell] << "\t" << sa_infinity[cell] << "\t" << lambda_sdl[cell] << std::endl;
                }
 
@@ -81,16 +83,18 @@ namespace st{
 
                // determine file name
                std::stringstream filename;
-               filename << "st-microcells-" << std::setfill ('0') << std::setw (8) << config_file_counter << ".cfg";
+               filename << "spin-acc/" << config_file_counter;
 
                zlog << zTs() << "Outputting ST microcell data " << filename.str() << std::endl;
 
                std::ofstream ofile;
                ofile.open(std::string(filename.str()).c_str());
 
-	            ofile<<"Time:"<< "\t" << sim::time*mp::dt_SI<< std::endl;
-
+	          //  ofile<<"Time:"<< "\t" << sim::time*mp::dt_SI<< std::endl;
+             ofile << "pos_x \t pos_y \t pos_z \t m_x \t m_y \t m_z \t spin_acc_x \t spin_acc_y \t spin_acc_z \t " << \
+             "j_x \t j_y \t j_z \t ast_x \t ast_y \t ast_z \t nast_x \t nast_y \t nast_z \t torque_x \t torque_y \t torque_z \t num_atom" << std::endl;
                for(int cell=0; cell<num_cells; ++cell){
+                    if( (st::internal::cell_stack_index[cell]-1)%3 == 0) continue;
                   ofile << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2] << "\t";
                   ofile << m[3*cell+0] << "\t" << m[3*cell+1] << "\t" << m[3*cell+2] << "\t";
                   ofile << sa[3*cell+0] << "\t" << sa[3*cell+1] << "\t" << sa[3*cell+2] << "\t";

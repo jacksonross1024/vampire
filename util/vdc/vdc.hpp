@@ -29,6 +29,7 @@ namespace vdc{
    extern bool verbose;
    extern bool xyz;
    extern bool povray;
+   extern bool track;
    extern bool povcells;
    extern bool cells;
    extern bool cellsf;
@@ -185,6 +186,7 @@ namespace vdc{
    void initialise_povray();
    void output_inc_file(unsigned int spin_file_id);
    void output_povray_file();
+   void output_track_file(unsigned int spin_file_id);
    void output_cells_inc_file(unsigned int spin_file_id);
    void output_povray_cells_file();
 

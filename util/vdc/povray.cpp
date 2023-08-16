@@ -155,7 +155,80 @@ void output_inc_file(unsigned int spin_file_id){
    return;
 
 }
+void output_track_file(unsigned int spin_file_id){
 
+   // Open Povray Include File
+	std::stringstream incpov_file_sstr;
+	incpov_file_sstr << "spins-";
+	incpov_file_sstr << std::setfill('0') << std::setw(8) << spin_file_id;
+	incpov_file_sstr << ".txt";
+	std::string incpov_file = incpov_file_sstr.str();
+
+   // output informative message to user
+   if(vdc::verbose) std::cout << "   Writing povray-track file " << incpov_file << "..." << std::flush;
+
+   // open incfile
+   std::ofstream incfile;
+   incfile.open(incpov_file.c_str());
+
+   //---------------------------------------------------------------------------
+   // parallelise stream formatting for better performance
+   // step 1: parallel formatted output to stringstream in memory
+   // step 2: binary write of formatted text to output file (awesomely fast!)
+   //---------------------------------------------------------------------------
+   #pragma omp parallel
+   {
+
+      std::stringstream otext;
+
+      // write to output text stream in parallel
+      #pragma omp for
+      for(size_t i=0; i < vdc::sliced_atoms_list.size(); i++){
+
+         // get atom ID
+         unsigned int atom = vdc::sliced_atoms_list[i];
+
+         // get magnetization for colour contrast
+         double sx = spins[3*atom+0];
+         double sy = spins[3*atom+1];
+         double sz = spins[3*atom+2];
+
+         // flip antiferromagnetic spins if required
+         if (std::find(afm_materials.begin(), afm_materials.end(), vdc::type[atom]+1) != afm_materials.end() ){
+            sx = -sx;
+            sy = -sy;
+            sz = -sz;
+         }
+
+         // temporary thread private variables defining spin colours
+         double red=0.0, green=0.0, blue=1.0;
+
+         // calculate rgb components based on spin orientation
+         vdc::rgb(sx, sy, sz, red, green, blue);
+
+         // format text for povray file
+         otext << "<" <<
+                  spins[3*atom+0] << "," << spins[3*atom+1] << "," << spins[3*atom+2] <<
+                   ">\n";
+
+      } // end of parallel for
+
+      // force each thread to write to file in order
+      #pragma omp critical
+      incfile << otext.str();
+
+   } // end of parallel region
+
+   // flush data to include file and close
+   incfile << std::flush;
+   incfile.close();
+
+   // output informative message to user
+   if(vdc::verbose) std::cout << "done!" << std::endl;
+
+   return;
+
+}
 //------------------------------------------------------------------------------
 // Function to output spins.pov file compatible with povray
 //------------------------------------------------------------------------------

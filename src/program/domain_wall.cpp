@@ -68,6 +68,8 @@ namespace program{
 		// depth_range = ceil(2.0*cs::system_dimensions[1]/sim::unit_cell_y);
 		// vertical_range = ceil(4.0*cs::system_dimensions[2]/sim::unit_cell_z);
 		std::vector  < double > mag(num_categories*num_dw_cells*num_mag_cat, 0.0);
+			//create y and z data structure 
+			
 		// std::vector  < double > mag_x(num_categories*num_dw_cells,0.0);
 		// std::vector  < double > mag_y(num_categories*num_dw_cells,0.0);
 		// std::vector  < double > mag_z(num_categories*num_dw_cells,0.0);

@@ -35,9 +35,9 @@ bool match_material(string const word, string const value, string const unit, in
    if((unsigned int) super_index + 1 > st::internal::mp.size() && super_index + 1 < 101) st::internal::mp.resize(super_index + 1);
 
    //------------------------------------------------------------
-   std::string test="spin-diffusion-length";
+   std::string test="spin-diffusion-length"; 
    /*
-      float spin-diffusion-length
+      float spin-diffusion-length 
          Details
       */
    if(word==test){
@@ -49,7 +49,7 @@ bool match_material(string const word, string const value, string const unit, in
       return true;
    }
    //--------------------------------------------------------------------
-   test="spin-polarisation-conductivity";
+   test="spin-polarisation-conductivity"; //beta (eq 2)
    /*
       float spin-diffusion-length
          Details
@@ -61,7 +61,7 @@ bool match_material(string const word, string const value, string const unit, in
       return true;
    }
    //--------------------------------------------------------------------
-   test="spin-polarisation-diffusion";
+   test="spin-polarisation-diffusion"; //beta'
    /*
       float spin-diffusion-length
          Details
@@ -73,7 +73,7 @@ bool match_material(string const word, string const value, string const unit, in
       return true;
    }
    //--------------------------------------------------------------------
-   test="spin-accumulation";
+   test="spin-accumulation"; //m(infinity)
    /*
       float spin-diffusion-length
          Details
@@ -85,19 +85,19 @@ bool match_material(string const word, string const value, string const unit, in
       return true;
    }
    //--------------------------------------------------------------------
-   test="diffusion-constant";
+   test="diffusion-constant"; //D_0 (eq 2)
    /*
       float spin-diffusion-length
          Details
       */
    if(word==test){
       double dc=atof(value.c_str());
-      vin::check_for_valid_value(dc, word, line, prefix, unit, "none", 1.0e-9, 100.0,"material"," 1.0e-9 - 100"); //Angstroms^2/s
+      vin::check_for_valid_value(dc, word, line, prefix, unit, "none", 1.0e-9, 100.0,"material"," 1.0e-9 - 100"); //m^2/s
       st::internal::mp[super_index].diffusion=dc;
       return true;
    }
    //--------------------------------------------------------------------
-   test="sd-exchange-constant";
+   test="sd-exchange-constant";// 
    /*
       float spin-diffusion-length
          Details
@@ -109,7 +109,7 @@ bool match_material(string const word, string const value, string const unit, in
       return true;
    }
    //--------------------------------------------------------------------
-   test="spin-torque-free-layer";
+   test="spin-torque-free-layer"; //
    /*
     * Spin torque free layer flag
     */
@@ -161,7 +161,7 @@ bool match_material(string const word, string const value, string const unit, in
 
        //-------------------------------------------------
 
-       test="TMRenable";
+       test="TMRenable"; //set false
 
        if(word==test){
          st::internal::TMRenable = true;
@@ -170,7 +170,7 @@ bool match_material(string const word, string const value, string const unit, in
 
 
       //-------------------------------------------------
-      test="current-density";
+      test="current-density"; //
        if(word==test){
          double T=atof(value.c_str());
          vin::check_for_valid_value(T, word, line, prefix, unit, "none", 0.0, 1.0e13,"input","0.0 - 1.0e13 A/m2");
@@ -203,12 +203,15 @@ bool match_material(string const word, string const value, string const unit, in
 
        test="micro-cell-size";
        if(word==test){
-         double T=atof(value.c_str());
-         vin::check_for_valid_value(T, word, line, prefix, unit, "none", 0.0, 20,"input","0.0 - 20 A");
-         st::internal::micro_cell_size =T;
+         std::vector<double> u(3);
+         u=vin::doubles_from_string(value);
+         //vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
+         st::internal::micro_cell_size[0]=u.at(0);
+         st::internal::micro_cell_size[1]=u.at(1);
+         st::internal::micro_cell_size[2]=u.at(2);
+         std::cout << "microcell size " << st::internal::micro_cell_size[0] << ", " << st::internal::micro_cell_size[1] << ", " << st::internal::micro_cell_size[2] << std::endl;
          return true;
-        }
-
+   }
       //-------------------------------------------------
 
       test="micro-cell-thickness";
@@ -221,16 +224,16 @@ bool match_material(string const word, string const value, string const unit, in
 
      //-------------------------------------------------
 
-       test="initial-spin-polarisation";
+       test="initial-spin-polarisation"; //
        if(word==test){
          double T=atof(value.c_str());
-         vin::check_for_valid_value(T, word, line, prefix, unit, "none", 0.0, 20,"input","0.0 - 20 A");
+         vin::check_for_valid_value(T, word, line, prefix, unit, "none", 0.0, 20,"input","0.0 - 20 C/m^3");
          st::internal::initial_beta =T;
          return true;
         }
 
     //--------------------------------------------------------------------
-      test="initial-mag-direction";
+      test="initial-mag-direction";//might not matter
       if(word==test){
       std::vector<double> u(3);
       u=vin::doubles_from_string(value);

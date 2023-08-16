@@ -23,13 +23,15 @@ namespace st{
       extern bool enabled; // enable spin torque calculation
       extern bool TMRenable;
 
-      extern double micro_cell_size; /// lateral size of spin torque microcells
+      //extern double micro_cell_size; /// lateral size of spin torque microcells
+      extern std::vector<double> micro_cell_size;
       extern double micro_cell_thickness; /// thickness of spin torque microcells (atomistic)
 
       extern int num_local_atoms; /// number of local atoms (ignores halo atoms in parallel simulation)
       extern int current_direction; /// direction for current x->0, y->1, z->2
       //   std::vector< std::vector< micro_cell_t > > stack;
       extern std::vector<int> atom_st_index; // mc which atom belongs to
+      extern std::vector<int> cell_stack_index; //stack each cell belongs to
       extern std::vector<double> x_field_array; // arrays to store atomic spin torque field
       extern std::vector<double> y_field_array;
       extern std::vector<double> z_field_array;
@@ -50,7 +52,7 @@ namespace st{
       extern int ST_output_rate;
 
       extern std::vector<double> initial_m;
-
+      extern std::vector<double> stack_init_mag;
 
       extern std::vector<int> stack_index; // start of stack in microcell arrays
 

@@ -114,10 +114,16 @@ double two_temperature_function(double ftime){
 
    const double i_pump_time = 1.0/sim::pump_time;
    const double reduced_time = (ftime-3.*sim::pump_time)*i_pump_time;
+   const double reduced_time_1 = (ftime-3.*sim::pump_time-sim::double_pump_delay)*i_pump_time;
+   const double reduced_time_2 = (ftime-3.*sim::pump_time-sim::double_pump_delay*2)*i_pump_time;
+   const double reduced_time_3 = (ftime-3.*sim::pump_time-sim::double_pump_delay*3)*i_pump_time;
    const double four_ln_2 = 2.77258872224; // 4 ln 2
-   // 2/(delta sqrt(pi/ln 2))*0.1, delta = 10 nm, J/m^2 -> mJ/cm^2 (factor 0.1)
+   // 2/(delta sqrt(pi/ln 2)), delta = 10 nm, J/m^2
    const double two_delta_sqrt_pi_ln_2 = 93943727.87;
-   const double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+   const double gaussian = exp(-four_ln_2*reduced_time*reduced_time)+\
+   						  +exp(-four_ln_2*reduced_time_1*reduced_time_1)\
+						  +exp(-four_ln_2*reduced_time_2*reduced_time_2)\
+						  +exp(-four_ln_2*reduced_time_3*reduced_time_3);
    if(sim::enable_laser_torque_fields) {
 		sim::laser_torque_strength = gaussian;
 		// if(gaussian > 1.0) std::cout << gaussian << std::endl;

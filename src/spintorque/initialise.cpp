@@ -16,7 +16,7 @@
 #include "errors.hpp"
 #include "spintorque.hpp"
 #include "vio.hpp"
-
+#include "atoms.hpp"
 
 // Spin Torque headers
 #include "internal.hpp"
@@ -69,24 +69,25 @@ void initialise(const double system_dimensions_x,
       sty=2;// c[sty] = c[2] = atom_y // current direction
       stz=1;// c[stz] = c[1] = atom_z
    }
-
+   // st::internal::micro_cell_thickness = st::internal::micro_cell_size[stx];
    //-------------------------------------------------------------------------------------
    // Calculate number of stacks and microcells
    //-------------------------------------------------------------------------------------
 
    // Make a small array for system dimensions
    double system_dimensions[3]={system_dimensions_x,system_dimensions_y,system_dimensions_z};
-
+   std::cout << "system dimensions " << system_dimensions[0] << ", " << system_dimensions[1] << ", " << system_dimensions[2] << std::endl;
    // determine number of cells in each stack  (global)
    st::internal::num_microcells_per_stack = 1+ceil((system_dimensions[stz]+0.01)/st::internal::micro_cell_thickness);
-
+   std::cout << "microcells per stack " << st::internal::num_microcells_per_stack << std::endl;
    // determine number of stacks in x and y (global)
-   st::internal::num_x_stacks = ceil((system_dimensions[stx]+0.01)/st::internal::micro_cell_size);
-   st::internal::num_y_stacks = ceil((system_dimensions[sty]+0.01)/st::internal::micro_cell_size);
-
+   st::internal::num_x_stacks = ceil((system_dimensions[stx]+0.0)/st::internal::micro_cell_size[stx]);
+   std::cout << "x_stacks " << st::internal::num_x_stacks << ", " << system_dimensions[stx]+0.0 << "/" << st::internal::micro_cell_size[stx] << std::endl;
+   st::internal::num_y_stacks = ceil((system_dimensions[sty]+0.0)/st::internal::micro_cell_size[sty]);
+   std::cout << "y_stacks " << st::internal::num_y_stacks << ", " << system_dimensions[sty]+0.0 << "/" << st::internal::micro_cell_size[sty] << std::endl;
    // determine total number of stacks
    st::internal::num_stacks = st::internal::num_x_stacks*st::internal::num_y_stacks;
-
+   std::cout << st::internal::num_stacks << std::endl;
    // allocate array to store index of first element of stack
    st::internal::stack_index.resize(st::internal::num_stacks);
 
@@ -147,12 +148,28 @@ void initialise(const double system_dimensions_x,
    // Allocate space for 3D supercell array (ST coordinate system)
    std::vector<std::vector<std::vector<int> > > supercell_array;
    supercell_array.resize(ncx);
+   st::internal::cell_stack_index.resize(ncx*ncy*ncz);
+   st::internal::stack_init_mag.resize(ncx*ncy*3);
+   double init_stack_mag[18] = {0,0,0, \
+                              -1,-1,0,\
+                              1,1,0,\
+                              0,0,0,\
+                              -1,-1,0,
+                              1,1,0};
+   
+
    for(int i=0;i<ncx;++i){
       supercell_array[i].resize(ncy);
       for(int j=0;j<ncy;++j){
+         // std::cout << stack << std::endl;
          supercell_array[i][j].resize(ncz);
          // set starting cell for each stack
          st::internal::stack_index[stack]=cell;
+          //hardcode Mn_1
+         st::internal::stack_init_mag.at((stack)*3 + 0) = init_stack_mag[(stack%6)*3 + 0]/sqrt(2.0); 
+         st::internal::stack_init_mag.at((stack)*3 + 1) = init_stack_mag[(stack%6)*3 + 1]/sqrt(2.0); 
+         st::internal::stack_init_mag.at((stack)*3 + 2) = init_stack_mag[(stack%6)*3 + 2]/sqrt(2.0); 
+         std::cout << st::internal::stack_init_mag.at(stack*3 + 0) << ", " << st::internal::stack_init_mag.at(stack*3 + 1) << ", " << st::internal::stack_init_mag.at(stack*3 + 2) << std::endl;
          // increment stack counter
          stack++;
          // store cell coordinates
@@ -163,6 +180,7 @@ void initialise(const double system_dimensions_x,
             st::internal::pos.at(3*cell+0)=i;
             st::internal::pos.at(3*cell+1)=j;
             st::internal::pos.at(3*cell+2)=k;
+            st::internal::cell_stack_index[cell] = stack;
             // increment cell number
             cell++;
          }
@@ -171,10 +189,10 @@ void initialise(const double system_dimensions_x,
 
    // define array to store atom-microcell associations
    st::internal::atom_st_index.resize(num_local_atoms);
-
+ 
    // Determine number of cells in x,y,z (ST coordinate system)
    const int d[3]={ncx,ncy,ncz};
-   const double cs[3] = {st::internal::micro_cell_size, st::internal::micro_cell_size, st::internal::micro_cell_thickness}; // cell size
+   const double cs[3] = {st::internal::micro_cell_size[stx], st::internal::micro_cell_size[sty], st::internal::micro_cell_thickness}; // cell size
 
    // Assign atoms to cells
    for(int atom=0;atom<num_local_atoms;atom++){
@@ -187,7 +205,8 @@ void initialise(const double system_dimensions_x,
       int scc[3]={0,0,0}; // super cell coordinates
       for(int i=0;i<3;i++){
          // Determine supercell coordinates for atom (rounding down)
-         scc[i]=int(c[i]/cs[i]);
+         scc[i]=int(floor(c[i]/cs[i]));
+       //  std::cout << i << ", " << scc[i] << ", " << c[i] << ", " << cs[i] << std::endl;
          // Always check cell in range
          if(scc[i]<0 || scc[i]>= d[i]){
             terminaltextcolor(RED);
@@ -209,7 +228,8 @@ void initialise(const double system_dimensions_x,
          }
       }
       // If no error for range then assign atom to cell.
-      st::internal::atom_st_index[atom]=supercell_array[scc[0]][scc[1]][scc[2]+1]; // move cells up by one in z
+      st::internal::atom_st_index[atom]= supercell_array[scc[0]][scc[1]][scc[2]+1]; // move cells up by one in z
+      
    }
    } // end of supercell assignment of atoms
 
@@ -241,26 +261,27 @@ namespace internal{
       //-------------------------------------------------------
       // Determine microcell properties from atomic properties
       //-------------------------------------------------------
-      st::internal::default_properties.beta_cond = 0.11;
-      st::internal::default_properties.beta_diff = 0.36;
-      st::internal::default_properties.sa_infinity = 1.0e8;
+      st::internal::default_properties.beta_cond =  0.11;
+      st::internal::default_properties.beta_diff =0.36;
+      st::internal::default_properties.sa_infinity =  1.0e8;
       st::internal::default_properties.lambda_sdl = 100.0e-9; // m
-      st::internal::default_properties.diffusion = 0.0001; //Angstroms^2/s
+      st::internal::default_properties.diffusion = 0.001; //m^2/s ? 
       st::internal::default_properties.sd_exchange = 1.6e-21; //Joule
 
+     
 
       // Temporary array to hold number of atoms in each cell for averaging
       std::vector<double> count(st::internal::beta_cond.size(),0.0);
 
       // loop over all atoms
-      for(int atom=0;atom<num_local_atoms;atom++){
+      for(int atom=0;atom<num_local_atoms;atom++) {
 
          // get material type
          int mat = atom_type_array[atom];
 
          // get microcell id
          int id = st::internal::atom_st_index[atom];
-
+         //  std::cout << atoms::sublayer_array[atom] << ", " << st::internal::cell_stack_index[st::internal::atom_st_index[atom]] << std::endl;
          // determine atomic properties
          double beta_cond = st::internal::mp.at(mat).beta_cond; // beta
          double beta_diff = st::internal::mp.at(mat).beta_diff; // beta_prime
@@ -276,6 +297,7 @@ namespace internal{
          st::internal::lambda_sdl.at(id) += lambda_sdl;
          st::internal::diffusion.at(id) += diffusion;
          st::internal::sd_exchange.at(id) += sd_exchange;
+      
          count.at(id) += 1.0;
       }
 
@@ -295,8 +317,6 @@ namespace internal{
          const double nat = count.at(cell);
 
           st::internal::cell_natom[cell] = nat;
-
-
 
          // check for zero atoms in cell
          if(nat>0.0001){
