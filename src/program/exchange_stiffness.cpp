@@ -175,7 +175,7 @@ void exchange_stiffness(){
 	const double sinphi = sin(constraint_phi*pi180);
 
 	// loop over constraint angles ct (constraint_theta)
-	for(double constraint_theta = 0.0; constraint_theta < mt; constraint_theta += dt){
+	for(double constraint_theta = 0.0; constraint_theta < mt; constraint_theta += dt) {
 
 		// push back data to store calculated torques and angles
 		angles.push_back(constraint_theta*pi180); // radians

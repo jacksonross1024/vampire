@@ -73,6 +73,7 @@ namespace sim{
 	enum integrator_t{ llg_heun = 0, monte_carlo = 1, llg_midpoint = 2,
 							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5};
 
+	
 	extern std::ofstream mag_file;
 	extern uint64_t time;
 	extern uint64_t total_time;
@@ -229,7 +230,7 @@ namespace sim{
 	extern int domain_wall_axis;
 	extern double domain_wall_position;
 	extern double domain_wall_velocity;
-	extern double domain_wall_discretisation;
+	extern std::vector<double> domain_wall_discretisation;
 	extern double domain_wall_centre;
 	extern double domain_wall_width;
 	extern int domain_wall_angle;

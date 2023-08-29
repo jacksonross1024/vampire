@@ -658,7 +658,7 @@ void integrate_serial(uint64_t n_steps){
    else{
 
    // Case statement to call integrator
-   switch(sim::integrator){
+   switch(sim::integrator) {
 
       case 0: // LLG Heun
          for(uint64_t ti=0;ti<n_steps;ti++){
