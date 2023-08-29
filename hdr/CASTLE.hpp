@@ -243,6 +243,7 @@ namespace CASTLE {
     extern void initialize_electron_atom_interactions();
     extern void initialize_velocities();
     extern void initialize_cell_omp();
+    extern void output_verbose_initialisation_data(string directory);
     extern void create();
     extern void output_data();
 

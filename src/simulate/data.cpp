@@ -363,6 +363,7 @@ namespace CASTLE {
    void initialize_electron_interactions();
    void initialize_atomic_interactions();
    void initialize_electron_atom_interactions();
+   void output_verbose_initialisation_data(string directory);
    void initialize_velocities();
    void initialize_cell_omp();
    void create();

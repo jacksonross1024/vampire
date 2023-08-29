@@ -353,7 +353,7 @@ void initialize () {
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
     ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     double p = phonon_energy/(constants::hbar_r*3650.0*1e5); // A^-1;  E_D = p * c_s * hbar //  1e15 / A1e10 = 1/A
-    ea_rate = -sim::ee_coupling_strength*dt*phonon_energy*M_PI*constants::K/(4.16*4.16*4.16*(p*p + 2.5*2.5))/constants::hbar_r;
+    ea_rate = -sim::ee_coupling_strength*dt*phonon_energy*M_PI*constants::K/constants::hbar_r/(4.16*4.16*4.16);///(4.16*4.16*4.16*(p*p + 2.5*2.5))/constants::hbar_r;
     // modifier: 0.02
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
@@ -471,7 +471,7 @@ void initialize () {
      initialize_cell_omp(); 
   // else std::cout << "CASTLE lattice integration is most efficient at greater than 4 15 Angstrom unit cells wide. Generating standard OpenMP lattice." << std::endl;
     // std::cout << "electron DoS summation: " << int(round(4*ee_density/3.0/(3*constants::kB_r*300.0+E_f_A - core_cutoff)/4.0))  << std::endl;
-    
+    output_verbose_initialisation_data(string(directory));
    if (err::check)  std::cout << "Total lattice cells: " << total_cells << ", maximum cell size: " << cell_integration_lists[0].size() << ", maximum integration list size: " << electron_integration_list[0].size() << std::endl;
    
     /*
@@ -1229,7 +1229,13 @@ void initialize_velocities() {
    
 
        if (err::check)  std::cout << "distribution output" << std::endl;
-    
+  
+            if (err::check) std::cout << "Electron velocity ready..." << std::endl;
+}
+
+void output_verbose_initialisation_data(string directory) {
+
+    //mu_F
     std::ofstream d_U_output_Ni;
     d_U_output_Ni.open(string(directory) + "/dU_Ni_calibration.txt");
     d_U_output_Ni.precision(10);
@@ -1338,9 +1344,49 @@ void initialize_velocities() {
     d_U_output_Ag.close();
     d_U_output_feg.close();
             if(err::check) std::cout << "normalised Uint for 0K: " << U_int_zero_Ni << std::endl;
-            if (err::check) std::cout << "Electron velocity ready..." << std::endl;
-}
 
+
+    //Au e-p BTE
+    const double e_energy = E_f_A;
+    const double e_mom = return_dWdE(e_energy); // 1/A
+    const double c_s = 3560.0; //m/s
+    const double E_D = 32.3e-3*constants::eV_to_AJ; //eV -> AJ
+    const double T_D = 225.0; //K
+    const double V = 4.16*4.16*4.16; //A^3
+    const double k = 2.5; //1/A
+    const double dos_p = 9.0/(pow(constants::kB_r*T_D, 3.0)*V); // 9/V E_D
+
+    const double M_ep_coeff = 1e30*constants::e*constants::e/(2.0*constants::eps_0*V); // 1e30 kg/ s^2 / A^2
+    const double coeff = V*M_PI*M_PI*M_PI/(constants::hbar_r*e_mom);
+    
+    std::ofstream BTE_out;
+    double integrand_p = 0.0;
+    double integrand_m = 0.0;
+    double temp = 300.0;
+    BTE_out.open("BTE-output.txt");
+    for (double e = dos_en_step; e < E_D; e += dos_en_step) {
+        double d_e_p = e_energy + e;
+        double d_e_m = e_energy - e;
+        double d_e_mom_p = return_dWdE(d_e_p);
+        double d_e_mom_m = return_dWdE(d_e_m);
+        double q = e*1e5/(constants::hbar_r*c_s); //  1e5/ A
+        double M_ep = M_ep_coeff/(q*q + k*k);
+        double f_p = return_fermi_distribution(d_e_p + DoS_cutoff - E_f_A, temp);
+        double f_m = return_fermi_distribution(d_e_m + DoS_cutoff - E_f_A, temp);
+        double f = return_fermi_distribution(e + DoS_cutoff - E_f_A, temp);
+        double g = return_BE_distribution(e, temp);
+        double F_p = f_p*(1.0-f)*(g+1.0) - f*(1.0-f_p)*g;
+        double F_m = f_m*(1.0-f)*g - f*(1.0-f_m)*(g+1.0);
+        double chi_p = (q*q + e_mom*e_mom - d_e_mom_p*d_e_mom_p)/(2.0*q*e_mom);
+        double chi_m = (q*q + e_mom*e_mom - d_e_mom_m*d_e_mom_m)/(2.0*q*e_mom);
+        double scat_p = coeff * dos_en_step * (dos_standard[int(floor((d_e_p-DoS_cutoff)*i_dos_en_step))]/(e_mom+q))*(dos_p*e*e/q)*F_p;
+        double scat_m = coeff * dos_en_step * (dos_standard[int(floor((d_e_m-DoS_cutoff)*i_dos_en_step))]/(e_mom-q))*(dos_p*e*e/q)*F_m;
+        integrand_p += scat_p;
+        integrand_m += scat_m;
+        std::cout << q << " + " << e_mom << " = " << q+e_mom << "; " << d_e_mom_p << std::endl;// << ", " << chi_p << ", " << scat_m << ", " << chi_m << std::endl;
+    } 
+    std::cout << " 0, 0, 0, 0, 0, " << integrand_p << ", " << integrand_m << std::endl;
+}
 void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp) {
 
   char directory [256];
