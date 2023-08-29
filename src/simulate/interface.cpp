@@ -196,11 +196,16 @@ namespace sim{
       //--------------------------------------------------------------------
       test="domain-wall-discretisation";
       if(word==test){
-         double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 1, 100,"input","1 - 100 A");
-         sim::domain_wall_discretisation = tt;
+         std::vector<double> u(3);
+         u=vin::doubles_from_string(value);
+       //  vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
+         //std::cout << sim::domain_wall_second_vector_x.size() << "\t" << super_index << "\t" << u[0] << '\t' << u[1] << '\t' << u[2] <<std::endl;
+         sim::domain_wall_discretisation[0] = u[0];
+         sim::domain_wall_discretisation[1] = u[1];
+         sim::domain_wall_discretisation[2] = u[2];
          return true;
       }
+      
       //--------------------------------------------------------------------
       test="domain-wall-anti-pbc-x";
       if(word==test){

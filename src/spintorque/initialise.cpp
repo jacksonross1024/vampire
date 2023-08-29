@@ -169,7 +169,7 @@ void initialise(const double system_dimensions_x,
          st::internal::stack_init_mag.at((stack)*3 + 0) = init_stack_mag[(stack%6)*3 + 0]/sqrt(2.0); 
          st::internal::stack_init_mag.at((stack)*3 + 1) = init_stack_mag[(stack%6)*3 + 1]/sqrt(2.0); 
          st::internal::stack_init_mag.at((stack)*3 + 2) = init_stack_mag[(stack%6)*3 + 2]/sqrt(2.0); 
-         std::cout << st::internal::stack_init_mag.at(stack*3 + 0) << ", " << st::internal::stack_init_mag.at(stack*3 + 1) << ", " << st::internal::stack_init_mag.at(stack*3 + 2) << std::endl;
+       //  std::cout << st::internal::stack_init_mag.at(stack*3 + 0) << ", " << st::internal::stack_init_mag.at(stack*3 + 1) << ", " << st::internal::stack_init_mag.at(stack*3 + 2) << std::endl;
          // increment stack counter
          stack++;
          // store cell coordinates

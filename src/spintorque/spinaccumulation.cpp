@@ -139,7 +139,7 @@ namespace st{
           // std::cout<< st::internal::initial_beta << "\t" << st::internal::j[0] << "\t" << je << "\t" << st::internal::stack_init_mag[stack*3] << "\t" << std::endl;
 
             // loop over all cells in stack after first (idx+1)
-            for(int cell=idx+1; cell<idx+num_microcells_per_stack; ++cell){
+            for(int cell=idx+2; cell<idx+num_microcells_per_stack; ++cell) {
 
                // calculate cell id's
                const int cellx = 3*cell+0;
