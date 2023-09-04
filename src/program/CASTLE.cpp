@@ -547,9 +547,9 @@ void initialize () {
 void initialize_cell_omp() {
 
   //number of cells in each lattice direction
-  x_omp_cells = 12;
-  y_omp_cells = 12;
-  z_omp_cells = 12;
+  x_omp_cells = 6;
+  y_omp_cells = 6;
+  z_omp_cells = 6;
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -730,9 +730,9 @@ void initialize_cell_omp() {
 
     //number of cells each thread takes in each lattice direction
     // (12/6)^3 = n_threads; 24 -> 2*2*6
-    const int max_x_threads = 6; //2 
-    const int max_y_threads = 6; //2 
-    const int max_z_threads = 3; //6 -> 24
+    const int max_x_threads = 2; //3 
+    const int max_y_threads = 2; //3 
+    const int max_z_threads = 3; //2 -> 18
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -870,10 +870,10 @@ void initialize_electrons() {
     // ee_scattering_angle = sim::ee_scattering_angle;
     // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     half_int_var.resize(2,0);
-    half_int_var[0] =  8;
-    half_int_var[1] =  8;
+    half_int_var[0] =  3;
+    half_int_var[1] =  3;
     
-    e_e_integration_cutoff = lattice_width/12.0; //
+    e_e_integration_cutoff = lattice_width/6.0; //
     e_e_coulomb_cutoff = 4.16*2.0; //
     double deltaX = e_e_integration_cutoff-e_e_coulomb_cutoff;
     std::cout << "band 1 velocity(A/fs): " << return_vel(E_f_A) << ", minimun separation criteria(dt): " << floor(deltaX/(2.0*return_vel(E_f_A)*dt)) << "...";
@@ -946,9 +946,9 @@ void initialize_electrons() {
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
        
-        electron_position[array_index]     = atoms::x_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*x_unit_size;
-        electron_position[array_index + 1] = atoms::y_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*y_unit_size;
-        electron_position[array_index + 2] = atoms::z_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*z_unit_size;
+        electron_position[array_index]     = atoms::x_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*x_unit_size;
+        electron_position[array_index + 1] = atoms::y_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*y_unit_size;
+        electron_position[array_index + 2] = atoms::z_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*z_unit_size;
         //initialize and output electron posititons
       //  = atom_anchor_position.at(3*(e%lattice_atoms));//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
        // electron_position.at(array_index + 2) = atom_anchor_position.at(3*(e%lattice_atoms)+2);// + cos(phi)*screening_depth;//*radius_mod(gen);
