@@ -321,7 +321,7 @@ void update_dynamics() {
       
       if(!equilibrium_step && applied_voltage_sim) external_potential += electron_applied_voltage(e, array_index, potential);
       //if(equilibrium_step && heat_pulse_sim) ea_scattering(e, array_index, omp_get_thread_num());
-      ea_scattering(e, array_index, omp_get_thread_num());
+      elastic_ea_scattering(e, array_index, omp_get_thread_num());
     }
 
     // if(count != photons_at_dt) std::cout << photons_at_dt << ", " << count<< std::endl;
@@ -529,6 +529,208 @@ double electron_applied_voltage(const int e, const int array_index, const double
   // } 
   //  return 0.0;
 }
+
+void elastic_ea_scattering(const int e, const int array_index, const int thread) {
+
+    const double e_energy = electron_potential[e];
+    const double k = return_dWdE(e_energy);
+        if(e_energy < core_cutoff+1.5) return;
+    double e_occupation;
+    double f_e_occupation;
+    double r_e_occupation;
+    const double phonon_factor = phonon_energy + (1.0*phonon_energy*mtrandom::gaussianc(omp_uniform_random[thread])/8.0); 
+    double p = phonon_factor*1e5/(constants::hbar_r*3650.0); // 1e5/ A
+
+    //Gamma_ep =( V*pi^3 / hbar k) * \pm DoS_standard[e']/k' DoS_p (E_q)/q F M_ep^2
+    const double coeff = cell_volume*M_PI*M_PI*M_PI/(constants::hbar_r*k); //A^3 A/ AJ fs 
+    const double p_energy = e_energy + phonon_factor;
+    const double m_energy = e_energy - phonon_factor;
+    const double p_k = return_dWdE(p_energy);
+    const double m_k = return_dWdE(m_energy);
+    const double p_dos = dos_standard[int((p_energy-DoS_cutoff)*i_dos_en_step)]/p_k; //states A/AJ
+    const double m_dos = dos_standard[int((m_energy-DoS_cutoff)*i_dos_en_step)]/m_k;
+    const double pho_s = dos_en_step*return_DoS_phonon(phonon_energy);///sqrt(2.0*M_PI); //
+    const double M_ep = 0.5*constants::K* phonon_factor/(q_sq*q_sq + p*p);
+    const double h_p = 0.5 + (p_k*p_k - p*p)/(2.0*k*k);
+   const double h_m = 0.5 + (m_k*m_k - p*p)/(2.0*k*k);
+    const double r_p = sqrt(p_k*p_k - h_p*h_p*k*k);
+    const double r_m = sqrt(m_k*m_k - h_m*h_m*k*k);
+
+    const double p_mom_ratio = 1.5*r_p/(p*p*p);
+    const double m_mom_ratio = 1.5*r_m/(p*p*p);
+
+    const int e_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - DoS_cutoff)*i_dos_en_step))));
+    const int f_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((p_energy - DoS_cutoff)*i_dos_en_step))));
+    const int r_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((m_energy - DoS_cutoff)*i_dos_en_step))));
+    //  std::cout << e_index << ", " << f_e_index << ", " << r_e_index << std::endl;
+    // const double local_d_dos = std::min(local_dos_occ, dos_en_step*double(electron_nearest_electron_list[e][0])/(E_f_A-DoS_cutoff));
+    if( e_energy > transport_cutoff) {
+      e_occupation   = std::min(1.0, double(global_e_dos[e_index  ][0]) / (dos_standard[e_index]*dos_en_step)); 
+      f_e_occupation = std::min(1.0, double(global_e_dos[f_e_index][0]) / (dos_standard[f_e_index]*dos_en_step)); 
+      r_e_occupation = std::min(1.0, double(global_e_dos[r_e_index][0]) / (dos_standard[r_e_index]*dos_en_step)); 
+      // e_occupation   =  std::min(1.0,double(ee_dos_hist[e][e_index  ]) / local_d_dos); 
+      // f_e_occupation =  std::min(1.0,double(ee_dos_hist[e][e_index+1]) / local_d_dos); 
+      // r_e_occupation =  std::min(1.0,double(ee_dos_hist[e][e_index-1]) / local_d_dos); 
+    } else {
+     e_occupation   = std::min(1.0, double(global_e_dos[e_index  ][0]) / std::max(1.0, double(global_e_dos[e_index  ][1])));    
+     f_e_occupation = std::min(1.0, double(global_e_dos[f_e_index][0]) / std::max(1.0, double(global_e_dos[f_e_index][1]))); 
+     r_e_occupation = std::min(1.0, double(global_e_dos[r_e_index][0]) / std::max(1.0, double(global_e_dos[r_e_index][1]))); 
+    }
+    
+    const double thermal_factor = return_BE_distribution(phonon_factor, Tp);
+    const double f_factor = thermal_factor*(1.0 - f_e_occupation);// - f_e_occupation*(1.0-e_occupation);
+    const double r_factor = (thermal_factor + 1.0) *(1.0-r_e_occupation);
+    const double rta_p = ea_rate*M_ep*pho_s*p_mom_ratio*f_factor;
+    const double rta_m = ea_rate*M_ep*pho_s*m_mom_ratio*r_factor;
+    global_tau_ep[2*e_index] += rta_p;
+    global_tau_ep[2*e_index+1] -= rta_m;
+
+    // #pragma omp critical 
+    // std::cout << exp(rta_p) << ", " << exp(rta_m) << std::endl;
+
+    if( (f_factor > 0.0) &&  ( omp_uniform_random[thread]() > std::exp(rta_p)) ) {
+   // #pragma omp critical 
+   // std::cout << ea_rate << ", " << M_ep << ", " << pho_s << ", " << p_mom_ratio/(1.5) << ", " << m_mom_ratio/(1.5) << ", " << f_factor << ", " << r_factor << std::endl;
+      if( p_energy > (E_f_A+ max_as) ) return;
+
+        if(p_k + p <= k ) std::cout << "weird stuff " << p_k << " + " << p << " < " << k << std::endl;
+    if(m_k + p <= k) std::cout << "normal stuff " << m_k << " + " << p << " < " << k << std::endl;
+    if((k + std::min(p_k, p)) <= std::max(p_k, p)) std::cout << "normal stuff " << (k + std::min(p_k, p)) << " < " <<  std::max(p_k, p) << "; " << k << ", " << p_k << ", " << p << std::endl;
+    if((k + std::min(m_k, p)) <= std::max(m_k, p)) std::cout << "weird? stuff " << (k + std::min(m_k, p)) << " < " <<  std::max(m_k, p) << "; " << k << ", " << m_k << ", " << p << std::endl;
+
+    const double n[3] = {electron_velocity[array_index], electron_velocity[array_index+1], electron_velocity[array_index+2]};
+    double O[3] = {1.0/sqrt(3.0),1.0/sqrt(3.0),1.0/sqrt(3.0)};
+    if(n[0]*O[0] + n[1]*O[1] + n[2]*O[2] > 0.99) {
+     //   std::cout << "change basis: " << n[0]*O[0] << ", " << n[1]*O[1] << ", " << n[2]*O[2] << std::endl;
+        O[0] = 1.0;
+        O[1] = 0.0;
+        O[2] = 0.0;
+    }
+
+    double t[3] = {
+                        O[1]*n[2] - O[2]*n[1],n[0]*O[2]-O[0]*n[2],n[1]*O[0]-n[0]*O[1]
+    };
+    //  #pragma omp critical 
+    // {
+    //     std::cout << "t_i: <" << O[1]*n[2] - O[2]*n[1] << ", " << n[0]*O[2]-O[0]*n[2] << ", " << n[1]*O[0]-n[0]*O[1] << std::endl; 
+    //   // std::cout << "n_i: <" << n[0] << ", " << n[1] << ", " << n[2] << ">, t_i:  <" << t[0] << ", "<< t[1] << ", " << t[2] << std::endl; 
+    // } 
+    const double t_n = 1.0/sqrt(t[0]*t[0] + t[1]*t[1] + t[2]*t[2]);
+    t[0] *= t_n;
+    t[1] *= t_n;
+    t[2] *= t_n;
+    // #pragma omp critical 
+    // {
+    //    std::cout << "n_i: <" << n[0] << ", " << n[1] << ", " << n[2] << ">, t_i:  <" << t[0] << ", "<< t[1] << ", " << t[2] << std::endl; 
+    // } 
+   
+    double b[3] = {
+                        t[1]*n[2] - t[2]*n[1],n[0]*t[2]-t[0]*n[2],n[1]*t[0]-n[0]*t[1]
+    };
+    
+    double d_p[3] = {
+                        k*n[0]*h_p, k*n[1]*h_p, k*n[2]*h_p
+    };
+    double theta_p = omp_uniform_random[thread]()*M_PI*2.0;
+
+    d_p[0] += r_p*(t[0]*cos(theta_p)+b[0]*sin(theta_p));
+    d_p[1] += r_p*(t[1]*cos(theta_p)+b[1]*sin(theta_p));
+    d_p[2] += r_p*(t[2]*cos(theta_p)+b[2]*sin(theta_p));
+      
+      int e_index = int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25)))) ;
+      relaxation_time_hist_ee[array_index][e_index]++;
+      relaxation_time_hist_ee[array_index + 2][e_index] += current_time_step - relaxation_time_hist_ee[array_index + 1][e_index ];
+      
+      electron_potential[e] = p_energy;
+      
+      relaxation_time_hist_ee[array_index + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((electron_potential[e]-DoS_cutoff)/0.25)))) ] = current_time_step;
+      
+      electron_velocity[array_index]   = d_p[0]/p_k;
+      electron_velocity[array_index+1] = d_p[1]/p_k;
+      electron_velocity[array_index+2] = d_p[2]/p_k;
+    
+      electron_ee_scattering_list[e][0] = 1;
+
+      #pragma omp critical(eascattering)
+      {
+     //  std::cout << p_k << " vs " << sqrt(d_p[0]*d_p[0] + d_p[1]*d_p[1] + d_p[2]*d_p[2]) << ", " << p_energy << ", " <<  return_dWdE_i(p_k) << std::endl;
+      ea_transport_scattering_count++;
+      TEKE += p_energy-e_energy;
+      TLE -= p_energy-e_energy;
+      e_a_scattering_count++;
+      }
+      return;
+    }  
+
+    if(r_factor > 0.0 && omp_uniform_random[thread]() > exp(rta_m)) {
+      
+//       #pragma omp critical 
+//    std::cout << ea_rate << ", " << M_ep << ", " << pho_s << ", " << p_mom_ratio/(1.5) << ", " << m_mom_ratio/(1.5) << ", " << f_factor << ", " << r_factor << std::endl;
+   
+      if( m_energy < core_cutoff) return;
+
+    if(p_k + p <= k ) std::cout << "weird stuff " << p_k << " + " << p << " < " << k << std::endl;
+    if(m_k + p <= k) std::cout << "normal stuff " << m_k << " + " << p << " < " << k << std::endl;
+    if((k + std::min(p_k, p)) <= std::max(p_k, p)) std::cout << "normal stuff " << (k + std::min(p_k, p)) << " < " <<  std::max(p_k, p) << "; " << k << ", " << p_k << ", " << p << std::endl;
+    if((k + std::min(m_k, p)) <= std::max(m_k, p)) std::cout << "weird? stuff " << (k + std::min(m_k, p)) << " < " <<  std::max(m_k, p) << "; " << k << ", " << m_k << ", " << p << std::endl;
+    
+    const double n[3] = {electron_velocity[array_index], electron_velocity[array_index+1], electron_velocity[array_index+2]};
+    double O[3] = {1.0/sqrt(3.0),1.0/sqrt(3.0),1.0/sqrt(3.0)};
+    if(n[0]*O[0] + n[1]*O[1] + n[2]*O[2] > 0.99) {
+     //   std::cout << "change basis: " << n[0]*O[0] << ", " << n[1]*O[1] << ", " << n[2]*O[2] << std::endl;
+        O[0] = 1.0;
+        O[1] = 0.0;
+        O[2] = 0.0;
+    }
+
+    double t[3] = {
+                        O[1]*n[2] - O[2]*n[1],n[0]*O[2]-O[0]*n[2],n[1]*O[0]-n[0]*O[1]
+    };
+   
+    const double t_n = 1.0/sqrt(t[0]*t[0] + t[1]*t[1] + t[2]*t[2]);
+    t[0] *= t_n;
+    t[1] *= t_n;
+    t[2] *= t_n;
+   
+    double b[3] = {
+                        t[1]*n[2] - t[2]*n[1],n[0]*t[2]-t[0]*n[2],n[1]*t[0]-n[0]*t[1]
+    };
+    
+    double d_p[3] = {
+                        k*n[0]*h_m, k*n[1]*h_m, k*n[2]*h_m
+    };
+    double theta_p = omp_uniform_random[thread]()*M_PI*2.0;
+
+    d_p[0] += r_m*(t[0]*cos(theta_p)+b[0]*sin(theta_p));
+    d_p[1] += r_m*(t[1]*cos(theta_p)+b[1]*sin(theta_p));
+    d_p[2] += r_m*(t[2]*cos(theta_p)+b[2]*sin(theta_p));
+      
+      int e_index = int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((e_energy-DoS_cutoff)/0.25)))) ;
+      relaxation_time_hist_ee[array_index][e_index]++;
+      relaxation_time_hist_ee[array_index + 2][e_index] += current_time_step - relaxation_time_hist_ee[array_index + 1][e_index ];
+      
+      electron_potential[e] = m_energy;
+      
+      relaxation_time_hist_ee[array_index + 1][int(std::max(0.0, std::min( 4.0*60.0 - 1.0, floor((electron_potential[e]-DoS_cutoff)/0.25)))) ] = current_time_step;
+      
+      electron_velocity[array_index]   = d_p[0]/m_k;
+      electron_velocity[array_index+1] = d_p[1]/m_k;
+      electron_velocity[array_index+2] = d_p[2]/m_k;
+    
+      electron_ee_scattering_list[e][0] = 1;
+
+      #pragma omp critical(eascattering)
+      {
+     //  std::cout << p_k << " vs " << sqrt(d_p[0]*d_p[0] + d_p[1]*d_p[1] + d_p[2]*d_p[2]) << ", " << p_energy << ", " <<  return_dWdE_i(p_k) << std::endl;
+      ea_core_scattering_count++;
+      TEKE -= m_energy-e_energy;
+      TLE += m_energy-e_energy;
+      e_a_scattering_count++;
+      }
+      return;
+    }
+}
+
 
 void ea_scattering(const int e, const int array_index, const int thread) {
 

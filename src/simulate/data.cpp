@@ -183,6 +183,8 @@ namespace CASTLE {
    double lattice_height; //Angstroms
    double lattice_width;  //Angsrtoms
    double lattice_depth;  //Angstroms
+     double lattice_volume;
+     double cell_volume;
    double atomic_size;    //Angstroms
    double screening_depth;//Angstroms
 
@@ -376,6 +378,7 @@ namespace CASTLE {
 
    void electron_thermal_field(const int e, const int array_index, const double EKE, const int thread);
    double electron_applied_voltage(const int e, const int array_index, const double potential);
+   void elastic_ea_scattering(const int e, const int array_index, const int thread);
    void ea_scattering(const int e, const int array_index, const int thread);
    void ee_scattering();
    bool elastic_scattering(int e, int array_index, int d_e, int array_index_i, double e_energy, double d_e_energy );
@@ -389,5 +392,6 @@ namespace CASTLE {
    double return_dWdE_i(const double e_mom); // momentum -> energy
    double return_vel(const double energy); //inverse slope of dWdE / hbar_r
    double return_m_e_r(const double energy);
+   double return_DoS_phonon(const double energy);
    double k_sq();
 }

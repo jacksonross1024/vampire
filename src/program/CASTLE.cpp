@@ -205,7 +205,9 @@ void initialize () {
     lattice_width = cs::system_dimensions[0]+x_unit_size; //A
     lattice_depth  = cs::system_dimensions[1]+y_unit_size; // A
     lattice_height  = cs::system_dimensions[2]+z_unit_size; // A
-    double lattice_volume = lattice_depth*lattice_height*lattice_width;
+    lattice_volume = lattice_depth*lattice_height*lattice_width;
+    cell_volume = x_unit_size*y_unit_size*z_unit_size;
+
     double l_f = lattice_atoms/lattice_volume; //atoms/A^3
            std::cout << "Initialising lattice: " << lattice_depth*lattice_height*lattice_width*1e-3 << " nm^3; active space range (AJ): " <<E_f_A+ min_as << " <> " << E_f_A+ max_as << ", (" << max_as-min_as << " AJ). Resultant resolution: " << dos_en_step << " for " << dos_size << " bins" << std::endl;
     
@@ -353,7 +355,8 @@ void initialize () {
     //G=Ce/Te-p = pihbar constant (meV**2)Ef*n_f*(1/eps)**2
     ea_rate = -30.0*dt*E_f_A/tau;  //AJ(ready for E_i)  AJfs/fs
     double p = phonon_energy/(constants::hbar_r*3650.0*1e5); // A^-1;  E_D = p * c_s * hbar //  1e15 / A1e10 = 1/A
-    ea_rate = -sim::ee_coupling_strength*dt*phonon_energy*M_PI*constants::K/constants::hbar_r/(4.16*4.16*4.16);///(4.16*4.16*4.16*(p*p + 2.5*2.5))/constants::hbar_r;
+    
+    ea_rate = -sim::ee_coupling_strength*dt*2.0*M_PI/ constants::hbar_r; //(4.16*4.16*4.16*(p*p + 2.5*2.5))/constants::hbar_r;
     // modifier: 0.02
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
@@ -726,9 +729,10 @@ void initialize_cell_omp() {
     if(err::check) std::cout << "spiral integration coordiantes initialized." << std::endl;
 
     //number of cells each thread takes in each lattice direction
-    const int max_x_threads = 6;
-    const int max_y_threads = 6;
-    const int max_z_threads = 6;  
+    // (12/6)^3 = n_threads; 24 -> 2*2*6
+    const int max_x_threads = 6; //2 
+    const int max_y_threads = 6; //2 
+    const int max_z_threads = 2; //6 -> 24
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -931,16 +935,17 @@ void initialize_electrons() {
         electron_ee_scattering_list[e].resize(ee_scattering, 0);
         electron_ea_scattering_list[e].resize(2,0);
         
-        relaxation_time_hist_ee[3*e].resize(4*60,0);
-        relaxation_time_hist_ee[3*e+1].resize(4*60,0);
-        relaxation_time_hist_ee[3*e+2].resize(4*60,0);
+         const int array_index = 3*e;
+        relaxation_time_hist_ee[array_index].resize(4*60,0);
+        relaxation_time_hist_ee[array_index+1].resize(4*60,0);
+        relaxation_time_hist_ee[array_index+2].resize(4*60,0);
 
         // ee_dos_hist.at(e).resize(dos_size,0);
         // relaxation_time_hist_ea[3*e].resize(4*70,0);
         // relaxation_time_hist_ea[3*e+1].resize(4*70,0);
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
-        const int array_index = 3*e;
+       
         electron_position[array_index]     = atoms::x_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*x_unit_size;
         electron_position[array_index + 1] = atoms::y_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*y_unit_size;
         electron_position[array_index + 2] = atoms::z_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*z_unit_size;
@@ -1685,6 +1690,10 @@ double return_vel(const double energy) {
 double return_m_e_r(const double energy) {
   if(energy > (E_f_A+4.86166)) return constants::hbar_r*constants::hbar_r*0.00275775*(0.00275775*(energy-E_f_A) + 3.81605);
   else return  (0.0244961*(energy-E_f_A) + 3.71037)*constants::hbar_r*0.0244961*constants::hbar_r;
+}
+
+double return_DoS_phonon(const double energy) {
+  return 9.0*energy*energy/(phonon_energy*phonon_energy*phonon_energy);
 }
 
 void output_data() {
