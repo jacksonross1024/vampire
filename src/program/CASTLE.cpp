@@ -732,7 +732,7 @@ void initialize_cell_omp() {
     // (12/6)^3 = n_threads; 24 -> 2*2*6
     const int max_x_threads = 6; //2 
     const int max_y_threads = 6; //2 
-    const int max_z_threads = 2; //6 -> 24
+    const int max_z_threads = 3; //6 -> 24
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
