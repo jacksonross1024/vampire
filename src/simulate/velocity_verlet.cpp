@@ -40,6 +40,7 @@ int velocity_verlet_step(double time_step) {
     p_y = 0.0;
     p_z = 0.0;
 
+
     int total_1 = 0;
     int total_2 = 0;
     for(int h = 0 ; h < dos_size; h++) {
@@ -541,15 +542,17 @@ void elastic_ea_scattering(const int e, const int array_index, const int thread)
     const double phonon_factor = phonon_energy + (1.0*phonon_energy*mtrandom::gaussianc(omp_uniform_random[thread])/8.0); 
     double p = phonon_factor*1e5/(constants::hbar_r*3650.0); // 1e5/ A
 
+    // #pragma omp critical 
+    // std::cout << "phonon energy: " << phonon_energy << ", factor: " << phonon_factor << std::endl;
     //Gamma_ep =( V*pi^3 / hbar k) * \pm DoS_standard[e']/k' DoS_p (E_q)/q F M_ep^2
     const double coeff = cell_volume*M_PI*M_PI*M_PI/(constants::hbar_r*k); //A^3 A/ AJ fs 
     const double p_energy = e_energy + phonon_factor;
     const double m_energy = e_energy - phonon_factor;
     const double p_k = return_dWdE(p_energy);
     const double m_k = return_dWdE(m_energy);
-    const double p_dos = dos_standard[int((p_energy-DoS_cutoff)*i_dos_en_step)]/p_k; //states A/AJ
-    const double m_dos = dos_standard[int((m_energy-DoS_cutoff)*i_dos_en_step)]/m_k;
-    const double pho_s = dos_en_step*return_DoS_phonon(phonon_energy);///sqrt(2.0*M_PI); //
+    // const double p_dos = dos_standard[int((p_energy-DoS_cutoff)*i_dos_en_step)]/p_k; //states A/AJ
+    // const double m_dos = dos_standard[int((m_energy-DoS_cutoff)*i_dos_en_step)]/m_k;
+    const double pho_s = dos_en_step*return_DoS_phonon(phonon_factor);///sqrt(2.0*M_PI); //
     const double M_ep = 0.5*constants::K* phonon_factor/(q_sq*q_sq + p*p);
     const double h_p = 0.5 + (p_k*p_k - p*p)/(2.0*k*k);
    const double h_m = 0.5 + (m_k*m_k - p*p)/(2.0*k*k);
@@ -723,8 +726,8 @@ void elastic_ea_scattering(const int e, const int array_index, const int thread)
       {
      //  std::cout << p_k << " vs " << sqrt(d_p[0]*d_p[0] + d_p[1]*d_p[1] + d_p[2]*d_p[2]) << ", " << p_energy << ", " <<  return_dWdE_i(p_k) << std::endl;
       ea_core_scattering_count++;
-      TEKE -= m_energy-e_energy;
-      TLE += m_energy-e_energy;
+      TEKE += m_energy-e_energy;
+      TLE -= m_energy-e_energy;
       e_a_scattering_count++;
       }
       return;
@@ -1020,7 +1023,7 @@ bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
       const int d_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_2 - DoS_cutoff)*i_dos_en_step))));
       if ( d_e_2 > transport_cutoff)  d_d_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_index][0])/(dos_standard[d_index]*dos_en_step));  
       else d_d_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_index][0]) / double(global_e_dos[d_index][1])); 
-      double occupation_factor = ee_rate*d_e_occupation*d_d_occupation/(q_sq+deltaK)*(q_sq+deltaK);///((q_sq+(deltaK))*(q_sq+(deltaK)));//*exp(0.15*(d_occupation*e_occupation-1.0));
+      double occupation_factor = ee_rate*d_e_occupation*d_d_occupation/((q_sq+deltaK)*(q_sq+deltaK));
 
       // if(e_energy > E_f_A+4.8 || d_e_energy > E_f_A+4.8) occupation_factor /= q_sq*q_sq;
       // else

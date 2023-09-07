@@ -547,9 +547,9 @@ void initialize () {
 void initialize_cell_omp() {
 
   //number of cells in each lattice direction
-  x_omp_cells = 6;
-  y_omp_cells = 6;
-  z_omp_cells = 6;
+  x_omp_cells = 12;
+  y_omp_cells = 12;
+  z_omp_cells = 12;
 
   total_cells = x_omp_cells*y_omp_cells*z_omp_cells;
 
@@ -730,9 +730,9 @@ void initialize_cell_omp() {
 
     //number of cells each thread takes in each lattice direction
     // (12/6)^3 = n_threads; 24 -> 2*2*6
-    const int max_x_threads = 2; //3 
-    const int max_y_threads = 2; //3 
-    const int max_z_threads = 3; //2 -> 18
+    const int max_x_threads = 6; //2 
+    const int max_y_threads = 6; //2 
+    const int max_z_threads = 2; //6 -> 24
 
     int max_total_threads = (x_omp_cells/max_x_threads) *(y_omp_cells/ max_y_threads) * (z_omp_cells/ max_z_threads);
    if(max_total_threads != omp_threads) std::cout << "maximum omp threads based on given lattice parameters: " << max_total_threads << "\n Given threads: " << omp_threads << "\n Reducing to max threads" << std::endl;
@@ -870,10 +870,10 @@ void initialize_electrons() {
     // ee_scattering_angle = sim::ee_scattering_angle;
     // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     half_int_var.resize(2,0);
-    half_int_var[0] =  3;
-    half_int_var[1] =  3;
+    half_int_var[0] =  4;
+    half_int_var[1] =  4;
     
-    e_e_integration_cutoff = lattice_width/6.0; //
+    e_e_integration_cutoff = lattice_width/12.0; //
     e_e_coulomb_cutoff = 4.16*2.0; //
     double deltaX = e_e_integration_cutoff-e_e_coulomb_cutoff;
     std::cout << "band 1 velocity(A/fs): " << return_vel(E_f_A) << ", minimun separation criteria(dt): " << floor(deltaX/(2.0*return_vel(E_f_A)*dt)) << "...";
@@ -1388,9 +1388,9 @@ void output_verbose_initialisation_data(string directory) {
         double scat_m = coeff * dos_en_step * (dos_standard[int(floor((d_e_m-DoS_cutoff)*i_dos_en_step))]/(e_mom-q))*(dos_p*e*e/q)*F_m;
         integrand_p += scat_p;
         integrand_m += scat_m;
-        std::cout << q << " + " << e_mom << " = " << q+e_mom << "; " << d_e_mom_p << std::endl;// << ", " << chi_p << ", " << scat_m << ", " << chi_m << std::endl;
+      //  std::cout << q << " + " << e_mom << " = " << q+e_mom << "; " << d_e_mom_p << std::endl;// << ", " << chi_p << ", " << scat_m << ", " << chi_m << std::endl;
     } 
-    std::cout << " 0, 0, 0, 0, 0, " << integrand_p << ", " << integrand_m << std::endl;
+   // std::cout << " 0, 0, 0, 0, 0, " << integrand_p << ", " << integrand_m << std::endl;
 }
 void create_fermi_distribution(const std::string& name, std::vector<double>& distribution, const double temp) {
 
@@ -1918,6 +1918,7 @@ void output_data() {
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
+    std::cout << "avg deltaE: " << TEKE*CASTLE_output_rate/double(e_a_scattering_count) << std::endl;
     e_a_scattering_count = 0;
     ee_core_scattering_count = 0;
     ee_transport_scattering_count = 0;
