@@ -545,7 +545,7 @@ void elastic_ea_scattering(const int e, const int array_index, const int thread)
     // #pragma omp critical 
     // std::cout << "phonon energy: " << phonon_energy << ", factor: " << phonon_factor << std::endl;
     //Gamma_ep =( V*pi^3 / hbar k) * \pm DoS_standard[e']/k' DoS_p (E_q)/q F M_ep^2
-    const double coeff = cell_volume*M_PI*M_PI*M_PI/(constants::hbar_r*k); //A^3 A/ AJ fs 
+   // const double coeff = cell_volume*M_PI*M_PI*M_PI/(constants::hbar_r*k); //A^3 A/ AJ fs 
     const double p_energy = e_energy + phonon_factor;
     const double m_energy = e_energy - phonon_factor;
     const double p_k = return_dWdE(p_energy);
@@ -555,7 +555,7 @@ void elastic_ea_scattering(const int e, const int array_index, const int thread)
     const double pho_s = dos_en_step*return_DoS_phonon(phonon_factor);///sqrt(2.0*M_PI); //
     const double M_ep = 0.5*constants::K* phonon_factor/(q_sq*q_sq + p*p);
     const double h_p = 0.5 + (p_k*p_k - p*p)/(2.0*k*k);
-   const double h_m = 0.5 + (m_k*m_k - p*p)/(2.0*k*k);
+    const double h_m = 0.5 + (m_k*m_k - p*p)/(2.0*k*k);
     const double r_p = sqrt(p_k*p_k - h_p*h_p*k*k);
     const double r_m = sqrt(m_k*m_k - h_m*h_m*k*k);
 
@@ -581,10 +581,10 @@ void elastic_ea_scattering(const int e, const int array_index, const int thread)
     }
     
     const double thermal_factor = return_BE_distribution(phonon_factor, Tp);
-    const double f_factor = thermal_factor*(1.0 - f_e_occupation);// - f_e_occupation*(1.0-e_occupation);
-    const double r_factor = (thermal_factor + 1.0) *(1.0-r_e_occupation);
-    const double rta_p = ea_rate*M_ep*pho_s*p_mom_ratio*f_factor;
-    const double rta_m = ea_rate*M_ep*pho_s*m_mom_ratio*r_factor;
+    const double f_factor = thermal_factor*(1.0 - f_e_occupation);//*e_occupation;// - f_e_occupation*(1.0-e_occupation);
+    const double r_factor = (thermal_factor + 1.0) *(1.0-r_e_occupation);//*e_occupation;
+    const double rta_p = ea_rate*M_ep*pho_s*f_factor;
+    const double rta_m = ea_rate*M_ep*pho_s*r_factor;
     global_tau_ep[2*e_index] += rta_p;
     global_tau_ep[2*e_index+1] -= rta_m;
 
@@ -592,8 +592,8 @@ void elastic_ea_scattering(const int e, const int array_index, const int thread)
     // std::cout << exp(rta_p) << ", " << exp(rta_m) << std::endl;
 
     if( (f_factor > 0.0) &&  ( omp_uniform_random[thread]() > std::exp(rta_p)) ) {
-   // #pragma omp critical 
-   // std::cout << ea_rate << ", " << M_ep << ", " << pho_s << ", " << p_mom_ratio/(1.5) << ", " << m_mom_ratio/(1.5) << ", " << f_factor << ", " << r_factor << std::endl;
+//    #pragma omp critical 
+//    std::cout << std::exp(rta_p) << ", " << ea_rate << ", " << phonon_factor/(q_sq*q_sq + p*p) << ", " << pho_s << ", " << f_factor << ", " << r_factor << std::endl;
       if( p_energy > (E_f_A+ max_as) ) return;
 
         if(p_k + p <= k ) std::cout << "weird stuff " << p_k << " + " << p << " < " << k << std::endl;
@@ -769,13 +769,13 @@ void ea_scattering(const int e, const int array_index, const int thread) {
     double k_m = sqrt(d_k_x_m*d_k_x_m + d_k_y_m*d_k_y_m + d_k_z_m*d_k_z_m);
     double m_energy = return_dWdE_i(k_m);
     
-    if(phonon_factor == (p_energy-e_energy) || phonon_factor == (e_energy-m_energy)){
-    #pragma omp critical
-    {
-    std::cout << e_energy << ", " << p_energy << ", " << e_energy-phonon_factor << ", " << m_energy << std::endl;
+    // if(phonon_factor == (p_energy-e_energy) || phonon_factor == (e_energy-m_energy)){
+    // #pragma omp critical
+    // {
+    // std::cout << e_energy << ", " << p_energy << ", " << e_energy-phonon_factor << ", " << m_energy << std::endl;
     
-    }
-    }
+    // }
+    // }
     const int e_index   = int(std::min( dos_size-2.0, std::max(1.0, floor((e_energy - DoS_cutoff)*i_dos_en_step))));
     const int f_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((p_energy - DoS_cutoff)*i_dos_en_step))));
     const int r_e_index = int(std::min( dos_size-2.0, std::max(1.0, floor((m_energy - DoS_cutoff)*i_dos_en_step))));
@@ -814,7 +814,6 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       
       // electron_transport_list[e] = true;
       // if(electron_potential[e] < transport_cutoff) electron_transport_list[e] = false;
-
       // const double theta = 2.0*M_PI*omp_uniform_random[thread]();
       // const double phi   = M_PI*omp_uniform_random[thread]();
      // if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
@@ -859,7 +858,6 @@ void ea_scattering(const int e, const int array_index, const int thread) {
       
       // electron_transport_list[e] = true;
       // if(electron_potential[e] < transport_cutoff) electron_transport_list[e] = false;
-
     //   const double theta = 2.0*M_PI*omp_uniform_random[thread]();
     //   const double phi   = M_PI*omp_uniform_random[thread]();
      // if(electron_velocity[array_index+2] < 0.0) theta += M_PI;
@@ -970,38 +968,39 @@ bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
   distance[2] = 4.16*cos(l_phi);
   length = 4.16*4.16;
   
-   const double k_1 = return_dWdE(e_energy);
-   const double k_2 = return_dWdE(d_e_energy);
+   const double k1 = return_dWdE(e_energy);
+   const double k2 = return_dWdE(d_e_energy);
 
-   const double k_x_1 = electron_velocity[array_index]*k_1;
-   const double k_y_1 = electron_velocity[array_index+1]*k_1;
-   const double k_z_1 = electron_velocity[array_index+2]*k_1;
+    double k_1[3] = {electron_velocity[array_index  ]*k1,\
+                          electron_velocity[array_index+1]*k1,\
+                          electron_velocity[array_index+2]*k1};
 
-   const double k_x_2 = electron_velocity[array_index_i]*k_2;
-   const double k_y_2 = electron_velocity[array_index_i+1]*k_2;
-   const double k_z_2 = electron_velocity[array_index_i+2]*k_2;
+    double k_2[3] = {electron_velocity[array_index_i  ]*k2,\
+                          electron_velocity[array_index_i+1]*k2,\
+                          electron_velocity[array_index_i+2]*k2};
 
-   const double v_x_dot_product =(( k_x_1 - k_x_2)*distance[0] \
-                                 + (k_y_1 - k_y_2)*distance[1]\
-                                 + (k_z_1 - k_z_2)*distance[2]) /length;
+   const double v_x_dot_product =(( k_1[0] - k_2[0])*distance[0] \
+                                 + (k_1[1] - k_2[1])*distance[1]\
+                                 + (k_1[2] - k_2[2])*distance[2]) /length;
 
           if(v_x_dot_product != v_x_dot_product) {std::cout << "ee error: " << v_x_dot_product << std::endl; return false;}
         
-   const double d_k_x_1 = k_x_1 - distance[0] *v_x_dot_product;
-   const double d_k_y_1 = k_y_1 - distance[1]*v_x_dot_product;
-   const double d_k_z_1 = k_z_1 - distance[2]*v_x_dot_product;
-   const double d_k_x_2 = k_x_2 + distance[0] *v_x_dot_product;
-   const double d_k_y_2 = k_y_2 + distance[1]*v_x_dot_product;
-   const double d_k_z_2 = k_z_2 + distance[2]*v_x_dot_product;
+   double d_k_1[3] = {k_1[0] - distance[0] *v_x_dot_product,\
+                      k_1[1] - distance[1]*v_x_dot_product,\
+                       k_1[2] - distance[2]*v_x_dot_product};
 
-   double d_k_1 = sqrt(d_k_x_1*d_k_x_1 + d_k_y_1*d_k_y_1 + d_k_z_1*d_k_z_1);
-   double d_k_2 = sqrt(d_k_x_2*d_k_x_2 + d_k_y_2*d_k_y_2 + d_k_z_2*d_k_z_2);
+   double d_k_2[3] = {k_2[0] + distance[0] *v_x_dot_product,\
+                      k_2[1] + distance[1]*v_x_dot_product,\
+                      k_2[2] + distance[2]*v_x_dot_product};
+
+   double d_k1 = sqrt(d_k_1[0]*d_k_1[0] + d_k_1[1]*d_k_1[1] + d_k_1[2]*d_k_1[2]);
+   double d_k2 = sqrt(d_k_2[0]*d_k_2[0] + d_k_2[1]*d_k_2[1] + d_k_2[2]*d_k_2[2]);
       
-   double d_e_1 = return_dWdE_i(d_k_1);
-   double d_e_2 = return_dWdE_i(d_k_2);
+   double d_e_1 = return_dWdE_i(d_k1);
+   double d_e_2 = return_dWdE_i(d_k2);
 
    double deltaE = e_energy+d_e_energy - d_e_1 - d_e_2;
-   const double deltaK = (k_1 - d_k_1)*(k_1 - d_k_1);
+   const double deltaK = (k1 - d_k1)*(k1 - d_k1);
    // if(d_e_1 > (E_f_A+4.8) || d_e_2 > (E_f_A+4.8)) std::cout << d_e_1 << ", " << d_k_1 << ", " << d_e_2 << ", "  << d_k_2 << ", " << deltaE << ", " << deltaK << std::endl;
    // double a_factor = abs((k_1*k_1 + k_2*k_2 - d_k_1*d_k_1 - d_k_2*d_k_2)/(2.0*d_k_1*d_k_2));
    // double b_factor = k_1*k_2/(d_k_1*d_k_2);
@@ -1016,21 +1015,33 @@ bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
        
       double d_e_occupation;  
       double d_d_occupation;
-      const int e_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_1 - DoS_cutoff)*i_dos_en_step))));
-      if ( d_e_1 > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0])/(dos_standard[e_index]*dos_en_step));  
-      else  d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[e_index][0]) / double(global_e_dos[e_index][1]));  
+      double e_occupation;  
+      double d_occupation;
 
-      const int d_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_2 - DoS_cutoff)*i_dos_en_step))));
-      if ( d_e_2 > transport_cutoff)  d_d_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_index][0])/(dos_standard[d_index]*dos_en_step));  
-      else d_d_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_index][0]) / double(global_e_dos[d_index][1])); 
-      double occupation_factor = ee_rate*d_e_occupation*d_d_occupation/((q_sq+deltaK)*(q_sq+deltaK));
+      const int e_index = int(std::min( dos_size-1.0, std::max(0.0, floor((e_energy - DoS_cutoff)*i_dos_en_step))));
+      if ( e_energy > transport_cutoff) e_occupation = std::min(1.0, double(global_e_dos[e_index][0])/(dos_standard[e_index]*dos_en_step));  
+      else  e_occupation = std::min(1.0, double(global_e_dos[e_index][0]) / double(global_e_dos[e_index][1]));  
+
+      const int d_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_energy - DoS_cutoff)*i_dos_en_step))));
+      if ( d_e_energy > transport_cutoff)  d_occupation = std::min(1.0, double(global_e_dos[d_index][0])/(dos_standard[d_index]*dos_en_step));  
+      else d_occupation = std::min(1.0, double(global_e_dos[d_index][0]) / double(global_e_dos[d_index][1])); 
+     
+      const int d_e_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_1 - DoS_cutoff)*i_dos_en_step))));
+      if ( d_e_1 > transport_cutoff) d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_e_index][0])/(dos_standard[d_e_index]*dos_en_step));  
+      else  d_e_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_e_index][0]) / double(global_e_dos[d_e_index][1]));  
+
+      const int d_d_index = int(std::min( dos_size-1.0, std::max(0.0, floor((d_e_2 - DoS_cutoff)*i_dos_en_step))));
+      if ( d_e_2 > transport_cutoff)  d_d_occupation = std::max(0.0, 1.0 - double(global_e_dos[d_d_index][0])/(dos_standard[d_d_index]*dos_en_step));  
+      else d_d_occupation = std::max(0.0, 1.0  - double(global_e_dos[d_d_index][0]) / double(global_e_dos[d_d_index][1])); 
+
+      double occupation_factor = ee_rate*d_d_occupation*d_e_occupation/((q_sq+deltaK)*(q_sq+deltaK));
 
       // if(e_energy > E_f_A+4.8 || d_e_energy > E_f_A+4.8) occupation_factor /= q_sq*q_sq;
       // else
       // occupation_factor /= (q_sq+deltaK)*(q_sq+deltaK);
 
-      global_tau_ee[e_index] += occupation_factor;
-      global_tau_ee[d_index] += occupation_factor;
+      global_tau_ee[d_e_index] += occupation_factor;
+      global_tau_ee[d_d_index] += occupation_factor;
 
    if(omp_uniform_random[thread]() > exp(occupation_factor)) {
           
@@ -1052,17 +1063,17 @@ bool elastic_scattering(int thread, int e, int array_index, int d_e, int array_i
           electron_ee_scattering_list[e][0] = 1;
           electron_ee_scattering_list[d_e][0] = 1;
 
-          double theta = atan2(d_k_y_1, d_k_x_1);
+          double theta = atan2(d_k_1[1], d_k_1[0]);
           if(theta != theta) theta == 0.0;
-          double phi = acos(d_k_z_1/d_k_1);
+          double phi = acos(d_k_1[2]/d_k1);
          
           electron_velocity[array_index]    = sin(phi)*cos(theta);
           electron_velocity[array_index+1]  = sin(phi)*sin(theta);
           electron_velocity[array_index+2]  = cos(phi); 
 
-           theta = atan2(d_k_y_2, d_k_x_2);
+           theta = atan2(d_k_2[1], d_k_2[0]);
               if(theta != theta) theta == 0.0;
-           phi = acos(d_k_z_2/d_k_2);
+           phi = acos(d_k_2[2]/d_k2);
 
           electron_velocity[array_index_i]  = sin(phi)*cos(theta);
           electron_velocity[array_index_i+1]= sin(phi)*sin(theta);

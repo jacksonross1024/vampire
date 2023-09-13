@@ -360,7 +360,7 @@ void initialize () {
     // modifier: 0.02
     // ee_rate = -1.0*dt*sim::ee_coupling_strength/(constants::eV_to_AJ*constants::eV_to_AJ); //eV^-2 fs^-1 -> fs**-1 AJ**-2
         // 2pi/hbar e^4 / eps_o^2 (1.25pi 2.75^3)^2 
-    ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*4.16*4.16*4.16), 2.0)/constants::hbar_r; // AJ/A^4
+    ee_rate = -1.0*dt*2.0*M_PI*pow(constants::e*constants::e/(constants::eps_0_A*cell_volume), 2.0)/constants::hbar_r; // AJ/A^4
     E_f_A -= ((E_f_A - 1.5*constants::eV_to_AJ)*i_dos_en_step - floor((E_f_A - 1.5*constants::eV_to_AJ)*i_dos_en_step))*dos_en_step;
     // core_cutoff = E_f_A - DoS_cutoff;
      std::cout << "E_f(AJ): " << E_f*1e20 << ", discretised (AJ): " << E_f_A << std::scientific << ", gamma(J/m**3/K**2): " << e_heat_capacity*1e7 << ", C_l(J/K/m**3): " << a_heat_capacity*1e7 << ", G@300K(J/K/s/m**3): " <<  G*1e22  << \
@@ -433,11 +433,11 @@ void initialize () {
     f_0 = return_fermi_distribution(h*dos_en_step - DoS_cutoff, 0.0);
     k = dWdE_standard[h];
     if(k <= 0.0) continue;
-    q += dos_en_step*dos_standard[h]*f_0*1.0/(k*k*lattice_atoms*x_unit_size*y_unit_size*z_unit_size);
+    q += dos_en_step*(1.0*dos_standard[h+1]+4.0*dos_standard[h]+1.0*dos_standard[h-1])*f_0*1.0*n_f*1e-3/(k*k*lattice_atoms*x_unit_size*y_unit_size*z_unit_size)/6.0;
     k = return_dWdE(h*dos_en_step-DoS_cutoff);
-    q_1 += dos_en_step*dos_standard[h]*f_0*1.0/(k*k*lattice_atoms*x_unit_size*y_unit_size*z_unit_size);
+    q_1 += dos_en_step*(1.0*dos_standard[h+1]+4.0*dos_standard[h]+1.0*dos_standard[h-1])*f_0*1.0*n_f*1e-3/(k*k*lattice_atoms*x_unit_size*y_unit_size*z_unit_size)/6.0;
             // s^2 /  fs^2
-    q_2 += dos_en_step*dos_standard[h]*(return_fermi_distribution((h+1)*dos_en_step - DoS_cutoff, 0.0)-return_fermi_distribution((h-1)*dos_en_step - DoS_cutoff, 0.0))/(2.0*dos_en_step);
+    q_2 += dos_en_step*(1.0*dos_standard[h+1]+4.0*dos_standard[h]+1.0*dos_standard[h-1])*f_0*1.0*n_f*1e-3*(return_fermi_distribution((h+1)*dos_en_step - DoS_cutoff, 0.0)-return_fermi_distribution((h-1)*dos_en_step - DoS_cutoff, 0.0))/(2.0*dos_en_step*lattice_atoms)/6.0;
   }
 	DoS_cutoff += dos_en_step;
   q = sqrt(constants::K*q);
@@ -446,8 +446,9 @@ void initialize () {
   q_offset = 11.9 - q;
 
   //  q_sq = k_sq();
-   if(err::check) std::cout << "q: " << q << ", q_1 " <<  q_1 << ", q_2: " << q_2 << std::endl;
-  q_sq = 2.5*2.5;//11.9*11.9;
+  //  if(err::check) 
+  std::cout << "q: " << q << ", q_1 " <<  q_1 << ", q_2: " << q_2 << std::endl;
+  q_sq = 1.5*1.5;//11.9*11.9;
     //========
     initialize_positions();
             if (err::check) std::cout << "Lattice built " << std::endl;
@@ -870,8 +871,8 @@ void initialize_electrons() {
     // ee_scattering_angle = sim::ee_scattering_angle;
     // e_e_neighbor_cutoff = pow((lattice_width/4.0)-1.0,2.0);
     half_int_var.resize(2,0);
-    half_int_var[0] =  4;
-    half_int_var[1] =  4;
+    half_int_var[0] =  8;
+    half_int_var[1] =  8;
     
     e_e_integration_cutoff = lattice_width/12.0; //
     e_e_coulomb_cutoff = 4.16*2.0; //
@@ -946,9 +947,9 @@ void initialize_electrons() {
         // relaxation_time_hist_ea[3*e+2].resize(4*70,0);
         
        
-        electron_position[array_index]     = atoms::x_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*x_unit_size;
-        electron_position[array_index + 1] = atoms::y_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*y_unit_size;
-        electron_position[array_index + 2] = atoms::z_coord_array.at((2*e)%int(lattice_atoms)) + 0.5*z_unit_size;
+        electron_position[array_index]     = atoms::x_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*x_unit_size;
+        electron_position[array_index + 1] = atoms::y_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*y_unit_size;
+        electron_position[array_index + 2] = atoms::z_coord_array.at((5*e)%int(lattice_atoms)) + 0.5*z_unit_size;
         //initialize and output electron posititons
       //  = atom_anchor_position.at(3*(e%lattice_atoms));//   + cos(theta)*sin(phi)*screening_depth;//*radius_mod(gen)); //Angstroms
        // electron_position.at(array_index + 2) = atom_anchor_position.at(3*(e%lattice_atoms)+2);// + cos(phi)*screening_depth;//*radius_mod(gen);
@@ -1594,7 +1595,7 @@ void create_defined_fermi_distribution(const std::string& name, std::vector<doub
       }
     }
   }
-  transport_cutoff -= 2.0;
+  transport_cutoff -= 4.0;
   DoS_cutoff =  min;
   core_cutoff = epsilon;
 
@@ -1918,7 +1919,7 @@ void output_data() {
     x_flux = 0;
     y_flux = 0;
     z_flux = 0;
-    std::cout << "avg deltaE: " << TEKE*CASTLE_output_rate/double(e_a_scattering_count) << std::endl;
+   // std::cout << "avg deltaE: " << TEKE*CASTLE_output_rate/double(e_a_scattering_count) << std::endl;
     e_a_scattering_count = 0;
     ee_core_scattering_count = 0;
     ee_transport_scattering_count = 0;
