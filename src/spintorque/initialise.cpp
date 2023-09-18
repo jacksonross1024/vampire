@@ -150,12 +150,15 @@ void initialise(const double system_dimensions_x,
    supercell_array.resize(ncx);
    st::internal::cell_stack_index.resize(ncx*ncy*ncz);
    st::internal::stack_init_mag.resize(ncx*ncy*3);
-   double init_stack_mag[18] = {0,0,0, \
-                              -1,-1,0,\
+    double stack_val[18] = {0,0,0, \
                               1,1,0,\
+                              -1,-1,0,\
                               0,0,0,\
-                              -1,-1,0,
-                              1,1,0};
+                              1,1,0,\
+                              -1,-1,0};
+    st::internal::init_stack_mag.resize(18);
+
+    for(int i =0 ; i < st::internal::init_stack_mag.size(); i++) st::internal::init_stack_mag[i] = stack_val[i];
    
 
    for(int i=0;i<ncx;++i){
@@ -166,9 +169,9 @@ void initialise(const double system_dimensions_x,
          // set starting cell for each stack
          st::internal::stack_index[stack]=cell;
           //hardcode Mn_1
-         st::internal::stack_init_mag.at((stack)*3 + 0) = init_stack_mag[(stack%6)*3 + 0]/sqrt(2.0); 
-         st::internal::stack_init_mag.at((stack)*3 + 1) = init_stack_mag[(stack%6)*3 + 1]/sqrt(2.0); 
-         st::internal::stack_init_mag.at((stack)*3 + 2) = init_stack_mag[(stack%6)*3 + 2]/sqrt(2.0); 
+         st::internal::stack_init_mag.at((stack)*3 + 0) = st::internal::init_stack_mag [(stack%6)*3 + 0]/sqrt(2.0); 
+         st::internal::stack_init_mag.at((stack)*3 + 1) = st::internal::init_stack_mag [(stack%6)*3 + 1]/sqrt(2.0); 
+         st::internal::stack_init_mag.at((stack)*3 + 2) = st::internal::init_stack_mag [(stack%6)*3 + 2]/sqrt(2.0); 
        //  std::cout << st::internal::stack_init_mag.at(stack*3 + 0) << ", " << st::internal::stack_init_mag.at(stack*3 + 1) << ", " << st::internal::stack_init_mag.at(stack*3 + 2) << std::endl;
          // increment stack counter
          stack++;
@@ -261,13 +264,13 @@ namespace internal{
       //-------------------------------------------------------
       // Determine microcell properties from atomic properties
       //-------------------------------------------------------
-      st::internal::default_properties.beta_cond =  0.11;
-      st::internal::default_properties.beta_diff =0.36;
-      st::internal::default_properties.sa_infinity =  1.0e8;
-      st::internal::default_properties.lambda_sdl = 100.0e-9; // m
+      st::internal::default_properties.beta_cond =  0.56;
+      st::internal::default_properties.beta_diff =0.72;
+      st::internal::default_properties.sa_infinity =  1.48e7;
+      st::internal::default_properties.lambda_sdl = 20.0e-10; // m
       st::internal::default_properties.diffusion = 0.001; //m^2/s ? 
-      st::internal::default_properties.sd_exchange = 1.6e-21; //Joule
-
+      st::internal::default_properties.sd_exchange = 8.010883e-21; //Joule
+      
      
 
       // Temporary array to hold number of atoms in each cell for averaging
@@ -326,6 +329,8 @@ namespace internal{
             st::internal::lambda_sdl.at(cell)  /= nat;
             st::internal::diffusion.at(cell)   /= nat;
             st::internal::sd_exchange.at(cell) /= nat;
+
+            st::internal::default_properties.sa_infinity =  st::internal::sa_infinity.at(cell);
          }
 
          else{

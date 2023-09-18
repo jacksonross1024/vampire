@@ -56,6 +56,8 @@ namespace st{
       
       int ST_output_rate;
       std::vector<double> initial_m(3);
+     
+      std::vector<double> init_stack_mag;
       std::vector<double> stack_init_mag;
       std::vector<int> stack_index; // start of stack in microcell arrays
 

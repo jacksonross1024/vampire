@@ -120,7 +120,7 @@ double two_temperature_function(double ftime){
    const double four_ln_2 = 2.77258872224; // 4 ln 2
    // 2/(delta sqrt(pi/ln 2)), delta = 10 nm, J/m^2
    const double two_delta_sqrt_pi_ln_2 = 93943727.87;
-   const double gaussian = exp(-four_ln_2*reduced_time*reduced_time)+\
+   const double gaussian = exp(-four_ln_2*reduced_time*reduced_time);//+\
    						  +exp(-four_ln_2*reduced_time_1*reduced_time_1)\
 						  +exp(-four_ln_2*reduced_time_2*reduced_time_2)\
 						  +exp(-four_ln_2*reduced_time_3*reduced_time_3);

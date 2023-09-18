@@ -21,7 +21,7 @@
 #include "create.hpp"
 #include <complex>
 #include "program.hpp"
-
+#include "sim.hpp"
 // Spin Torque headers
 #include "internal.hpp"
 
@@ -57,6 +57,7 @@ namespace st{
          //---------------------------------------------------------------------------------------------------
          //set parameters for TMR calculation
          if(st::internal::TMRenable == true){
+            std::cout << "wrong" << std::endl;
             int FL =	st::internal::free_layer;
             int RL =	st::internal::reference_layer;
             double dot = st::internal::magx_mat[RL]*st::internal::magx_mat[FL]+
@@ -125,21 +126,25 @@ namespace st{
          for(int stack=1; stack <num_stacks; ++stack) {
             if(stack%3 == 0) continue;
             // determine starting cell in stack
-            const int idx = stack_index[stack];
+            const int idx = stack_index[stack]+1;
 
             // set initial values
-            st::internal::sa[3*idx+0] = 0.0;
-            st::internal::sa[3*idx+1] = 0.0;
-            st::internal::sa[3*idx+2] = 0.0; //10.e6;// st::internal::default_properties.sa_infinity;
+            st::internal::sa[3*idx+0] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0);
+            st::internal::sa[3*idx+1] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0);
+            st::internal::sa[3*idx+2] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 2]/sqrt(2.0);
 
-            st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::stack_init_mag[stack*3 +0];
-            st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::stack_init_mag[stack*3 +1];
-            st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::stack_init_mag[stack*3 +2];
+            // st::internal::m [3*idx+0]  = st::internal::stack_init_mag[stack*3 +0]*2*3.74;
+            // st::internal::m [3*idx+1]  = st::internal::stack_init_mag[stack*3 +1]*2*3.74;
+            // st::internal::m [3*idx+2]  = st::internal::stack_init_mag[stack*3 +2]*2*3.74;
 
-          // std::cout<< st::internal::initial_beta << "\t" << st::internal::j[0] << "\t" << je << "\t" << st::internal::stack_init_mag[stack*3] << "\t" << std::endl;
+            st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::m [3*idx+0];
+            st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::m [3*idx+1];
+            st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::m [3*idx+2];
+
+          //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << st::internal::default_properties.sa_infinity << "\t" << st::internal::init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << st::internal::init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << st::internal::m[3*idx+0] << " \t" <<  st::internal::m[3*idx+1] << "\t" << st::internal::sa[3*idx+0] << "\t" << st::internal::sa[3*idx+1] << std::endl;
 
             // loop over all cells in stack after first (idx+1)
-            for(int cell=idx+2; cell<idx+num_microcells_per_stack; ++cell) {
+            for(int cell=idx+1; cell<idx+num_microcells_per_stack; ++cell) {
 
                // calculate cell id's
                const int cellx = 3*cell+0;
@@ -290,7 +295,7 @@ namespace st{
                const double jmy = Bc*je*m.y - twoDo*pre_jmy;
                const double jmz = Bc*je*m.z - twoDo*pre_jmz;
 
-               if(st::internal::cell_natom[cell]>0){
+               if(st::internal::cell_natom[cell]>0) {
                   // Save values for the spin accumulation
                   st::internal::sa[cellx] = sax;
                   st::internal::sa[celly] = say;
@@ -300,11 +305,15 @@ namespace st{
                   st::internal::j[cellx] = jmx;
                   st::internal::j[celly] = jmy;
                   st::internal::j[cellz] = jmz;
-
-                  // Calculate spin torque energy for cell (Joules)
+                  if(cell < idx+201) {
+                     st::internal::spin_torque[cellx] = 0.0;
+                     st::internal::spin_torque[celly] = 0.0;
+                     st::internal::spin_torque[cellz] = 0.0;//
+                  }  else {// Calculate spin torque energy for cell (Joules)
                   st::internal::spin_torque[cellx] = microcell_volume * st::internal::sd_exchange[cell] * sax * i_e * i_muB;
                   st::internal::spin_torque[celly] = microcell_volume * st::internal::sd_exchange[cell] * say * i_e * i_muB;
-                  st::internal::spin_torque[cellz] = microcell_volume * st::internal::sd_exchange[cell] * saz * i_e * i_muB;
+                  st::internal::spin_torque[cellz] = microcell_volume * st::internal::sd_exchange[cell] * saz * i_e * i_muB; 
+                  }
                }
                else{
                   // Save values for the spin accumulation
@@ -317,10 +326,16 @@ namespace st{
                   st::internal::j[celly] = st::internal::j[pcelly];
                   st::internal::j[cellz] = st::internal::j[pcellz];
 
+                  if(cell < idx+201) {
+                     st::internal::spin_torque[cellx] = 0.0;
+                     st::internal::spin_torque[celly] = 0.0;
+                     st::internal::spin_torque[cellz] = 0.0;//
+                  } else {
                   // Calculate spin torque energy for cell (Joules)
                   st::internal::spin_torque[cellx] = st::internal::spin_torque[pcellx];
                   st::internal::spin_torque[celly] = st::internal::spin_torque[pcelly];
                   st::internal::spin_torque[cellz] = st::internal::spin_torque[pcellz];
+                  }
                }
 
                //--------------------------------------------

@@ -53,6 +53,7 @@ namespace st{
 
       extern std::vector<double> initial_m;
       extern std::vector<double> stack_init_mag;
+      extern std::vector<double> init_stack_mag;
 
       extern std::vector<int> stack_index; // start of stack in microcell arrays
 
