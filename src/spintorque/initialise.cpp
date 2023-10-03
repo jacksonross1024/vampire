@@ -56,18 +56,16 @@ void initialise(const double system_dimensions_x,
    //-------------------------------------------------------------------------------------
    // Determine transformation between x,y,z in actual and spin torque coordinate system
    //-------------------------------------------------------------------------------------
-   int stx=0; // indices for x,y,z in the spin torque coordinate system (default z)
-   int sty=1;
-   int stz=2;
+  
    if(st::internal::current_direction==0){
-      stx=2; // c[stx] = c[2] = atom_x // current direction
-      sty=1; // c[sty] = c[1] = atom_y
-      stz=0; // c[stz] = c[0] = atom_z
+      st::internal::stx=2; // c[stx] = c[2] = atom_x // current direction
+      st::internal::sty=1; // c[sty] = c[1] = atom_y
+      st::internal::stz=0; // c[stz] = c[0] = atom_z
    }
    else if(st::internal::current_direction==1){
-      stx=0;// c[stx] = c[0] = atom_x
-      sty=2;// c[sty] = c[2] = atom_y // current direction
-      stz=1;// c[stz] = c[1] = atom_z
+      st::internal::stx=0;// c[stx] = c[0] = atom_x
+      st::internal::sty=2;// c[sty] = c[2] = atom_y // current direction
+      st::internal::stz=1;// c[stz] = c[1] = atom_z
    }
    // st::internal::micro_cell_thickness = st::internal::micro_cell_size[stx];
    //-------------------------------------------------------------------------------------
@@ -78,13 +76,13 @@ void initialise(const double system_dimensions_x,
    double system_dimensions[3]={system_dimensions_x,system_dimensions_y,system_dimensions_z};
    std::cout << "system dimensions " << system_dimensions[0] << ", " << system_dimensions[1] << ", " << system_dimensions[2] << std::endl;
    // determine number of cells in each stack  (global)
-   st::internal::num_microcells_per_stack = 1+ceil((system_dimensions[stz]+0.01)/st::internal::micro_cell_thickness);
-   std::cout << "microcells per stack " << st::internal::num_microcells_per_stack << std::endl;
+   st::internal::num_microcells_per_stack = 1+ceil((system_dimensions[st::internal::stz]+0.01)/st::internal::micro_cell_thickness);
+   std::cout << "microcells per stack " << st::internal::num_microcells_per_stack << ", microcell volume (A^3): " <<  st::internal::micro_cell_size[st::internal::stx]*st::internal::micro_cell_size[st::internal::sty]*st::internal::micro_cell_thickness << std::endl;
    // determine number of stacks in x and y (global)
-   st::internal::num_x_stacks = ceil((system_dimensions[stx]+0.0)/st::internal::micro_cell_size[stx]);
-   std::cout << "x_stacks " << st::internal::num_x_stacks << ", " << system_dimensions[stx]+0.0 << "/" << st::internal::micro_cell_size[stx] << std::endl;
-   st::internal::num_y_stacks = ceil((system_dimensions[sty]+0.0)/st::internal::micro_cell_size[sty]);
-   std::cout << "y_stacks " << st::internal::num_y_stacks << ", " << system_dimensions[sty]+0.0 << "/" << st::internal::micro_cell_size[sty] << std::endl;
+   st::internal::num_x_stacks = ceil((system_dimensions[st::internal::stx]+0.0)/st::internal::micro_cell_size[st::internal::stx]);
+   std::cout << "x_stacks " << st::internal::num_x_stacks << ", " << system_dimensions[st::internal::stx]+0.0 << "/" << st::internal::micro_cell_size[st::internal::stx] << std::endl;
+   st::internal::num_y_stacks = ceil((system_dimensions[st::internal::sty]+0.0)/st::internal::micro_cell_size[st::internal::sty]);
+   std::cout << "y_stacks " << st::internal::num_y_stacks << ", " << system_dimensions[st::internal::sty]+0.0 << "/" << st::internal::micro_cell_size[st::internal::sty] << std::endl;
    // determine total number of stacks
    st::internal::num_stacks = st::internal::num_x_stacks*st::internal::num_y_stacks;
    std::cout << st::internal::num_stacks << std::endl;
@@ -195,16 +193,16 @@ void initialise(const double system_dimensions_x,
  
    // Determine number of cells in x,y,z (ST coordinate system)
    const int d[3]={ncx,ncy,ncz};
-   const double cs[3] = {st::internal::micro_cell_size[stx], st::internal::micro_cell_size[sty], st::internal::micro_cell_thickness}; // cell size
+   const double cs[3] = {st::internal::micro_cell_size[st::internal::stx], st::internal::micro_cell_size[st::internal::sty], st::internal::micro_cell_thickness}; // cell size
 
    // Assign atoms to cells
    for(int atom=0;atom<num_local_atoms;atom++){
       // temporary for atom coordinates
       double c[3];
       // convert atom coordinates to st reference frame
-      c[stx]=atom_coords_x[atom]+0.0001;
-      c[sty]=atom_coords_y[atom]+0.0001;
-      c[stz]=atom_coords_z[atom]+0.0001;
+      c[st::internal::stx]=atom_coords_x[atom]+0.0001;
+      c[st::internal::sty]=atom_coords_y[atom]+0.0001;
+      c[st::internal::stz]=atom_coords_z[atom]+0.0001;
       int scc[3]={0,0,0}; // super cell coordinates
       for(int i=0;i<3;i++){
          // Determine supercell coordinates for atom (rounding down)

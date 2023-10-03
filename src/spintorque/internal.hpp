@@ -43,6 +43,9 @@ namespace st{
 
       extern int config_file_counter; // spin torque config file counter
 
+      extern int stx;//=0; // indices for x,y,z in the spin torque coordinate system (default z)
+      extern int sty;//=1;
+      extern int stz;//=2;
       extern int free_layer;       /// index of free layer in magnetic tunnel junction
       extern int reference_layer;  /// index of reference layer in magnetic tunnel junction
 

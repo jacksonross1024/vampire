@@ -82,8 +82,8 @@ namespace anisotropy{
       }
 
       //---------------------------------------------------------------------------------
-      // Function to add second order uniaxial anisotropy in x,y and z
-      // E = 2/3 * - ku2 (1/2)  * (3sz^2 - 1) == -ku2 sz^2 + const
+      // Function to add fourth order rotational anisotropy in spherical coord (cartesian has problems still)
+      //   // E_4r = sin^3 theta cos (4 phi)
       //---------------------------------------------------------------------------------
       double rotational_fourth_order_energy_fixed_basis(
          const int atom,
@@ -95,12 +95,12 @@ namespace anisotropy{
          // get reduced anisotropy constant ku/mu_s
          const double k4r = internal::k4r[mat];
 
-         const double sx2 = sx*sx;
-         const double sz2 = sz*sz;
-         const double sx4 = sx2*sx2;
-         const double sz4 = sz2*sz2;
+         //S already normalised to 1
+         double theta = atan2(sy,sx);
+            if(theta != theta) theta = 0.0;
+         double phi = acos(sz);
 
-         const double energy = k4r*(1.0 + sz4 - 8.0*sx2 + 8.0*sx2*sz2 + 8.0*sx4-2.0*sz2);
+         const double energy = k4r*sin(theta)*sin(theta)*sin(theta)*cos(4*phi);
          //dE/dS_x = k4r*(-16 s_x +16 s_x*s_z^2 + 32 s_x^3)
          //        =-k4r*8.0*s_x(1-s_z^2 - 2s_x^2)
          //

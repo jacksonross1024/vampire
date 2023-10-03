@@ -37,7 +37,9 @@ namespace st{
       std::vector<double> y_field_array;
       std::vector<double> z_field_array;
 
-
+      int stx=0; // indices for x,y,z in the spin torque coordinate system (default z)
+      int sty=1;
+      int stz=2;
 
       int num_stacks;  // total number of stacks
       int num_x_stacks; // number of stacks in x

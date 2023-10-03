@@ -118,8 +118,8 @@ namespace st{
 
          const double i_muB = 1.0/9.274e-24; // J/T
          const double i_e = 1.0/1.60217662e-19; // electronic charge (Coulombs)
-         const double microcell_volume = (st::internal::micro_cell_size[0] *
-                                          st::internal::micro_cell_size[1] *
+         const double microcell_volume = (st::internal::micro_cell_size[st::internal::stx] *
+                                          st::internal::micro_cell_size[st::internal::sty] *
                                           st::internal::micro_cell_thickness)*1.e-30; // m^3
 
          // loop over all 1D stacks (in parallel)

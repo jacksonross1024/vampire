@@ -105,48 +105,48 @@ namespace internal{
    												v_exchange_list[iid].Jij[2]};
                  // const double Sj[3] = {spin_array_x[natom], spin_array_y[natom], spin_array_z[natom]};
                
-               if(sim::anti_PBC[0]) {
-                  if(atoms::x_coord_array[natom] < -0.1) {
-                     hx += -Jij[0] * spin_array_y[natom];
-                     hy += Jij[1] * spin_array_x[natom];
-                  //   count++;
-                   // if(atom==1) std::cout <<Jij[0] << " 0 <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << -spin_array_y[natom] << ", " << spin_array_x[natom] << std::endl;
-                  }
-                  // else if(atoms::x_coord_array[atom] < -0.01) {
-                  //    hx += Jij[0] * spin_array_y[natom];
-                  //    hy += -Jij[1] * spin_array_x[natom];
-                  //    count++;
-                  //    if(atom==1) std::cout <<Jij[0] << " <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << spin_array_y[natom] << ", " << -spin_array_x[natom] << std::endl;
-                  // }
-                  else if (atoms::x_coord_array[natom] > cs::system_dimensions[0]-0.01) {
-                     hx += Jij[0] * spin_array_y[natom];
-                     hy += -Jij[1] * spin_array_x[natom];
-                   //  count++;
-                    // if(atom==2001) std::cout <<Jij[0] << " l_x <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << spin_array_y[natom] << ", " << -spin_array_x[natom] << std::endl;
-                  }
-                  // else if (atoms::x_coord_array[atom] > cs::system_dimensions[0]-0.01) {
-                  //    hx += -Jij[0] * spin_array_y[natom];
-                  //    hy += Jij[1] * spin_array_x[natom];
-                  //    count++;
-                  // }
-                  else 
-                  {
-                     hx += Jij[0] * spin_array_x[natom];
-                     hy += Jij[1] * spin_array_y[natom];
-                  }
-   					hz += Jij[2] * spin_array_z[natom];
-                  }
-               else {
+            //    if(sim::anti_PBC[0]) {
+            //       if(atoms::x_coord_array[natom] < -0.1) {
+            //          hx += -Jij[0] * spin_array_y[natom];
+            //          hy += Jij[1] * spin_array_x[natom];
+            //       //   count++;
+            //        // if(atom==1) std::cout <<Jij[0] << " 0 <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << -spin_array_y[natom] << ", " << spin_array_x[natom] << std::endl;
+            //       }
+            //       // else if(atoms::x_coord_array[atom] < -0.01) {
+            //       //    hx += Jij[0] * spin_array_y[natom];
+            //       //    hy += -Jij[1] * spin_array_x[natom];
+            //       //    count++;
+            //       //    if(atom==1) std::cout <<Jij[0] << " <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << spin_array_y[natom] << ", " << -spin_array_x[natom] << std::endl;
+            //       // }
+            //       else if (atoms::x_coord_array[natom] > cs::system_dimensions[0]-0.01) {
+            //          hx += Jij[0] * spin_array_y[natom];
+            //          hy += -Jij[1] * spin_array_x[natom];
+            //        //  count++;
+            //         // if(atom==2001) std::cout <<Jij[0] << " l_x <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << spin_array_y[natom] << ", " << -spin_array_x[natom] << std::endl;
+            //       }
+            //       // else if (atoms::x_coord_array[atom] > cs::system_dimensions[0]-0.01) {
+            //       //    hx += -Jij[0] * spin_array_y[natom];
+            //       //    hy += Jij[1] * spin_array_x[natom];
+            //       //    count++;
+            //       // }
+            //       else 
+            //       {
+            //          hx += Jij[0] * spin_array_x[natom];
+            //          hy += Jij[1] * spin_array_y[natom];
+            //       }
+   			// 		hz += Jij[2] * spin_array_z[natom];
+            //       }
                   hx += Jij[0] * spin_array_x[natom];
                   hy += Jij[1] * spin_array_y[natom];
    					hz += Jij[2] * spin_array_z[natom];
-               }
+               
             }
               // if(count > 0) std::cout << "atom " << atom << " has " << count << " abc neighbors " << std::endl;
+               
                field_array_x[atom] += hx; // save total field to field array
    				field_array_y[atom] += hy;
    				field_array_z[atom] += hz;
-
+  // if(atom==4000) std::cout << hx << "\t" << hy << "\t" << hz << std::endl;
    			}
    			break;
 
