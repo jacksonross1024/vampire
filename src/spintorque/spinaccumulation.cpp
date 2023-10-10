@@ -164,7 +164,7 @@ namespace st{
                const double pmodm = sqrt(pm.x*pm.x + pm.y*pm.y + pm.z*pm.z);
 
                // Check for zero magnetization in normalization
-               if(modm > 1.e-8){
+               if(modm > 1.e-11){
                   m.x = m.x/modm;
                   m.y = m.y/modm;
                   m.z = m.z/modm;
@@ -174,7 +174,7 @@ namespace st{
                   m.y = 0.0;
                   m.z = 0.0;
                }
-               if(pmodm > 1.e-8){
+               if(pmodm > 1.e-11){
                   pm.x = pm.x/pmodm;
                   pm.y = pm.y/pmodm;
                   pm.z = pm.z/pmodm;
@@ -190,7 +190,7 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Check for cell magnetization greater than 1e-8 mu_B
-               if(modm > 1.0e-8){
+               if(modm > 1.0e-11){
                   // Initialise inverse transformation matrix
                   set_inverse_transformation_matrix(m, itm);
 
@@ -367,7 +367,7 @@ namespace st{
                double bj; // the ST parameter describing field-like torque
 
 
-                if( ( plus_perp <= 1.0e-7 ) ){
+                if( ( plus_perp <= 1.0e-11 ) ){
                     aj = 0.0;
                     bj = 0.0; }
 

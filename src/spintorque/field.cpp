@@ -46,11 +46,11 @@ namespace st{
             st::internal::y_field_array[atom] = st::internal::spin_torque[cell3+1]*i_mu_s;
             st::internal::z_field_array[atom] = st::internal::spin_torque[cell3+2]*i_mu_s;
 
-            if(atom == 4000) {
-            std::cout << atom << "\t" << st::internal::x_field_array[atom] << "\t";
-            std::cout << st::internal::y_field_array[atom] << "\t" << st::internal::z_field_array[atom] << "\t" << std::endl;
-            // std::cout << i_mu_s << "\t" << mu_s_array[atom_type_array[atom]] << std::endl;
-            }
+            // if(atom == 4000) {
+            // std::cout << atom << "\t" << st::internal::x_field_array[atom] << "\t";
+            // std::cout << st::internal::y_field_array[atom] << "\t" << st::internal::z_field_array[atom] << "\t" << std::endl;
+            // // std::cout << i_mu_s << "\t" << mu_s_array[atom_type_array[atom]] << std::endl;
+            // }
       }
 
    }
