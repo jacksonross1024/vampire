@@ -51,7 +51,7 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 
 	// Constants for distribution calculation
 	const int num_alloy_materials = mp::num_materials; // local constant for number of materials
-	const double resolution = 5.0; // spatial reolution of concentration map (Angstroms)
+	const double resolution = 50.0; // spatial reolution of concentration map (Angstroms)
 	const double sizex = cs::system_dimensions[0];
 	const double sizey = cs::system_dimensions[1];
 	const int xcells = int(sizex/resolution)+1;
