@@ -541,7 +541,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 			if(phi != phi) phi = 0.0;
 
 		//T_z e||xy -> torque asymmetry sin(2(phi-pi/4))
-		double theta = M_PI*0.25;
+		double theta = 0.0;
 		// double lot_str = sin(2.0*theta - 2.0*phi);
 		double lot_str[3] = { -sin(phi)*sin(phi),sin(2.0*phi), sin(2*phi)*cos(theta)*cos(theta)};
 		// double lot_str[3] = {0.0, 0.0, sin(2.0*phi)};
