@@ -110,6 +110,7 @@ namespace program{
 						int z_cell = (atoms::z_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[2];
 				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
 						int cell = z_cell*num_dw_cells_x*num_dw_cells_y*num_mag_types + y_cell*num_dw_cells_x*num_mag_types + x_cell*num_mag_types + mat;
+						//          1* + 
 					//	std::cout << cell << "\t";
 						atom_to_cell_array[atom] = cell;
 						cell_to_lattice_array[3*cell + 0] = x_cell;
@@ -448,7 +449,7 @@ namespace program{
 				mag[num_mag_cat*cell+ 2] += S[2];
 				mag[num_mag_cat*cell+ 3] += exchange::single_spin_energy(atom, S[0], S[1], S[2]);
 				mag[num_mag_cat*cell+ 4] += anisotropy::single_spin_energy(atom,mat , S[0], S[1], S[2], sim::temperature);
-				mag[num_mag_cat*cell+ 5] += (cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt[mat];
+				mag[num_mag_cat*cell+ 5] += (cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*0.5 - atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]);
 			}
 
@@ -636,7 +637,7 @@ namespace program{
 				mag[num_mag_cat*cell+2] += S[2];
 				mag[num_mag_cat*cell+3] += exchange::single_spin_energy(atom, S[0], S[1], S[2]);
 				mag[num_mag_cat*cell+4] += anisotropy::single_spin_energy(atom,mat , S[0], S[1], S[2], sim::temperature);
-				mag[num_mag_cat*cell+5] += sim::laser_torque_strength*(cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt[mat];
+				mag[num_mag_cat*cell+5] += sim::laser_torque_strength*(cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
 
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*1.5 - (M_PI+atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]));
 			}

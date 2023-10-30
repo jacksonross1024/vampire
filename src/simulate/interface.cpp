@@ -345,10 +345,19 @@ namespace sim{
       }
       test = "optical-torque";
       if( word==test ){
-         double lt = atof(value.c_str());
+         std::cout << "Enabling LOT (yJ) material: ";
+         std::vector<double> u(3);
+         u=vin::doubles_from_string(value);
          // Test for valid range
-         vin::check_for_valid_value(lt, word, line, prefix, unit, "yJ", -1.0e6, 1.0e6,"input","-100 - 100yJ");
-         sim::internal::mp[super_index].lt.set(lt);
+         //vin::check_for_valid_value(u, word, line, prefix, unit, "yJ", -1.0e6, 1.0e6,"input","-100 - 100yJ");
+         // sim::internal::lot_lt_x[super_index] = u[0];
+         // sim::lot_lt_y[super_index] = u[1];
+         // sim::lot_lt_z[super_index] = u[2];
+         sim::internal::mp[super_index].lt_x.set(u[0]);
+         sim::internal::mp[super_index].lt_y.set(u[1]);
+         sim::internal::mp[super_index].lt_z.set(u[2]);
+
+         std::cout  << super_index << ": <" << sim::internal::mp[super_index].lt_x.get() << ", " << sim::internal::mp[super_index].lt_y.get() << ", " << sim::internal::mp[super_index].lt_z.get() << "> " << std::endl;
          enable_laser_torque_fields = true;
          return true;
       }

@@ -106,8 +106,10 @@ double temperature_pulse_function(double function_time){
 ///
 ///   I(t) = 2/(tp delta sqrt(pi/ln 2)) exp[-(4 ln 2)(t/tp)**2] W/m^3
 ///
-///   Assuming a nominal penetration depth of 10 nm and conversion from J/m^2 -> mJ/cm^2,
-///   I(t) is now in units of s^1 m^-1 and laser power P is in units of mJ/cm^2
+///   Assuming a nominal penetration depth of 10 nm 
+// [this is bad conversion] and conversion from J/m^2 -> mJ/cm^2, 50 J/m^2 -> 0.5 mJ/cm^2 
+///   I(t) is now in units of s^1 m^-1 and laser power P is in units of J/m^2
+/// bad : mJ/cm^2
 ///
 ///-----------------------------------------------------------------------------------------
 double two_temperature_function(double ftime){
@@ -119,9 +121,9 @@ double two_temperature_function(double ftime){
    const double reduced_time_3 = (ftime-1.5*sim::pump_time-sim::double_pump_delay*3)*i_pump_time;
    const double four_ln_2 = 2.77258872224; // 4 ln 2
    // 2/(delta sqrt(pi/ln 2)), delta = 10 nm, J/m^2
-   const double two_delta_sqrt_pi_ln_2 = 93943727.87;
-   const double gaussian = exp(-four_ln_2*reduced_time*reduced_time)+\
-   						  +1.3*exp(-four_ln_2*reduced_time_1*reduced_time_1)\
+   const double two_delta_sqrt_pi_ln_2 = 93943727.87; // 1/m
+   const double gaussian = exp(-four_ln_2*reduced_time*reduced_time);//+\
+   						  +1.0*exp(-four_ln_2*reduced_time_1*reduced_time_1)\
 						  +1*exp(-four_ln_2*reduced_time_2*reduced_time_2)\
 						  +1*exp(-four_ln_2*reduced_time_3*reduced_time_3);
    if(sim::enable_laser_torque_fields) {

@@ -94,7 +94,9 @@ namespace sim{
 
       
       std::vector<double> lot_unit_vector(3, 0.0);
-      std::vector<double> lot_lt;
+      std::vector<double>  lot_lt_x;
+      std::vector<double>  lot_lt_y;
+      std::vector<double>  lot_lt_z;
       std::vector<sim::internal::mp_t> mp; // array of material properties
 
       std::vector<double> stt_asm; // array of spin transfer torque asymmetry

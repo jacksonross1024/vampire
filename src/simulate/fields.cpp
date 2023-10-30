@@ -541,20 +541,23 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 			if(phi != phi) phi = 0.0;
 
 		//T_z e||xy -> torque asymmetry sin(2(phi-pi/4))
-		double theta = 3.0*M_PI/8.0;
-		double lot_str = sin(2.0*theta - 2.0*phi);
-		// double lot_str = sin(2.0*phi);
-		double lotlt_z = sim::laser_torque_strength * (lot_str)*lot_lt[material]*1e-24 /mp::material[material].mu_s_SI;
+		double theta = M_PI*0.25;
+		// double lot_str = sin(2.0*theta - 2.0*phi);
+		double lot_str[3] = { -sin(phi)*sin(phi),sin(2.0*phi), sin(2*phi)*cos(theta)*cos(theta)};
+		// double lot_str[3] = {0.0, 0.0, sin(2.0*phi)};
+		double lotlt_z = sim::laser_torque_strength * (lot_str[2])*sim::internal::lot_lt_z[material]*1e-24 /mp::material[material].mu_s_SI;
+		double lotlt_y = sim::laser_torque_strength * (lot_str[1])*sim::internal::lot_lt_y[material]*1e-24 /mp::material[material].mu_s_SI;
+		double lotlt_x = sim::laser_torque_strength * (lot_str[0])*sim::internal::lot_lt_x[material]*1e-24 /mp::material[material].mu_s_SI;
 		// if(program::fractional_electric_field_strength > 0.0) std::cout << program::fractional_electric_field_strength << std::endl;
-		double lotx = lot_unit_vector[0];
-		double loty = lot_unit_vector[1];
-		double lotz = lot_unit_vector[2];
+		double lotx = lotlt_x;//*lot_unit_vector[0];
+		double loty = lotlt_y;//*lot_unit_vector[1];
+		double lotz = lotlt_z;//lotlt_z*lot_unit_vector[2];
 
-		hx += lotlt_z * (loty*sz - sy*lotz);
-		hy += lotlt_z * (lotz*sx - sz*lotx);
-		hz += lotlt_z * (lotx*sy - sx*loty);
+		hx += (loty*sz - sy*lotz);
+		hy += (lotz*sx - sz*lotx);
+		hz += (lotx*sy - sx*loty);
 
-		
+		//if(hz != 0) std::cout << lotlt_x << ", " << lotlt_y << ", " << lotlt_z << std::endl;
 		//----------------------------------------------------------------------------------
 		// VCMA field
 		//----------------------------------------------------------------------------------

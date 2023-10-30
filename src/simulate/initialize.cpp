@@ -32,8 +32,11 @@ namespace sim{
       sim::internal::sot_rj.resize(num_materials,0.0);
       sim::internal::sot_pj.resize(num_materials,0.0);
 
-      sim::internal::lot_lt.resize(num_materials, 0.0);
-      sim::internal::vcmak.resize(num_materials, 0.0);
+      sim::internal::lot_lt_x.resize(num_materials, 0.0);
+      sim::internal::lot_lt_y.resize(num_materials, 0.0);
+      sim::internal::lot_lt_z.resize(num_materials, 0.0);
+
+      sim::internal::vcmak.resize(num_materials);
 
       // loop over materials set by user
       for(unsigned int m=0; m < sim::internal::mp.size(); ++m){
@@ -46,13 +49,15 @@ namespace sim{
          if(sim::internal::mp[m].sot_rj.is_set())  sim::internal::sot_rj[m]  = sim::internal::mp[m].sot_rj.get();
          if(sim::internal::mp[m].sot_pj.is_set())  sim::internal::sot_pj[m]  = sim::internal::mp[m].sot_pj.get();
 
-         if(sim::internal::mp[m].lt.is_set())  sim::internal::lot_lt[m] = sim::internal::mp[m].lt.get();
+         if(sim::internal::mp[m].lt_x.is_set())  sim::internal::lot_lt_x[m] = sim::internal::mp[m].lt_x.get();
+         if(sim::internal::mp[m].lt_y.is_set())  sim::internal::lot_lt_y[m] = sim::internal::mp[m].lt_y.get();
+         if(sim::internal::mp[m].lt_z.is_set())  sim::internal::lot_lt_z[m] = sim::internal::mp[m].lt_z.get();
+
          // set vcma coefficients (requires sim::internal::enable_vcma_fields == true) but this should be default
          if(sim::internal::mp[m].vcmak.is_set()){
             const double imu_s = 1.0 / mp::material[m].mu_s_SI; // calculate inverse moment
             sim::internal::vcmak[m] = imu_s * sim::internal::mp[m].vcmak.get();
          }
-
       }
 
       return;
