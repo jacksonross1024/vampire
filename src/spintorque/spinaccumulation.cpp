@@ -123,10 +123,12 @@ namespace st{
                                           st::internal::micro_cell_thickness)*1.e-30; // m^3
 
          // loop over all 1D stacks (in parallel)
-         for(int stack=1; stack <num_stacks; ++stack) {
-            if(stack%3 == 0) continue;
+         for(int s=0; s <st::internal::mpi_stack_list.size(); ++s) {
+            int stack = st::internal::mpi_stack_list[s]+1;
+        //   std::cout << vmpi::my_rank << ", " << stack << std::endl;
+            // if(stack%3 == 0) continue;
             // determine starting cell in stack
-            const int idx = stack_index[stack]+1;
+            const int idx = stack_index[stack];
 
             // set initial values
             st::internal::sa[3*idx+0] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0);
@@ -267,14 +269,28 @@ namespace st{
                const double sa_perp3 = prefac*(c*sin_bx + d*cos_bx);
 
                //convert mp and m_perp
-               const double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
-               const double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
-               const double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
+                double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
+                double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
+                double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
+              
+               //add SOT contribution
+               double theta = atan2(m.y,m.x);
+                  if(theta != theta) theta = 0.0;
+               double phi = acos(m.z);
 
+               double say_sot = -sin(phi)*sin(2.0*theta)*0.5*st::internal::sa_infinity[cell]*je*1e-11; //j_sd / mu_b dS/S 8 10^8 / 10^7 A/m^2 = T
+               double sax_sot = -sin(phi)*(1.2*sin(theta)+1.4)*st::internal::sa_infinity[cell]*je*1e-11;
+               double saz_sot = cos(theta)*sin(phi)*0.12*st::internal::sa_infinity[cell]*je*1e-11;
+
+               // double sax_sot = sin(phi)*sin(2.0*theta)*0.5*1.48e7*je*1e-11; //j_sd / mu_b dS/S 8 10^8 / 10^7 A/m^2 = T
+               // double say_sot = sin(phi)*(1.2*sin(theta)+1.4)*1.48e7*je*1e-11;
+               // double saz_sot = -cos(theta)*sin(phi)*0.12*1.48e7*je*1e-11;
+              //  std::cout << sax << ", " << say << ", " << saz << ", " \
+                                          <<sax_sot << ", " << say_sot << ", " << saz_sot << std::endl;
                //--------------------------------------------
                // Step 4 calculate the spin current (jm_end)
                //--------------------------------------------
-               const double ac_bd = a*c + b*d;
+               const double ac_bd = a*c + b*d; 
                const double ad_bc = a*d - b*c;
 
                const double divsa_para = (mp_inf - mp_0)*i_lsdl*e_xsdl;
@@ -301,19 +317,23 @@ namespace st{
                   st::internal::sa[celly] = say;
                   st::internal::sa[cellz] = saz;
 
+                  st::internal::sa_sot[cellx] = sax_sot;
+                  st::internal::sa_sot[celly] = say_sot;
+                  st::internal::sa_sot[cellz] = saz_sot;
+
                   // Save values for the spin current
                   st::internal::j[cellx] = jmx;
                   st::internal::j[celly] = jmy;
                   st::internal::j[cellz] = jmz;
-                  if(cell < idx+201) {
-                     st::internal::spin_torque[cellx] = 0.0;
-                     st::internal::spin_torque[celly] = 0.0;
-                     st::internal::spin_torque[cellz] = 0.0;//
-                  }  else {// Calculate spin torque energy for cell (Joules)
-                  st::internal::spin_torque[cellx] = microcell_volume * st::internal::sd_exchange[cell] * sax * i_e * i_muB;
-                  st::internal::spin_torque[celly] = microcell_volume * st::internal::sd_exchange[cell] * say * i_e * i_muB;
-                  st::internal::spin_torque[cellz] = microcell_volume * st::internal::sd_exchange[cell] * saz * i_e * i_muB; 
-                  }
+                  // if(cell < idx+201) {
+                  //    st::internal::spin_torque[cellx] = 0.0;
+                  //    st::internal::spin_torque[celly] = 0.0;
+                  //    st::internal::spin_torque[cellz] = 0.0;//
+                  // }  else {// Calculate spin torque energy for cell (Joules)
+                  st::internal::spin_torque[cellx] = microcell_volume * st::internal::sd_exchange[cell] * (sax+sax_sot) * i_e * i_muB;
+                  st::internal::spin_torque[celly] = microcell_volume * st::internal::sd_exchange[cell] * (say+say_sot) * i_e * i_muB;
+                  st::internal::spin_torque[cellz] = microcell_volume * st::internal::sd_exchange[cell] * (saz+saz_sot) * i_e * i_muB; 
+                  // }
                }
                else{
                   // Save values for the spin accumulation
@@ -321,21 +341,25 @@ namespace st{
                   st::internal::sa[celly] = st::internal::sa[pcelly];
                   st::internal::sa[cellz] = st::internal::sa[pcellz];
 
+                  st::internal::sa_sot[cellx] = st::internal::sa_sot[pcellx];
+                  st::internal::sa_sot[celly] = st::internal::sa_sot[pcelly];
+                  st::internal::sa_sot[cellz] = st::internal::sa_sot[pcellz];
+
                   // Save values for the spin current
                   st::internal::j[cellx] = st::internal::j[pcellx];
                   st::internal::j[celly] = st::internal::j[pcelly];
                   st::internal::j[cellz] = st::internal::j[pcellz];
 
-                  if(cell < idx+201) {
+                  // if(cell < idx+201) {
                      st::internal::spin_torque[cellx] = 0.0;
                      st::internal::spin_torque[celly] = 0.0;
                      st::internal::spin_torque[cellz] = 0.0;//
-                  } else {
+                  // } else {
                   // Calculate spin torque energy for cell (Joules)
                   st::internal::spin_torque[cellx] = st::internal::spin_torque[pcellx];
                   st::internal::spin_torque[celly] = st::internal::spin_torque[pcelly];
                   st::internal::spin_torque[cellz] = st::internal::spin_torque[pcellz];
-                  }
+                  // }
                }
 
                //--------------------------------------------
@@ -408,7 +432,7 @@ namespace st{
          // Reduce all microcell spin torques on all nodes
          #ifdef MPICF
             MPI_Allreduce(MPI_IN_PLACE, &st::internal::spin_torque[0],st::internal::spin_torque.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE, &st::internal::total_ST[0],st::internal::total_ST.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            // MPI_Allreduce(MPI_IN_PLACE, &st::internal::total_ST[0],st::internal::total_ST.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
          #endif
          st::internal::output_microcell_data();
 

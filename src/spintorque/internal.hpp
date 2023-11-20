@@ -79,6 +79,7 @@ namespace st{
       extern std::vector<double> m; // magnetisation
       extern std::vector<double> j; // spin current
       extern std::vector<double> sa; // spin accumulation
+      extern std::vector<double> sa_sot;
       extern std::vector<double> spin_torque; // spin torque
       extern std::vector<double> ast; // adiabatic spin torque
       extern std::vector<double> nast; // non-adiabatic spin torque
@@ -87,8 +88,18 @@ namespace st{
       extern std::vector<double> magy_mat;
       extern std::vector<double> magz_mat;
       
-      
+      extern std::vector<int> mpi_stack_list;
 
+      extern std::vector<double> sa_sum;
+      extern std::vector<double> sa_sot_sum;
+        // double m_sum[size] = {0.0};
+      extern std::vector<double> j_sum;
+      extern   std::vector<double> coeff_ast_sum;
+      extern   std::vector<double> coeff_nast_sum;
+      extern   std::vector<double> ast_sum;
+      extern   std::vector<double> nast_sum;
+      extern std::vector<double> total_ST_sum;
+      extern   std::vector<int> cell_natom_sum;
       // material parameters for spin torque calculation
       struct mp_t{
          double beta_cond;    /// spin polarisation (conductivity)

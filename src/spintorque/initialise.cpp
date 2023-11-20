@@ -112,12 +112,22 @@ void initialise(const double system_dimensions_x,
    st::internal::m.resize(three_vec_array_size); // magnetisation
    st::internal::j.resize(three_vec_array_size); // spin current
    st::internal::sa.resize(three_vec_array_size); // spin accumulation
+   st::internal::sa_sot.resize(three_vec_array_size); // spin accumulation
    st::internal::spin_torque.resize(three_vec_array_size); // spin torque
    st::internal::ast.resize(three_vec_array_size); // adiabatic spin torque
    st::internal::nast.resize(three_vec_array_size); // non-adiabatic spin torque
    st::internal::total_ST.resize(three_vec_array_size); // non-adiabatic spin torque
 
-
+   st::internal::sa_sum.resize(three_vec_array_size, 0.0);
+         st::internal::sa_sot_sum.resize(three_vec_array_size, 0.0);
+        // double m_sum[size] = {0.0};
+         st::internal::j_sum.resize(three_vec_array_size, 0.0);
+         st::internal::coeff_ast_sum.resize(three_vec_array_size, 0.0);
+         st::internal::coeff_nast_sum.resize(three_vec_array_size, 0.0);
+         st::internal::ast_sum.resize(three_vec_array_size, 0.0);
+         st::internal::nast_sum.resize(three_vec_array_size, 0.0);
+         st::internal::total_ST_sum.resize(three_vec_array_size, 0.0);
+         st::internal::cell_natom_sum.resize(array_size, 0);
 
    //---------------------------------------------------
    // Noi Initialise j,sa, st, ast, nast here?
@@ -126,6 +136,9 @@ void initialise(const double system_dimensions_x,
       st::internal::sa[3*cell+0] = 0.0;
       st::internal::sa[3*cell+1] = 0.0;
       st::internal::sa[3*cell+2] = 1.0;
+      st::internal::sa_sot[3*cell+0] = 0.0;
+      st::internal::sa_sot[3*cell+1] = 0.0;
+      st::internal::sa_sot[3*cell+2] = 0.0;
       st::internal::j [3*cell+0] = 0.0;
       st::internal::j [3*cell+1] = 0.0;
       st::internal::j [3*cell+2] = 0.0;
@@ -250,6 +263,42 @@ void initialise(const double system_dimensions_x,
    // optionally output base microcell data
    st::internal::output_base_microcell_data();
 
+   //determine mpi core stack list 
+   int residual = st::internal::num_stacks % vmpi::num_processors;
+  // st::internal::mpi_stack_list.resize(int(floor(st::internal::num_stacks/vmpi::num_processors))+1);
+   for(int s = 0; s < int(floor(st::internal::num_stacks/vmpi::num_processors)); s++) {
+      st::internal::mpi_stack_list.push_back(s*vmpi::num_processors + vmpi::my_rank);
+   }
+   if(vmpi::my_rank <= residual){
+      st::internal::mpi_stack_list.push_back(st::internal::num_stacks - vmpi::my_rank);
+   }
+
+    #ifdef MPICF 
+   // if(err::check) {
+      //check stt stack mpi setup 
+      int stacks[st::internal::num_stacks] = {0};
+      int mpi_stacks[st::internal::num_stacks] = {-1};
+      int stack_sum = 0;
+      int size = st::internal::mpi_stack_list.size();
+      MPI_Reduce(&size,&stack_sum, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+      bool error = false;
+      if(vmpi::my_rank == 0 && (stack_sum-1) != st::internal::num_stacks) {
+         std::cout << stack_sum-1 << " != " << st::internal::num_stacks << std::endl;
+         error = true;
+      }
+      MPI_Bcast(&error,1,MPI_INT,0,MPI_COMM_WORLD);
+      if(error) {
+
+         for(int i = 0; i < st::internal::mpi_stack_list.size(); i++) std::cout << vmpi::my_rank << ", " << st::internal::mpi_stack_list[i] << std::endl; 
+          
+         MPI_Barrier(MPI_COMM_WORLD);
+         err::vexit();
+      }
+
+     
+   // }
+   
+    #endif 
    return;
 }
 
@@ -262,10 +311,10 @@ namespace internal{
       //-------------------------------------------------------
       // Determine microcell properties from atomic properties
       //-------------------------------------------------------
-      st::internal::default_properties.beta_cond =  0.56;
-      st::internal::default_properties.beta_diff =0.72;
+      st::internal::default_properties.beta_cond =  0.23;
+      st::internal::default_properties.beta_diff =0.56;
       st::internal::default_properties.sa_infinity =  1.48e7;
-      st::internal::default_properties.lambda_sdl = 20.0e-10; // m
+      st::internal::default_properties.lambda_sdl = 16.0e-10; // m
       st::internal::default_properties.diffusion = 0.001; //m^2/s ? 
       st::internal::default_properties.sd_exchange = 8.010883e-21; //Joule
       

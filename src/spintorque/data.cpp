@@ -82,6 +82,7 @@ namespace st{
       std::vector<double> m; // magnetisation
       std::vector<double> j; // spin current
       std::vector<double> sa; // spin accumulation
+      std::vector<double> sa_sot; // spin accumulation
       std::vector<double> spin_torque; // spin torque energy (J)
       std::vector<double> ast; // adiabatic spin torque
       std::vector<double> nast; // non-adiabatic spin torque
@@ -90,7 +91,19 @@ namespace st{
       std::vector<double> magy_mat;
       std::vector<double> magz_mat;
       
-      
+      std::vector<double> sa_sum;
+         std::vector<double> sa_sot_sum;
+        // double m_sum[size] = {0.0};
+         std::vector<double> j_sum;
+         std::vector<double> coeff_ast_sum;
+         std::vector<double> coeff_nast_sum;
+         std::vector<double> ast_sum;
+         std::vector<double> nast_sum;
+         //double total_ST_sum[size] = {0.0};
+         std::vector<double> total_ST_sum;
+         std::vector<int> cell_natom_sum;
+
+      std::vector<int> mpi_stack_list;
       // array of material properties
       std::vector<st::internal::mp_t> mp;
 
