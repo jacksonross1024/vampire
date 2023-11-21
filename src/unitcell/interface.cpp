@@ -267,6 +267,14 @@ namespace unitcell{
             internal::interaction_cutoff_range[superIndex][subIndex] *= icr;
             return true;
          }
+         test = "RKKYf";
+         if (word == test){
+            double RKKYf = atof(value.c_str());
+            vin::check_for_valid_value(icRKKYfr, word, line, prefix, unit, "1/A", 0.1, 4.0,"input","0.1 - 4 Fermi wave number for RKKY oscillations");
+            internal::RKKYf[superIndex][subIndex] *= RKKYf;
+            return true;
+         }
+         
       }
       //--------------------------------------------------------------------
       // Keyword not found

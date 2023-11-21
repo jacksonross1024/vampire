@@ -43,7 +43,7 @@ namespace vdc{
 
          // get atom ID
          unsigned int atom = vdc::sliced_atoms_list[i];
-
+         
          const double x = vdc::coordinates[3*atom+0];
          const double y = vdc::coordinates[3*atom+1];
          const double z = vdc::coordinates[3*atom+2];
@@ -117,8 +117,8 @@ namespace vdc{
       // const unsigned int d[3] = { num_cells[0], num_cells[1], num_cells[2] };
 
       // calculate number of atoms in each cell
-      std::vector<unsigned int> init_num_atoms_in_cell(vdc::total_cells);
-
+      std::vector<unsigned int> init_num_atoms_in_cell(vdc::total_cells*tmid);
+      
       //------------------------------------------------------------------------
       // Assign atoms to cells
       //------------------------------------------------------------------------
@@ -126,7 +126,7 @@ namespace vdc{
 
          // get atom ID
          unsigned int atom = vdc::sliced_atoms_list[i];
-
+         unsigned int type = vdc::type[atom];
          // temporary for atom coordinates
          double c[3] = { vdc::coordinates[3*atom+0] - atoms_min[0],
                          vdc::coordinates[3*atom+1] - atoms_min[1],
@@ -150,7 +150,8 @@ namespace vdc{
          vdc::atom_cell_id[atom] = cellid;
 
          // accumulate number of atoms in each cell
-         init_num_atoms_in_cell[cellid]++;
+         init_num_atoms_in_cell[cellid*tmid + 0]++;
+         init_num_atoms_in_cell[cellid*tmid + type]++;
 
       }
 
@@ -172,8 +173,8 @@ namespace vdc{
             vdc::cell_coords.push_back( init_cell_coords[3*cell + 2] );
 
             // save number of atoms in final cell array
-            vdc::num_atoms_in_cell.push_back(init_num_atoms_in_cell[cell]);
-
+           
+            for(int t = 0; t < tmid; t++)  vdc::num_atoms_in_cell.push_back(init_num_atoms_in_cell[cell*tmid + t]);
             // increment number of cells;
             num_cells_with_atoms++;
 
@@ -309,8 +310,9 @@ namespace vdc{
          ofile << vdc::cell_coords[3*cell + 0] << "\t" << vdc::cell_coords[3*cell + 1] << "\t" << vdc::cell_coords[3*cell + 2] << "\t";
          for( unsigned int m = 0; m < tmid; m++){
             ofile << vdc::cell_magnetization[cell][m][0] << "\t" << vdc::cell_magnetization[cell][m][1] << "\t" << vdc::cell_magnetization[cell][m][2] << "\t" << vdc::cell_magnetization[cell][m][3] << "\t";
+         ofile << num_atoms_in_cell[cell*tmid+m];
          }
-         ofile << num_atoms_in_cell[cell];
+       //  ofile << num_atoms_in_cell[cell*tmid];
          ofile << "\n";
 
          // output new lines after each row of x,y,z for gnuplot compatible data (to be fixed)

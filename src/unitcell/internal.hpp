@@ -57,7 +57,7 @@ namespace unitcell{
       extern std::vector <std::vector <exchange_parameters_t> > material_exchange_parameters; // holds exponential exchange parameters for material-wise exchange
       extern std::vector <std::vector <double> > nn_cutoff_range; // holds nearest neighbour cut-off ranges between different unit cell categories.
       extern std::vector <std::vector <double> > interaction_cutoff_range; // holds interaction cut-off ranges.
-
+      extern std::vector <std::vector <double> > RKKYf;
       extern bool sublattice_materials; // flag to enable identification of atoms in simple crystals by material
 
       //-------------------------------------------------------------------------
