@@ -543,8 +543,8 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		//T_z e||xy -> torque asymmetry sin(2(phi-pi/4))
 		double theta = 0.0;
 		// double lot_str = sin(2.0*theta - 2.0*phi);
-		double lot_str[3] = { -sin(phi)*sin(phi),sin(2.0*phi), sin(2*phi)*cos(theta)*cos(theta)};
-		// double lot_str[3] = {0.0, 0.0, sin(2.0*phi)};
+		// double lot_str[3] = { -sin(phi)*sin(phi),sin(2.0*phi), sin(2*phi)*cos(theta)*cos(theta)};
+		double lot_str[3] = {0.0, 0.0, sin(2.0*phi)};
 		double lotlt_z = sim::laser_torque_strength * (lot_str[2])*sim::internal::lot_lt_z[material]*1e-24 /mp::material[material].mu_s_SI;
 		double lotlt_y = sim::laser_torque_strength * (lot_str[1])*sim::internal::lot_lt_y[material]*1e-24 /mp::material[material].mu_s_SI;
 		double lotlt_x = sim::laser_torque_strength * (lot_str[0])*sim::internal::lot_lt_x[material]*1e-24 /mp::material[material].mu_s_SI;

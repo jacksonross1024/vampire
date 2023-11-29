@@ -219,6 +219,47 @@ namespace program{
 			//    }
 			// }
 		}
+		else {
+			if (sim::domain_wall_axis == 0) {
+				//90 degree 
+				if(sim::domain_wall_angle == 0) {
+					for(int atom=0;atom<num_local_atoms;atom++) {
+					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
+						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*30.0) {
+							int mat = atoms::type_array[atom]-1;
+						//	double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
+
+						//	double theta = std::atan(exp(-1.0*(atoms::x_coord_array[atom] - sim::domain_wall_position)/sim::domain_wall_width)) -M_PI*0.25;
+						//	double pos_x = std::cos(theta)*mod;
+						//	double pos_y = std::sin(theta)*mod; //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
+					
+						//	atoms::x_spin_array[atom] =  (mat==1?-1.0:1.0)* pos_x;
+						//	atoms::y_spin_array[atom] =  (mat==1?-1.0:1.0)* pos_y;
+						//	atoms::z_spin_array[atom] = 0.0;// (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
+						// int cat = atoms::sublayer_array[atom];
+						// if(cat > 5) std::cout << cat << std::endl;
+						int x_cell = (atoms::x_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[0];
+						int y_cell = (atoms::y_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[1];
+						int z_cell = (atoms::z_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[2];
+				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
+						int cell = z_cell*num_dw_cells_x*num_dw_cells_y*num_mag_types + y_cell*num_dw_cells_x*num_mag_types + x_cell*num_mag_types + mat;
+						//          1* + 
+					//	std::cout << cell << "\t";
+						atom_to_cell_array[atom] = cell;
+						cell_to_lattice_array[3*cell + 0] = x_cell;
+						cell_to_lattice_array[3*cell + 1] = y_cell;
+						cell_to_lattice_array[3*cell + 2] = z_cell;
+
+						num_atoms_in_cell[cell]++;
+					//	avg_atom_num ++;
+						// if( z_cell > 5) {
+						// 	std::cout << cell << ", " << z_cell << ", " << atoms::z_coord_array[atom]+0.001 << ", " << sim::domain_wall_discretisation[2] << std::endl;
+						// }
+						// if (num_atoms_in_cell[num_dw_cells*cat + cell] < 0) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
+					}
+				}
+			}
+		}
 		/*
 		int count = 0;
 		// std::cout << sim::anti_PBC[0] << '\t' <<  sim::anti_PBC[1] << '\t' <<  sim::anti_PBC[2] <<std::endl;
@@ -544,7 +585,7 @@ namespace program{
 
 			double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
 			const double i_pump_time = 1.0/sim::pump_time;
-  		 	double reduced_time = (ftime-2.0*sim::pump_time)*i_pump_time;
+  		 	double reduced_time = (ftime-1.5*sim::pump_time)*i_pump_time;
    			const double four_ln_2 = 2.77258872224; // 4 ln 2
    			double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
 			if(sim::enable_laser_torque_fields) {
@@ -669,8 +710,8 @@ namespace program{
 			dw_res.precision(10);
     		dw_res << std::scientific;
 			int mat_type = 0;
-			for (int z_cell = 0; z_cell < num_dw_cells_z; z_cell++) {
-				for(int y_cell = 0; y_cell < num_dw_cells_y; y_cell++) {
+			for (int z_cell = 0; z_cell < num_dw_cells_z-1; z_cell++) {
+				for(int y_cell = 0; y_cell < num_dw_cells_y-1; y_cell++) {
 					double mag_x_1 = 1.0/sqrt(2.0);
 					double mag_y_1 = 1.0/sqrt(2.0);
 					double mag_x_2 = 1.0/sqrt(2.0);
@@ -678,8 +719,17 @@ namespace program{
 					double d_topological_charge_acc = 0.0;
 					double d_topological_charge = 0.0;
 
+					if(print) {
+					int cell = z_cell*num_dw_cells_x*num_dw_cells_y*num_mag_types + y_cell*num_dw_cells_x*num_mag_types + 1*num_mag_types + mat_type;	
+					double num = num_atoms_in_cell[cell];
 					dw_res << 0 << '\t' << y_cell << "\t" << z_cell << "\t" << mag_x_1 << "\t" << mag_y_1 << "\t" << "\n";
-
+					dw_res << cell_to_lattice_array[3*cell+0]*sim::domain_wall_discretisation[0]  << '\t' << cell_to_lattice_array[3*cell + 1] << '\t' << cell_to_lattice_array[3*cell + 2]<< '\t' <<\
+							        mag[num_mag_cat*cell] / num << "\t" << mag[num_mag_cat*cell + 1] /num << "\t" << //magnetisation data
+									mag[num_mag_cat*cell +3]/num << "\t" << //exchange energy
+									mag[num_mag_cat*cell +4]/num << "\t" << //anisotropy energy
+									mag[num_mag_cat*cell +5]/num << "\t" << //LOT energy
+									d_topological_charge << "\t"  << d_topological_charge_acc  <<  "\n";
+					}
 				for(int x_cell = 1; x_cell < num_dw_cells_x; x_cell++) {
 						int cell = z_cell*num_dw_cells_x*num_dw_cells_y*num_mag_types + y_cell*num_dw_cells_x*num_mag_types + x_cell*num_mag_types + mat_type;	
 					//std::cout << cell << std::endl;
@@ -717,9 +767,9 @@ namespace program{
 					avg_topological_charge_acc += d_topological_charge_acc;
 					//if(d_topological_charge < 1e-6) std::cout << d_topological_charge << std::endl;
 					if (num_atoms_in_cell[cell] > 0 ) {
-						if(print) {
+						if(print && (d_topological_charge > 1e-7)) {
 							double num = num_atoms_in_cell[cell];
-						
+
 							dw_res << cell_to_lattice_array[3*cell+0]*sim::domain_wall_discretisation[0]  << '\t' << cell_to_lattice_array[3*cell + 1] << '\t' << cell_to_lattice_array[3*cell + 2]<< '\t' <<\
 							        mag[num_mag_cat*cell] / num << "\t" << mag[num_mag_cat*cell + 1] /num << "\t" << //magnetisation data
 									mag[num_mag_cat*cell +3]/num << "\t" << //exchange energy
@@ -737,9 +787,16 @@ namespace program{
 						}
 					}
 				}
-				dw_res << num_dw_cells_x*sim::domain_wall_discretisation[0] << '\t' << y_cell << '\t' << z_cell << '\t' << \
-							        mag_x_2 << "\t" << mag_y_2 << "\t" << //magnetisation data
-									"\n";
+				if(print) {
+					int cell = (num_dw_cells_z-2)*num_dw_cells_x*num_dw_cells_y*num_mag_types + (num_dw_cells_y-2)*num_dw_cells_x*num_mag_types + (num_dw_cells_x-1)*num_mag_types + mat_type;
+					double num = num_atoms_in_cell[cell];	
+					dw_res << cell_to_lattice_array[3*cell+0]*sim::domain_wall_discretisation[0]  << '\t' << cell_to_lattice_array[3*cell + 1] << '\t' << cell_to_lattice_array[3*cell + 2]<< '\t' <<\
+							        mag[num_mag_cat*cell] / num << "\t" << mag[num_mag_cat*cell + 1] /num << "\t" << //magnetisation data
+									mag[num_mag_cat*cell +3]/num << "\t" << //exchange energy
+									mag[num_mag_cat*cell +4]/num << "\t" << //anisotropy energy
+									mag[num_mag_cat*cell +5]/num << "\t" << //LOT energy
+									d_topological_charge << "\t"  << d_topological_charge_acc  <<  "\n";
+				}
 			}
 			}
 			/* second layer only
