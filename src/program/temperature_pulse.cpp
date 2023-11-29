@@ -116,7 +116,7 @@ double two_temperature_function(double ftime){
    const double reduced_time = (ftime-3.*sim::pump_time)*i_pump_time;
    const double four_ln_2 = 2.77258872224; // 4 ln 2
    // 2/(delta sqrt(pi/ln 2))*0.1, delta = 10 nm, J/m^2 -> mJ/cm^2 (factor 0.1)
-   const double two_delta_sqrt_pi_ln_2 = 9394372.787;
+   const double two_delta_sqrt_pi_ln_2 = 93943727.87;
    const double pump=sim::pump_power*two_delta_sqrt_pi_ln_2*
    						exp(-four_ln_2*reduced_time*reduced_time)*i_pump_time;
 

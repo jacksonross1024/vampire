@@ -718,7 +718,7 @@ namespace create{
       if(word==test){
          // check for type of host alloy
          double v=atof(value.c_str());
-         vin::check_for_valid_value(v, word, line, prefix, unit, "none", 0.0, 1.0,"material"," 0.0 - 1.0");
+         vin::check_for_valid_value(v, word, line, prefix, unit, "none", 0.0, 5.0,"material"," 0.0 - 1.0");
          create::internal::mp[super_index].slave_material[sub_index].variance = v;
          return true;
       }
