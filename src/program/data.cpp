@@ -28,6 +28,19 @@ namespace program{
 
    namespace internal{
 
+          int num_mag_cat;
+		int num_mag_types;
+		
+		int num_dw_cells_x;
+		int num_dw_cells_y;
+		int num_dw_cells_z;
+
+      int num_dw_cells;
+
+      std::vector  < double > mag;
+      std::vector <double > atom_to_cell_array;
+		std::vector <int > cell_to_lattice_array;
+      std::vector < int > num_atoms_in_cell;
       //------------------------------------------------------------------------
       // Shared variables inside program module
       //------------------------------------------------------------------------

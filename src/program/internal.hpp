@@ -35,7 +35,19 @@ namespace program{
       //-------------------------------------------------------------------------
       // Internal data type definitions
       //-------------------------------------------------------------------------
+      extern int num_mag_cat;
+		extern int num_mag_types;
+		
+		extern int num_dw_cells_x;
+		extern int num_dw_cells_y;
+		extern int num_dw_cells_z;
 
+      extern int num_dw_cells;
+
+      extern std::vector  < double > mag;
+      extern std::vector <double > atom_to_cell_array;
+		extern std::vector <int > cell_to_lattice_array;
+      extern std::vector < int > num_atoms_in_cell;
       //-----------------------------------------------------------------------------
       // internal materials class for storing material parameters
       //-----------------------------------------------------------------------------
