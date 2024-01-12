@@ -57,11 +57,18 @@ namespace program{
 
 		//if(sim::domain_wall_discretisation == 1) 
 		//sim::domain_wall_discretisation[] = 1.0*sim::unit_cell_x;// + 0.0001; 
-		
+		if(sim::domain_wall_discretisation_type == 0) {
 		sim::domain_wall_discretisation[0] *= sim::unit_cell_x;
 		sim::domain_wall_discretisation[1] *= sim::unit_cell_y;
 		sim::domain_wall_discretisation[2] *= sim::unit_cell_z/6.0; //1/6th unit cell for planar resolution
-		
+		} else if (sim::domain_wall_discretisation_type == 1) {
+			sim::domain_wall_discretisation[0] *= 10.0;
+			sim::domain_wall_discretisation[1] *= 10.0;
+			sim::domain_wall_discretisation[2] *= 10.0;
+		} else if (sim::domain_wall_discretisation_type != 2) {
+			std::cerr << "error; unknown domain wall discretisation type " << std::endl;
+		}
+
 		program::internal::num_dw_cells_x = (cs::system_dimensions[0]/sim::domain_wall_discretisation[0]) + 1;
 		program::internal::num_dw_cells_y = (cs::system_dimensions[1]/sim::domain_wall_discretisation[1]) + 1;
 		program::internal::num_dw_cells_z = (cs::system_dimensions[2]/sim::domain_wall_discretisation[2]) + 1;
@@ -759,7 +766,7 @@ namespace program{
 					avg_topological_charge_acc += d_topological_charge_acc;
 					//if(d_topological_charge < 1e-6) std::cout << d_topological_charge << std::endl;
 					if (num > 0 ) {
-						if(d_topological_charge > 1e-7){
+						if(sim::temperature > 1.0 || std::abs(d_topological_charge) > 1e-7){
 							dw_res << x_cell*sim::domain_wall_discretisation[0]  << '\t' << y_cell << '\t' << z_cell << '\t' <<\
 							        program::internal::mag[program::internal::num_mag_cat*cell] / num << "\t" << program::internal::mag[program::internal::num_mag_cat*cell + 1] /num << "\t" << //magnetisation data
 									program::internal::mag[program::internal::num_mag_cat*cell +3]/num << "\t" << //exchange energy
@@ -771,14 +778,14 @@ namespace program{
 					}
 				}
 			
-					 cell = (program::internal::num_dw_cells_z-2)*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y*program::internal::num_mag_types + (program::internal::num_dw_cells_y-2)*program::internal::num_dw_cells_x*program::internal::num_mag_types + (program::internal::num_dw_cells_x-1)*program::internal::num_mag_types + mat_type;
-					 num = program::internal::num_atoms_in_cell[cell];	
-					dw_res << (program::internal::num_dw_cells_x-1)*sim::domain_wall_discretisation[0]  << '\t' << y_cell << '\t' << z_cell << '\t' <<\
+					// cell = (program::internal::num_dw_cells_z-2)*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y*program::internal::num_mag_types + (program::internal::num_dw_cells_y-2)*program::internal::num_dw_cells_x*program::internal::num_mag_types + (program::internal::num_dw_cells_x-1)*program::internal::num_mag_types + mat_type;
+					// num = program::internal::num_atoms_in_cell[cell];	
+					//dw_res << (program::internal::num_dw_cells_x-1)*sim::domain_wall_discretisation[0]  << '\t' << y_cell << '\t' << z_cell << '\t' <<\
 							        program::internal::mag[program::internal::num_mag_cat*cell] / num << "\t" << program::internal::mag[program::internal::num_mag_cat*cell + 1] /num << "\t" << //magnetisation data
-									program::internal::mag[program::internal::num_mag_cat*cell +3]/num << "\t" << //exchange energy
-									program::internal::mag[program::internal::num_mag_cat*cell +4]/num << "\t" << //anisotropy energy
-									program::internal::mag[program::internal::num_mag_cat*cell +5]/num << "\t" << //LOT energy
-									d_topological_charge << "\t"  << d_topological_charge_acc  <<  "\n";
+									// program::internal::mag[program::internal::num_mag_cat*cell +3]/num << "\t" << //exchange energy
+									// program::internal::mag[program::internal::num_mag_cat*cell +4]/num << "\t" << //anisotropy energy
+									// program::internal::mag[program::internal::num_mag_cat*cell +5]/num << "\t" << //LOT energy
+									// d_topological_charge << "\t"  << d_topological_charge_acc  <<  "\n";
 			}
 			}
 			

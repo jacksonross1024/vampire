@@ -70,6 +70,7 @@ namespace sim{
    double domain_wall_position = 0.25;
    double domain_wall_velocity = 0.0;
    std::vector<double> domain_wall_discretisation(3);// = 10;
+   int domain_wall_discretisation_type = 0;
    double domain_wall_centre = 0;
    double domain_wall_width = 10.0;
    int domain_wall_angle = -1;

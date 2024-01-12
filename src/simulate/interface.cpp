@@ -205,7 +205,13 @@ namespace sim{
          sim::domain_wall_discretisation[2] = u[2];
          return true;
       }
-      
+      test="domain-wall-discretisation-type";
+      if(word==test){
+         if(value == "unit-cell")  sim::domain_wall_discretisation_type = 0;
+         else if(value == "nm")  sim::domain_wall_discretisation_type = 1;
+         else if(value == "a")  sim::domain_wall_discretisation_type = 2;
+         return true;
+      }
       //--------------------------------------------------------------------
       test="domain-wall-anti-pbc-x";
       if(word==test){
@@ -213,6 +219,7 @@ namespace sim{
          cs::pbc[0]=true;
          return true;
       }
+     
       //--------------------------------------------------------------------
       test="domain-wall-anti-pbc-y";
       if(word==test){

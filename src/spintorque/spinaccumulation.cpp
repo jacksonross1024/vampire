@@ -131,9 +131,13 @@ namespace st{
             const int idx = stack_index[stack];
 
             // set initial values
-            st::internal::sa[3*idx+0] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0);
-            st::internal::sa[3*idx+1] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0);
-            st::internal::sa[3*idx+2] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 2]/sqrt(2.0);
+            // st::internal::sa[3*idx+0] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0);
+            // st::internal::sa[3*idx+1] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0);
+            // st::internal::sa[3*idx+2] = st::internal::default_properties.sa_infinity*st::internal::init_stack_mag[((stack)%6)*3 + 2]/sqrt(2.0);
+
+            st::internal::sa[3*idx+0] = st::internal::sa_infinity[idx]/sqrt(2.0);
+            st::internal::sa[3*idx+1] = st::internal::sa_infinity[idx]/sqrt(2.0);
+            st::internal::sa[3*idx+2] = 0.0;//st::internal::default_properties.sa_infinity/sqrt(2.0);
 
             // st::internal::m [3*idx+0]  = st::internal::stack_init_mag[stack*3 +0]*2*3.74;
             // st::internal::m [3*idx+1]  = st::internal::stack_init_mag[stack*3 +1]*2*3.74;

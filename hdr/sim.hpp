@@ -233,6 +233,7 @@ namespace sim{
 	extern std::vector<double> domain_wall_discretisation;
 	extern double domain_wall_centre;
 	extern double domain_wall_width;
+	extern int domain_wall_discretisation_type;
 	extern int domain_wall_angle;
 	extern double unit_cell_x;
     extern double unit_cell_y;
