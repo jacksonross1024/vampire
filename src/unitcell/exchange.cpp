@@ -34,6 +34,7 @@ double exchange(double range, double cutoff, int mat_i, int mat_j){
    switch(uc::internal::exchange_function){
 
       case nearest_neighbour:{
+         std::cout << "test" << std::endl;
          if(range <= cutoff) return 1.0;
          else return 0.0;
          break;
@@ -72,8 +73,11 @@ double exchange(double range, double cutoff, int mat_i, int mat_j){
       case RKKY:{
          unsigned int min = std::min(mat_i, mat_j);
          unsigned int max = std::max(mat_i, mat_j);
-         double RKKy_const = (sin(2*uc::internal::RKKYkf[min][max]*range) - 2*range*uc::internal::RKKYkf[min][max]*range*cos(2*uc::internal::RKKYkf[min][max]*range))/(range*range*range*range*2.0);
-         if(RKKy_const == 0.0) return 1.0;
+         double RKKy_const = (sin(2*uc::internal::RKKYf[min][max]*range)/(range*range*range*range*2)) - uc::internal::RKKYf[min][max]*cos(2*uc::internal::RKKYf[min][max]*range)/(range*range*range);
+         if(uc::internal::RKKYf[min][max] =! 0.0) {
+           std::cout << "RKKY for " << min << " <-> " << max << " replaced nn exchange; " << uc::internal::RKKYf[min][max] << std::endl;
+            return 1.0;
+         }
          break;
       }
 
