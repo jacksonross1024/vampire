@@ -276,8 +276,8 @@ void initialise(const double system_dimensions_x,
     #ifdef MPICF 
    // if(err::check) {
       //check stt stack mpi setup 
-      int stacks[st::internal::num_stacks] = {0};
-      int mpi_stacks[st::internal::num_stacks] = {-1};
+      // int stacks[st::internal::num_stacks] = {0};
+      // int mpi_stacks[st::internal::num_stacks] = {-1};
       int stack_sum = 0;
       int size = st::internal::mpi_stack_list.size();
       MPI_Reduce(&size,&stack_sum, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
