@@ -16,7 +16,8 @@ susceptibility.o \
 binder_cumulant.o\
 spinwave.o \
 torque.o \
-update.o
+update.o \
+spinTemp.o
 
 # Append module objects to global tree
 OBJECTS+=$(addprefix obj/statistics/,$(statistics_objects))

@@ -47,6 +47,9 @@ namespace stats{
 
    bool calculate_spinwaves                     = false;
 
+   bool calculate_system_spin_temperature       = false;
+   bool calculate_material_spin_temperature     = false;
+
    energy_statistic_t system_energy("s");
    energy_statistic_t grain_energy("g");
    energy_statistic_t material_energy("m");
@@ -75,6 +78,9 @@ namespace stats{
 
    binder_cumulant_statistic_t system_binder_cumulant("bc");
    binder_cumulant_statistic_t material_binder_cumulant("mbc");
+
+   spin_temperature_statistic_t system_spin_temperature("s"); 
+   spin_temperature_statistic_t material_spin_temperature("m"); 
 
    spinwave_statistic_t spinwaves("sw");
    //-----------------------------------------------------------------------------

@@ -202,7 +202,38 @@ namespace sim{
 	extern int LLG_Midpoint_mpi();
 	extern int LLG_Midpoint_cuda();
 
+	//Suzuki-Trotter decomposition for spin
+    extern int STDspin();
+    void STDspin_parallel_init(std::vector<double> &x, std::vector<double> &y, std::vector<double> &z,
+                             double min_dim[3], double max_dim[3]);
+    extern bool STDspin_parallel_initialized;
+    void STDspin_step_parallel(std::vector<double> &x_spin_array, std::vector<double> &y_spin_array, std::vector<double> &z_spin_array, std::vector<int> &type_array); 
 
+	//functions for Suzuki-Trotter decomposition
+  
+      void cayley_update(const int start_index,
+                  const int end_index,
+                  double dt,
+                  std::vector<double>& x_spin_array, // coord vectors for atoms
+                  std::vector<double>& y_spin_array,
+                  std::vector<double>& z_spin_array,
+                  std::vector<double>& fields_array_x, //  vectors for fields
+                  std::vector<double>& fields_array_y,
+                  std::vector<double>& fields_array_z);
+
+      void add_spin_noise(const int start_index,
+                  const int end_index,
+                  double dt,
+                  const std::vector<int>& type_array, // type for atom
+                  std::vector<double>& x_spin_array, // coord vectors for atoms
+                  std::vector<double>& y_spin_array,
+                  std::vector<double>& z_spin_array,
+                  std::vector<double>& fields_array_x, //  vectors for fields
+                  std::vector<double>& fields_array_y,
+                  std::vector<double>& fields_array_z,
+                  std::vector<double>& Hx_th, //  vectors for fields
+                  std::vector<double>& Hy_th,
+                  std::vector<double>& Hz_th);
 	// Integrator initialisers
 	extern int LLGinit();
 

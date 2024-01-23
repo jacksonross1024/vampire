@@ -487,4 +487,23 @@ namespace vout{
    void domain_wall_velocity(std::ostream& stream, bool header) {
       stream << generic_output_double("domain_wall_velocity", sim::domain_wall_velocity, header);
    }
+     //Output Function 75
+	void system_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::system_spin_temperature.output_spin_temperature(header);
+		
+	}
+	//Output Function 76
+	void material_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::material_spin_temperature.output_spin_temperature(header);
+		
+	}
+	//Output Function 77
+	void mean_system_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::system_spin_temperature.output_mean_spin_temperature(header);
+	}
+
+	//Output Function 78
+	void mean_material_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::material_spin_temperature.output_mean_spin_temperature(header);
+	}
 }

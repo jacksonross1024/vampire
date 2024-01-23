@@ -63,6 +63,9 @@ namespace stats{
          // reset binder cumulant statistics
          if(stats::calculate_system_binder_cumulant)   stats::system_binder_cumulant.reset_averages();
          if(stats::calculate_material_binder_cumulant) stats::material_binder_cumulant.reset_averages();
+         
+         if(stats::calculate_system_spin_temperature)       stats::system_spin_temperature.reset();
+         if(stats::calculate_material_spin_temperature)     stats::material_spin_temperature.reset();
 
          // if(stats::calculate_spinwaves)   stats::spinwaves.reset();
       }

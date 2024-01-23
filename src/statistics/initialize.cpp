@@ -286,6 +286,28 @@ namespace stats{
       if(stats::calculate_material_binder_cumulant) stats::material_binder_cumulant.initialize(stats::material_magnetization);
 
       if(stats::calculate_spinwaves)   stats::spinwaves.initialize();
+
+      //spin temperature
+      if(stats::calculate_system_spin_temperature){
+         for(int atom=0; atom < stats::num_atoms; ++atom){
+            // ignore non-magnetic atoms in stats calculation by assigning them to last mask
+            if(non_magnetic_materials_array[material_type_array[atom]]) mask[atom] = 1;
+            // all other atoms are included
+            else mask[atom] = 0;
+         }
+         stats::system_spin_temperature.set_mask(1+1,mask,magnetic_moment_array);
+      }
+      if(stats::calculate_material_spin_temperature){
+         for(int atom=0; atom < stats::num_atoms; ++atom){
+            // ignore non-magnetic atoms in stats calculation by assigning them to last mask
+            if(non_magnetic_materials_array[material_type_array[atom]]) mask[atom] =  num_materials;
+            // other atoms assigned to material level masks
+            else mask[atom] = material_type_array[atom];
+         }
+         stats::material_spin_temperature.set_mask(num_materials+1,mask,magnetic_moment_array);
+      }
+     
+
       return;
 
    }

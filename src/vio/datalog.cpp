@@ -279,6 +279,18 @@ namespace vout{
 			case 74:
 				vout::domain_wall_velocity(stream, header);
 				break;
+			case 75:
+			vout::system_spin_temperature(stream, header);
+			break;
+		case 76:
+			vout::material_spin_temperature(stream, header);
+			break;
+       case 77:
+			vout::mean_system_spin_temperature(stream, header);
+			break;
+		case 78:
+			vout::mean_material_spin_temperature(stream, header);
+			break;
          case 997: //MP
 				vout::material_binder_cumulant(stream,header);
 				break;

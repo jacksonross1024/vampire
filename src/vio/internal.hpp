@@ -181,6 +181,11 @@ namespace vout{
    void domain_wall_velocity(std::ostream& stream,bool header);
    void MRresistance(std::ostream& stream, bool header);
 
+   void system_spin_temperature(std::ostream& stream, bool header);
+   void material_spin_temperature(std::ostream& stream, bool header);
+   void mean_system_spin_temperature(std::ostream& stream, bool header);
+   void mean_material_spin_temperature(std::ostream& stream, bool header);
+
    //-------------------------------------------------------------------------
    // Funciton protypes for functions inside: datalog.cpp
    //-------------------------------------------------------------------------

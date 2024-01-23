@@ -1476,6 +1476,34 @@ namespace vin{
             vout::gnuplot_array_format=true;
             return EXIT_SUCCESS;
         }
+        test = "spin-temperature";
+        if (word == test) {
+            stats::calculate_system_spin_temperature = true;
+            stats::calculate_system_magnetization = true; //override magnetisation flag
+            output_list.push_back(75);
+            return EXIT_SUCCESS;
+        }
+        test = "material-spin-temperature";
+        if (word == test) {
+            stats::calculate_material_spin_temperature = true;
+            stats::calculate_material_magnetization = true; //override magnetisation flad
+            output_list.push_back(76);
+            return EXIT_SUCCESS;
+        }
+        test = "mean-spin-temperature";
+        if (word == test) {
+            stats::calculate_system_spin_temperature = true;
+            stats::calculate_system_magnetization = true;
+            output_list.push_back(77);
+            return EXIT_SUCCESS;
+        }
+        test = "mean-material-spin-temperature";
+        if (word == test) {
+            stats::calculate_material_spin_temperature = true;
+            stats::calculate_material_magnetization = true;
+            output_list.push_back(78);
+            return EXIT_SUCCESS;
+        }
         //--------------------------------------------------------------------
         test="output-rate";
         if(word==test){

@@ -741,7 +741,7 @@ namespace program{
 					int cell = z_cell*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y*program::internal::num_mag_types + y_cell*program::internal::num_dw_cells_x*program::internal::num_mag_types + 0*program::internal::num_mag_types + mat_type;	
 					double num = 1.0/program::internal::num_atoms_in_cell[cell];
 					dw_res << 0*sim::domain_wall_discretisation[0]  << '\t' << y_cell << '\t' << z_cell << '\t' <<\
-							        avg*program::internal::mag[program::internal::num_mag_cat*cell]*num << "\t" << avg*program::internal::mag[program::internal::num_mag_cat*cell + 1] *num << "\t" <<\
+							         avg*program::internal::mag[program::internal::num_mag_cat*cell]*num << "\t" << avg*program::internal::mag[program::internal::num_mag_cat*cell + 1] *num << "\t" << avg*program::internal::mag[program::internal::num_mag_cat*cell + 2] *num <<\
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +3]*num << "\t" <<\
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +4]*num << "\t" <<\
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +5]*num << "\t" <<\
@@ -787,7 +787,7 @@ namespace program{
 					// if (num > 0 ) {
 						if(sim::temperature > 1.0 || std::abs(d_topological_charge) > 1e-7){
 							dw_res << x_cell*sim::domain_wall_discretisation[0]  << '\t' << y_cell << '\t' << z_cell << '\t' <<\
-							        avg*program::internal::mag[program::internal::num_mag_cat*cell] * num << "\t" << avg*program::internal::mag[program::internal::num_mag_cat*cell + 1] *num << "\t" << //magnetisation data
+							         avg*program::internal::mag[program::internal::num_mag_cat*cell]*num << "\t" << avg*program::internal::mag[program::internal::num_mag_cat*cell + 1] *num << "\t" << avg*program::internal::mag[program::internal::num_mag_cat*cell + 2] *num <<\
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +3]*num << "\t" << //exchange energy
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +4]*num << "\t" << //anisotropy energy
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +5]*num << "\t" << //LOT energy
