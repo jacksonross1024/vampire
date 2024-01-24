@@ -462,7 +462,7 @@ namespace program{
 		program::fractional_electric_field_strength = 0.0;
 		//
 		sim::integrate(sim::equilibration_time);
-
+		stats::update();
 		for(int atom=0;atom<num_local_atoms;atom++) {
 			int cell = program::internal::num_mag_cat*program::internal::atom_to_cell_array[atom];
 			int mat = atoms::type_array[atom];
@@ -483,8 +483,8 @@ namespace program{
 		// 	// MPI_Allreduce(MPI_IN_PLACE, &topological_charge[0],     num_dw_cells*num_categories,    MPI_DOUBLE,    MPI_SUM, MPI_COMM_WORLD);
 		// 	#endif
 
-		stats::update();
-		vout::data();
+		//stats::update();
+		// vout::data();
 		
 
 		// Set temperature and reset stats only if continue checkpoint not loaded
@@ -502,23 +502,23 @@ namespace program{
 		// Perform Time Series
 
 	switch(sim::integrator){
-		case 0: // LLG Heun
+		case 0: { // LLG Heun
 			while(sim::time<sim::equilibration_time+sim::total_time) {
 
 				double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
-			const double i_pump_time = 1.0/sim::pump_time;
-  		 	double reduced_time = (ftime-1.5*sim::pump_time)*i_pump_time;
-   			const double four_ln_2 = 2.77258872224; // 4 ln 2
-   			double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
-			if(sim::enable_laser_torque_fields) {
-				if(ftime < 1.5*sim::pump_time) sim::laser_torque_strength = gaussian;
-				else if (ftime < 1.5*sim::pump_time + sim::double_pump_delay) sim::laser_torque_strength = 1.0;
-				else {
-					reduced_time = (ftime-1.5*sim::pump_time-sim::double_pump_delay)*i_pump_time;
-					gaussian = exp(-four_ln_2*reduced_time*reduced_time);
-					sim::laser_torque_strength = gaussian;
+				const double i_pump_time = 1.0/sim::pump_time;
+  		 		double reduced_time = (ftime-1.5*sim::pump_time)*i_pump_time;
+   				const double four_ln_2 = 2.77258872224; // 4 ln 2
+   				double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+				if(sim::enable_laser_torque_fields) {
+					if(ftime < 1.5*sim::pump_time) sim::laser_torque_strength = gaussian;
+					else if (ftime < 1.5*sim::pump_time + sim::double_pump_delay) sim::laser_torque_strength = 1.0;
+					else {
+						reduced_time = (ftime-1.5*sim::pump_time-sim::double_pump_delay)*i_pump_time;
+						gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+						sim::laser_torque_strength = gaussian;
+					}
 				}
-			}
    			const double two_delta_sqrt_pi_ln_2 = 9394372.787;
 	
    			const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time;
@@ -606,9 +606,11 @@ namespace program{
 			output_dw_data(1);
 		}
 		//vout::data;
+		}
 			break;
 
-			case 1: // Montecarlo
+			case 1: { 
+				// Montecarlo
 			// for(uint64_t ti=0;ti<sim::equilibration_time;ti++) {
 			// 		#ifdef MPICF
             //    		if(montecarlo::mc_parallel_initialized == false) {
@@ -684,14 +686,63 @@ namespace program{
 				output_dw_data(sim::loop_time);
 			// }
 			//vout::data;
+			}
 			break;
 
-			// default:{
-			// terminaltextcolor(RED);
-			// std::cerr << "unsupported integrator type "<< sim::integrator << " requested for domain wall program, exiting" << std::endl;
-			// terminaltextcolor(WHITE);
-			// exit (EXIT_FAILURE);
-			// }
+			case 6: { // Suzuki Trotter decomposition
+				while(sim::time<sim::equilibration_time+sim::total_time) {
+					for(int cell = 0; cell < program::internal::num_dw_cells; cell++) {
+				
+					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
+						program::internal::mag[program::internal::num_mag_cat* cell + 0 ] = 0.0;
+						program::internal::mag[program::internal::num_mag_cat* cell + 1 ] = 0.0;
+						program::internal::mag[program::internal::num_mag_cat* cell + 2 ] = 0.0;
+						program::internal::mag[program::internal::num_mag_cat* cell + 3 ] = 0.0;
+						program::internal::mag[program::internal::num_mag_cat* cell + 4 ] = 0.0;
+						program::internal::mag[program::internal::num_mag_cat* cell + 5 ] = 0.0;
+					} 
+
+					for(uint64_t ti=0;ti<sim::partial_time;ti++){
+						#ifdef MPICF
+               			if(sim::STDspin_parallel_initialized == false) {
+                  			sim::STDspin_parallel_init(atoms::x_coord_array, atoms::y_coord_array, atoms::z_coord_array,
+                                               vmpi::min_dimensions, vmpi::max_dimensions);
+               			}
+               			sim::STDspin_step_parallel(atoms::x_spin_array, atoms::y_spin_array, atoms::z_spin_array,
+                                               atoms::type_array);
+            			#endif
+
+						// increment time
+						sim::internal::increment_time();
+					}
+					stats::update();
+					// vout::data();
+			for(int atom=0;atom<num_local_atoms;atom++) {
+				int cell = program::internal::atom_to_cell_array[atom];
+			//	int cat = atoms::sublayer_array[atom];
+				int mat = atoms::type_array[atom];
+				double S[3] = {atoms::x_spin_array[atom], atoms::y_spin_array[atom],atoms::z_spin_array[atom]};
+				program::internal::mag[program::internal::num_mag_cat*cell]   += S[0];
+				program::internal::mag[program::internal::num_mag_cat*cell+1] += S[1];
+				program::internal::mag[program::internal::num_mag_cat*cell+2] += S[2];
+				program::internal::mag[program::internal::num_mag_cat*cell+3] += exchange::single_spin_energy(atom, S[0], S[1], S[2]);
+				program::internal::mag[program::internal::num_mag_cat*cell+4] += anisotropy::single_spin_energy(atom,mat , S[0], S[1], S[2], sim::temperature);
+				program::internal::mag[program::internal::num_mag_cat*cell+5] += sim::laser_torque_strength*(cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
+
+				// topological_charge[num_dw_cells*cat + cell] += M_PI*1.5 - (M_PI+atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]));
+			}
+			output_dw_data(1);
+			}
+			vout::data();
+			}
+			break;
+
+			default:{
+			terminaltextcolor(RED);
+			std::cerr << "unsupported integrator type "<< sim::integrator << " requested for domain wall program, exiting" << std::endl;
+			terminaltextcolor(WHITE);
+			exit (EXIT_FAILURE);
+			}
 		}
 	}
 				//#pragma vector

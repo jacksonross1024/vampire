@@ -49,7 +49,7 @@ void STDspin_parallel_init(std::vector<double> &x, // atomic coordinates
    int catoms = vmpi::num_core_atoms;
    int batoms = vmpi::num_bdry_atoms;
    
- 
+   sim::hamiltonian_simulation_flags[3] = 0;
    double widthx = max_dim[0] - min_dim[0];
    double widthy = max_dim[1] - min_dim[1];
    double widthz = max_dim[2] - min_dim[2];
@@ -155,9 +155,9 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
 
        
          //vectors for thermal noise spin plus lattice
-         std::vector <double> Hx_th(atoms::x_spin_array.size());
-      	  std::vector <double> Hy_th(atoms::x_spin_array.size());
-      	  std::vector <double> Hz_th(atoms::x_spin_array.size());
+         std::vector <double> Hx_th(atoms::x_spin_array.size(), 0.0);
+      	  std::vector <double> Hy_th(atoms::x_spin_array.size(), 0.0);
+      	  std::vector <double> Hz_th(atoms::x_spin_array.size(), 0.0);
 
          generate (Hx_th.begin(),Hx_th.end(), mtrandom::gaussian);
          generate (Hy_th.begin(),Hy_th.end(), mtrandom::gaussian);
@@ -190,9 +190,9 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
          calculate_spin_fields(atom, atom+1);
  	     calculate_external_fields(atom, atom+1);
  	     
- 	      atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
-          atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
-          atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
+ 	      // atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
+         //  atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
+         //  atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
 
 
@@ -235,9 +235,9 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
          
          calculate_spin_fields(atom, atom+1);
      	  calculate_external_fields(atom, atom+1);
-            atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
-           atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
-           atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
+         //    atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
+         //   atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
+         //   atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
          add_spin_noise(atom,
                      atom+1,
@@ -294,9 +294,9 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
             
             calculate_spin_fields(atom, atom+1);
         	calculate_external_fields(atom, atom+1);
-            atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
-            atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
-            atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
+            // atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
+            // atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
+            // atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
             add_spin_noise(atom,
                         atom+1,
@@ -338,9 +338,9 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
             
             calculate_spin_fields(atom, atom+1);
         	  calculate_external_fields(atom, atom+1);
-            atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
-            atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
-            atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
+            // atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
+            // atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
+            // atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
             add_spin_noise(atom,
                         atom+1,
@@ -394,9 +394,9 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
              
              calculate_spin_fields(atom, atom+1);
          	  calculate_external_fields(atom, atom+1);
-         	     atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
-                 atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
-                 atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
+         	   //   atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
+               //   atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
+               //   atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
 
              add_spin_noise(atom,
@@ -441,9 +441,9 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
         
         calculate_spin_fields(atom, atom+1);
     	  calculate_external_fields(atom, atom+1);
-    	     atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
-            atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
-            atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
+    	   //   atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
+         //    atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
+         //    atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
 
         add_spin_noise(atom,
@@ -498,9 +498,9 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
                 
                 calculate_spin_fields(atom, atom+1);
             	calculate_external_fields(atom, atom+1);
-            	   atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
-                  atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
-                  atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
+            	   // atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
+                  // atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
+                  // atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
 
                 add_spin_noise(atom,
@@ -543,9 +543,9 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
                 
                calculate_spin_fields(atom, atom+1);
            	   calculate_external_fields(atom, atom+1);
-           	      atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
-                    atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
-                    atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
+           	      // atoms::x_total_spin_field_array[atom]=+atoms::x_total_external_field_array[atom];
+                  //   atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
+                  //   atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
 
                add_spin_noise(atom,
