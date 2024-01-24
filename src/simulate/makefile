@@ -9,6 +9,8 @@ increment_time.o \
 initialize.o \
 initialize_modules.o \
 interface.o \
+STDspin.o\
+STDmpi.o\
 llg_quantum.o
 
 # Append module objects to global tree

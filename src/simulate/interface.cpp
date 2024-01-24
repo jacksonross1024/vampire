@@ -161,11 +161,11 @@ namespace sim{
             sim::integrator = sim::llg_quantum;
             return true;
          }
-         // test="suzuki-trotter";
-         // if( value == test ){
-         //    sim::integrator = sim::suzuki_trotter_spin;
-         //    return true;
-         // }
+         test="suzuki-trotter";
+         if( value == test ){
+            sim::integrator = sim::suzuki_trotter_spin;
+            return true;
+         }
          //--------------------------------------------------------------------
          else{
             terminaltextcolor(RED);

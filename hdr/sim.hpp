@@ -71,7 +71,7 @@ namespace sim{
 
 	// enumerated list for integrators
 	enum integrator_t{ llg_heun = 0, monte_carlo = 1, llg_midpoint = 2,
-							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5};
+							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5, suzuki_trotter_spin=6};
 
 	
 	extern std::ofstream mag_file;
@@ -208,7 +208,8 @@ namespace sim{
                              double min_dim[3], double max_dim[3]);
     extern bool STDspin_parallel_initialized;
     void STDspin_step_parallel(std::vector<double> &x_spin_array, std::vector<double> &y_spin_array, std::vector<double> &z_spin_array, std::vector<int> &type_array); 
-
+	    extern std::vector<std::vector<int> > c_octants; //Core atoms of each octant
+    extern std::vector<std::vector<int> > b_octants; //Boundary atoms of each octant
 	//functions for Suzuki-Trotter decomposition
   
       void cayley_update(const int start_index,

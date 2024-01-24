@@ -311,7 +311,8 @@ int run(){
    stopwatch.start();
 
    // Precondition spins at equilibration temperature
-   montecarlo::monte_carlo_preconditioning();
+   if(program::program == 52) {} //delay preconditioning for Domain wall stats
+   else montecarlo::monte_carlo_preconditioning();
 
 	if(stats::calculate_spinwaves) stats::spinwaves.reset();
 	
@@ -718,12 +719,12 @@ void integrate_serial(uint64_t n_steps){
 				sim::internal::increment_time();
 			}
 			break;
-		// case 6: //suzuki-trotter-decomposition for spin
-		// for(uint64_t ti=0;ti<n_steps;ti++){
-		// 	sim::STDspin();
-		// 	// increment time
-		// 	sim::internal::increment_time();
-		// }
+		case 6: //suzuki-trotter-decomposition for spin
+		for(uint64_t ti=0;ti<n_steps;ti++){
+			sim::STDspin();
+			// increment time
+			sim::internal::increment_time();
+		}
 		break;
 		default:{
 			std::cerr << "Unknown integrator type "<< sim::integrator << " requested, exiting" << std::endl;
@@ -832,6 +833,22 @@ int integrate_mpi(uint64_t n_steps){
 				std::cerr << "Error - Constrained Monte Carlo Integrator unavailable for parallel execution" << std::endl;
 				terminaltextcolor(WHITE);
 				err::vexit();
+				// increment time
+				sim::internal::increment_time();
+			}
+			break;
+			case 6: // Suzuki Trotter decomposition
+
+			for(uint64_t ti=0;ti<n_steps;ti++){
+				#ifdef MPICF
+               if(sim::STDspin_parallel_initialized == false) {
+                  sim::STDspin_parallel_init(atoms::x_coord_array, atoms::y_coord_array, atoms::z_coord_array,
+                                               vmpi::min_dimensions, vmpi::max_dimensions);
+               }
+               sim::STDspin_step_parallel(atoms::x_spin_array, atoms::y_spin_array, atoms::z_spin_array,
+                                            atoms::type_array);
+            #endif
+
 				// increment time
 				sim::internal::increment_time();
 			}

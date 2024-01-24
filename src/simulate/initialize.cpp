@@ -38,6 +38,9 @@ namespace sim{
 
       sim::internal::vcmak.resize(num_materials);
 
+      sim::STDspin_parallel_initialized = false;
+      sim::c_octants.resize(8);
+      sim::b_octants.resize(8);
       // loop over materials set by user
       for(unsigned int m=0; m < sim::internal::mp.size(); ++m){
          // copy values set by user to arrays
