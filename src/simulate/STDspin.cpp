@@ -45,7 +45,7 @@ namespace sim{
       generate (Hy_th.begin(),Hy_th.end(), mtrandom::gaussian);
       generate (Hz_th.begin(),Hz_th.end(), mtrandom::gaussian);
 
-
+        sim::hamiltonian_simulation_flags[3] = 0;
       for(int atom=0;atom<num_atoms;atom++){
       calculate_spin_fields(atom, atom+1);
   	  calculate_external_fields(atom, atom+1);
