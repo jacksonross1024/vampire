@@ -34,8 +34,8 @@ namespace sim{
       const int num_atoms=atoms::num_atoms;
       double cay_dt=-mp::dt/2.0;//-dt4*consts::gyro - mp::dt contains gamma;
       double dt2=0.5*mp::dt_SI*1e12;
-      double lambda=mp::material[0].alpha;
-      double spin_noise=mp::material[0].H_th_sigma*sqrt(sim::temperature);
+      // double lambda=mp::material[0].alpha;
+      // double spin_noise=mp::material[0].H_th_sigma*sqrt(sim::temperature);
 
       std::vector <double> Hx_th(atoms::x_spin_array.size());
    	  std::vector <double> Hy_th(atoms::x_spin_array.size());
@@ -169,8 +169,8 @@ void add_spin_noise(const int start_index,
             std::vector<double>& Hy_th,
             std::vector<double>& Hz_th){
 
-     double lambda=mp::material[0].alpha;
-     double spin_noise=sqrt(sim::temperature)*mp::material[0].H_th_sigma;
+     double lambda=mp::material[type_array[start_index]].alpha;
+     double spin_noise=sqrt(sim::temperature)*mp::material[type_array[start_index]].H_th_sigma;
 
      //std::cout<<"lambda= "<<lambda<<std::endl;
 

@@ -149,8 +149,8 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
                     
        double cay_dt=-mp::dt/4.0;//-dt4*consts::gyro - mp::dt contains gamma;
        double dt2=0.5*mp::dt_SI*1e12;
-       double lambda=mp::material[0].alpha;
-       double spin_noise=mp::material[0].H_th_sigma*sqrt(sim::temperature);
+      //  double lambda=mp::material[type_array[]].alpha;
+      //  double spin_noise=mp::material[0].H_th_sigma*sqrt(sim::temperature);
        
 
        
@@ -194,8 +194,6 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
          //  atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
          //  atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
-
-
          add_spin_noise(atom,
                      atom+1,
                      mp::dt_SI*1e12,
@@ -209,9 +207,6 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
                      Hx_th, //  vectors for fields
                      Hy_th,
                      Hz_th);
-                     
-
-
 
         cayley_update(atom,
                      atom+1,
@@ -253,9 +248,6 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
                      Hy_th,
                      Hz_th);
                      
-
-
-
         cayley_update(atom,
                      atom+1,
                      cay_dt,
@@ -264,9 +256,7 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
                      atoms::z_spin_array,
                      atoms::x_total_spin_field_array,
                      atoms::y_total_spin_field_array,
-                     atoms::z_total_spin_field_array);
-          
-                     
+                     atoms::z_total_spin_field_array);   
 
          } //end spin for loop
          
@@ -398,7 +388,6 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
                //   atoms::y_total_spin_field_array[atom]=+atoms::y_total_external_field_array[atom];
                //   atoms::z_total_spin_field_array[atom]=+atoms::z_total_external_field_array[atom];
 
-
              add_spin_noise(atom,
                          atom+1,
                          mp::dt_SI*1e12,
@@ -412,8 +401,6 @@ void STDspin_step_parallel(std::vector<double> &x_spin_array,
                          Hx_th, //  vectors for fields
                          Hy_th,
                          Hz_th);
-                         
-
 
 
             cayley_update(atom,
