@@ -170,10 +170,20 @@ void add_spin_noise(const int start_index,
             std::vector<double>& Hz_th){
 
      double lambda=mp::material[type_array[start_index]].alpha;
-     double spin_noise=sqrt(sim::temperature)*mp::material[type_array[start_index]].H_th_sigma;
+    
+      double temperature = sim::temperature;
+      // Check for localised temperature
 
+      int mat = type_array[start_index];
+      // Calculate temperature rescaling
+      double alpha = mp::material[mat].temperature_rescaling_alpha;
+      double Tc = mp::material[mat].temperature_rescaling_Tc;
+      // if T<Tc T/Tc = (T/Tc)^alpha else T = T
+      double rescaled_temperature = temperature < Tc ? Tc*pow(temperature/Tc,alpha) : temperature;
+      double sqrt_T=sqrt(rescaled_temperature);
+     
      //std::cout<<"lambda= "<<lambda<<std::endl;
-
+      double spin_noise=sqrt_T*mp::material[type_array[start_index]].H_th_sigma;
      for( int i = start_index; i<end_index; i++)
 
     {
