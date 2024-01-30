@@ -87,6 +87,9 @@ void spin_temperature_statistic_t::set_mask(const int in_mask_size, const std::v
       }
    }
     
+      for (int mask_num = 0; mask_num < mask_size; ++mask_num ) {
+        spin_temperature_top[mask_num] = spin_temperature_bottom[mask_num] = total_spin_temperature[mask_num] = 0.0;
+    }
     initialized = true;
    
    
@@ -121,9 +124,12 @@ void spin_temperature_statistic_t::calculate(const std::vector<double>& sx, cons
     const std::vector<double>& Hx_ext, const std::vector<double>& Hy_ext, const std::vector<double>& Hz_ext) {
  
     //zero spin_temperature array
-    for (int mask_num = 0; mask_num < mask_size; ++mask_num ) {
-        spin_temperature_top[mask_num] = spin_temperature_bottom[mask_num] = total_spin_temperature[mask_num] = 0.0;
-    }
+  
+     if(sim::integrator == sim::monte_carlo || sim::integrator == sim::cmc || sim::integrator == sim::hybrid_cmc || sim::integrator == sim::suzuki_trotter_spin){
+      const int64_t num_atoms = sx.size();
+      sim::calculate_spin_fields(0, num_atoms);
+      sim::calculate_external_fields(0, num_atoms);
+   } 
   
    //create local variables
         int mask_num = 0;
@@ -165,12 +171,14 @@ void spin_temperature_statistic_t::calculate(const std::vector<double>& sx, cons
         const double K_b = 1.38064852e-23;
          for (int mask_num = 0; mask_num < mask_size; ++mask_num) {  
             total_spin_temperature[mask_num] = (u_B * spin_temperature_top[mask_num]) / (2.0 * K_b * spin_temperature_bottom[mask_num]); 
-            mean_spin_counter[mask_num] += 1;
-            mean_spin_temperature[mask_num] += total_spin_temperature[mask_num];
+            spin_temperature_top[mask_num]= spin_temperature_bottom[mask_num] = 0.0;
+            // mean_spin_counter[mask_num] += 1;
+            // mean_spin_temperature[mask_num] += total_spin_temperature[mask_num];
          }
 
         //unscale temperature
-        for (int mat = 0; mat < mp::material.size(); mat++) {
+        for (int mask_num = 0; mask_num < mask_size; ++mask_num) {  
+            int mat = mask_num;
             double alpha = mp::material[mat].temperature_rescaling_alpha;
             double Tc = mp::material[mat].temperature_rescaling_Tc;
             //if T < Tc, then Tr= Tc * (T/Tc)^alpha
@@ -179,6 +187,11 @@ void spin_temperature_statistic_t::calculate(const std::vector<double>& sx, cons
           // Zero empty mask id's
          for(unsigned int id=0; id < zero_list.size(); ++id) total_spin_temperature[zero_list[id]]=0.0;
 
+         for (int mask_num = 0; mask_num < mask_size; ++mask_num) {  
+           // total_spin_temperature[mask_num] = (u_B * spin_temperature_top[mask_num]) / (2.0 * K_b * spin_temperature_bottom[mask_num]); 
+            mean_spin_counter[mask_num] += 1;
+            mean_spin_temperature[mask_num] += total_spin_temperature[mask_num];
+         }
     }  
 
     
@@ -219,8 +232,8 @@ std::string spin_temperature_statistic_t::output_mean_spin_temperature(bool head
        if(header) {
            result << name + std::to_string(mask_id) + "mean_spinTemp";
        } else{
-        double ic = 1.0 / mean_spin_counter[mask_id];
-        const double temp = mean_spin_temperature[mask_id] * ic;
+        if(mean_spin_counter[mask_id] == 0.0) mean_spin_counter[mask_id] = 1.0;
+        const double temp = mean_spin_temperature[mask_id] /mean_spin_counter[mask_id];
           result << temp;
         
        }
