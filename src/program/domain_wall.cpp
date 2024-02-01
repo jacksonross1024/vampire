@@ -90,6 +90,11 @@ namespace program{
 			if (sim::domain_wall_axis == 0) {
 				//90 degree 
 				if(sim::domain_wall_angle == 0) {
+					 double alpha = mp::material[1].temperature_rescaling_alpha;
+      				double Tc = mp::material[1].temperature_rescaling_Tc;
+					double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
+					std::cout <<mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
+					sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
 					for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
 						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*30.0) {
@@ -625,7 +630,11 @@ namespace program{
 			// 	sim::internal::increment_time();
 			// }
 			uint64_t start_time=sim::time;
-			for(int cell = 0; cell < program::internal::num_dw_cells; cell++) {
+			
+			// Simulate system
+			uint64_t counter_time = 0;
+			while(sim::time<sim::loop_time+start_time){
+				for(int cell = 0; cell < program::internal::num_dw_cells; cell++) {
 				
 					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
 					program::internal::mag[program::internal::num_mag_cat* cell + 0 ] = 0.0;
@@ -636,11 +645,7 @@ namespace program{
 					program::internal::mag[program::internal::num_mag_cat* cell + 5 ] = 0.0;
 
 				} 
-			// Simulate system
-			uint64_t counter_time = 0;
-			while(sim::time<sim::loop_time+start_time){
-				
-				//for(uint64_t ti=0;ti<sim::partial_time;ti++) {
+				for(uint64_t ti=0;ti<sim::partial_time;ti++) {
 					#ifdef MPICF
                		if(montecarlo::mc_parallel_initialized == false) {
                 		montecarlo::mc_parallel_init(atoms::x_coord_array, atoms::y_coord_array, atoms::z_coord_array,
@@ -650,42 +655,27 @@ namespace program{
                                             atoms::type_array);
             		#endif
 
-				// increment time
-				sim::internal::increment_time();
-				//}
-				for(int atom=0;atom<num_local_atoms;atom++) {
-					int cell = program::internal::atom_to_cell_array[atom];
-			//	int cat = atoms::sublayer_array[atom];
-					int mat = atoms::type_array[atom];
-					double S[3] = {atoms::x_spin_array[atom], atoms::y_spin_array[atom],atoms::z_spin_array[atom]};
-					program::internal::mag[program::internal::num_mag_cat*cell]   += S[0];
-					program::internal::mag[program::internal::num_mag_cat*cell+1] += S[1];
-					program::internal::mag[program::internal::num_mag_cat*cell+2] += S[2];
-					program::internal::mag[program::internal::num_mag_cat*cell+3] += exchange::single_spin_energy(atom, S[0], S[1], S[2]);
-					program::internal::mag[program::internal::num_mag_cat*cell+4] += anisotropy::single_spin_energy(atom,mat , S[0], S[1], S[2], sim::temperature);
-					program::internal::mag[program::internal::num_mag_cat*cell+5] += sim::laser_torque_strength*(cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
+				
+					sim::internal::increment_time();
+					for(int atom=0;atom<num_local_atoms;atom++) {
+						int cell = program::internal::atom_to_cell_array[atom];
+			
+						int mat = atoms::type_array[atom];
+						double S[3] = {atoms::x_spin_array[atom], atoms::y_spin_array[atom],atoms::z_spin_array[atom]};
+						program::internal::mag[program::internal::num_mag_cat*cell]   += S[0];
+						program::internal::mag[program::internal::num_mag_cat*cell+1] += S[1];
+						program::internal::mag[program::internal::num_mag_cat*cell+2] += S[2];
+						program::internal::mag[program::internal::num_mag_cat*cell+3] += exchange::single_spin_energy(atom, S[0], S[1], S[2]);
+						program::internal::mag[program::internal::num_mag_cat*cell+4] += anisotropy::single_spin_energy(atom,mat , S[0], S[1], S[2], sim::temperature);
+						program::internal::mag[program::internal::num_mag_cat*cell+5] += sim::laser_torque_strength*(cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
 
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*1.5 - (M_PI+atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]));
-				}	
+					}	
 				stats::update();
-
-				//}
-				//counter_time += sim::partial_time;
-				//std::cout << 1.0/double(counter_time )<< std::endl;
-				// for(int cell = 0; cell < program::internal::num_dw_cells; cell++) {
-				
-				// 	// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
-				// 	program::internal::mag[program::internal::num_mag_cat* cell + 0 ] /= int(counter_time);
-				// 	program::internal::mag[program::internal::num_mag_cat* cell + 1 ] /= int(counter_time);
-				// 	program::internal::mag[program::internal::num_mag_cat* cell + 2 ] /= int(counter_time);
-				// 	program::internal::mag[program::internal::num_mag_cat* cell + 3 ] /= int(counter_time);
-				// 	program::internal::mag[program::internal::num_mag_cat* cell + 4 ] /= int(counter_time);
-				// 	program::internal::mag[program::internal::num_mag_cat* cell + 5 ] /= int(counter_time);
-
 				}
-				output_dw_data(sim::loop_time);
-			// }
-			//vout::data;
+				output_dw_data(sim::partial_time);
+				vout::data;
+				}
 			}
 			break;
 
