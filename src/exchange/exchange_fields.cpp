@@ -13,13 +13,13 @@
 // C++ standard library headers
 
 // Vampire headers
-#include "atoms.hpp" // for exchange list type defs
+//#include "atoms.hpp" // for exchange list type defs
 #include "exchange.hpp"
 #include "dipole.hpp"
 #include <iostream>
 // exchange module headers
 #include "internal.hpp"
-#include "sim.hpp"
+
 namespace exchange{
 
 namespace internal{
@@ -62,11 +62,11 @@ namespace internal{
    				const int end   = neighbour_list_end_index[atom]+1;
 
                // loop over all neighbours
-   				for(int nn = start; nn < end; ++nn) {
+   				for(int nn = start; nn < end; ++nn){
 
    					const int natom = neighbour_list_array[nn]; // get neighbouring atom number
    					const double Jij = i_exchange_list[ neighbour_interaction_type_array[nn] ].Jij; // get exchange constant between atoms
-                  
+
    					hx += Jij * spin_array_x[natom]; // add exchange fields
    					hy += Jij * spin_array_y[natom];
    					hz += Jij * spin_array_z[natom];
@@ -93,9 +93,9 @@ namespace internal{
                // temporray constants for loop start and end indices
                const int start = neighbour_list_start_index[atom];
                const int end   = neighbour_list_end_index[atom]+1;
-              // int count = 0;
+
                // loop over all neighbours
-               for(int nn = start; nn < end; ++nn) {
+               for(int nn = start; nn < end; ++nn){
 
                   const int natom = neighbour_list_array[nn]; // get neighbouring atom number
                   const int iid = neighbour_interaction_type_array[nn]; // interaction id
@@ -103,50 +103,17 @@ namespace internal{
    					const double Jij[3]={v_exchange_list[iid].Jij[0],
    												v_exchange_list[iid].Jij[1],
    												v_exchange_list[iid].Jij[2]};
-                 // const double Sj[3] = {spin_array_x[natom], spin_array_y[natom], spin_array_z[natom]};
-               
-            //    if(sim::anti_PBC[0]) {
-            //       if(atoms::x_coord_array[natom] < -0.1) {
-            //          hx += -Jij[0] * spin_array_y[natom];
-            //          hy += Jij[1] * spin_array_x[natom];
-            //       //   count++;
-            //        // if(atom==1) std::cout <<Jij[0] << " 0 <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << -spin_array_y[natom] << ", " << spin_array_x[natom] << std::endl;
-            //       }
-            //       // else if(atoms::x_coord_array[atom] < -0.01) {
-            //       //    hx += Jij[0] * spin_array_y[natom];
-            //       //    hy += -Jij[1] * spin_array_x[natom];
-            //       //    count++;
-            //       //    if(atom==1) std::cout <<Jij[0] << " <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << spin_array_y[natom] << ", " << -spin_array_x[natom] << std::endl;
-            //       // }
-            //       else if (atoms::x_coord_array[natom] > cs::system_dimensions[0]-0.01) {
-            //          hx += Jij[0] * spin_array_y[natom];
-            //          hy += -Jij[1] * spin_array_x[natom];
-            //        //  count++;
-            //         // if(atom==2001) std::cout <<Jij[0] << " l_x <" << spin_array_x[atom] << "," << spin_array_y[atom] << ">  <" << spin_array_y[natom] << ", " << -spin_array_x[natom] << std::endl;
-            //       }
-            //       // else if (atoms::x_coord_array[atom] > cs::system_dimensions[0]-0.01) {
-            //       //    hx += -Jij[0] * spin_array_y[natom];
-            //       //    hy += Jij[1] * spin_array_x[natom];
-            //       //    count++;
-            //       // }
-            //       else 
-            //       {
-            //          hx += Jij[0] * spin_array_x[natom];
-            //          hy += Jij[1] * spin_array_y[natom];
-            //       }
-   			// 		hz += Jij[2] * spin_array_z[natom];
-            //       }
-                  hx += Jij[0] * spin_array_x[natom];
-                  hy += Jij[1] * spin_array_y[natom];
+
+                  hx += Jij[0] * spin_array_x[natom]; // add exchange fields
+   					hy += Jij[1] * spin_array_y[natom];
    					hz += Jij[2] * spin_array_z[natom];
-               
-            }
-              // if(count > 0) std::cout << "atom " << atom << " has " << count << " abc neighbors " << std::endl;
-               
+
+   				}
+
                field_array_x[atom] += hx; // save total field to field array
    				field_array_y[atom] += hy;
    				field_array_z[atom] += hz;
-  // if(atom==4000) std::cout << hx << "\t" << hy << "\t" << hz << std::endl;
+
    			}
    			break;
 
@@ -183,11 +150,7 @@ namespace internal{
    													  t_exchange_list[iid].Jij[2][2]} };
 
    					const double S[3]={spin_array_x[natom], spin_array_y[natom], spin_array_z[natom]};
-                 // if(atoms::x_coord_array[atom] > cs::system_dimensions[0] || atoms::x_coord_array[natom] < -0.1 ) {\
-                     std::cout << Jij[0][0] * S[0] + Jij[0][1] * S[1] + Jij[0][2] * S[2] <<\
-                          ", " << Jij[1][0] * S[0] + Jij[1][1] * S[1] + Jij[1][2] * S[2] <<\
-                          ", " << Jij[2][0] * S[0] + Jij[2][1] * S[1] + Jij[2][2] * S[2] << std::endl;
-                  // }
+
    					hx += ( Jij[0][0] * S[0] + Jij[0][1] * S[1] + Jij[0][2] * S[2]);
    					hy += ( Jij[1][0] * S[0] + Jij[1][1] * S[1] + Jij[1][2] * S[2]);
    					hz += ( Jij[2][0] * S[0] + Jij[2][1] * S[1] + Jij[2][2] * S[2]);
