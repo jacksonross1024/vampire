@@ -87,6 +87,7 @@ namespace program{
 
       extern std::vector<internal::mp_t> mp; // array of material properties
 
+      extern double exchange_stiffness_min_constraint_angle;
       extern double exchange_stiffness_max_constraint_angle; // degrees
       extern double exchange_stiffness_delta_constraint_angle; // degrees
 

@@ -228,6 +228,14 @@ namespace program{
          return true;
       }
       //--------------------------------------------------------------------
+      test="exchange-stiffness-minimum-angle";
+      if(word==test){
+         double ma = atof(value.c_str()); // convert string to uint64_t
+         vin::check_for_valid_value(ma, word, line, prefix, unit, "", 0.0, 180.1,"input","0 - 180 degrees");
+         program::internal::exchange_stiffness_min_constraint_angle = ma;
+         return true;
+      }
+      //--------------------------------------------------------------------
       test="exchange-stiffness-angle-increment";
       if(word==test){
          double ai = atof(value.c_str()); // convert string to uint64_t
