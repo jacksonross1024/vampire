@@ -86,15 +86,16 @@ namespace program{
 
 		program::internal::num_atoms_in_cell.resize(program::internal::num_dw_cells,0);
 
-		if (!sim::load_checkpoint_flag){
+		if (!sim::load_checkpoint_flag) {
 			if (sim::domain_wall_axis == 0) {
 				//90 degree 
 				if(sim::domain_wall_angle == 0) {
-					 double alpha = mp::material[1].temperature_rescaling_alpha;
+					double alpha = mp::material[1].temperature_rescaling_alpha;
       				double Tc = mp::material[1].temperature_rescaling_Tc;
 					double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
 					std::cout <<mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
 					sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
+
 					for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
 						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*30.0) {
@@ -633,7 +634,7 @@ namespace program{
 			
 			// Simulate system
 			uint64_t counter_time = 0;
-			while(sim::time<sim::loop_time+start_time){
+			while(sim::time<sim::loop_time+start_time) {
 				for(int cell = 0; cell < program::internal::num_dw_cells; cell++) {
 				
 					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
@@ -681,6 +682,56 @@ namespace program{
 
 			case 6: { // Suzuki Trotter decomposition
 				while(sim::time<sim::equilibration_time+sim::total_time) {
+					double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
+				const double i_pump_time = 1.0/sim::pump_time;
+  		 		double reduced_time = (ftime-1.5*sim::pump_time)*i_pump_time;
+   				const double four_ln_2 = 2.77258872224; // 4 ln 2
+   				double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+				if(sim::enable_laser_torque_fields) {
+					if(ftime < 1.5*sim::pump_time) sim::laser_torque_strength = gaussian;
+					else if (ftime < 1.5*sim::pump_time + sim::double_pump_delay) sim::laser_torque_strength = 1.0;
+					else {
+						reduced_time = (ftime-1.5*sim::pump_time-sim::double_pump_delay)*i_pump_time;
+						gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+						sim::laser_torque_strength = gaussian;
+					}
+				}
+   			const double two_delta_sqrt_pi_ln_2 = 9394372.787;
+	
+   			const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time;
+   			const double Te = sim::TTTe;
+   			const double Tp = sim::TTTp;
+   			const double G  = sim::TTG;
+   			const double Ce = sim::TTCe;
+   			const double Cl = sim::TTCl;
+   			const double dt = mp::dt_SI;
+
+			// integrate two temperature model (floor in free elecron approximation (c prop to T) for low temperatures)
+			if(Te>1.0) sim::TTTe = (-G*(Te-Tp)+pump)*dt/(Ce*Te) + Te;
+			else sim::TTTe =       (-G*(Te-Tp)+pump)*dt/Ce + Te;
+			sim::TTTp =            ( G*(Te-Tp)     )*dt/Cl + Tp - (Tp-sim::Teq)*sim::HeatSinkCouplingConstant*dt;
+
+			double time_from_start = mp::dt_SI * double(sim::time-sim::equilibration_time);
+
+   			if(time_from_start < program::internal::electrical_pulse_rise_time ) {
+      			program::fractional_electric_field_strength = time_from_start / program::internal::electrical_pulse_rise_time;
+			
+   			}
+   			// implement continuous current
+   			else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time) ){
+     			program::fractional_electric_field_strength = 1.0;
+
+   			}
+   			// implement fall time
+   			else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time + program::internal::electrical_pulse_fall_time)) {
+    	  		const double fractional_fall_time = time_from_start - (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time);
+    	  		program::fractional_electric_field_strength = 1.0 - fractional_fall_time / program::internal::electrical_pulse_fall_time;
+		
+   			}
+   // after pulse current = 0
+   			else{
+      			program::fractional_electric_field_strength = 0.0;
+   			}
 					for(int cell = 0; cell < program::internal::num_dw_cells; cell++) {
 				
 					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
@@ -789,7 +840,7 @@ namespace program{
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +3]*num << "\t" <<\
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +4]*num << "\t" <<\
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +5]*num << "\t" <<\
-									d_topological_charge << "\t"  << d_topological_charge_acc  <<  "\n";
+									d_topological_charge << "\t"  << d_topological_charge_acc  << "\t" << 1.0/num << '\n';
 					
 				for(int x_cell = 1; x_cell < program::internal::num_dw_cells_x-1; x_cell++) {
 						 cell = z_cell*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y*program::internal::num_mag_types + y_cell*program::internal::num_dw_cells_x*program::internal::num_mag_types + x_cell*program::internal::num_mag_types + mat_type;	
@@ -835,7 +886,7 @@ namespace program{
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +3]*num << "\t" << //exchange energy
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +4]*num << "\t" << //anisotropy energy
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +5]*num << "\t" << //LOT energy
-									d_topological_charge << "\t"  << d_topological_charge_acc  <<  "\n";
+									d_topological_charge << "\t"  << d_topological_charge_acc  << "\t" << 1.0/num << "\n";
 					
 						// }
 						}
