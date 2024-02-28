@@ -34,7 +34,7 @@ double exchange(double range, double cutoff, int mat_i, int mat_j){
    switch(uc::internal::exchange_function){
 
       case nearest_neighbour:{
-         std::cout << "test" << std::endl;
+       //  std::cout << "test" << std::endl;
          if(range <= cutoff) return 1.0;
          else return 0.0;
          break;

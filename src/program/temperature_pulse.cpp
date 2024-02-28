@@ -109,7 +109,7 @@ double temperature_pulse_function(double function_time){
 ///   Assuming a nominal penetration depth of 10 nm 
 // [this is bad conversion] and conversion from J/m^2 -> mJ/cm^2, 50 J/m^2 -> 0.5 mJ/cm^2 
 ///   I(t) is now in units of s^1 m^-1 and laser power P is in units of J/m^2
-/// bad : mJ/cm^2
+/// bad : mJ/cm^2: 9394372.787 -> 93943727.87;
 ///
 ///-----------------------------------------------------------------------------------------
 double two_temperature_function(double ftime){
@@ -131,7 +131,7 @@ double two_temperature_function(double ftime){
 		// if(gaussian > 1.0) std::cout << gaussian << std::endl;
 	}
 	
-   const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time;
+   const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time/5.0;
    const double Te = sim::TTTe;
    const double Tp = sim::TTTp;
    const double G  = sim::TTG;

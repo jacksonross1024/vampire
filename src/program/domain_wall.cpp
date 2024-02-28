@@ -102,7 +102,7 @@ namespace program{
 							int mat = atoms::type_array[atom]-1;
 							double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
 						//if(sim::num_monte_carlo_preconditioning_steps == 0) {
-							double theta = std::atan(exp(-1.0*(atoms::x_coord_array[atom] - sim::domain_wall_position)/sim::domain_wall_width)) -M_PI*0.25;
+							double theta = std::atan(exp(-1.0*(atoms::x_coord_array[atom] - sim::domain_wall_position)/sim::domain_wall_width)) - M_PI*0.25;//  + std::atan(exp(1.0*(atoms::x_coord_array[atom] - 15000.0)/sim::domain_wall_width)) -M_PI*0.25;
 							double pos_x = std::cos(theta)*mod;
 							double pos_y = std::sin(theta)*mod; //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
 					
@@ -231,11 +231,9 @@ namespace program{
 						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*30.0) {
 							int mat = atoms::type_array[atom]-1;
 						//	double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
-
 						//	double theta = std::atan(exp(-1.0*(atoms::x_coord_array[atom] - sim::domain_wall_position)/sim::domain_wall_width)) -M_PI*0.25;
 						//	double pos_x = std::cos(theta)*mod;
-						//	double pos_y = std::sin(theta)*mod; //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
-					
+						//	double pos_y = std::sin(theta)*mod; //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));		
 						//	atoms::x_spin_array[atom] =  (mat==1?-1.0:1.0)* pos_x;
 						//	atoms::y_spin_array[atom] =  (mat==1?-1.0:1.0)* pos_y;
 						//	atoms::z_spin_array[atom] = 0.0;// (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
@@ -590,6 +588,8 @@ namespace program{
 					// 							sim::H_vec[2],
 					// 							mp::dt);
 					#endif
+					#else 
+					sim::LLG_Heun();
 				#endif
 				// increment time
 				sim::internal::increment_time();
