@@ -525,7 +525,7 @@ namespace program{
 				}
    			const double two_delta_sqrt_pi_ln_2 = 9394372.787;
 	
-   			const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time;
+   			const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time/5.0;
    			const double Te = sim::TTTe;
    			const double Tp = sim::TTTp;
    			const double G  = sim::TTG;
