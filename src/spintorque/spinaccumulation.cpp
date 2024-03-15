@@ -123,8 +123,23 @@ namespace st{
                                           st::internal::micro_cell_thickness)*1.e-30; // m^3
 
          // loop over all 1D stacks (in parallel)
-         for(int s=0; s <st::internal::mpi_stack_list.size(); ++s) {
-            int stack = st::internal::mpi_stack_list[s]+1;
+         int int_stacks;
+         // std::vector<int> stacks_list;
+         #ifdef MPICH 
+         int_stacks = st::internal::mpi_stack_list.size();
+         // stacks_list = st::internal::mpi_stack_list[s];
+         #else 
+         int_stacks = st::internal::num_stacks;
+        
+         #endif
+
+         for(int s=0; s < int_stacks; ++s) {
+            #ifdef MPICH
+            int stack = stacks_list[s] + 1;
+            #else 
+            int stack = s;
+            #endif
+
         //   std::cout << vmpi::my_rank << ", " << stack << std::endl;
             // if(stack%3 == 0) continue;
             // determine starting cell in stack
@@ -282,9 +297,9 @@ namespace st{
                   if(theta != theta) theta = 0.0;
                double phi = acos(m.z);
 
-               double say_sot = -sin(phi)*sin(2.0*theta)*0.5*st::internal::sa_infinity[cell]*je*1e-11; //j_sd / mu_b dS/S 8 10^8 / 10^7 A/m^2 = T
-               double sax_sot = -sin(phi)*(1.2*sin(theta)+1.4)*st::internal::sa_infinity[cell]*je*1e-11;
-               double saz_sot = cos(theta)*sin(phi)*0.12*st::internal::sa_infinity[cell]*je*1e-11;
+               double say_sot =0.0;// -sin(phi)*sin(2.0*theta)*0.5*st::internal::sa_infinity[cell]*je*1e-11; //j_sd / mu_b dS/S 8 10^8 / 10^7 A/m^2 = T
+               double sax_sot = 0.0;// -sin(phi)*(1.2*sin(theta)+1.4)*st::internal::sa_infinity[cell]*je*1e-11;
+               double saz_sot = 0.0;//cos(theta)*sin(phi)*0.12*st::internal::sa_infinity[cell]*je*1e-11;
 
                // double sax_sot = sin(phi)*sin(2.0*theta)*0.5*1.48e7*je*1e-11; //j_sd / mu_b dS/S 8 10^8 / 10^7 A/m^2 = T
                // double say_sot = sin(phi)*(1.2*sin(theta)+1.4)*1.48e7*je*1e-11;
@@ -355,9 +370,9 @@ namespace st{
                   st::internal::j[cellz] = st::internal::j[pcellz];
 
                   // if(cell < idx+201) {
-                     st::internal::spin_torque[cellx] = 0.0;
-                     st::internal::spin_torque[celly] = 0.0;
-                     st::internal::spin_torque[cellz] = 0.0;//
+                     // st::internal::spin_torque[cellx] = 0.0;
+                     // st::internal::spin_torque[celly] = 0.0;
+                     // st::internal::spin_torque[cellz] = 0.0;//
                   // } else {
                   // Calculate spin torque energy for cell (Joules)
                   st::internal::spin_torque[cellx] = st::internal::spin_torque[pcellx];

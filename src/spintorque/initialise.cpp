@@ -263,6 +263,7 @@ void initialise(const double system_dimensions_x,
    // optionally output base microcell data
    st::internal::output_base_microcell_data();
 
+       #ifdef MPICF 
    //determine mpi core stack list 
    int residual = st::internal::num_stacks % vmpi::num_processors;
   // st::internal::mpi_stack_list.resize(int(floor(st::internal::num_stacks/vmpi::num_processors))+1);
@@ -273,7 +274,7 @@ void initialise(const double system_dimensions_x,
       st::internal::mpi_stack_list.push_back(st::internal::num_stacks - vmpi::my_rank);
    }
 
-    #ifdef MPICF 
+
    // if(err::check) {
       //check stt stack mpi setup 
       // int stacks[st::internal::num_stacks] = {0};
@@ -294,8 +295,6 @@ void initialise(const double system_dimensions_x,
          MPI_Barrier(MPI_COMM_WORLD);
          err::vexit();
       }
-
-     
    // }
    
     #endif 
@@ -313,7 +312,7 @@ namespace internal{
       //-------------------------------------------------------
       st::internal::default_properties.beta_cond =  0.23;
       st::internal::default_properties.beta_diff =0.56;
-      st::internal::default_properties.sa_infinity =  1.48e7;
+      st::internal::default_properties.sa_infinity =  -1.48e7;
       st::internal::default_properties.lambda_sdl = 16.0e-10; // m
       st::internal::default_properties.diffusion = 0.001; //m^2/s ? 
       st::internal::default_properties.sd_exchange = 8.010883e-21; //Joule

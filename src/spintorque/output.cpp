@@ -47,7 +47,7 @@ namespace st{
                ofile << num_cells << std::endl;
                ofile << num_stacks << std::endl;
                for(int cell=0; cell < num_cells; ++cell){
-                    if( (st::internal::cell_stack_index[cell]-1)%3 == 0) continue;
+                  //   if( (st::internal::cell_stack_index[cell]-1)%3 == 0) continue;
 	               ofile << cell_stack_index[cell] << "\t" << "\t" << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2];
 	               ofile << "\t" << beta_cond[cell] << "\t" << beta_diff[cell] << "\t" << sa_infinity[cell] << "\t" << lambda_sdl[cell] << std::endl;
                }
@@ -148,9 +148,58 @@ namespace st{
            }
          config_file_counter++;
          }
+   #else
+   if(sim::time%(ST_output_rate) ==0){
+             
 
+                  using st::internal::m;
+         using st::internal::sa;
+         using st::internal::j;
+         using st::internal::coeff_ast;
+         using st::internal::coeff_nast;
+         using st::internal::ast;
+         using st::internal::nast;
+         using st::internal::cell_natom;
+
+         const int size = m.size();
+         const int num_cells = size/3;
+         
+
+               // determine file name
+               std::stringstream filename;
+               filename << "spin-acc/" << config_file_counter;
+          
            
-  #endif 
+                     std::ofstream ofile;
+               ofile.open(std::string(filename.str()).c_str());
+	          //  ofile<<"Time:"<< "\t" << sim::time*mp::dt_SI<< std::endl;
+             ofile << "pos_x \t pos_y \t pos_z \t m_x \t m_y \t m_z \t spin_acc_x \t spin_acc_y \t spin_acc_z \t " << \
+             "j_x \t j_y \t j_z \t ast_x \t ast_y \t ast_z \t nast_x \t nast_y \t nast_z \t torque_x \t torque_y \t torque_z \t num_atom" << std::endl;
+               for(int cell=0; cell<num_cells; ++cell){
+                  //   if( (st::internal::cell_stack_index[cell]-1)%3 == 0) continue;
+                  if(cell_natom[cell] == 0) continue;
+                  ofile << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2] << "\t";
+                  ofile << m[3*cell+0] << "\t" << m[3*cell+1] << "\t" << m[3*cell+2] << "\t";
+                  ofile << sa[3*cell+0] << "\t" << sa[3*cell+1] << "\t" << sa[3*cell+2] << "\t";
+                  ofile << sa_sot[3*cell+0] << "\t" << sa_sot[3*cell+1] << "\t" << sa_sot[3*cell+2] << "\t";
+                  ofile << j[3*cell+0] << "\t" << j[3*cell+1] << "\t" << j[3*cell+2] << "\t";
+                  ofile << coeff_ast[cell] << "\t";
+                  ofile << coeff_nast[cell] << "\t";
+                  ofile << ast[3*cell+0] << "\t" << ast[3*cell+1] << "\t" << ast[3*cell+2] << "\t";
+                  ofile << nast[3*cell+0] << "\t" << nast[3*cell+1] << "\t" << nast[3*cell+2] << "\t";
+                  ofile << total_ST[3*cell+0] << "\t" << total_ST[3*cell+1] << "\t" << total_ST[3*cell+2];
+                  ofile << "\t" << cell_natom[cell] << "\n";
+                  // ofile << std::endl;
+                  // ofile << spin_torque[3*cell+0] << "\t" << spin_torque[3*cell+1] << "\t" << spin_torque[3*cell+2] << std::endl;
+               }
+
+            ofile.close();
+       
+            // update config_file_counter
+         config_file_counter++;
+         }
+           
+   #endif 
          return;
       }
 
