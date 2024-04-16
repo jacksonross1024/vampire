@@ -27,6 +27,7 @@ honeycomb-a.o \
 honeycomb-b.o \
 kagome.o \
 mn2au.o \
+mn3sn.o \
 nd2fe14b.o\
 rocksalt.o \
 rutile.o \
