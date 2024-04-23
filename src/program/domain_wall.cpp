@@ -130,25 +130,64 @@ namespace program{
 				
 				//180 degree:
 				else if(sim::domain_wall_angle == 1) {
+					// for(int atom=0;atom<num_local_atoms;atom++) {
+					// //		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
+					// 	// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
+					// 	int mat = atoms::type_array[atom];
+					// 	double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
+					// 	double theta = -std::atan(std::sinh((atoms::x_coord_array[atom] - sim::domain_wall_position)/sim::domain_wall_width));
+						
+					// 	double pos_x = std::cos(theta)*mod; 
+					// 	double pos_y = std::sin(theta)*mod;
+					
+					// 	atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_x;
+					// 	atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_y;
+					// 	atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
+						
+					// 	int x_cell = (atoms::x_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[0];
+					// 	int y_cell = (atoms::y_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[1];
+					// 	int z_cell = (atoms::z_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[2];
+				
+					// 	int cell =  z_cell*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y + y_cell*program::internal::num_dw_cells_x + x_cell;
+					// 	program::internal::atom_to_cell_array[atom] = cell;
+					// 	program::internal::cell_to_lattice_array[3*cell + 0] = x_cell;
+					// 	program::internal::cell_to_lattice_array[3*cell + 1] = y_cell;
+					// 	program::internal::cell_to_lattice_array[3*cell + 2] = z_cell;
+
+					// 	program::internal::num_atoms_in_cell[cell]++;
+					// }
+				}
+			} else if (sim::domain_wall_axis == 1) {
+				if(sim::domain_wall_angle == 0) {
+					double alpha = mp::material[1].temperature_rescaling_alpha;
+      				double Tc = mp::material[1].temperature_rescaling_Tc;
+					double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
+					std::cout <<mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
+					sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
+
 					for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
-						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
-						int mat = atoms::type_array[atom];
-						double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
-						double theta = -std::atan(std::sinh((atoms::x_coord_array[atom] - sim::domain_wall_position)/sim::domain_wall_width));
-						
-						double pos_x = std::cos(theta)*mod; 
-						double pos_y = std::sin(theta)*mod;
+						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*30.0) {
+							int mat = atoms::type_array[atom]-1;
+							double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
+						//if(sim::num_monte_carlo_preconditioning_steps == 0) {
+							double theta = std::atan(exp(-1.0*(atoms::y_coord_array[atom] - sim::domain_wall_position)/sim::domain_wall_width)) - M_PI*0.25;//  + std::atan(exp(1.0*(atoms::x_coord_array[atom] - 15000.0)/sim::domain_wall_width)) -M_PI*0.25;
+							double pos_x = std::cos(theta)*mod;
+							double pos_y = std::sin(theta)*mod; //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
 					
-						atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_x;
-						atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_y;
-						atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
-						
-						int x_cell = (atoms::x_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[0];
-						int y_cell = (atoms::y_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[1];
-						int z_cell = (atoms::z_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[2];
-				
-						int cell =  z_cell*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y + y_cell*program::internal::num_dw_cells_x + x_cell;
+							atoms::x_spin_array[atom] =  (mat==1?-1.0:1.0)* pos_x;
+							atoms::y_spin_array[atom] =  (mat==1?-1.0:1.0)* pos_y;
+							atoms::z_spin_array[atom] = 0.0;// (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
+					//	}	
+						// int cat = atoms::sublayer_array[atom];
+						// if(cat > 5) std::cout << cat << std::endl;
+						int x_cell = (atoms::x_coord_array[atom]+0.01)/sim::domain_wall_discretisation[0];
+						int y_cell = (atoms::y_coord_array[atom]+0.010)/sim::domain_wall_discretisation[1];
+						int z_cell = (atoms::z_coord_array[atom]+0.010)/sim::domain_wall_discretisation[2];
+				//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
+						int cell = z_cell*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y*program::internal::num_mag_types + x_cell*program::internal::num_dw_cells_y*program::internal::num_mag_types + y_cell*program::internal::num_mag_types + mat;
+						//          1* + 
+					//	std::cout << cell << "\t";
 						program::internal::atom_to_cell_array[atom] = cell;
 						program::internal::cell_to_lattice_array[3*cell + 0] = x_cell;
 						program::internal::cell_to_lattice_array[3*cell + 1] = y_cell;
@@ -157,71 +196,37 @@ namespace program{
 						program::internal::num_atoms_in_cell[cell]++;
 					}
 				}
+				
+				//180 degree:
+				else if(sim::domain_wall_angle == 1) {
+					// for(int atom=0;atom<num_local_atoms;atom++) {
+					// //		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
+					// 	// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*3.0) {
+					// 	int mat = atoms::type_array[atom];
+					// 	double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
+					// 	double theta = -std::atan(std::sinh((atoms::x_coord_array[atom] - sim::domain_wall_position)/sim::domain_wall_width));
+						
+					// 	double pos_x = std::cos(theta)*mod; 
+					// 	double pos_y = std::sin(theta)*mod;
+					
+					// 	atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_x;
+					// 	atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos_y;
+					// 	atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
+						
+					// 	int x_cell = (atoms::x_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[0];
+					// 	int y_cell = (atoms::y_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[1];
+					// 	int z_cell = (atoms::z_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[2];
+				
+					// 	int cell =  z_cell*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y + y_cell*program::internal::num_dw_cells_x + x_cell;
+					// 	program::internal::atom_to_cell_array[atom] = cell;
+					// 	program::internal::cell_to_lattice_array[3*cell + 0] = x_cell;
+					// 	program::internal::cell_to_lattice_array[3*cell + 1] = y_cell;
+					// 	program::internal::cell_to_lattice_array[3*cell + 2] = z_cell;
+
+					// 	program::internal::num_atoms_in_cell[cell]++;
+					// }
+				}
 			}
-		/*	// if (sim::domain_wall_axis == 1){
-			// 	for(int atom=0;atom<num_local_atoms;atom++) {
-			// 		//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
-			// 		if (atoms::y_coord_array[atom] > sim::domain_wall_position -sim::domain_wall_width*3.0) {
-			// 			int mat = atoms::type_array[atom];
-			// 			double pos = std::tanh((atoms::y_coord_array[atom] - sim::domain_wall_position)*M_PI/sim::domain_wall_width);
-			// 			//volatile double pos_x = std::cos(pos);
-			// 			//volatile double pos_y = std::sin(pos); //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
-					
-			// 			double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
-					
-			// 			atoms::x_spin_array[atom] =  (mat==2?-1.0:1.0)* sqrt(1.0-pos*pos)*mod;
-			// 			atoms::y_spin_array[atom] =  (mat==2?-1.0:1.0)* pos*mod;
-			// 			atoms::z_spin_array[atom] +=  (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*pos;
-			
-			// 		}
-			// 	}
-			// }
-			// if (sim::domain_wall_axis == 2){
-			// 	for(int atom=0;atom<num_local_atoms;atom++){
-			// 		//			std::cout <<" here" << "\t" << atom << '\t' <<  atoms::z_coord_array[atom] << "\t" << cs::system_dimensions[2] << "\t" << sim::domain_wall_position  << '\t'<< sim::domain_wall_width/2.0 << "\t" << cs::system_dimensions[2]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
-			// 		if (atoms::z_coord_array[atom] > cs::system_dimensions[2]*sim::domain_wall_position -sim::domain_wall_width/2.0){
-			// 			//	 std::cout << "entered" << std::endl;
-			// 			int mat = atoms::type_array[atom];
-			// 			double pos = (atoms::z_coord_array[atom] - cs::system_dimensions[2]*sim::domain_wall_position + sim::domain_wall_width/2.0)/sim::domain_wall_width;
-			// 			if (pos > 1) pos = 1;
-			// 			if (pos < 0) pos = 0;
-			// 			//				std::cout << atoms::z_coord_array[atom] << '\t' << pos << std::endl;
-			// 			double dx = -atoms::x_spin_array[atom] + sim::domain_wall_second_vector_x[mat];
-			// 			double dy = -atoms::y_spin_array[atom] + sim::domain_wall_second_vector_y[mat];
-			// 			double dz = -atoms::z_spin_array[atom] + sim::domain_wall_second_vector_z[mat];
-			// 			//	std::cout << dx << '\t' << dy << "\t" << dz << std::endl;
-			// 			double mx = atoms::x_spin_array[atom] + dx*pos;
-			// 			double my = atoms::y_spin_array[atom] + dy*pos;
-			// 			double mz = atoms::z_spin_array[atom] + dz*pos;
-			// 			//	std::cout << dx << '\t' << dy << "\t" << dz << std::endl;
-			// 			atoms::x_spin_array[atom] = mx;
-			// 			atoms::y_spin_array[atom] = my;
-			// 			atoms::z_spin_array[atom] = mz;
-			// 			//		if (mat ==0) std::cout << atom << '\t' << mat << "\t" << atoms::z_coord_array[atom] << '\t' << atoms::x_spin_array[atom] << '\t' << atoms::y_spin_array[atom] << '\t' << atoms::z_spin_array[atom] << '\t' << sim::domain_wall_second_vector_x[mat] << '\t' << sim::domain_wall_second_vector_y[mat] << '\t' << sim::domain_wall_second_vector_z[mat] << '\t' <<std::endl;
-			// 		}
-			// 	}
-			// }
-			// if (sim::domain_wall_axis == 1){
-			//    for(int atom=0;atom<num_local_atoms;atom++){
-			//       if (atoms::y_coord_array[atom] > cs::system_dimensions[1]*sim::domain_wall_position){
-			// 			int mat = atoms::type_array[atom];
-			// 			atoms::x_spin_array[atom] = sim::domain_wall_second_vector_x[mat];
-			// 			atoms::y_spin_array[atom] = sim::domain_wall_second_vector_y[mat];
-			// 		 atoms::z_spin_array[atom] = sim::domain_wall_second_vector_z[mat];
-			//        }
-			//    }
-			// }
-			//
-			// if (sim::domain_wall_axis == 2){
-			//    for(int atom=0;atom<num_local_atoms;atom++){
-			//       if (atoms::z_coord_array[atom] > cs::system_dimensions[2]*sim::domain_wall_position){
-			// 			int mat = atoms::type_array[atom];
-			// 			atoms::x_spin_array[atom] = sim::domain_wall_second_vector_x[mat];
-			// 			atoms::y_spin_array[atom] = sim::domain_wall_second_vector_y[mat];
-			// 		  atoms::z_spin_array[atom] = sim::domain_wall_second_vector_z[mat];
-			//        }
-			//    }
-			// } */
 		} else {
 			if (sim::domain_wall_axis == 0) {
 				//90 degree 
@@ -261,183 +266,7 @@ namespace program{
 				}
 			}
 		}
-		/*
-		int count = 0;
-		// std::cout << sim::anti_PBC[0] << '\t' <<  sim::anti_PBC[1] << '\t' <<  sim::anti_PBC[2] <<std::endl;
-		if (sim::anti_PBC[0] || sim::anti_PBC[1] || sim::anti_PBC[2]){
-		  for (int atom = 0; atom <num_local_atoms; atom++){
-		    const int start = atoms::neighbour_list_start_index[atom];
-		    const int end   = atoms::neighbour_list_end_index[atom] + 1;
-		    for(int nn=start;nn<end;nn++){
-		 	 const int natom = atoms::neighbour_list_array[nn];
-		 	 bool edge = false;
-		 	 if (sim::anti_PBC[0] == true) {
-		 	   #ifdef MPICF
-		 	   if (atoms::x_coord_array[natom] < -0.01 || atoms::x_coord_array[natom] > (cs::system_dimensions[0]-0.01) || atoms::x_coord_array[atom] < -0.01 || atoms::x_coord_array[atom] > (cs::system_dimensions[0]-0.01)){
-					//  std::cout << atom << '\t' << natom  << "\t" << atoms::x_coord_array[atom] << '\t' <<atoms::x_coord_array[natom] << '\t' <<  std::endl;
-		
-					 edge = true;
-					 count++;
-		 	   }
-		 	   #else
-		 	   const double dx = (atoms::x_coord_array[atom] - atoms::x_coord_array[natom])*(atoms::x_coord_array[atom] - atoms::x_coord_array[natom]);
-		 	   if (dx > (cs::system_dimensions[0]-10)*(cs::system_dimensions[0]-10)){
-		 	     edge = true;
-		 	   }
-		 	   #endif
-		 	 }
-		 	 if (sim::anti_PBC[1] == true){
-		 	   //std::cout << "y" << std::endl;
-		 	   #ifdef MPICF
-		 	   if (atoms::y_coord_array[natom] < 0 || atoms::y_coord_array[natom] > (cs::system_dimensions[1]-1.665) || atoms::y_coord_array[atom] < 0 || atoms::y_coord_array[atom] > (cs::system_dimensions[1]-1.665)){
-		 	     edge = true;
-		 	   }
-		 	   #else
-		 	   const double dy = (atoms::y_coord_array[atom] - atoms::y_coord_array[natom])*(atoms::y_coord_array[atom] - atoms::y_coord_array[natom]);
-		 	   if (dy > (cs::system_dimensions[1]-5)*(cs::system_dimensions[1]-5)){
-		 	     edge = true;
-		 	   }
-		 	   #endif
-		
-		 	 }
-		 	 if (sim::anti_PBC[2] == true){
-		 	   //std::cout << "z" << std::endl;
-		 	   #ifdef MPICF
-		 	   if (atoms::z_coord_array[natom] < 0 || atoms::z_coord_array[natom] > cs::system_dimensions[2] || atoms::z_coord_array[atom] < 0 || atoms::z_coord_array[atom] > cs::system_dimensions[2]){
-		 	     edge = true;
-		 	   }
-		 	   #else
-		 	   const double dz = (atoms::z_coord_array[atom] - atoms::z_coord_array[natom])*(atoms::z_coord_array[atom] - atoms::z_coord_array[natom]);
-		 	   if (dz > (cs::system_dimensions[2]-5)*(cs::system_dimensions[2]-5)){
-		 	     edge = true;
-		 	   }
-		 	   #endif
-		 	 }
-			// 	std::cout << edge << std::endl;
-		
-		 	 	 if (edge == true){
-		 		   	//   std::cout <<  exchange::program::internal::exchange_type << '\t' << edge << '\t' << nn << "\t" << exchange::tensorial << std::endl;
-		 		     switch(exchange::program::internal::exchange_type){
-		 	   case exchange::isotropic:
-		 	     //std::cout << "iso" <<std::endl;
-		 	     	atoms::i_exchange_list[nn].Jij = -1.0*atoms::i_exchange_list[nn].Jij;
-						break;
-		 	   case exchange::vectorial:
-				 	// std::cout << atom << '\t' << natom << '\t' << atoms::v_exchange_list[nn].Jij[0] << "\t" << atoms::x_coord_array[atom] << '\t' <<atoms::x_coord_array[natom] << '\t' <<  std::endl;
-		 	     atoms::v_exchange_list[nn].Jij[0] = -1.0*atoms::v_exchange_list[nn].Jij[0];
-		 	     atoms::v_exchange_list[nn].Jij[1] = -1.0*atoms::v_exchange_list[nn].Jij[1];
-		 	     atoms::v_exchange_list[nn].Jij[2] = -1.0*atoms::v_exchange_list[nn].Jij[2];
-					 break;
-		 	   case exchange::tensorial:
-		 	    //std::cout << "tensor"<<std::endl;
-			if(atoms::t_exchange_list[nn].Jij[0][0] < -300 ) {	
-				// std::cout << atoms::t_exchange_list[nn].Jij[0][0] << std::endl;
-		 	    //  if(atoms::x_coord_array[atom] > cs::system_dimensions[0]-1.665) atoms::t_exchange_list[nn].Jij[1][0] = -1.0*atoms::t_exchange_list[nn].Jij[0][0];
-		 	    //  else atoms::t_exchange_list[nn].Jij[1][0] = 1.0*atoms::t_exchange_list[nn].Jij[0][0];
-				//  if(atoms::x_coord_array[atom] > cs::system_dimensions[0]-1.665) atoms::t_exchange_list[nn].Jij[0][1] = -1.0*atoms::t_exchange_list[nn].Jij[0][0];
-		 	    //  else atoms::t_exchange_list[nn].Jij[0][1] = 1.0*atoms::t_exchange_list[nn].Jij[0][0];
-			 	atoms::t_exchange_list[nn].Jij[0][1] = 1.5*atoms::t_exchange_list[nn].Jij[0][0];
-				atoms::t_exchange_list[nn].Jij[1][0] = 1.5*atoms::t_exchange_list[nn].Jij[0][0];
-		 	     atoms::t_exchange_list[nn].Jij[0][2] = 0.0;//-1.0*atoms::t_exchange_list[nn].Jij[0][2];
-		 	     atoms::t_exchange_list[nn].Jij[1][2] = 0.0;//-1.0*atoms::t_exchange_list[nn].Jij[1][2];
-		 	     atoms::t_exchange_list[nn].Jij[2][0] = 0.0;//-1.0*atoms::t_exchange_list[nn].Jij[2][0];
-		 	     atoms::t_exchange_list[nn].Jij[2][1] = 0.0;//-1.0*atoms::t_exchange_list[nn].Jij[2][1];
-				 atoms::t_exchange_list[nn].Jij[0][0] = 1.0*atoms::t_exchange_list[nn].Jij[0][0];
-				 atoms::t_exchange_list[nn].Jij[1][1] = 1.0*atoms::t_exchange_list[nn].Jij[1][1];
-		 	     atoms::t_exchange_list[nn].Jij[2][2] = 1.0*atoms::t_exchange_list[nn].Jij[2][2];
-				 if(atoms::x_coord_array[atom] > -0.01) {
-				atoms::t_exchange_list[nn].Jij[1][0] *= -0.50;//*atoms::t_exchange_list[nn].Jij[1][1];
-				atoms::t_exchange_list[nn].Jij[0][0] *= 1.0;//*atoms::t_exchange_list[nn].Jij[0][0];
-				// atoms::t_exchange_list[nn].Jij[2][2] *= 1.0;//*atoms::t_exchange_list[nn].Jij[2][2];
-				atoms::t_exchange_list[nn].Jij[1][1] *= 1.0;//*atoms::t_exchange_list[nn].Jij[2][2];
-				atoms::t_exchange_list[nn].Jij[0][1] *= -0.50;//*atoms::t_exchange_list[nn].Jij[0][0];
-				}
-				if(atoms::x_coord_array[natom] < -0.01) {
-				atoms::t_exchange_list[nn].Jij[1][0] *= -0.5;//*atoms::t_exchange_list[nn].Jij[1][1];
-				atoms::t_exchange_list[nn].Jij[0][0] *= -1.0;//*atoms::t_exchange_list[nn].Jij[0][0];
-				// atoms::t_exchange_list[nn].Jij[2][2] *= 1.0;//*atoms::t_exchange_list[nn].Jij[2][2];
-				atoms::t_exchange_list[nn].Jij[1][1] *= -1.0;//*atoms::t_exchange_list[nn].Jij[2][2];
-				atoms::t_exchange_list[nn].Jij[0][1] *= -0.500;//*atoms::t_exchange_list[nn].Jij[0][0];
-				}
-					 break;
-			} else if(atoms::t_exchange_list[nn].Jij[0][0] > 90 ) {
-				// std::cout << atoms::t_exchange_list[nn].Jij[0][0] << std::endl;
-				// if(atoms::x_coord_array[atom] > cs::system_dimensions[0]-1.665) atoms::t_exchange_list[nn].Jij[0][1] = -1.0*atoms::t_exchange_list[nn].Jij[0][0];
-				// else atoms::t_exchange_list[nn].Jij[0][1] = 1.0*atoms::t_exchange_list[nn].Jij[0][0];
-				atoms::t_exchange_list[nn].Jij[0][1] = 1.0*atoms::t_exchange_list[nn].Jij[0][0];
-		 	     atoms::t_exchange_list[nn].Jij[0][2] = 0.0;//-1.0*atoms::t_exchange_list[nn].Jij[0][2];
-		 	    // atoms::t_exchange_list[nn].Jij[1][0] = -1.0*atoms::t_exchange_list[nn].Jij[1][1];
-		 	     atoms::t_exchange_list[nn].Jij[1][2] = 0.0;//-1.0*atoms::t_exchange_list[nn].Jij[1][2];
-		 	     atoms::t_exchange_list[nn].Jij[2][0] = 0.0;//-1.0*atoms::t_exchange_list[nn].Jij[2][0];
-		 	     atoms::t_exchange_list[nn].Jij[2][1] = 0.0;//-1.0*atoms::t_exchange_list[nn].Jij[2][1];
-				 atoms::t_exchange_list[nn].Jij[1][0] = 1.00*atoms::t_exchange_list[nn].Jij[0][0];
-				 atoms::t_exchange_list[nn].Jij[0][0] = 1.0*atoms::t_exchange_list[nn].Jij[0][0];
-				 atoms::t_exchange_list[nn].Jij[1][1] = 1.00*atoms::t_exchange_list[nn].Jij[1][1];
-		 	     atoms::t_exchange_list[nn].Jij[2][2] = 1.0*atoms::t_exchange_list[nn].Jij[2][2];
-				 	 if(atoms::x_coord_array[natom] < -0.01) {
-				atoms::t_exchange_list[nn].Jij[1][0] *= -1.0;//*atoms::t_exchange_list[nn].Jij[1][1];
-				atoms::t_exchange_list[nn].Jij[0][0] *= 1.0;//*atoms::t_exchange_list[nn].Jij[0][0];
-				atoms::t_exchange_list[nn].Jij[2][2] *= 1.0;//*atoms::t_exchange_list[nn].Jij[2][2];
-				atoms::t_exchange_list[nn].Jij[1][1] *= 1.0;//*atoms::t_exchange_list[nn].Jij[2][2];
-				atoms::t_exchange_list[nn].Jij[0][1] *= -1;//*atoms::t_exchange_list[nn].Jij[0][0];
-				}
-				if(atoms::x_coord_array[atom] > -0.01) {
-				atoms::t_exchange_list[nn].Jij[1][0] *= -1.0;//*atoms::t_exchange_list[nn].Jij[1][1];
-				atoms::t_exchange_list[nn].Jij[0][0] *= 1.0;//*atoms::t_exchange_list[nn].Jij[0][0];
-				atoms::t_exchange_list[nn].Jij[2][2] *= 1.0;//*atoms::t_exchange_list[nn].Jij[2][2];
-				atoms::t_exchange_list[nn].Jij[1][1] *= 1.0;//*atoms::t_exchange_list[nn].Jij[2][2];
-				atoms::t_exchange_list[nn].Jij[0][1] *= -1.0;//*atoms::t_exchange_list[nn].Jij[0][0];
-				}
-					 break;
-			} 
-			
-		 	     }
-		 	   }
-		    }
-		  }
-		
-		
-		std::cout << vmpi::my_rank << ": " << count << std::endl;
-		*/
-		//works out which atoms are in which cells and sets cells based on wether the domain wall
-		//is along x or y or z
-		// if (sim::domain_wall_axis == 0){
-		// 	for(int atom=0;atom<num_local_atoms;atom++){
-		// 		int cat = atoms::category_array[atom];
-		// 		int cell = atoms::x_coord_array[atom]/sim::domain_wall_discretisation;
-		// 		//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
-		// 		atom_to_cell_array[atom] = cell;
-		// 		num_atoms_in_cell[num_dw_cells*cat + cell] ++;
-		// 		//	if (cell > num_dw_cells) std::cout << atoms::x_coord_array[atom] << '\t' << sim::domain_wall_discretisation <<std::endl;
-		// 	}
-		// }
-		// if (sim::domain_wall_axis == 1){
-		// 	for(int atom=0;atom<num_local_atoms;atom++){
-		// 		int cat = atoms::sublayer_array[atom];
-		// 		int cell = atoms::y_coord_array[atom]/sim::domain_wall_discretisation;
-		// 		//				std::cout << atom << '\t' << mat << '\t' << cell << "\t" << atom_to_cell_array.size() << "\t" << num_atoms_in_cell.size() << '\t' << num_dw_cells*mat + cell << std::endl;
-		// 		atom_to_cell_array[atom] = cell;
-		// 		num_atoms_in_cell[num_dw_cells*cat + cell] ++;
-		// 		// if(num_atoms_in_cell[num_dw_cells*cat + cell] < 0 || num_atoms_in_cell[num_dw_cells*cat + cell] > 20) std::cout << cell << ", " << atoms::x_coord_array[atom] << ", " << atoms::y_coord_array[atom] << ", " << atoms::z_coord_array[atom] << std::endl;
-		// 		//	if (cell > num_dw_cells) std::cout << atoms::x_coord_array[atom] << '\t' << sim::domain_wall_discretisation <<std::endl;
-		// 	}
-		// }
-		// if (sim::domain_wall_axis == 1){
-		// 	for(int atom=0;atom<num_local_atoms;atom++){
-		// 		int mat = atoms::type_array[atom];
-		// 		int cell = atoms::y_coord_array[atom]/sim::domain_wall_discretisation;
-		// 		atom_to_cell_array[atom] = cell;
-		// 		num_atoms_in_cell[num_dw_cells*mat + cell] ++;
-		// 	}
-		// }
-		// if (sim::domain_wall_axis == 2){
-		// 	for(int atom=0;atom<num_local_atoms;atom++){
-		// 		int mat = atoms::type_array[atom];
-		// 		int cell = atoms::z_coord_array[atom]/sim::domain_wall_discretisation;
-		// 		atom_to_cell_array[atom] = cell;
-		// 		num_atoms_in_cell[num_dw_cells*mat + cell] ++;
-		// 	}
-		// }
+	
 
 		#ifdef MPICF
 			MPI_Allreduce(MPI_IN_PLACE, &program::internal::num_atoms_in_cell[0],  program::internal::num_dw_cells,    MPI_INT,    MPI_SUM, MPI_COMM_WORLD);
