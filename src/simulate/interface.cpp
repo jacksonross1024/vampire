@@ -47,23 +47,23 @@ namespace sim{
          return true;
       }
       //-------------------------------------------------------------------
-      test="spin-orbit-torque-polarization-angle";
-      if(word==test){
-        double u=atof(value.c_str());
-         // Test for valid range
-         vin::check_for_valid_value(u, word, line, prefix, unit,"radian",0,2*M_PI, "input", "0-2pi");
-         // save sanitized unit vector
-         sim::lot_theta = u;
-         return true;
-      }
-      test="laser-torque-unit-vector";
+      test="spin-orbit-torque-polarization-unit-vector";
       if(word==test){
          std::vector<double> u(3);
          u=vin::doubles_from_string(value);
          // Test for valid range
          vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
          // save sanitized unit vector
-         sim::internal::lot_unit_vector = u;
+         sim::internal::sot_polarization_unit_vector = u;
+         return true;
+      }
+      test="laser-torque-unit-vector";
+      if(word==test){
+        double u=atof(value.c_str());
+         // Test for valid range
+         vin::check_for_valid_value(u, word, line, prefix, unit,"radian",0,2*M_PI, "input", "0-2pi");
+         // save sanitized unit vector
+         sim::lot_theta = u;
          return true;
       }
       test="electrical-pulse-strength";
