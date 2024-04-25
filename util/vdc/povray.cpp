@@ -209,7 +209,7 @@ void output_track_file(unsigned int spin_file_id){
          // format text for povray file
          otext << "<" <<
                   spins[3*atom+0] << "," << spins[3*atom+1] << "," << spins[3*atom+2] <<
-                   ">\n";
+                   ">,";
 
       } // end of parallel for
 

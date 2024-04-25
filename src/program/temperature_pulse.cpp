@@ -122,12 +122,12 @@ double two_temperature_function(double ftime){
    const double four_ln_2 = 2.77258872224; // 4 ln 2
    // 2/(delta sqrt(pi/ln 2)), delta = 10 nm, J/m^2
    const double two_delta_sqrt_pi_ln_2 = 93943727.87; // 1/m
-   //const double gaussian = exp(-four_ln_2*reduced_time*reduced_time)+\
+   const double gaussian = exp(-four_ln_2*reduced_time*reduced_time)+\
    						  +1.0*exp(-four_ln_2*reduced_time_1*reduced_time_1);//\
 						  +1*exp(-four_ln_2*reduced_time_2*reduced_time_2)\
 						  +1*exp(-four_ln_2*reduced_time_3*reduced_time_3);
 
-   	double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+   	// double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
 	// if(sim::enable_laser_torque_fields) {
 	// if(ftime < 1.5*sim::pump_time) sim::laser_torque_strength = gaussian;
 	// else if (ftime < 1.5*sim::pump_time + sim::double_pump_delay) {
@@ -182,7 +182,7 @@ double double_pump_two_temperature_function(double ftime){
 
 	const double four_ln_2 = 2.77258872224; // 4 ln 2
 	// 2/(delta sqrt(pi/ln 2))*0.1, delta = 10 nm, J/m^2 -> mJ/cm^2 (factor 0.1)
-	const double two_delta_sqrt_pi_ln_2 = 9394372.787;
+	const double two_delta_sqrt_pi_ln_2 = 93943727.87;
 
 	const double i_pump_time1 = 1.0/sim::pump_time;
 	const double reduced_time1 = (ftime-3.*sim::pump_time)*i_pump_time1;
@@ -190,10 +190,14 @@ double double_pump_two_temperature_function(double ftime){
 							exp(-four_ln_2*reduced_time1*reduced_time1)*i_pump_time1;
 
 	const double i_pump_time2 = 1.0/sim::double_pump_time;
-	const double reduced_time2 = (ftime-sim::double_pump_delay-3.*sim::double_pump_time)*i_pump_time2;
+	const double reduced_time2 = (ftime-sim::double_pump_delay-1.5*sim::double_pump_time)*i_pump_time2;
 	const double pump2=sim::double_pump_power*two_delta_sqrt_pi_ln_2*
 							exp(-four_ln_2*reduced_time2*reduced_time2)*i_pump_time2;
 
+	  if(sim::enable_laser_torque_fields) {
+		sim::laser_torque_strength = exp(-four_ln_2*reduced_time2*reduced_time2);
+		// if(gaussian > 1.0) std::cout << gaussian << std::endl;
+	}
 		const double Te = sim::TTTe;
 		const double Tp = sim::TTTp;
 		const double G  = sim::TTG;
