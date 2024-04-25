@@ -88,7 +88,7 @@ void spin_temperature_statistic_t::set_mask(const int in_mask_size, const std::v
    }
     
       for (int mask_num = 0; mask_num < mask_size; ++mask_num ) {
-        spin_temperature_top[mask_num] = spin_temperature_bottom[mask_num] = total_spin_temperature[mask_num] = 0.0;
+        mean_spin_counter[mask_num] = spin_temperature_top[mask_num] = spin_temperature_bottom[mask_num] = total_spin_temperature[mask_num] = 0.0;
     }
     initialized = true;
    

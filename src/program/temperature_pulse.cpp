@@ -116,9 +116,9 @@ double two_temperature_function(double ftime){
 
    const double i_pump_time = 1.0/sim::pump_time;
     double reduced_time = (ftime-1.5*sim::pump_time)*i_pump_time;
-   const double reduced_time_1 = (ftime-1.5*sim::pump_time-sim::double_pump_delay)*i_pump_time;
-   const double reduced_time_2 = (ftime-1.5*sim::pump_time-sim::double_pump_delay*2)*i_pump_time;
-   const double reduced_time_3 = (ftime-1.5*sim::pump_time-sim::double_pump_delay*3)*i_pump_time;
+//    const double reduced_time_1 = (ftime-1.5*sim::pump_time-sim::double_pump_delay)*i_pump_time;
+//    const double reduced_time_2 = (ftime-1.5*sim::pump_time-sim::double_pump_delay*2)*i_pump_time;
+//    const double reduced_time_3 = (ftime-1.5*sim::pump_time-sim::double_pump_delay*3)*i_pump_time;
    const double four_ln_2 = 2.77258872224; // 4 ln 2
    // 2/(delta sqrt(pi/ln 2)), delta = 10 nm, J/m^2
    const double two_delta_sqrt_pi_ln_2 = 93943727.87; // 1/m
@@ -144,7 +144,7 @@ double two_temperature_function(double ftime){
 		// if(gaussian > 1.0) std::cout << gaussian << std::endl;
 	}
 	
-   const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time/1.5;
+   const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time;
    const double Te = sim::TTTe;
    const double Tp = sim::TTTp;
    const double G  = sim::TTG;

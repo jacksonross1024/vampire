@@ -159,18 +159,6 @@ void initialise(const double system_dimensions_x,
    // Allocate space for 3D supercell array (ST coordinate system)
    std::vector<std::vector<std::vector<int> > > supercell_array;
    supercell_array.resize(ncx);
-   st::internal::cell_stack_index.resize(ncx*ncy*ncz);
-   st::internal::stack_init_mag.resize(ncx*ncy*3);
-    double stack_val[18] = {0,0,0, \
-                              1,1,0,\
-                              -1,-1,0,\
-                              0,0,0,\
-                              1,1,0,\
-                              -1,-1,0};
-    st::internal::init_stack_mag.resize(18);
-
-    for(int i =0 ; i < st::internal::init_stack_mag.size(); i++) st::internal::init_stack_mag[i] = stack_val[i];
-   
 
    for(int i=0;i<ncx;++i){
       supercell_array[i].resize(ncy);
@@ -179,11 +167,7 @@ void initialise(const double system_dimensions_x,
          supercell_array[i][j].resize(ncz);
          // set starting cell for each stack
          st::internal::stack_index[stack]=cell;
-          //hardcode Mn_1
-         st::internal::stack_init_mag.at((stack)*3 + 0) = st::internal::init_stack_mag [(stack%6)*3 + 0]/sqrt(2.0); 
-         st::internal::stack_init_mag.at((stack)*3 + 1) = st::internal::init_stack_mag [(stack%6)*3 + 1]/sqrt(2.0); 
-         st::internal::stack_init_mag.at((stack)*3 + 2) = st::internal::init_stack_mag [(stack%6)*3 + 2]/sqrt(2.0); 
-       //  std::cout << st::internal::stack_init_mag.at(stack*3 + 0) << ", " << st::internal::stack_init_mag.at(stack*3 + 1) << ", " << st::internal::stack_init_mag.at(stack*3 + 2) << std::endl;
+
          // increment stack counter
          stack++;
          // store cell coordinates
@@ -210,6 +194,9 @@ void initialise(const double system_dimensions_x,
 
    // Assign atoms to cells
    for(int atom=0;atom<num_local_atoms;atom++){
+      // if(st::internal::remove_nm) {
+      //    if(atoms::magnetic)
+      // }
       // temporary for atom coordinates
       double c[3];
       // convert atom coordinates to st reference frame
@@ -265,12 +252,16 @@ void initialise(const double system_dimensions_x,
 
        #ifdef MPICF 
    //determine mpi core stack list 
+   if(vmpi::num_processors > st::internal::num_stacks) {
+      std::cout << "mpirun threads requested larger than spin-torque decomposition allows" << std::endl;
+      err::vexit();
+   }
    int residual = st::internal::num_stacks % vmpi::num_processors;
   // st::internal::mpi_stack_list.resize(int(floor(st::internal::num_stacks/vmpi::num_processors))+1);
    for(int s = 0; s < int(floor(st::internal::num_stacks/vmpi::num_processors)); s++) {
       st::internal::mpi_stack_list.push_back(s*vmpi::num_processors + vmpi::my_rank);
-   }
-   if(vmpi::my_rank <= residual){
+   } 
+   if(residual > 0 && vmpi::my_rank <= residual){
       st::internal::mpi_stack_list.push_back(st::internal::num_stacks - vmpi::my_rank);
    }
 
@@ -318,7 +309,6 @@ namespace internal{
       st::internal::default_properties.sd_exchange = 8.010883e-21; //Joule
       
      
-
       // Temporary array to hold number of atoms in each cell for averaging
       std::vector<double> count(st::internal::beta_cond.size(),0.0);
 
