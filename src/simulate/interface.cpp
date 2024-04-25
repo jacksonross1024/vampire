@@ -47,14 +47,13 @@ namespace sim{
          return true;
       }
       //-------------------------------------------------------------------
-      test="spin-orbit-torque-polarization-unit-vector";
+      test="spin-orbit-torque-polarization-angle";
       if(word==test){
-         std::vector<double> u(3);
-         u=vin::doubles_from_string(value);
+        double u=atof(value.c_str());
          // Test for valid range
-         vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
+         vin::check_for_valid_value(u, word, line, prefix, unit,"radian",0,2*M_PI, "input", "0-2pi");
          // save sanitized unit vector
-         sim::internal::sot_polarization_unit_vector = u;
+         sim::lot_theta = u;
          return true;
       }
       test="laser-torque-unit-vector";

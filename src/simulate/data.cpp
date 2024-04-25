@@ -84,6 +84,7 @@ namespace sim{
    
    bool enable_laser_torque_fields = false;
    double laser_torque_strength = 0.0;
+   double lot_theta = M_PI/2.0;
    
    namespace internal{
 

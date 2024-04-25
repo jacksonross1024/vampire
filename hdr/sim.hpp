@@ -158,6 +158,8 @@ namespace sim{
 	extern bool piezomagnetic_dipole_field;
 	extern double piezomagnetic_dipole_field_strength;
 	
+	extern double lot_theta;
+	
 	extern int system_simulation_flags;
 	extern int hamiltonian_simulation_flags[10];
 
