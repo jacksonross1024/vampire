@@ -23,13 +23,17 @@ namespace st{
       extern bool enabled; // enable spin torque calculation
       extern bool TMRenable;
 
-      extern double micro_cell_size; /// lateral size of spin torque microcells
+      extern bool fbc;
+      //extern double micro_cell_size; /// lateral size of spin torque microcells
+      extern std::vector<double> micro_cell_size;
       extern double micro_cell_thickness; /// thickness of spin torque microcells (atomistic)
 
       extern int num_local_atoms; /// number of local atoms (ignores halo atoms in parallel simulation)
+      extern int remove_nm;
       extern int current_direction; /// direction for current x->0, y->1, z->2
       //   std::vector< std::vector< micro_cell_t > > stack;
       extern std::vector<int> atom_st_index; // mc which atom belongs to
+      extern std::vector<int> cell_stack_index; //stack each cell belongs to
       extern std::vector<double> x_field_array; // arrays to store atomic spin torque field
       extern std::vector<double> y_field_array;
       extern std::vector<double> z_field_array;
@@ -41,6 +45,9 @@ namespace st{
 
       extern int config_file_counter; // spin torque config file counter
 
+      extern int stx;//=0; // indices for x,y,z in the spin torque coordinate system (default z)
+      extern int sty;//=1;
+      extern int stz;//=2;
       extern int free_layer;       /// index of free layer in magnetic tunnel junction
       extern int reference_layer;  /// index of reference layer in magnetic tunnel junction
 
@@ -48,9 +55,11 @@ namespace st{
       extern double initial_beta;
       extern double rel_angle;
       extern int ST_output_rate;
+      extern bool output_torque_data;
 
       extern std::vector<double> initial_m;
-
+      extern std::vector<double> stack_init_mag;
+      extern std::vector<double> init_stack_mag;
 
       extern std::vector<int> stack_index; // start of stack in microcell arrays
 
@@ -64,6 +73,7 @@ namespace st{
       extern std::vector<double> b; /// spin diffusion length
       extern std::vector<double> coeff_ast;
       extern std::vector<double> coeff_nast;
+      extern std::vector<double> spin_acc_sign;
 
       extern std::vector<double> cell_natom;
 
@@ -73,6 +83,7 @@ namespace st{
       extern std::vector<double> m; // magnetisation
       extern std::vector<double> j; // spin current
       extern std::vector<double> sa; // spin accumulation
+      extern std::vector<double> sa_sot;
       extern std::vector<double> spin_torque; // spin torque
       extern std::vector<double> ast; // adiabatic spin torque
       extern std::vector<double> nast; // non-adiabatic spin torque
@@ -81,8 +92,20 @@ namespace st{
       extern std::vector<double> magy_mat;
       extern std::vector<double> magz_mat;
       
-      
 
+      extern std::vector<int> mpi_stack_list;
+
+
+      extern std::vector<double> sa_sum;
+      extern std::vector<double> sa_sot_sum;
+        // double m_sum[size] = {0.0};
+      extern std::vector<double> j_sum;
+      extern   std::vector<double> coeff_ast_sum;
+      extern   std::vector<double> coeff_nast_sum;
+      extern   std::vector<double> ast_sum;
+      extern   std::vector<double> nast_sum;
+      extern std::vector<double> total_ST_sum;
+      extern   std::vector<int> cell_natom_sum;
       // material parameters for spin torque calculation
       struct mp_t{
          double beta_cond;    /// spin polarisation (conductivity)
@@ -146,6 +169,7 @@ namespace st{
 
 
    } // end of iternal namespace
+    extern double spin_acc_time;
 } // end of st namespace
 
 #endif //SPINTORQUE_INTERNAL_H_

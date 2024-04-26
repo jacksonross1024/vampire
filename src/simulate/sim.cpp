@@ -62,6 +62,7 @@
 #include "random.hpp"
 #include "sim.hpp"
 #include "spintorque.hpp"
+#include "../spintorque/internal.hpp"
 #include "stats.hpp"
 #include "stopwatch.hpp"
 #include "vio.hpp"
@@ -547,6 +548,7 @@ int run(){
 	}
 
    std::cout <<     "Simulation run time [s]: " << stopwatch.elapsed_seconds() << std::endl;
+   std::cout << 	"spin acc  component [s]: " << st::spin_acc_time << std::endl;
    zlog << zTs() << "Simulation run time [s]: " << stopwatch.elapsed_seconds() << std::endl;
 
    //------------------------------------------------

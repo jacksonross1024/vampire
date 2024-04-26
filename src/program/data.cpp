@@ -24,10 +24,22 @@ namespace program{
    // Externally visible variables
    //---------------------------------------------------------------------------
    int program = 0; // program type to be run in vampire
-   double fractional_electric_field_strength = 1.0; // factor controlling strength of stt/sot and voltage
+   double fractional_electric_field_strength = 0.0; // factor controlling strength of stt/sot and voltage
 
    namespace internal{
+       int num_mag_cat;
+		int num_mag_types;
+		
+		int num_dw_cells_x;
+		int num_dw_cells_y;
+		int num_dw_cells_z;
 
+      int num_dw_cells;
+
+      std::vector  < double > mag;
+      std::vector <double > atom_to_cell_array;
+		std::vector <int > cell_to_lattice_array;
+      std::vector < int > num_atoms_in_cell;
       //------------------------------------------------------------------------
       // Shared variables inside program module
       //------------------------------------------------------------------------
@@ -36,7 +48,7 @@ namespace program{
       //------------------------------------------------------------------------
       // Electrial pulse program
       //------------------------------------------------------------------------
-      double electrical_pulse_time      = 1.0e-9; // length of electrical pulses (1 ns default)
+      double electrical_pulse_time      = 0.0; //1.0e-9; // length of electrical pulses (1 ns default)
       double electrical_pulse_rise_time = 0.0;    // linear rise time for electrical pulse (0.0 default)
       double electrical_pulse_fall_time = 0.0;    // linear fall time for electrical pulse (0.0 default)
       int num_electrical_pulses         = 1;

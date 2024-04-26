@@ -59,25 +59,66 @@ namespace anisotropy{
          // Loop over all atoms between start and end index
          for(int atom = start_index; atom < end_index; atom++){
 
-            // get atom material
-            const int mat = atom_material_array[atom];
+      //       // get atom material
+      //       const int mat = atom_material_array[atom];
+      //       const double sx = spin_array_x[atom]; // store spin direction in temporary variables
+      //       const double sy = spin_array_y[atom];
+      //       const double sz = spin_array_z[atom];
+      //       // get reduced anisotropy constant ku/mu_s
+      //       const double k4r = internal::k4r[mat];
+      //       const double sx2 = sx*sx;
+      //       const double sy2 = sy*sy;
+      //       const double sz2 = sz*sz;
 
-            const double sx = spin_array_x[atom]; // store spin direction in temporary variables
+      //       field_array_x[atom] += k4r * 1.0 * sx * (1.0 - sz2 - 2.0 * sx2)*1;
+      //       //field_array_x[atom] += k4r * 4 * sx*(sx2 - 3*sy2);
+      //       field_array_y[atom] += k4r * 1.0 * sy * (1.0 - sz2 - 2.0 * sy2)*1;
+      //       // field_array_y[atom] += k4r * 4 * sy*(sy2 - 3*sx2);
+      //       field_array_z[atom] += k4r * 0.50 * sz * (1.0 - 2.0 * sz2 - 4.0 * sx2 - 4.0 * sy2)*1;
+      //       // field_array_z[atom] += 0.0;
+      //   }
+      //    return;
+
+         const double sx = spin_array_x[atom]; // store spin direction in temporary variables
             const double sy = spin_array_y[atom];
             const double sz = spin_array_z[atom];
 
+            // get atom material
+            const int mat = atom_material_array[atom];
+
+            const double fx = sqrt(2.0)*0.5;//internal::kr_vector[mat].x;
+            const double fy = sqrt(2.0)*0.5;//internal::kr_vector[mat].y;
+            const double fz = 0.0;//internal::kr_vector[mat].z;
+
+            const double gx = -sqrt(2.0)*0.5;//internal::kl_vector[mat].x;
+            const double gy = sqrt(2.0)*0.5;// internal::kl_vector[mat].y;
+            const double gz = 0.0;//internal::kl_vector[mat].z;
+
+            // calculate S_x and S_x^3 parts
+            const double Sx = sx * fx + sy * fy + sz * fz;
+            const double Sx2 = Sx * Sx;
+
+            // calculate S_y and S_y^3 parts
+            const double Sy = sx * gx + sy * gy + sz * gz;
+            const double Sy2 = Sy * Sy;
+
             // get reduced anisotropy constant ku/mu_s
-            const double k4r = internal::k4r[mat];
+            const double four_k4r4 = 4.0 * internal::k4r[mat];
 
-            const double sx2 = sx*sx;
-            const double sy2 = sy*sy;
-            const double sz2 = sz*sz;
+            // calculate full form to add to field
+            const double fullx = four_k4r4 * Sx * (Sx2 - 3 * Sy2);
+            const double fully = four_k4r4 * Sy * (Sy2 - 3 * Sx2);
 
-            field_array_x[atom] += k4r * 8.0 * sx * (1.0 - sz2 - 2.0 * sx2);
-            field_array_y[atom] += k4r * 8.0 * sy * (1.0 - sz2 - 2.0 * sy2);
-            field_array_z[atom] += k4r * 2.0 * sz * (1.0 - 2.0 * sz2 - 4.0 * sx2 - 4.0 * sy2);
+            field_array_x[atom] += fullx * fx;
+            field_array_y[atom] += fullx * fy;
+            field_array_z[atom] += fullx * fz;
 
-        }
+            // sum y-component of field, where y-direction is represented by gx, gy, gz
+            field_array_x[atom] += fully * gx;
+            field_array_y[atom] += fully * gy;
+            field_array_z[atom] += fully * gz;
+
+         }
 
          return;
 

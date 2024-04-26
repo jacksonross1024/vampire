@@ -179,9 +179,20 @@ namespace sim{
       //--------------------------------------------------------------------
       test="domain-wall-discretisation";
       if(word==test){
-         double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 10, 1000,"input","10 - 1 A");
-         sim::domain_wall_discretisation = tt;
+         std::vector<double> u(3);
+         u=vin::doubles_from_string(value);
+       //  vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
+         //std::cout << sim::domain_wall_second_vector_x.size() << "\t" << super_index << "\t" << u[0] << '\t' << u[1] << '\t' << u[2] <<std::endl;
+         sim::domain_wall_discretisation[0] = u[0];
+         sim::domain_wall_discretisation[1] = u[1];
+         sim::domain_wall_discretisation[2] = u[2];
+         return true;
+      }
+      test="domain-wall-discretisation-type";
+      if(word==test){
+         if(value == "unit-cell")  sim::domain_wall_discretisation_type = 0;
+         else if(value == "nm")  sim::domain_wall_discretisation_type = 1;
+         else if(value == "a")  sim::domain_wall_discretisation_type = 2;
          return true;
       }
       //--------------------------------------------------------------------
@@ -209,7 +220,7 @@ namespace sim{
       test="domain-wall-position";
       if(word==test){
          double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "none", 0, 1,"input","0 - 1");
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "none", 0, 1e10,"input","0 - l_x");
          sim::domain_wall_position = tt;
          return true;
       }
@@ -217,9 +228,18 @@ namespace sim{
       test="domain-wall-width";
       if(word==test){
          double tt = atof(value.c_str()); // convert string to uint64_t
-         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 0, 1000,"input","0 - 1 A");
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "length", 0, 10000,"input","0 - 1000 A");
          sim::domain_wall_width = tt;
          return true;
+      }
+      test="domain-wall-angle";
+      if(word==test) {
+         double tt = atof(value.c_str()); // convert string to uint64_t
+         vin::check_for_valid_value(tt, word, line, prefix, unit, "degree", 90, 180,"input","90 or 180 degrees");
+         if(tt == 90) sim::domain_wall_angle = 0;
+         else if (tt ==180) sim::domain_wall_angle = 1;
+         if(sim::domain_wall_angle < 0) return false;
+         else return true;
       }
       //--------------------------------------------------------------------
       // input parameter not found here

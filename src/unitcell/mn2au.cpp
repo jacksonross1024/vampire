@@ -15,19 +15,19 @@
 
 // Vampire headers
 #include "unitcell.hpp"
-
+#include "sim.hpp"
 // unitcell module headers
 #include "internal.hpp"
 
 namespace unitcell{
 namespace internal{
 
-void build_mn2au(unitcell::unit_cell_t& unit_cell){
+void build_mn2au(unitcell::unit_cell_t& unit_cell) {
 
    // Set basic unit cell properties
    unit_cell.dimensions[0] = 1.0;
    unit_cell.dimensions[1] = 1.0;
-   unit_cell.dimensions[2] = 3.0;
+   unit_cell.dimensions[2] = unitcell::internal::unit_cell_size_z/unitcell::internal::unit_cell_size_x;
 
    unit_cell.shape[0][0]=1.0;
    unit_cell.shape[0][1]=0.0;
@@ -41,9 +41,9 @@ void build_mn2au(unitcell::unit_cell_t& unit_cell){
    unit_cell.shape[2][1]=0.0;
    unit_cell.shape[2][2]=1.0;
 
-   unit_cell.lcsize=3;
-   unit_cell.hcsize=6;
-   unit_cell.interaction_range=1;
+   unit_cell.lcsize= 6;
+   unit_cell.hcsize= 6;
+   unit_cell.interaction_range=2;
    unit_cell.atom.resize(6);
    unit_cell.surface_threshold=12;
    //-----------------------------
@@ -53,8 +53,8 @@ void build_mn2au(unitcell::unit_cell_t& unit_cell){
    unit_cell.atom[0].mat = uc::internal::sublattice_materials ? 0 : 0; // if sublattice material is defined, then identify at as same as ID
    unit_cell.atom[0].lc = 0;
    unit_cell.atom[0].hc = 0;
-   unit_cell.atom[0].ni = 8;
-   unit_cell.atom[0].nm = false;
+   unit_cell.atom[0].ni = 9;
+   unit_cell.atom[0].nm = true;
    //-----------------------------
    unit_cell.atom[1].x = 0.5;
    unit_cell.atom[1].y = 0.5;
@@ -62,7 +62,7 @@ void build_mn2au(unitcell::unit_cell_t& unit_cell){
    unit_cell.atom[1].mat = uc::internal::sublattice_materials ? 1 : 0; // if sublattice material is defined, then identify at as same as ID
    unit_cell.atom[1].lc = 1;
    unit_cell.atom[1].hc = 1;
-   unit_cell.atom[1].ni = 8;
+   unit_cell.atom[1].ni = 9;
    unit_cell.atom[1].nm = false;
    //-----------------------------
    unit_cell.atom[2].x = 0.0;
@@ -71,35 +71,35 @@ void build_mn2au(unitcell::unit_cell_t& unit_cell){
    unit_cell.atom[2].mat = uc::internal::sublattice_materials ? 2 : 0; // if sublattice material is defined, then identify at as same as ID
    unit_cell.atom[2].lc = 2;
    unit_cell.atom[2].hc = 2;
-   unit_cell.atom[2].ni = 8;
-   unit_cell.atom[2].nm = true;
+   unit_cell.atom[2].ni = 9;
+   unit_cell.atom[2].nm = false;
    //-----------------------------
    unit_cell.atom[3].x = 0.5;
    unit_cell.atom[3].y = 0.5;
    unit_cell.atom[3].z = 0.5;
    unit_cell.atom[3].mat = uc::internal::sublattice_materials ? 0 : 0; // if sublattice material is defined, then identify at as same as ID
-   unit_cell.atom[3].lc = 0;
+   unit_cell.atom[3].lc = 3;
    unit_cell.atom[3].hc = 3;
-   unit_cell.atom[3].ni = 8;
-   unit_cell.atom[3].nm  = false;
+   unit_cell.atom[3].ni = 9;
+   unit_cell.atom[3].nm  = true;
    //-----------------------------
    unit_cell.atom[4].x = 0.0;
    unit_cell.atom[4].y = 0.0;
    unit_cell.atom[4].z = 0.666666667;
    unit_cell.atom[4].mat = uc::internal::sublattice_materials ? 1 : 0; // if sublattice material is defined, then identify at as same as ID
-   unit_cell.atom[4].lc = 1;
+   unit_cell.atom[4].lc = 4;
    unit_cell.atom[4].hc = 4;
-   unit_cell.atom[4].ni = 8;
+   unit_cell.atom[4].ni = 9;
    unit_cell.atom[4].nm  = false;
    //-----------------------------
    unit_cell.atom[5].x = 0.5;
    unit_cell.atom[5].y = 0.5;
    unit_cell.atom[5].z = 0.833333333;
    unit_cell.atom[5].mat = uc::internal::sublattice_materials ? 2 : 0; // if sublattice material is defined, then identify at as same as ID
-   unit_cell.atom[5].lc = 2;
+   unit_cell.atom[5].lc = 5;
    unit_cell.atom[5].hc = 5;
-   unit_cell.atom[5].ni = 8;
-   unit_cell.atom[5].nm = true;
+   unit_cell.atom[5].ni = 9;
+   unit_cell.atom[5].nm = false;
 
    unit_cell.cutoff_radius = sqrt(3.0)/2.0; // normalised to unit cell size
 
@@ -108,7 +108,11 @@ void build_mn2au(unitcell::unit_cell_t& unit_cell){
    // Set actual unit cell size after calculating interactions
    unit_cell.dimensions[0] *= unitcell::internal::unit_cell_size_x;
    unit_cell.dimensions[1] *= unitcell::internal::unit_cell_size_y;
-   unit_cell.dimensions[2] *= unitcell::internal::unit_cell_size_z;
+   unit_cell.dimensions[2] *= unitcell::internal::unit_cell_size_x;
+
+   sim::unit_cell_x = unitcell::internal::unit_cell_size_x;
+   sim::unit_cell_y = unitcell::internal::unit_cell_size_y;
+   sim::unit_cell_z = unitcell::internal::unit_cell_size_z;
 
    return;
 

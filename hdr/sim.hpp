@@ -239,12 +239,17 @@ namespace sim{
    extern double mc_statistics_moves;
    extern double mc_statistics_reject;
 
+	extern int domain_wall_discretisation_type;
+	extern std::vector<double> domain_wall_discretisation;
 	extern int domain_wall_axis;
 	extern double domain_wall_position;
-	extern double domain_wall_discretisation;
 	extern double domain_wall_centre;
 	extern double domain_wall_width;
 	extern std::vector < bool > anti_PBC;
+		extern int domain_wall_angle;
+	extern double unit_cell_x;
+    extern double unit_cell_y;
+    extern double unit_cell_z;
 
 	extern std::vector < double > domain_wall_second_vector_x;
 	extern std::vector < double > domain_wall_second_vector_y;

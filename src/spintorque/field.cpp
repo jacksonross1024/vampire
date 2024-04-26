@@ -45,10 +45,6 @@ namespace st{
             st::internal::x_field_array[atom] = st::internal::spin_torque[cell3+0]*i_mu_s;
             st::internal::y_field_array[atom] = st::internal::spin_torque[cell3+1]*i_mu_s;
             st::internal::z_field_array[atom] = st::internal::spin_torque[cell3+2]*i_mu_s;
-            /*std::cout << atom << "\t" << st::internal::x_field_array[atom] << "\t";
-            std::cout << st::internal::y_field_array[atom] << "\t" << st::internal::z_field_array[atom] << "\t";
-            std::cout << i_mu_s << "\t" << mu_s_array[atom_type_array[atom]] << std::endl;
-            std::cin.get();*/
       }
 
    }

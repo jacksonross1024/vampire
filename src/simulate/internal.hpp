@@ -76,7 +76,7 @@ namespace sim{
       extern std::vector<double> sot_polarization_unit_vector; // sot spin polarization direction
 
       extern std::vector<double> vcmak;   // voltage controlled anisotropy coefficient
-
+      
       // shared Functions
       void llg_quantum_step();
 
@@ -87,6 +87,7 @@ namespace sim{
       extern void increment_time();
 
    } // end of internal namespace
+  
 } // end of sim namespace
 
 #endif //SIM_INTERNAL_H_

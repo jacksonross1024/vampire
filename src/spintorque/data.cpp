@@ -22,19 +22,25 @@ namespace st{
       //-----------------------------------------------------------------------------
       bool enabled=false;  // disable spin torque calculation
       bool TMRenable=false; // disable TMR calculation, GMR is set as dafault
-      
-      double micro_cell_size= 5*3.00; /// lateral size of spin torque microcells
+      bool fbc = true;
+      //double micro_cell_size= 5*3.00; /// lateral size of spin torque microcells
+      std::vector<double> micro_cell_size(3);
+
       double micro_cell_thickness = 3.00; /// thickness of spin torque microcells (atomistic)
 
       int num_local_atoms; /// number of local atoms (ignores halo atoms in parallel simulation)
+      int remove_nm = -1;
       int current_direction =2; /// direction for current x->0, y->1, z->2
       //   std::vector< std::vector< micro_cell_t > > stack;
       std::vector<int> atom_st_index; // mc which atom belongs to
+      std::vector<int> cell_stack_index; 
       std::vector<double> x_field_array; // arrays to store atomic spin torque field
       std::vector<double> y_field_array;
       std::vector<double> z_field_array;
 
-
+      int stx=0; // indices for x,y,z in the spin torque coordinate system (default z)
+      int sty=1;
+      int stz=2;
 
       int num_stacks;  // total number of stacks
       int num_x_stacks; // number of stacks in x
@@ -52,8 +58,11 @@ namespace st{
       double rel_angle;  // relative angle between 2 FMs for TMR calculation
       
       int ST_output_rate;
+      bool output_torque_data = false;
       std::vector<double> initial_m(3);
-
+     
+      std::vector<double> init_stack_mag;
+      std::vector<double> stack_init_mag;
       std::vector<int> stack_index; // start of stack in microcell arrays
 
       std::vector<double> beta_cond; /// spin polarisation (conductivity) Beta B
@@ -68,13 +77,14 @@ namespace st{
       std::vector<double> coeff_ast; // adiabatic spin torque
       std::vector<double> coeff_nast; // non-adiabatic spin torque
       std::vector<double> cell_natom;
-
+      std::vector<double> spin_acc_sign;
 
       // three-vector arrays
       std::vector<double> pos; /// stack position
       std::vector<double> m; // magnetisation
       std::vector<double> j; // spin current
       std::vector<double> sa; // spin accumulation
+      std::vector<double> sa_sot; // spin accumulation
       std::vector<double> spin_torque; // spin torque energy (J)
       std::vector<double> ast; // adiabatic spin torque
       std::vector<double> nast; // non-adiabatic spin torque
@@ -83,7 +93,20 @@ namespace st{
       std::vector<double> magy_mat;
       std::vector<double> magz_mat;
       
-      
+      std::vector<double> sa_sum;
+         std::vector<double> sa_sot_sum;
+        // double m_sum[size] = {0.0};
+         std::vector<double> j_sum;
+         std::vector<double> coeff_ast_sum;
+         std::vector<double> coeff_nast_sum;
+         std::vector<double> ast_sum;
+         std::vector<double> nast_sum;
+         //double total_ST_sum[size] = {0.0};
+         std::vector<double> total_ST_sum;
+         std::vector<int> cell_natom_sum;
+   
+      std::vector<int> mpi_stack_list;
+
       // array of material properties
       std::vector<st::internal::mp_t> mp;
 
@@ -91,4 +114,5 @@ namespace st{
       st::internal::mp_t default_properties;
 
    } // end of internal namespace
+      double spin_acc_time = 0.0;
 } // end of st namespace
