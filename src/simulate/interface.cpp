@@ -57,7 +57,7 @@ namespace sim{
          sim::internal::sot_polarization_unit_vector = u;
          return true;
       }
-      test="laser-torque-unit-vector";
+      test="laser-torque-angle";
       if(word==test){
         double u=atof(value.c_str());
          // Test for valid range
