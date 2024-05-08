@@ -611,7 +611,7 @@ namespace st{
          const double microcell_volume = (st::internal::micro_cell_size[st::internal::stx] *
                                           st::internal::micro_cell_size[st::internal::sty] *
                                           st::internal::micro_cell_thickness)*1.e-30; // m^3
-
+         const double atomcell_volume = 15.7624e-30;
          // loop over all 1D stacks (in parallel)
          int int_stacks = st::internal::mpi_stack_list.size();
          // std::vector<int> stacks_list;
@@ -619,7 +619,7 @@ namespace st{
         
 
          int stack = 0;
-         const double sot_sd_exchange_multiple = 2.5e3;// 3e2;
+         const double sot_sd_exchange_multiple = 1;// 3e2;
          // std::cout << int_stacks << ", " << st::internal::mpi_stack_list.size() << std::endl;
          for(int s=0; s < int_stacks; ++s) {
             stack = st::internal::mpi_stack_list.at(s);
@@ -693,8 +693,9 @@ namespace st{
                st::internal::three_vector_t pm(0.0,0.0,0.0);
                // if(st::internal::sot_sa && st::internal::sot_sa_source[cell-1]) {
                   pm.x = 0;
-                  pm.y = 1.0;
-                  pm.z = 0.0; // Au cell artificial magnetisations
+                  pm.y = (m.y >= 0.0) ?  1.0:-1.0;
+                  if(m.x == 1.0) pm.y = -1.0;
+                  else if (m.x == -1.0)  pm.y = 1.0;
                // } else {
                //    pm.x =st::internal::m[pcellx];
                //    pm.y = st::internal::m[pcelly];
@@ -755,7 +756,7 @@ namespace st{
                const double Bd = st::internal::sot_beta_diff; // beta_prime
                const double Do = st::internal::sot_diffusion;
                // st::internal::three_vector_t jm0(st::internal::initial_theta*je/sqrt(2.0),-st::internal::initial_theta*je/sqrt(2.0),0.0);
-               st::internal::three_vector_t jm0(0.0,-st::internal::initial_theta*je,0.0);
+               st::internal::three_vector_t jm0(0.0,pm.y*st::internal::initial_theta*je,0.0);
                // if(st::internal::sot_sa_source[cell-1]) {
                   // jm0.y = st::internal::initial_theta*je;
                // }
@@ -908,9 +909,9 @@ namespace st{
                   st::internal::j_up[cellz] = jmz;
 
                   // }  else {// Calculate spin torque energy for cell (Joules)
-                  st::internal::spin_torque[cellx] = sot_sd_exchange_multiple*microcell_volume * st::internal::sot_sd_exchange * (sax_sot) * i_e * i_muB;
-                  st::internal::spin_torque[celly] = sot_sd_exchange_multiple*microcell_volume * st::internal::sot_sd_exchange * (say_sot) * i_e * i_muB;
-                  st::internal::spin_torque[cellz] = sot_sd_exchange_multiple*microcell_volume * st::internal::sot_sd_exchange * (saz_sot) * i_e * i_muB; 
+                  st::internal::spin_torque[cellx] = sot_sd_exchange_multiple*atomcell_volume * st::internal::sot_sd_exchange * (sax_sot) * i_e * i_muB;
+                  st::internal::spin_torque[celly] = sot_sd_exchange_multiple*atomcell_volume * st::internal::sot_sd_exchange * (say_sot) * i_e * i_muB;
+                  st::internal::spin_torque[cellz] = sot_sd_exchange_multiple*atomcell_volume * st::internal::sot_sd_exchange * (saz_sot) * i_e * i_muB; 
                   
                   // st::internal::spin_torque[cellx] = 0.0;// microcell_volume * st::internal::sd_exchange[cell] * (sax+sax_sot) * i_e * i_muB;
                   // st::internal::spin_torque[celly] = 0.0;//microcell_volume * st::internal::sd_exchange[cell] * (say+say_sot) * i_e * i_muB;
@@ -1034,7 +1035,9 @@ namespace st{
                st::internal::three_vector_t pm(0.0,0.0,0.0);
                // if(st::internal::sot_sa && st::internal::sot_sa_source[cell+1]) {
                   pm.x = 0;
-                  pm.y = -1.0;
+                  pm.y = (m.y >= 0.0) ?  1.0:-1.0;
+                  if(m.x == 1.0) pm.y = 1.0;
+                  else if (m.x == -1.0)  pm.y = -1.0;
                   pm.z = 0.0; // Au cell artificial magnetisations
                // } else {
                //    pm.x =st::internal::m[pcellx];
@@ -1096,7 +1099,7 @@ namespace st{
                const double Bd = st::internal::sot_beta_diff; // beta_prime
                const double Do = st::internal::sot_diffusion;
                //  st::internal::three_vector_t jm0(-st::internal::initial_theta*je/sqrt(2.0),st::internal::initial_theta*je/sqrt(2.0),0.0);
-               st::internal::three_vector_t jm0(0.0,st::internal::initial_theta*je,0.0);
+               st::internal::three_vector_t jm0(0.0,pm.y*st::internal::initial_theta*je,0.0);
                // if(st::internal::sot_sa_source[cell-1]) {
                   // jm0.y = -st::internal::initial_theta*je;
                // }
@@ -1269,9 +1272,9 @@ namespace st{
                   st::internal::j_down[cellz] = jmz;
 
                   // }  else {// Calculate spin torque energy for cell (Joules)
-                  st::internal::spin_torque[cellx] = sot_sd_exchange_multiple*microcell_volume * st::internal::sot_sd_exchange * (sax_sot) * i_e * i_muB;
-                  st::internal::spin_torque[celly] = sot_sd_exchange_multiple*microcell_volume * st::internal::sot_sd_exchange * (say_sot) * i_e * i_muB;
-                  st::internal::spin_torque[cellz] = sot_sd_exchange_multiple*microcell_volume * st::internal::sot_sd_exchange * (saz_sot) * i_e * i_muB; 
+                  st::internal::spin_torque[cellx] = sot_sd_exchange_multiple*atomcell_volume * st::internal::sot_sd_exchange * (sax_sot) * i_e * i_muB;
+                  st::internal::spin_torque[celly] = sot_sd_exchange_multiple*atomcell_volume * st::internal::sot_sd_exchange * (say_sot) * i_e * i_muB;
+                  st::internal::spin_torque[cellz] = sot_sd_exchange_multiple*atomcell_volume * st::internal::sot_sd_exchange * (saz_sot) * i_e * i_muB; 
                   
                   // st::internal::spin_torque[cellx] = 0.0;// microcell_volume * st::internal::sd_exchange[cell] * (sax+sax_sot) * i_e * i_muB;
                   // st::internal::spin_torque[celly] = 0.0;//microcell_volume * st::internal::sd_exchange[cell] * (say+say_sot) * i_e * i_muB;
@@ -1642,7 +1645,7 @@ namespace st{
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = microcell_volume * st::internal::sd_exchange[cell] * i_e * i_muB;
+               const double prefac_sc = atomcell_volume * st::internal::sd_exchange[cell] * i_e * i_muB;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -2024,7 +2027,7 @@ namespace st{
                int acellz = 3*(cell+1)+2;
 
                st::internal::three_vector_t  m(st::internal::m[cellx],  st::internal::m[celly],  st::internal::m[cellz]);
-               const double modm = sqrt(m.x*m.x + m.y*m.y + m.z*m.z);
+               double modm = sqrt(m.x*m.x + m.y*m.y + m.z*m.z);
                if(modm > 1.e-11){
                   m.x = m.x/modm;
                   m.y = m.y/modm;
@@ -2032,8 +2035,9 @@ namespace st{
                }
                else{
                   m.x = 0.0;
-                  m.y = 0.0;
+                  m.y = 1.0;
                   m.z = 0.0;
+                  modm = 1.0;
                }
                // Check for cell magnetization greater than 1e-8 mu_B
                if(modm > 1.0e-11){
@@ -2134,9 +2138,9 @@ namespace st{
                st::internal::sa[celly] = say;
                st::internal::sa[cellz] = saz;
 
-               st::internal::spin_torque[cellx] += microcell_volume * st::internal::sd_exchange[cell] * (sax) * i_e * i_muB;
-               st::internal::spin_torque[celly] += microcell_volume * st::internal::sd_exchange[cell] * (say) * i_e * i_muB;
-               st::internal::spin_torque[cellz] += microcell_volume * st::internal::sd_exchange[cell] * (saz) * i_e * i_muB; 
+               st::internal::spin_torque[cellx] += atomcell_volume * st::internal::sd_exchange[cell] * (sax) * i_e * i_muB;
+               st::internal::spin_torque[celly] += atomcell_volume * st::internal::sd_exchange[cell] * (say) * i_e * i_muB;
+               st::internal::spin_torque[cellz] += atomcell_volume * st::internal::sd_exchange[cell] * (saz) * i_e * i_muB; 
 
             if(st::internal::sot_check) {    
                st::internal::spin_torque[cellx] = 0.0;// += microcell_volume * st::internal::sd_exchange[cell] * (sax) * i_e * i_muB;
