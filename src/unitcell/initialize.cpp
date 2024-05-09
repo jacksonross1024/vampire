@@ -66,7 +66,7 @@ namespace unitcell{
       }
 
       // optionally write generated unit cell file to disk
-      internal::write_unit_cell_file(unit_cell);
+      // internal::write_unit_cell_file(unit_cell);
 
       return;
 
