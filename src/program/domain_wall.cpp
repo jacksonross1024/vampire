@@ -22,6 +22,7 @@
 #include "vio.hpp"
 #include "vmath.hpp"
 #include "vmpi.hpp"
+#include "ltmp.hpp"
 #include "../exchange/internal.hpp"
 #include "anisotropy.hpp"
 #include "montecarlo.hpp"
@@ -289,7 +290,8 @@ namespace program{
 		}
 
 		for (int cell = 0; cell < 6*program::internal::num_dw_cells; cell++)	program::internal::mag[cell] = 0.0;
-	
+
+		if(program::program == 55) ltmp::equilibration_step = true;
 		montecarlo::monte_carlo_preconditioning();
 	
 		program::fractional_electric_field_strength = 0.0;
@@ -333,7 +335,7 @@ namespace program{
 		}
 		
 		// Perform Time Series
-
+	if(program::program == 55) ltmp::equilibration_step = false;
 	switch(sim::integrator){
 		case 0: { // LLG Heun
 			while(sim::time<sim::equilibration_time+sim::total_time) {

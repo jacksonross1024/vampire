@@ -165,6 +165,11 @@ namespace program{
             program::program=73;
             return true;
          }
+         test="domain-wall-gradient";
+         if(value==test){
+            program::program=55;
+            return true;
+         }
          else{
             terminaltextcolor(RED);
             std::cout << word << '\t' << test << std::endl;

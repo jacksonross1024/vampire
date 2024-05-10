@@ -515,6 +515,14 @@ int run(){
 			program::mm_A_calculation();
 			break;
 		//------------------------------------------------------------------------
+		case 55:
+		 	if(vmpi::my_rank==0){
+				std::cout << "Domain walls..." << std::endl;
+				zlog << "Domain walls..." << std::endl;
+			}
+			program::domain_wall();
+			break;
+		//------------------------------------------------------------------------
 		case 70:
 			if(vmpi::my_rank==0){
 				std::cout << "field-sweep..." << std::endl;

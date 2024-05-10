@@ -53,7 +53,7 @@ namespace ltmp{
          //#endif
 
          // Precalculate heat transfer constant k*L/V (J/K/m^3/s) (divide by Angstroms^2)
-         const double dTdiff_prefactor = ltmp::internal::thermal_conductivity/(ltmp::internal::micro_cell_size*ltmp::internal::micro_cell_size*1.e-20);
+         const double dTdiff_prefactor = ltmp::internal::thermal_conductivity/(ltmp::internal::micro_cell_size[0]*ltmp::internal::micro_cell_size[1]*1.e-20);
 
          // Determine change in Te and Tp
          for(unsigned int cell=0; cell<ltmp::internal::attenuation_array.size(); ++cell){

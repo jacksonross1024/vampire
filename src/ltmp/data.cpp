@@ -21,7 +21,7 @@ namespace ltmp{
    // Externally visible variables
    //-----------------------------------------------------------------------------------------------
    abs_t absorption_profile; // class variable containing tabulated absorption profile
-
+   bool equilibration_step = true;
    namespace internal{
 
       //-----------------------------------------------------------------------------
@@ -34,8 +34,10 @@ namespace ltmp{
       bool output_microcell_data=false; /// enable verbose output data for temperature cells
       bool temperature_rescaling=false; /// enable rescaled temperature calculation
       bool gradient=false; /// enable temperature gradient
+      bool gradient_only = false;
+      
 
-      double micro_cell_size = 10.0; /// lateral size of local temperature microcells (A)
+      std::vector<double> micro_cell_size(3,10.0); /// lateral size of local temperature microcells (A)
       double laser_spot_size = 350.0; /// laser spot size for lateral profile (A)
       double penetration_depth = 200.0; /// vertical laser penetration depth
       double thermal_conductivity = 11.0; //J/s/m/K
@@ -49,7 +51,7 @@ namespace ltmp{
 
       double minimum_temperature = 0.0; // Minimum temperature in temperature gradient
       double maximum_temperature = 0.0; // Maximum temperature in temperature gradient
-
+      double equilibration_temperature = 0.0;
       int num_local_atoms; /// number of local atoms (ignores halo atoms in parallel simulation)
       int num_cells; /// number of temperature cells
       int my_first_cell; /// first cell on my CPU

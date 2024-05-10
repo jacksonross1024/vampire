@@ -27,7 +27,7 @@ namespace ltmp{
 
       // calculate local temperature
       if(ltmp::internal::gradient == false) ltmp::internal::calculate_local_temperature_pulse(time_from_start);
-      else ltmp::internal::calculate_local_temperature_gradient();
+      else ltmp::internal::calculate_local_temperature_gradient(time_from_start);
 
       // store number of local atoms as local constant for compiler
       const int num_local_atoms = ltmp::internal::num_local_atoms;
@@ -81,6 +81,7 @@ namespace ltmp{
                                std::vector<double>& z_total_external_field_array,
                                const int start_index,
                                const int end_index){
+      if(ltmp::internal::gradient_only) update_localised_temperature(0.0);
 
       // Add spin torque fields
       for(int i=start_index; i<end_index; ++i) x_total_external_field_array[i] += ltmp::internal::x_field_array[i];

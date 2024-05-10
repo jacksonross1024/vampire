@@ -73,15 +73,15 @@ void initialise(const double system_dimensions_x,
    ltmp::internal::dt=dt; // time step
    ltmp::internal::minimum_temperature = Tmin; // minimum temperature for temperature gradient
    ltmp::internal::maximum_temperature = Tmax; // maximum temperature for temperature gradient
-
+   ltmp::internal::equilibration_temperature = starting_temperature;
    //-------------------------------------------------------------------------------------
    // Calculate number of microcells
    //-------------------------------------------------------------------------------------
 
    // determine number of stacks in x and y (global)
-   int dx =  ceil((system_dimensions_x+0.01)/ltmp::internal::micro_cell_size);
-   int dy =  ceil((system_dimensions_y+0.01)/ltmp::internal::micro_cell_size);
-   int dz =  ceil((system_dimensions_z+0.01)/ltmp::internal::micro_cell_size);
+   int dx =  ceil((system_dimensions_x+0.01)/ltmp::internal::micro_cell_size[0]);
+   int dy =  ceil((system_dimensions_y+0.01)/ltmp::internal::micro_cell_size[1]);
+   int dz =  ceil((system_dimensions_z+0.01)/ltmp::internal::micro_cell_size[2]);
 
    // determine total number of stacks
    if(     ltmp::internal::lateral_discretisation == true  && ltmp::internal::vertical_discretisation == true ){
@@ -146,9 +146,9 @@ void initialise(const double system_dimensions_x,
             cell_list.push_back(tmp);
 
             // save ijk coordinates as microcell positions
-            ltmp::internal::cell_position_array.at(3*cell+0)=double(i)*ltmp::internal::micro_cell_size;
-            ltmp::internal::cell_position_array.at(3*cell+1)=double(j)*ltmp::internal::micro_cell_size;
-            ltmp::internal::cell_position_array.at(3*cell+2)=double(k)*ltmp::internal::micro_cell_size;
+            ltmp::internal::cell_position_array.at(3*cell+0)=double(i)*ltmp::internal::micro_cell_size[0];
+            ltmp::internal::cell_position_array.at(3*cell+1)=double(j)*ltmp::internal::micro_cell_size[1];
+            ltmp::internal::cell_position_array.at(3*cell+2)=double(k)*ltmp::internal::micro_cell_size[2];
 
             // increment cell number
             cell++;
@@ -161,7 +161,7 @@ void initialise(const double system_dimensions_x,
 
    // Determine number of cells in x,y,z (ST coordinate system)
    const int d[3]={ncx,ncy,ncz};
-   const double cs[3] = {ltmp::internal::micro_cell_size, ltmp::internal::micro_cell_size, ltmp::internal::micro_cell_size}; // cell size
+   const double cs[3] = {ltmp::internal::micro_cell_size[0], ltmp::internal::micro_cell_size[1], ltmp::internal::micro_cell_size[2]}; // cell size
 
    // Assign atoms to cells
    for(int atom=0;atom<num_local_atoms;atom++){
