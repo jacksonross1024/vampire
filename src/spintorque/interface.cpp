@@ -210,7 +210,27 @@ bool match_material(string const word, string const value, string const unit, in
          st::internal::micro_cell_size[2]=u.at(2);
          std::cout << "microcell size " << st::internal::micro_cell_size[0] << ", " << st::internal::micro_cell_size[1] << ", " << st::internal::micro_cell_size[2] << std::endl;
          return true;
-   }
+      }
+      test = "micro-cell-decomp";
+      if(word == test){
+         std::string decomp_value = "mpi";
+         if(decomp_value == value) {
+            st::internal::microcell_decomp_type = decomp_value;
+            return true;
+         }
+         decomp_value = "A";
+         if(decomp_value == value) {
+            st::internal::microcell_decomp_type = decomp_value;
+            return true;
+         }
+         terminaltextcolor(RED);
+            std::cerr << "Error - value for \'spin-torque:" << word << "\' must be one of:" << std::endl;
+            std::cerr << "\t\"mpi\"" << std::endl;
+            std::cerr << "\t\"A\"" << std::endl;
+         terminaltextcolor(WHITE);
+            return false;
+
+      }
       //-------------------------------------------------
 
       test="micro-cell-thickness";
@@ -302,7 +322,7 @@ bool match_material(string const word, string const value, string const unit, in
       return false;
       
    }
-   
+
    test = "sot-check-only";
    if(word == test) {
       st::internal::sot_check = true;

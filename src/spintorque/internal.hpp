@@ -26,6 +26,7 @@ namespace st{
       extern bool fbc;
       //extern double micro_cell_size; /// lateral size of spin torque microcells
       extern std::vector<double> micro_cell_size;
+      extern std::string microcell_decomp_type;
       extern double micro_cell_thickness; /// thickness of spin torque microcells (atomistic)
 
       extern int num_local_atoms; /// number of local atoms (ignores halo atoms in parallel simulation)

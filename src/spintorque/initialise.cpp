@@ -77,6 +77,19 @@ void initialise(const double system_dimensions_x,
 
    // Make a small array for system dimensions
    double system_dimensions[3]={system_dimensions_x,system_dimensions_y,system_dimensions_z};
+
+   if(st::internal::microcell_decomp_type == "A") {}
+   else if (st::internal::microcell_decomp_type == "mpi") {
+      st::internal::micro_cell_size[st::internal::stx] = system_dimensions[st::internal::stx] / st::internal::micro_cell_size[st::internal::stx];
+      st::internal::micro_cell_size[st::internal::sty] = system_dimensions[st::internal::sty] / st::internal::micro_cell_size[st::internal::sty];
+      st::internal::micro_cell_size[st::internal::stz] = system_dimensions[st::internal::stz] / st::internal::micro_cell_size[st::internal::stz];
+   } else {
+      terminaltextcolor(RED);
+      std::cerr << "wrong microcell decomp type " << std::endl;
+      terminaltextcolor(WHITE);
+      err::vexit();
+   }
+
    std::cout << "system dimensions " << system_dimensions[0] << ", " << system_dimensions[1] << ", " << system_dimensions[2] << std::endl;
    // determine number of cells in each stack  (global)
    st::internal::num_microcells_per_stack = 1+ceil((system_dimensions[st::internal::stz]+0.01)/st::internal::micro_cell_thickness);
