@@ -287,6 +287,8 @@ namespace program{
 		else{
 			// Set equilibration temperature
 			sim::temperature=sim::Teq;
+			sim::TTTe=sim::temperature;
+			sim::TTTp=sim::temperature;	
 		}
 
 		for (int cell = 0; cell < 6*program::internal::num_dw_cells; cell++)	program::internal::mag[cell] = 0.0;
@@ -339,36 +341,7 @@ namespace program{
 	switch(sim::integrator){
 		case 0: { // LLG Heun
 			while(sim::time<sim::equilibration_time+sim::total_time) {
-
-				double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
-				const double i_pump_time = 1.0/sim::pump_time;
-  		 		double reduced_time = (ftime-1.5*sim::pump_time)*i_pump_time;
-   				const double four_ln_2 = 2.77258872224; // 4 ln 2
-   				double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
-				if(sim::enable_laser_torque_fields) {
-					if(ftime < 1.5*sim::pump_time) sim::laser_torque_strength = gaussian;
-					else if (ftime < 1.5*sim::pump_time + sim::double_pump_delay) sim::laser_torque_strength = 1.0;
-					else {
-						reduced_time = (ftime-1.5*sim::pump_time-sim::double_pump_delay)*i_pump_time;
-						gaussian = exp(-four_ln_2*reduced_time*reduced_time);
-						sim::laser_torque_strength = gaussian;
-					}
-				}
-   			const double two_delta_sqrt_pi_ln_2 = 93943727.87;
-	
-   			const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time/1.0;
-   			const double Te = sim::TTTe;
-   			const double Tp = sim::TTTp;
-   			const double G  = sim::TTG;
-   			const double Ce = sim::TTCe;
-   			const double Cl = sim::TTCl;
-   			const double dt = mp::dt_SI;
-
-			// integrate two temperature model (floor in free elecron approximation (c prop to T) for low temperatures)
-			if(Te>1.0) sim::TTTe = (-G*(Te-Tp)+pump)*dt/(Ce*Te) + Te;
-			else sim::TTTe =       (-G*(Te-Tp)+pump)*dt/Ce + Te;
-			sim::TTTp =            ( G*(Te-Tp)     )*dt/Cl + Tp - (Tp-sim::Teq)*sim::HeatSinkCouplingConstant*dt;
-
+				
 			double time_from_start = mp::dt_SI * double(sim::time-sim::equilibration_time);
 
    			if(time_from_start < program::internal::electrical_pulse_rise_time ) {
@@ -403,7 +376,37 @@ namespace program{
 					} 
 
 				for(uint64_t ti=0;ti<sim::partial_time;ti++){
-				
+					double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
+					const double i_pump_time = 1.0/sim::pump_time;
+					double reduced_time = (ftime-1.5*sim::pump_time)*i_pump_time;
+					const double four_ln_2 = 2.77258872224; // 4 ln 2
+					double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+					if(sim::enable_laser_torque_fields) {
+						if(ftime < 1.5*sim::pump_time) sim::laser_torque_strength = gaussian;
+						else if (ftime < 1.5*sim::pump_time + sim::double_pump_delay) sim::laser_torque_strength = 1.0;
+						else {
+							reduced_time = (ftime-1.5*sim::pump_time-sim::double_pump_delay)*i_pump_time;
+							gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+							sim::laser_torque_strength = gaussian;
+						}
+					}
+					const double two_delta_sqrt_pi_ln_2 = 93943727.87;
+			
+					const double pump= two_delta_sqrt_pi_ln_2*sim::pump_power*gaussian*i_pump_time/1.0;
+					const double Te = sim::TTTe;
+					const double Tp = sim::TTTp;
+					const double G  = sim::TTG;
+					const double Ce = sim::TTCe;
+					const double Cl = sim::TTCl;
+					const double dt = mp::dt_SI;
+
+					// integrate two temperature model (floor in free elecron approximation (c prop to T) for low temperatures)
+					if(Te>1.0) sim::TTTe = (-G*(Te-Tp)+pump)*dt/(Ce*Te) + Te;
+					else sim::TTTe =       (-G*(Te-Tp)+pump)*dt/Ce + Te;
+					sim::TTTp =            ( G*(Te-Tp)     )*dt/Cl + Tp - (Tp-sim::Teq)*sim::HeatSinkCouplingConstant*dt;
+
+					// std::cout << sim::TTTe << ", " << sim::TTTp << ", " << sim::Teq << std::endl;
+
 					#ifdef MPICF
 				// Select CUDA version if supported
 					#ifdef CUDA
