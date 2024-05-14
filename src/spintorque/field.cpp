@@ -36,7 +36,8 @@ namespace st{
       st::internal::update_cell_magnetisation(x_spin_array, y_spin_array, z_spin_array, atom_type_array, mu_s_array);
 
       // calculate spin_accumulation
-      st::internal::calculate_spin_accumulation();
+      if(st::internal::sot_sa) st::internal::calculate_sot_accumulation();
+      else st::internal::calculate_spin_accumulation();
 
       // determine spin torque field and copy to atomic internal field arrays
       for(int atom=0; atom<st::internal::num_local_atoms; ++atom) {
@@ -46,7 +47,6 @@ namespace st{
             st::internal::y_field_array[atom] = st::internal::spin_torque[cell3+1]*i_mu_s;
             st::internal::z_field_array[atom] = st::internal::spin_torque[cell3+2]*i_mu_s;
       }
-
    }
 
    //-----------------------------------------------------------------------------

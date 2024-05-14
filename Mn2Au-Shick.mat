@@ -1,0 +1,94 @@
+#===================================================
+# vampire material file  for Mn2Au
+#---------------------------------------------------
+#  R F L Evans (c) 2020
+#===================================================
+
+#---------------------------------------------------
+# Number of Materials
+#---------------------------------------------------
+material:num-materials=3
+
+#---------------------------------------------------
+# Material 1 Mn 1
+#---------------------------------------------------
+material[3]:material-name= "Mn1"
+material[3]:damping-constant = 0.008 
+material[3]:atomic-spin-moment= 3.72 !muB
+material[3]:material-element= "Mn"
+material[3]:initial-spin-direction= 1,1,0
+material[3]:exchange-matrix-3rd-nn[3] = 3.18261e-21 
+material[3]:exchange-matrix-5th-nn[3] = 1.01097e-21 # for long range exch. input range currently excludes
+material[3]:exchange-matrix-1st-nn[2] = -1.094296e-20, -1.094296e-20, -1.086911e-20 
+material[3]:exchange-matrix-2nd-nn[2] = -1.469234e-20 , -1.469234e-20, -1.459319e-20 
+material[3]:exchange-matrix-4th-nn[2] = -1.38167862e-21 , -1.38167862e-21, -1.24167862e-21 # for long range exch. input range currently excludes
+material[3]:unit-cell-category = 3
+material[3]:uniaxial-anisotropy-direction= 0,0,1
+#material[3]:uniaxial-anisotropy-constant = −1.303e−22
+#material[3]:uniaxial-inplane-anisotropy-constant = 1.2985e-24
+material[3]:fourth-order-uniaxial-anisotropy-constant = 1.60218e-24
+material[3]:fourth-order-rotational-anisotropy-constant = 8.00109e-25 # k4para const. <1,1,0>
+#material[3]:fourth-order-biaxial-anisotropy-constant = 8.00109e-25
+material[3]:temperature-rescaling-exponent = 2.0
+material[3]:temperature-rescaling-curie-temperature=1250.35
+
+#material[3]:spin-orbit-field-like-torque = 0.1 #T
+#material[3]:spin-orbit-anti-damping-torque = 0.018 #T
+#material[3]:spin-orbit-torque-asymmetry = 0
+
+#---------------------------------------------------
+# Material 2 Mn	2      
+#---------------------------------------------------
+material[2]:material-name= "Mn2"
+material[2]:damping-constant = 0.008 #Behovits et al 2023
+material[2]:atomic-spin-moment= 3.72 !muB
+material[2]:material-element= "Mn"
+material[2]:initial-spin-direction=  -1,-1, 0
+material[2]:exchange-matrix-3rd-nn[2] = 3.18261e-21 
+material[2]:exchange-matrix-5th-nn[2] = 1.01097e-21 # for long range exch. input range currently excludes
+material[2]:exchange-matrix-1st-nn[3] = -1.094296e-20 , -1.094296e-20, -1.086911e-20
+material[2]:exchange-matrix-2nd-nn[3] = -1.469234e-20 , -1.469234e-20, -1.459319e-20 
+material[2]:exchange-matrix-4th-nn[3] = -1.38167862e-21 , -1.38167862e-21, -1.24167862e-21   # for long range exch. input range currently excludes
+material[2]:unit-cell-category = 2
+material[2]:uniaxial-anisotropy-direction= 0,0,1
+#material[2]:uniaxial-anisotropy-constant = −1.303e−22
+#material[2]:uniaxial-inplane-anisotropy-constant = 1.2985e-24
+material[2]:fourth-order-uniaxial-anisotropy-constant = 1.60218e-24
+material[2]:fourth-order-rotational-anisotropy-constant = 8.00109e-25 #k4para const. <1,1,0>
+#material[2]:fourth-order-biaxial-anisotropy-constant = 8.00109e-25
+material[2]:temperature-rescaling-exponent = 2.0
+material[2]:temperature-rescaling-curie-temperature=1250.35
+
+#material[2]:spin-orbit-field-like-torque = -0.1 #T 8 mT/10^11 A/m^2 Behovits et al 2023
+#material[2]:spin-orbit-anti-damping-torque = -0.018 #T  0.15*8
+#material[2]:spin-orbit-torque-asymmetry = 0
+
+material[3]:spin-diffusion-length = 25 #A Oppeneer
+material[3]:spin-polarisation-conductivity = 0.99
+material[3]:spin-polarisation-diffusion = 0.9
+material[3]:spin-accumulation = 1.48e7 #C/m^3   26.1 e8 C/m^3  = 0.2637362637362637 - -0.4175824175824179 = 1.54e-1/6.81e-1  e-/4Mn Oppeneer  
+material[3]:diffusion-constant = 0.01 #m^2/s -> e20/e16 -> 10 A/dt
+material[3]:sd-exchange-constant = 0.05 !eV #50 meV 8.010883e-21 J, Oppeneer
+
+material[2]:spin-diffusion-length = 25 #A Oppeneer 
+material[2]:spin-polarisation-conductivity = 0.99 
+material[2]:spin-polarisation-diffusion = 0.9
+material[2]:spin-accumulation = 1.48e7 #C/m^3 -> 0.11 e-/u.c.1.48e7 C/m^3 (Khmelevski) * 0.05 eV 
+material[2]:diffusion-constant = 0.01 #m^2/s 
+material[2]:sd-exchange-constant = 0.05 !eV #50 meV 8.010883e-21 J, Oppeneer 
+
+#Au values have minimal impact on Mn acc currently
+material[1]:spin-diffusion-length = 200.0
+material[1]:spin-polarisation-conductivity = 0.99 
+material[1]:spin-polarisation-diffusion = 0.99     
+material[1]:spin-accumulation = 1 # to match Mn acc when current on
+material[1]:diffusion-constant = 1e-2 #m^2/s 
+material[1]:sd-exchange-constant =  8.010883e-25 #5 ueV
+
+#---------------------------------------------------
+# Material 3 Au
+#---------------------------------------------------
+material[1]:material-name="Au"
+material[1]:non-magnetic=keep
+material[1]:unit-cell-category = 1
+material[1]:material-element= "Au"

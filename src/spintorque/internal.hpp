@@ -53,9 +53,10 @@ namespace st{
 
       extern double je; // current (C/s)
       extern double initial_beta;
+      extern double initial_theta;
       extern double rel_angle;
       extern int ST_output_rate;
-      extern bool output_torque_data;
+      extern std::string output_torque_data;
 
       extern std::vector<double> initial_m;
       extern std::vector<double> stack_init_mag;
@@ -74,16 +75,23 @@ namespace st{
       extern std::vector<double> coeff_ast;
       extern std::vector<double> coeff_nast;
       extern std::vector<double> spin_acc_sign;
-
+      extern bool sot_sa;
+      extern std::vector<bool> sot_sa_source;
+      extern bool sot_check;
       extern std::vector<double> cell_natom;
 
 
       // three-vector arrays
       extern std::vector<double> pos; /// stack position
       extern std::vector<double> m; // magnetisation
-      extern std::vector<double> j; // spin current
-      extern std::vector<double> sa; // spin accumulation
-      extern std::vector<double> sa_sot;
+      extern std::vector<double> j_final_up;
+      extern std::vector<double> j_final_down;
+      extern std::vector<double> j_int_up; // spin current
+      extern std::vector<double> j_int_down;
+      extern std::vector<double> sa_final; // spin accumulation
+      extern std::vector<double> sa_sot_final;
+      extern std::vector<double> sa_sot_int;
+      extern std::vector<double> sa_sot_init;
       extern std::vector<double> spin_torque; // spin torque
       extern std::vector<double> ast; // adiabatic spin torque
       extern std::vector<double> nast; // non-adiabatic spin torque
@@ -95,17 +103,28 @@ namespace st{
 
       extern std::vector<int> mpi_stack_list;
 
-
+      //mpi sum variables
       extern std::vector<double> sa_sum;
-      extern std::vector<double> sa_sot_sum;
-        // double m_sum[size] = {0.0};
-      extern std::vector<double> j_sum;
+      extern std::vector<double> j_final_up_sum;
+      extern std::vector<double> j_final_down_sum;
       extern   std::vector<double> coeff_ast_sum;
       extern   std::vector<double> coeff_nast_sum;
       extern   std::vector<double> ast_sum;
       extern   std::vector<double> nast_sum;
       extern std::vector<double> total_ST_sum;
       extern   std::vector<int> cell_natom_sum;
+
+      //sot sa parameters
+      extern double sot_sa_infinity;
+      extern double sot_beta_cond;
+      extern double sot_beta_diff;
+      extern double sot_lambda_sdl;
+      extern double sot_diffusion;
+      extern double sot_sd_exchange;
+      extern double sot_a;
+      extern double sot_b;
+
+
       // material parameters for spin torque calculation
       struct mp_t{
          double beta_cond;    /// spin polarisation (conductivity)
@@ -157,6 +176,7 @@ namespace st{
       void output_microcell_data();
       void output_base_microcell_data();
       void calculate_spin_accumulation();
+      void calculate_sot_accumulation();
       void update_cell_magnetisation(const std::vector<double>& x_spin_array,
                                      const std::vector<double>& y_spin_array,
                                      const std::vector<double>& z_spin_array,

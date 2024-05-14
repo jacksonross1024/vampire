@@ -54,11 +54,12 @@ namespace st{
 
       double je; // = 1.0e11; // current (C/s/m^2)
       double initial_beta;
+      double initial_theta = 0.2;
       
       double rel_angle;  // relative angle between 2 FMs for TMR calculation
       
       int ST_output_rate;
-      bool output_torque_data = false;
+      std::string output_torque_data;
       std::vector<double> initial_m(3);
      
       std::vector<double> init_stack_mag;
@@ -78,13 +79,20 @@ namespace st{
       std::vector<double> coeff_nast; // non-adiabatic spin torque
       std::vector<double> cell_natom;
       std::vector<double> spin_acc_sign;
+      std::vector<bool> sot_sa_source;
+      bool sot_sa = false;
 
       // three-vector arrays
       std::vector<double> pos; /// stack position
       std::vector<double> m; // magnetisation
-      std::vector<double> j; // spin current
-      std::vector<double> sa; // spin accumulation
-      std::vector<double> sa_sot; // spin accumulation
+      std::vector<double> j_final_up;
+      std::vector<double> j_final_down;
+      std::vector<double> j_int_up; // spin current
+      std::vector<double> j_int_down;
+      std::vector<double> sa_final; // spin accumulation
+      std::vector<double> sa_sot_final; // spin accumulation
+      std::vector<double> sa_sot_int; // spin accumulation
+      std::vector<double> sa_sot_init;
       std::vector<double> spin_torque; // spin torque energy (J)
       std::vector<double> ast; // adiabatic spin torque
       std::vector<double> nast; // non-adiabatic spin torque
@@ -94,17 +102,15 @@ namespace st{
       std::vector<double> magz_mat;
       
       std::vector<double> sa_sum;
-         std::vector<double> sa_sot_sum;
-        // double m_sum[size] = {0.0};
-         std::vector<double> j_sum;
-         std::vector<double> coeff_ast_sum;
-         std::vector<double> coeff_nast_sum;
-         std::vector<double> ast_sum;
-         std::vector<double> nast_sum;
-         //double total_ST_sum[size] = {0.0};
-         std::vector<double> total_ST_sum;
-         std::vector<int> cell_natom_sum;
-   
+      std::vector<double> j_final_up_sum;
+      bool sot_check = false;
+      std::vector<double> j_final_down_sum;
+      std::vector<double> coeff_ast_sum;
+      std::vector<double> coeff_nast_sum;
+      std::vector<double> ast_sum;
+      std::vector<double> nast_sum;
+      std::vector<double> total_ST_sum;
+      std::vector<int> cell_natom_sum;
       std::vector<int> mpi_stack_list;
 
       // array of material properties
@@ -112,6 +118,16 @@ namespace st{
 
       // default material properties
       st::internal::mp_t default_properties;
+
+      //sot sa parameters 
+      double sot_sa_infinity;
+      double sot_beta_cond;
+      double sot_beta_diff;
+      double sot_lambda_sdl;
+      double sot_diffusion;
+      double sot_sd_exchange;
+      double sot_a;
+      double sot_b;
 
    } // end of internal namespace
       double spin_acc_time = 0.0;

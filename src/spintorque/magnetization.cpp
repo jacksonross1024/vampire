@@ -49,8 +49,8 @@ namespace st{
          for(int atom=0; atom<st::internal::num_local_atoms; ++atom) {
             const int cell = st::internal::atom_st_index[atom];
             const int material = atom_type_array[atom];
-            const double mus = mu_s_array[material];
-
+             double mus = mu_s_array[material];
+               if(material == 0) mus = 0.0;
             st::internal::m[3*cell+0] += x_spin_array[atom]*mus;
             st::internal::m[3*cell+1] += y_spin_array[atom]*mus;
             st::internal::m[3*cell+2] += z_spin_array[atom]*mus;

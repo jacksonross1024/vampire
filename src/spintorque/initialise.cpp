@@ -52,7 +52,10 @@ void initialise(const double system_dimensions_x,
 
    // output informative message
    zlog << zTs() << "Initialising data structures for spin torque calculation." << std::endl;
-
+   if(st::internal::sot_sa ) {
+       std::cout << "Spin Torque module set for SOT calculation." << std::endl;
+       std::cout << "Make sure HM layer is set to 'keep'... " << std::endl;
+   }
    //-------------------------------------------------------------------------------------
    // Determine transformation between x,y,z in actual and spin torque coordinate system
    //-------------------------------------------------------------------------------------
@@ -85,7 +88,7 @@ void initialise(const double system_dimensions_x,
    std::cout << "y_stacks " << st::internal::num_y_stacks << ", " << system_dimensions[st::internal::sty]+0.0 << "/" << st::internal::micro_cell_size[st::internal::sty] << std::endl;
    // determine total number of stacks
    st::internal::num_stacks = st::internal::num_x_stacks*st::internal::num_y_stacks;
-   std::cout << st::internal::num_stacks << std::endl;
+   std::cout << "Total stacks: " << st::internal::num_stacks << std::endl;
    // allocate array to store index of first element of stack
    st::internal::stack_index.resize(st::internal::num_stacks);
 
@@ -105,45 +108,50 @@ void initialise(const double system_dimensions_x,
    st::internal::coeff_ast.resize(array_size, 0.0);
    st::internal::coeff_nast.resize(array_size, 0.0);
    st::internal::cell_natom.resize(array_size, 0.0);
-
+   st::internal::sot_sa_source.resize(array_size, false);
 
    const int three_vec_array_size = 3*array_size;
-   st::internal::pos.resize(three_vec_array_size); /// microcell position
-   st::internal::m.resize(three_vec_array_size); // magnetisation
-   st::internal::j.resize(three_vec_array_size); // spin current
-   st::internal::sa.resize(three_vec_array_size, 0.0); // spin accumulation
-   st::internal::sa_sot.resize(three_vec_array_size); // spin accumulation
-   st::internal::spin_torque.resize(three_vec_array_size); // spin torque
-   st::internal::ast.resize(three_vec_array_size); // adiabatic spin torque
-   st::internal::nast.resize(three_vec_array_size); // non-adiabatic spin torque
-   st::internal::total_ST.resize(three_vec_array_size); // non-adiabatic spin torque
+   st::internal::pos.resize(three_vec_array_size,0.0); /// microcell position
+   st::internal::m.resize(three_vec_array_size,0.0); // magnetisation
+   st::internal::j_final_up.resize(three_vec_array_size,0.0);
+   st::internal::j_final_down.resize(three_vec_array_size,0.0);
+   st::internal::j_int_up.resize(three_vec_array_size,0.0); // spin current
+   st::internal::j_int_down.resize(three_vec_array_size,0.0); // spin current
+   st::internal::sa_final.resize(three_vec_array_size, 0.0); // spin accumulation
+   st::internal::sa_sot_final.resize(three_vec_array_size,0.0); // sot sa up stack
+   st::internal::sa_sot_int.resize(three_vec_array_size,0.0); // sot sa up stack
+   st::internal::sa_sot_init.resize(three_vec_array_size,0.0); // sot sa down stack
+   st::internal::spin_torque.resize(three_vec_array_size,0.0); // spin torque
+   st::internal::ast.resize(three_vec_array_size,0.0); // adiabatic spin torque
+   st::internal::nast.resize(three_vec_array_size,0.0); // non-adiabatic spin torque
+   st::internal::total_ST.resize(three_vec_array_size,0.0); // non-adiabatic spin torque
    st::internal::spin_acc_sign.resize(three_vec_array_size, 0.0);
 
-   st::internal::sa_sum.resize(three_vec_array_size, 0.0);
-         st::internal::sa_sot_sum.resize(three_vec_array_size, 0.0);
-        // double m_sum[size] = {0.0};
-         st::internal::j_sum.resize(three_vec_array_size, 0.0);
-         st::internal::coeff_ast_sum.resize(three_vec_array_size, 0.0);
-         st::internal::coeff_nast_sum.resize(three_vec_array_size, 0.0);
-         st::internal::ast_sum.resize(three_vec_array_size, 0.0);
-         st::internal::nast_sum.resize(three_vec_array_size, 0.0);
-         st::internal::total_ST_sum.resize(three_vec_array_size, 0.0);
-         st::internal::cell_natom_sum.resize(array_size, 0);
+
+      st::internal::sa_sum.resize(three_vec_array_size, 0.0);
+      st::internal::j_final_up_sum.resize(three_vec_array_size, 0.0);
+      st::internal::j_final_down_sum.resize(three_vec_array_size, 0.0);
+      st::internal::coeff_ast_sum.resize(three_vec_array_size, 0.0);
+      st::internal::coeff_nast_sum.resize(three_vec_array_size, 0.0);
+      st::internal::ast_sum.resize(three_vec_array_size, 0.0);
+      st::internal::nast_sum.resize(three_vec_array_size, 0.0);
+      st::internal::total_ST_sum.resize(three_vec_array_size, 0.0);
+      st::internal::cell_natom_sum.resize(array_size, 0);
 
    //---------------------------------------------------
    // Noi Initialise j,sa, st, ast, nast here?
    //---------------------------------------------------
-   for(int cell = 0; cell < array_size; ++cell){
-      st::internal::sa[3*cell+0] = 0.0;
-      st::internal::sa[3*cell+1] = 0.0;
-      st::internal::sa[3*cell+2] = 0.0;
-      st::internal::sa_sot[3*cell+0] = 0.0;
-      st::internal::sa_sot[3*cell+1] = 0.0;
-      st::internal::sa_sot[3*cell+2] = 0.0;
-      st::internal::j [3*cell+0] = 0.0;
-      st::internal::j [3*cell+1] = 0.0;
-      st::internal::j [3*cell+2] = 0.0;
-   }
+   // for(int cell = 0; cell < array_size; ++cell){
+   //    st::internal::sa[3*cell+0] = 0.0;
+   //    st::internal::sa[3*cell+1] = 0.0;
+   //    st::internal::sa[3*cell+2] = 0.0;
+   //    st::internal::sa_sot[3*cell+0] = 0.0;
+   //    st::internal::sa_sot[3*cell+1] = 0.0;
+   //    st::internal::sa_sot[3*cell+2] = 0.0;
+   //    st::internal::j [3*cell+0] = 0.0;
+   //    st::internal::j [3*cell+1] = 0.0;
+   //    st::internal::j [3*cell+2] = 0.0;
+   // }
 
    //---------------------------------------------------
    // Determine which atoms belong to which stacks
@@ -251,6 +259,7 @@ void initialise(const double system_dimensions_x,
    // optionally output base microcell data
    st::internal::output_base_microcell_data();
 
+      //added mpi decomposition for stacks
        #ifdef MPICF 
      
    //determine mpi core stack list 
@@ -271,11 +280,6 @@ void initialise(const double system_dimensions_x,
       mpi_stack_id.at(removed_stacks - vmpi::my_rank -1) = 1;
    }
 
-
-   // if(err::check) {
-      //check stt stack mpi setup 
-      // int stacks[st::internal::num_stacks] = {0};
-      // int mpi_stacks[st::internal::num_stacks] = {-1};
       int stack_sum = 0;
       int size = st::internal::mpi_stack_list.size();
       MPI_Reduce(&size,&stack_sum, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -296,8 +300,7 @@ void initialise(const double system_dimensions_x,
          MPI_Barrier(MPI_COMM_WORLD);
          err::vexit();
       }
-   // }
-      std::cout << "MPI stack count " << removed_stacks << std::endl;
+      std::cout << "avg MPI stack count " << st::internal::mpi_stack_list.size()  << std::endl;
     #endif 
    return;
 }
@@ -311,12 +314,12 @@ namespace internal{
       //-------------------------------------------------------
       // Determine microcell properties from atomic properties
       //-------------------------------------------------------
-      st::internal::default_properties.beta_cond = 0.0;//  0.23;
-      st::internal::default_properties.beta_diff = 0.0;//0.56;
-      st::internal::default_properties.sa_infinity = 0.0;// 1.48e7;
-      st::internal::default_properties.lambda_sdl = 0.0;//16.0e-10; // m
-      st::internal::default_properties.diffusion = 0.0;// 0.001; //m^2/s ? 
-      st::internal::default_properties.sd_exchange = 0.0;//8.010883e-21; //Joule
+      st::internal::default_properties.beta_cond =  0.23;
+      st::internal::default_properties.beta_diff = 0.56;
+      st::internal::default_properties.sa_infinity =  1.48e7;
+      st::internal::default_properties.lambda_sdl = 16.0e-10; // m
+      st::internal::default_properties.diffusion =  0.001; //m^2/s ? 
+      st::internal::default_properties.sd_exchange = 8.010883e-21; //Joule
       
      
       // Temporary array to hold number of atoms in each cell for averaging
@@ -330,12 +333,7 @@ namespace internal{
 
          // get microcell id
          int id = st::internal::atom_st_index[atom];
-         // bool local = false;
-         // #ifdef MPICH
-         //    for(int i = 0; i < mpi_stack_list.size(); i++){
-         //       if(mpi_stack_list[i] == )
-         //    }
-         //  std::cout << atoms::sublayer_array[atom] << ", " << st::internal::cell_stack_index[st::internal::atom_st_index[atom]] << std::endl;
+   
          // determine atomic properties
          double beta_cond = st::internal::mp.at(mat).beta_cond; // beta
          double beta_diff = st::internal::mp.at(mat).beta_diff; // beta_prime
@@ -351,8 +349,8 @@ namespace internal{
          st::internal::lambda_sdl.at(id) += lambda_sdl;
          st::internal::diffusion.at(id) += diffusion;
          st::internal::sd_exchange.at(id) += sd_exchange;
-         st::internal::spin_acc_sign.at(id) += (mat == 0) ? 0:((mat == 1) ? -1.0:1.0);
-         count.at(id) += (mat == 0) ? 0:1;
+         st::internal::spin_acc_sign.at(id) += (mat == 0) ? 0:((mat == 1) ? 1.0:-1.0); 
+         count.at(id) += (mat == 0) ? 1:1;
       }
 
       // reduce microcell properties on all CPUs
@@ -384,7 +382,7 @@ namespace internal{
             st::internal::sd_exchange.at(cell) /= nat;
             st::internal::spin_acc_sign.at(cell) = std::round(st::internal::spin_acc_sign.at(cell)/count.at(cell));
             st::internal::default_properties.sa_infinity =  st::internal::sa_infinity.at(cell);
-            if(st::internal::spin_acc_sign.at(cell) != 1.0 && st::internal::spin_acc_sign.at(cell) != -1.0) std::cout << st::internal::spin_acc_sign.at(cell) << std::endl;
+            // if(st::internal::spin_acc_sign.at(cell) != 1.0 && st::internal::spin_acc_sign.at(cell) != -1.0) std::cout << st::internal::spin_acc_sign.at(cell) << std::endl;
          } else{
             st::internal::beta_cond.at(cell)   = st::internal::default_properties.beta_cond;
             st::internal::beta_diff.at(cell)   = st::internal::default_properties.beta_diff;
@@ -393,6 +391,7 @@ namespace internal{
             st::internal::diffusion.at(cell)   = st::internal::default_properties.diffusion;
             st::internal::sd_exchange.at(cell) = st::internal::default_properties.sd_exchange;
          }
+         if(st::internal::spin_acc_sign.at(cell) == 0) st::internal::sot_sa_source.at(cell) = true;
       }
 
 
@@ -421,6 +420,30 @@ namespace internal{
 
       }
 
+
+      //set sot-sa parameters
+      // depreciated 
+      if(st::internal::sot_sa){
+         int mat = 0;
+         st::internal::sot_beta_cond = st::internal::mp.at(mat).beta_cond; // beta
+         st::internal::sot_beta_diff = st::internal::mp.at(mat).beta_diff; // beta_prime
+         st::internal::sot_sa_infinity = st::internal::mp.at(mat).sa_infinity;
+         st::internal::sot_lambda_sdl = st::internal::mp.at(mat).lambda_sdl;
+         st::internal::sot_diffusion = st::internal::mp.at(mat).diffusion;
+         st::internal::sot_sd_exchange = st::internal::mp.at(mat).sd_exchange;
+
+         const double BBp = 1.0/sqrt(1.0-st::internal::sot_beta_cond*st::internal::sot_beta_diff);
+         const double lambda_sf = st::internal::sot_lambda_sdl*BBp;
+         const double lambda_j = sqrt(2.0*hbar*st::internal::sot_diffusion/st::internal::sot_sd_exchange); // Angstroms
+         const double lambda_sf2 = lambda_sf*lambda_sf;
+         const double lambda_j2 = lambda_j*lambda_j;
+
+         std::complex<double> inside (1.0/lambda_sf2, -1.0/lambda_j2);
+         std::complex<double> inv_lplus = sqrt(inside);
+
+         st::internal::sot_a =  real(inv_lplus);
+         st::internal::sot_b = -imag(inv_lplus);
+      }
       return;
    }
 }

@@ -80,7 +80,7 @@ bool match_material(string const word, string const value, string const unit, in
       */
    if(word==test){
       double sa=atof(value.c_str());
-      vin::check_for_valid_value(sa, word, line, prefix, unit, "none", 1.0e-6, 1.0e10,"material"," 1.0e-6 - 1.0e10");
+      vin::check_for_valid_value(sa, word, line, prefix, unit, "none", 0.0, 1.0e10,"material"," 1.0e-6 - 1.0e10");
       st::internal::mp[super_index].sa_infinity=sa;
       return true;
    }
@@ -104,7 +104,7 @@ bool match_material(string const word, string const value, string const unit, in
       */
    if(word==test){
       double sd=atof(value.c_str());
-      vin::check_for_valid_value(sd, word, line, prefix, unit, "energy", 1.0e-30, 1.e-17,"material"," 1.0e-30 - 1.e-17 J");
+      vin::check_for_valid_value(sd, word, line, prefix, unit, "energy", 0.0, 1.e-17,"material"," 1.0e-30 - 1.e-17 J");
       st::internal::mp[super_index].sd_exchange=sd;
       return true;
    }
@@ -231,6 +231,14 @@ bool match_material(string const word, string const value, string const unit, in
          return true;
         }
 
+      test="spin-hall-angle"; //
+       if(word==test){
+         double T=atof(value.c_str());
+         vin::check_for_valid_value(T, word, line, prefix, unit, "none", 0.0, 1,"input","Spin Hall Angle: 0.0 - 1.0");
+         st::internal::initial_theta =T;
+         return true;
+        }
+
       test="remove-material-type"; //
        if(word==test){
          double T=atof(value.c_str());
@@ -269,20 +277,53 @@ bool match_material(string const word, string const value, string const unit, in
 
    test = "output-torque-data";
    if(word == test) {
-      st::internal::output_torque_data = true;
+      std::string output_type = "init";
+      if(value == output_type){
+         st::internal::output_torque_data = output_type;
+         return true;
+      }
+      output_type = "int";
+      if(value == output_type) {
+         st::internal::output_torque_data = output_type;
+         return true;
+      }
+      output_type = "final";
+      if(value == output_type) {
+         st::internal::output_torque_data = output_type;
+         return true;
+      }
+      
+      terminaltextcolor(RED);
+      std::cerr << "Error - value for \'spin-torque:" << word << "\' must be one of:" << std::endl;
+      std::cerr << "\t\"init\"" << std::endl;
+      std::cerr << "\t\"int\"" << std::endl;
+      std::cerr << "\t\"final\"" << std::endl;
+      terminaltextcolor(WHITE);
+      return false;
+      
+   }
+   
+   test = "sot-check-only";
+   if(word == test) {
+      st::internal::sot_check = true;
 
       return true;
    }
       //-------------------------------------------------
 
-       test="ST-output-rate";
-       if(word==test){
-         int T=atoi(value.c_str());
-         vin::check_for_valid_int(T, word, line, prefix, 0, 2000000000,"input","0 - 2,000,000,000");
-         st::internal::ST_output_rate =T;
-         return true;
-        }
-
+   test="ST-output-rate";
+   if(word==test){
+      int T=atoi(value.c_str());
+      vin::check_for_valid_int(T, word, line, prefix, 0, 2000000000,"input","0 - 2,000,000,000");
+      st::internal::ST_output_rate =T;
+      return true;
+   }
+   test="SOT-spin-accumulation";
+   if(word==test){
+      
+      st::internal::sot_sa =true;
+      return true;
+   }
 
       //--------------------------------------------------------------------
       // input parameter not found here
