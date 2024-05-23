@@ -126,7 +126,7 @@ double two_temperature_function(double ftime){
    						  +1.0*exp(-four_ln_2*reduced_time_1*reduced_time_1);//\
 						  +1*exp(-four_ln_2*reduced_time_2*reduced_time_2)\
 						  +1*exp(-four_ln_2*reduced_time_3*reduced_time_3);
-
+	sim::H_actual = sim::H_applied*gaussian; 
    	// double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
 	// if(sim::enable_laser_torque_fields) {
 	// if(ftime < 1.5*sim::pump_time) sim::laser_torque_strength = gaussian;
@@ -335,8 +335,7 @@ void temperature_pulse(){
 
 			// Calculate time from pulse
 			double time_from_start=mp::dt_SI*double(sim::time-start_time);
-			if(time_from_start > 12e-12) sim::H_actual = sim::H_applied;
-			if (time_from_start > 20e-12) sim::H_actual = sim::Heq;
+			
 			// Calculate temperature
 			sim::temperature=temperature_pulse_function(time_from_start);
 
@@ -344,7 +343,7 @@ void temperature_pulse(){
 			sim::integrate(1);
 
 		}
-
+		
 		// Calculate magnetisation statistics
 		stats::update();
 
