@@ -7,35 +7,71 @@
 #------------------------------------------
 # Creation attributes:
 #------------------------------------------
-dimensions:unit-cell-size = 3.54 !A
-dimensions:system-size-x = 7.7 !nm
-dimensions:system-size-y = 7.7 !nm
-dimensions:system-size-z = 7.7 !nm
+dimensions:unit-cell-size = 2.507 !A
 
+dimensions:system-size-x = 10 !nm
+dimensions:system-size-y = 10 !nm
+dimensions:system-size-z = 10 !nm
+
+create:periodic-boundaries-x
+create:periodic-boundaries-y
+create:periodic-boundaries-x
+
+sim:domain-wall-axis=z
 #------------------------------------------
 # Material Files:
 #------------------------------------------
-material:file = Co.mat
+material:file = 
+#create:crystal-sublattice-materials=true
+create:crystal-structure = 
 
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
-sim:temperature = 300.0
-sim:time-steps-increment = 1000
-sim:total-time-steps = 10000
-sim:time-step = 1 !fs
+#sim:minimum-temperature = 0
+#sim:maximum-temperature = 1400
+sim:equilibration-temperature = 300
+sim:temperature = 300
+
+sim:time-steps-increment = 1
+
+sim:preconditioning-steps = 1000
+sim:equilibration-time-steps=5000
+sim:total-time-steps = 5000
+
+sim:electrical-pulse-rise-time = 10 !ps
+sim:electrical-pulse-time = 20 !ps
+sim:applied-field-strength = 1 #T
+sim:applied-field-unit-vector = 0,1,0 
+
+sim:spin-orbit-torque-polarization-unit-vector = 0,1,0
 
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:program = benchmark
+sim:program = electrical-pulse #time variable magnetic field; SOT; STT
 sim:integrator = llg-heun
 
 #------------------------------------------
 # data output
 #------------------------------------------
-output:real-time
-output:magnetisation
 
-screen:time-steps
-screen:magnetisation-length
+spin-torque:enable-ST-fields #turns on ST
+spin-torque:current-density = 1e11 #A/m^2 
+spin-torque:current-direction= x #stack decomp direction and current direction
+spin-torque:micro-cell-size= 10,10,100 #A -> <x cell, y cell, z lattice size>
+spin-torque:micro-cell-thickness= 2 #A 
+
+
+output:time-steps
+output:material-magnetisation
+output:mean-total-torque
+output:total-energy 
+
+
+#material[]:spin-diffusion-length = 40 #A
+#material[]:spin-polarisation-conductivity =  # (spin-up - spin-down)/(spin-up + spin-down) [0,1]
+#material[]:spin-polarisation-diffusion =  #beta'
+#material[]:spin-accumulation =  # spin-up - spin-down C/m^3 = states/eV/atom * 25 meV (300K) [1e6 - 1e8 C/m^3]
+#material[]:diffusion-constant = # ms^2 [1e-2 - 1e-4]
+#material[]:sd-exchange-constant =  !eV #Jsd ~ ferromagnetic exch (50 meV)
