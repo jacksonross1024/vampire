@@ -172,7 +172,7 @@ bool match_material(string const word, string const value, string const unit, in
       test="current-density"; //
        if(word==test){
          double T=atof(value.c_str());
-         vin::check_for_valid_value(T, word, line, prefix, unit, "none", 0.0, 1.0e13,"input","0.0 - 1.0e13 A/m2");
+         vin::check_for_valid_value(T, word, line, prefix, unit, "none", 0.0, 1.0e15,"input","0.0 - 1.0e13 A/m2");
          st::internal::je =T;
          return true;
         }
@@ -254,7 +254,7 @@ bool match_material(string const word, string const value, string const unit, in
       test="spin-hall-angle"; //
        if(word==test){
          double T=atof(value.c_str());
-         vin::check_for_valid_value(T, word, line, prefix, unit, "none", 0.0, 1,"input","Spin Hall Angle: 0.0 - 1.0");
+         vin::check_for_valid_value(T, word, line, prefix, unit, "none", 0.0, 10,"input","Spin Hall Angle: 0.0 - 1.0");
          st::internal::initial_theta =T;
          return true;
         }

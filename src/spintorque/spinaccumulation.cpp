@@ -32,81 +32,81 @@ namespace st{
       //-----------------------------------------------------------------------------
       // Funtion to calculate the spin accumulation and spin torque
       //-----------------------------------------------------------------------------
-    void  calculate_spin_accumulation(){}
-    /*  void calculate_spin_accumulation(){
-         if(st::internal::sot_sa) std::cout << "standard spin acc and sot spin acc activated " << std::endl;
+   //  void  calculate_spin_accumulation(){}
+      void calculate_spin_accumulation(){
+         if(sot_sa) std::cout << "standard spin acc and sot spin acc activated " << std::endl;
          stopwatch_t stopwatch;
          stopwatch.start();
 
          // Zero all shared arrays (essential for parallelisation to work)
-         std::fill (st::internal::spin_torque.begin(),st::internal::spin_torque.end(),0.0);
-         std::fill (st::internal::sa.begin(),st::internal::sa.end(),0.0);
-         // std::fill (st::internal::sa_sot.begin(),st::internal::sa_sot.end(),0.0);
-         // std::fill (st::internal::j.begin(),st::internal::j.end(),0.0);
+         std::fill (spin_torque.begin(),spin_torque.end(),0.0);
+         std::fill (sa_final.begin(),sa_final.end(),0.0);
+         // std::fill (sa_sot.begin(),sa_sot.end(),0.0);
+         // std::fill (j.begin(),j.end(),0.0);
          // Declare resuable temporary variables
-         st::internal::matrix_t itm; // inverse transformation matrix
-         st::internal::matrix_t M; // general matrix
-         st::internal::three_vector_t V(0.0,0.0,0.0); // general 3-vector
+         matrix_t itm; // inverse transformation matrix
+         matrix_t M; // general matrix
+         three_vector_t V(0.0,0.0,0.0); // general 3-vector
 
          // reference basis vectors
-         const st::internal::three_vector_t bx(1.0,0.0,0.0);
-         const st::internal::three_vector_t by(0.0,1.0,0.0);
-         const st::internal::three_vector_t bz(0.0,0.0,1.0);
+         const three_vector_t bx(1.0,0.0,0.0);
+         const three_vector_t by(0.0,1.0,0.0);
+         const three_vector_t bz(0.0,0.0,1.0);
 
          // local basis vectors
-         st::internal::three_vector_t b1(1.0,0.0,0.0);
-         st::internal::three_vector_t b2(0.0,1.0,0.0);
-         st::internal::three_vector_t b3(0.0,0.0,1.0);
+         three_vector_t b1(1.0,0.0,0.0);
+         three_vector_t b2(0.0,1.0,0.0);
+         three_vector_t b3(0.0,0.0,1.0);
 
          // set local constants
-         double je = program::fractional_electric_field_strength* st::internal::je; // current (C/s) 
+         double je = program::fractional_electric_field_strength* je; // current (C/s) 
 
          //---------------------------------------------------------------------------------------------------
          //set parameters for TMR calculation
-         if(st::internal::TMRenable == true){
+         if(TMRenable == true){
             std::cout << "wrong" << std::endl;
-            int FL =	st::internal::free_layer;
-            int RL =	st::internal::reference_layer;
-            double dot = st::internal::magx_mat[RL]*st::internal::magx_mat[FL]+
-                         st::internal::magy_mat[RL]*st::internal::magy_mat[FL]+
-                         st::internal::magz_mat[RL]*st::internal::magz_mat[FL];
+            int FL =	free_layer;
+            int RL =	reference_layer;
+            double dot = magx_mat[RL]*magx_mat[FL]+
+                         magy_mat[RL]*magy_mat[FL]+
+                         magz_mat[RL]*magz_mat[FL];
 
             // RE - this code is not general! Needs to be fixed. Placeholder added in the meantime
             // AM (2020) - Code fixed, but still codes refers to MTJ RL/barrier/FL specifically
             double MgO_thickness = (create::get_material_height_min(FL)-create::get_material_height_max(RL))*cs::system_dimensions[2]*1.0e-10;
 
             //calculate the relative angle of two FMs
-            st::internal::rel_angle = acos(dot);
-            double plus_cos = 1.0+cos(st::internal::rel_angle);
-            double minus_cos = 1.0-cos(st::internal::rel_angle);
+            rel_angle = acos(dot);
+            double plus_cos = 1.0+cos(rel_angle);
+            double minus_cos = 1.0-cos(rel_angle);
             double exp_t = exp(-MgO_thickness/0.25e-9);
 
-            double jtunnel = st::internal::je*0.5*(plus_cos+0.5*minus_cos)*exp_t;
-//            std::cout << "t_MgO=( " << create::get_material_height_min(FL) << " - " << create::get_material_height_max(RL) << " ) = " << MgO_thickness << "\tJe\t" << st::internal::je << "\tJe_tun\t" << jtunnel << std::endl;
+            double jtunnel = je*0.5*(plus_cos+0.5*minus_cos)*exp_t;
+//            std::cout << "t_MgO=( " << create::get_material_height_min(FL) << " - " << create::get_material_height_max(RL) << " ) = " << MgO_thickness << "\tJe\t" << je << "\tJe_tun\t" << jtunnel << std::endl;
 
             //set the current je and spin poralisation parameters
             je = jtunnel;
             // AM (2020) - I think the default parameters should be rescaled by same factor as tunnelling current and not changed using those of material 0 arbitrarily
-            // st::internal::default_properties.beta_cond *= st::internal::mp[0].beta_cond*0.5*(plus_cos+0.5*minus_cos)*exp_t;
-            // st::internal::default_properties.beta_diff *= st::internal::mp[0].beta_diff*0.5*(plus_cos+0.5*minus_cos)*exp_t;
+            // default_properties.beta_cond *= mp[0].beta_cond*0.5*(plus_cos+0.5*minus_cos)*exp_t;
+            // default_properties.beta_diff *= mp[0].beta_diff*0.5*(plus_cos+0.5*minus_cos)*exp_t;
 
             // Calculate spin torque parameters
-            for(size_t cell=0; cell<st::internal::beta_cond.size(); ++cell){
+            for(size_t cell=0; cell<beta_cond.size(); ++cell){
 
                // check for zero atoms in cell
-               if(st::internal::cell_natom[cell] <= 0.0001){
-                  st::internal::beta_cond[cell]   = st::internal::default_properties.beta_cond;
-                  st::internal::beta_diff[cell]   = st::internal::default_properties.beta_diff;
+               if(cell_natom[cell] <= 0.0001){
+                  beta_cond[cell]   = default_properties.beta_cond;
+                  beta_diff[cell]   = default_properties.beta_diff;
 
                   const double hbar = 1.05457162e-34;
-                  const double B  = st::internal::beta_cond[cell];
-                  const double Bp = st::internal::beta_diff[cell];
-                  const double lambda_sdl = st::internal::lambda_sdl[cell];
-                  const double Do = st::internal::diffusion[cell];
-                  const double Jsd = st::internal::sd_exchange[cell];
+                  const double B  = beta_cond[cell];
+                  const double Bp = beta_diff[cell];
+                  // const double lambda_sdl = lambda_sdl[cell];
+                  const double Do = diffusion[cell];
+                  const double Jsd = sd_exchange[cell];
 
                   const double BBp = 1.0/sqrt(1.0-B*Bp);
-                  const double lambda_sf = lambda_sdl*BBp;
+                  const double lambda_sf = lambda_sdl[cell]*BBp;
                   const double lambda_j = sqrt(2.0*hbar*Do/Jsd); // Angstroms
                   const double lambda_sf2 = lambda_sf*lambda_sf;
                   const double lambda_j2 = lambda_j*lambda_j;
@@ -114,72 +114,68 @@ namespace st{
                   std::complex<double> inside (1.0/lambda_sf2, -1.0/lambda_j2);
                   std::complex<double> inv_lplus = sqrt(inside);
 
-                  st::internal::a[cell] =  real(inv_lplus);
-                  st::internal::b[cell] = -imag(inv_lplus);
+                  a[cell] =  real(inv_lplus);
+                  b[cell] = -imag(inv_lplus);
                }
             }
-            st::internal::output_base_microcell_data();
+            output_base_microcell_data();
          }
 
          //---------------------------------------------------------------------------------------------------
 
          const double i_muB = 1.0/9.274e-24; // J/T
          const double i_e = 1.0/1.60217662e-19; // electronic charge (Coulombs)
-         const double microcell_volume = (st::internal::micro_cell_size[st::internal::stx] *
-                                          st::internal::micro_cell_size[st::internal::sty] *
-                                          st::internal::micro_cell_thickness)*1.e-30; // m^3
-
+         const double microcell_volume = (micro_cell_size[stx] *
+                                          micro_cell_size[sty] *
+                                          micro_cell_thickness)*1.e-30; // m^3
+         const double atomcell_volume = 15.7624e-30;
          // loop over all 1D stacks (in parallel)
-         int int_stacks = st::internal::mpi_stack_list.size();
+         int int_stacks;
+         #ifdef MPICH
+            int_stacks = mpi_stack_list_y.size();
+         #else
+            int_stacks = stack_index_y.size();
+         #endif
          // std::vector<int> stacks_list;
-         // stacks_list = st::internal::mpi_stack_list           
+         // stacks_list = mpi_stack_list           
         
 
          int stack = 0;
-         // std::cout << int_stacks << ", " << st::internal::mpi_stack_list.size() << std::endl;
+         // std::cout << int_stacks << ", " << mpi_stack_list.size() << std::endl;
          for(int s=0; s < int_stacks; ++s) {
-            stack = st::internal::mpi_stack_list.at(s);
-        
+            #ifdef MPICH
+               stack = mpi_stack_list_y.at(s);
+            #else 
+               stack = stack_index_x.at(s);
+            #endif
             // if(stack % 3 == 0) continue;
                // std::cout << stack << std::endl;
-               // std::cout << st::internal::spin_acc_sign[stack_index[stack]] << ", " << stack << std::endl;
+               // std::cout << spin_acc_sign[stack_index[stack]] << ", " << stack << std::endl;
       
             // std::cout << vmpi::my_rank << ", " << stack << std::endl;
             // determine starting cell in stack
-            const int idx = stack_index[stack] + 1;
+            const int idx = stack_index_y[stack] + 1;
            // std::cout << stack << ", " << idx << std::endl;
             // set initial values
-           if(st::internal::fbc) { 
-               st::internal::sa[3*idx+0] = 0.0;
-               st::internal::sa[3*idx+1] = 0.0;
-               st::internal::sa[3*idx+2] = 0.0;
-               st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::initial_m[0];
-               st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::initial_m[1];
-               st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::initial_m[2];
-           }  else if (!st::internal::fbc) {
-               const double mod = 1.0/sqrt(st::internal::m [3*idx+0]*st::internal::m [3*idx+0] + st::internal::m [3*idx+1]*st::internal::m [3*idx+1] + st::internal::m [3*idx+2]*st::internal::m[3*idx+2]);
-               st::internal::sa[3*idx+0] = st::internal::sa_infinity[idx]*st::internal::m [3*idx+0]*mod;
-               st::internal::sa[3*idx+1] = st::internal::sa_infinity[idx]*st::internal::m [3*idx+1]*mod;
-               st::internal::sa[3*idx+2] = st::internal::sa_infinity[idx]*st::internal::m [3*idx+2]*mod;
+           if(fbc) { 
+               sa_final[3*idx+0] = 0.0;
+               sa_final[3*idx+1] = 0.0;
+               sa_final[3*idx+2] = 0.0;
+               j_final_up_x [3*idx+0] = initial_beta*je*initial_m[0];
+               j_final_up_x [3*idx+1] = initial_beta*je*initial_m[1];
+               j_final_up_x [3*idx+2] = initial_beta*je*initial_m[2];
+           }  else if (!fbc) {
+               const double mod = 1.0/sqrt(m [3*idx+0]*m [3*idx+0] + m [3*idx+1]*m [3*idx+1] + m [3*idx+2]*m[3*idx+2]);
+               sa_final[3*idx+0] = sa_infinity[idx]*m [3*idx+0]*mod;
+               sa_final[3*idx+1] = sa_infinity[idx]*m [3*idx+1]*mod;
+               sa_final[3*idx+2] = sa_infinity[idx]*m [3*idx+2]*mod;
 
-               st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::m [3*idx+0];
-               st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::m [3*idx+1];
-               st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::m [3*idx+2];
+               j_final_up_x [3*idx+0] = initial_beta*je*m [3*idx+0]*mod;
+               j_final_up_x [3*idx+1] = initial_beta*je*m [3*idx+1]*mod;
+               j_final_up_x [3*idx+2] = initial_beta*je*m [3*idx+2]*mod;
            }
 
-           if(st::internal::sot_sa && st::internal::sot_sa_source[idx]){
-               st::internal::sa[3*idx+0] = st::internal::sa_infinity[idx]*0.0;
-               st::internal::sa[3*idx+1] = program::fractional_electric_field_strength*st::internal::sa_infinity[idx];
-               st::internal::sa[3*idx+2] = st::internal::sa_infinity[idx]*0.0;
-
-               // std::cout << st::internal::sa[3*idx+0] << ", " << st::internal::sa[3*idx+1] << ", " << st::internal::sa[3*idx+2] << std::endl;
-
-               st::internal::j [3*idx+0] = st::internal::initial_beta*je*0.0;
-               st::internal::j [3*idx+1] = 0.0;//st::internal::initial_beta*je*1.0;
-               st::internal::j [3*idx+2] = st::internal::initial_beta*je*0.0;
-           }
-
-          //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << st::internal::default_properties.sa_infinity << "\t" << st::internal::init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << st::internal::init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << st::internal::m[3*idx+0] << " \t" <<  st::internal::m[3*idx+1] << "\t" << st::internal::sa[3*idx+0] << "\t" << st::internal::sa[3*idx+1] << std::endl;
+          //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << default_properties.sa_infinity << "\t" << init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << m[3*idx+0] << " \t" <<  m[3*idx+1] << "\t" << sa[3*idx+0] << "\t" << sa[3*idx+1] << std::endl;
 
             // loop over all cells in stack after first (idx+1)
             for(int cell=idx+1; cell<idx+num_microcells_per_stack; ++cell) {
@@ -194,51 +190,43 @@ namespace st{
                const int pcelly = 3*(cell-1)+1;
                const int pcellz = 3*(cell-1)+2;
 
-               st::internal::three_vector_t  m(0.0,  0.0,  0.0);
+               three_vector_t  m_local(0.0,  0.0,  0.0);
                // copy array values to temporaries for readability
-               if(st::internal::sot_sa && st::internal::sot_sa_source[cell]) {
-                  m.x = 0;
-                  m.y = -1.0;
-                  m.z = 0.0; // Au cell artificial magnetisations
-               } else {
-                  m.x =st::internal::m[cellx];
-                  m.y = st::internal::m[celly];
-                  m.z = st::internal::m[cellz]; // current cell magnetisations
-               }
-               st::internal::three_vector_t pm(0.0,0.0,0.0);
-               if(st::internal::sot_sa && st::internal::sot_sa_source[cell-1]) {
-                  pm.x = 0;
-                  pm.y = 1.0;
-                  pm.z = 0.0; // Au cell artificial magnetisations
-               } else {
-                  pm.x =st::internal::m[pcellx];
-                  pm.y = st::internal::m[pcelly];
-                  pm.z = st::internal::m[pcellz]; // current cell magnetisations
-               }
+       
+                  m_local.x = m[cellx];
+                  m_local.y = m[celly];
+                  m_local.z = m[cellz]; // current cell magnetisations
+               
+               three_vector_t pm_local(0.0,0.0,0.0);
+         
+                  pm_local.x = m[pcellx];
+                  pm_local.y = m[pcelly];
+                  pm_local.z = m[pcellz]; // current cell magnetisations
+               
 
-               const double modm = sqrt(m.x*m.x + m.y*m.y + m.z*m.z);
-               const double pmodm = sqrt(pm.x*pm.x + pm.y*pm.y + pm.z*pm.z);
+               const double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
+               const double pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
 
                // Check for zero magnetization in normalization
                if(modm > 1.e-11){
-                  m.x = m.x/modm;
-                  m.y = m.y/modm;
-                  m.z = m.z/modm;
+                  m_local.x = m_local.x/modm;
+                  m_local.y = m_local.y/modm;
+                  m_local.z = m_local.z/modm;
                }
                else{
-                  m.x = 0.0;
-                  m.y = 0.0;
-                  m.z = 0.0;
+                  m_local.x = 0.0;
+                  m_local.y = 0.0;
+                  m_local.z = 0.0;
                }
                if(pmodm > 1.e-11){
-                  pm.x = pm.x/pmodm;
-                  pm.y = pm.y/pmodm;
-                  pm.z = pm.z/pmodm;
+                  pm_local.x = pm_local.x/pmodm;
+                  pm_local.y = pm_local.y/pmodm;
+                  pm_local.z = pm_local.z/pmodm;
                }
                else{
-                  pm.x = 0.0;
-                  pm.y = 0.0;
-                  pm.z = 0.0;
+                  pm_local.x = 0.0;
+                  pm_local.y = 0.0;
+                  pm_local.z = 0.0;
                }
 
                //---------------------------------------------------------------------
@@ -248,7 +236,7 @@ namespace st{
                // Check for cell magnetization greater than 1e-8 mu_B
                if(modm > 1.0e-11){
                   // Initialise inverse transformation matrix
-                  set_inverse_transformation_matrix(m, itm);
+                  set_inverse_transformation_matrix(m_local, itm);
 
                   // Calculate basis vectors
                   b1 = transform_vector(bz, itm);
@@ -266,41 +254,33 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Initialise temporary constants
-               const double Bc = st::internal::beta_cond[cell]; // beta
-               const double Bd = st::internal::beta_diff[cell]; // beta_prime
-               const double Do = st::internal::diffusion[cell];
-                st::internal::three_vector_t jm0(st::internal::j[pcellx],st::internal::j[pcelly],st::internal::j[pcellz]);
-               if(st::internal::sot_sa_source[cell-1]) {
-                  jm0.y += st::internal::initial_beta*je;
-               }
+               const double Bc = beta_cond[cell]; // beta
+               const double Bd = beta_diff[cell]; // beta_prime
+               const double Do = diffusion[cell];
+               three_vector_t jm0(j_final_up_x[pcellx],j_final_up_x[pcelly],j_final_up_x[pcellz]);
 
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
                const double preD = twoDo*Bc*Bd;
 
-               M.xx = preD*m.x*m.x - twoDo;     M.xy = preD*m.y*m.x;             M.xz = preD*m.z*m.x;
-               M.yx = preD*m.x*m.y;             M.yy = preD*m.y*m.y - twoDo;     M.yz = preD*m.z*m.y;
-               M.zx = preD*m.x*m.z;             M.zy = preD*m.y*m.z;             M.zz = preD*m.z*m.z - twoDo;
+               M.xx = preD*m_local.x*m_local.x - twoDo;     M.xy = preD*m_local.y*m_local.x;             M.xz = preD*m_local.z*m_local.x;
+               M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
+               M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
-               if(st::internal::sot_sa ) {
-                  V.x = jm0.x;// - Bc*je*m.x;
-                  V.y = jm0.y;// + Bc*je*m.y;
-                  V.z = jm0.z;// - Bc*je*m.z;
-               } else {
-                  V.x = jm0.x - Bc*je*m.x;
-                  V.y = jm0.y - Bc*je*m.y;
-                  V.z = jm0.z - Bc*je*m.z;
-               }
-               const st::internal::three_vector_t divm_0 = gaussian_elimination(M, V);
+                  V.x = jm0.x - Bc*je*m_local.x;
+                  V.y = jm0.y - Bc*je*m_local.y;
+                  V.z = jm0.z - Bc*je*m_local.z;
+               
+               const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
-               const double i_lsdl = 1.0/st::internal::lambda_sdl[cell];
-                double mp_inf = st::internal::sa_infinity[cell];
-                 if(st::internal::sot_sa && st::internal::sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a = st::internal::a[cell];
-               const double b = st::internal::b[cell];
-               const double two_a = 2.0*a;
-               const double two_b = 2.0*b;
+               const double i_lsdl = 1.0/lambda_sdl[cell];
+               double mp_inf = sa_infinity[cell];
+                
+               const double a_local = a[cell];
+               const double b_local = b[cell];
+               const double two_a = 2.0*a_local;
+               const double two_b = 2.0*b_local;
 
                M.xx = -b1.x*i_lsdl;    M.xy = (-two_a*b2.x + two_b*b3.x);    M.xz = (-two_b*b2.x - two_a*b3.x);
                M.yx = -b1.y*i_lsdl;    M.yy = (-two_a*b2.y + two_b*b3.y);    M.yz = (-two_b*b2.y - two_a*b3.y);
@@ -310,7 +290,7 @@ namespace st{
                V.y = divm_0.y - b1.y*mp_inf*i_lsdl;
                V.z = divm_0.z - b1.z*mp_inf*i_lsdl;
 
-               const st::internal::three_vector_t coeff = gaussian_elimination(M, V);
+               const three_vector_t coeff = gaussian_elimination(M, V);
 
                const double mp_0 = coeff.x;
                const double c    = coeff.y;
@@ -320,11 +300,11 @@ namespace st{
                // Step 3 calculate spin accumulation
                //------------------------------------
 
-               const double x = st::internal::micro_cell_thickness*1.0e-10; // Convert to metres
-               const double cos_bx = cos(b*x);
-               const double sin_bx = sin(b*x);
+               const double x = micro_cell_thickness*1.0e-10; // Convert to metres
+               const double cos_bx = cos(b_local*x);
+               const double sin_bx = sin(b_local*x);
                const double e_xsdl = exp(-x*i_lsdl);
-               const double e_ax   = exp(-a*x);
+               const double e_ax   = exp(-a_local*x);
                const double prefac = (2.0*e_ax);
 
                const double sa_para  = mp_inf + (mp_0 - mp_inf)*e_xsdl;
@@ -336,25 +316,11 @@ namespace st{
                 double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
                 double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
               
-               //add SOT contribution
-               double theta = atan2(m.y,m.x);
-                  if(theta != theta) theta = 0.0;
-               double phi = acos(m.z);
-                  // if(st::internal::spin_acc_sign.at(cell) != 1.0 && st::internal::spin_acc_sign.at(cell) != -1.0) std::cout << st::internal::spin_acc_sign.at(cell) << ", " << stack << ", " << cell << std::endl;
-               double say_sot = 0.0;// sin(phi)*(1.4+1.2*sin(theta)*sin(theta))*st::internal::sa_infinity[cell]*je*1e-11*st::internal::spin_acc_sign[cell]; //j_sd / mu_b dS/S 8 10^8 / 10^7 A/m^2 = T
-               double sax_sot = 0.0;//sin(phi)*sin(2*theta)*st::internal::sa_infinity[cell]*je*1e-11*st::internal::spin_acc_sign[cell];
-               double saz_sot = 0.0;// -cos(theta)*sin(phi)*0.12*st::internal::sa_infinity[cell]*je*1e-11*st::internal::spin_acc_sign[cell];
-
-               // double sax_sot = sin(phi)*sin(2.0*theta)*0.5*1.48e7*je*1e-11; //j_sd / mu_b dS/S 8 10^8 / 10^7 A/m^2 = T
-               // double say_sot = sin(phi)*(1.2*sin(theta)+1.4)*1.48e7*je*1e-11;
-               // double saz_sot = -cos(theta)*sin(phi)*0.12*1.48e7*je*1e-11;
-              //  std::cout << sax << ", " << say << ", " << saz << ", " \
-                                          <<sax_sot << ", " << say_sot << ", " << saz_sot << std::endl;
                //--------------------------------------------
                // Step 4 calculate the spin current (jm_end)
                //--------------------------------------------
-               const double ac_bd = a*c + b*d; 
-               const double ad_bc = a*d - b*c;
+               const double ac_bd = a_local*c + b_local*d; 
+               const double ad_bc = a_local*d - b_local*c;
 
                const double divsa_para = (mp_inf - mp_0)*i_lsdl*e_xsdl;
                const double divsa_perp2 = prefac*(-ac_bd*cos_bx + ad_bc*sin_bx);
@@ -364,75 +330,52 @@ namespace st{
                const double divsay = b1.y*divsa_para + b2.y*divsa_perp2 + b3.y*divsa_perp3;
                const double divsaz = b1.z*divsa_para + b2.z*divsa_perp2 + b3.z*divsa_perp3;
 
-               const double dot = m.x*divsax + m.y*divsay + m.z*divsaz;
+               const double dot = m_local.x*divsax + m_local.y*divsay + m_local.z*divsaz;
 
-               const double pre_jmx = divsax - Bc*Bd*m.x*dot;
-               const double pre_jmy = divsay - Bc*Bd*m.y*dot;
-               const double pre_jmz = divsaz - Bc*Bd*m.z*dot;
+               const double pre_jmx = divsax - Bc*Bd*m_local.x*dot;
+               const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
+               const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
-                double jmx = Bc*je*m.x - twoDo*pre_jmx;
-                double jmy = Bc*je*m.y - twoDo*pre_jmy;
-                double jmz = Bc*je*m.z - twoDo*pre_jmz;
+                double jmx = Bc*je*m_local.x - twoDo*pre_jmx;
+                double jmy = Bc*je*m_local.y - twoDo*pre_jmy;
+                double jmz = Bc*je*m_local.z - twoDo*pre_jmz;
 
-               if(st::internal::sot_sa) {
-                   jmx =  - twoDo*pre_jmx;
-                   jmy =  - twoDo*pre_jmy;
-                   jmz =  - twoDo*pre_jmz;
-               }
-               if(st::internal::cell_natom[cell]>0) {
-               //    if(st::internal::sot_sa && st::internal::sot_sa_source[cell]){
-               // //       st::internal::sa[cellx] += st::internal::sa_infinity[cell]*0.0;
-               // //       st::internal::sa[celly] += st::internal::sa_infinity[cell]*1.0;
-               // //       st::internal::sa[cellz] += st::internal::sa_infinity[cell]*0.0;
-
-               // //    // std::cout << st::internal::sa[3*idx+0] << ", " << st::internal::sa[3*idx+1] << ", " << st::internal::sa[3*idx+2] << std::endl;
-
-               //       st::internal::j [cellx] += st::internal::initial_beta*je*0.0;
-               //       st::internal::j [celly] += st::internal::initial_beta*je*1.0;
-               //       st::internal::j [cellz] += st::internal::initial_beta*je*0.0;
-               // }
-                  // Save values for the spin accumulation
-                  st::internal::sa[cellx] = sax;
-                  st::internal::sa[celly] = say;
-                  st::internal::sa[cellz] = saz;
-
-                  // st::internal::sa_sot[cellx] += sax_sot;
-                  // st::internal::sa_sot[celly] += say_sot;
-                  // st::internal::sa_sot[cellz] += saz_sot;
+          
+               if(cell_natom[cell]>0) {
+      
+                  sa_final[cellx] = sax;
+                  sa_final[celly] = say;
+                  sa_final[cellz] = saz;
 
                   // Save values for the spin current
-                  st::internal::j[cellx] = jmx;
-                  st::internal::j[celly] = jmy;
-                  st::internal::j[cellz] = jmz;
+                  j_final_up_x[cellx] = jmx;
+                  j_final_up_x[celly] = jmy;
+                  j_final_up_x[cellz] = jmz;
 
                   // }  else {// Calculate spin torque energy for cell (Joules)
-                  st::internal::spin_torque[cellx] += microcell_volume * st::internal::sd_exchange[cell] * (sax+sax_sot) * i_e * i_muB;
-                  st::internal::spin_torque[celly] += microcell_volume * st::internal::sd_exchange[cell] * (say+say_sot) * i_e * i_muB;
-                  st::internal::spin_torque[cellz] += microcell_volume * st::internal::sd_exchange[cell] * (saz+saz_sot) * i_e * i_muB; 
+                  spin_torque[cellx] += atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
+                  spin_torque[celly] += atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
+                  spin_torque[cellz] += atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
                   // }
                } 
                else{
                   // Save values for the spin accumulation
-                  st::internal::sa[cellx] = st::internal::sa[pcellx];
-                  st::internal::sa[celly] = st::internal::sa[pcelly];
-                  st::internal::sa[cellz] = st::internal::sa[pcellz];
-
-                  // st::internal::sa_sot[cellx] += st::internal::sa_sot[pcellx];
-                  // st::internal::sa_sot[celly] += st::internal::sa_sot[pcelly];
-                  // st::internal::sa_sot[cellz] += st::internal::sa_sot[pcellz];
+                  sa_final[cellx] = sa_final[pcellx];
+                  sa_final[celly] = sa_final[pcelly];
+                  sa_final[cellz] = sa_final[pcellz];
 
                   // Save values for the spin current
-                  st::internal::j[cellx] = st::internal::j[pcellx];
-                  st::internal::j[celly] = st::internal::j[pcelly];
-                  st::internal::j[cellz] = st::internal::j[pcellz];
+                  j_final_up_x[cellx] = j_final_up_x[pcellx];
+                  j_final_up_x[celly] = j_final_up_x[pcelly];
+                  j_final_up_x[cellz] = j_final_up_x[pcellz];
 
                   // Calculate spin torque energy for cell (Joules)
-                  st::internal::spin_torque[cellx] = st::internal::spin_torque[pcellx];
-                  st::internal::spin_torque[celly] = st::internal::spin_torque[pcelly];
-                  st::internal::spin_torque[cellz] = st::internal::spin_torque[pcellz];
+                  spin_torque[cellx] = spin_torque[pcellx];
+                  spin_torque[celly] = spin_torque[pcelly];
+                  spin_torque[cellz] = spin_torque[pcellz];
                   // }
                }
-               if(st::internal::output_torque_data) {
+               if(output_torque_data == "final") {
                //--------------------------------------------
                // Step 5 calculate the spin torque of each cell
                //--------------------------------------------
@@ -443,18 +386,18 @@ namespace st{
                M.yx = b1.y;    M.yy = b2.y;    M.yz = b3.y;
                M.zx = b1.z;    M.zy = b2.z;    M.zz = b3.z;
 
-               V.x = pm.x;
-               V.y = pm.y;
-               V.z = pm.z;
+               V.x = pm_local.x;
+               V.y = pm_local.y;
+               V.z = pm_local.z;
 
-               const st::internal::three_vector_t pm_basis = gaussian_elimination(M, V);
+               const three_vector_t pm_basis = gaussian_elimination(M, V);
 
                //const double pm_b1 = pm_basis.x; // unused variable
                const double pm_b2 = pm_basis.y;
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = microcell_volume * st::internal::sd_exchange[cell] * i_e * i_muB;
+               const double prefac_sc = microcell_volume * sd_exchange[cell] * i_e * i_muB;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -472,29 +415,29 @@ namespace st{
                 }
 
                 double SxSp[3], SxSxSp[3];
-                st::internal::coeff_ast[cell]  = aj;
-                st::internal::coeff_nast[cell] = bj;
+                coeff_ast[cell]  = aj;
+                coeff_nast[cell] = bj;
 
-                SxSp[0]=(m.y*pm.z-m.z*pm.y);
-                SxSp[1]=(m.z*pm.x-m.x*pm.z);
-                SxSp[2]=(m.x*pm.y-m.y*pm.x);
+                SxSp[0]=(m_local.y*pm_local.z-m_local.z*pm_local.y);
+                SxSp[1]=(m_local.z*pm_local.x-m_local.x*pm_local.z);
+                SxSp[2]=(m_local.x*pm_local.y-m_local.y*pm_local.x);
 
-                SxSxSp[0]= (m.y*SxSp[2]-m.z*SxSp[1]);
-                SxSxSp[1]= (m.z*SxSp[0]-m.x*SxSp[2]);
-                SxSxSp[2]= (m.x*SxSp[1]-m.y*SxSp[0]);
+                SxSxSp[0]= (m_local.y*SxSp[2]-m_local.z*SxSp[1]);
+                SxSxSp[1]= (m_local.z*SxSp[0]-m_local.x*SxSp[2]);
+                SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
                 //calculate directly from J(Sxm)
-                st::internal::total_ST[cellx] = prefac_sc*(m.y*saz-m.z*say);
-                st::internal::total_ST[celly] = prefac_sc*(m.z*sax-m.x*saz);
-                st::internal::total_ST[cellz] = prefac_sc*(m.x*say-m.y*sax);
+                total_ST[cellx] = prefac_sc*(m_local.y*saz-m_local.z*say);
+                total_ST[celly] = prefac_sc*(m_local.z*sax-m_local.x*saz);
+                total_ST[cellz] = prefac_sc*(m_local.x*say-m_local.y*sax);
 
-                st::internal::ast[cellx] = -aj*SxSxSp[0];
-                st::internal::ast[celly] = -aj*SxSxSp[1];
-                st::internal::ast[cellz] = -aj*SxSxSp[2];
+                ast[cellx] = -aj*SxSxSp[0];
+                ast[celly] = -aj*SxSxSp[1];
+                ast[cellz] = -aj*SxSxSp[2];
 
-                st::internal::nast[cellx] = bj*SxSp[0];
-                st::internal::nast[celly] = bj*SxSp[1];
-                st::internal::nast[cellz] = bj*SxSp[2];
+                nast[cellx] = bj*SxSp[0];
+                nast[celly] = bj*SxSp[1];
+                nast[cellz] = bj*SxSp[2];
                }
             } // end of cell loop
 
@@ -504,94 +447,95 @@ namespace st{
 
          // Reduce all microcell spin torques on all nodes
          #ifdef MPICF
-            MPI_Allreduce(MPI_IN_PLACE, &st::internal::spin_torque[0],st::internal::spin_torque.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-            // if(st::internal::output_torque_data) MPI_Allreduce(MPI_IN_PLACE, &st::internal::total_ST[0],st::internal::total_ST.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &spin_torque[0],spin_torque.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            // if(output_torque_data) MPI_Allreduce(MPI_IN_PLACE, &total_ST[0],total_ST.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
          #endif
-         st::internal::output_microcell_data();
+         output_microcell_data();
 
          st::spin_acc_time += stopwatch.elapsed_seconds();
 
          return;
       }
-*/
+
        void calculate_sot_accumulation(){
 
          stopwatch_t stopwatch;
          stopwatch.start();
 
          // Zero all shared arrays (essential for parallelisation to work)
-         std::fill (st::internal::spin_torque.begin(),st::internal::spin_torque.end(),0.0);
-         std::fill (st::internal::sa_final.begin(),st::internal::sa_final.end(),0.0);
-         std::fill (st::internal::sa_sot_int.begin(),st::internal::sa_sot_int.end(),0.0);
-         std::fill (st::internal::sa_sot_init.begin(),st::internal::sa_sot_init.end(),0.0);
-         std::fill (st::internal::j_final_up.begin(),st::internal::j_final_up.end(),0.0);
-         std::fill (st::internal::j_final_down.begin(),st::internal::j_final_down.end(),0.0);
-         std::fill (st::internal::j_int_up.begin(),st::internal::j_int_up.end(),0.0);
-         std::fill (st::internal::j_int_down.begin(),st::internal::j_int_down.end(),0.0);
+         std::fill (spin_torque.begin(),spin_torque.end(),0.0);
+         std::fill (sa_final.begin(),sa_final.end(),0.0);
+         // std::fill (sa_sot_int.begin(),sa_sot_int.end(),0.0);
+         // std::fill (sa_sot_init.begin(),sa_sot_init.end(),0.0);
+         // std::fill (j_final_up_y.begin(),j_final_up_y.end(),0.0);
+         // std::fill (j_final_down_y.begin(),j_final_down_y.end(),0.0);
+         std::fill (j_int_up_y.begin(),j_int_up_y.end(),0.0);
+         std::fill (j_int_down_y.begin(),j_int_down_y.end(),0.0);
+         // std::fill (j_final_up_x.begin(),j_final_up_x.end(),0.0);
          // Declare resuable temporary variables
-         st::internal::matrix_t itm; // inverse transformation matrix
-         st::internal::matrix_t M; // general matrix
-         st::internal::three_vector_t V(0.0,0.0,0.0); // general 3-vector
+         matrix_t itm; // inverse transformation matrix
+         matrix_t M; // general matrix
+         three_vector_t V(0.0,0.0,0.0); // general 3-vector
 
          // reference basis vectors
-         const st::internal::three_vector_t bx(1.0,0.0,0.0);
-         const st::internal::three_vector_t by(0.0,1.0,0.0);
-         const st::internal::three_vector_t bz(0.0,0.0,1.0);
+         const three_vector_t bx(1.0,0.0,0.0);
+         const three_vector_t by(0.0,1.0,0.0);
+         const three_vector_t bz(0.0,0.0,1.0);
 
          // local basis vectors
-         st::internal::three_vector_t b1(1.0,0.0,0.0);
-         st::internal::three_vector_t b2(0.0,1.0,0.0);
-         st::internal::three_vector_t b3(0.0,0.0,1.0);
+         three_vector_t b1(1.0,0.0,0.0);
+         three_vector_t b2(0.0,1.0,0.0);
+         three_vector_t b3(0.0,0.0,1.0);
 
          // set local constants
-         double je = program::fractional_electric_field_strength* st::internal::je; // current (C/s)
+         double je = program::fractional_electric_field_strength* je; // current (C/s)
 
          //---------------------------------------------------------------------------------------------------
          //set parameters for TMR calculation
-         if(st::internal::TMRenable == true){
+         if(TMRenable == true){
             std::cout << "wrong" << std::endl;
-            int FL =	st::internal::free_layer;
-            int RL =	st::internal::reference_layer;
-            double dot = st::internal::magx_mat[RL]*st::internal::magx_mat[FL]+
-                         st::internal::magy_mat[RL]*st::internal::magy_mat[FL]+
-                         st::internal::magz_mat[RL]*st::internal::magz_mat[FL];
+            int FL =	free_layer;
+            int RL =	reference_layer;
+            double dot = magx_mat[RL]*magx_mat[FL]+
+                         magy_mat[RL]*magy_mat[FL]+
+                         magz_mat[RL]*magz_mat[FL];
 
             // RE - this code is not general! Needs to be fixed. Placeholder added in the meantime
             // AM (2020) - Code fixed, but still codes refers to MTJ RL/barrier/FL specifically
             double MgO_thickness = (create::get_material_height_min(FL)-create::get_material_height_max(RL))*cs::system_dimensions[2]*1.0e-10;
 
             //calculate the relative angle of two FMs
-            st::internal::rel_angle = acos(dot);
-            double plus_cos = 1.0+cos(st::internal::rel_angle);
-            double minus_cos = 1.0-cos(st::internal::rel_angle);
+            rel_angle = acos(dot);
+            double plus_cos = 1.0+cos(rel_angle);
+            double minus_cos = 1.0-cos(rel_angle);
             double exp_t = exp(-MgO_thickness/0.25e-9);
 
-            double jtunnel = st::internal::je*0.5*(plus_cos+0.5*minus_cos)*exp_t;
-//            std::cout << "t_MgO=( " << create::get_material_height_min(FL) << " - " << create::get_material_height_max(RL) << " ) = " << MgO_thickness << "\tJe\t" << st::internal::je << "\tJe_tun\t" << jtunnel << std::endl;
+            double jtunnel = je*0.5*(plus_cos+0.5*minus_cos)*exp_t;
+//            std::cout << "t_MgO=( " << create::get_material_height_min(FL) << " - " << create::get_material_height_max(RL) << " ) = " << MgO_thickness << "\tJe\t" << je << "\tJe_tun\t" << jtunnel << std::endl;
 
             //set the current je and spin poralisation parameters
             je = jtunnel;
             // AM (2020) - I think the default parameters should be rescaled by same factor as tunnelling current and not changed using those of material 0 arbitrarily
-            st::internal::default_properties.beta_cond *= /*st::internal::mp[0].beta_cond**/0.5*(plus_cos+0.5*minus_cos)*exp_t;
-            st::internal::default_properties.beta_diff *= /*st::internal::mp[0].beta_diff**/0.5*(plus_cos+0.5*minus_cos)*exp_t;
+            default_properties.beta_cond *= /*mp[0].beta_cond**/0.5*(plus_cos+0.5*minus_cos)*exp_t;
+            default_properties.beta_diff *= /*mp[0].beta_diff**/0.5*(plus_cos+0.5*minus_cos)*exp_t;
 
             // Calculate spin torque parameters
-            for(size_t cell=0; cell<st::internal::beta_cond.size(); ++cell){
+            for(size_t cell=0; cell<beta_cond.size(); ++cell){
 
                // check for zero atoms in cell
-               if(st::internal::cell_natom[cell] <= 0.0001){
-                  st::internal::beta_cond[cell]   = st::internal::default_properties.beta_cond;
-                  st::internal::beta_diff[cell]   = st::internal::default_properties.beta_diff;
+               if(cell_natom[cell] <= 0.0001){
+                  beta_cond[cell]   = default_properties.beta_cond;
+                  beta_diff[cell]   = default_properties.beta_diff;
 
                   const double hbar = 1.05457162e-34;
-                  const double B  = st::internal::beta_cond[cell];
-                  const double Bp = st::internal::beta_diff[cell];
-                  const double lambda_sdl = st::internal::lambda_sdl[cell];
-                  const double Do = st::internal::diffusion[cell];
-                  const double Jsd = st::internal::sd_exchange[cell];
+                  const double B  = beta_cond[cell];
+                  const double Bp = beta_diff[cell];
+                  // const double lambda_sdl = lambda_sdl[cell];
+                  const double Do = diffusion[cell];
+                  const double Jsd = sd_exchange[cell];
 
                   const double BBp = 1.0/sqrt(1.0-B*Bp);
-                  const double lambda_sf = lambda_sdl*BBp;
+                  const double lambda_sf = lambda_sdl[cell]*BBp;
                   const double lambda_j = sqrt(2.0*hbar*Do/Jsd); // Angstroms
                   const double lambda_sf2 = lambda_sf*lambda_sf;
                   const double lambda_j2 = lambda_j*lambda_j;
@@ -599,61 +543,72 @@ namespace st{
                   std::complex<double> inside (1.0/lambda_sf2, -1.0/lambda_j2);
                   std::complex<double> inv_lplus = sqrt(inside);
 
-                  st::internal::a[cell] =  real(inv_lplus);
-                  st::internal::b[cell] = -imag(inv_lplus);
+                  a[cell] =  real(inv_lplus);
+                  b[cell] = -imag(inv_lplus);
                }
             }
-            st::internal::output_base_microcell_data();
+            output_base_microcell_data();
          }
 
          //---------------------------------------------------------------------------------------------------
 
          const double i_muB = 1.0/9.274e-24; // J/T
          const double i_e = 1.0/1.60217662e-19; // electronic charge (Coulombs)
-         const double microcell_volume = (st::internal::micro_cell_size[st::internal::stx] *
-                                          st::internal::micro_cell_size[st::internal::sty] *
-                                          st::internal::micro_cell_thickness)*1.e-30; // m^3
+         const double microcell_volume = (micro_cell_size[stx] *
+                                          micro_cell_size[sty] *
+                                          micro_cell_thickness)*1.e-30; // m^3
          const double atomcell_volume = 15.7624e-30;
          // loop over all 1D stacks (in parallel)
-         int int_stacks = st::internal::mpi_stack_list.size();
+         int int_stacks;
+         //#ifdef MPICH
+            int_stacks = mpi_stack_list_y.size();
+         //#else
+        //    int_stacks = stack_index_y.size();
+         //#endif
+
          int stack = 0;
          const double sot_sd_exchange_multiple = 1;// 3e2;
-         
+         // std::cout << "starting sot simulation y axis..." << std::endl;
          for(int s=0; s < int_stacks; ++s) {
-            stack = st::internal::mpi_stack_list.at(s);
-        
-            const int idx = stack_index[stack] + 1;
+           // #ifdef MPICH
+               stack = mpi_stack_list_y.at(s);
+          //  #else 
+           //    stack = stack_index_y.at(s);
+           // #endif
+
+            const int idx = stack_index_y[stack] + 1;
             //init process
+            // std::cout << stack << ", " << idx << std::endl;
             for(int cell=idx; cell<idx+num_microcells_per_stack; ++cell) {
-               int direction_sign = st::internal::sot_sa_source[cell] ? -1:1; //direction and sign if Au J_s
+               int direction_sign = sot_sa_source[cell] ? -1:1; //direction and sign if Au J_s
                
                // calculate cell id's
                const int cellx = 3*cell+0;
                const int celly = 3*cell+1;
                const int cellz = 3*cell+2;
 
-               st::internal::three_vector_t  m(0.0,  0.0,  0.0);
+               three_vector_t  m_local(0.0,  0.0,  0.0);
                // copy array values to temporaries for readability
-               if(st::internal::sot_sa_source[cell]) {
-                  m.x = 0;
-                  m.y = 1.0; // Au cell artificial direction for correct basis of spin acc change
-                  m.z = 0.0; 
+               if(sot_sa_source[cell]) {
+                  m_local.x = 0;
+                  m_local.y = 1.0; // Au cell artificial direction for correct basis of spin acc change
+                  m_local.z = 0.0; 
                } else {
-                  m.x = st::internal::m[cellx];
-                  m.y = st::internal::m[celly];
-                  m.z = st::internal::m[cellz]; // current cell magnetisations
+                  m_local.x = m[cellx];
+                  m_local.y = m[celly];
+                  m_local.z = m[cellz]; // current cell magnetisations
                }
-               const double modm = sqrt(m.x*m.x + m.y*m.y + m.z*m.z);
+               const double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
                // Check for zero magnetization in normalization
                if(modm > 1.e-11){
-                  m.x = m.x/modm;
-                  m.y = m.y/modm;
-                  m.z = m.z/modm;
+                  m_local.x = m_local.x/modm;
+                  m_local.y = m_local.y/modm;
+                  m_local.z = m_local.z/modm;
                }
                else{
-                  m.x = 0.0;
-                  m.y = 0.0;
-                  m.z = 0.0;
+                  m_local.x = 0.0;
+                  m_local.y = 0.0;
+                  m_local.z = 0.0;
                }
 
                //---------------------------------------------------------------------
@@ -663,7 +618,7 @@ namespace st{
                // Check for cell magnetization greater than 1e-8 mu_B
                if(modm > 1.0e-11){
                   // Initialise inverse transformation matrix
-                  set_inverse_transformation_matrix(m, itm);
+                  set_inverse_transformation_matrix(m_local, itm);
 
                   // Calculate basis vectors
                   b1 = transform_vector(bz, itm);
@@ -681,35 +636,35 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Initialise temporary constants
-               const double Bc = st::internal::beta_cond[cell]; // beta
-               const double Bd = st::internal::beta_diff[cell]; // beta_prime
-               const double Do = st::internal::diffusion[cell];
-               st::internal::three_vector_t jm0(0.0,0.0,0.0); //zero incoming spin current for init process
+               const double Bc = beta_cond[cell]; // beta
+               const double Bd = beta_diff[cell]; // beta_prime
+               const double Do = diffusion[cell];
+               three_vector_t jm0(0.0,0.0,0.0); //zero incoming spin current for init process
                
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
                const double preD = twoDo*Bc*Bd;
 
-               M.xx = preD*m.x*m.x - twoDo;     M.xy = preD*m.y*m.x;             M.xz = preD*m.z*m.x;
-               M.yx = preD*m.x*m.y;             M.yy = preD*m.y*m.y - twoDo;     M.yz = preD*m.z*m.y;
-               M.zx = preD*m.x*m.z;             M.zy = preD*m.y*m.z;             M.zz = preD*m.z*m.z - twoDo;
+               M.xx = preD*m_local.x*m_local.x - twoDo;     M.xy = preD*m_local.y*m_local.x;             M.xz = preD*m_local.z*m_local.x;
+               M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
+               M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
                //no charge current conversion from out of plane process
-                  V.x = jm0.x;// - Bc*je*m.x;
-                  V.y = jm0.y;// - Bc*je*m.x;
-                  V.z = jm0.z;// - Bc*je*m.z;
+                  V.x = jm0.x;// - Bc*je*m_local.x;
+                  V.y = jm0.y;// - Bc*je*m_local.x;
+                  V.z = jm0.z;// - Bc*je*m_local.z;
               
-               const st::internal::three_vector_t divm_0 = gaussian_elimination(M, V);
+               const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
-               const double i_lsdl = 1.0/st::internal::lambda_sdl[cell];
-               double mp_inf = st::internal::sa_infinity[cell];
+               const double i_lsdl = 1.0/lambda_sdl[cell];
+               double mp_inf = sa_infinity[cell];
                //modify spin acc on Au depending on current. Very low impact but seems physics?
-               if(st::internal::sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a = st::internal::a[cell];
-               const double b = st::internal::b[cell];
-               const double two_a = 2.0*a;
-               const double two_b = 2.0*b;
+               if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+               const double a_local = a[cell];
+               const double b_local = b[cell];
+               const double two_a = 2.0*a_local;
+               const double two_b = 2.0*b_local;
 
                M.xx = -b1.x*i_lsdl;    M.xy = (-two_a*b2.x + two_b*b3.x);    M.xz = (-two_b*b2.x - two_a*b3.x);
                M.yx = -b1.y*i_lsdl;    M.yy = (-two_a*b2.y + two_b*b3.y);    M.yz = (-two_b*b2.y - two_a*b3.y);
@@ -719,7 +674,7 @@ namespace st{
                V.y = divm_0.y - b1.y*mp_inf*i_lsdl;
                V.z = divm_0.z - b1.z*mp_inf*i_lsdl;
 
-               const st::internal::three_vector_t coeff = gaussian_elimination(M, V);
+               const three_vector_t coeff = gaussian_elimination(M, V);
 
                const double mp_0 = coeff.x;
                const double c    = coeff.y;
@@ -729,27 +684,22 @@ namespace st{
                // Step 3 calculate spin accumulation
                //------------------------------------
 
-               const double x = st::internal::micro_cell_thickness*1.0e-10; // Convert to metres
-               const double cos_bx = cos(b*x);
-               const double sin_bx = sin(b*x);
+               const double x = micro_cell_thickness*1.0e-10; // Convert to metres
+               const double cos_bx = cos(b_local*x);
+               const double sin_bx = sin(b_local*x);
                const double e_xsdl = exp(-x*i_lsdl);
-               const double e_ax   = exp(-a*x);
+               const double e_ax   = exp(-a_local*x);
                const double prefac = (2.0*e_ax);
 
                const double sa_para  = mp_inf + (mp_0 - mp_inf)*e_xsdl;
                const double sa_perp2 = prefac*(c*cos_bx - d*sin_bx);
                const double sa_perp3 = prefac*(c*sin_bx + d*cos_bx);
-
-               //convert mp and m_perp
-               double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
-               double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
-               double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
                            
                //--------------------------------------------
                // Step 4 calculate the spin current (jm_end)
                //--------------------------------------------
-               const double ac_bd = a*c + b*d; 
-               const double ad_bc = a*d - b*c;
+               const double ac_bd = a_local*c + b_local*d; 
+               const double ad_bc = a_local*d - b_local*c;
 
                const double divsa_para = (mp_inf - mp_0)*i_lsdl*e_xsdl;
                const double divsa_perp2 = prefac*(-ac_bd*cos_bx + ad_bc*sin_bx);
@@ -759,36 +709,37 @@ namespace st{
                const double divsay = b1.y*divsa_para + b2.y*divsa_perp2 + b3.y*divsa_perp3;
                const double divsaz = b1.z*divsa_para + b2.z*divsa_perp2 + b3.z*divsa_perp3;
 
-               const double dot = m.x*divsax + m.y*divsay + m.z*divsaz;
+               const double dot = m_local.x*divsax + m_local.y*divsay + m_local.z*divsaz;
 
-               const double pre_jmx = divsax - Bc*Bd*m.x*dot;
-               const double pre_jmy = divsay - Bc*Bd*m.y*dot;
-               const double pre_jmz = divsaz - Bc*Bd*m.z*dot;
+               const double pre_jmx = divsax - Bc*Bd*m_local.x*dot;
+               const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
+               const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
                 //no charge current conversion
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
                   //modify spin current by current density and spin hall theta 
-                  if(st::internal::sot_sa_source[cell]) jmy = je*st::internal::initial_theta;
+                  if(sot_sa_source[cell]) jmy = -je*initial_theta;
                double jmz =   twoDo*pre_jmz;
                
-               // Save values. assume no 0 magnetisation cells
-               st::internal::sa_sot_init[cellx] = sax;
-               st::internal::sa_sot_init[celly] = say;
-               st::internal::sa_sot_init[cellz] = saz;
+               // // Save values. assume no 0 magnetisation cells
+               // sa_sot_init[cellx] = sax;
+               // sa_sot_init[celly] = say;
+               // sa_sot_init[cellz] = saz;
 
                //init value saved in int for fast overwrite
-               st::internal::j_int_up[cellx] = jmx;
-               st::internal::j_int_up[celly] = jmy;
-               st::internal::j_int_up[cellz] = jmz;
+               j_int_up_y[cellx] = jmx;
+               j_int_up_y[celly] = jmy;
+               j_int_up_y[cellz] = jmz;
 
+               // if(sot_sa_source[cell]) std::cout << jmx << ", " << jmy << ", " << jmz <<
                //down diffusion for Au spin current negative
-               st::internal::j_int_down[cellx] = jmx*direction_sign;
-               st::internal::j_int_down[celly] = jmy*direction_sign;
-               st::internal::j_int_down[cellz] = jmz*direction_sign;
+               j_int_down_y[cellx] = jmx*direction_sign;
+               j_int_down_y[celly] = jmy*direction_sign;
+               j_int_down_y[cellz] = jmz*direction_sign;
                
                //conditional spin torque decompositon for output. faster to omit
-            if(st::internal::output_torque_data == "init") {
+            if(output_torque_data == "init") {
                //--------------------------------------------
                // Step 5 calculate the spin torque of each cell
                //--------------------------------------------
@@ -798,46 +749,46 @@ namespace st{
                const int pcelly = pcellx +1;
                const int pcellz = pcelly +1;
 
-               st::internal::three_vector_t  pm(0.0,  0.0,  0.0);
+               three_vector_t  pm_local(0.0,  0.0,  0.0);
                // copy array values to temporaries for readability
-               if(st::internal::sot_sa_source[cell-1]) {
-                  pm.x = 0;
-                  pm.y = 1.0; // Au cell artificial direction for correct basis of spin acc change
-                  pm.z = 0.0; 
+               if(sot_sa_source[cell-1]) {
+                  pm_local.x = 0;
+                  pm_local.y = 1.0; // Au cell artificial direction for correct basis of spin acc change
+                  pm_local.z = 0.0; 
                } else {
-                  pm.x = st::internal::m[pcellx];
-                  pm.y = st::internal::m[pcelly];
-                  pm.z = st::internal::m[pcellz]; // current cell magnetisations
+                  pm_local.x = m[pcellx];
+                  pm_local.y = m[pcelly];
+                  pm_local.z = m[pcellz]; // current cell magnetisations
                }
-               const double pmodm = sqrt(pm.x*pm.x + pm.y*pm.y + pm.z*pm.z);
+               const double pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
                // Check for zero magnetization in normalization
                if(pmodm > 1.e-11){
-                  pm.x = pm.x/pmodm;
-                  pm.y = pm.y/pmodm;
-                  pm.z = pm.z/pmodm;
+                  pm_local.x = pm_local.x/pmodm;
+                  pm_local.y = pm_local.y/pmodm;
+                  pm_local.z = pm_local.z/pmodm;
                }
                else{
-                  pm.x = 0.0;
-                  pm.y = 0.0;
-                  pm.z = 0.0;
+                  pm_local.x = 0.0;
+                  pm_local.y = 0.0;
+                  pm_local.z = 0.0;
                }
 
                M.xx = b1.x;    M.xy = b2.x;    M.xz = b3.x;
                M.yx = b1.y;    M.yy = b2.y;    M.yz = b3.y;
                M.zx = b1.z;    M.zy = b2.z;    M.zz = b3.z;
 
-               V.x = pm.x;
-               V.y = pm.y;
-               V.z = pm.z;
+               V.x = pm_local.x;
+               V.y = pm_local.y;
+               V.z = pm_local.z;
 
-               const st::internal::three_vector_t pm_basis = gaussian_elimination(M, V);
+               const three_vector_t pm_basis = gaussian_elimination(M, V);
 
                //const double pm_b1 = pm_basis.x; // unused variable
                const double pm_b2 = pm_basis.y;
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = atomcell_volume * st::internal::sd_exchange[cell] * i_e * i_muB;
+               const double prefac_sc = atomcell_volume * sd_exchange[cell] * i_e * i_muB;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -854,30 +805,35 @@ namespace st{
                     bj  = prefac_sc*(sa_perp2*pm_b2 + sa_perp3*pm_b3)/plus_perp;
                 }
 
-                double SxSp[3], SxSxSp[3];
-                st::internal::coeff_ast[cell]  = aj;
-                st::internal::coeff_nast[cell] = bj;
+               double SxSp[3], SxSxSp[3];
+               coeff_ast[cell]  = aj;
+               coeff_nast[cell] = bj;
 
-                SxSp[0]=(m.y*pm.z-m.z*pm.y);
-                SxSp[1]=(m.z*pm.x-m.x*pm.z);
-                SxSp[2]=(m.x*pm.y-m.y*pm.x);
+               SxSp[0]=(m_local.y*pm_local.z-m_local.z*pm_local.y);
+               SxSp[1]=(m_local.z*pm_local.x-m_local.x*pm_local.z);
+               SxSp[2]=(m_local.x*pm_local.y-m_local.y*pm_local.x);
 
-                SxSxSp[0]= (m.y*SxSp[2]-m.z*SxSp[1]);
-                SxSxSp[1]= (m.z*SxSp[0]-m.x*SxSp[2]);
-                SxSxSp[2]= (m.x*SxSp[1]-m.y*SxSp[0]);
+               SxSxSp[0]= (m_local.y*SxSp[2]-m_local.z*SxSp[1]);
+               SxSxSp[1]= (m_local.z*SxSp[0]-m_local.x*SxSp[2]);
+               SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
-                //calculate directly from J(Sxm)
-               //  st::internal::total_ST[cellx] = prefac_sc*(m.y*saz-m.z*say);
-               //  st::internal::total_ST[celly] = prefac_sc*(m.z*sax-m.x*saz);
-               //  st::internal::total_ST[cellz] = prefac_sc*(m.x*say-m.y*sax);
+               //convert mp and m_perp
+            double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
+            double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
+            double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
 
-                st::internal::ast[cellx] = -aj*SxSxSp[0];
-                st::internal::ast[celly] = -aj*SxSxSp[1];
-                st::internal::ast[cellz] = -aj*SxSxSp[2];
+               //calculate directly from J(Sxm)
+               total_ST[cellx] = prefac_sc*(m_local.y*saz-m_local.z*say);
+               total_ST[celly] = prefac_sc*(m_local.z*sax-m_local.x*saz);
+               total_ST[cellz] = prefac_sc*(m_local.x*say-m_local.y*sax);
 
-                st::internal::nast[cellx] = bj*SxSp[0];
-                st::internal::nast[celly] = bj*SxSp[1];
-                st::internal::nast[cellz] = bj*SxSp[2];
+               ast[cellx] = -aj*SxSxSp[0];
+               ast[celly] = -aj*SxSxSp[1];
+               ast[cellz] = -aj*SxSxSp[2];
+
+               nast[cellx] = bj*SxSp[0];
+               nast[celly] = bj*SxSp[1];
+               nast[cellz] = bj*SxSp[2];
                } 
             } 
          
@@ -899,30 +855,30 @@ namespace st{
                const int acelly = 3*(cell+1)+1;
                const int acellz = 3*(cell+1)+2;
 
-               st::internal::three_vector_t  m(0.0,  0.0,  0.0);
+               three_vector_t  m_local(0.0,  0.0,  0.0);
                // copy array values to temporaries for readability
-               if(st::internal::sot_sa_source[cell]) {
-                  m.x = 0;
-                  m.y = direction_sign; // Au cell artificial magnetisations
-                  m.z = 0.0; 
+               if(sot_sa_source[cell]) {
+                  m_local.x = 0;
+                  m_local.y = direction_sign; // Au cell artificial magnetisations
+                  m_local.z = 0.0; 
                } else {
-                  m.x =st::internal::m[cellx];
-                  m.y = st::internal::m[celly];
-                  m.z = st::internal::m[cellz]; // current cell magnetisations
+                  m_local.x = m[cellx];
+                  m_local.y = m[celly];
+                  m_local.z = m[cellz]; // current cell magnetisations
                }
            
-               const double modm = sqrt(m.x*m.x + m.y*m.y + m.z*m.z);
+               const double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
       
                // Check for zero magnetization in normalization
                if(modm > 1.e-11){
-                  m.x = m.x/modm;
-                  m.y = m.y/modm;
-                  m.z = m.z/modm;
+                  m_local.x = m_local.x/modm;
+                  m_local.y = m_local.y/modm;
+                  m_local.z = m_local.z/modm;
                }
                else{
-                  m.x = 0.0;
-                  m.y = 0.0;
-                  m.z = 0.0;
+                  m_local.x = 0.0;
+                  m_local.y = 0.0;
+                  m_local.z = 0.0;
                }
 
                //---------------------------------------------------------------------
@@ -932,7 +888,7 @@ namespace st{
                // Check for cell magnetization greater than 1e-8 mu_B
                if(modm > 1.0e-11){
                   // Initialise inverse transformation matrix
-                  set_inverse_transformation_matrix(m, itm);
+                  set_inverse_transformation_matrix(m_local, itm);
 
                   // Calculate basis vectors
                   b1 = transform_vector(bz, itm);
@@ -950,37 +906,37 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Initialise temporary constants
-               const double Bc = st::internal::beta_cond[cell]; // beta
-               const double Bd = st::internal::beta_diff[cell]; // beta_prime
-               const double Do = st::internal::diffusion[cell];
-               st::internal::three_vector_t jm0(0.0,0.0,0.0);
+               const double Bc = beta_cond[cell]; // beta
+               const double Bd = beta_diff[cell]; // beta_prime
+               const double Do = diffusion[cell];
+               three_vector_t jm0(0.0,0.0,0.0);
                //grab correct cell's init spin current (int label)
-               if(direction_sign < 0) {jm0.x = j_int_down[acellx]; jm0.y = j_int_down[acelly]; jm0.z = j_int_down[acellz];}
-               else {jm0.x = j_int_up[pcellx]; jm0.y = j_int_up[pcelly]; jm0.z = j_int_up[pcellz];}
+               if(direction_sign < 0) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
+               else {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
              
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
                const double preD = twoDo*Bc*Bd;
 
-               M.xx = preD*m.x*m.x - twoDo;     M.xy = preD*m.y*m.x;             M.xz = preD*m.z*m.x;
-               M.yx = preD*m.x*m.y;             M.yy = preD*m.y*m.y - twoDo;     M.yz = preD*m.z*m.y;
-               M.zx = preD*m.x*m.z;             M.zy = preD*m.y*m.z;             M.zz = preD*m.z*m.z - twoDo;
+               M.xx = preD*m_local.x*m_local.x - twoDo;     M.xy = preD*m_local.y*m_local.x;             M.xz = preD*m_local.z*m_local.x;
+               M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
+               M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
                //no charge current polarisation
-               V.x = jm0.x;// - Bc*je*m.x;
-               V.y = jm0.y;// + Bc*je*m.y;
-               V.z = jm0.z;// - Bc*je*m.z;
+               V.x = jm0.x;// - Bc*je*m_local.x;
+               V.y = jm0.y;// + Bc*je*m_local.y;
+               V.z = jm0.z;// - Bc*je*m_local.z;
               
-               const st::internal::three_vector_t divm_0 = gaussian_elimination(M, V);
+               const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
-               const double i_lsdl = 1.0/st::internal::lambda_sdl[cell];
-               double mp_inf = st::internal::sa_infinity[cell];
-                  if(st::internal::sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a = st::internal::a[cell];
-               const double b = st::internal::b[cell];
-               const double two_a = 2.0*a;
-               const double two_b = 2.0*b;
+               const double i_lsdl = 1.0/lambda_sdl[cell];
+               double mp_inf = sa_infinity[cell];
+                  if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+               const double a_local = a[cell];
+               const double b_local = b[cell];
+               const double two_a = 2.0*a_local;
+               const double two_b = 2.0*b_local;
 
                M.xx = -b1.x*i_lsdl;    M.xy = (-two_a*b2.x + two_b*b3.x);    M.xz = (-two_b*b2.x - two_a*b3.x);
                M.yx = -b1.y*i_lsdl;    M.yy = (-two_a*b2.y + two_b*b3.y);    M.yz = (-two_b*b2.y - two_a*b3.y);
@@ -990,7 +946,7 @@ namespace st{
                V.y = divm_0.y - b1.y*mp_inf*i_lsdl;
                V.z = divm_0.z - b1.z*mp_inf*i_lsdl;
 
-               const st::internal::three_vector_t coeff = gaussian_elimination(M, V);
+               const three_vector_t coeff = gaussian_elimination(M, V);
 
                const double mp_0 = coeff.x;
                const double c    = coeff.y;
@@ -1000,27 +956,22 @@ namespace st{
                // Step 3 calculate spin accumulation
                //------------------------------------
 
-               const double x = st::internal::micro_cell_thickness*1.0e-10; // Convert to metres
-               const double cos_bx = cos(b*x);
-               const double sin_bx = sin(b*x);
+               const double x = micro_cell_thickness*1.0e-10; // Convert to metres
+               const double cos_bx = cos(b_local*x);
+               const double sin_bx = sin(b_local*x);
                const double e_xsdl = exp(-x*i_lsdl);
-               const double e_ax   = exp(-a*x);
+               const double e_ax   = exp(-a_local*x);
                const double prefac = (2.0*e_ax);
 
                const double sa_para  = mp_inf + (mp_0 - mp_inf)*e_xsdl;
                const double sa_perp2 = prefac*(c*cos_bx - d*sin_bx);
                const double sa_perp3 = prefac*(c*sin_bx + d*cos_bx);
-
-               //convert mp and m_perp
-               double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
-               double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
-               double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
               
                //--------------------------------------------
                // Step 4 calculate the spin current (jm_end)
                //--------------------------------------------
-               const double ac_bd = a*c + b*d; 
-               const double ad_bc = a*d - b*c;
+               const double ac_bd = a_local*c + b_local*d; 
+               const double ad_bc = a_local*d - b_local*c;
 
                const double divsa_para = (mp_inf - mp_0)*i_lsdl*e_xsdl;
                const double divsa_perp2 = prefac*(-ac_bd*cos_bx + ad_bc*sin_bx);
@@ -1030,88 +981,88 @@ namespace st{
                const double divsay = b1.y*divsa_para + b2.y*divsa_perp2 + b3.y*divsa_perp3;
                const double divsaz = b1.z*divsa_para + b2.z*divsa_perp2 + b3.z*divsa_perp3;
 
-               const double dot = m.x*divsax + m.y*divsay + m.z*divsaz;
+               const double dot = m_local.x*divsax + m_local.y*divsay + m_local.z*divsaz;
 
-               const double pre_jmx = divsax - Bc*Bd*m.x*dot;
-               const double pre_jmy = divsay - Bc*Bd*m.y*dot;
-               const double pre_jmz = divsaz - Bc*Bd*m.z*dot;
+               const double pre_jmx = divsax - Bc*Bd*m_local.x*dot;
+               const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
+               const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
-               //  double jmx = Bc*je*m.x - twoDo*pre_jmx;
-               //  double jmy = Bc*je*m.y - twoDo*pre_jmy;
-               //  double jmz = Bc*je*m.z - twoDo*pre_jmz;
+               //  double jmx = Bc*je*m_local.x - twoDo*pre_jmx;
+               //  double jmy = Bc*je*m_local.y - twoDo*pre_jmy;
+               //  double jmz = Bc*je*m_local.z - twoDo*pre_jmz;
 
                
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
                   //Au spin source sign direction dependent 
-                  if(st::internal::sot_sa_source[cell]) jmy += direction_sign*je*st::internal::initial_theta;
+                  if(sot_sa_source[cell]) jmy += -direction_sign*je*initial_theta;
                double jmz =   twoDo*pre_jmz;
               
-               if(st::internal::cell_natom[cell]>0) {
+               if(cell_natom[cell]>0) {
                
-                  st::internal::sa_sot_int[cellx] = sax;
-                  st::internal::sa_sot_int[celly] = say;
-                  st::internal::sa_sot_int[cellz] = saz;
+                  // sa_sot_int[cellx] = sax;
+                  // sa_sot_int[celly] = say;
+                  // sa_sot_int[cellz] = saz;
 
                   // Save values for the spin current
                   if(direction_sign < 0) {
-                     st::internal::j_int_down[cellx] = jmx;
-                     st::internal::j_int_down[celly] = jmy;
-                     st::internal::j_int_down[cellz] = jmz;
+                     j_int_down_y[cellx] = jmx;
+                     j_int_down_y[celly] = jmy;
+                     j_int_down_y[cellz] = jmz;
                   } else {
-                     st::internal::j_int_up[cellx] = jmx;
-                     st::internal::j_int_up[celly] = jmy;
-                     st::internal::j_int_up[cellz] = jmz;
+                     j_int_up_y[cellx] = jmx;
+                     j_int_up_y[celly] = jmy;
+                     j_int_up_y[cellz] = jmz;
                   }
                } 
-            if(st::internal::output_torque_data == "int") { 
+            if(output_torque_data == "int") { 
                //--------------------------------------------
                // Step 5 calculate the spin torque of each cell
                //--------------------------------------------
                // Note: intermediate spin torque value is currently sum of 
                // up and down process for up and down current. May not be a very physical value
-               st::internal::three_vector_t pm(0.0,0.0,0.0);
+               three_vector_t pm_local(0.0,0.0,0.0);
                double pmodm;
                if(direction_sign < 0){
-                  if(st::internal::sot_sa_source[cell+1]) {
-                     pm.y = -1;
+                  if(sot_sa_source[cell+1]) {
+                     pm_local.y = -1;
                      pmodm = 1;
                   } else {
-                     pm.x = st::internal::m[acellx];
-                     pm.y = st::internal::m[acelly];
-                     pm.z = st::internal::m[acellz];
-                     pmodm = sqrt(pm.x*pm.x + pm.y*pm.y + pm.z*pm.z);
+                     pm_local.x = m[acellx];
+                     pm_local.y = m[acelly];
+                     pm_local.z = m[acellz];
+                     pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
                   }
                   if(pmodm > 1.e-11){
-                     pm.x = pm.x/pmodm;
-                     pm.y = pm.y/pmodm;
-                     pm.z = pm.z/pmodm;
+                     pm_local.x = pm_local.x/pmodm;
+                     pm_local.y = pm_local.y/pmodm;
+                     pm_local.z = pm_local.z/pmodm;
                   }
                   else{
-                     pm.x = 0.0;
-                     pm.y = 0.0;
-                     pm.z = 0.0;
+                     pm_local.x = 0.0;
+                     pm_local.y = 0.0;
+                     pm_local.z = 0.0;
                   }
                }
                else {
-                  if(st::internal::sot_sa_source[cell-1]) {
-                     pm.y = 1;
+                  if(sot_sa_source[cell-1]) {
+                     pm_local.y = 1;
                      pmodm = 1;
                   } else {
-                     pm.x = st::internal::m[acellx];
-                     pm.y = st::internal::m[acelly];
-                     pm.z = st::internal::m[acellz];
-                     pmodm = sqrt(pm.x*pm.x + pm.y*pm.y + pm.z*pm.z);
+                     pm_local.x = m[acellx];
+                     pm_local.y = m[acelly];
+                     pm_local.z = m[acellz];
+                     pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
                   }
                   if(pmodm > 1.e-11){
-                     pm.x = pm.x/pmodm;
-                     pm.y = pm.y/pmodm;
-                     pm.z = pm.z/pmodm;
+                     pm_local.x = pm_local.x/pmodm;
+                     pm_local.y = pm_local.y/pmodm;
+                     pm_local.z = pm_local.z/pmodm;
                   }
                   else{
-                     pm.x = 0.0;
-                     pm.y = 0.0;
-                     pm.z = 0.0;
+                     pm_local.x = 0.0;
+                     pm_local.y = 0.0;
+                     pm_local.z = 0.0;
                   }
                }
                
@@ -1121,18 +1072,18 @@ namespace st{
                M.yx = b1.y;    M.yy = b2.y;    M.yz = b3.y;
                M.zx = b1.z;    M.zy = b2.z;    M.zz = b3.z;
 
-               V.x = pm.x;
-               V.y = pm.y;
-               V.z = pm.z;
+               V.x = pm_local.x;
+               V.y = pm_local.y;
+               V.z = pm_local.z;
 
-               const st::internal::three_vector_t pm_basis = gaussian_elimination(M, V);
+               const three_vector_t pm_basis = gaussian_elimination(M, V);
 
                //const double pm_b1 = pm_basis.x; // unused variable
                const double pm_b2 = pm_basis.y;
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = atomcell_volume * st::internal::sd_exchange[cell] * i_e * i_muB;
+               const double prefac_sc = atomcell_volume * sd_exchange[cell] * i_e * i_muB;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -1149,30 +1100,35 @@ namespace st{
                     bj  = prefac_sc*(sa_perp2*pm_b2 + sa_perp3*pm_b3)/plus_perp;
                 }
 
-                double SxSp[3], SxSxSp[3];
-                st::internal::coeff_ast[cell]  += aj;
-                st::internal::coeff_nast[cell] += bj;
+               double SxSp[3], SxSxSp[3];
+               coeff_ast[cell]  += aj;
+               coeff_nast[cell] += bj;
 
-                SxSp[0]=(m.y*pm.z-m.z*pm.y);
-                SxSp[1]=(m.z*pm.x-m.x*pm.z);
-                SxSp[2]=(m.x*pm.y-m.y*pm.x);
+               SxSp[0]=(m_local.y*pm_local.z-m_local.z*pm_local.y);
+               SxSp[1]=(m_local.z*pm_local.x-m_local.x*pm_local.z);
+               SxSp[2]=(m_local.x*pm_local.y-m_local.y*pm_local.x);
 
-                SxSxSp[0]= (m.y*SxSp[2]-m.z*SxSp[1]);
-                SxSxSp[1]= (m.z*SxSp[0]-m.x*SxSp[2]);
-                SxSxSp[2]= (m.x*SxSp[1]-m.y*SxSp[0]);
+               SxSxSp[0]= (m_local.y*SxSp[2]-m_local.z*SxSp[1]);
+               SxSxSp[1]= (m_local.z*SxSp[0]-m_local.x*SxSp[2]);
+               SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
-                //calculate directly from J(Sxm)
-               //  st::internal::total_ST[cellx] = prefac_sc*(m.y*saz-m.z*say);
-               //  st::internal::total_ST[celly] = prefac_sc*(m.z*sax-m.x*saz);
-               //  st::internal::total_ST[cellz] = prefac_sc*(m.x*say-m.y*sax);
+               //convert mp and m_perp
+               double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
+               double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
+               double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
 
-                st::internal::ast[cellx] += -aj*SxSxSp[0];
-                st::internal::ast[celly] += -aj*SxSxSp[1];
-                st::internal::ast[cellz] += -aj*SxSxSp[2];
+               //calculate directly from J(Sxm)
+               total_ST[cellx] += prefac_sc*(m_local.y*saz-m_local.z*say);
+               total_ST[celly] += prefac_sc*(m_local.z*sax-m_local.x*saz);
+               total_ST[cellz] += prefac_sc*(m_local.x*say-m_local.y*sax);
 
-                st::internal::nast[cellx] += bj*SxSp[0];
-                st::internal::nast[celly] += bj*SxSp[1];
-                st::internal::nast[cellz] += bj*SxSp[2];
+               ast[cellx] += -aj*SxSxSp[0];
+               ast[celly] += -aj*SxSxSp[1];
+               ast[cellz] += -aj*SxSxSp[2];
+
+               nast[cellx] += bj*SxSp[0];
+               nast[celly] += bj*SxSp[1];
+               nast[cellz] += bj*SxSp[2];
                } 
             } 
            
@@ -1193,30 +1149,30 @@ namespace st{
                const int acelly = 3*(cell+1)+1;
                const int acellz = 3*(cell+1)+2;
 
-               st::internal::three_vector_t  m(0.0,  0.0,  0.0);
+               three_vector_t  m_local(0.0,  0.0,  0.0);
                // copy array values to temporaries for readability
-               if(st::internal::sot_sa_source[cell]) {
-                  m.x = 0;
-                  m.y = direction_sign;
-                  m.z = 0.0; // Au cell artificial magnetisations
+               if(sot_sa_source[cell]) {
+                  m_local.x = 0;
+                  m_local.y = direction_sign;
+                  m_local.z = 0.0; // Au cell artificial magnetisations
                } else {
-                  m.x =st::internal::m[cellx];
-                  m.y = st::internal::m[celly];
-                  m.z = st::internal::m[cellz]; // current cell magnetisations
+                  m_local.x = m[cellx];
+                  m_local.y = m[celly];
+                  m_local.z = m[cellz]; // current cell magnetisations
                }
                
-               const double modm = sqrt(m.x*m.x + m.y*m.y + m.z*m.z);
+               const double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
                
                // Check for zero magnetization in normalization
                if(modm > 1.e-11){
-                  m.x = m.x/modm;
-                  m.y = m.y/modm;
-                  m.z = m.z/modm;
+                  m_local.x = m_local.x/modm;
+                  m_local.y = m_local.y/modm;
+                  m_local.z = m_local.z/modm;
                }
                else{
-                  m.x = 0.0;
-                  m.y = 0.0;
-                  m.z = 0.0;
+                  m_local.x = 0.0;
+                  m_local.y = 0.0;
+                  m_local.z = 0.0;
                }
 
                //--------------------------------------------------------------------
@@ -1226,7 +1182,7 @@ namespace st{
                // Check for cell magnetization greater than 1e-8 mu_B
                if(modm > 1.0e-11){
                   // Initialise inverse transformation matrix
-                  set_inverse_transformation_matrix(m, itm);
+                  set_inverse_transformation_matrix(m_local, itm);
 
                   // Calculate basis vectors
                   b1 = transform_vector(bz, itm);
@@ -1244,36 +1200,36 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Initialise temporary constants
-               const double Bc = st::internal::beta_cond[cell]; // beta
-               const double Bd = st::internal::beta_diff[cell]; // beta_prime
-               const double Do = st::internal::diffusion[cell];
-               st::internal::three_vector_t jm0(0.0,0.0,0.0);
-               if(direction_sign < 0) {jm0.x = j_int_down[acellx]; jm0.y = j_int_down[acelly]; jm0.z = j_int_down[acellz];}
-               else {jm0.x = j_int_up[pcellx]; jm0.y = j_int_up[pcelly]; jm0.z = j_int_up[pcellz];}
+               const double Bc = beta_cond[cell]; // beta
+               const double Bd = beta_diff[cell]; // beta_prime
+               const double Do = diffusion[cell];
+               three_vector_t jm0(0.0,0.0,0.0);
+               if(direction_sign < 0) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
+               else {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
                
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
                const double preD = twoDo*Bc*Bd;
 
-               M.xx = preD*m.x*m.x - twoDo;     M.xy = preD*m.y*m.x;             M.xz = preD*m.z*m.x;
-               M.yx = preD*m.x*m.y;             M.yy = preD*m.y*m.y - twoDo;     M.yz = preD*m.z*m.y;
-               M.zx = preD*m.x*m.z;             M.zy = preD*m.y*m.z;             M.zz = preD*m.z*m.z - twoDo;
+               M.xx = preD*m_local.x*m_local.x - twoDo;     M.xy = preD*m_local.y*m_local.x;             M.xz = preD*m_local.z*m_local.x;
+               M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
+               M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
                //no charge current conversion
-               V.x = jm0.x;// - Bc*je*m.x;
-               V.y = jm0.y;// + Bc*je*m.y;
-               V.z = jm0.z;// - Bc*je*m.z;
+               V.x = jm0.x;// - Bc*je*m_local.x;
+               V.y = jm0.y;// + Bc*je*m_local.y;
+               V.z = jm0.z;// - Bc*je*m_local.z;
                
-               const st::internal::three_vector_t divm_0 = gaussian_elimination(M, V);
+               const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
-               const double i_lsdl = 1.0/st::internal::lambda_sdl[cell];
-               double mp_inf = st::internal::sa_infinity[cell];
-                  if(st::internal::sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a = st::internal::a[cell];
-               const double b = st::internal::b[cell];
-               const double two_a = 2.0*a;
-               const double two_b = 2.0*b;
+               const double i_lsdl = 1.0/lambda_sdl[cell];
+               double mp_inf = sa_infinity[cell];
+                  if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+               const double a_local = a[cell];
+               const double b_local = b[cell];
+               const double two_a = 2.0*a_local;
+               const double two_b = 2.0*b_local;
 
                M.xx = -b1.x*i_lsdl;    M.xy = (-two_a*b2.x + two_b*b3.x);    M.xz = (-two_b*b2.x - two_a*b3.x);
                M.yx = -b1.y*i_lsdl;    M.yy = (-two_a*b2.y + two_b*b3.y);    M.yz = (-two_b*b2.y - two_a*b3.y);
@@ -1283,7 +1239,7 @@ namespace st{
                V.y = divm_0.y - b1.y*mp_inf*i_lsdl;
                V.z = divm_0.z - b1.z*mp_inf*i_lsdl;
 
-               const st::internal::three_vector_t coeff = gaussian_elimination(M, V);
+               const three_vector_t coeff = gaussian_elimination(M, V);
 
                const double mp_0 = coeff.x;
                const double c    = coeff.y;
@@ -1293,27 +1249,22 @@ namespace st{
                // Step 3 calculate spin accumulation
                //------------------------------------
 
-               const double x = st::internal::micro_cell_thickness*1.0e-10; // Convert to metres
-               const double cos_bx = cos(b*x);
-               const double sin_bx = sin(b*x);
+               const double x = micro_cell_thickness*1.0e-10; // Convert to metres
+               const double cos_bx = cos(b_local*x);
+               const double sin_bx = sin(b_local*x);
                const double e_xsdl = exp(-x*i_lsdl);
-               const double e_ax   = exp(-a*x);
+               const double e_ax   = exp(-a_local*x);
                const double prefac = (2.0*e_ax);
 
                const double sa_para  = mp_inf + (mp_0 - mp_inf)*e_xsdl;
                const double sa_perp2 = prefac*(c*cos_bx - d*sin_bx);
                const double sa_perp3 = prefac*(c*sin_bx + d*cos_bx);
-
-               //convert mp and m_perp
-               double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
-               double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
-               double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
            
                //--------------------------------------------
                // Step 4 calculate the spin current (jm_end)
                //--------------------------------------------
-               const double ac_bd = a*c + b*d; 
-               const double ad_bc = a*d - b*c;
+               const double ac_bd = a_local*c + b_local*d; 
+               const double ad_bc = a_local*d - b_local*c;
 
                const double divsa_para = (mp_inf - mp_0)*i_lsdl*e_xsdl;
                const double divsa_perp2 = prefac*(-ac_bd*cos_bx + ad_bc*sin_bx);
@@ -1323,82 +1274,82 @@ namespace st{
                const double divsay = b1.y*divsa_para + b2.y*divsa_perp2 + b3.y*divsa_perp3;
                const double divsaz = b1.z*divsa_para + b2.z*divsa_perp2 + b3.z*divsa_perp3;
 
-               const double dot = m.x*divsax + m.y*divsay + m.z*divsaz;
+               const double dot = m_local.x*divsax + m_local.y*divsay + m_local.z*divsaz;
 
-               const double pre_jmx = divsax - Bc*Bd*m.x*dot;
-               const double pre_jmy = divsay - Bc*Bd*m.y*dot;
-               const double pre_jmz = divsaz - Bc*Bd*m.z*dot;
+               const double pre_jmx = divsax - Bc*Bd*m_local.x*dot;
+               const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
+               const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
-                  if(st::internal::sot_sa_source[cell]) jmy += direction_sign*je*st::internal::initial_theta;
+                  if(sot_sa_source[cell]) jmy = -direction_sign*je*initial_theta;
                double jmz =   twoDo*pre_jmz;
                
-               if(st::internal::cell_natom[cell]>0) {
+               if(cell_natom[cell]>0) {
                
-                  st::internal::sa_sot_final[cellx] = sax;
-                  st::internal::sa_sot_final[celly] = say;
-                  st::internal::sa_sot_final[cellz] = saz;
+                  // sa_sot_final[cellx] = sax;
+                  // sa_sot_final[celly] = say;
+                  // sa_sot_final[cellz] = saz;
 
                   // Save values for the spin current
                    if(direction_sign < 0) {
-                     st::internal::j_int_down[cellx] = jmx;
-                     st::internal::j_int_down[celly] = jmy;
-                     st::internal::j_int_down[cellz] = jmz;
+                     j_int_down_y[cellx] = jmx;
+                     j_int_down_y[celly] = jmy;
+                     j_int_down_y[cellz] = jmz;
                   } else {
-                     st::internal::j_int_up[cellx] = jmx;
-                     st::internal::j_int_up[celly] = jmy;
-                     st::internal::j_int_up[cellz] = jmz;
+                     j_int_up_y[cellx] = jmx;
+                     j_int_up_y[celly] = jmy;
+                     j_int_up_y[cellz] = jmz;
                   }
 
                } 
                
-            if(st::internal::output_torque_data == "int") {
+            if(output_torque_data == "int") {
                //--------------------------------------------
                // Step 5 calculate the spin torque of each cell
                //--------------------------------------------
-               st::internal::three_vector_t pm(0.0,0.0,0.0);
+               three_vector_t pm_local(0.0,0.0,0.0);
                double pmodm;
                if(direction_sign < 0){
-                  if(st::internal::sot_sa_source[cell+1]) {
-                     pm.y = -1;
+                  if(sot_sa_source[cell+1]) {
+                     pm_local.y = -1;
                      pmodm = 1;
                   } else {
-                     pm.x = st::internal::m[acellx];
-                     pm.y = st::internal::m[acelly];
-                     pm.z = st::internal::m[acellz];
-                     pmodm = sqrt(pm.x*pm.x + pm.y*pm.y + pm.z*pm.z);
+                     pm_local.x = m[acellx];
+                     pm_local.y = m[acelly];
+                     pm_local.z = m[acellz];
+                     pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
                   }
                   if(pmodm > 1.e-11){
-                     pm.x = pm.x/pmodm;
-                     pm.y = pm.y/pmodm;
-                     pm.z = pm.z/pmodm;
+                     pm_local.x = pm_local.x/pmodm;
+                     pm_local.y = pm_local.y/pmodm;
+                     pm_local.z = pm_local.z/pmodm;
                   }
                   else{
-                     pm.x = 0.0;
-                     pm.y = 0.0;
-                     pm.z = 0.0;
+                     pm_local.x = 0.0;
+                     pm_local.y = 0.0;
+                     pm_local.z = 0.0;
                   }
                }
                else {
-                  if(st::internal::sot_sa_source[cell-1]) {
-                     pm.y = 1;
+                  if(sot_sa_source[cell-1]) {
+                     pm_local.y = 1;
                      pmodm = 1;
                   } else {
-                     pm.x = st::internal::m[acellx];
-                     pm.y = st::internal::m[acelly];
-                     pm.z = st::internal::m[acellz];
-                     pmodm = sqrt(pm.x*pm.x + pm.y*pm.y + pm.z*pm.z);
+                     pm_local.x = m[acellx];
+                     pm_local.y = m[acelly];
+                     pm_local.z = m[acellz];
+                     pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
                   }
                   if(pmodm > 1.e-11){
-                     pm.x = pm.x/pmodm;
-                     pm.y = pm.y/pmodm;
-                     pm.z = pm.z/pmodm;
+                     pm_local.x = pm_local.x/pmodm;
+                     pm_local.y = pm_local.y/pmodm;
+                     pm_local.z = pm_local.z/pmodm;
                   }
                   else{
-                     pm.x = 0.0;
-                     pm.y = 0.0;
-                     pm.z = 0.0;
+                     pm_local.x = 0.0;
+                     pm_local.y = 0.0;
+                     pm_local.z = 0.0;
                   }
                }
                //convert M of previous cell into basis b1, b2, b3
@@ -1407,18 +1358,18 @@ namespace st{
                M.yx = b1.y;    M.yy = b2.y;    M.yz = b3.y;
                M.zx = b1.z;    M.zy = b2.z;    M.zz = b3.z;
 
-               V.x = pm.x;
-               V.y = pm.y;
-               V.z = pm.z;
+               V.x = pm_local.x;
+               V.y = pm_local.y;
+               V.z = pm_local.z;
 
-               const st::internal::three_vector_t pm_basis = gaussian_elimination(M, V);
+               const three_vector_t pm_basis = gaussian_elimination(M, V);
 
                //const double pm_b1 = pm_basis.x; // unused variable
                const double pm_b2 = pm_basis.y;
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = microcell_volume * st::internal::sd_exchange[cell] * i_e * i_muB;
+               const double prefac_sc = microcell_volume * sd_exchange[cell] * i_e * i_muB;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -1435,30 +1386,36 @@ namespace st{
                     bj  = prefac_sc*(sa_perp2*pm_b2 + sa_perp3*pm_b3)/plus_perp;
                 }
 
-                double SxSp[3], SxSxSp[3];
-                st::internal::coeff_ast[cell]  += aj;
-                st::internal::coeff_nast[cell] += bj;
+               double SxSp[3], SxSxSp[3];
+               coeff_ast[cell]  += aj;
+               coeff_nast[cell] += bj;
 
-                SxSp[0]=(m.y*pm.z-m.z*pm.y);
-                SxSp[1]=(m.z*pm.x-m.x*pm.z);
-                SxSp[2]=(m.x*pm.y-m.y*pm.x);
+               SxSp[0]=(m_local.y*pm_local.z-m_local.z*pm_local.y);
+               SxSp[1]=(m_local.z*pm_local.x-m_local.x*pm_local.z);
+               SxSp[2]=(m_local.x*pm_local.y-m_local.y*pm_local.x);
 
-                SxSxSp[0]= (m.y*SxSp[2]-m.z*SxSp[1]);
-                SxSxSp[1]= (m.z*SxSp[0]-m.x*SxSp[2]);
-                SxSxSp[2]= (m.x*SxSp[1]-m.y*SxSp[0]);
+               SxSxSp[0]= (m_local.y*SxSp[2]-m_local.z*SxSp[1]);
+               SxSxSp[1]= (m_local.z*SxSp[0]-m_local.x*SxSp[2]);
+               SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
-                //calculate directly from J(Sxm)
-               //  st::internal::total_ST[cellx] = prefac_sc*(m.y*saz-m.z*say);
-               //  st::internal::total_ST[celly] = prefac_sc*(m.z*sax-m.x*saz);
-               //  st::internal::total_ST[cellz] = prefac_sc*(m.x*say-m.y*sax);
 
-                st::internal::ast[cellx] += -aj*SxSxSp[0];
-                st::internal::ast[celly] += -aj*SxSxSp[1];
-                st::internal::ast[cellz] += -aj*SxSxSp[2];
+               //convert mp and m_perp
+               double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
+               double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
+               double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
 
-                st::internal::nast[cellx] += bj*SxSp[0];
-                st::internal::nast[celly] += bj*SxSp[1];
-                st::internal::nast[cellz] += bj*SxSp[2];
+               //calculate directly from J(Sxm)
+               total_ST[cellx] += prefac_sc*(m_local.y*saz-m_local.z*say);
+               total_ST[celly] += prefac_sc*(m_local.z*sax-m_local.x*saz);
+               total_ST[cellz] += prefac_sc*(m_local.x*say-m_local.y*sax);
+
+               ast[cellx] += -aj*SxSxSp[0];
+               ast[celly] += -aj*SxSxSp[1];
+               ast[cellz] += -aj*SxSxSp[2];
+
+               nast[cellx] += bj*SxSp[0];
+               nast[celly] += bj*SxSp[1];
+               nast[cellz] += bj*SxSp[2];
                } 
             }
        
@@ -1480,30 +1437,30 @@ namespace st{
                const int acelly = 3*(cell+1)+1;
                const int acellz = 3*(cell+1)+2;
 
-               st::internal::three_vector_t  m(0.0,  0.0,  0.0);
+               three_vector_t  m_local(0.0,  0.0,  0.0);
                // copy array values to temporaries for readability
-               if(st::internal::sot_sa_source[cell]) {
-                  m.x = 0;
-                  m.y = direction_sign;
-                  m.z = 0.0; // Au cell artificial magnetisations
+               if(sot_sa_source[cell]) {
+                  m_local.x = 0;
+                  m_local.y = direction_sign;
+                  m_local.z = 0.0; // Au cell artificial magnetisations
                } else {
-                  m.x =st::internal::m[cellx];
-                  m.y = st::internal::m[celly];
-                  m.z = st::internal::m[cellz]; // current cell magnetisations
+                  m_local.x = m[cellx];
+                  m_local.y = m[celly];
+                  m_local.z = m[cellz]; // current cell magnetisations
                }
            
-               const double modm = sqrt(m.x*m.x + m.y*m.y + m.z*m.z);
+               const double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
                
                // Check for zero magnetization in normalization
                if(modm > 1.e-11){
-                  m.x = m.x/modm;
-                  m.y = m.y/modm;
-                  m.z = m.z/modm;
+                  m_local.x = m_local.x/modm;
+                  m_local.y = m_local.y/modm;
+                  m_local.z = m_local.z/modm;
                }
                else{
-                  m.x = 0.0;
-                  m.y = 0.0;
-                  m.z = 0.0;
+                  m_local.x = 0.0;
+                  m_local.y = 0.0;
+                  m_local.z = 0.0;
                }
 
                //---------------------------------------------------------------------
@@ -1513,7 +1470,7 @@ namespace st{
                // Check for cell magnetization greater than 1e-8 mu_B
                if(modm > 1.0e-11){
                   // Initialise inverse transformation matrix
-                  set_inverse_transformation_matrix(m, itm);
+                  set_inverse_transformation_matrix(m_local, itm);
 
                   // Calculate basis vectors
                   b1 = transform_vector(bz, itm);
@@ -1531,36 +1488,36 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Initialise temporary constants
-               const double Bc = st::internal::beta_cond[cell]; // beta
-               const double Bd = st::internal::beta_diff[cell]; // beta_prime
-               const double Do = st::internal::diffusion[cell];
-               st::internal::three_vector_t jm0(0.0,0.0,0.0);
-               if(direction_sign < 0) {jm0.x = j_int_down[acellx]; jm0.y = j_int_down[acelly]; jm0.z = j_int_down[acellz];}
-               else {jm0.x = j_int_up[pcellx]; jm0.y = j_int_up[pcelly]; jm0.z = j_int_up[pcellz];}
+               const double Bc = beta_cond[cell]; // beta
+               const double Bd = beta_diff[cell]; // beta_prime
+               const double Do = diffusion[cell];
+               three_vector_t jm0(0.0,0.0,0.0);
+               if(direction_sign < 0) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
+               else {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
               
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
                const double preD = twoDo*Bc*Bd;
 
-               M.xx = preD*m.x*m.x - twoDo;     M.xy = preD*m.y*m.x;             M.xz = preD*m.z*m.x;
-               M.yx = preD*m.x*m.y;             M.yy = preD*m.y*m.y - twoDo;     M.yz = preD*m.z*m.y;
-               M.zx = preD*m.x*m.z;             M.zy = preD*m.y*m.z;             M.zz = preD*m.z*m.z - twoDo;
+               M.xx = preD*m_local.x*m_local.x - twoDo;     M.xy = preD*m_local.y*m_local.x;             M.xz = preD*m_local.z*m_local.x;
+               M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
+               M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
                // no charge current conversion
-                  V.x = jm0.x;// - Bc*je*m.x;
-                  V.y = jm0.y;// + Bc*je*m.y;
-                  V.z = jm0.z;// - Bc*je*m.z;
+                  V.x = jm0.x;// - Bc*je*m_local.x;
+                  V.y = jm0.y;// + Bc*je*m_local.y;
+                  V.z = jm0.z;// - Bc*je*m_local.z;
               
-               const st::internal::three_vector_t divm_0 = gaussian_elimination(M, V);
+               const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
-               const double i_lsdl = 1.0/st::internal::lambda_sdl[cell];
-               double mp_inf = st::internal::sa_infinity[cell];
-                  if(st::internal::sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a = st::internal::a[cell];
-               const double b = st::internal::b[cell];
-               const double two_a = 2.0*a;
-               const double two_b = 2.0*b;
+               const double i_lsdl = 1.0/lambda_sdl[cell];
+               double mp_inf = sa_infinity[cell];
+                  if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+               const double a_local = a[cell];
+               const double b_local = b[cell];
+               const double two_a = 2.0*a_local;
+               const double two_b = 2.0*b_local;
 
                M.xx = -b1.x*i_lsdl;    M.xy = (-two_a*b2.x + two_b*b3.x);    M.xz = (-two_b*b2.x - two_a*b3.x);
                M.yx = -b1.y*i_lsdl;    M.yy = (-two_a*b2.y + two_b*b3.y);    M.yz = (-two_b*b2.y - two_a*b3.y);
@@ -1570,7 +1527,7 @@ namespace st{
                V.y = divm_0.y - b1.y*mp_inf*i_lsdl;
                V.z = divm_0.z - b1.z*mp_inf*i_lsdl;
 
-               const st::internal::three_vector_t coeff = gaussian_elimination(M, V);
+               const three_vector_t coeff = gaussian_elimination(M, V);
 
                const double mp_0 = coeff.x;
                const double c    = coeff.y;
@@ -1580,11 +1537,261 @@ namespace st{
                // Step 3 calculate spin accumulation
                //------------------------------------
 
-               const double x = st::internal::micro_cell_thickness*1.0e-10; // Convert to metres
-               const double cos_bx = cos(b*x);
-               const double sin_bx = sin(b*x);
+               const double x = micro_cell_thickness*1.0e-10; // Convert to metres
+               const double cos_bx = cos(b_local*x);
+               const double sin_bx = sin(b_local*x);
                const double e_xsdl = exp(-x*i_lsdl);
-               const double e_ax   = exp(-a*x);
+               const double e_ax   = exp(-a_local*x);
+               const double prefac = (2.0*e_ax);
+
+               const double sa_para  = mp_inf + (mp_0 - mp_inf)*e_xsdl;
+               const double sa_perp2 = prefac*(c*cos_bx - d*sin_bx);
+               const double sa_perp3 = prefac*(c*sin_bx + d*cos_bx);
+
+               //--------------------------------------------
+               // Step 4 calculate the spin current (jm_end)
+               //--------------------------------------------
+               const double ac_bd = a_local*c + b_local*d; 
+               const double ad_bc = a_local*d - b_local*c;
+
+               const double divsa_para = (mp_inf - mp_0)*i_lsdl*e_xsdl;
+               const double divsa_perp2 = prefac*(-ac_bd*cos_bx + ad_bc*sin_bx);
+               const double divsa_perp3 = prefac*(-ac_bd*sin_bx - ad_bc*cos_bx);
+
+               const double divsax = b1.x*divsa_para + b2.x*divsa_perp2 + b3.x*divsa_perp3;
+               const double divsay = b1.y*divsa_para + b2.y*divsa_perp2 + b3.y*divsa_perp3;
+               const double divsaz = b1.z*divsa_para + b2.z*divsa_perp2 + b3.z*divsa_perp3;
+
+               const double dot = m_local.x*divsax + m_local.y*divsay + m_local.z*divsaz;
+
+               const double pre_jmx = divsax - Bc*Bd*m_local.x*dot;
+               const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
+               const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
+
+               double jmx =   twoDo*pre_jmx;
+               double jmy =   twoDo*pre_jmy;
+                  if(sot_sa_source[cell]) jmy += -direction_sign*je*initial_theta;
+               double jmz =   twoDo*pre_jmz;
+
+               if(cell_natom[cell]>0) {
+
+                  // sa_sot_int[cellx] = sax;
+                  // sa_sot_int[celly] = say;
+                  // sa_sot_int[cellz] = saz;
+
+                  // Save values for the spin current
+                  if(direction_sign < 0) {
+                     j_int_down_y[cellx] = jmx;
+                     j_int_down_y[celly] = jmy;
+                     j_int_down_y[cellz] = jmz;
+                  } else {
+                     j_int_up_y[cellx] = jmx;
+                     j_int_up_y[celly] = jmy;
+                     j_int_up_y[cellz] = jmz;
+                  }
+               } 
+            
+            if(output_torque_data == "int") {
+               //--------------------------------------------
+               // Step 5 calculate the spin torque of each cell
+               //--------------------------------------------
+               three_vector_t pm_local(0.0,0.0,0.0);
+               double pmodm;
+               if(direction_sign < 0){
+                  if(sot_sa_source[cell+1]) {
+                     pm_local.y = -1;
+                     pmodm = 1;
+                  } else {
+                     pm_local.x = m[acellx];
+                     pm_local.y = m[acelly];
+                     pm_local.z = m[acellz];
+                     pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
+                  }
+                  if(pmodm > 1.e-11){
+                     pm_local.x = pm_local.x/pmodm;
+                     pm_local.y = pm_local.y/pmodm;
+                     pm_local.z = pm_local.z/pmodm;
+                  }
+                  else{
+                     pm_local.x = 0.0;
+                     pm_local.y = 0.0;
+                     pm_local.z = 0.0;
+                  }
+               }
+               else {
+                  if(sot_sa_source[cell-1]) {
+                     pm_local.y = 1;
+                     pmodm = 1;
+                  } else {
+                     pm_local.x = m[acellx];
+                     pm_local.y = m[acelly];
+                     pm_local.z = m[acellz];
+                     pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
+                  }
+                  if(pmodm > 1.e-11){
+                     pm_local.x = pm_local.x/pmodm;
+                     pm_local.y = pm_local.y/pmodm;
+                     pm_local.z = pm_local.z/pmodm;
+                  }
+                  else{
+                     pm_local.x = 0.0;
+                     pm_local.y = 0.0;
+                     pm_local.z = 0.0;
+                  }
+               }
+               //convert M of previous cell into basis b1, b2, b3
+
+               M.xx = b1.x;    M.xy = b2.x;    M.xz = b3.x;
+               M.yx = b1.y;    M.yy = b2.y;    M.yz = b3.y;
+               M.zx = b1.z;    M.zy = b2.z;    M.zz = b3.z;
+
+               V.x = pm_local.x;
+               V.y = pm_local.y;
+               V.z = pm_local.z;
+
+               const three_vector_t pm_basis = gaussian_elimination(M, V);
+
+               //const double pm_b1 = pm_basis.x; // unused variable
+               const double pm_b2 = pm_basis.y;
+               const double pm_b3 = pm_basis.z;
+
+               // Calculate the spin torque coefficients describing ast and nast
+               const double prefac_sc = atomcell_volume * sd_exchange[cell] * i_e * i_muB;
+               const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
+               // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
+
+	            double aj; // the ST parameter describing Slonczewski torque
+               double bj; // the ST parameter describing field-like torque
+
+
+                if( ( plus_perp <= 1.0e-11 ) ){
+                    aj = 0.0;
+                    bj = 0.0; }
+
+                else{
+                    aj  = prefac_sc*(sa_perp2*pm_b3 - sa_perp3*pm_b2)/plus_perp;
+                    bj  = prefac_sc*(sa_perp2*pm_b2 + sa_perp3*pm_b3)/plus_perp;
+                }
+
+               double SxSp[3], SxSxSp[3];
+               coeff_ast[cell]  += aj;
+               coeff_nast[cell] += bj;
+
+               SxSp[0]=(m_local.y*pm_local.z-m_local.z*pm_local.y);
+               SxSp[1]=(m_local.z*pm_local.x-m_local.x*pm_local.z);
+               SxSp[2]=(m_local.x*pm_local.y-m_local.y*pm_local.x);
+
+               SxSxSp[0]= (m_local.y*SxSp[2]-m_local.z*SxSp[1]);
+               SxSxSp[1]= (m_local.z*SxSp[0]-m_local.x*SxSp[2]);
+               SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
+
+
+               //convert mp and m_perp 
+               double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
+               double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
+               double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
+         
+               //calculate directly from J(Sxm)
+               total_ST[cellx] += prefac_sc*(m_local.y*saz-m_local.z*say);
+               total_ST[celly] += prefac_sc*(m_local.z*sax-m_local.x*saz);
+               total_ST[cellz] += prefac_sc*(m_local.x*say-m_local.y*sax);
+
+               ast[cellx] += -aj*SxSxSp[0];
+               ast[celly] += -aj*SxSxSp[1];
+               ast[cellz] += -aj*SxSxSp[2];
+
+               nast[cellx] += bj*SxSp[0];
+               nast[celly] += bj*SxSp[1];
+               nast[cellz] += bj*SxSp[2];
+               } 
+            } 
+      
+            for(int cell=idx; cell<idx+num_microcells_per_stack; cell++) {
+               
+                //direction sign for Au outgoing spin current for data output
+               int direction_sign = sot_sa_source[cell] ? -1:1;
+               int cellx = 3*cell;
+               int celly = 3*cell+1;
+               int cellz = 3*cell+2;
+
+               three_vector_t  m_local(m[cellx],  m[celly],  m[cellz]);
+               double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
+               if(modm > 1.e-11){
+                  m_local.x = m_local.x/modm;
+                  m_local.y = m_local.y/modm;
+                  m_local.z = m_local.z/modm;
+               }
+               else{
+                  m_local.x = 0.0;
+                  m_local.y = 1.0;
+                  m_local.z = 0.0;
+                  modm = 1.0;
+               }
+               // Check for cell magnetization greater than 1e-8 mu_B
+               if(modm > 1.0e-11){
+                  // Initialise inverse transformation matrix
+                  set_inverse_transformation_matrix(m_local, itm);
+
+                  // Calculate basis vectors
+                  b1 = transform_vector(bz, itm);
+                  b2 = transform_vector(bx, itm);
+                  b3 = transform_vector(by, itm);
+               }
+               else{
+                  // set default rotational frame
+                  b1 = bz;
+                  b2 = bx;
+                  b3 = by;
+               }
+
+                // Initialise temporary constants
+               const double Bc = beta_cond[cell]; // beta
+               const double Bd = beta_diff[cell]; // beta_prime
+               const double Do = diffusion[cell];
+               three_vector_t jm0(j_int_up_y[cellx]+j_int_down_y[cellx],//+j_final_up_x[cellx], 
+                                  j_int_up_y[celly]+j_int_down_y[celly],//+j_final_up_x[cellx],
+                                  j_int_up_y[cellz]+j_int_down_y[cellz]);//+j_final_up_x[cellx]);                     
+
+               const double twoDo = 2.0*Do;
+               const double preD = twoDo*Bc*Bd;
+
+               M.xx = preD*m_local.x*m_local.x - twoDo;     M.xy = preD*m_local.y*m_local.x;             M.xz = preD*m_local.z*m_local.x;
+               M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
+               M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
+
+               V.x = jm0.x - Bc*je*m_local.x;
+               V.y = jm0.y - Bc*je*m_local.y;
+               V.z = jm0.z - Bc*je*m_local.z;
+
+               const three_vector_t divm_0 = gaussian_elimination(M, V);
+
+               const double i_lsdl = 1.0/lambda_sdl[cell];
+               double mp_inf = sa_infinity[cell];
+                  if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+               const double a_local = a[cell];
+               const double b_local = b[cell];
+               const double two_a = 2.0*a_local;
+               const double two_b = 2.0*b_local;
+
+               M.xx = -b1.x*i_lsdl;    M.xy = (-two_a*b2.x + two_b*b3.x);    M.xz = (-two_b*b2.x - two_a*b3.x);
+               M.yx = -b1.y*i_lsdl;    M.yy = (-two_a*b2.y + two_b*b3.y);    M.yz = (-two_b*b2.y - two_a*b3.y);
+               M.zx = -b1.z*i_lsdl;    M.zy = (-two_a*b2.z + two_b*b3.z);    M.zz = (-two_b*b2.z - two_a*b3.z);
+
+               V.x = divm_0.x - b1.x*mp_inf*i_lsdl;
+               V.y = divm_0.y - b1.y*mp_inf*i_lsdl;
+               V.z = divm_0.z - b1.z*mp_inf*i_lsdl;
+
+               const three_vector_t coeff = gaussian_elimination(M, V);
+
+               const double mp_0 = coeff.x;
+               const double c    = coeff.y;
+               const double d    = coeff.z;
+
+               const double x = micro_cell_thickness*1.0e-10; // Convert to metres
+               const double cos_bx = cos(b_local*x);
+               const double sin_bx = sin(b_local*x);
+               const double e_xsdl = exp(-x*i_lsdl);
+               const double e_ax   = exp(-a_local*x);
                const double prefac = (2.0*e_ax);
 
                const double sa_para  = mp_inf + (mp_0 - mp_inf)*e_xsdl;
@@ -1595,12 +1802,9 @@ namespace st{
                double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
                double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
                double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
-            
-               //--------------------------------------------
-               // Step 4 calculate the spin current (jm_end)
-               //--------------------------------------------
-               const double ac_bd = a*c + b*d; 
-               const double ad_bc = a*d - b*c;
+
+               const double ac_bd = a_local*c + b_local*d; 
+               const double ad_bc = a_local*d - b_local*c;
 
                const double divsa_para = (mp_inf - mp_0)*i_lsdl*e_xsdl;
                const double divsa_perp2 = prefac*(-ac_bd*cos_bx + ad_bc*sin_bx);
@@ -1610,101 +1814,77 @@ namespace st{
                const double divsay = b1.y*divsa_para + b2.y*divsa_perp2 + b3.y*divsa_perp3;
                const double divsaz = b1.z*divsa_para + b2.z*divsa_perp2 + b3.z*divsa_perp3;
 
-               const double dot = m.x*divsax + m.y*divsay + m.z*divsaz;
+               const double dot = m_local.x*divsax + m_local.y*divsay + m_local.z*divsaz;
 
-               const double pre_jmx = divsax - Bc*Bd*m.x*dot;
-               const double pre_jmy = divsay - Bc*Bd*m.y*dot;
-               const double pre_jmz = divsaz - Bc*Bd*m.z*dot;
+               const double pre_jmx = divsax - Bc*Bd*m_local.x*dot;
+               const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
+               const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
+           
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
-                  if(st::internal::sot_sa_source[cell]) jmy += direction_sign*je*st::internal::initial_theta;
+                  if(sot_sa_source[cell]) jmy = je*initial_theta;
                double jmz =   twoDo*pre_jmz;
 
-               if(st::internal::cell_natom[cell]>0) {
+               sa_final[cellx] = sax;
+               sa_final[celly] = say;
+               sa_final[cellz] = saz;
 
-                  st::internal::sa_sot_int[cellx] = sax;
-                  st::internal::sa_sot_int[celly] = say;
-                  st::internal::sa_sot_int[cellz] = saz;
+               j_final_up_y[cellx] = jmx;
+               j_final_up_y[celly] = jmy;
+               j_final_up_y[cellz] = jmz;
 
-                  // Save values for the spin current
-                  if(direction_sign < 0) {
-                     st::internal::j_int_down[cellx] = jmx;
-                     st::internal::j_int_down[celly] = jmy;
-                     st::internal::j_int_down[cellz] = jmz;
-                  } else {
-                     st::internal::j_int_up[cellx] = jmx;
-                     st::internal::j_int_up[celly] = jmy;
-                     st::internal::j_int_up[cellz] = jmz;
-                  }
-               } 
+               j_final_down_y[cellx] = jmx*direction_sign;
+               j_final_down_y[celly] = jmy*direction_sign;
+               j_final_down_y[cellz] = jmz*direction_sign;
+
+               // j_final_up_x[cellx] = Bc*je*m_local.x - twoDo*pre_jmx;;
+               // j_final_up_x[celly] = Bc*je*m_local.y - twoDo*pre_jmy;
+               // j_final_up_x[cellz] = Bc*je*m_local.z - twoDo*pre_jmz;
+
+               // spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
+               // spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
+               // spin_torque[cellz] = atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
+
+               //sot check output flag will run spin acc program without torque to calculate and output values
             
-            if(st::internal::output_torque_data == "int") {
+
+               if(output_torque_data == "final") {
                //--------------------------------------------
                // Step 5 calculate the spin torque of each cell
                //--------------------------------------------
-               st::internal::three_vector_t pm(0.0,0.0,0.0);
+               three_vector_t pm_local(0.0,0.0,0.0);
                double pmodm;
-               if(direction_sign < 0){
-                  if(st::internal::sot_sa_source[cell+1]) {
-                     pm.y = -1;
-                     pmodm = 1;
-                  } else {
-                     pm.x = st::internal::m[acellx];
-                     pm.y = st::internal::m[acelly];
-                     pm.z = st::internal::m[acellz];
-                     pmodm = sqrt(pm.x*pm.x + pm.y*pm.y + pm.z*pm.z);
-                  }
-                  if(pmodm > 1.e-11){
-                     pm.x = pm.x/pmodm;
-                     pm.y = pm.y/pmodm;
-                     pm.z = pm.z/pmodm;
-                  }
-                  else{
-                     pm.x = 0.0;
-                     pm.y = 0.0;
-                     pm.z = 0.0;
-                  }
-               }
-               else {
-                  if(st::internal::sot_sa_source[cell-1]) {
-                     pm.y = 1;
-                     pmodm = 1;
-                  } else {
-                     pm.x = st::internal::m[acellx];
-                     pm.y = st::internal::m[acelly];
-                     pm.z = st::internal::m[acellz];
-                     pmodm = sqrt(pm.x*pm.x + pm.y*pm.y + pm.z*pm.z);
-                  }
-                  if(pmodm > 1.e-11){
-                     pm.x = pm.x/pmodm;
-                     pm.y = pm.y/pmodm;
-                     pm.z = pm.z/pmodm;
-                  }
-                  else{
-                     pm.x = 0.0;
-                     pm.y = 0.0;
-                     pm.z = 0.0;
-                  }
-               }
+               
+             
+                     pm_local.x = 0.0;
+                     pm_local.y = 1.0;
+                     pm_local.z = 0.0;
+                  
+                set_inverse_transformation_matrix(pm_local, itm);
+
+                  // Calculate basis vectors
+                  b1 = transform_vector(bz, itm);
+                  b2 = transform_vector(bx, itm);
+                  b3 = transform_vector(by, itm);
                //convert M of previous cell into basis b1, b2, b3
 
                M.xx = b1.x;    M.xy = b2.x;    M.xz = b3.x;
                M.yx = b1.y;    M.yy = b2.y;    M.yz = b3.y;
                M.zx = b1.z;    M.zy = b2.z;    M.zz = b3.z;
 
-               V.x = pm.x;
-               V.y = pm.y;
-               V.z = pm.z;
+               V.x = pm_local.x;
+               V.y = pm_local.y;
+               V.z = pm_local.z;
 
-               const st::internal::three_vector_t pm_basis = gaussian_elimination(M, V);
+               const three_vector_t pm_basis = gaussian_elimination(M, V);
 
                //const double pm_b1 = pm_basis.x; // unused variable
                const double pm_b2 = pm_basis.y;
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = atomcell_volume * st::internal::sd_exchange[cell] * i_e * i_muB;
+               const double prefac_sc = atomcell_volume * sd_exchange[cell] * i_e * i_muB;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -1722,66 +1902,279 @@ namespace st{
                 }
 
                 double SxSp[3], SxSxSp[3];
-                st::internal::coeff_ast[cell]  += aj;
-                st::internal::coeff_nast[cell] += bj;
+                coeff_ast[cell]  = aj;
+                coeff_nast[cell] = bj;
 
-                SxSp[0]=(m.y*pm.z-m.z*pm.y);
-                SxSp[1]=(m.z*pm.x-m.x*pm.z);
-                SxSp[2]=(m.x*pm.y-m.y*pm.x);
+                SxSp[0]=(m_local.y*pm_local.z-m_local.z*pm_local.y);
+                SxSp[1]=(m_local.z*pm_local.x-m_local.x*pm_local.z);
+                SxSp[2]=(m_local.x*pm_local.y-m_local.y*pm_local.x);
 
-                SxSxSp[0]= (m.y*SxSp[2]-m.z*SxSp[1]);
-                SxSxSp[1]= (m.z*SxSp[0]-m.x*SxSp[2]);
-                SxSxSp[2]= (m.x*SxSp[1]-m.y*SxSp[0]);
+                SxSxSp[0]= (m_local.y*SxSp[2]-m_local.z*SxSp[1]);
+                SxSxSp[1]= (m_local.z*SxSp[0]-m_local.x*SxSp[2]);
+                SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
                 //calculate directly from J(Sxm)
-               //  st::internal::total_ST[cellx] = prefac_sc*(m.y*saz-m.z*say);
-               //  st::internal::total_ST[celly] = prefac_sc*(m.z*sax-m.x*saz);
-               //  st::internal::total_ST[cellz] = prefac_sc*(m.x*say-m.y*sax);
+                double Tx = prefac_sc*(m_local.y*saz-m_local.z*say);
+                double Ty = prefac_sc*(m_local.z*sax-m_local.x*saz);
+                double Tz = prefac_sc*(m_local.x*say-m_local.y*sax);
+                total_ST[cellx] = Ty*m_local.z-Tz*m_local.y;
+                total_ST[celly] = Tz*m_local.x-Tx*m_local.z;
+                total_ST[cellz] = Tx*m_local.y-Ty*m_local.x;
 
-                st::internal::ast[cellx] += -aj*SxSxSp[0];
-                st::internal::ast[celly] += -aj*SxSxSp[1];
-                st::internal::ast[cellz] += -aj*SxSxSp[2];
+                ast[cellx] = -aj*SxSxSp[0];
+                ast[celly] = -aj*SxSxSp[1];
+                ast[cellz] = -aj*SxSxSp[2];
 
-                st::internal::nast[cellx] += bj*SxSp[0];
-                st::internal::nast[celly] += bj*SxSp[1];
-                st::internal::nast[cellz] += bj*SxSp[2];
-               } 
-            } 
+                nast[cellx] = bj*SxSp[0];
+                nast[celly] = bj*SxSp[1];
+                nast[cellz] = bj*SxSp[2];
+               }
+            }
+         } // end of stack loop
+         // #ifdef MPICH
+            int_stacks = mpi_stack_list_x.size();
+         // #else
+            // int_stacks = stack_index_x.size();
+         // #endif
 
-            //final loop to calculate spin acc and torque from summed spin currents
-            for(int cell=idx; cell<idx+num_microcells_per_stack; cell+=1) {
-               
-                //direction sign for Au outgoing spin current for data output
-               int direction_sign = st::internal::sot_sa_source[cell] ? -1:1;
-               int cellx = 3*cell;
-               int celly = 3*cell+1;
-               int cellz = 3*cell+2;
+         stack = 0;
+         // std::cout << "continuing sot simulation x axis..." << std::endl;
+         // std::cout << int_stacks << ", " << mpi_stack_list.size() << std::endl;
+         for(int s=0; s < int_stacks; ++s) {
+            // #ifdef MPICH
+               stack = mpi_stack_list_x.at(s);
+            // #else
+               // stack = stack_index_x.at(s);
+            // #endif
+            
+            // if(stack % 3 == 0) continue;
+              
+            const int idx = stack_index_x[stack];
+           // std::cout << stack << ", " << idx << std::endl;
+            // set initial values
+           if(fbc) { 
+               // sa[3*idx+0] = 0.0;
+               // sa[3*idx+1] = 0.0;
+               // sa[3*idx+2] = 0.0;
+               j_final_up_x[3*idx+0] = initial_beta*je*initial_m[0];
+               j_final_up_x[3*idx+1] = initial_beta*je*initial_m[1];
+               j_final_up_x[3*idx+2] = initial_beta*je*initial_m[2];
+           }  else if (!fbc) {
+               const double mod = 1.0/sqrt(sa_final[3*idx+0]*sa_final[3*idx+0] + sa_final[3*idx+1]*sa_final[3*idx+1] + sa_final[3*idx+2]*sa_final[3*idx+2]);
+               // sa[3*idx+0] = sa_infinity[idx]*m [3*idx+0]*mod;
+               // sa[3*idx+1] = sa_infinity[idx]*m [3*idx+1]*mod;
+               // sa[3*idx+2] = sa_infinity[idx]*m [3*idx+2]*mod;
 
-               int pcellx = 3*(cell-1);
-               int pcelly = 3*(cell-1)+1;
-               int pcellz = 3*(cell-1)+2;
+               j_final_up_x[3*idx+0] = initial_beta*je*sa_final[3*idx+0]*mod;
+               j_final_up_x[3*idx+1] = initial_beta*je*sa_final[3*idx+1]*mod;
+               j_final_up_x[3*idx+2] = initial_beta*je*sa_final[3*idx+2]*mod;
+           }
 
-               int acellx = 3*(cell+1);
-               int acelly = 3*(cell+1)+1;
-               int acellz = 3*(cell+1)+2;
+          //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << default_properties.sa_infinity << "\t" << init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << m[3*idx+0] << " \t" <<  m[3*idx+1] << "\t" << sa[3*idx+0] << "\t" << sa[3*idx+1] << std::endl;
 
-               st::internal::three_vector_t  m(st::internal::m[cellx],  st::internal::m[celly],  st::internal::m[cellz]);
-               double modm = sqrt(m.x*m.x + m.y*m.y + m.z*m.z);
+            // loop over all cells in stack after first (idx+1)
+            for(int xc = 1; xc < cell_index_x[stack].size()-1; ++xc) {
+               // if(xc == 0 && (cell_index_x[stack][xc-1] != idx)) std::cout << idx << ", " << cell_index_x[stack][xc-1] << std::endl;
+
+               int cell = cell_index_x[stack][xc];
+               // calculate cell id's
+               const int cellx = 3*cell+0;
+               const int celly = 3*cell+1;
+               const int cellz = 3*cell+2;
+
+               // calculate previous cell id's
+               const int pcellx = 3*cell_index_x[stack][xc-1]+0;
+               const int pcelly = 3*cell_index_x[stack][xc-1]+1;
+               const int pcellz = 3*cell_index_x[stack][xc-1]+2;
+
+               three_vector_t  m_local(0.0,  0.0,  0.0);
+               // copy array values to temporaries for readability
+             
+                  m_local.x = sa_final[cellx];
+                  m_local.y = sa_final[celly];
+                  m_local.z = sa_final[cellz]; // current cell new SA
+
+               const double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
+               // const double pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
+
+               // Check for zero magnetization in normalization
                if(modm > 1.e-11){
-                  m.x = m.x/modm;
-                  m.y = m.y/modm;
-                  m.z = m.z/modm;
+                  m_local.x = m_local.x/modm;
+                  m_local.y = m_local.y/modm;
+                  m_local.z = m_local.z/modm;
                }
                else{
-                  m.x = 0.0;
-                  m.y = 1.0;
-                  m.z = 0.0;
-                  modm = 1.0;
+                  m_local.x = 0.0;
+                  m_local.y = 0.0;
+                  m_local.z = 0.0;
                }
+
+               //---------------------------------------------------------------------
+               // Step 1 calculate coordinate transformation m -> m' for current cell
+               //---------------------------------------------------------------------
+
                // Check for cell magnetization greater than 1e-8 mu_B
                if(modm > 1.0e-11){
                   // Initialise inverse transformation matrix
-                  set_inverse_transformation_matrix(m, itm);
+                  set_inverse_transformation_matrix(m_local, itm);
+
+                  // Calculate basis vectors
+                  b1 = transform_vector(bz, itm);
+                  b2 = transform_vector(bx, itm);
+                  b3 = transform_vector(by, itm);
+               }
+               else{
+                  // set default rotational frame
+                  b1 = bz;
+                  b2 = bx;
+                  b3 = by;
+               }
+               //---------------------------------------------------------------------
+               // Step 2 determine coefficients for the spin accumulation
+               //---------------------------------------------------------------------
+
+               // Initialise temporary constants
+               const double Bc = beta_cond[cell]; // beta
+               const double Bd = beta_diff[cell]; // beta_prime
+               const double Do = diffusion[cell];
+                three_vector_t jm0(j_final_up_x[pcellx],j_final_up_x[pcelly],j_final_up_x[pcellz]);
+             
+
+               //  Calculate gradient dsacc/dx
+               const double twoDo = 2.0*Do;
+               const double preD = twoDo*Bc*Bd;
+
+               M.xx = preD*m_local.x*m_local.x - twoDo;     M.xy = preD*m_local.y*m_local.x;             M.xz = preD*m_local.z*m_local.x;
+               M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
+               M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
+
+                  V.x = jm0.x - Bc*je*m_local.x;
+                  V.y = jm0.y - Bc*je*m_local.y;
+                  V.z = jm0.z - Bc*je*m_local.z;
+               
+               const three_vector_t divm_0 = gaussian_elimination(M, V);
+
+               // Calculate mp(0), c and d
+               const double i_lsdl = 1.0/lambda_sdl[cell];
+                double mp_inf = sa_infinity[cell];
+                 if(sot_sa && sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+               const double a_local = a[cell];
+               const double b_local = b[cell];
+               const double two_a = 2.0*a_local;
+               const double two_b = 2.0*b_local;
+
+               M.xx = -b1.x*i_lsdl;    M.xy = (-two_a*b2.x + two_b*b3.x);    M.xz = (-two_b*b2.x - two_a*b3.x);
+               M.yx = -b1.y*i_lsdl;    M.yy = (-two_a*b2.y + two_b*b3.y);    M.yz = (-two_b*b2.y - two_a*b3.y);
+               M.zx = -b1.z*i_lsdl;    M.zy = (-two_a*b2.z + two_b*b3.z);    M.zz = (-two_b*b2.z - two_a*b3.z);
+
+               V.x = divm_0.x - b1.x*mp_inf*i_lsdl;
+               V.y = divm_0.y - b1.y*mp_inf*i_lsdl;
+               V.z = divm_0.z - b1.z*mp_inf*i_lsdl;
+
+               const three_vector_t coeff = gaussian_elimination(M, V);
+
+               const double mp_0 = coeff.x;
+               const double c    = coeff.y;
+               const double d    = coeff.z;
+
+               //------------------------------------
+               // Step 3 calculate spin accumulation
+               //------------------------------------
+
+               const double x = micro_cell_size[0]*1.0e-10; // Convert to metres
+               const double cos_bx = cos(b_local*x);
+               const double sin_bx = sin(b_local*x);
+               const double e_xsdl = exp(-x*i_lsdl);
+               const double e_ax   = exp(-a_local*x);
+               const double prefac = (2.0*e_ax);
+
+               const double sa_para  = mp_inf + (mp_0 - mp_inf)*e_xsdl;
+               const double sa_perp2 = prefac*(c*cos_bx - d*sin_bx);
+               const double sa_perp3 = prefac*(c*sin_bx + d*cos_bx);    
+
+               //--------------------------------------------
+               // Step 4 calculate the spin current (jm_end)
+               //--------------------------------------------
+               const double ac_bd = a_local*c + b_local*d; 
+               const double ad_bc = a_local*d - b_local*c;
+
+               const double divsa_para = (mp_inf - mp_0)*i_lsdl*e_xsdl;
+               const double divsa_perp2 = prefac*(-ac_bd*cos_bx + ad_bc*sin_bx);
+               const double divsa_perp3 = prefac*(-ac_bd*sin_bx - ad_bc*cos_bx);
+
+               const double divsax = b1.x*divsa_para + b2.x*divsa_perp2 + b3.x*divsa_perp3;
+               const double divsay = b1.y*divsa_para + b2.y*divsa_perp2 + b3.y*divsa_perp3;
+               const double divsaz = b1.z*divsa_para + b2.z*divsa_perp2 + b3.z*divsa_perp3;
+
+               const double dot = m_local.x*divsax + m_local.y*divsay + m_local.z*divsaz;
+
+               const double pre_jmx = divsax - Bc*Bd*m_local.x*dot;
+               const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
+               const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
+
+               double jmx = Bc*je*m_local.x - twoDo*pre_jmx;
+               double jmy = Bc*je*m_local.y - twoDo*pre_jmy;
+               double jmz = Bc*je*m_local.z - twoDo*pre_jmz;
+
+               //calculate directly from J(Sxm)
+               double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
+               double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
+               double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
+               
+               if(cell_natom[cell]>0) {
+
+                  // Save values for the spin current
+                  j_final_up_x[cellx] = jmx;
+                  j_final_up_x[celly] = jmy;
+                  j_final_up_x[cellz] = jmz;
+
+                  spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
+                  spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
+                  spin_torque[cellz] = atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
+                     if(sot_check) {    
+                     spin_torque[cellx] = 0.0;// += microcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
+                     spin_torque[celly] = 0.0;//+= microcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
+                     spin_torque[cellz] = 0.0;//+= microcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
+                  } 
+               } 
+               else{
+
+                  // Save values for the spin current
+                  j_final_up_x[cellx] = 0.0;//j_final_up_x[pcellx];
+                  j_final_up_x[celly] = 0.0;//j_final_up_x[pcelly];
+                  j_final_up_x[cellz] = 0.0;//j_final_up_x[pcellz];
+
+               }
+               if(output_torque_data == "final") {
+               //--------------------------------------------
+               // Step 5 calculate the spin torque of each cell
+               //--------------------------------------------
+                three_vector_t  pm_local(0.0,  0.0,  0.0);
+               // copy array values to temporaries for readability
+             
+                  pm_local.x = sa_final[pcellx];
+                  pm_local.y = sa_final[pcelly];
+                  pm_local.z = sa_final[pcellz]; // current cell magnetisations
+
+               const double pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
+               // const double pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
+
+               // Check for zero magnetization in normalization
+               if(pmodm > 1.e-11){
+                  pm_local.x = pm_local.x/pmodm;
+                  pm_local.y = pm_local.y/pmodm;
+                  pm_local.z = pm_local.z/pmodm;
+               }
+               else{
+                  pm_local.x = 0.0;
+                  pm_local.y = 0.0;
+                  pm_local.z = 0.0;
+               }
+
+               // Check for cell magnetization greater than 1e-8 mu_B
+               if(pmodm > 1.0e-11){
+                  // Initialise inverse transformation matrix
+                  set_inverse_transformation_matrix(pm_local, itm);
 
                   // Calculate basis vectors
                   b1 = transform_vector(bz, itm);
@@ -1795,118 +2188,92 @@ namespace st{
                   b3 = by;
                }
 
-                // Initialise temporary constants
-               const double Bc = st::internal::beta_cond[cell]; // beta
-               const double Bd = st::internal::beta_diff[cell]; // beta_prime
-               const double Do = st::internal::diffusion[cell];
-               st::internal::three_vector_t jm0(st::internal::j_int_up[cellx]+st::internal::j_int_down[cellx], \
-                                                st::internal::j_int_up[celly]+st::internal::j_int_down[celly],\
-                                                st::internal::j_int_up[cellz]+st::internal::j_int_down[cellz]);                     
+               //convert M of previous cell into basis b1, b2, b3
 
-               const double twoDo = 2.0*Do;
-               const double preD = twoDo*Bc*Bd;
+               M.xx = b1.x;    M.xy = b2.x;    M.xz = b3.x;
+               M.yx = b1.y;    M.yy = b2.y;    M.yz = b3.y;
+               M.zx = b1.z;    M.zy = b2.z;    M.zz = b3.z;
 
-               M.xx = preD*m.x*m.x - twoDo;     M.xy = preD*m.y*m.x;             M.xz = preD*m.z*m.x;
-               M.yx = preD*m.x*m.y;             M.yy = preD*m.y*m.y - twoDo;     M.yz = preD*m.z*m.y;
-               M.zx = preD*m.x*m.z;             M.zy = preD*m.y*m.z;             M.zz = preD*m.z*m.z - twoDo;
+               V.x = pm_local.x;
+               V.y = pm_local.y;
+               V.z = pm_local.z;
 
-               V.x = jm0.x;// - Bc*je*m.x;
-               V.y = jm0.y;// + Bc*je*m.y;
-               V.z = jm0.z;// - Bc*je*m.z;
+               const three_vector_t pm_basis = gaussian_elimination(M, V);
 
-               const st::internal::three_vector_t divm_0 = gaussian_elimination(M, V);
+               //const double pm_b1 = pm_basis.x; // unused variable
+               const double pm_b2 = pm_basis.y;
+               const double pm_b3 = pm_basis.z;
 
-               const double i_lsdl = 1.0/st::internal::lambda_sdl[cell];
-               double mp_inf = st::internal::sa_infinity[cell];
-                  if(st::internal::sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a = st::internal::a[cell];
-               const double b = st::internal::b[cell];
-               const double two_a = 2.0*a;
-               const double two_b = 2.0*b;
+               // Calculate the spin torque coefficients describing ast and nast
+               const double prefac_sc = atomcell_volume * sd_exchange[cell] * i_e * i_muB;
+               const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
+               // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
-               M.xx = -b1.x*i_lsdl;    M.xy = (-two_a*b2.x + two_b*b3.x);    M.xz = (-two_b*b2.x - two_a*b3.x);
-               M.yx = -b1.y*i_lsdl;    M.yy = (-two_a*b2.y + two_b*b3.y);    M.yz = (-two_b*b2.y - two_a*b3.y);
-               M.zx = -b1.z*i_lsdl;    M.zy = (-two_a*b2.z + two_b*b3.z);    M.zz = (-two_b*b2.z - two_a*b3.z);
+	            double aj; // the ST parameter describing Slonczewski torque
+               double bj; // the ST parameter describing field-like torque
 
-               V.x = divm_0.x - b1.x*mp_inf*i_lsdl;
-               V.y = divm_0.y - b1.y*mp_inf*i_lsdl;
-               V.z = divm_0.z - b1.z*mp_inf*i_lsdl;
 
-               const st::internal::three_vector_t coeff = gaussian_elimination(M, V);
+                if( ( plus_perp <= 1.0e-11 ) ){
+                    aj = 0.0;
+                    bj = 0.0; }
 
-               const double mp_0 = coeff.x;
-               const double c    = coeff.y;
-               const double d    = coeff.z;
+                else{
+                    aj  = prefac_sc*(sa_perp2*pm_b3 - sa_perp3*pm_b2)/plus_perp;
+                    bj  = prefac_sc*(sa_perp2*pm_b2 + sa_perp3*pm_b3)/plus_perp;
+                }
 
-               const double x = st::internal::micro_cell_thickness*1.0e-10; // Convert to metres
-               const double cos_bx = cos(b*x);
-               const double sin_bx = sin(b*x);
-               const double e_xsdl = exp(-x*i_lsdl);
-               const double e_ax   = exp(-a*x);
-               const double prefac = (2.0*e_ax);
+               double SxSp[3], SxSxSp[3];
+               coeff_ast[cell]  = aj;
+               coeff_nast[cell] = bj;
 
-               const double sa_para  = mp_inf + (mp_0 - mp_inf)*e_xsdl;
-               const double sa_perp2 = prefac*(c*cos_bx - d*sin_bx);
-               const double sa_perp3 = prefac*(c*sin_bx + d*cos_bx);
+               SxSp[0]=(m_local.y*pm_local.z-m_local.z*pm_local.y);
+               SxSp[1]=(m_local.z*pm_local.x-m_local.x*pm_local.z);
+               SxSp[2]=(m_local.x*pm_local.y-m_local.y*pm_local.x);
 
-               //convert mp and m_perp
-               double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
-               double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
-               double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
+               SxSxSp[0]= (m_local.y*SxSp[2]-m_local.z*SxSp[1]);
+               SxSxSp[1]= (m_local.z*SxSp[0]-m_local.x*SxSp[2]);
+               SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
-               const double ac_bd = a*c + b*d; 
-               const double ad_bc = a*d - b*c;
+               total_ST[cellx] += prefac_sc*(m_local.y*saz-m_local.z*say);
+               total_ST[celly] += prefac_sc*(m_local.z*sax-m_local.x*saz);
+               total_ST[cellz] += prefac_sc*(m_local.x*say-m_local.y*sax);
 
-               const double divsa_para = (mp_inf - mp_0)*i_lsdl*e_xsdl;
-               const double divsa_perp2 = prefac*(-ac_bd*cos_bx + ad_bc*sin_bx);
-               const double divsa_perp3 = prefac*(-ac_bd*sin_bx - ad_bc*cos_bx);
+               ast[cellx] += -aj*SxSxSp[0];
+               ast[celly] += -aj*SxSxSp[1];
+               ast[cellz] += -aj*SxSxSp[2];
 
-               const double divsax = b1.x*divsa_para + b2.x*divsa_perp2 + b3.x*divsa_perp3;
-               const double divsay = b1.y*divsa_para + b2.y*divsa_perp2 + b3.y*divsa_perp3;
-               const double divsaz = b1.z*divsa_para + b2.z*divsa_perp2 + b3.z*divsa_perp3;
-
-               const double dot = m.x*divsax + m.y*divsay + m.z*divsaz;
-
-               const double pre_jmx = divsax - Bc*Bd*m.x*dot;
-               const double pre_jmy = divsay - Bc*Bd*m.y*dot;
-               const double pre_jmz = divsaz - Bc*Bd*m.z*dot;
-
-           
-               double jmx =   twoDo*pre_jmx;
-               double jmy =   twoDo*pre_jmy;
-                  if(st::internal::sot_sa_source[cell]) jmy = je*st::internal::initial_theta;
-               double jmz =   twoDo*pre_jmz;
-
-               st::internal::sa_final[cellx] = sax;
-               st::internal::sa_final[celly] = say;
-               st::internal::sa_final[cellz] = saz;
-
-               st::internal::j_final_up[cellx] = jmx;
-               st::internal::j_final_up[celly] = jmy;
-               st::internal::j_final_up[cellz] = jmz;
-
-               st::internal::j_final_down[cellx] = jmx*direction_sign;
-               st::internal::j_final_down[celly] = jmy*direction_sign;
-               st::internal::j_final_down[cellz] = jmz*direction_sign;
-
-               st::internal::spin_torque[cellx] += atomcell_volume * st::internal::sd_exchange[cell] * (sax) * i_e * i_muB;
-               st::internal::spin_torque[celly] += atomcell_volume * st::internal::sd_exchange[cell] * (say) * i_e * i_muB;
-               st::internal::spin_torque[cellz] += atomcell_volume * st::internal::sd_exchange[cell] * (saz) * i_e * i_muB; 
-
-               //sot check output flag will run spin acc program without torque to calculate and output values
-               if(st::internal::sot_check) {    
-                  st::internal::spin_torque[cellx] = 0.0;// += microcell_volume * st::internal::sd_exchange[cell] * (sax) * i_e * i_muB;
-                  st::internal::spin_torque[celly] = 0.0;//+= microcell_volume * st::internal::sd_exchange[cell] * (say) * i_e * i_muB;
-                  st::internal::spin_torque[cellz] = 0.0;//+= microcell_volume * st::internal::sd_exchange[cell] * (saz) * i_e * i_muB; 
-               }  
-            }
+               nast[cellx] += bj*SxSp[0];
+               nast[celly] += bj*SxSp[1];
+               nast[cellz] += bj*SxSp[2];
+               }
+            } // end of cell loop
          } // end of stack loop
+
+         // #ifdef MPICH
+            // int_stacks = mpi_stack_list_y.size();
+         // #else 
+            // int_stacks = stack_index_y.size();
+         // #endif
+
+         // std::cout << "finilasing sot simulation." << std::endl;
+         // for(int s = 0; s < int_stacks; s++) {
+         //    // #ifdef MPICH
+         //       stack = mpi_stack_list_y.at(s);
+         //    // #else 
+         //       // stack = stack_index_y.at(s);
+         //    // #endif
+
+         //    const int idx = stack_index_y[stack] + 1;
+         //   //final loop to calculate spin acc and torque from summed spin currents
+            
+         // }
+         
 
          // Reduce all atomcell spin torques on all nodes
          #ifdef MPICF
-            MPI_Allreduce(MPI_IN_PLACE, &st::internal::spin_torque[0],st::internal::spin_torque.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &spin_torque[0],spin_torque.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
          #endif
-         st::internal::output_microcell_data();
+         output_microcell_data();
 
          st::spin_acc_time += stopwatch.elapsed_seconds();
 

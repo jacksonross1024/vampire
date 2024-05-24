@@ -1,5 +1,6 @@
 
 
+
 #set global styles
 # General Palette
 set palette defined ( 0 '#04233B',\
@@ -30,46 +31,43 @@ set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
 
 set terminal pngcairo font "helvetica, 14"
-chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 1) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
-chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 1) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
+chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 1) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
+chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 1) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
 
-delta_SS(t,b,m_t,m_b, sa) = (abs(t-sa*m_t)/abs(b-sa*m_b))
+chck_dw_up(sl_x, sl_z, x) = (sl_z == 5 && x > 0.1) ? (sl_x) : (1/0)
+chck_dw_dw(sl_x, sl_z, x) = (sl_z == 6 && x < -0.1) ? (sl_x): (1/0)
 
-delta_S(m,M,sa) = (m-M*sa)/sa
+delta_S(t,m, sa) = ((t-sa*m)/sa)
 
-set ytics 0,20
+
 SA = 1.48e7
+cell_x = 0.6656
 
-dS = 1e-2
-set xrange [-dS:dS]
-
-set title "<-1-10>"
-set yrange [0:60]
+set xrange [200:300]
 file= "spin-acc/0"
-set output "sa--1-10.png"
-set ylabel "Z cell"
+set output "sa-dw.png"
+set ylabel "sa"
 set multiplot layout 2,1
-#set title "spin current"
+
 set key outside top center horizontal
 set size 1,0.5
-set xlabel "Mn_1 deltaS"
-plot file u (delta_S($7, $4, SA)):(chck_up($1,$2,$4,$3)) w p ls 2 title "sa_x1",\
-"" u (delta_S($8,$5,SA)):(chck_up($1,$2,$4,$3)) w p ls 3 title "sa_y1",\
-"" u (delta_S($9,$6,SA)):(chck_up($1,$2,$4,$3)) w p ls 4 title "sa_z1",\
-"" u (delta_S($7, $4, SA)):(chck_dw($1,$2,$4,$3)) w p ls 5 title "sa_x2",\
-"" u (delta_S($8,$5,SA)):(chck_dw($1,$2,$4,$3)) w p ls 6 title "sa_y2",\
-"" u (delta_S($9,$6,SA)):(chck_dw($1,$2,$4,$3)) w p ls 7 title "sa_z2"
+set xlabel "position (nm)"
+plot file u (chck_dw_up($1,$3,$4)*cell_x):($7/SA) w p ls 3 title "sa_x",\
+"" u (chck_dw_up($1,$3,$4)*cell_x):($8/SA) w p ls 4 title "sa_y",\
+"" u (chck_dw_up($1,$3,$4)*cell_x):($9/SA) w p ls 5  title "sa_z"
+
 
 unset title 
 set size 1,0.45
 set xlabel "Mn_1 SA ratio"
-set xrange [-0.25:1]
-set yrange [0:60]
-plot file u (delta_SS($9,$8,$6,$5, SA)):(chck_up($1,$2,$4,$3)) w p ls 4 title "dSz/dS_y",\
-"" u (delta_SS($7,$8,$4,$5, SA)):(chck_up($1,$2,$4,$3)) w p ls 5 title "dSx/dSy",\
-"" u (delta_SS($9,$8,$6,$5, SA)):(chck_dw($1,$2,$4,$3)) w p ls 4 notitle "sa_x/sa_x",\
-"" u (delta_SS($7,$8,$4,$5, SA)):(chck_dw($1,$2,$4,$3)) w p ls 5 notitle "sa_y/sa_x",\
-"" u (0.045):0 w l ls 1 dt " - " title "ab initio, dSz/dSy",\
+
+plot file u (chck_dw_up($1,$3,$4)*cell_x):(delta_S($7,$4, SA)) w p ls 3 title "dS_x",\
+"" u (chck_dw_up($1,$3,$4)*cell_x):(delta_S($8,$5, SA)) w p ls 4 title "dS_y",\
+"" u (chck_dw_up($1,$3,$4)*cell_x):(delta_S($9,$6, SA)) w p ls 5 title "dS_z",\
+
+#"" u (chck_dw_dw($1,$3,$4)):(delta_S($7,$8,$4,$5, SA)) w p ls 6 notitle "sa_y/sa_x",\
+
+#"" u (0.045):0 w l ls 1 dt " - " title "ab initio, dSz/dSy",\
 "" u (0.29):0 w l ls 1 title 'dSx/dSy'
 
 

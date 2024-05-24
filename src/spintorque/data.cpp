@@ -42,7 +42,8 @@ namespace st{
       int sty=1;
       int stz=2;
 
-      int num_stacks;  // total number of stacks
+      int num_stacks_x;  // total number of stacks
+      int num_stacks_y;  // total number of stacks
       int num_x_stacks; // number of stacks in x
       int num_y_stacks; // number of stack in y
       int num_microcells_per_stack; // number of microcells per stack
@@ -64,7 +65,9 @@ namespace st{
      
       std::vector<double> init_stack_mag;
       std::vector<double> stack_init_mag;
-      std::vector<int> stack_index; // start of stack in microcell arrays
+      std::vector<int> stack_index_y; // start of stack in microcell arrays
+      std::vector<int> stack_index_x; // start of stack in microcell arrays
+      std::vector<std::vector<int> > cell_index_x;
 
       std::vector<double> beta_cond; /// spin polarisation (conductivity) Beta B
       std::vector<double> beta_diff; /// spin polarisation (diffusion) Beta' Bp
@@ -85,14 +88,15 @@ namespace st{
       // three-vector arrays
       std::vector<double> pos; /// stack position
       std::vector<double> m; // magnetisation
-      std::vector<double> j_final_up;
-      std::vector<double> j_final_down;
-      std::vector<double> j_int_up; // spin current
-      std::vector<double> j_int_down;
+      std::vector<double> j_final_up_y;
+      std::vector<double> j_final_down_y;
+      std::vector<double> j_int_up_y; // spin current
+      std::vector<double> j_int_down_y;
+      std::vector<double> j_final_up_x;
       std::vector<double> sa_final; // spin accumulation
-      std::vector<double> sa_sot_final; // spin accumulation
-      std::vector<double> sa_sot_int; // spin accumulation
-      std::vector<double> sa_sot_init;
+      // std::vector<double> sa_sot_final; // spin accumulation
+      // std::vector<double> sa_sot_int; // spin accumulation
+      // std::vector<double> sa_sot_init;
       std::vector<double> spin_torque; // spin torque energy (J)
       std::vector<double> ast; // adiabatic spin torque
       std::vector<double> nast; // non-adiabatic spin torque
@@ -102,16 +106,19 @@ namespace st{
       std::vector<double> magz_mat;
       
       std::vector<double> sa_sum;
-      std::vector<double> j_final_up_sum;
+      std::vector<double> j_final_up_y_sum;
+      std::vector<double> j_final_down_y_sum;
+      std::vector<double> j_final_up_x_sum;
       bool sot_check = false;
-      std::vector<double> j_final_down_sum;
+      
       std::vector<double> coeff_ast_sum;
       std::vector<double> coeff_nast_sum;
       std::vector<double> ast_sum;
       std::vector<double> nast_sum;
       std::vector<double> total_ST_sum;
       std::vector<int> cell_natom_sum;
-      std::vector<int> mpi_stack_list;
+      std::vector<int> mpi_stack_list_y;
+      std::vector<int> mpi_stack_list_x;
 
       // array of material properties
       std::vector<st::internal::mp_t> mp;

@@ -100,15 +100,17 @@ void initialise(const double system_dimensions_x,
    st::internal::num_y_stacks = ceil((system_dimensions[st::internal::sty]+0.0)/st::internal::micro_cell_size[st::internal::sty]);
    std::cout << "y_stacks " << st::internal::num_y_stacks << ", " << system_dimensions[st::internal::sty]+0.0 << "/" << st::internal::micro_cell_size[st::internal::sty] << std::endl;
    // determine total number of stacks
-   st::internal::num_stacks = st::internal::num_x_stacks*st::internal::num_y_stacks;
-   std::cout << "Total stacks: " << st::internal::num_stacks << std::endl;
+   st::internal::num_stacks_y = st::internal::num_x_stacks*st::internal::num_y_stacks;
+   st::internal::num_stacks_x = st::internal::num_y_stacks*st::internal::num_microcells_per_stack;
+   std::cout << "Total stacks: " << st::internal::num_stacks_y << std::endl;
+   if(st::internal::sot_sa) std::cout << "Total stacks x: " << st::internal::num_stacks_x << std::endl;
    // allocate array to store index of first element of stack
-   st::internal::stack_index.resize(st::internal::num_stacks);
-
+   st::internal::stack_index_y.resize(st::internal::num_stacks_y);
+   st::internal::stack_index_x.resize(st::internal::num_stacks_x);
    //-------------------------------------------------------------------------------------
    // allocate microcell data
    //-------------------------------------------------------------------------------------
-   const int array_size = st::internal::num_stacks*st::internal::num_microcells_per_stack;
+   const int array_size = st::internal::num_x_stacks*st::internal::num_y_stacks*st::internal::num_microcells_per_stack;
 
    st::internal::beta_cond.resize(array_size, 0.0); /// spin polarisation (conductivity)
    st::internal::beta_diff.resize(array_size, 0.0); /// spin polarisation (diffusion)
@@ -126,14 +128,15 @@ void initialise(const double system_dimensions_x,
    const int three_vec_array_size = 3*array_size;
    st::internal::pos.resize(three_vec_array_size,0.0); /// microcell position
    st::internal::m.resize(three_vec_array_size,0.0); // magnetisation
-   st::internal::j_final_up.resize(three_vec_array_size,0.0);
-   st::internal::j_final_down.resize(three_vec_array_size,0.0);
-   st::internal::j_int_up.resize(three_vec_array_size,0.0); // spin current
-   st::internal::j_int_down.resize(three_vec_array_size,0.0); // spin current
+   st::internal::j_final_up_y.resize(three_vec_array_size,0.0);
+   st::internal::j_final_down_y.resize(three_vec_array_size,0.0);
+   st::internal::j_int_up_y.resize(three_vec_array_size,0.0); // spin current
+   st::internal::j_int_down_y.resize(three_vec_array_size,0.0); // spin current
+   st::internal::j_final_up_x.resize(three_vec_array_size,0.0); // spin current
    st::internal::sa_final.resize(three_vec_array_size, 0.0); // spin accumulation
-   st::internal::sa_sot_final.resize(three_vec_array_size,0.0); // sot sa up stack
-   st::internal::sa_sot_int.resize(three_vec_array_size,0.0); // sot sa up stack
-   st::internal::sa_sot_init.resize(three_vec_array_size,0.0); // sot sa down stack
+   // st::internal::sa_sot_final.resize(three_vec_array_size,0.0); // sot sa up stack
+   // st::internal::sa_sot_int.resize(three_vec_array_size,0.0); // sot sa up stack
+   // st::internal::sa_sot_init.resize(three_vec_array_size,0.0); // sot sa down stack
    st::internal::spin_torque.resize(three_vec_array_size,0.0); // spin torque
    st::internal::ast.resize(three_vec_array_size,0.0); // adiabatic spin torque
    st::internal::nast.resize(three_vec_array_size,0.0); // non-adiabatic spin torque
@@ -142,8 +145,9 @@ void initialise(const double system_dimensions_x,
 
 
       st::internal::sa_sum.resize(three_vec_array_size, 0.0);
-      st::internal::j_final_up_sum.resize(three_vec_array_size, 0.0);
-      st::internal::j_final_down_sum.resize(three_vec_array_size, 0.0);
+      st::internal::j_final_up_x_sum.resize(three_vec_array_size, 0.0);
+      st::internal::j_final_up_y_sum.resize(three_vec_array_size, 0.0);
+      st::internal::j_final_down_y_sum.resize(three_vec_array_size, 0.0);
       st::internal::coeff_ast_sum.resize(three_vec_array_size, 0.0);
       st::internal::coeff_nast_sum.resize(three_vec_array_size, 0.0);
       st::internal::ast_sum.resize(three_vec_array_size, 0.0);
@@ -175,32 +179,42 @@ void initialise(const double system_dimensions_x,
    int ncz = st::internal::num_microcells_per_stack;
 
    // Set cell and stack counters
-   int cell=0;
-   int stack=0;
+   int cell = 0;
+   int stack_x = 0;
+   int stack_y = 0;
       st::internal::cell_stack_index.resize(ncx*ncy*ncz);
    // Allocate space for 3D supercell array (ST coordinate system)
    std::vector<std::vector<std::vector<int> > > supercell_array;
    supercell_array.resize(ncx);
+   st::internal::cell_index_x.resize(ncy*ncz);
 
    for(int i=0;i<ncx;++i){
       supercell_array[i].resize(ncy);
+      stack_x = 0;
+
       for(int j=0;j<ncy;++j){
          // std::cout << stack << std::endl;
          supercell_array[i][j].resize(ncz);
          // set starting cell for each stack
-         st::internal::stack_index[stack]=cell;
+         st::internal::stack_index_y[stack_y]=cell;
 
+         if(i == 0) st::internal::stack_index_x[stack_x] = cell;
+         st::internal::cell_index_x[stack_x].push_back(cell);
+         stack_x++;
          // increment stack counter
-         stack++;
+         stack_y++;
          // store cell coordinates
          for(int k=0; k<ncz; ++k){
+            if(i ==0) st::internal::stack_index_x[stack_x] = cell;
+            st::internal::cell_index_x[stack_x].push_back(cell); 
+            stack_x++;
             // associate cell with position i,j,k
             supercell_array[i][j][k]=cell;
             // save ijk coordinates as microcell positions
             st::internal::pos.at(3*cell+0)=i;
             st::internal::pos.at(3*cell+1)=j;
             st::internal::pos.at(3*cell+2)=k;
-            st::internal::cell_stack_index[cell] = stack;
+            st::internal::cell_stack_index[cell] = stack_y;
             // increment cell number
             cell++;
          }
@@ -273,48 +287,108 @@ void initialise(const double system_dimensions_x,
    st::internal::output_base_microcell_data();
 
       //added mpi decomposition for stacks
-       #ifdef MPICF 
+   #ifdef MPICF 
      
-   //determine mpi core stack list 
-      int removed_stacks = st::internal::num_stacks;
-      std::vector<int> mpi_stack_id(removed_stacks, 0);
-   if(vmpi::num_processors > removed_stacks) {
-      std::cout << "mpirun threads requested larger than spin-torque decomposition allows" << std::endl;
-      err::vexit();
-   }
-   int residual = removed_stacks % vmpi::num_processors;
-  // st::internal::mpi_stack_list.resize(int(floor(st::internal::num_stacks/vmpi::num_processors))+1);
-   for(int s = 0; s < int(floor(removed_stacks/vmpi::num_processors)); s++) {
-      st::internal::mpi_stack_list.push_back(s*vmpi::num_processors + vmpi::my_rank);
-      mpi_stack_id.at(s*vmpi::num_processors + vmpi::my_rank) = 1;
-   } 
-   if(residual > 0 && vmpi::my_rank < residual){
-      st::internal::mpi_stack_list.push_back(removed_stacks - vmpi::my_rank -1);
-      mpi_stack_id.at(removed_stacks - vmpi::my_rank -1) = 1;
-   }
+      //determine mpi core stack_y list 
+      int removed_stacks_y = st::internal::num_stacks_y;
+      std::vector<int> mpi_stack_id_y(removed_stacks_y, 0);
+   
+      if(vmpi::num_processors > removed_stacks_y ) {
+         std::cout << "mpirun threads requested larger than spin-torque decomposition allows" << std::endl;
+         err::vexit();
+      }
+      int residual = removed_stacks_y % vmpi::num_processors;
+   // st::internal::mpi_stack_list.resize(int(floor(st::internal::num_stacks/vmpi::num_processors))+1);
+      for(int s = 0; s < int(floor(removed_stacks_y/vmpi::num_processors)); s++) {
+         st::internal::mpi_stack_list_y.push_back(s*vmpi::num_processors + vmpi::my_rank);
+         mpi_stack_id_y.at(s*vmpi::num_processors + vmpi::my_rank) = 1;
+      } 
+      if(residual > 0 && vmpi::my_rank < residual){
+         st::internal::mpi_stack_list_y.push_back(removed_stacks_y - vmpi::my_rank -1);
+         mpi_stack_id_y.at(removed_stacks_y - vmpi::my_rank -1) = 1;
+      }   
+   
 
-      int stack_sum = 0;
-      int size = st::internal::mpi_stack_list.size();
-      MPI_Reduce(&size,&stack_sum, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-      MPI_Allreduce(MPI_IN_PLACE, &mpi_stack_id[0],  mpi_stack_id.size(),   MPI_INT,MPI_SUM, MPI_COMM_WORLD);
+      int stack_sum_y = 0;
+      int size_y = st::internal::mpi_stack_list_y.size();
+     
+      MPI_Reduce(&size_y,&stack_sum_y, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &mpi_stack_id_y[0],  mpi_stack_id_y.size(),   MPI_INT,MPI_SUM, MPI_COMM_WORLD);
+     
       bool error = false;
-      if(vmpi::my_rank == 0 && stack_sum != removed_stacks) {
-         std::cout << stack_sum << " != " << removed_stacks << std::endl;
+      if(vmpi::my_rank == 0 && stack_sum_y != removed_stacks_y ) {
+         std::cout << stack_sum_y << " != " << removed_stacks_y << std::endl;
          error = true;
+      }  
+
+      for(int i = 0; i < mpi_stack_id_y.size(); i++) {
+         if(mpi_stack_id_y[i] != 1) error = true;
       }
-      for(int i = 0; i < mpi_stack_id.size(); i++) {
-         if(mpi_stack_id[i] != 1) error = true;
-      }
+
       MPI_Bcast(&error,1,MPI_INT,0,MPI_COMM_WORLD);
       if(error) {
 
-         for(int i = 0; i < mpi_stack_id.size(); i++) std::cout <<i << ", " << mpi_stack_id[i] << std::endl; 
-          
+         for(int i = 0; i < mpi_stack_id_y.size(); i++) std::cout << "mpi y stack: " << i << ", " << mpi_stack_id_y[i] << std::endl; 
+         // for(int i = 0; i < mpi_stack_id_x.size(); i++) std::cout << "mpi x stack: " << i << ", " << mpi_stack_id_x[i] << std::endl; 
          MPI_Barrier(MPI_COMM_WORLD);
          err::vexit();
       }
-      std::cout << "avg MPI stack count " << st::internal::mpi_stack_list.size()  << std::endl;
-    #endif 
+      std::cout << "avg MPI y stack count " << st::internal::mpi_stack_list_y.size()  << std::endl;
+      
+      if(st::internal::sot_sa) {
+
+         int removed_stacks_x = st::internal::num_stacks_x;
+         std::vector<int> mpi_stack_id_x(removed_stacks_x, 0);
+
+         if(vmpi::num_processors > removed_stacks_x ) {
+            std::cout << "mpirun threads requested larger than spin-torque decomposition allows" << std::endl;
+            err::vexit();
+         }
+         residual = removed_stacks_x % vmpi::num_processors;
+         if(residual > 0) std::cout << "may have mpi decomp problem" << std::endl;
+         // st::internal::mpi_stack_list.resize(int(floor(st::internal::num_stacks/vmpi::num_processors))+1);
+         for(int s = 0; s < int(floor(removed_stacks_x/vmpi::num_processors)); s++) {
+            st::internal::mpi_stack_list_x.push_back(s*vmpi::num_processors + vmpi::my_rank);
+            mpi_stack_id_x.at(s*vmpi::num_processors + vmpi::my_rank) = 1;
+         } 
+         if(residual > 0 && vmpi::my_rank < residual){
+            st::internal::mpi_stack_list_x.push_back(removed_stacks_x - vmpi::my_rank -1);
+            mpi_stack_id_x.at(removed_stacks_x - vmpi::my_rank -1) = 1;
+         }
+         int stack_sum_x = 0;
+         int size_x = st::internal::mpi_stack_list_x.size();
+         MPI_Reduce(&size_x,&stack_sum_x, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+         if(vmpi::my_rank == 0 && stack_sum_x != removed_stacks_x ) {
+               std::cout << stack_sum_x << " != " << removed_stacks_x << std::endl;
+               error = true;
+            }
+            MPI_Bcast(&error,1,MPI_INT,0,MPI_COMM_WORLD);
+            if(error) {
+
+               // for(int i = 0; i < mpi_stack_id_y.size(); i++) std::cout << "mpi y stack: " << i << ", " << mpi_stack_id_y[i] << std::endl; 
+               for(int i = 0; i < mpi_stack_id_x.size(); i++) std::cout << "mpi x stack: " << i << ", " << mpi_stack_id_x[i] << std::endl; 
+               MPI_Barrier(MPI_COMM_WORLD);
+               err::vexit();
+            }
+         MPI_Allreduce(MPI_IN_PLACE, &mpi_stack_id_x[0],  mpi_stack_id_x.size(),   MPI_INT,MPI_SUM, MPI_COMM_WORLD);
+         
+
+         for(int i = 0; i < mpi_stack_id_x.size(); i++) {
+               if(mpi_stack_id_x[i] != 1) error = true;
+            }
+         MPI_Bcast(&error,1,MPI_INT,0,MPI_COMM_WORLD);
+            if(error) {
+
+               // for(int i = 0; i < mpi_stack_id_y.size(); i++) std::cout << "mpi y stack: " << i << ", " << mpi_stack_id_y[i] << std::endl; 
+               for(int i = 0; i < mpi_stack_id_x.size(); i++) std::cout << "mpi x stack: " << i << ", " << mpi_stack_id_x[i] << std::endl; 
+               MPI_Barrier(MPI_COMM_WORLD);
+               err::vexit();
+            }
+
+         std::cout << "avg MPI x stack count " << st::internal::mpi_stack_list_x.size()  << std::endl;
+      }
+   #endif 
    return;
 }
 

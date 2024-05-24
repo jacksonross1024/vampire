@@ -39,7 +39,8 @@ namespace st{
       extern std::vector<double> y_field_array;
       extern std::vector<double> z_field_array;
 
-      extern int num_stacks;  // total number of stacks
+      extern int num_stacks_y;  // total number of stacks
+      extern int num_stacks_x;  // total number of stacks
       extern int num_x_stacks; // number of stacks in x
       extern int num_y_stacks; // number of stack in y
       extern int num_microcells_per_stack; // number of microcells per stack
@@ -63,8 +64,9 @@ namespace st{
       extern std::vector<double> stack_init_mag;
       extern std::vector<double> init_stack_mag;
 
-      extern std::vector<int> stack_index; // start of stack in microcell arrays
-
+      extern std::vector<int> stack_index_y; // start of stack in microcell arrays
+      extern std::vector<int> stack_index_x; // start of stack in microcell arrays
+      extern std::vector<std::vector<int> > cell_index_x;
       extern std::vector<double> beta_cond; /// spin polarisation (conductivity)
       extern std::vector<double> beta_diff; /// spin polarisation (diffusion)
       extern std::vector<double> sa_infinity; /// intrinsic spin accumulation
@@ -85,14 +87,15 @@ namespace st{
       // three-vector arrays
       extern std::vector<double> pos; /// stack position
       extern std::vector<double> m; // magnetisation
-      extern std::vector<double> j_final_up;
-      extern std::vector<double> j_final_down;
-      extern std::vector<double> j_int_up; // spin current
-      extern std::vector<double> j_int_down;
+      extern std::vector<double> j_final_up_y;
+      extern std::vector<double> j_final_up_x;
+      extern std::vector<double> j_final_down_y;
+      extern std::vector<double> j_int_up_y; // spin current
+      extern std::vector<double> j_int_down_y;
       extern std::vector<double> sa_final; // spin accumulation
-      extern std::vector<double> sa_sot_final;
-      extern std::vector<double> sa_sot_int;
-      extern std::vector<double> sa_sot_init;
+      // extern std::vector<double> sa_sot_final;
+      // extern std::vector<double> sa_sot_int;
+      // extern std::vector<double> sa_sot_init;
       extern std::vector<double> spin_torque; // spin torque
       extern std::vector<double> ast; // adiabatic spin torque
       extern std::vector<double> nast; // non-adiabatic spin torque
@@ -102,12 +105,14 @@ namespace st{
       extern std::vector<double> magz_mat;
       
 
-      extern std::vector<int> mpi_stack_list;
+      extern std::vector<int> mpi_stack_list_y;
+      extern std::vector<int> mpi_stack_list_x;
 
       //mpi sum variables
       extern std::vector<double> sa_sum;
-      extern std::vector<double> j_final_up_sum;
-      extern std::vector<double> j_final_down_sum;
+      extern std::vector<double> j_final_up_x_sum;
+      extern std::vector<double> j_final_up_y_sum;
+      extern std::vector<double> j_final_down_y_sum;
       extern   std::vector<double> coeff_ast_sum;
       extern   std::vector<double> coeff_nast_sum;
       extern   std::vector<double> ast_sum;
