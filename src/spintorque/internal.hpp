@@ -94,7 +94,7 @@ namespace st{
       extern std::vector<double> j_int_down_y;
       extern std::vector<double> sa_final; // spin accumulation
       // extern std::vector<double> sa_sot_final;
-      // extern std::vector<double> sa_sot_int;
+      extern std::vector<double> sa_int;
       // extern std::vector<double> sa_sot_init;
       extern std::vector<double> spin_torque; // spin torque
       extern std::vector<double> ast; // adiabatic spin torque

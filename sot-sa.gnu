@@ -30,23 +30,23 @@ set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
 
 set terminal pngcairo font "helvetica, 14"
-chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 1) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
-chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 1) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
+chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 0) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
+chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 0) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
 
 delta_SS(t,b,m_t,m_b, sa) = (abs(t-sa*m_t)/abs(b-sa*m_b))
 
 delta_S(m,M,sa) = (m-M*sa)/sa
 
-set ytics 0,20
+set ytics 0,10
 SA = 1.48e7
 
 dS = 1e-2
 set xrange [-dS:dS]
 
-set title "<-1-10>"
-set yrange [0:60]
+set title "<110>"
+set yrange [0:24]
 file= "spin-acc/0"
-set output "sa--1-10.png"
+set output "sa-110.png"
 set ylabel "Z cell"
 set multiplot layout 2,1
 #set title "spin current"
@@ -64,7 +64,7 @@ unset title
 set size 1,0.45
 set xlabel "Mn_1 SA ratio"
 set xrange [-0.25:1]
-set yrange [0:60]
+
 plot file u (delta_SS($9,$8,$6,$5, SA)):(chck_up($1,$2,$4,$3)) w p ls 4 title "dSz/dS_y",\
 "" u (delta_SS($7,$8,$4,$5, SA)):(chck_up($1,$2,$4,$3)) w p ls 5 title "dSx/dSy",\
 "" u (delta_SS($9,$8,$6,$5, SA)):(chck_dw($1,$2,$4,$3)) w p ls 4 notitle "sa_x/sa_x",\
@@ -74,8 +74,9 @@ plot file u (delta_SS($9,$8,$6,$5, SA)):(chck_up($1,$2,$4,$3)) w p ls 4 title "d
 
 
 unset multiplot 
+
 set auto x
-set output "J_s_up.png"
+set output "J_s_x.png"
 
 set multiplot layout 2,1
 #set title "spin current"
@@ -96,8 +97,8 @@ plot file u 10:(chck_dw($1,$2,$4,$3)) w p ls 4 notitle "sa_x",\
 
 unset multiplot 
 
-set output "J_s_down.png"
-set auto x
+set output "J_sy_up.png"
+
 set multiplot layout 2,1
 #set title "spin current"
 set key outside top center horizontal
@@ -114,5 +115,25 @@ set xlabel "Mn_2 J_s (A/m^3)"
 plot file u 13:(chck_dw($1,$2,$4,$3)) w p ls 4 notitle "sa_x",\
 "" u 14:(chck_dw($1,$2,$4,$3)) w p ls 5 notitle "sa_y",\
 "" u 15:(chck_dw($1,$2,$4,$3)) w p ls 7 notitle "sa_z"
+
+unset multiplot 
+set output "J_sy_down.png"
+set auto x
+set multiplot layout 2,1
+#set title "spin current"
+set key outside top center horizontal
+set size 1,0.5
+set xlabel "Mn_1 J_s (A/m^3)"
+plot file u 16:(chck_up($1,$2,$4,$3)) w p ls 4 title "Js_x",\
+"" u 17:(chck_up($1,$2,$4,$3)) w p ls 5 title "Js_y",\
+"" u 18:(chck_up($1,$2,$4,$3)) w p ls 7 title "Js_z"
+
+unset key
+unset title 
+set size 1,0.45
+set xlabel "Mn_2 J_s (A/m^3)"
+plot file u 16:(chck_dw($1,$2,$4,$3)) w p ls 4 notitle "sa_x",\
+"" u 17:(chck_dw($1,$2,$4,$3)) w p ls 5 notitle "sa_y",\
+"" u 18:(chck_dw($1,$2,$4,$3)) w p ls 7 notitle "sa_z"
 
 unset multiplot 

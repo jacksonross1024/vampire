@@ -135,7 +135,7 @@ void initialise(const double system_dimensions_x,
    st::internal::j_final_up_x.resize(three_vec_array_size,0.0); // spin current
    st::internal::sa_final.resize(three_vec_array_size, 0.0); // spin accumulation
    // st::internal::sa_sot_final.resize(three_vec_array_size,0.0); // sot sa up stack
-   // st::internal::sa_sot_int.resize(three_vec_array_size,0.0); // sot sa up stack
+   st::internal::sa_int.resize(three_vec_array_size,0.0); // sot sa up stack
    // st::internal::sa_sot_init.resize(three_vec_array_size,0.0); // sot sa down stack
    st::internal::spin_torque.resize(three_vec_array_size,0.0); // spin torque
    st::internal::ast.resize(three_vec_array_size,0.0); // adiabatic spin torque
@@ -198,9 +198,9 @@ void initialise(const double system_dimensions_x,
          // set starting cell for each stack
          st::internal::stack_index_y[stack_y]=cell;
 
-         if(i == 0) st::internal::stack_index_x[stack_x] = cell;
-         st::internal::cell_index_x[stack_x].push_back(cell);
-         stack_x++;
+        // if(i == 0) st::internal::stack_index_x[stack_x] = cell;
+       //  st::internal::cell_index_x[stack_x].push_back(cell);
+       //  stack_x++;
          // increment stack counter
          stack_y++;
          // store cell coordinates
@@ -217,6 +217,7 @@ void initialise(const double system_dimensions_x,
             st::internal::cell_stack_index[cell] = stack_y;
             // increment cell number
             cell++;
+         //   std::cout << st::internal::cell_index_x[stack_x].size() << std::endl;
          }
       }
    }
@@ -389,6 +390,7 @@ void initialise(const double system_dimensions_x,
          std::cout << "avg MPI x stack count " << st::internal::mpi_stack_list_x.size()  << std::endl;
       }
    #endif 
+   
    return;
 }
 

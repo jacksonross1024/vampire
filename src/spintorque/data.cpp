@@ -95,7 +95,7 @@ namespace st{
       std::vector<double> j_final_up_x;
       std::vector<double> sa_final; // spin accumulation
       // std::vector<double> sa_sot_final; // spin accumulation
-      // std::vector<double> sa_sot_int; // spin accumulation
+      std::vector<double> sa_int; // spin accumulation
       // std::vector<double> sa_sot_init;
       std::vector<double> spin_torque; // spin torque energy (J)
       std::vector<double> ast; // adiabatic spin torque
@@ -136,6 +136,9 @@ namespace st{
       double sot_a;
       double sot_b;
 
+        
+         // stopwatch.start();
    } // end of internal namespace
+   
       double spin_acc_time = 0.0;
 } // end of st namespace

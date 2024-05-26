@@ -26,6 +26,8 @@ set linetype 2 dt 2
 set style line 100 pt 1 ps 1.2 lt 0 lc rgb "gray30" lw 2
 set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
+
+
 w_2 = 20.0
 w_1 = 20.0
 p_2 = 300
@@ -45,7 +47,7 @@ p_1 = l*1791.0
 p_2 = l*1791.0
 p_1 = 300.0
 p_2 = 300.0
-set terminal pngcairo 
+set terminal pngcairo font "Helvetica, 14"
 
 set output "torque.png"
 set auto y
@@ -68,8 +70,8 @@ p_2_t = p_1
 w_2_t = w_1
 m_y_t_2 = 1.0/sqrt(2.0)
 
-K = ARG1 + 0
-
+#K = ARG1 + 0
+K = 0.0
 m_y_1 = m_y_2*(1.0-(K/1225.0)**2.0)**0.332
 m_y_t_1 = m_y_1
 
@@ -89,33 +91,46 @@ set print "dw-mc-dynamics.txt"
 files = system("ls dw/dw-*.txt | sort --version-sort")
 do for [file in files] {
 
-set print "dw-temp-data.txt"
+#set print "dw-temp-data.txt"
 do for [y=0:0] {
     do for [z=0:0] {
         fit wdth_2(x,w_1,p_1,m_y_1) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_1, p_1
-        fit wdth_2(x,w_2,p_2,m_y_2) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_2, p_2, m_y_2
-        fit wdth_tanh(x,w_1_t,p_1_t,m_y_t_1) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_1_t, p_1_t
-        fit wdth_tanh(x,w_2_t,p_2_t,m_y_t_2) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_2_t, p_2_t, m_y_t_2
-       print sprintf("%s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", file, y, z,p_1,w_1,p_1_err,w_1_err, p_2, w_2, m_y_2, p_2_err, w_2_err, m_y_2_err,\
-                                                                          p_1_t,2*w_1_t/3.14,p_1_t_err,w_1_t_err,p_2_t,w_2_t*2/3.14,m_y_t_2,p_2_t_err,w_2_t_err,m_y_t_2_err)
+        #fit wdth_2(x,w_2,p_2,m_y_2) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_2, p_2, m_y_2
+        #fit wdth_tanh(x,w_1_t,p_1_t,m_y_t_1) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_1_t, p_1_t
+        #fit wdth_tanh(x,w_2_t,p_2_t,m_y_t_2) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_2_t, p_2_t, m_y_t_2
+       print sprintf("%s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", file, y, z,p_1,w_1,p_1_err,w_1_err)
+
     }
 }
-stats "dw-temp-data.txt" u 5 name 'SG_1_'
-stats "dw-temp-data.txt" u 9 name 'SG_2_'
-stats "dw-temp-data.txt" u 15 name 'tan_1_'
-stats "dw-temp-data.txt" u 19 name 'tan_2_'
-set print "dw-mc-dynamics.txt" append
-print SG_1_mean, SG_1_stddev, SG_2_mean, SG_2_stddev, tan_1_mean, tan_1_stddev, tan_2_mean, tan_2_stddev, p_2
+#stats "dw-temp-data.txt" u 5 name 'SG_1_'
+#stats "dw-temp-data.txt" u 9 name 'SG_2_'
+#stats "dw-temp-data.txt" u 15 name 'tan_1_'
+#stats "dw-temp-data.txt" u 19 name 'tan_2_'
+#set print "dw-mc-dynamics.txt" append
+#print SG_1_mean, SG_1_stddev, SG_2_mean, SG_2_stddev, tan_1_mean, tan_1_stddev, tan_2_mean, tan_2_stddev, p_2
 }
 
 
-set output "width-dynamic.png"
+set output "position-dynamic.png"
 set auto x 
-set ylabel "width (nm)" 
-set xlabel "Time Step"
+set auto y 
+set auto y2 
+set y2tics out nomirror 
+set ytics out nomirror 
+set xtics out nomirror 
+set ylabel "Position (nm)" tc "#20547C"
+set xlabel "Time (ps)"
+set y2label "Velocity (km/s)" tc "#C07F28"
+
+x1 = 249.916804
+x2 = 249.916803
+dx = 0.0
+d_x(x) = (x2 = x, dx = (x2-x1)/0.1, x1 = x2, dx) #nm/ps
+
+plot "dw-mc-dynamics.txt" u ($0*0.1+2):4 w l ls 3 title "position",\
+"" u ($0*0.1+2):(d_x($4)) axis x1y2 w l ls 6 title "Velocity",\
 
 
-plot "dw-mc-dynamics.txt" u ($0*100.0):1 w l ls 1 title "m_e(0) SG",\
-"" u ($0*100.0):3 w l ls 4 title "m_e(T) SG",\
-"" u ($0*100.0):5 w l ls 5 title "m_e(0) tanh",\
-"" u ($0*100.0):7 w l ls 7 title "m_e(T) tanh",\
+#"output" u ($1*1e-4+2):2 axis x1y2 w l ls 1 title "Current",\
+
+#"" u ($0*0.1):5 axis x1y2 w l ls 1 title "width",\

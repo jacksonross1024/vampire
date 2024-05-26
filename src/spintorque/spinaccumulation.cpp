@@ -59,7 +59,7 @@ namespace st{
          three_vector_t b3(0.0,0.0,1.0);
 
          // set local constants
-         double je = program::fractional_electric_field_strength* je; // current (C/s) 
+         double je_eff = program::fractional_electric_field_strength* je_eff; // current (C/s) 
 
          //---------------------------------------------------------------------------------------------------
          //set parameters for TMR calculation
@@ -81,11 +81,11 @@ namespace st{
             double minus_cos = 1.0-cos(rel_angle);
             double exp_t = exp(-MgO_thickness/0.25e-9);
 
-            double jtunnel = je*0.5*(plus_cos+0.5*minus_cos)*exp_t;
-//            std::cout << "t_MgO=( " << create::get_material_height_min(FL) << " - " << create::get_material_height_max(RL) << " ) = " << MgO_thickness << "\tJe\t" << je << "\tJe_tun\t" << jtunnel << std::endl;
+            double jtunnel = je_eff*0.5*(plus_cos+0.5*minus_cos)*exp_t;
+//            std::cout << "t_MgO=( " << create::get_material_height_min(FL) << " - " << create::get_material_height_max(RL) << " ) = " << MgO_thickness << "\tje_eff\t" << je_eff << "\tje_eff_tun\t" << jtunnel << std::endl;
 
-            //set the current je and spin poralisation parameters
-            je = jtunnel;
+            //set the current je_eff and spin poralisation parameters
+            je_eff = jtunnel;
             // AM (2020) - I think the default parameters should be rescaled by same factor as tunnelling current and not changed using those of material 0 arbitrarily
             // default_properties.beta_cond *= mp[0].beta_cond*0.5*(plus_cos+0.5*minus_cos)*exp_t;
             // default_properties.beta_diff *= mp[0].beta_diff*0.5*(plus_cos+0.5*minus_cos)*exp_t;
@@ -161,18 +161,18 @@ namespace st{
                sa_final[3*idx+0] = 0.0;
                sa_final[3*idx+1] = 0.0;
                sa_final[3*idx+2] = 0.0;
-               j_final_up_x [3*idx+0] = initial_beta*je*initial_m[0];
-               j_final_up_x [3*idx+1] = initial_beta*je*initial_m[1];
-               j_final_up_x [3*idx+2] = initial_beta*je*initial_m[2];
+               j_final_up_x [3*idx+0] = initial_beta*je_eff*initial_m[0];
+               j_final_up_x [3*idx+1] = initial_beta*je_eff*initial_m[1];
+               j_final_up_x [3*idx+2] = initial_beta*je_eff*initial_m[2];
            }  else if (!fbc) {
                const double mod = 1.0/sqrt(m [3*idx+0]*m [3*idx+0] + m [3*idx+1]*m [3*idx+1] + m [3*idx+2]*m[3*idx+2]);
                sa_final[3*idx+0] = sa_infinity[idx]*m [3*idx+0]*mod;
                sa_final[3*idx+1] = sa_infinity[idx]*m [3*idx+1]*mod;
                sa_final[3*idx+2] = sa_infinity[idx]*m [3*idx+2]*mod;
 
-               j_final_up_x [3*idx+0] = initial_beta*je*m [3*idx+0]*mod;
-               j_final_up_x [3*idx+1] = initial_beta*je*m [3*idx+1]*mod;
-               j_final_up_x [3*idx+2] = initial_beta*je*m [3*idx+2]*mod;
+               j_final_up_x [3*idx+0] = initial_beta*je_eff*m [3*idx+0]*mod;
+               j_final_up_x [3*idx+1] = initial_beta*je_eff*m [3*idx+1]*mod;
+               j_final_up_x [3*idx+2] = initial_beta*je_eff*m [3*idx+2]*mod;
            }
 
           //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << default_properties.sa_infinity << "\t" << init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << m[3*idx+0] << " \t" <<  m[3*idx+1] << "\t" << sa[3*idx+0] << "\t" << sa[3*idx+1] << std::endl;
@@ -267,9 +267,9 @@ namespace st{
                M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
                M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
-                  V.x = jm0.x - Bc*je*m_local.x;
-                  V.y = jm0.y - Bc*je*m_local.y;
-                  V.z = jm0.z - Bc*je*m_local.z;
+                  V.x = jm0.x - Bc*je_eff*m_local.x;
+                  V.y = jm0.y - Bc*je_eff*m_local.y;
+                  V.z = jm0.z - Bc*je_eff*m_local.z;
                
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
@@ -336,9 +336,9 @@ namespace st{
                const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
                const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
-                double jmx = Bc*je*m_local.x - twoDo*pre_jmx;
-                double jmy = Bc*je*m_local.y - twoDo*pre_jmy;
-                double jmz = Bc*je*m_local.z - twoDo*pre_jmz;
+                double jmx = Bc*je_eff*m_local.x - twoDo*pre_jmx;
+                double jmy = Bc*je_eff*m_local.y - twoDo*pre_jmy;
+                double jmz = Bc*je_eff*m_local.z - twoDo*pre_jmz;
 
           
                if(cell_natom[cell]>0) {
@@ -465,6 +465,7 @@ namespace st{
          // Zero all shared arrays (essential for parallelisation to work)
          std::fill (spin_torque.begin(),spin_torque.end(),0.0);
          std::fill (sa_final.begin(),sa_final.end(),0.0);
+         std::fill (sa_int.begin(),sa_int.end(),0.0);
          // std::fill (sa_sot_int.begin(),sa_sot_int.end(),0.0);
          // std::fill (sa_sot_init.begin(),sa_sot_init.end(),0.0);
          // std::fill (j_final_up_y.begin(),j_final_up_y.end(),0.0);
@@ -488,8 +489,8 @@ namespace st{
          three_vector_t b3(0.0,0.0,1.0);
 
          // set local constants
-         double je = program::fractional_electric_field_strength* je; // current (C/s)
-
+         const double je_eff = program::fractional_electric_field_strength* je; // current (C/s)
+        
          //---------------------------------------------------------------------------------------------------
          //set parameters for TMR calculation
          if(TMRenable == true){
@@ -510,11 +511,11 @@ namespace st{
             double minus_cos = 1.0-cos(rel_angle);
             double exp_t = exp(-MgO_thickness/0.25e-9);
 
-            double jtunnel = je*0.5*(plus_cos+0.5*minus_cos)*exp_t;
-//            std::cout << "t_MgO=( " << create::get_material_height_min(FL) << " - " << create::get_material_height_max(RL) << " ) = " << MgO_thickness << "\tJe\t" << je << "\tJe_tun\t" << jtunnel << std::endl;
+            double jtunnel = je_eff*0.5*(plus_cos+0.5*minus_cos)*exp_t;
+//            std::cout << "t_MgO=( " << create::get_material_height_min(FL) << " - " << create::get_material_height_max(RL) << " ) = " << MgO_thickness << "\tje_eff\t" << je_eff << "\tje_eff_tun\t" << jtunnel << std::endl;
 
-            //set the current je and spin poralisation parameters
-            je = jtunnel;
+            //set the current je_eff and spin poralisation parameters
+            // je_eff = jtunnel;/
             // AM (2020) - I think the default parameters should be rescaled by same factor as tunnelling current and not changed using those of material 0 arbitrarily
             default_properties.beta_cond *= /*mp[0].beta_cond**/0.5*(plus_cos+0.5*minus_cos)*exp_t;
             default_properties.beta_diff *= /*mp[0].beta_diff**/0.5*(plus_cos+0.5*minus_cos)*exp_t;
@@ -650,9 +651,9 @@ namespace st{
                M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
                //no charge current conversion from out of plane process
-                  V.x = jm0.x;// - Bc*je*m_local.x;
-                  V.y = jm0.y;// - Bc*je*m_local.x;
-                  V.z = jm0.z;// - Bc*je*m_local.z;
+                  V.x = jm0.x;// - Bc*je_eff*m_local.x;
+                  V.y = jm0.y;// - Bc*je_eff*m_local.x;
+                  V.z = jm0.z;// - Bc*je_eff*m_local.z;
               
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
@@ -719,7 +720,7 @@ namespace st{
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
                   //modify spin current by current density and spin hall theta 
-                  if(sot_sa_source[cell]) jmy = -je*initial_theta;
+                  if(sot_sa_source[cell]) jmy = -je_eff*initial_theta;
                double jmz =   twoDo*pre_jmz;
                
                // // Save values. assume no 0 magnetisation cells
@@ -923,9 +924,9 @@ namespace st{
                M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
                //no charge current polarisation
-               V.x = jm0.x;// - Bc*je*m_local.x;
-               V.y = jm0.y;// + Bc*je*m_local.y;
-               V.z = jm0.z;// - Bc*je*m_local.z;
+               V.x = jm0.x;// - Bc*je_eff*m_local.x;
+               V.y = jm0.y;// + Bc*je_eff*m_local.y;
+               V.z = jm0.z;// - Bc*je_eff*m_local.z;
               
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
@@ -987,15 +988,15 @@ namespace st{
                const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
                const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
-               //  double jmx = Bc*je*m_local.x - twoDo*pre_jmx;
-               //  double jmy = Bc*je*m_local.y - twoDo*pre_jmy;
-               //  double jmz = Bc*je*m_local.z - twoDo*pre_jmz;
+               //  double jmx = Bc*je_eff*m_local.x - twoDo*pre_jmx;
+               //  double jmy = Bc*je_eff*m_local.y - twoDo*pre_jmy;
+               //  double jmz = Bc*je_eff*m_local.z - twoDo*pre_jmz;
 
                
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
                   //Au spin source sign direction dependent 
-                  if(sot_sa_source[cell]) jmy += -direction_sign*je*initial_theta;
+                  if(sot_sa_source[cell]) jmy += -direction_sign*je_eff*initial_theta;
                double jmz =   twoDo*pre_jmz;
               
                if(cell_natom[cell]>0) {
@@ -1216,9 +1217,9 @@ namespace st{
                M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
                //no charge current conversion
-               V.x = jm0.x;// - Bc*je*m_local.x;
-               V.y = jm0.y;// + Bc*je*m_local.y;
-               V.z = jm0.z;// - Bc*je*m_local.z;
+               V.x = jm0.x;// - Bc*je_eff*m_local.x;
+               V.y = jm0.y;// + Bc*je_eff*m_local.y;
+               V.z = jm0.z;// - Bc*je_eff*m_local.z;
                
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
@@ -1282,7 +1283,7 @@ namespace st{
 
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
-                  if(sot_sa_source[cell]) jmy = -direction_sign*je*initial_theta;
+                  if(sot_sa_source[cell]) jmy = -direction_sign*je_eff*initial_theta;
                double jmz =   twoDo*pre_jmz;
                
                if(cell_natom[cell]>0) {
@@ -1504,9 +1505,9 @@ namespace st{
                M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
                // no charge current conversion
-                  V.x = jm0.x;// - Bc*je*m_local.x;
-                  V.y = jm0.y;// + Bc*je*m_local.y;
-                  V.z = jm0.z;// - Bc*je*m_local.z;
+                  V.x = jm0.x;// - Bc*je_eff*m_local.x;
+                  V.y = jm0.y;// + Bc*je_eff*m_local.y;
+                  V.z = jm0.z;// - Bc*je_eff*m_local.z;
               
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
@@ -1570,7 +1571,7 @@ namespace st{
 
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
-                  if(sot_sa_source[cell]) jmy += -direction_sign*je*initial_theta;
+                  if(sot_sa_source[cell]) jmy += -direction_sign*je_eff*initial_theta;
                double jmz =   twoDo*pre_jmz;
 
                if(cell_natom[cell]>0) {
@@ -1759,9 +1760,9 @@ namespace st{
                M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
                M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
-               V.x = jm0.x - Bc*je*m_local.x;
-               V.y = jm0.y - Bc*je*m_local.y;
-               V.z = jm0.z - Bc*je*m_local.z;
+               V.x = jm0.x - Bc*je_eff*m_local.x;
+               V.y = jm0.y - Bc*je_eff*m_local.y;
+               V.z = jm0.z - Bc*je_eff*m_local.z;
 
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
@@ -1823,12 +1824,20 @@ namespace st{
            
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
-                  if(sot_sa_source[cell]) jmy = je*initial_theta;
+                  if(sot_sa_source[cell]) jmy = je_eff*initial_theta;
                double jmz =   twoDo*pre_jmz;
+
+               sa_int[cellx] = sax;
+               sa_int[celly] = say;
+               sa_int[cellz] = saz;
 
                sa_final[cellx] = sax;
                sa_final[celly] = say;
                sa_final[cellz] = saz;
+
+               spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
+               spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
+               spin_torque[cellz] = atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
 
                j_final_up_y[cellx] = jmx;
                j_final_up_y[celly] = jmy;
@@ -1838,9 +1847,9 @@ namespace st{
                j_final_down_y[celly] = jmy*direction_sign;
                j_final_down_y[cellz] = jmz*direction_sign;
 
-               // j_final_up_x[cellx] = Bc*je*m_local.x - twoDo*pre_jmx;;
-               // j_final_up_x[celly] = Bc*je*m_local.y - twoDo*pre_jmy;
-               // j_final_up_x[cellz] = Bc*je*m_local.z - twoDo*pre_jmz;
+               // j_final_up_x[cellx] = Bc*je_eff*m_local.x - twoDo*pre_jmx;;
+               // j_final_up_x[celly] = Bc*je_eff*m_local.y - twoDo*pre_jmy;
+               // j_final_up_x[cellz] = Bc*je_eff*m_local.z - twoDo*pre_jmz;
 
                // spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
                // spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
@@ -1931,6 +1940,12 @@ namespace st{
                }
             }
          } // end of stack loop
+/*
+         #ifdef MPICF
+            // MPI_Allreduce(MPI_IN_PLACE, &j_final_up_x[0],j_final_up_x.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &sa_int[0],sa_int.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+         #endif
+
          // #ifdef MPICH
             int_stacks = mpi_stack_list_x.size();
          // #else
@@ -1946,37 +1961,46 @@ namespace st{
             // #else
                // stack = stack_index_x.at(s);
             // #endif
-            
-            // if(stack % 3 == 0) continue;
+            //  if(stack % 3 == 0) continue;
+            // std::cout << stack << std::endl;
+           
               
             const int idx = stack_index_x[stack];
-           // std::cout << stack << ", " << idx << std::endl;
+            if(sot_sa_source[idx]) continue;
+
             // set initial values
            if(fbc) { 
                // sa[3*idx+0] = 0.0;
                // sa[3*idx+1] = 0.0;
                // sa[3*idx+2] = 0.0;
-               j_final_up_x[3*idx+0] = initial_beta*je*initial_m[0];
-               j_final_up_x[3*idx+1] = initial_beta*je*initial_m[1];
-               j_final_up_x[3*idx+2] = initial_beta*je*initial_m[2];
+               j_final_up_x[3*idx+0] = initial_beta*je_eff*initial_m[0];
+               j_final_up_x[3*idx+1] = initial_beta*je_eff*initial_m[1];
+               j_final_up_x[3*idx+2] = initial_beta*je_eff*initial_m[2];
            }  else if (!fbc) {
-               const double mod = 1.0/sqrt(sa_final[3*idx+0]*sa_final[3*idx+0] + sa_final[3*idx+1]*sa_final[3*idx+1] + sa_final[3*idx+2]*sa_final[3*idx+2]);
-               // sa[3*idx+0] = sa_infinity[idx]*m [3*idx+0]*mod;
-               // sa[3*idx+1] = sa_infinity[idx]*m [3*idx+1]*mod;
-               // sa[3*idx+2] = sa_infinity[idx]*m [3*idx+2]*mod;
+                double mod = sqrt(sa_int[3*idx+0]*sa_int[3*idx+0] + sa_int[3*idx+1]*sa_int[3*idx+1] + sa_int[3*idx+2]*sa_int[3*idx+2]);
+                if(mod > 1e-11) mod = 1.0/mod;
+               sa_final[3*idx+0] = sa_int[3*idx+0];
+               sa_final[3*idx+1] = sa_int[3*idx+1];
+               sa_final[3*idx+2] = sa_int[3*idx+2];
 
-               j_final_up_x[3*idx+0] = initial_beta*je*sa_final[3*idx+0]*mod;
-               j_final_up_x[3*idx+1] = initial_beta*je*sa_final[3*idx+1]*mod;
-               j_final_up_x[3*idx+2] = initial_beta*je*sa_final[3*idx+2]*mod;
+               j_final_up_x[3*idx+0] = initial_beta*je_eff*sa_int[3*idx+0]*mod;
+               j_final_up_x[3*idx+1] = initial_beta*je_eff*sa_int[3*idx+1]*mod;
+               j_final_up_x[3*idx+2] = initial_beta*je_eff*sa_int[3*idx+2]*mod;
+
+             //  if(je_eff > 0) std::cout << j_final_up_x[3*idx+0] << " , " << j_final_up_x[3*idx+1] << ", " << j_final_up_x[3*idx+2] << std::endl;
+          //    std::cout << mod << ", " << sa_final[3*idx+0] << ", " << sa_final[3*idx+1] << ", " << sa_final[3*idx+2] << std::endl;
            }
 
           //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << default_properties.sa_infinity << "\t" << init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << m[3*idx+0] << " \t" <<  m[3*idx+1] << "\t" << sa[3*idx+0] << "\t" << sa[3*idx+1] << std::endl;
-
+        // std::cout << stack << ", " << idx << ", " << spin_acc_sign[idx] << std::endl;
             // loop over all cells in stack after first (idx+1)
-            for(int xc = 1; xc < cell_index_x[stack].size()-1; ++xc) {
+            std::vector<int> cell_container_list = cell_index_x[stack];
+            for(int xc = 1; xc < cell_container_list.size(); ++xc) {
                // if(xc == 0 && (cell_index_x[stack][xc-1] != idx)) std::cout << idx << ", " << cell_index_x[stack][xc-1] << std::endl;
 
                int cell = cell_index_x[stack][xc];
+               // if(sot_sa_source[cell]) std::cout << "problem" << std::endl;
+               //   std::cout << stack  << ", " << cell << ", " << spin_acc_sign[cell] << std::endl;
                // calculate cell id's
                const int cellx = 3*cell+0;
                const int celly = 3*cell+1;
@@ -1990,9 +2014,9 @@ namespace st{
                three_vector_t  m_local(0.0,  0.0,  0.0);
                // copy array values to temporaries for readability
              
-                  m_local.x = sa_final[cellx];
-                  m_local.y = sa_final[celly];
-                  m_local.z = sa_final[cellz]; // current cell new SA
+                  m_local.x = sa_int[cellx];
+                  m_local.y = sa_int[celly];
+                  m_local.z = sa_int[cellz]; // current cell new SA
 
                const double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
                // const double pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
@@ -2004,6 +2028,7 @@ namespace st{
                   m_local.z = m_local.z/modm;
                }
                else{
+              //    std::cout << "problem " << std::endl;
                   m_local.x = 0.0;
                   m_local.y = 0.0;
                   m_local.z = 0.0;
@@ -2048,16 +2073,16 @@ namespace st{
                M.yx = preD*m_local.x*m_local.y;             M.yy = preD*m_local.y*m_local.y - twoDo;     M.yz = preD*m_local.z*m_local.y;
                M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
-                  V.x = jm0.x - Bc*je*m_local.x;
-                  V.y = jm0.y - Bc*je*m_local.y;
-                  V.z = jm0.z - Bc*je*m_local.z;
+                  V.x = jm0.x - Bc*je_eff*m_local.x;
+                  V.y = jm0.y - Bc*je_eff*m_local.y;
+                  V.z = jm0.z - Bc*je_eff*m_local.z;
                
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
                const double i_lsdl = 1.0/lambda_sdl[cell];
-                double mp_inf = sa_infinity[cell];
-                 if(sot_sa && sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+               double mp_inf = modm;
+              
                const double a_local = a[cell];
                const double b_local = b[cell];
                const double two_a = 2.0*a_local;
@@ -2112,15 +2137,15 @@ namespace st{
                const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
                const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
-               double jmx = Bc*je*m_local.x - twoDo*pre_jmx;
-               double jmy = Bc*je*m_local.y - twoDo*pre_jmy;
-               double jmz = Bc*je*m_local.z - twoDo*pre_jmz;
+               double jmx = Bc*je_eff*m_local.x - twoDo*pre_jmx;
+               double jmy = Bc*je_eff*m_local.y - twoDo*pre_jmy;
+               double jmz = Bc*je_eff*m_local.z - twoDo*pre_jmz;
 
                //calculate directly from J(Sxm)
                double sax = b1.x*sa_para + b2.x*sa_perp2 + b3.x*sa_perp3;
                double say = b1.y*sa_para + b2.y*sa_perp2 + b3.y*sa_perp3;
                double saz = b1.z*sa_para + b2.z*sa_perp2 + b3.z*sa_perp3;
-               
+
                if(cell_natom[cell]>0) {
 
                   // Save values for the spin current
@@ -2128,9 +2153,14 @@ namespace st{
                   j_final_up_x[celly] = jmy;
                   j_final_up_x[cellz] = jmz;
 
+                  sa_final[cellx] = sax;
+                  sa_final[celly] = say;
+                  sa_final[cellz] = saz;
+
                   spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
                   spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
                   spin_torque[cellz] = atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
+
                      if(sot_check) {    
                      spin_torque[cellx] = 0.0;// += microcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
                      spin_torque[celly] = 0.0;//+= microcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
@@ -2248,13 +2278,12 @@ namespace st{
                }
             } // end of cell loop
          } // end of stack loop
-
+ */
          // #ifdef MPICH
             // int_stacks = mpi_stack_list_y.size();
          // #else 
             // int_stacks = stack_index_y.size();
          // #endif
-
          // std::cout << "finilasing sot simulation." << std::endl;
          // for(int s = 0; s < int_stacks; s++) {
          //    // #ifdef MPICH
@@ -2262,10 +2291,8 @@ namespace st{
          //    // #else 
          //       // stack = stack_index_y.at(s);
          //    // #endif
-
          //    const int idx = stack_index_y[stack] + 1;
-         //   //final loop to calculate spin acc and torque from summed spin currents
-            
+         //   //final loop to calculate spin acc and torque from summed spin currents 
          // }
          
 
