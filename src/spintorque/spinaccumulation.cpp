@@ -1940,7 +1940,7 @@ namespace st{
                }
             }
          } // end of stack loop
-/*
+
          #ifdef MPICF
             // MPI_Allreduce(MPI_IN_PLACE, &j_final_up_x[0],j_final_up_x.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(MPI_IN_PLACE, &sa_int[0],sa_int.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -2264,9 +2264,13 @@ namespace st{
                SxSxSp[1]= (m_local.z*SxSp[0]-m_local.x*SxSp[2]);
                SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
-               total_ST[cellx] += prefac_sc*(m_local.y*saz-m_local.z*say);
-               total_ST[celly] += prefac_sc*(m_local.z*sax-m_local.x*saz);
-               total_ST[cellz] += prefac_sc*(m_local.x*say-m_local.y*sax);
+               //calculate directly from J(Sxm)
+                double Tx = prefac_sc*(m_local.y*saz-m_local.z*say);
+                double Ty = prefac_sc*(m_local.z*sax-m_local.x*saz);
+                double Tz = prefac_sc*(m_local.x*say-m_local.y*sax);
+                total_ST[cellx] = Ty*m_local.z-Tz*m_local.y;
+                total_ST[celly] = Tz*m_local.x-Tx*m_local.z;
+                total_ST[cellz] = Tx*m_local.y-Ty*m_local.x;
 
                ast[cellx] += -aj*SxSxSp[0];
                ast[celly] += -aj*SxSxSp[1];
@@ -2278,7 +2282,7 @@ namespace st{
                }
             } // end of cell loop
          } // end of stack loop
- */
+ 
          // #ifdef MPICH
             // int_stacks = mpi_stack_list_y.size();
          // #else 
