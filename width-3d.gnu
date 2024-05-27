@@ -95,10 +95,10 @@ do for [file in files] {
 do for [y=0:0] {
     do for [z=0:0] {
         fit wdth_2(x,w_1,p_1,m_y_1) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_1, p_1
-        #fit wdth_2(x,w_2,p_2,m_y_2) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_2, p_2, m_y_2
+        fit wdth_2(x,w_2,p_2,m_y_2) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_2, p_2, m_y_2
         #fit wdth_tanh(x,w_1_t,p_1_t,m_y_t_1) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_1_t, p_1_t
         #fit wdth_tanh(x,w_2_t,p_2_t,m_y_t_2) file  u ($1*0.1):(chck($2,$3,-$5,y,z)) via w_2_t, p_2_t, m_y_t_2
-       print sprintf("%s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", file, y, z,p_1,w_1,p_1_err,w_1_err)
+       print sprintf("%s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", file, y, z,p_1,w_1,p_1_err,w_1_err,p_2,w_2,m_y_2,p_2_err,w_2_err,m_y_2_err)
 
     }
 }
@@ -126,6 +126,7 @@ x1 = 249.916804
 x2 = 249.916803
 dx = 0.0
 d_x(x) = (x2 = x, dx = (x2-x1)/0.1, x1 = x2, dx) #nm/ps
+set y2range [0:5]
 
 plot "dw-mc-dynamics.txt" u ($0*0.1+2):4 w l ls 3 title "position",\
 "" u ($0*0.1+2):(d_x($4)) axis x1y2 w l ls 6 title "Velocity",\

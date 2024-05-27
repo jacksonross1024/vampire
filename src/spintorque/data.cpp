@@ -92,6 +92,8 @@ namespace st{
       std::vector<double> j_final_down_y;
       std::vector<double> j_int_up_y; // spin current
       std::vector<double> j_int_down_y;
+      std::vector<double> j_init_up_y; // spin current
+      std::vector<double> j_init_down_y;
       std::vector<double> j_final_up_x;
       std::vector<double> sa_final; // spin accumulation
       // std::vector<double> sa_sot_final; // spin accumulation

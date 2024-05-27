@@ -92,6 +92,8 @@ namespace st{
       extern std::vector<double> j_final_down_y;
       extern std::vector<double> j_int_up_y; // spin current
       extern std::vector<double> j_int_down_y;
+      extern std::vector<double> j_init_up_y; // spin current
+      extern std::vector<double> j_init_down_y;
       extern std::vector<double> sa_final; // spin accumulation
       // extern std::vector<double> sa_sot_final;
       extern std::vector<double> sa_int;

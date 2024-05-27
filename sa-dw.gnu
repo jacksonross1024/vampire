@@ -46,20 +46,21 @@ set ytics out mirror
 set xtics out nomirror 
 set ytics 0.5
 
-fname = 20 
+fname = 4
 
-p1 = 280
+p1 = 210
 set xrange [p1-50:p1+50]
 
 file= sprintf("spin-acc/%.0f",fname)
-set output sprintf("sa-dw-sot-%.0f.png",fname)
+set output sprintf("sa-dw-sot-10e11-%.0f.png",fname)
 
 set ylabel "sa (x 1.48e7 C/m^3)"
 set multiplot layout 2,1
-set title "DW STT Only"
+set title "DW STT+SOT Only"
 set key outside top center horizontal
 set size 1,0.5
 set xlabel "position (nm)"
+
 plot file u (chck_dw_up($1,$3,$4)*cell_x):($7/SA) w p ls 3 title "sa_x",\
 "" u (chck_dw_up($1,$3,$4)*cell_x):($8/SA) w p ls 4 title "sa_y",\
 "" u (chck_dw_up($1,$3,$4)*cell_x):($9/SA) w p ls 5  title "sa_z"
@@ -83,7 +84,7 @@ unset multiplot
 
 set ytics 0.5
 set xrange [p1-50:p1+50]
-set output sprintf("J-sx-up-sot-%.0f.png",fname)
+set output sprintf("J-sx-up-sot-10e11-%.0f.png",fname)
 
 set ylabel "Js^x (x 10^{10} A/m^2)"
 set xlabel "Position (nm)"
@@ -93,73 +94,102 @@ set multiplot layout 2,1
 #set title "spin current"
 set key outside top center horizontal
 set size 1,0.5
-set xlabel "Mn_1 J_s (A/m^3)"
+set xlabel "Mn_1 Position (nm)"
 plot file u (chck_dw_up($1,$3,$4)*cell_x):($10/J_0) w p ls 3 title "Js_x",\
 "" u (chck_dw_up($1,$3,$4)*cell_x):($11/J_0) w p ls 4 title "Js_y",\
-"" u (chck_dw_up($1,$3,$4)*cell_x):($12/J_0) w p ls 5 title "Js_z",\
+#"" u (chck_dw_up($1,$3,$4)*cell_x):($12/J_0) w p ls 5 title "Js_z",\
 
 unset key
 unset title 
 set size 1,0.45
-set xlabel "Mn_2 J_s (A/m^3)"
+set xlabel "Mn_2 Position (nm)"
 plot file u (chck_dw_down($1,$3,$4)*cell_x):($10/J_0)  w p ls 3 title "Js_x",\
 "" u (chck_dw_down($1,$3,$4)*cell_x):($11/J_0)  w p ls 4 title "Js_y",\
-"" u (chck_dw_down($1,$3,$4)*cell_x):($12/J_0)  w p ls 5 title "Js_z",\
+#"" u (chck_dw_down($1,$3,$4)*cell_x):($12/J_0)  w p ls 5 title "Js_z",\
 
 unset multiplot 
 
-set output sprintf("J_sy_up-sot-%.0f.png",fname)
+set output sprintf("J_sy_up-sot-10e11-%.0f.png",fname)
 
 set multiplot layout 2,1
 #set title "spin current"
 set key outside top center horizontal
 set size 1,0.5
-set xlabel "Mn_1 J_s (A/m^3)"
+set xlabel "Mn_1 Position (nm)"
 plot file u (chck_dw_up($1,$3,$4)*cell_x):($13/J_0)  w p ls 3 title "Js_x",\
 "" u (chck_dw_up($1,$3,$4)*cell_x):($14/J_0)  w p ls 4 title "Js_y",\
-"" u (chck_dw_up($1,$3,$4)*cell_x):($15/J_0)  w p ls 5 title "Js_z",\
+#"" u (chck_dw_up($1,$3,$4)*cell_x):($15/J_0)  w p ls 5 title "Js_z",\
 
 unset key
 unset title 
 set size 1,0.45
-set xlabel "Mn_2 J_s (A/m^3)"
+set xlabel "Mn_2 Position (nm)"
 plot file u (chck_dw_down($1,$3,$4)*cell_x):($13/J_0)  w p ls 3 title "Js_x",\
 "" u (chck_dw_down($1,$3,$4)*cell_x):($14/J_0)  w p ls 4 title "Js_y",\
-"" u (chck_dw_down($1,$3,$4)*cell_x):($15/J_0)  w p ls 5 title "Js_z",\
+#"" u (chck_dw_down($1,$3,$4)*cell_x):($15/J_0)  w p ls 5 title "Js_z",\
 
 unset multiplot 
 
 
-set output sprintf("J_sy_down-sot-%.0f.png",fname)
+set output sprintf("J_sy_down-sot-10e11-%.0f.png",fname)
 
 set multiplot layout 2,1
 #set title "spin current"
 set key outside top center horizontal
 set size 1,0.5
-set xlabel "Mn_1 J_s (A/m^3)"
+set xlabel "Mn_1 Position (nm)"
 plot file u (chck_dw_up($1,$3,$4)*cell_x):($16/J_0)  w p ls 3 title "Js_x",\
 "" u (chck_dw_up($1,$3,$4)*cell_x):($17/J_0)  w p ls 4 title "Js_y",\
-"" u (chck_dw_up($1,$3,$4)*cell_x):($18/J_0)  w p ls 5 title "Js_z",\
+#"" u (chck_dw_up($1,$3,$4)*cell_x):($18/J_0)  w p ls 5 title "Js_z",\
 
 unset key
 unset title 
 set size 1,0.45
-set xlabel "Mn_2 J_s (A/m^3)"
+set xlabel "Mn_2 Position (nm)"
 plot file u (chck_dw_down($1,$3,$4)*cell_x):($16/J_0)  w p ls 3 title "Js_x",\
 "" u (chck_dw_down($1,$3,$4)*cell_x):($17/J_0)  w p ls 4 title "Js_y",\
-"" u (chck_dw_down($1,$3,$4)*cell_x):($18/J_0)  w p ls 5 title "Js_z",\
+#"" u (chck_dw_down($1,$3,$4)*cell_x):($18/J_0)  w p ls 5 title "Js_z",\
+
+unset multiplot 
+
+set output sprintf("J_sx_total-sttsot-10e11-%.0f.png",fname)
+
+J_0 = 1e9
+
+set ytics 10
+set multiplot layout 2,1
+#set title "spin current"
+set key outside top center horizontal
+set size 1,0.5
+set xlabel "Mn_1 Position (nm)"
+set title "STT + SOT"
+set ylabel "Js_z (x 10^9 A/m^2)"
+
+plot file u (chck_dw_up($1,$3,$4)*cell_x):($12/J_0)  w p ls 3 title "Js^x_z",\
+"" u (chck_dw_up($1,$3,$4)*cell_x):($15/J_0)  w p ls 4 title "Js^y_z",\
+"" u (chck_dw_up($1,$3,$4)*cell_x):($18/J_0)  w p ls 5 title "Js^{-y}_z",\
+
+unset key
+unset title 
+set size 1,0.45
+set xlabel "Mn_2 Position (nm)"
+plot file u (chck_dw_down($1,$3,$4)*cell_x):($12/J_0)  w p ls 3 title "Js^x_z",\
+"" u (chck_dw_down($1,$3,$4)*cell_x):($15/J_0)  w p ls 4 title "Js^y_z",\
+"" u (chck_dw_down($1,$3,$4)*cell_x):($18/J_0)  w p ls 5 title "Js^{-y}_z",\
 
 unset multiplot 
 
 
-set output sprintf("Torque-sot-%.0f.png",fname)
+set output sprintf("Torque-stt-sot-10e11-%.0f.png",fname)
 
 set multiplot layout 2,1
 set auto y 
 set ytics 3
 set key outside top center horizontal
 set size 1,0.5
-set xlabel "Mn_1 Torque (mT)"
+set ylabel "Torque (mT)"
+set title "STT + SOT"
+set xlabel "Mn_1 Position (nm)"
 plot file u (chck_dw_up($1,$3,$4)*cell_x):($27*100)  w p ls 3 title "T_x",\
 "" u (chck_dw_up($1,$3,$4)*cell_x):($28*100)  w p ls 4 title "T_y",\
 "" u (chck_dw_up($1,$3,$4)*cell_x):($29*100)  w p ls 5 title "T_z",\
@@ -167,7 +197,7 @@ plot file u (chck_dw_up($1,$3,$4)*cell_x):($27*100)  w p ls 3 title "T_x",\
 unset key
 unset title 
 set size 1,0.45
-set xlabel "Mn_2 Torque (mT)"
+set xlabel "Mn_2 Position (nm)"
 plot file u (chck_dw_down($1,$3,$4)*cell_x):($27*100)  w p ls 3 title "T_x",\
 "" u (chck_dw_down($1,$3,$4)*cell_x):($28*100)  w p ls 4 title "T_y",\
 "" u (chck_dw_down($1,$3,$4)*cell_x):($29*100)  w p ls 5 title "T_z",\

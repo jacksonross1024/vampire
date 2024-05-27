@@ -132,6 +132,8 @@ void initialise(const double system_dimensions_x,
    st::internal::j_final_down_y.resize(three_vec_array_size,0.0);
    st::internal::j_int_up_y.resize(three_vec_array_size,0.0); // spin current
    st::internal::j_int_down_y.resize(three_vec_array_size,0.0); // spin current
+   st::internal::j_init_up_y.resize(three_vec_array_size,0.0); // spin current
+   st::internal::j_init_down_y.resize(three_vec_array_size,0.0); // spin current
    st::internal::j_final_up_x.resize(three_vec_array_size,0.0); // spin current
    st::internal::sa_final.resize(three_vec_array_size, 0.0); // spin accumulation
    // st::internal::sa_sot_final.resize(three_vec_array_size,0.0); // sot sa up stack
