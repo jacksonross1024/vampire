@@ -342,38 +342,32 @@ namespace program{
 		case 0: { // LLG Heun
 			while(sim::time<sim::equilibration_time+sim::total_time) {
 				
-			double time_from_start = mp::dt_SI * double(sim::time-sim::equilibration_time);
+				double time_from_start = mp::dt_SI * double(sim::time-sim::equilibration_time);
+				if(time_from_start < program::internal::electrical_pulse_rise_time ) {
+					program::fractional_electric_field_strength = time_from_start / program::internal::electrical_pulse_rise_time;
+				}
+				// implement continuous current
+				else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time) ){
+					program::fractional_electric_field_strength = 1.0;
+				}
+				// implement fall time
+				else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time + program::internal::electrical_pulse_fall_time)) {
+					const double fractional_fall_time = time_from_start - (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time);
+					program::fractional_electric_field_strength = 1.0 - fractional_fall_time / program::internal::electrical_pulse_fall_time;
+				}
+				else{
+					program::fractional_electric_field_strength = 0.0;
+				}
 
-   			if(time_from_start < program::internal::electrical_pulse_rise_time ) {
-      			program::fractional_electric_field_strength = time_from_start / program::internal::electrical_pulse_rise_time;
-			
-   			}
-   			// implement continuous current
-   			else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time) ){
-     			program::fractional_electric_field_strength = 1.0;
-
-   			}
-   			// implement fall time
-   			else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time + program::internal::electrical_pulse_fall_time)) {
-    	  		const double fractional_fall_time = time_from_start - (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time);
-    	  		program::fractional_electric_field_strength = 1.0 - fractional_fall_time / program::internal::electrical_pulse_fall_time;
-		
-   			}
-   // after pulse current = 0
-   			else{
-      			program::fractional_electric_field_strength = 0.0;
-   			}
-			for(int cell = 0; cell < program::internal::num_dw_cells; cell++) {
-				
-					// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
-						program::internal::mag[program::internal::num_mag_cat* cell + 0 ] = 0.0;
-						program::internal::mag[program::internal::num_mag_cat* cell + 1 ] = 0.0;
-						program::internal::mag[program::internal::num_mag_cat* cell + 2 ] = 0.0;
-						program::internal::mag[program::internal::num_mag_cat* cell + 3 ] = 0.0;
-						program::internal::mag[program::internal::num_mag_cat* cell + 4 ] = 0.0;
-						program::internal::mag[program::internal::num_mag_cat* cell + 5 ] = 0.0;
-
-					} 
+				for(int cell = 0; cell < program::internal::num_dw_cells; cell++) {
+						// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
+							program::internal::mag[program::internal::num_mag_cat* cell + 0 ] = 0.0;
+							program::internal::mag[program::internal::num_mag_cat* cell + 1 ] = 0.0;
+							program::internal::mag[program::internal::num_mag_cat* cell + 2 ] = 0.0;
+							program::internal::mag[program::internal::num_mag_cat* cell + 3 ] = 0.0;
+							program::internal::mag[program::internal::num_mag_cat* cell + 4 ] = 0.0;
+							program::internal::mag[program::internal::num_mag_cat* cell + 5 ] = 0.0;
+				} 
 
 				for(uint64_t ti=0;ti<sim::partial_time;ti++){
 					double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
@@ -406,7 +400,7 @@ namespace program{
 					sim::TTTp =            ( G*(Te-Tp)     )*dt/Cl + Tp - (Tp-sim::Teq)*sim::HeatSinkCouplingConstant*dt;
 
 					// std::cout << sim::TTTe << ", " << sim::TTTp << ", " << sim::Teq << std::endl;
-
+					sim::temperature = sim::TTTe;
 					#ifdef MPICF
 				// Select CUDA version if supported
 					#ifdef CUDA
@@ -427,8 +421,9 @@ namespace program{
 				#endif
 				// increment time
 				sim::internal::increment_time();
-				}	
-				stats::update();
+			}
+
+			stats::update();
 			for(int atom=0;atom<num_local_atoms;atom++) {
 				int cell = program::internal::atom_to_cell_array[atom];
 			//	int cat = atoms::sublayer_array[atom];
