@@ -136,7 +136,7 @@ namespace st{
          int stack;
          for(int s=0; s < int_stacks; ++s) {
             #ifdef MPICH
-            stack = stacks_list[s] + 1;
+            stack = mpi_stack_list[s] + 1;
             #else 
             stack = s;
             #endif
