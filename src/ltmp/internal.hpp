@@ -41,6 +41,8 @@ namespace ltmp{
       extern double TTCe; // electron heat capacity (T=0)
       extern double TTCl; // lattice heat capcity
       extern double dt; // time step
+      // extern double TTTeq;
+      extern double Tcool;
 
       extern double minimum_temperature; // Minimum temperature in temperature gradient
       extern double maximum_temperature; // Maximum temperature in temperature gradient

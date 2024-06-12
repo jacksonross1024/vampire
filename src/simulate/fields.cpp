@@ -333,7 +333,7 @@ int calculate_thermal_fields(const int start_index,const int end_index){
 	fill (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index,0.0);
 	fill (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index,0.0);
 
-   generate (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index, mtrandom::gaussian);
+    generate (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index, mtrandom::gaussian);
   	generate (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index, mtrandom::gaussian);
     generate (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index, mtrandom::gaussian);
 
@@ -342,7 +342,7 @@ int calculate_thermal_fields(const int start_index,const int end_index){
       const int imaterial=atoms::type_array[atom];
       const double H_th_sigma = sigma_prefactor[imaterial];
 
-      atoms::thermal_x_field[atom] *= H_th_sigma;
+        atoms::thermal_x_field[atom] *= H_th_sigma;
 		atoms::thermal_y_field[atom] *= H_th_sigma;
 		atoms::thermal_z_field[atom] *= H_th_sigma;
 	}
@@ -561,7 +561,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		// if(program::fractional_electric_field_strength > 0.0) std::cout << program::fractional_electric_field_strength << std::endl;
 		double lotx = lotlt_x;//*lot_unit_vector[0];
 		double loty = lotlt_y;//*lot_unit_vector[1];
-		double lotz = lotlt_z;//lotlt_z*lot_unit_vector[2];
+		double lotz = lotlt_z*exp(-(500.0-atoms::z_coord_array[atom])/300.0);//lotlt_z*lot_unit_vector[2];
 
 		hx += (loty*sz - sy*lotz);
 		hy += (lotz*sx - sz*lotx);

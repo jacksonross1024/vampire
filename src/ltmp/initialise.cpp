@@ -73,7 +73,7 @@ void initialise(const double system_dimensions_x,
    ltmp::internal::dt=dt; // time step
    ltmp::internal::minimum_temperature = Tmin; // minimum temperature for temperature gradient
    ltmp::internal::maximum_temperature = Tmax; // maximum temperature for temperature gradient
-   ltmp::internal::equilibration_temperature = starting_temperature;
+   ltmp::internal::equilibration_temperature = 300.0;//starting_temperature;
    //-------------------------------------------------------------------------------------
    // Calculate number of microcells
    //-------------------------------------------------------------------------------------

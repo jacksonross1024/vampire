@@ -13,7 +13,7 @@
 // Vampire headers
 #include "ltmp.hpp"
 #include "vmpi.hpp"
-
+#include "sim.hpp"
 // Local temperature pulse headers
 #include "internal.hpp"
 
@@ -32,9 +32,11 @@ namespace ltmp{
          const double reduced_time = (time_from_start - 2.0*ltmp::internal::pump_time)*i_pump_time;
          const double four_ln_2 = 2.77258872224; // 4 ln 2
          // 2/(delta sqrt(pi/ln 2))*0.1, delta = 10 nm, J/m^2 -> mJ/cm^2 (factor 0.1)
-         const double two_delta_sqrt_pi_ln_2 = 9394372.787;
-         const double pump=ltmp::internal::pump_power*two_delta_sqrt_pi_ln_2*
-   								exp(-four_ln_2*reduced_time*reduced_time)*i_pump_time;
+         const double two_delta_sqrt_pi_ln_2 = 93943727.87;
+         const double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
+         const double pump=ltmp::internal::pump_power*two_delta_sqrt_pi_ln_2*gaussian*i_pump_time;
+
+         if(sim::enable_laser_torque_fields) sim::laser_torque_strength = gaussian;
 
          const double G  = ltmp::internal::TTG;
          const double Ce = ltmp::internal::TTCe;
@@ -53,26 +55,47 @@ namespace ltmp{
          //#endif
 
          // Precalculate heat transfer constant k*L/V (J/K/m^3/s) (divide by Angstroms^2)
-         const double dTdiff_prefactor = ltmp::internal::thermal_conductivity/(ltmp::internal::micro_cell_size[0]*ltmp::internal::micro_cell_size[1]*1.e-20);
-
+         const double dTe_diff_prefactor = 5*ltmp::internal::thermal_conductivity/(ltmp::internal::micro_cell_size[0]*ltmp::internal::micro_cell_size[1]*1.e-20);
+         const double dTp_diff_prefactor = ltmp::internal::thermal_conductivity/(ltmp::internal::micro_cell_size[0]*ltmp::internal::micro_cell_size[1]*1.e-20);
          // Determine change in Te and Tp
-         for(unsigned int cell=0; cell<ltmp::internal::attenuation_array.size(); ++cell){
+         for(unsigned int cell=0; cell<ltmp::internal::attenuation_array.size()-1; ++cell){
 
             const double Te = root_temperature_array[2*cell+0]*root_temperature_array[2*cell+0];
             const double Tp = root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1];
 
             // calculate heat transfer from neighbouring cells
-            double dTdiff = 0.0;
+            double dTe_diff = 0.0;
+            double dTp_diff = 0.0;
+            for(int id = ltmp::internal::cell_neighbour_start_index[cell]; id < ltmp::internal::cell_neighbour_end_index[cell]; ++id){
+               const int ncell = ltmp::internal::cell_neighbour_list[id]; // neighbour cell id
+               double nTe = root_temperature_array[2*ncell+0]*root_temperature_array[2*ncell+0];
+               double nTp = root_temperature_array[2*ncell+1]*root_temperature_array[2*ncell+1];
+               dTe_diff += nTe - Te;
+               dTp_diff += nTp - Tp;
+            }
+
+            delta_temperature_array[2*cell+0] = (G*(Tp-Te) + pump*attenuation_array[cell] + dTe_diff*dTe_diff_prefactor)*dt/(Ce*Te);
+            delta_temperature_array[2*cell+1] = (G*(Te-Tp)                                + dTp_diff*dTp_diff_prefactor)*dt/Cl;
+
+         } // end of cell loop
+
+         int cell = ltmp::internal::attenuation_array.size()-1;
+         const double Te = root_temperature_array[2*cell+0]*root_temperature_array[2*cell+0];
+         const double Tp = root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1];
+
+            // calculate heat transfer from neighbouring cells
+            double dTe_diff = 0.0;
+            double dTp_diff = 0.0;
             for(int id=ltmp::internal::cell_neighbour_start_index[cell]; id<ltmp::internal::cell_neighbour_end_index[cell]; ++id){
                const int ncell = ltmp::internal::cell_neighbour_list[id]; // neighbour cell id
                double nTe = root_temperature_array[2*ncell+0]*root_temperature_array[2*ncell+0];
-               dTdiff += nTe - Te;
+               double nTp = root_temperature_array[2*ncell+1]*root_temperature_array[2*ncell+1];
+               dTe_diff += nTe - Te;
+               dTp_diff += nTp - Tp;
             }
 
-            delta_temperature_array[2*cell+0] = (G*(Tp-Te) + pump*attenuation_array[cell] + dTdiff*dTdiff_prefactor)*dt/(Ce*Te);
-            delta_temperature_array[2*cell+1] = (G*(Te-Tp)                             )*dt/Cl;
-
-         } // end of cell loop
+            delta_temperature_array[2*cell+0] = (G*(Tp-Te) + pump*attenuation_array[cell] + dTe_diff*dTe_diff_prefactor)*dt/(Ce*Te);
+            delta_temperature_array[2*cell+1] = (G*(Te-Tp)                                + dTp_diff*dTp_diff_prefactor)*dt/Cl - (Tp-equilibration_temperature)*Tcool*dt;
 
          // Calculate new electron and lattice temperatures
          for(unsigned int cell=0; cell<ltmp::internal::attenuation_array.size(); ++cell){
