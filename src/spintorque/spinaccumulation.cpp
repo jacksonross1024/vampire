@@ -2296,12 +2296,13 @@ namespace st{
                 SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
                 //calculate directly from J(Sxm)
-                double Tx = prefac_sc*(m_local.y*saz-m_local.z*say);
-                double Ty = prefac_sc*(m_local.z*sax-m_local.x*saz);
-                double Tz = prefac_sc*(m_local.x*say-m_local.y*sax);
-                total_ST[cellx] = Ty*m_local.z-Tz*m_local.y;
-                total_ST[celly] = Tz*m_local.x-Tx*m_local.z;
-                total_ST[cellz] = Tx*m_local.y-Ty*m_local.x;
+                const double mlocal[3] = {m[3*cell], m[3*cell+1], m[3*cell+2]};
+                double Tx = prefac_sc*(mlocal[1]*saz-mlocal[2]*say);
+                double Ty = prefac_sc*(mlocal[2]*sax-mlocal[0]*saz);
+                double Tz = prefac_sc*(mlocal[0]*say-mlocal[1]*sax);
+                total_ST[cellx] = Ty*mlocal[2]-Tz*mlocal[1];
+                total_ST[celly] = Tz*mlocal[0]-Tx*mlocal[2];
+                total_ST[cellz] = Tx*mlocal[1]-Ty*mlocal[0];
 
                 ast[cellx] = -aj*SxSxSp[0];
                 ast[celly] = -aj*SxSxSp[1];
