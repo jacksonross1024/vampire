@@ -13,6 +13,7 @@
 #include <cmath>
 #include <algorithm>
 #include <vector>
+#include <fstream>
 
 // Vampire headers
 #include "cells.hpp"
@@ -75,6 +76,9 @@ namespace cells{
       #endif
       }
 
+      if(output_microcells) {
+         cells::output_data();
+      }
       return EXIT_SUCCESS;
 
    }

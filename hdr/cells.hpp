@@ -61,6 +61,7 @@ namespace cells{
    extern std::vector < double > num_macro_cells_fft; /// lateral size of local macro-cells (A)
    extern std::vector<double> fft_cell_id_array;
 
+   extern bool output_microcells;
    //---------------------------------------------------------------------------
    // Function to calculate magnetisation in cells
    //---------------------------------------------------------------------------
@@ -94,6 +95,9 @@ namespace cells{
    //---------------------------------------------------------------------------
    bool match_material_parameter(std::string const word, std::string const value, std::string const unit, int const line, int const super_index, const int sub_index);
 
+       extern int output_counter;
+      extern void output_data();
+      extern void open_output_data();
 } // end of cells namespace
 
 #endif //CELLS_H_

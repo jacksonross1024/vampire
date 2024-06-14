@@ -36,6 +36,7 @@ namespace cells{
    double macro_cell_size_y = 10.0; /// macro-cells size (A)
    double macro_cell_size_z = 10.0; /// macro-cells size (A)
 
+   bool output_microcells = false;
 
    std::vector <int> local_cell_array;
    std::vector<int> num_atoms_in_cell; /// number of atoms in each cell
@@ -67,6 +68,9 @@ namespace cells{
    //---------------------------------------------------------------------------
    int mag();
 
+      int output_counter = 0;
+    void open_output_data();
+      void output_data();
    namespace internal{
 
       //------------------------------------------------------------------------
@@ -83,6 +87,11 @@ namespace cells{
       std::vector<double> spin_array_z;
       std::vector<int> atom_type_array;
       int num_atoms;
+
+      // std::ofstream output_file;
+   
+     
+
    } // end of internal namespace
 
 } // end of cells namespace
