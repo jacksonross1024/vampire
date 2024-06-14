@@ -51,6 +51,7 @@ namespace cells{
    extern std::vector<double> mag_array_x; /// arrays to store cells magnetisation
    extern std::vector<double> mag_array_y;
    extern std::vector<double> mag_array_z;
+   extern std::vector<double> mag_array_m;
    extern std::vector<double> field_array_x; /// arrays to store cells field
    extern std::vector<double> field_array_y;
    extern std::vector<double> field_array_z;

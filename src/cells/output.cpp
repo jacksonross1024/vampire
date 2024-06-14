@@ -47,12 +47,13 @@ namespace cells{
 
             if(vmpi::my_rank == 0) {
                 output_file << output_counter << "\t";
+
                 for(int cell = 0; cell < cells::mag_array_z.size(); cell++) {
-                    double mod = sqrt(mag_array_x[cell]*mag_array_x[cell]+ mag_array_y[cell]*mag_array_y[cell] + mag_array_z[cell]* mag_array_z[cell]);
-                    if(mod > 0.0){
-                        mod = 1.0/mod;
-                        output_file << mag_array_x[cell]*mod << "\t" << mag_array_y[cell]*mod << "\t" << mag_array_z[cell]*mod << "\t";
-                    }
+                    if(cells::num_atoms_in_cell[cell] == 0) continue;
+                    // double mod = sqrt(mag_array_x[cell]*mag_array_x[cell]+ mag_array_y[cell]*mag_array_y[cell] + mag_array_z[cell]* mag_array_z[cell]);
+                    // if(mod > 0.0)  mod = 1.0/mod;   
+                    output_file << mag_array_x[cell] << "\t" << mag_array_y[cell] << "\t" << mag_array_z[cell] << "\t" << mag_array_m[cell] << "\t";
+                    
                 }
                 output_file << std::endl;
                 output_counter++;
