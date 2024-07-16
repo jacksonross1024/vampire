@@ -106,8 +106,8 @@ double temperature_pulse_function(double function_time){
 ///
 ///   I(t) = 2/(tp delta sqrt(pi/ln 2)) exp[-(4 ln 2)(t/tp)**2] W/m^3
 ///
-///   Assuming a nominal penetration depth of 10 nm and conversion from J/m^2 -> mJ/cm^2,
-///   I(t) is now in units of s^1 m^-1 and laser power P is in units of mJ/cm^2
+///   Assuming a nominal penetration depth of 10 nm and conversion from J/m^2 
+///   I(t) is now in units of s^1 m^-1 and laser power P is in units of J/m^2
 ///
 ///-----------------------------------------------------------------------------------------
 double two_temperature_function(double ftime){
