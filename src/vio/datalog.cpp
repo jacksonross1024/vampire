@@ -276,15 +276,26 @@ namespace vout{
 			case 73:
 				vout::lot_strength(stream, header);
 				break;
+         
 			case 74:
-				vout::domain_wall_velocity(stream, header);
+				vout::sysspintemp(stream, header);
 				break;
-         case 997: //MP
+			case 75:
+				vout::mean_sysspintemp(stream, header);
+				break;
+			case 76:
+				vout::material_mean_sysspintemp(stream, header);
+				break;
+			case 77:
+				vout::material_spin_temp(stream, header);
+				break;
+			case 997: //MP
 				vout::material_binder_cumulant(stream,header);
 				break;
-   		case 998:
+   			case 998:
       		vout::system_binder_cumulant(stream,header);
       		break;
+
 			case 999: //AJN
 				vout::standard_deviation(stream,header);
 				break;
@@ -355,10 +366,10 @@ namespace vout{
       if(vmpi::my_rank == 0){
          if(!zmag.is_open()){
             // check for checkpoint continue and append data
-            if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag) zmag.open("output",std::ofstream::app);
+            if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag) zmag.open(vout::output_file_name,std::ofstream::app);
             // otherwise overwrite file
             else{
-               zmag.open("output",std::ofstream::trunc);
+               zmag.open(vout::output_file_name,std::ofstream::trunc);
                // write file header information
                write_output_file_header(zmag, file_output_list);
             }

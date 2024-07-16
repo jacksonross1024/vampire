@@ -981,6 +981,7 @@ namespace vin{
             double H=atof(value.c_str());
             check_for_valid_value(H, word, line, prefix, unit, "field", -1.e4, 1.0e4,"input","+/- 10,000 T");
             sim::fmr_field_strength=H;
+            sim::hamiltonian_simulation_flags[5]=1; // enable fmr fields
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
@@ -989,6 +990,7 @@ namespace vin{
             double w = atof(value.c_str());
             check_for_valid_value(w, word, line, prefix, unit, "frequency", 0.0, 1.0e14,"input","0 - 10,000 GHz");
             sim::fmr_field_frequency = w;
+            sim::hamiltonian_simulation_flags[5]=1; // enable fmr fields
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
@@ -1468,6 +1470,35 @@ namespace vin{
         test="domain-wall-velocity";
         if(word==test){
            output_list.push_back(74);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="spin-temperature";
+        if(word==test){
+            stats::calculate_system_spin_temp = true;
+            output_list.push_back(74);
+            return EXIT_SUCCESS;
+        }
+        else
+        //--------------------------------------------------------------------
+        test="mean-spin-temperature";
+        if(word==test){
+            stats::calculate_system_spin_temp = true;
+            output_list.push_back(75);
+            return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-spin-temperature";
+        if(word==test){
+           stats::calculate_material_spin_temp = true;
+           output_list.push_back(76);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-mean-spin-temperature";
+        if(word==test){
+           stats::calculate_material_spin_temp = true;
+           output_list.push_back(77);
            return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------

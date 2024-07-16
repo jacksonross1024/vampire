@@ -99,7 +99,7 @@ void write_grain_file(){
                //------------------------------------------
                case grain::material_magnetisation:
                   // inline function to output grain data
-                  zgrain << stats::material_grain_magnetization.output_magnetization(header);
+                  zgrain << stats::material_grain_magnetization.output_normalized_magnetization(header);
                   break;
                //------------------------------------------
                case grain::material_height_magnetisation:
@@ -122,6 +122,11 @@ void write_grain_file(){
                   zgrain << stats::grain_specific_heat.output_mean_specific_heat(sim::temperature, header);
                   break;
                //------------------------------------------
+               //------------------------------------------
+               case grain::mean_spin_temp:
+                  // inline function to output grain data
+                  zgrain << stats::grain_spin_temp.output_spin_temp(header);
+                  break;
 
             } // end of case statement
 

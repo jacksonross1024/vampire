@@ -16,6 +16,7 @@ susceptibility.o \
 binder_cumulant.o\
 spinwave.o \
 torque.o \
+spin_temperature.o \
 update.o
 
 # Append module objects to global tree

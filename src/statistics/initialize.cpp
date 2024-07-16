@@ -124,11 +124,11 @@ namespace stats{
             int grain = grain_array[atom];
             int mat = material_type_array[atom];
             // ignore non-magnetic atoms in stats calculation by assigning them to last mask
-            if(non_magnetic_materials_array[material_type_array[atom]]) mask[atom] = (num_grains)*num_materials+mat;
+            if(non_magnetic_materials_array[material_type_array[atom]]) mask[atom] = (num_grains)*num_materials;
             else mask[atom] = num_materials * grain + mat;
          }
 
-         stats::material_grain_magnetization.set_mask(num_materials*(num_grains+1)+1,mask,magnetic_moment_array);
+         stats::material_grain_magnetization.set_mask(num_materials*(num_grains)+1,mask,magnetic_moment_array);
 
       }
 
@@ -258,6 +258,45 @@ namespace stats{
             else mask[atom] = material_type_array[atom];
          }
          stats::material_torque.set_mask(num_materials+1,mask,magnetic_moment_array);
+      }
+
+      //------------------------------------------------------------------------
+      // system spin temperature
+      //------------------------------------------------------------------------
+      if(stats::calculate_system_spin_temp){
+         for(int atom=0; atom < stats::num_atoms; ++atom){
+            // ignore non-magnetic atoms in stats calculation by assigning them to last mask
+            if(non_magnetic_materials_array[material_type_array[atom]]) mask[atom] = 1;
+            // all other atoms are included
+            else mask[atom] = 0;
+         }
+         stats::system_spin_temp.set_mask(1+1,mask,magnetic_moment_array);
+      }
+
+      //------------------------------------------------------------------------
+      // grain spin temp
+      //------------------------------------------------------------------------
+      if(stats::calculate_grain_spin_temp){
+         for(int atom=0; atom < stats::num_atoms; ++atom){
+            // ignore non-magnetic atoms in stats calculation by assigning them to last mask
+            if(non_magnetic_materials_array[material_type_array[atom]]) mask[atom] = num_grains;
+            // all other atoms are included
+            else mask[atom] = grain_array[atom];
+         }
+         stats::grain_spin_temp.set_mask(num_grains+1, mask, magnetic_moment_array);
+      }
+
+      //------------------------------------------------------------------------
+      // material spin temp
+      //------------------------------------------------------------------------
+      if(stats::calculate_material_spin_temp){
+         for(int atom=0; atom < stats::num_atoms; ++atom){
+            // ignore non-magnetic atoms in stats calculation by assigning them to last mask
+            if(non_magnetic_materials_array[material_type_array[atom]]) mask[atom] =  num_materials;
+            // other atoms assigned to material level masks
+            else mask[atom] = material_type_array[atom];
+         }
+         stats::material_spin_temp.set_mask(num_materials+1,mask,magnetic_moment_array);
       }
 
       //------------------------------------------------------------------------
