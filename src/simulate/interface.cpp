@@ -342,6 +342,15 @@ namespace sim{
          sim::internal::mp[super_index].sot_asm.set(sotasm);
          return true;
       }
+      test = "spin-orbit-torque-2nd-order-asymmetry";
+      // damping-like parameter for material in spin orbit torque calculation
+      if( word==test ){
+         double sotasm2 = atof(value.c_str());
+         // Test for valid range
+         vin::check_for_valid_value(sotasm2, word, line, prefix, unit, "", 0.0, 1.0e2,"input","0 - 100");
+         sim::internal::mp[super_index].sot_asm_2nd_order.set(sotasm2);
+         return true;
+      }
       //------------------------------------------------------------
       test  = "voltage-controlled-magnetic-anisotropy-coefficient";
       test2 = "vcma-coefficient";

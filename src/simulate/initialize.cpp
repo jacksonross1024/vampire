@@ -29,6 +29,7 @@ namespace sim{
 
       // unroll spin orbit torque arrays
       sim::internal::sot_asm.resize(num_materials,0.0);
+      sim::internal::sot_asm_2nd_order.resize(num_materials,0.0);
       sim::internal::sot_rj.resize(num_materials,0.0);
       sim::internal::sot_pj.resize(num_materials,0.0);
 
@@ -42,6 +43,7 @@ namespace sim{
          if(sim::internal::mp[m].stt_pj.is_set())  sim::internal::stt_pj[m]  = sim::internal::mp[m].stt_pj.get();
 
          if(sim::internal::mp[m].sot_asm.is_set()) sim::internal::sot_asm[m] = sim::internal::mp[m].sot_asm.get();
+         if(sim::internal::mp[m].sot_asm_2nd_order.is_set()) sim::internal::sot_asm_2nd_order[m] = sim::internal::mp[m].sot_asm_2nd_order.get();
          if(sim::internal::mp[m].sot_rj.is_set())  sim::internal::sot_rj[m]  = sim::internal::mp[m].sot_rj.get();
          if(sim::internal::mp[m].sot_pj.is_set())  sim::internal::sot_pj[m]  = sim::internal::mp[m].sot_pj.get();
 
