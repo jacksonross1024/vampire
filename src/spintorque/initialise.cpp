@@ -111,7 +111,7 @@ void initialise(const double system_dimensions_x,
    // allocate microcell data
    //-------------------------------------------------------------------------------------
    const int array_size = st::internal::num_x_stacks*st::internal::num_y_stacks*st::internal::num_microcells_per_stack;
-
+   //stt
    st::internal::beta_cond.resize(array_size, 0.0); /// spin polarisation (conductivity)
    st::internal::beta_diff.resize(array_size, 0.0); /// spin polarisation (diffusion)
    st::internal::sa_infinity.resize(array_size, 0.0); /// intrinsic spin accumulation
@@ -120,12 +120,25 @@ void initialise(const double system_dimensions_x,
    st::internal::sd_exchange.resize(array_size, 0.0); /// diffusion constant Do
    st::internal::a.resize(array_size, 0.0); // a parameter for spin accumulation
    st::internal::b.resize(array_size, 0.0); // b parameter for spin accumulation
+
+   //sot
+   st::internal::sot_beta_cond.resize(array_size, 0.0); /// spin polarisation (conductivity)
+   st::internal::sot_beta_diff.resize(array_size, 0.0); /// spin polarisation (diffusion)
+   st::internal::sot_sa_infinity.resize(array_size, 0.0); /// intrinsic spin accumulation
+   st::internal::sot_lambda_sdl.resize(array_size, 0.0); /// spin diffusion length
+   st::internal::sot_diffusion.resize(array_size, 0.0); /// diffusion constant Do
+   st::internal::sot_sd_exchange.resize(array_size, 0.0); /// diffusion constant Do
+   st::internal::sot_a.resize(array_size, 0.0); // a parameter for spin accumulation
+   st::internal::sot_b.resize(array_size, 0.0); // b parameter for spin accumulation
+   st::internal::sot_sa_source.resize(array_size, false);
+   
+   
    st::internal::coeff_ast.resize(array_size, 0.0);
    st::internal::coeff_nast.resize(array_size, 0.0);
    st::internal::cell_natom.resize(array_size, 0.0);
-   st::internal::sot_sa_source.resize(array_size, false);
-
    const int three_vec_array_size = 3*array_size;
+   st::internal::spin_acc_sign.resize(three_vec_array_size, 0.0);
+
    st::internal::pos.resize(three_vec_array_size,0.0); /// microcell position
    st::internal::m.resize(three_vec_array_size,0.0); // magnetisation
    st::internal::j_final_up_y.resize(three_vec_array_size,0.0);
@@ -143,19 +156,17 @@ void initialise(const double system_dimensions_x,
    st::internal::ast.resize(three_vec_array_size,0.0); // adiabatic spin torque
    st::internal::nast.resize(three_vec_array_size,0.0); // non-adiabatic spin torque
    st::internal::total_ST.resize(three_vec_array_size,0.0); // non-adiabatic spin torque
-   st::internal::spin_acc_sign.resize(three_vec_array_size, 0.0);
 
-
-      st::internal::sa_sum.resize(three_vec_array_size, 0.0);
-      st::internal::j_final_up_x_sum.resize(three_vec_array_size, 0.0);
-      st::internal::j_final_up_y_sum.resize(three_vec_array_size, 0.0);
-      st::internal::j_final_down_y_sum.resize(three_vec_array_size, 0.0);
-      st::internal::coeff_ast_sum.resize(three_vec_array_size, 0.0);
-      st::internal::coeff_nast_sum.resize(three_vec_array_size, 0.0);
-      st::internal::ast_sum.resize(three_vec_array_size, 0.0);
-      st::internal::nast_sum.resize(three_vec_array_size, 0.0);
-      st::internal::total_ST_sum.resize(three_vec_array_size, 0.0);
-      st::internal::cell_natom_sum.resize(array_size, 0);
+   st::internal::sa_sum.resize(three_vec_array_size, 0.0);
+   st::internal::j_final_up_x_sum.resize(three_vec_array_size, 0.0);
+   st::internal::j_final_up_y_sum.resize(three_vec_array_size, 0.0);
+   st::internal::j_final_down_y_sum.resize(three_vec_array_size, 0.0);
+   st::internal::coeff_ast_sum.resize(three_vec_array_size, 0.0);
+   st::internal::coeff_nast_sum.resize(three_vec_array_size, 0.0);
+   st::internal::ast_sum.resize(three_vec_array_size, 0.0);
+   st::internal::nast_sum.resize(three_vec_array_size, 0.0);
+   st::internal::total_ST_sum.resize(three_vec_array_size, 0.0);
+   st::internal::cell_natom_sum.resize(array_size, 0);
 
    //---------------------------------------------------
    // Noi Initialise j,sa, st, ast, nast here?
@@ -408,10 +419,16 @@ namespace internal{
       st::internal::default_properties.beta_cond =  0.23;
       st::internal::default_properties.beta_diff = 0.56;
       st::internal::default_properties.sa_infinity =  1.48e7;
-      st::internal::default_properties.lambda_sdl = 16.0e-10; // m
+      st::internal::default_properties.lambda_sdl = 36.0e-10; // m
       st::internal::default_properties.diffusion =  0.001; //m^2/s ? 
       st::internal::default_properties.sd_exchange = 8.010883e-21; //Joule
       
+      st::internal::default_properties.sot_beta_cond =  0.23;
+      st::internal::default_properties.sot_beta_diff = 3.26;
+      st::internal::default_properties.sot_sa_infinity =  1.48e7;
+      st::internal::default_properties.sot_lambda_sdl = 14.0e-10; // m
+      st::internal::default_properties.sot_diffusion =  0.01; //m^2/s ? 
+      st::internal::default_properties.sot_sd_exchange = 8.010883e-21; //Joule
      
       // Temporary array to hold number of atoms in each cell for averaging
       std::vector<double> count(st::internal::beta_cond.size(),0.0);
@@ -425,7 +442,7 @@ namespace internal{
          // get microcell id
          int id = st::internal::atom_st_index[atom];
    
-         // determine atomic properties
+         //STT determine atomic properties
          double beta_cond = st::internal::mp.at(mat).beta_cond; // beta
          double beta_diff = st::internal::mp.at(mat).beta_diff; // beta_prime
          double sa_infinity = st::internal::mp.at(mat).sa_infinity;
@@ -440,7 +457,27 @@ namespace internal{
          st::internal::lambda_sdl.at(id) += lambda_sdl;
          st::internal::diffusion.at(id) += diffusion;
          st::internal::sd_exchange.at(id) += sd_exchange;
-         st::internal::spin_acc_sign.at(id) += (mat == 0) ? 0:((mat == 1) ? 1.0:-1.0); 
+
+         //SOT
+         if(st::internal::sot_sa) {
+            double sot_beta_cond = st::internal::mp.at(mat).sot_beta_cond; // beta
+            double sot_beta_diff = st::internal::mp.at(mat).sot_beta_diff; // beta_prime
+            double sot_sa_infinity = st::internal::mp.at(mat).sot_sa_infinity;
+            double sot_lambda_sdl = st::internal::mp.at(mat).sot_lambda_sdl;
+            double sot_diffusion = st::internal::mp.at(mat).sot_diffusion;
+            double sot_sd_exchange = st::internal::mp.at(mat).sot_sd_exchange;
+
+            //add atomic properties to microcells
+            st::internal::sot_beta_cond.at(id) += sot_beta_cond;
+            st::internal::sot_beta_diff.at(id) += sot_beta_diff;
+            st::internal::sot_sa_infinity.at(id) += sot_sa_infinity;
+            st::internal::sot_lambda_sdl.at(id) += sot_lambda_sdl;
+            st::internal::sot_diffusion.at(id) += sot_diffusion;
+            st::internal::sot_sd_exchange.at(id) += sot_sd_exchange;
+
+            st::internal::spin_acc_sign.at(id) += (mat == 0) ? 0:((mat == 1) ? 1.0:-1.0); 
+         }
+
          count.at(id) += (mat == 0) ? 1:1;
       }
 
@@ -452,10 +489,20 @@ namespace internal{
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::lambda_sdl[0],  st::internal::lambda_sdl.size(),  MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::diffusion[0],   st::internal::diffusion.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::sd_exchange[0], st::internal::sd_exchange.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
-         MPI_Allreduce(MPI_IN_PLACE, &st::internal::spin_acc_sign[0], st::internal::spin_acc_sign.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
-         MPI_Allreduce(MPI_IN_PLACE, &count[0],                     count.size(),                     MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+          MPI_Allreduce(MPI_IN_PLACE, &count[0],                     count.size(),                     MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
       #endif
 
+      if(st::internal::sot_sa) {
+         #ifdef MPICF
+            MPI_Allreduce(MPI_IN_PLACE, &st::internal::spin_acc_sign[0], st::internal::spin_acc_sign.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &st::internal::sot_beta_cond[0],   st::internal::sot_beta_cond.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &st::internal::sot_beta_diff[0],   st::internal::sot_beta_diff.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &st::internal::sot_sa_infinity[0], st::internal::sot_sa_infinity.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &st::internal::sot_lambda_sdl[0],  st::internal::sot_lambda_sdl.size(),  MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &st::internal::sot_diffusion[0],   st::internal::sot_diffusion.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, &st::internal::sot_sd_exchange[0], st::internal::sot_sd_exchange.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         #endif
+      }
       // Calculate average (mean) spin torque parameters
       for(size_t cell=0; cell<beta_cond.size(); ++cell){
          // const double nat = vmpi::num_processors*count.at(cell);
@@ -471,7 +518,6 @@ namespace internal{
             st::internal::lambda_sdl.at(cell)  /= nat;
             st::internal::diffusion.at(cell)   /= nat;
             st::internal::sd_exchange.at(cell) /= nat;
-            st::internal::spin_acc_sign.at(cell) = std::round(st::internal::spin_acc_sign.at(cell)/count.at(cell));
             st::internal::default_properties.sa_infinity =  st::internal::sa_infinity.at(cell);
             // if(st::internal::spin_acc_sign.at(cell) != 1.0 && st::internal::spin_acc_sign.at(cell) != -1.0) std::cout << st::internal::spin_acc_sign.at(cell) << std::endl;
          } else{
@@ -482,7 +528,28 @@ namespace internal{
             st::internal::diffusion.at(cell)   = st::internal::default_properties.diffusion;
             st::internal::sd_exchange.at(cell) = st::internal::default_properties.sd_exchange;
          }
-         if(st::internal::spin_acc_sign.at(cell) == 0) st::internal::sot_sa_source.at(cell) = true;
+         if(st::internal::sot_sa) {
+            if(nat>0.0001){
+               //  if(nat != 2)   std::cout << nat << std::endl;
+               st::internal::sot_beta_cond.at(cell)   /= nat;
+               st::internal::sot_beta_diff.at(cell)   /= nat;
+               st::internal::sot_sa_infinity.at(cell) /= nat;
+               st::internal::sot_lambda_sdl.at(cell)  /= nat;
+               st::internal::sot_diffusion.at(cell)   /= nat;
+               st::internal::sot_sd_exchange.at(cell) /= nat;
+               st::internal::spin_acc_sign.at(cell) = std::round(st::internal::spin_acc_sign.at(cell)/count.at(cell));
+               st::internal::default_properties.sot_sa_infinity =  st::internal::sot_sa_infinity.at(cell);
+               // if(st::internal::spin_acc_sign.at(cell) != 1.0 && st::internal::spin_acc_sign.at(cell) != -1.0) std::cout << st::internal::spin_acc_sign.at(cell) << std::endl;
+            } else{
+               st::internal::sot_beta_cond.at(cell)   = st::internal::default_properties.sot_beta_cond;
+               st::internal::sot_beta_diff.at(cell)   = st::internal::default_properties.sot_beta_diff;
+               st::internal::sot_sa_infinity.at(cell) = st::internal::default_properties.sot_sa_infinity;
+               st::internal::sot_lambda_sdl.at(cell)  = st::internal::default_properties.sot_lambda_sdl;
+               st::internal::sot_diffusion.at(cell)   = st::internal::default_properties.sot_diffusion;
+               st::internal::sot_sd_exchange.at(cell) = st::internal::default_properties.sot_sd_exchange;
+            }
+            if(st::internal::spin_acc_sign.at(cell) == 0) st::internal::sot_sa_source.at(cell) = true;
+         }
       }
 
 
@@ -509,31 +576,28 @@ namespace internal{
          st::internal::a[cell] =  real(inv_lplus);
          st::internal::b[cell] = -imag(inv_lplus);
 
-      }
-
-
       //set sot-sa parameters
-      // depreciated 
-      if(st::internal::sot_sa){
+        if(st::internal::sot_sa){
          int mat = 0;
-         st::internal::sot_beta_cond = st::internal::mp.at(mat).beta_cond; // beta
-         st::internal::sot_beta_diff = st::internal::mp.at(mat).beta_diff; // beta_prime
-         st::internal::sot_sa_infinity = st::internal::mp.at(mat).sa_infinity;
-         st::internal::sot_lambda_sdl = st::internal::mp.at(mat).lambda_sdl;
-         st::internal::sot_diffusion = st::internal::mp.at(mat).diffusion;
-         st::internal::sot_sd_exchange = st::internal::mp.at(mat).sd_exchange;
 
-         const double BBp = 1.0/sqrt(1.0-st::internal::sot_beta_cond*st::internal::sot_beta_diff);
-         const double lambda_sf = st::internal::sot_lambda_sdl*BBp;
-         const double lambda_j = sqrt(2.0*hbar*st::internal::sot_diffusion/st::internal::sot_sd_exchange); // Angstroms
-         const double lambda_sf2 = lambda_sf*lambda_sf;
-         const double lambda_j2 = lambda_j*lambda_j;
+         const double sot_B  = st::internal::sot_beta_cond[cell];
+         const double sot_Bp = st::internal::sot_beta_diff[cell];
+         const double sot_lambda_sdl = st::internal::sot_lambda_sdl[cell];
+         const double sot_Do = st::internal::sot_diffusion[cell];
+         const double sot_Jsd = st::internal::sot_sd_exchange[cell];
 
-         std::complex<double> inside (1.0/lambda_sf2, -1.0/lambda_j2);
-         std::complex<double> inv_lplus = sqrt(inside);
+         const double sot_BBp = 1.0/sqrt(1.0-sot_B*sot_Bp);
+         const double sot_lambda_sf = sot_lambda_sdl*sot_BBp;
+         const double sot_lambda_j = sqrt(2.0*hbar*sot_Do /sot_Jsd); // Angstroms
+         const double sot_lambda_sf2 = sot_lambda_sf*sot_lambda_sf;
+         const double sot_lambda_j2 = sot_lambda_j*sot_lambda_j;
 
-         st::internal::sot_a =  real(inv_lplus);
-         st::internal::sot_b = -imag(inv_lplus);
+         std::complex<double> sot_inside (1.0/sot_lambda_sf2, -1.0/sot_lambda_j2);
+         std::complex<double> sot_inv_lplus = sqrt(sot_inside);
+
+         st::internal::sot_a[cell] =  real(sot_inv_lplus);
+         st::internal::sot_b[cell] = -imag(sot_inv_lplus);
+         }
       }
       return;
    }

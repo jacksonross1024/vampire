@@ -67,6 +67,8 @@ namespace st{
       extern std::vector<int> stack_index_y; // start of stack in microcell arrays
       extern std::vector<int> stack_index_x; // start of stack in microcell arrays
       extern std::vector<std::vector<int> > cell_index_x;
+
+      //STT
       extern std::vector<double> beta_cond; /// spin polarisation (conductivity)
       extern std::vector<double> beta_diff; /// spin polarisation (diffusion)
       extern std::vector<double> sa_infinity; /// intrinsic spin accumulation
@@ -75,14 +77,24 @@ namespace st{
       extern std::vector<double> sd_exchange; /// spin diffusion length
       extern std::vector<double> a; /// spin diffusion length
       extern std::vector<double> b; /// spin diffusion length
-      extern std::vector<double> coeff_ast;
-      extern std::vector<double> coeff_nast;
+
+      //SOT
+      extern std::vector<double> sot_beta_cond; /// spin polarisation (conductivity)
+      extern std::vector<double> sot_beta_diff; /// spin polarisation (diffusion)
+      extern std::vector<double> sot_sa_infinity; /// intrinsic spin accumulation
+      extern std::vector<double> sot_lambda_sdl; /// spin diffusion length
+      extern std::vector<double> sot_diffusion; /// spin diffusion length
+      extern std::vector<double> sot_sd_exchange; /// spin diffusion length
+      extern std::vector<double> sot_a; /// spin diffusion length
+      extern std::vector<double> sot_b; /// spin diffusion length
       extern std::vector<double> spin_acc_sign;
       extern bool sot_sa;
       extern std::vector<bool> sot_sa_source;
       extern bool sot_check;
-      extern std::vector<double> cell_natom;
 
+      extern std::vector<double> coeff_ast;
+      extern std::vector<double> coeff_nast;     
+      extern std::vector<double> cell_natom;
 
       // three-vector arrays
       extern std::vector<double> pos; /// stack position
@@ -106,7 +118,6 @@ namespace st{
       extern std::vector<double> magy_mat;
       extern std::vector<double> magz_mat;
       
-
       extern std::vector<int> mpi_stack_list_y;
       extern std::vector<int> mpi_stack_list_x;
 
@@ -115,32 +126,31 @@ namespace st{
       extern std::vector<double> j_final_up_x_sum;
       extern std::vector<double> j_final_up_y_sum;
       extern std::vector<double> j_final_down_y_sum;
-      extern   std::vector<double> coeff_ast_sum;
-      extern   std::vector<double> coeff_nast_sum;
-      extern   std::vector<double> ast_sum;
-      extern   std::vector<double> nast_sum;
+      extern std::vector<double> coeff_ast_sum;
+      extern std::vector<double> coeff_nast_sum;
+      extern std::vector<double> ast_sum;
+      extern std::vector<double> nast_sum;
       extern std::vector<double> total_ST_sum;
-      extern   std::vector<int> cell_natom_sum;
-
-      //sot sa parameters
-      extern double sot_sa_infinity;
-      extern double sot_beta_cond;
-      extern double sot_beta_diff;
-      extern double sot_lambda_sdl;
-      extern double sot_diffusion;
-      extern double sot_sd_exchange;
-      extern double sot_a;
-      extern double sot_b;
+      extern std::vector<int> cell_natom_sum;
 
 
       // material parameters for spin torque calculation
       struct mp_t{
+         //STT
          double beta_cond;    /// spin polarisation (conductivity)
          double beta_diff;    /// spin polarisation (diffusion)
          double sa_infinity;  /// intrinsic spin accumulation
          double lambda_sdl;   /// spin diffusion length
          double diffusion;    /// diffusion constant
          double sd_exchange;  /// sd_exchange constant
+
+         //SOT
+         double sot_beta_cond;    /// spin polarisation (conductivity)
+         double sot_beta_diff;    /// spin polarisation (diffusion)
+         double sot_sa_infinity;  /// intrinsic spin accumulation
+         double sot_lambda_sdl;   /// spin diffusion length
+         double sot_diffusion;    /// diffusion constant
+         double sot_sd_exchange;  /// sd_exchange constant
       };
 
       // three vector type definition

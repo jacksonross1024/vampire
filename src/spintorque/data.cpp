@@ -69,6 +69,7 @@ namespace st{
       std::vector<int> stack_index_x; // start of stack in microcell arrays
       std::vector<std::vector<int> > cell_index_x;
 
+      //STT
       std::vector<double> beta_cond; /// spin polarisation (conductivity) Beta B
       std::vector<double> beta_diff; /// spin polarisation (diffusion) Beta' Bp
       std::vector<double> sa_infinity; /// intrinsic spin accumulation
@@ -78,13 +79,24 @@ namespace st{
       std::vector<double> a; // a parameter for spin accumulation
       std::vector<double> b; // b parameter for spin accumulation
 
-      std::vector<double> coeff_ast; // adiabatic spin torque
-      std::vector<double> coeff_nast; // non-adiabatic spin torque
-      std::vector<double> cell_natom;
+      //SOT
+      std::vector<double> sot_beta_cond; /// spin polarisation (conductivity) Beta B
+      std::vector<double> sot_beta_diff; /// spin polarisation (diffusion) Beta' Bp
+      std::vector<double> sot_sa_infinity; /// intrinsic spin accumulation
+      std::vector<double> sot_lambda_sdl; /// spin diffusion length
+      std::vector<double> sot_diffusion; /// diffusion constant Do
+      std::vector<double> sot_sd_exchange; /// electron(s)-spin(d) exchange interaction
+      std::vector<double> sot_a; // a parameter for spin accumulation
+      std::vector<double> sot_b; // b parameter for spin accumulation
       std::vector<double> spin_acc_sign;
       std::vector<bool> sot_sa_source;
       bool sot_sa = false;
+      //sot sa parameters 
 
+      std::vector<double> coeff_ast; // adiabatic spin torque
+      std::vector<double> coeff_nast; // non-adiabatic spin torque
+      std::vector<double> cell_natom;
+      
       // three-vector arrays
       std::vector<double> pos; /// stack position
       std::vector<double> m; // magnetisation
@@ -128,17 +140,6 @@ namespace st{
       // default material properties
       st::internal::mp_t default_properties;
 
-      //sot sa parameters 
-      double sot_sa_infinity;
-      double sot_beta_cond;
-      double sot_beta_diff;
-      double sot_lambda_sdl;
-      double sot_diffusion;
-      double sot_sd_exchange;
-      double sot_a;
-      double sot_b;
-
-        
          // stopwatch.start();
    } // end of internal namespace
    

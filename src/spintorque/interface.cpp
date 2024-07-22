@@ -34,7 +34,7 @@ bool match_material(string const word, string const value, string const unit, in
    // Check for material id > current array size and if so dynamically expand mp array
    if((unsigned int) super_index + 1 > st::internal::mp.size() && super_index + 1 < 101) st::internal::mp.resize(super_index + 1);
 
-   //------------------------------------------------------------
+   //STT constants------------------------------------------------------------
    std::string test="spin-diffusion-length"; 
    /*
       float spin-diffusion-length 
@@ -127,6 +127,80 @@ bool match_material(string const word, string const value, string const unit, in
       return true;
    }
 
+   //SOT-SA constants------------------------------------------------------------
+   test="sot-spin-diffusion-length"; 
+   /*
+      float spin-diffusion-length 
+         Details
+      */
+   if(word==test){
+      double lsdl=atof(value.c_str());
+      //std::cout << "lsdl" << super_index << "\t" << lsdl << "\t" << value.c_str() << std::endl;
+      vin::check_for_valid_value(lsdl, word, line, prefix, unit, "length", 0.01, 1.0e10,"material"," 0.01 - 1e10 Angstroms");
+      st::internal::mp[super_index].sot_lambda_sdl=lsdl*1.e-10; // defined in metres
+      std::cout << "lsdl" << super_index << "\t" << lsdl << std::endl;
+      return true;
+   }
+   //--------------------------------------------------------------------
+   test="sot-spin-polarisation-conductivity"; //beta (eq 2)
+   /*
+      float spin-diffusion-length
+         Details
+      */
+   if(word==test){
+      double betac=atof(value.c_str());
+      vin::check_for_valid_value(betac, word, line, prefix, unit, "none", 1.0e-3, 1.0e3,"material"," 0.001 - 1000");
+      st::internal::mp[super_index].sot_beta_cond=betac;
+      return true;
+   }
+   //--------------------------------------------------------------------
+   test="sot-spin-polarisation-diffusion"; //beta'
+   /*
+      float spin-diffusion-length
+         Details
+      */
+   if(word==test){
+      double betad=atof(value.c_str());
+      vin::check_for_valid_value(betad, word, line, prefix, unit, "none", 1.0e-3, 1.0e3,"material"," 0.001 - 1000");
+      st::internal::mp[super_index].sot_beta_diff=betad;
+      return true;
+   }
+   //--------------------------------------------------------------------
+   test="sot-spin-accumulation"; //m(infinity)
+   /*
+      float spin-diffusion-length
+         Details
+      */
+   if(word==test){
+      double sa=atof(value.c_str());
+      vin::check_for_valid_value(sa, word, line, prefix, unit, "none", 0.0, 1.0e10,"material"," 1.0e-6 - 1.0e10");
+      st::internal::mp[super_index].sot_sa_infinity=sa;
+      return true;
+   }
+   //--------------------------------------------------------------------
+   test="sot-diffusion-constant"; //D_0 (eq 2)
+   /*
+      float spin-diffusion-length
+         Details
+      */
+   if(word==test){
+      double dc=atof(value.c_str());
+      vin::check_for_valid_value(dc, word, line, prefix, unit, "none", 1.0e-9, 100.0,"material"," 1.0e-9 - 100"); //m^2/s
+      st::internal::mp[super_index].sot_diffusion=dc;
+      return true;
+   }
+   //--------------------------------------------------------------------
+   test="sot-sd-exchange-constant";// 
+   /*
+      float spin-diffusion-length
+         Details
+      */
+   if(word==test){
+      double sd=atof(value.c_str());
+      vin::check_for_valid_value(sd, word, line, prefix, unit, "energy", 0.0, 1.e-17,"material"," 1.0e-30 - 1.e-17 J");
+      st::internal::mp[super_index].sot_sd_exchange=sd;
+      return true;
+   }
    //--------------------------------------------------------------------
    // keyword not found
    //--------------------------------------------------------------------

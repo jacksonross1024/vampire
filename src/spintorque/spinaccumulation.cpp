@@ -457,7 +457,7 @@ namespace st{
          return;
       }
 
-       void calculate_sot_accumulation(){
+      void calculate_sot_accumulation(){
 
          stopwatch_t stopwatch;
          stopwatch.start();
@@ -493,65 +493,7 @@ namespace st{
          const double je_eff = program::fractional_electric_field_strength* je; // current (C/s)
         
          //---------------------------------------------------------------------------------------------------
-         //set parameters for TMR calculation
-         if(TMRenable == true){
-            std::cout << "wrong" << std::endl;
-            int FL =	free_layer;
-            int RL =	reference_layer;
-            double dot = magx_mat[RL]*magx_mat[FL]+
-                         magy_mat[RL]*magy_mat[FL]+
-                         magz_mat[RL]*magz_mat[FL];
-
-            // RE - this code is not general! Needs to be fixed. Placeholder added in the meantime
-            // AM (2020) - Code fixed, but still codes refers to MTJ RL/barrier/FL specifically
-            double MgO_thickness = (create::get_material_height_min(FL)-create::get_material_height_max(RL))*cs::system_dimensions[2]*1.0e-10;
-
-            //calculate the relative angle of two FMs
-            rel_angle = acos(dot);
-            double plus_cos = 1.0+cos(rel_angle);
-            double minus_cos = 1.0-cos(rel_angle);
-            double exp_t = exp(-MgO_thickness/0.25e-9);
-
-            double jtunnel = je_eff*0.5*(plus_cos+0.5*minus_cos)*exp_t;
-//            std::cout << "t_MgO=( " << create::get_material_height_min(FL) << " - " << create::get_material_height_max(RL) << " ) = " << MgO_thickness << "\tje_eff\t" << je_eff << "\tje_eff_tun\t" << jtunnel << std::endl;
-
-            //set the current je_eff and spin poralisation parameters
-            // je_eff = jtunnel;/
-            // AM (2020) - I think the default parameters should be rescaled by same factor as tunnelling current and not changed using those of material 0 arbitrarily
-            default_properties.beta_cond *= /*mp[0].beta_cond**/0.5*(plus_cos+0.5*minus_cos)*exp_t;
-            default_properties.beta_diff *= /*mp[0].beta_diff**/0.5*(plus_cos+0.5*minus_cos)*exp_t;
-
-            // Calculate spin torque parameters
-            for(size_t cell=0; cell<beta_cond.size(); ++cell){
-
-               // check for zero atoms in cell
-               if(cell_natom[cell] <= 0.0001){
-                  beta_cond[cell]   = default_properties.beta_cond;
-                  beta_diff[cell]   = default_properties.beta_diff;
-
-                  const double hbar = 1.05457162e-34;
-                  const double B  = beta_cond[cell];
-                  const double Bp = beta_diff[cell];
-                  // const double lambda_sdl = lambda_sdl[cell];
-                  const double Do = diffusion[cell];
-                  const double Jsd = sd_exchange[cell];
-
-                  const double BBp = 1.0/sqrt(1.0-B*Bp);
-                  const double lambda_sf = lambda_sdl[cell]*BBp;
-                  const double lambda_j = sqrt(2.0*hbar*Do/Jsd); // Angstroms
-                  const double lambda_sf2 = lambda_sf*lambda_sf;
-                  const double lambda_j2 = lambda_j*lambda_j;
-
-                  std::complex<double> inside (1.0/lambda_sf2, -1.0/lambda_j2);
-                  std::complex<double> inv_lplus = sqrt(inside);
-
-                  a[cell] =  real(inv_lplus);
-                  b[cell] = -imag(inv_lplus);
-               }
-            }
-            output_base_microcell_data();
-         }
-
+         //no TMR calculation
          //---------------------------------------------------------------------------------------------------
 
          const double i_muB = 1.0/9.274e-24; // J/T
@@ -560,7 +502,6 @@ namespace st{
                                           micro_cell_size[sty] *
                                           micro_cell_thickness)*1.e-30; // m^3
          const double atomcell_volume = 15.7624e-30;
-
 
          // #ifdef MPICH
          int   int_stacks = mpi_stack_list_x.size();
@@ -571,6 +512,8 @@ namespace st{
          int stack = 0;
          // std::cout << "continuing sot simulation x axis..." << std::endl;
          // std::cout << int_stacks << ", " << mpi_stack_list.size() << std::endl;
+
+         //STT first
          for(int s=0; s < int_stacks; ++s) {
             // #ifdef MPICH
                stack = mpi_stack_list_x.at(s);
@@ -779,25 +722,15 @@ namespace st{
 
                   sa_int[cellx] = sax;
                   sa_int[celly] = say;
-                  sa_int[cellz] = saz;
+                  sa_int[cellz] = saz; 
 
-                  // spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
-                  // spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
-                  // spin_torque[cellz] = atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
-
-
-                     if(sot_check) {    
-                     spin_torque[cellx] = 0.0;// += microcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
-                     spin_torque[celly] = 0.0;//+= microcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
-                     spin_torque[cellz] = 0.0;//+= microcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
-                  } 
                } 
                else{
 
                   // Save values for the spin current
-                  j_final_up_x[cellx] = 0.0;//j_final_up_x[pcellx];
-                  j_final_up_x[celly] = 0.0;//j_final_up_x[pcelly];
-                  j_final_up_x[cellz] = 0.0;//j_final_up_x[pcellz];
+                  j_final_up_x[cellx] = jmx;//j_final_up_x[pcellx];
+                  j_final_up_x[celly] = jmy;//j_final_up_x[pcelly];
+                  j_final_up_x[cellz] = jmz;//j_final_up_x[pcellz];
 
                }
                if(output_torque_data == "final") {
@@ -928,6 +861,8 @@ namespace st{
           stack = 0;
          const double sot_sd_exchange_multiple = 1;// 3e2;
          // std::cout << "starting sot simulation y axis..." << std::endl;
+
+         //sot now
          for(int s=0; s < int_stacks; ++s) {
            // #ifdef MPICH
                stack = mpi_stack_list_y.at(s);
@@ -1006,9 +941,9 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Initialise temporary constants
-               const double Bc = beta_cond[cell]; // beta
-               const double Bd = beta_diff[cell]; // beta_prime
-               const double Do = diffusion[cell];
+               const double Bc = sot_beta_cond[cell]; // beta
+               const double Bd = sot_beta_diff[cell]; // beta_prime
+               const double Do = sot_diffusion[cell];
                three_vector_t jm0(j_init_up_y[pcellx]+j_init_down_y[acellx],\
                                   j_init_up_y[pcelly]+j_init_down_y[acelly],\
                                   j_init_up_y[pcellz]+j_init_down_y[acellz]); //zero incoming spin current for init process
@@ -1029,12 +964,12 @@ namespace st{
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
-               const double i_lsdl = 1.0/lambda_sdl[cell];
+               const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;
                //modify spin acc on Au depending on current. Very low impact but seems physics?
                if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a_local = a[cell];
-               const double b_local = b[cell];
+               const double a_local = sot_a[cell];
+               const double b_local = sot_b[cell];
                const double two_a = 2.0*a_local;
                const double two_b = 2.0*b_local;
 
@@ -1280,9 +1215,9 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Initialise temporary constants
-               const double Bc = beta_cond[cell]; // beta
-               const double Bd = beta_diff[cell]; // beta_prime
-               const double Do = diffusion[cell];
+               const double Bc = sot_beta_cond[cell]; // beta
+               const double Bd = sot_beta_diff[cell]; // beta_prime
+               const double Do = sot_diffusion[cell];
                three_vector_t jm0(0.0,0.0,0.0);
                //grab correct cell's init spin current (int label)
                if(direction_sign < 0) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
@@ -1304,11 +1239,11 @@ namespace st{
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
-               const double i_lsdl = 1.0/lambda_sdl[cell];
+               const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;//sa_infinity[cell];
                   if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a_local = a[cell];
-               const double b_local = b[cell];
+               const double a_local = sot_a[cell];
+               const double b_local = sot_b[cell];
                const double two_a = 2.0*a_local;
                const double two_b = 2.0*b_local;
 
@@ -1574,9 +1509,9 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Initialise temporary constants
-               const double Bc = beta_cond[cell]; // beta
-               const double Bd = beta_diff[cell]; // beta_prime
-               const double Do = diffusion[cell];
+               const double Bc = sot_beta_cond[cell]; // beta
+               const double Bd = sot_beta_diff[cell]; // beta_prime
+               const double Do = sot_diffusion[cell];
                three_vector_t jm0(0.0,0.0,0.0);
                if(direction_sign < 0) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
                else {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
@@ -1597,11 +1532,11 @@ namespace st{
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
-               const double i_lsdl = 1.0/lambda_sdl[cell];
+               const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;// sa_infinity[cell];
                   if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a_local = a[cell];
-               const double b_local = b[cell];
+               const double a_local = sot_a[cell];
+               const double b_local = sot_b[cell];
                const double two_a = 2.0*a_local;
                const double two_b = 2.0*b_local;
 
@@ -1862,9 +1797,9 @@ namespace st{
                //---------------------------------------------------------------------
 
                // Initialise temporary constants
-               const double Bc = beta_cond[cell]; // beta
-               const double Bd = beta_diff[cell]; // beta_prime
-               const double Do = diffusion[cell];
+               const double Bc = sot_beta_cond[cell]; // beta
+               const double Bd = sot_beta_diff[cell]; // beta_prime
+               const double Do = sot_diffusion[cell];
                three_vector_t jm0(0.0,0.0,0.0);
                if(direction_sign < 0) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
                else {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
@@ -1885,11 +1820,11 @@ namespace st{
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
                // Calculate mp(0), c and d
-               const double i_lsdl = 1.0/lambda_sdl[cell];
+               const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;// sa_infinity[cell];
                   if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a_local = a[cell];
-               const double b_local = b[cell];
+               const double a_local = sot_a[cell];
+               const double b_local = sot_b[cell];
                const double two_a = 2.0*a_local;
                const double two_b = 2.0*b_local;
 
@@ -2119,9 +2054,9 @@ namespace st{
                }
 
                 // Initialise temporary constants
-               const double Bc = beta_cond[cell]; // beta
-               const double Bd = beta_diff[cell]; // beta_prime
-               const double Do = diffusion[cell];
+               const double Bc = sot_beta_cond[cell]; // beta
+               const double Bd = sot_beta_diff[cell]; // beta_prime
+               const double Do = sot_diffusion[cell];
                three_vector_t jm0(j_int_up_y[cellx]+j_int_down_y[cellx],//+j_final_up_x[cellx], 
                                   j_int_up_y[celly]+j_int_down_y[celly],//+j_final_up_x[cellx],
                                   j_int_up_y[cellz]+j_int_down_y[cellz]);//+j_final_up_x[cellx]);                     
@@ -2134,16 +2069,16 @@ namespace st{
                M.zx = preD*m_local.x*m_local.z;             M.zy = preD*m_local.y*m_local.z;             M.zz = preD*m_local.z*m_local.z - twoDo;
 
                V.x = jm0.x;// - Bc*je_eff*m_local.x;
-               V.y = jm0.y ;//- Bc*je_eff*m_local.y;
+               V.y = jm0.y;//- Bc*je_eff*m_local.y;
                V.z = jm0.z;// - Bc*je_eff*m_local.z;
 
                const three_vector_t divm_0 = gaussian_elimination(M, V);
 
-               const double i_lsdl = 1.0/lambda_sdl[cell];
+               const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;// sa_infinity[cell];
                   if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
-               const double a_local = a[cell];
-               const double b_local = b[cell];
+               const double a_local = sot_a[cell];
+               const double b_local = sot_b[cell];
                const double two_a = 2.0*a_local;
                const double two_b = 2.0*b_local;
 
@@ -2208,10 +2143,12 @@ namespace st{
                sa_final[celly] = say;
                sa_final[cellz] = saz;
 
-               spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
-               spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
-               spin_torque[cellz] = atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
-
+               //sot check output flag will run spin acc program without torque to calculate and output values
+               if(!sot_check){
+                  spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
+                  spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
+                  spin_torque[cellz] = atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
+               }
                j_final_up_y[cellx] = jmx;
                j_final_up_y[celly] = jmy;
                j_final_up_y[cellz] = jmz;
@@ -2219,17 +2156,6 @@ namespace st{
                j_final_down_y[cellx] = jmx*direction_sign;
                j_final_down_y[celly] = jmy*direction_sign;
                j_final_down_y[cellz] = jmz*direction_sign;
-
-               // j_final_up_x[cellx] = Bc*je_eff*m_local.x - twoDo*pre_jmx;;
-               // j_final_up_x[celly] = Bc*je_eff*m_local.y - twoDo*pre_jmy;
-               // j_final_up_x[cellz] = Bc*je_eff*m_local.z - twoDo*pre_jmz;
-
-               // spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
-               // spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
-               // spin_torque[cellz] = atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
-
-               //sot check output flag will run spin acc program without torque to calculate and output values
-            
 
                if(output_torque_data == "final") {
                //--------------------------------------------
@@ -2266,7 +2192,7 @@ namespace st{
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = atomcell_volume * sd_exchange[cell] * i_e * i_muB;
+               const double prefac_sc = atomcell_volume * sot_sd_exchange[cell] * i_e * i_muB;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -2296,7 +2222,9 @@ namespace st{
                 SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
                 //calculate directly from J(Sxm)
-                const double mlocal[3] = {m[3*cell], m[3*cell+1], m[3*cell+2]};
+                double mlocal[3] = {m[3*cell], m[3*cell+1], m[3*cell+2]};
+                double mmod = sqrt(mlocal[0]*mlocal[0] + mlocal[1]*mlocal[1] + mlocal[2]*mlocal[2]);
+                if(mmod > 0.0) {mlocal[0] /= mmod; mlocal[1] /= mmod; mlocal[2] /= mmod;}
                 double Tx = prefac_sc*(mlocal[1]*saz-mlocal[2]*say);
                 double Ty = prefac_sc*(mlocal[2]*sax-mlocal[0]*saz);
                 double Tz = prefac_sc*(mlocal[0]*say-mlocal[1]*sax);
