@@ -17,6 +17,7 @@ shells.o \
 sc.o \
 bcc.o \
 bcc110.o \
+cccro.o \
 fcc.o \
 fcc111.o \
 file.o \

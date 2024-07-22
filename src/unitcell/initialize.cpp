@@ -39,6 +39,7 @@ namespace unitcell{
       //------------------------------------------------------------------------
       if(uc::internal::crystal_structure      == "sc"             ) uc::internal::build_simple_cubic(           unit_cell );
       else if(uc::internal::crystal_structure == "bcc"            ) uc::internal::build_body_centred_cubic(     unit_cell );
+      else if(uc::internal::crystal_structure == "cccro"          ) uc::internal::build_cccro(                  unit_cell );
       else if(uc::internal::crystal_structure == "bcc-110"        ) uc::internal::build_body_centred_cubic_110( unit_cell );
       else if(uc::internal::crystal_structure == "fcc"            ) uc::internal::build_face_centred_cubic(     unit_cell );
       else if(uc::internal::crystal_structure == "fcc-111"        ) uc::internal::build_face_centred_cubic_111( unit_cell );
@@ -66,7 +67,7 @@ namespace unitcell{
       }
 
       // optionally write generated unit cell file to disk
-      // internal::write_unit_cell_file(unit_cell);
+      internal::write_unit_cell_file(unit_cell);
 
       return;
 
