@@ -27,7 +27,7 @@
 // Vampire headers
 #include "cells.hpp"
 #include "material.hpp"
-
+#include "vmpi.hpp"
 // cells module headers
 #include "internal.hpp"
 
@@ -56,6 +56,9 @@ namespace cells{
       extern int num_atoms;
       //extern int num_local_atoms;
 
+      // #extern 
+
+      // extern void output_cell_positions();
       //-------------------------------------------------------------------------
       // Internal function declarations
       //-------------------------------------------------------------------------
