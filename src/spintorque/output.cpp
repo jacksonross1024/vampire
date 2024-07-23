@@ -47,13 +47,13 @@ namespace st{
                ofile << num_cells << std::endl;
                ofile << num_stacks_y << std::endl;
                for(int cell=0; cell < num_cells; ++cell){
-                  if(cell_natom[cell] == 0) continue;
+                  // if(cell_natom[cell] == 0) continue;
                   if(sot_sa) {
                         ofile << cell_stack_index[cell] << "\t" << "\t" << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2] \
                         << "\t" << beta_cond[cell] << "\t" << beta_diff[cell] << "\t" << sa_infinity[cell] << "\t" << lambda_sdl[cell] << "\t" << \
                         st::internal::a[cell] << "\t" << st::internal::b[cell] << "\t" \
                         << "\t" << st::internal::sot_beta_cond[cell] << "\t" << st::internal::sot_beta_diff[cell] << "\t" << st::internal::sot_sa_infinity[cell] << "\t" << st::internal::sot_lambda_sdl[cell] << "\t" \
-                        << st::internal::sot_a[cell] << "\t" << st::internal::sot_b[cell] << "\t" << st::internal::spin_acc_sign[cell] << "\t" << st::internal::sot_sa_source[cell] <<  std::endl;
+                        << st::internal::sot_a[cell] << "\t" << st::internal::sot_b[cell] << "\t" << st::internal::spin_acc_sign[cell] << "\t" << st::internal::sot_sa_source[cell] << "\t" << st::internal::cell_natom[cell] << std::endl;
                   } else {
                         ofile << cell_stack_index[cell] << "\t" << "\t" << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2] \
                         << "\t" << beta_cond[cell] << "\t" << beta_diff[cell] << "\t" << sa_infinity[cell] << "\t" << lambda_sdl[cell] << "\t" << 

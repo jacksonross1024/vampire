@@ -1,0 +1,118 @@
+
+#===================================================
+# vampire material file  for Mn2Au
+#---------------------------------------------------
+#  R F L Evans (c) 2020
+#===================================================
+
+#---------------------------------------------------
+# Number of Materials
+#---------------------------------------------------
+material:num-materials=3
+
+#---------------------------------------------------
+# Material 1 Mn 1
+#---------------------------------------------------
+material[3]:material-name= "Mn1"
+material[3]:damping-constant = 0.001
+material[3]:atomic-spin-moment=3.72 !muB
+material[3]:material-element= "Mn"
+material[3]:initial-spin-direction= 1,1,0
+material[3]:exchange-matrix-3rd-nn[3] = 3.18261e-21 # 230 K -> 1/2 -> 115K
+material[3]:exchange-matrix-5th-nn[3] = 1.01097e-21 #J_3 2nd (Oppeneer only)
+material[3]:exchange-matrix-1st-nn[2] = -1.094296e-20 , -1.094296e-20, -1.086911e-20 # 792 K -> 1/2 -> 396K * 4 links
+material[3]:exchange-matrix-2nd-nn[2] = -1.469234e-20 , -1.469234e-20, -1.459319e-20 # 1064 K -> 1/2 -> 532K * 1 link
+material[3]:exchange-matrix-4th-nn[2] = -1.38167862e-21 , -1.38167862e-21, -1.24167862e-21  #(J_2 2nd Oppeneer, J_3 Hist)
+material[3]:unit-cell-category = 3
+material[3]:uniaxial-anisotropy-direction= 0,0,1
+material[3]:fourth-order-uniaxial-anisotropy-constant = 3.71e-25
+material[3]:fourth-order-rotational-anisotropy-constant = 1.855e-25 # k4para const. <1,1,0>
+
+material[3]:temperature-rescaling-exponent = 2.0
+material[3]:temperature-rescaling-curie-temperature=1250.35
+
+#material[3]:spin-orbit-relaxation-torque = 0.00275 # beta_sot = 0.1
+#material[3]:spin-orbit-precession-torque = 0.0275 # used for field-like SOT
+
+#---------------------------------------------------
+# Material 2 Mn	2       8nm/3ps -> 10^12/10^9 
+#---------------------------------------------------
+material[2]:material-name= "Mn2"
+material[2]:damping-constant = 0.001
+material[2]:atomic-spin-moment= 3.72 !muB
+material[2]:material-element= "Mn"
+material[2]:initial-spin-direction=  -1,-1, 0
+material[2]:exchange-matrix-3rd-nn[2] = 3.18261e-21 #J_3 Oppeneer; J_2 Hirst
+material[2]:exchange-matrix-5th-nn[2] = 1.01097e-21 #J_3 2nd (Oppeneer only)
+material[2]:exchange-matrix-1st-nn[3] = -1.094296e-20 , -1.094296e-20, -1.086911e-20 #(J_1 )
+material[2]:exchange-matrix-2nd-nn[3] = -1.469234e-20 , -1.469234e-20, -1.459319e-20 #(J_2 Oppeneer, J_4 Hist)  1.90659e-22 / 9.93349e-23 / 2.48337e-23
+material[2]:exchange-matrix-4th-nn[3] = -1.38167862e-21 , -1.38167862e-21, -1.24167862e-21   #(J_2 2nd Oppeneer, J_3 Hist)
+material[2]:unit-cell-category = 2
+material[2]:uniaxial-anisotropy-direction= 0,0,1
+
+material[2]:fourth-order-uniaxial-anisotropy-constant = 3.71e-25
+material[2]:fourth-order-rotational-anisotropy-constant = 1.855e-25 #k4para const. <1,1,0>
+
+material[2]:temperature-rescaling-exponent = 2.0
+material[2]:temperature-rescaling-curie-temperature=1250.35
+
+#material[2]:spin-orbit-relaxation-torque = -0.00275 # beta_sot = 0.1
+#material[2]:spin-orbit-precession-torque = -0.0275 # used for field-like SOT
+
+#----------------
+# STT (e.g., in plane transport constants)
+#----------------
+material[3]:spin-diffusion-length = 36 # in plane sdl
+material[3]:spin-polarisation-conductivity = 0.23 #beta from DoS
+material[3]:spin-polarisation-diffusion = 0.56 # in plane beta'. double beta.
+material[3]:spin-accumulation = 1.48e7 #DoS
+material[3]:diffusion-constant = 0.001 #generic
+material[3]:sd-exchange-constant = 0.05 !eV #literature
+
+material[2]:spin-diffusion-length = 36 #
+material[2]:spin-polarisation-conductivity = 0.23 #beta 
+material[2]:spin-polarisation-diffusion = 0.56 #
+material[2]:spin-accumulation = 1.48e7 #C/m^3 -> 0.11 e-/u.c.1.48e7 C/m^3 (Khmelevski) * 0.05 eV 
+material[2]:diffusion-constant = 0.001 #m^2/s 
+material[2]:sd-exchange-constant = 0.05 !eV #50 meV 8.010883e-21 J, Oppeneer 
+
+#Au values have minimal impact on Mn acc currently
+material[1]:spin-diffusion-length = 2000.0
+material[1]:spin-polarisation-conductivity = 0.99 
+material[1]:spin-polarisation-diffusion = 0.99     
+material[1]:spin-accumulation = 0.0# to match Mn acc when current on
+material[1]:diffusion-constant = 1e-3 #m^2/s 
+material[1]:sd-exchange-constant =  8.010883e-25 #5 ueV
+
+#--------------
+# SOT (e.g. perpendicular plane) constants
+#--------------
+material[3]:sot-spin-diffusion-length = 10.5 # sdl and sd-exchange affect the out of plane component most
+material[3]:sot-spin-polarisation-conductivity = 0.23
+material[3]:sot-spin-polarisation-diffusion = 3.425 #beta' seems to affect most the amount of x vs. y spin polarisation
+material[3]:sot-spin-accumulation = 1.48e7 # 
+material[3]:sot-diffusion-constant = 0.007 #
+material[3]:sot-sd-exchange-constant = 0.3 !eV  #this combined with diffusion, beta', and spin accumulation determine the field. want 2-8 mT / 10e11 A/m^2
+
+material[2]:sot-spin-diffusion-length = 10.5 #
+material[2]:sot-spin-polarisation-conductivity = 0.23 #beta 
+material[2]:sot-spin-polarisation-diffusion = 3.425 
+material[2]:sot-spin-accumulation = 1.48e7 
+material[2]:sot-diffusion-constant = 0.007 
+material[2]:sot-sd-exchange-constant = 0.3 !eV 
+
+#Au values have minimal impact on Mn acc currently
+material[1]:sot-spin-diffusion-length = 2000.0
+material[1]:sot-spin-polarisation-conductivity = 0.99 
+material[1]:sot-spin-polarisation-diffusion = 0.99     
+material[1]:sot-spin-accumulation = 0.0# to match Mn acc when current on
+material[1]:sot-diffusion-constant = 1e-3 #m^2/s 
+material[1]:sot-sd-exchange-constant =  8.010883e-25 #5 ueV
+
+#---------------------------------------------------
+# Material 3 Au
+#---------------------------------------------------
+material[1]:material-name="Au"
+material[1]:non-magnetic=keep #must keep for sa sot module 
+material[1]:unit-cell-category = 1
+material[1]:material-element= "Au"

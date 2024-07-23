@@ -30,49 +30,54 @@ set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
 
 set terminal pngcairo font "helvetica, 14"
-chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 0) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
-chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 0) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
+chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 0 ) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
+chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 0 ) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
 
 delta_SS(t,b,m_t,m_b, sa) = (abs(t-sa*m_t)/abs(b-sa*m_b))
 
 delta_S(m,M,sa) = (m-M*sa)/sa
 
-set ytics 0,10
+set ytics 0,4 out nomirror
+set mytics 2
 SA = 1.48e7
-
-dS = 1e-2
+cz = 0.142
+dS = 0.75e-2
 set xrange [-dS:dS]
 
 set title "<110>"
-set yrange [0:24]
+set yrange [0:8]
 file= "spin-acc/0"
 set output "sa-110.png"
-set ylabel "Z cell"
+set ylabel "Height (nm)"
 set multiplot layout 2,1
 #set title "spin current"
-set key outside top center horizontal
+set key top right vertical 
 set size 1,0.5
-set xlabel "Mn_1 deltaS"
-plot file u (delta_S($7, $4, SA)):(chck_up($1,$2,$4,$3)) w p ls 2 title "sa_x1",\
-"" u (delta_S($8,$5,SA)):(chck_up($1,$2,$4,$3)) w p ls 3 title "sa_y1",\
-"" u (delta_S($9,$6,SA)):(chck_up($1,$2,$4,$3)) w p ls 4 title "sa_z1",\
-"" u (delta_S($7, $4, SA)):(chck_dw($1,$2,$4,$3)) w p ls 5 title "sa_x2",\
-"" u (delta_S($8,$5,SA)):(chck_dw($1,$2,$4,$3)) w p ls 6 title "sa_y2",\
-"" u (delta_S($9,$6,SA)):(chck_dw($1,$2,$4,$3)) w p ls 7 title "sa_z2"
+set xlabel "Mn 𝜹m/m"
+plot file u (delta_S($7, $4, SA)):(chck_up($1,$2,$4,$3)*cz) w p ls 2 title "𝜹m_{x1}",\
+"" u (delta_S($8,$5,SA)):(chck_up($1,$2,$4,$3)*cz) w p ls 3 title "𝜹m_{y1}",\
+"" u (delta_S($9,$6,SA)):(chck_up($1,$2,$4,$3)*cz) w p ls 4 title "𝜹m_{z1}",\
+"" u (delta_S($7, $4, SA)):(chck_dw($1,$2,$4,$3)*cz) w p ls 5 title "𝜹m_{x2}",\
+"" u (delta_S($8,$5,SA)):(chck_dw($1,$2,$4,$3)*cz) w p ls 6 title "𝜹m_{y2}",\
+"" u (delta_S($9,$6,SA)):(chck_dw($1,$2,$4,$3)*cz) w p ls 7 title "𝜹m_{z2}"
 
 unset title 
 set size 1,0.45
-set xlabel "Mn_1 SA ratio"
-set xrange [-0.25:1]
+set xlabel "Mn 𝜹m ratio"
+set xrange [-0.1:1]
+set key top right inside
+plot file u (delta_SS($9,$8,$6,$5, SA)):(chck_up($1,$2,$4,$3)*cz) w p ls 4 title "simulation: 𝜹m_z/𝜹m_y",\
+"" u (delta_SS($7,$8,$4,$5, SA)):(chck_up($1,$2,$4,$3)*cz) w p ls 5 title "𝜹m_x/𝜹m_y",\
+"" u (delta_SS($9,$8,$6,$5, SA)):(chck_dw($1,$2,$4,$3)*cz) w p ls 4 notitle "sa_x/sa_x",\
+"" u (delta_SS($7,$8,$4,$5, SA)):(chck_dw($1,$2,$4,$3)*cz) w p ls 5 notitle "sa_y/sa_x",\
+"" u (0.045):0 w l ls 1 dt " - " title "ab initio: 𝜹m_z/𝜹m_y",\
+"" u (0.29):0 w l ls 1 title '𝜹m_x/𝜹m_y'
 
-plot file u (delta_SS($9,$8,$6,$5, SA)):(chck_up($1,$2,$4,$3)) w p ls 4 title "dSz/dS_y",\
-"" u (delta_SS($7,$8,$4,$5, SA)):(chck_up($1,$2,$4,$3)) w p ls 5 title "dSx/dSy",\
-"" u (delta_SS($9,$8,$6,$5, SA)):(chck_dw($1,$2,$4,$3)) w p ls 4 notitle "sa_x/sa_x",\
-"" u (delta_SS($7,$8,$4,$5, SA)):(chck_dw($1,$2,$4,$3)) w p ls 5 notitle "sa_y/sa_x",\
-"" u (0.045):0 w l ls 1 dt " - " title "ab initio, dSz/dSy",\
-"" u (0.29):0 w l ls 1 title 'dSx/dSy'
+# dm_z/dm_y(<110>) = 0.08/1.75 = 0.045
+# dm_x/dm_y(<110>) = 0.5/1.75 = 0.29
 
-
+# dm_z/dm_y(<100>) = 0.135/1.4 = 0.1
+# dm_x/dm_y(<100>) = 0.0/1.4 = 0.0
 unset multiplot 
 
 set auto x

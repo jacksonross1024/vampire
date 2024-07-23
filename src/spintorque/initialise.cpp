@@ -91,19 +91,23 @@ void initialise(const double system_dimensions_x,
    }
 
    std::cout << "system dimensions " << system_dimensions[0] << ", " << system_dimensions[1] << ", " << system_dimensions[2] << std::endl;
+
    // determine number of cells in each stack  (global)
-   st::internal::num_microcells_per_stack = 1+ceil((system_dimensions[st::internal::stz]+0.01)/st::internal::micro_cell_thickness);
+   st::internal::num_microcells_per_stack = ceil((system_dimensions[st::internal::stz]+0.0000)/st::internal::micro_cell_thickness);
    std::cout << "microcells per stack " << st::internal::num_microcells_per_stack << ", microcell volume (A^3): " <<  st::internal::micro_cell_size[st::internal::stx]*st::internal::micro_cell_size[st::internal::sty]*st::internal::micro_cell_thickness << std::endl;
+   
    // determine number of stacks in x and y (global)
-   st::internal::num_x_stacks = ceil((system_dimensions[st::internal::stx]+0.0)/st::internal::micro_cell_size[st::internal::stx]);
-   std::cout << "x_stacks " << st::internal::num_x_stacks << ", " << system_dimensions[st::internal::stx]+0.0 << "/" << st::internal::micro_cell_size[st::internal::stx] << std::endl;
-   st::internal::num_y_stacks = ceil((system_dimensions[st::internal::sty]+0.0)/st::internal::micro_cell_size[st::internal::sty]);
-   std::cout << "y_stacks " << st::internal::num_y_stacks << ", " << system_dimensions[st::internal::sty]+0.0 << "/" << st::internal::micro_cell_size[st::internal::sty] << std::endl;
+   st::internal::num_x_stacks = ceil((system_dimensions[st::internal::stx]+0.0000)/st::internal::micro_cell_size[st::internal::stx]);
+   std::cout << "x_stacks " << st::internal::num_x_stacks << ", " << system_dimensions[st::internal::stx]+0.0001 << "/" << st::internal::micro_cell_size[st::internal::stx] << std::endl;
+   st::internal::num_y_stacks = ceil((system_dimensions[st::internal::sty]+0.0000)/st::internal::micro_cell_size[st::internal::sty]);
+   std::cout << "y_stacks " << st::internal::num_y_stacks << ", " << system_dimensions[st::internal::sty]+0.0001 << "/" << st::internal::micro_cell_size[st::internal::sty] << std::endl;
+   
    // determine total number of stacks
    st::internal::num_stacks_y = st::internal::num_x_stacks*st::internal::num_y_stacks;
    st::internal::num_stacks_x = st::internal::num_y_stacks*st::internal::num_microcells_per_stack;
    std::cout << "Total stacks: " << st::internal::num_stacks_y << std::endl;
-   if(st::internal::sot_sa) std::cout << "Total stacks x: " << st::internal::num_stacks_x << std::endl;
+      if(st::internal::sot_sa) std::cout << "Total stacks x: " << st::internal::num_stacks_x << std::endl;
+   
    // allocate array to store index of first element of stack
    st::internal::stack_index_y.resize(st::internal::num_stacks_y);
    st::internal::stack_index_x.resize(st::internal::num_stacks_x);
@@ -210,10 +214,7 @@ void initialise(const double system_dimensions_x,
          supercell_array[i][j].resize(ncz);
          // set starting cell for each stack
          st::internal::stack_index_y[stack_y]=cell;
-
-        // if(i == 0) st::internal::stack_index_x[stack_x] = cell;
-       //  st::internal::cell_index_x[stack_x].push_back(cell);
-       //  stack_x++;
+        
          // increment stack counter
          stack_y++;
          // store cell coordinates
@@ -250,8 +251,8 @@ void initialise(const double system_dimensions_x,
       // temporary for atom coordinates
       double c[3];
       // convert atom coordinates to st reference frame
-      c[st::internal::stx]=atom_coords_x[atom]+0.0001;
-      c[st::internal::sty]=atom_coords_y[atom]+0.0001;
+      c[st::internal::stx]=atom_coords_x[atom]+0.0000;
+      c[st::internal::sty]=atom_coords_y[atom]+0.000;
       c[st::internal::stz]=atom_coords_z[atom]+0.0001;
       int scc[3]={0,0,0}; // super cell coordinates
       for(int i=0;i<3;i++){
@@ -279,7 +280,7 @@ void initialise(const double system_dimensions_x,
          }
       }
       // If no error for range then assign atom to cell.
-      st::internal::atom_st_index[atom]= supercell_array[scc[0]][scc[1]][scc[2]+1]; // move cells up by one in z
+      st::internal::atom_st_index[atom]= supercell_array[scc[0]][scc[1]][scc[2]]; // move cells up by one in z
       
    }
    } // end of supercell assignment of atoms
@@ -347,7 +348,7 @@ void initialise(const double system_dimensions_x,
          MPI_Barrier(MPI_COMM_WORLD);
          err::vexit();
       }
-      std::cout << "avg MPI y stack count " << st::internal::mpi_stack_list_y.size()  << std::endl;
+      std::cout << "MPI y stack list " << st::internal::mpi_stack_list_y.size()  << std::endl;
       
       if(st::internal::sot_sa) {
 
@@ -399,8 +400,9 @@ void initialise(const double system_dimensions_x,
                MPI_Barrier(MPI_COMM_WORLD);
                err::vexit();
             }
-
-         std::cout << "avg MPI x stack count " << st::internal::mpi_stack_list_x.size()  << std::endl;
+      // for(int i = 0; i < st::internal::mpi_stack_list_x.size(); i++ ) std::cout << "MPI " << vmpi::my_rank << ", x stack values: " << st::internal::mpi_stack_list_x[i]  << std::endl;
+      std::cout << "MPI x stack list avg. " << st::internal::mpi_stack_list_x.size()  << std::endl;
+         
       }
    #endif 
    
@@ -416,19 +418,19 @@ namespace internal{
       //-------------------------------------------------------
       // Determine microcell properties from atomic properties
       //-------------------------------------------------------
-      st::internal::default_properties.beta_cond =  0.23;
-      st::internal::default_properties.beta_diff = 0.56;
+      st::internal::default_properties.beta_cond =  0.99;
+      st::internal::default_properties.beta_diff = 0.99;
       st::internal::default_properties.sa_infinity =  1.48e7;
-      st::internal::default_properties.lambda_sdl = 36.0e-10; // m
+      st::internal::default_properties.lambda_sdl = 2000.0e-10; // m
       st::internal::default_properties.diffusion =  0.001; //m^2/s ? 
-      st::internal::default_properties.sd_exchange = 8.010883e-21; //Joule
+      st::internal::default_properties.sd_exchange = 8.010883e-25; //Joule
       
-      st::internal::default_properties.sot_beta_cond =  0.23;
-      st::internal::default_properties.sot_beta_diff = 3.26;
+      st::internal::default_properties.sot_beta_cond =  0.99;
+      st::internal::default_properties.sot_beta_diff = 0.99;
       st::internal::default_properties.sot_sa_infinity =  1.48e7;
-      st::internal::default_properties.sot_lambda_sdl = 14.0e-10; // m
-      st::internal::default_properties.sot_diffusion =  0.01; //m^2/s ? 
-      st::internal::default_properties.sot_sd_exchange = 8.010883e-21; //Joule
+      st::internal::default_properties.sot_lambda_sdl = 2000.0e-10; // m
+      st::internal::default_properties.sot_diffusion =  0.001; //m^2/s ? 
+      st::internal::default_properties.sot_sd_exchange = 8.010883e-25; //Joule
      
       // Temporary array to hold number of atoms in each cell for averaging
       std::vector<double> count(st::internal::beta_cond.size(),0.0);

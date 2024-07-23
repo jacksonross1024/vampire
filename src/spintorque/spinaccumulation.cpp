@@ -525,7 +525,7 @@ namespace st{
            
               
             const int idx = stack_index_x[stack];
-            if(sot_sa_source[idx]) continue;
+            // if(sot_sa_source[idx]) continue;
 
             // set initial values
            if(fbc) {
@@ -538,18 +538,22 @@ namespace st{
            } else if (!fbc) {
                 double mod = sqrt(m[3*idx+0]*m[3*idx+0] + m[3*idx+1]*m[3*idx+1] + m[3*idx+2]*m[3*idx+2]);
                 if(mod > 1e-11) mod = 1.0/mod;
-               sa_final[3*idx+0] = sa_infinity[idx]*m[3*idx+0]*mod;
-               sa_final[3*idx+1] = sa_infinity[idx]*m[3*idx+1]*mod;
-               sa_final[3*idx+2] = sa_infinity[idx]*m[3*idx+2]*mod;
+               sa_int[3*idx+0] = sa_infinity[idx]*m[3*idx+0]*mod;
+               sa_int[3*idx+1] = sa_infinity[idx]*m[3*idx+1]*mod;
+               sa_int[3*idx+2] = sa_infinity[idx]*m[3*idx+2]*mod;
 
                j_final_up_x[3*idx+0] = initial_beta*je_eff*m[3*idx+0]*mod;
                j_final_up_x[3*idx+1] = initial_beta*je_eff*m[3*idx+1]*mod;
                j_final_up_x[3*idx+2] = initial_beta*je_eff*m[3*idx+2]*mod;
 
-             //  if(je_eff > 0) std::cout << j_final_up_x[3*idx+0] << " , " << j_final_up_x[3*idx+1] << ", " << j_final_up_x[3*idx+2] << std::endl;
-          //    std::cout << mod << ", " << sa_final[3*idx+0] << ", " << sa_final[3*idx+1] << ", " << sa_final[3*idx+2] << std::endl;
-           }
+               // j_init_up_y[cellx] = twoDo*pre_jmx;
+               // j_init_up_y[celly] = twoDo*pre_jmy;
+               // j_init_up_y[cellz] = twoDo*pre_jmz;
 
+               // j_init_down_y[cellx] = twoDo*pre_jmx;
+               // j_init_down_y[celly] = twoDo*pre_jmy;
+               // j_init_down_y[cellz] = twoDo*pre_jmz;
+           }
           //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << default_properties.sa_infinity << "\t" << init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << m[3*idx+0] << " \t" <<  m[3*idx+1] << "\t" << sa[3*idx+0] << "\t" << sa[3*idx+1] << std::endl;
         // std::cout << stack << ", " << idx << ", " << spin_acc_sign[idx] << std::endl;
             // loop over all cells in stack after first (idx+1)
@@ -870,7 +874,7 @@ namespace st{
            //    stack = stack_index_y.at(s);
            // #endif
 
-            const int idx = stack_index_y[stack] + 1;
+            const int idx = stack_index_y[stack];
             //init process
             // std::cout << stack << ", " << idx << std::endl;
             for(int cell=idx; cell<idx+num_microcells_per_stack; ++cell) {
@@ -944,10 +948,18 @@ namespace st{
                const double Bc = sot_beta_cond[cell]; // beta
                const double Bd = sot_beta_diff[cell]; // beta_prime
                const double Do = sot_diffusion[cell];
-               three_vector_t jm0(j_init_up_y[pcellx]+j_init_down_y[acellx],\
+               three_vector_t jm0(0.0,0.0,0.0);
+               if(cell == idx) {jm0 = {j_init_down_y[acellx],\
+                                  j_init_down_y[acelly],\
+                                  j_init_down_y[acellz]};
+               } else if (cell == idx+num_microcells_per_stack - 1 ) {
+                                jm0 = {j_init_up_y[pcellx],\
+                                  j_init_up_y[pcelly],\
+                                  j_init_up_y[pcellz]};
+               } else {         jm0 = {j_init_up_y[pcellx]+j_init_down_y[acellx],\
                                   j_init_up_y[pcelly]+j_init_down_y[acelly],\
-                                  j_init_up_y[pcellz]+j_init_down_y[acellz]); //zero incoming spin current for init process
-               
+                                  j_init_up_y[pcellz]+j_init_down_y[acellz]};
+               }
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
                const double preD = twoDo*Bc*Bd;
@@ -1220,8 +1232,8 @@ namespace st{
                const double Do = sot_diffusion[cell];
                three_vector_t jm0(0.0,0.0,0.0);
                //grab correct cell's init spin current (int label)
-               if(direction_sign < 0) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
-               else {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
+               if(direction_sign < 0 && cell != idx+num_microcells_per_stack-1) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
+               else if(cell != idx) {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
              
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
@@ -1442,7 +1454,7 @@ namespace st{
             } 
            
             //int process down 1
-            for(int cell=idx+num_microcells_per_stack-2; cell >= idx; cell--) {
+            for(int cell=idx+num_microcells_per_stack-1; cell >= idx; cell--) {
                   int direction_sign = cell%2==0 ? 1:-1; //sign change for the down process
                
                const int cellx = 3*cell+0;
@@ -1513,8 +1525,8 @@ namespace st{
                const double Bd = sot_beta_diff[cell]; // beta_prime
                const double Do = sot_diffusion[cell];
                three_vector_t jm0(0.0,0.0,0.0);
-               if(direction_sign < 0) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
-               else {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
+               if(direction_sign < 0 && cell != idx+num_microcells_per_stack-1) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
+               else if(cell != idx) {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
                
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
@@ -1801,8 +1813,8 @@ namespace st{
                const double Bd = sot_beta_diff[cell]; // beta_prime
                const double Do = sot_diffusion[cell];
                three_vector_t jm0(0.0,0.0,0.0);
-               if(direction_sign < 0) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
-               else {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
+               if(direction_sign < 0 && cell != idx+num_microcells_per_stack-1) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
+               else if(cell != idx) {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
               
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
@@ -2061,6 +2073,7 @@ namespace st{
                                   j_int_up_y[celly]+j_int_down_y[celly],//+j_final_up_x[cellx],
                                   j_int_up_y[cellz]+j_int_down_y[cellz]);//+j_final_up_x[cellx]);                     
 
+               
                const double twoDo = 2.0*Do;
                const double preD = twoDo*Bc*Bd;
 
