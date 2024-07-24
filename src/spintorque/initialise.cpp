@@ -115,6 +115,7 @@ void initialise(const double system_dimensions_x,
    // allocate microcell data
    //-------------------------------------------------------------------------------------
    const int array_size = st::internal::num_x_stacks*st::internal::num_y_stacks*st::internal::num_microcells_per_stack;
+
    //stt
    st::internal::beta_cond.resize(array_size, 0.0); /// spin polarisation (conductivity)
    st::internal::beta_diff.resize(array_size, 0.0); /// spin polarisation (diffusion)
@@ -135,8 +136,7 @@ void initialise(const double system_dimensions_x,
    st::internal::sot_a.resize(array_size, 0.0); // a parameter for spin accumulation
    st::internal::sot_b.resize(array_size, 0.0); // b parameter for spin accumulation
    st::internal::sot_sa_source.resize(array_size, false);
-   
-   
+      
    st::internal::coeff_ast.resize(array_size, 0.0);
    st::internal::coeff_nast.resize(array_size, 0.0);
    st::internal::cell_natom.resize(array_size, 0.0);
@@ -153,9 +153,7 @@ void initialise(const double system_dimensions_x,
    st::internal::j_init_down_y.resize(three_vec_array_size,0.0); // spin current
    st::internal::j_final_up_x.resize(three_vec_array_size,0.0); // spin current
    st::internal::sa_final.resize(three_vec_array_size, 0.0); // spin accumulation
-   // st::internal::sa_sot_final.resize(three_vec_array_size,0.0); // sot sa up stack
    st::internal::sa_int.resize(three_vec_array_size,0.0); // sot sa up stack
-   // st::internal::sa_sot_init.resize(three_vec_array_size,0.0); // sot sa down stack
    st::internal::spin_torque.resize(three_vec_array_size,0.0); // spin torque
    st::internal::ast.resize(three_vec_array_size,0.0); // adiabatic spin torque
    st::internal::nast.resize(three_vec_array_size,0.0); // non-adiabatic spin torque
@@ -210,12 +208,12 @@ void initialise(const double system_dimensions_x,
       stack_x = 0;
 
       for(int j=0;j<ncy;++j){
-         // std::cout << stack << std::endl;
+         
          supercell_array[i][j].resize(ncz);
-         // set starting cell for each stack
+         // set starting cell for y stack
          st::internal::stack_index_y[stack_y]=cell;
         
-         // increment stack counter
+         // increment y stack counter
          stack_y++;
          // store cell coordinates
          for(int k=0; k<ncz; ++k){
@@ -231,7 +229,6 @@ void initialise(const double system_dimensions_x,
             st::internal::cell_stack_index[cell] = stack_y;
             // increment cell number
             cell++;
-         //   std::cout << st::internal::cell_index_x[stack_x].size() << std::endl;
          }
       }
    }
@@ -245,9 +242,7 @@ void initialise(const double system_dimensions_x,
 
    // Assign atoms to cells
    for(int atom=0;atom<num_local_atoms;atom++){
-      // if(st::internal::remove_nm) {
-      //    if(atoms::type_array[atom] == st::internal::remove_nm) continue;
-      // }
+
       // temporary for atom coordinates
       double c[3];
       // convert atom coordinates to st reference frame
@@ -280,7 +275,7 @@ void initialise(const double system_dimensions_x,
          }
       }
       // If no error for range then assign atom to cell.
-      st::internal::atom_st_index[atom]= supercell_array[scc[0]][scc[1]][scc[2]]; // move cells up by one in z
+      st::internal::atom_st_index[atom]= supercell_array[scc[0]][scc[1]][scc[2]]; 
       
    }
    } // end of supercell assignment of atoms
@@ -553,8 +548,6 @@ namespace internal{
             if(st::internal::spin_acc_sign.at(cell) == 0) st::internal::sot_sa_source.at(cell) = true;
          }
       }
-
-
 
       // Determine a and b parameters
       const double hbar = 1.05457162e-34;

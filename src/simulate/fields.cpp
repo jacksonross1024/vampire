@@ -523,7 +523,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		double sot_factor = program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
 
 		const double sot_lambda_2ndorder = sot_asm_2nd_order[material];
-		sot_factor *= 1.0 / (1.0 + (sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz))*(sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz)));
+		sot_factor *= 1.0 / (1.0 + (sot_lambda_2ndorder*(sx*sotpx + sy*sotpy + sz*sotpz))*(sot_lambda_2ndorder*(sx*sotpx + sy*sotpy + sz*sotpz)));
 		// calculate field
 		hx += sot_factor * ( (sotrj-alpha*sotpj)*(sy*sotpz - sz*sotpy) + (sotpj+alpha*sotrj)*sotpx );
 		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );

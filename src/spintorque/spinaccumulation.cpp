@@ -466,15 +466,12 @@ namespace st{
          std::fill (spin_torque.begin(),spin_torque.end(),0.0);
          std::fill (sa_final.begin(),sa_final.end(),0.0);
          std::fill (sa_int.begin(),sa_int.end(),0.0);
-         // std::fill (sa_sot_int.begin(),sa_sot_int.end(),0.0);
-         // std::fill (sa_sot_init.begin(),sa_sot_init.end(),0.0);
-         // std::fill (j_final_up_y.begin(),j_final_up_y.end(),0.0);
+         
          std::fill (j_init_up_y.begin(),j_init_up_y.end(),0.0);
          std::fill (j_init_down_y.begin(),j_init_down_y.end(),0.0);
          std::fill (j_int_up_y.begin(),j_int_up_y.end(),0.0);
          std::fill (j_int_down_y.begin(),j_int_down_y.end(),0.0);
-         // std::fill (j_final_up_x.begin(),j_final_up_x.end(),0.0);
-         // Declare resuable temporary variables
+         
          matrix_t itm; // inverse transformation matrix
          matrix_t M; // general matrix
          three_vector_t V(0.0,0.0,0.0); // general 3-vector
@@ -501,69 +498,42 @@ namespace st{
          const double microcell_volume = (micro_cell_size[stx] *
                                           micro_cell_size[sty] *
                                           micro_cell_thickness)*1.e-30; // m^3
-         const double atomcell_volume = 15.7624e-30;
+         const double atomcell_volume = 15.7624e-30; //hard code for Mn2Au atom volume for now
 
-         // #ifdef MPICH
+         // need mpi run for now
          int   int_stacks = mpi_stack_list_x.size();
-         // #else
-            // int_stacks = stack_index_x.size();
-         // #endif
-
          int stack = 0;
-         // std::cout << "continuing sot simulation x axis..." << std::endl;
-         // std::cout << int_stacks << ", " << mpi_stack_list.size() << std::endl;
 
          //STT first
          for(int s=0; s < int_stacks; ++s) {
-            // #ifdef MPICH
-               stack = mpi_stack_list_x.at(s);
-            // #else
-               // stack = stack_index_x.at(s);
-            // #endif
-            //  if(stack % 3 == 0) continue;
-            // std::cout << stack << std::endl;
-           
-              
-            const int idx = stack_index_x[stack];
-            // if(sot_sa_source[idx]) continue;
 
-            // set initial values
-           if(fbc) {
-               // sa[3*idx+0] = 0.0;
-               // sa[3*idx+1] = 0.0;
-               // sa[3*idx+2] = 0.0;
+            stack = mpi_stack_list_x.at(s);          
+            const int idx = stack_index_x[stack];
+   
+           if(fbc) { //fbc uses initial beta for spin polarisation from injection
                j_final_up_x[3*idx+0] = initial_beta*je_eff*initial_m[0];
                j_final_up_x[3*idx+1] = initial_beta*je_eff*initial_m[1];
                j_final_up_x[3*idx+2] = initial_beta*je_eff*initial_m[2];
-           } else if (!fbc) {
+           } else if (!fbc) { //assume infinite magnetisation precedding. 
                 double mod = sqrt(m[3*idx+0]*m[3*idx+0] + m[3*idx+1]*m[3*idx+1] + m[3*idx+2]*m[3*idx+2]);
                 if(mod > 1e-11) mod = 1.0/mod;
                sa_int[3*idx+0] = sa_infinity[idx]*m[3*idx+0]*mod;
                sa_int[3*idx+1] = sa_infinity[idx]*m[3*idx+1]*mod;
                sa_int[3*idx+2] = sa_infinity[idx]*m[3*idx+2]*mod;
 
-               j_final_up_x[3*idx+0] = initial_beta*je_eff*m[3*idx+0]*mod;
+               j_final_up_x[3*idx+0] = initial_beta*je_eff*m[3*idx+0]*mod; //need to remove beta_initial dependency
                j_final_up_x[3*idx+1] = initial_beta*je_eff*m[3*idx+1]*mod;
                j_final_up_x[3*idx+2] = initial_beta*je_eff*m[3*idx+2]*mod;
 
-               // j_init_up_y[cellx] = twoDo*pre_jmx;
-               // j_init_up_y[celly] = twoDo*pre_jmy;
-               // j_init_up_y[cellz] = twoDo*pre_jmz;
-
-               // j_init_down_y[cellx] = twoDo*pre_jmx;
-               // j_init_down_y[celly] = twoDo*pre_jmy;
-               // j_init_down_y[cellz] = twoDo*pre_jmz;
            }
-          //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << default_properties.sa_infinity << "\t" << init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << m[3*idx+0] << " \t" <<  m[3*idx+1] << "\t" << sa[3*idx+0] << "\t" << sa[3*idx+1] << std::endl;
-        // std::cout << stack << ", " << idx << ", " << spin_acc_sign[idx] << std::endl;
-            // loop over all cells in stack after first (idx+1)
+         
+            //standard stt method in x plane
             std::vector<int> cell_container_list = cell_index_x[stack];
             for(int xc = 1; xc < cell_container_list.size(); ++xc) {
-               // if(xc == 0 && (cell_index_x[stack][xc-1] != idx)) std::cout << idx << ", " << cell_index_x[stack][xc-1] << std::endl;
+              
 
                int cell = cell_index_x[stack][xc];
-               // if(sot_sa_source[cell]) std::cout << "problem" << std::endl;
-               //   std::cout << stack  << ", " << cell << ", " << spin_acc_sign[cell] << std::endl;
+               
                // calculate cell id's
                const int cellx = 3*cell+0;
                const int celly = 3*cell+1;
@@ -582,8 +552,7 @@ namespace st{
                   m_local.z = m[cellz]; // current cell new SA
 
                const double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
-               // const double pmodm = sqrt(pm_local.x*pm_local.x + pm_local.y*pm_local.y + pm_local.z*pm_local.z);
-
+               
                // Check for zero magnetization in normalization
                if(modm > 1.e-11){
                   m_local.x = m_local.x/modm;
@@ -625,8 +594,7 @@ namespace st{
                const double Bc = beta_cond[cell]; // beta
                const double Bd = beta_diff[cell]; // beta_prime
                const double Do = diffusion[cell];
-                three_vector_t jm0(j_final_up_x[pcellx],j_final_up_x[pcelly],j_final_up_x[pcellz]);
-             
+               three_vector_t jm0(j_final_up_x[pcellx],j_final_up_x[pcelly],j_final_up_x[pcellz]);
 
                //  Calculate gradient dsacc/dx
                const double twoDo = 2.0*Do;
@@ -716,6 +684,7 @@ namespace st{
                   j_final_up_x[celly] = jmy;
                   j_final_up_x[cellz] = jmz;
 
+                  //spin polarisation in cell becomes up and down drift current for z axis
                   j_init_up_y[cellx] = twoDo*pre_jmx;
                   j_init_up_y[celly] = twoDo*pre_jmy;
                   j_init_up_y[cellz] = twoDo*pre_jmz;
@@ -724,6 +693,7 @@ namespace st{
                   j_init_down_y[celly] = twoDo*pre_jmy;
                   j_init_down_y[cellz] = twoDo*pre_jmz;
 
+                  //save intermediate sa for z axis
                   sa_int[cellx] = sax;
                   sa_int[celly] = say;
                   sa_int[cellz] = saz; 
@@ -845,7 +815,7 @@ namespace st{
             } // end of cell loop
          } // end of stack loop
  
-
+         //reduce for new mpi decomp 
          #ifdef MPICF
             // MPI_Allreduce(MPI_IN_PLACE, &j_final_up_x[0],j_final_up_x.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(MPI_IN_PLACE, &sa_int[0],sa_int.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -853,30 +823,16 @@ namespace st{
             MPI_Allreduce(MPI_IN_PLACE, &j_init_down_y[0],j_init_down_y.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
          #endif
 
-         // loop over all 1D stacks (in parallel)
-         // int int_stacks;
-         //#ifdef MPICH
-            int_stacks = mpi_stack_list_y.size();
-         //#else
-        //    int_stacks = stack_index_y.size();
-         //#endif
-
-
-          stack = 0;
-         const double sot_sd_exchange_multiple = 1;// 3e2;
-         // std::cout << "starting sot simulation y axis..." << std::endl;
-
+         //new mpi decomp 
+         int_stacks = mpi_stack_list_y.size();
+         stack = 0;
+      
          //sot now
          for(int s=0; s < int_stacks; ++s) {
-           // #ifdef MPICH
-               stack = mpi_stack_list_y.at(s);
-          //  #else 
-           //    stack = stack_index_y.at(s);
-           // #endif
-
+            stack = mpi_stack_list_y.at(s);
             const int idx = stack_index_y[stack];
+
             //init process
-            // std::cout << stack << ", " << idx << std::endl;
             for(int cell=idx; cell<idx+num_microcells_per_stack; ++cell) {
                int direction_sign = sot_sa_source[cell] ? -1:1; //direction and sign if Au J_s
                
@@ -948,7 +904,7 @@ namespace st{
                const double Bc = sot_beta_cond[cell]; // beta
                const double Bd = sot_beta_diff[cell]; // beta_prime
                const double Do = sot_diffusion[cell];
-               three_vector_t jm0(0.0,0.0,0.0);
+               three_vector_t jm0(0.0,0.0,0.0); //different bounds for top and bottom layers
                if(cell == idx) {jm0 = {j_init_down_y[acellx],\
                                   j_init_down_y[acelly],\
                                   j_init_down_y[acellz]};
@@ -960,7 +916,9 @@ namespace st{
                                   j_init_up_y[pcelly]+j_init_down_y[acelly],\
                                   j_init_up_y[pcellz]+j_init_down_y[acellz]};
                }
+
                //  Calculate gradient dsacc/dx
+               // need to include Roy's new interface dsa contribution for multilayers
                const double twoDo = 2.0*Do;
                const double preD = twoDo*Bc*Bd;
 
@@ -978,7 +936,7 @@ namespace st{
                // Calculate mp(0), c and d
                const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;
-               //modify spin acc on Au depending on current. Very low impact but seems physics?
+               //modify spin acc on Au depending on current. current Au m_inf = 0.0
                if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
                const double a_local = sot_a[cell];
                const double b_local = sot_b[cell];
@@ -1057,7 +1015,7 @@ namespace st{
                j_int_up_y[celly] = jmy;
                j_int_up_y[cellz] = jmz;
 
-               // if(sot_sa_source[cell]) std::cout << jmx << ", " << jmy << ", " << jmz <<
+               
                //down diffusion for Au spin current negative
                j_int_down_y[cellx] = jmx*direction_sign;
                j_int_down_y[celly] = jmy*direction_sign;
@@ -1231,7 +1189,7 @@ namespace st{
                const double Bd = sot_beta_diff[cell]; // beta_prime
                const double Do = sot_diffusion[cell];
                three_vector_t jm0(0.0,0.0,0.0);
-               //grab correct cell's init spin current (int label)
+               //grab correct cell's init spin current (int label) bounds for top and bottom cells
                if(direction_sign < 0 && cell != idx+num_microcells_per_stack-1) {jm0.x = j_int_down_y[acellx]; jm0.y = j_int_down_y[acelly]; jm0.z = j_int_down_y[acellz];}
                else if(cell != idx) {jm0.x = j_int_up_y[pcellx]; jm0.y = j_int_up_y[pcelly]; jm0.z = j_int_up_y[pcellz];}
              
@@ -1308,11 +1266,6 @@ namespace st{
                const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
                const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
-               //  double jmx = Bc*je_eff*m_local.x - twoDo*pre_jmx;
-               //  double jmy = Bc*je_eff*m_local.y - twoDo*pre_jmy;
-               //  double jmz = Bc*je_eff*m_local.z - twoDo*pre_jmz;
-
-               
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
                   //Au spin source sign direction dependent 
@@ -1320,7 +1273,7 @@ namespace st{
                double jmz =   twoDo*pre_jmz;
               
                if(cell_natom[cell]>0) {
-               
+                  //no sa calculation yet
                   // sa_sot_int[cellx] = sax;
                   // sa_sot_int[celly] = say;
                   // sa_sot_int[cellz] = saz;
@@ -1607,7 +1560,7 @@ namespace st{
                double jmz =   twoDo*pre_jmz;
                
                if(cell_natom[cell]>0) {
-               
+                  //no sa calculation yet
                   // sa_sot_final[cellx] = sax;
                   // sa_sot_final[celly] = say;
                   // sa_sot_final[cellz] = saz;
@@ -2026,7 +1979,7 @@ namespace st{
                nast[cellz] += bj*SxSp[2];
                } 
             } 
-      
+            //summation step
             for(int cell=idx; cell<idx+num_microcells_per_stack; cell++) {
                
                 //direction sign for Au outgoing spin current for data output
@@ -2044,7 +1997,7 @@ namespace st{
                }
                else{
                   m_local.x = 0.0;
-                  m_local.y = 1.0;
+                  m_local.y = 1.0; //default to +y for Au, get alternating sa in output but no physical change
                   m_local.z = 0.0;
                   modm = 1.0;
                }
@@ -2068,7 +2021,7 @@ namespace st{
                 // Initialise temporary constants
                const double Bc = sot_beta_cond[cell]; // beta
                const double Bd = sot_beta_diff[cell]; // beta_prime
-               const double Do = sot_diffusion[cell];
+               const double Do = sot_diffusion[cell];                   // no contribution from x current since it was used to calculate the sa_int value at beginning of z axis steps
                three_vector_t jm0(j_int_up_y[cellx]+j_int_down_y[cellx],//+j_final_up_x[cellx], 
                                   j_int_up_y[celly]+j_int_down_y[celly],//+j_final_up_x[cellx],
                                   j_int_up_y[cellz]+j_int_down_y[cellz]);//+j_final_up_x[cellx]);                     
@@ -2142,15 +2095,10 @@ namespace st{
                const double pre_jmy = divsay - Bc*Bd*m_local.y*dot;
                const double pre_jmz = divsaz - Bc*Bd*m_local.z*dot;
 
-           
                double jmx =   twoDo*pre_jmx;
                double jmy =   twoDo*pre_jmy;
-                  if(sot_sa_source[cell]) jmy = je_eff*initial_theta;
+                  if(sot_sa_source[cell]) jmy = je_eff*initial_theta; //depreciated
                double jmz =   twoDo*pre_jmz;
-
-               // sa_int[cellx] = sax;
-               // sa_int[celly] = say;
-               // sa_int[cellz] = saz;
 
                sa_final[cellx] = sax;
                sa_final[celly] = say;
@@ -2241,6 +2189,7 @@ namespace st{
                 double Tx = prefac_sc*(mlocal[1]*saz-mlocal[2]*say);
                 double Ty = prefac_sc*(mlocal[2]*sax-mlocal[0]*saz);
                 double Tz = prefac_sc*(mlocal[0]*say-mlocal[1]*sax);
+                //Torque field in T. hard code in output to scale with m_s 3.72. Need to change
                 total_ST[cellx] = Ty*mlocal[2]-Tz*mlocal[1];
                 total_ST[celly] = Tz*mlocal[0]-Tx*mlocal[2];
                 total_ST[cellz] = Tx*mlocal[1]-Ty*mlocal[0];
@@ -2275,6 +2224,7 @@ namespace st{
          
 
          // Reduce all atomcell spin torques on all nodes
+         //only do reduction for this constant since used in LLG step. Others are reduced in output step
          #ifdef MPICF
             MPI_Allreduce(MPI_IN_PLACE, &spin_torque[0],spin_torque.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
          #endif

@@ -66,6 +66,7 @@ spin-torque:enable-ST-fields #enable ST module
 spin-torque:SOT-spin-accumulation  #enable SOT spin acc codes
 spin-torque:current-direction= z #stack decomp direction, not true current value. sot acc set to E || x vector
 
+spin-torque:current-density = 1e11 
 spin-torque:micro-cell-decomp = mpi #determines microcell based on mpi decomp
 spin-torque:micro-cell-size= 4,1,1 #number of mpi cores in each direction. right now only change the x value. Must be run with mpirun, even if -np 1 and micro-cell-size = 1,0,0
 spin-torque:micro-cell-thickness= 1.42316667 #partition perp current direction 
