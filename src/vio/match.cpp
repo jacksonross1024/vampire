@@ -613,7 +613,9 @@ namespace vin{
         if(word==test){
             std::vector<double> u(3);
             u=doubles_from_string(value);
+            double u_old[3] = {u[0],u[1],u[2]};
             check_for_valid_unit_vector(u, word, line, prefix, "input");
+            if(u_old[0] != u[0] || u_old[1] != u[1] || u_old[2] != u[2]) std::cout << "unit vector normalised from <" << u_old[0] << ", " << u_old[1] << ", " << u_old[2] << "> to <" << u[0] << ", " << u[1] << ", " << u[2] << ">" << std::endl;
             sim::H_vec[0]=u.at(0);
             sim::H_vec[1]=u.at(1);
             sim::H_vec[2]=u.at(2);

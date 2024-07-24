@@ -108,7 +108,7 @@ namespace ltmp{
          }
 
          // optionally output cell data
-         if(ltmp::internal::output_microcell_data) ltmp::internal::write_cell_temperature_data();
+         // if(ltmp::internal::output_microcell_data) ltmp::internal::write_cell_temperature_data();
 
          return;
 

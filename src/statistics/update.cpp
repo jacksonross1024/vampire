@@ -18,6 +18,7 @@
 #include "sim.hpp"
 #include "stats.hpp"
 #include "cells.hpp"
+#include "../ltmp/internal.hpp"
 
 namespace stats{
 
@@ -98,6 +99,7 @@ namespace stats{
                                                              //  atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array);
          
          if(cells::output_microcells) cells::mag();
+         if(ltmp::internal::output_microcell_data) ltmp::internal::write_cell_temperature_data();
          
          }
 

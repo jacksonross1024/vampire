@@ -561,7 +561,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		// if(program::fractional_electric_field_strength > 0.0) std::cout << program::fractional_electric_field_strength << std::endl;
 		double lotx = lotlt_x;//*lot_unit_vector[0];
 		double loty = lotlt_y;//*lot_unit_vector[1];
-		double lotz = lotlt_z*exp(-(500.0-atoms::z_coord_array[atom])/300.0);//lotlt_z*lot_unit_vector[2];
+		double lotz = lotlt_z;//*exp(-(100.0-atoms::z_coord_array[atom])/300.0);//lotlt_z*lot_unit_vector[2];
 
 		hx += (loty*sz - sy*lotz);
 		hy += (lotz*sx - sz*lotx);

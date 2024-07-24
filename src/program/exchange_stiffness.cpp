@@ -275,7 +275,7 @@ void exchange_stiffness(){
 		sim::temperature=sim::Tmin;
 
 		// equilibrate ground state structure at zero kelvin
-		for(int ztime = 0; ztime < 500; ztime++) sim::integrate(1);
+		// for(int ztime = 0; ztime < 500; ztime++) sim::integrate(1);
 
 		// reset temperature array
 		temperatures.resize(0);
