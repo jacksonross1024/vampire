@@ -110,7 +110,9 @@ namespace st{
                   ofile << m[3*cell+0]*mag << "\t" << m[3*cell+1]*mag << "\t" << m[3*cell+2]*mag << "\t";
                  // if(st::internal::sot_check) ofile << (sa_sum[3*cell+0]-sa_infinity[cell]*m[3*cell]*mag)/sa_infinity[cell] << "\t" << (sa_sum[3*cell+1]-sa_infinity[cell]*m[3*cell+1]*mag)/sa_infinity[cell] << "\t" << (sa_sum[3*cell+2]-m[3*cell+2]*mag)/sa_infinity[cell] << "\t";
                   //else 
+                  ofile << std::fixed << std::setprecision(10);
                   ofile << sa_sum[3*cell+0] << "\t" << sa_sum[3*cell+1] << "\t" << sa_sum[3*cell+2] << "\t";
+                  ofile << std::setprecision(6);
                   ofile << j_final_up_x_sum[3*cell+0] << "\t" << j_final_up_x_sum[3*cell+1] << "\t" << j_final_up_x_sum[3*cell+2] << "\t";
                   ofile << j_final_up_y_sum[3*cell+0] << "\t" << j_final_up_y_sum[3*cell+1] << "\t" << j_final_up_y_sum[3*cell+2] << "\t";
                   ofile << j_final_down_y_sum[3*cell+0] << "\t" << j_final_down_y_sum[3*cell+1] << "\t" << j_final_down_y_sum[3*cell+2] << "\t";

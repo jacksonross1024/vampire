@@ -565,6 +565,10 @@ namespace internal{
          const double lambda_sf2 = lambda_sf*lambda_sf;
          const double lambda_j2 = lambda_j*lambda_j;
 
+         const double l_perp = 0;
+         const double l_L = 0;
+         const double lambda_phi2 = 2*lambda_j2;
+         const double lambda_trans2 = lambda_phi2 + lambda_sf2;
          std::complex<double> inside (1.0/lambda_sf2, -1.0/lambda_j2);
          std::complex<double> inv_lplus = sqrt(inside);
 
@@ -586,6 +590,12 @@ namespace internal{
          const double sot_lambda_j = sqrt(2.0*hbar*sot_Do /sot_Jsd); // Angstroms
          const double sot_lambda_sf2 = sot_lambda_sf*sot_lambda_sf;
          const double sot_lambda_j2 = sot_lambda_j*sot_lambda_j;
+
+         const double l_perp = 0;
+         const double l_L = 0;
+         const double sot_lambda_phi2 = 2*lambda_j2;
+         const double sot_lambda_trans2 = lambda_phi2 + lambda_sf2;
+         // std::complex<double> inside (1.0/lambda_trans2, -1.0/lambda_j2); 
 
          std::complex<double> sot_inside (1.0/sot_lambda_sf2, -1.0/sot_lambda_j2);
          std::complex<double> sot_inv_lplus = sqrt(sot_inside);

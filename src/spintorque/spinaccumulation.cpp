@@ -498,7 +498,7 @@ namespace st{
          const double microcell_volume = (micro_cell_size[stx] *
                                           micro_cell_size[sty] *
                                           micro_cell_thickness)*1.e-30; // m^3
-         const double atomcell_volume = 15.7624e-30; //hard code for Mn2Au atom volume for now
+         const double atomcell_volume = 67.8e-30;// muffin tin radii 15.7624e-30; //hard code for Mn2Au atom volume for now
 
          // need mpi run for now
          int   int_stacks = mpi_stack_list_x.size();
@@ -2103,12 +2103,20 @@ namespace st{
                sa_final[cellx] = sax;
                sa_final[celly] = say;
                sa_final[cellz] = saz;
-
+               
                //sot check output flag will run spin acc program without torque to calculate and output values
                if(!sot_check){
-                  spin_torque[cellx] = atomcell_volume * sd_exchange[cell] * (sax) * i_e * i_muB;
-                  spin_torque[celly] = atomcell_volume * sd_exchange[cell] * (say) * i_e * i_muB;
-                  spin_torque[cellz] = atomcell_volume * sd_exchange[cell] * (saz) * i_e * i_muB; 
+                  double prefac_sot = sot_sd_exchange[cell]*i_muB;
+                  double mlocal[3] = {m[3*cell], m[3*cell+1], m[3*cell+2]};
+                  double mmod = sqrt(mlocal[0]*mlocal[0] + mlocal[1]*mlocal[1] + mlocal[2]*mlocal[2]);
+                     if(mmod > 0.0) {mlocal[0] /= mmod; mlocal[1] /= mmod; mlocal[2] /= mmod;}
+                  // spin_torque[cellx] = prefac_sot*(sax-mlocal[0]*sa_infinity[cell])/sa_infinity[cell];
+                  // spin_torque[celly] = prefac_sot*(say-mlocal[1]*sa_infinity[cell])/sa_infinity[cell];
+                  // spin_torque[cellz] = prefac_sot*(saz-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];
+                  // if(cell == 1) std::cout << "spin torque " <<  spin_torque[celly] << std::endl;
+                  spin_torque[cellx] = atomcell_volume * sot_sd_exchange[cell] * (sax) * i_e * i_muB;
+                  spin_torque[celly] = atomcell_volume * sot_sd_exchange[cell] * (say) * i_e * i_muB;
+                  spin_torque[cellz] = atomcell_volume * sot_sd_exchange[cell] * (saz) * i_e * i_muB; 
                }
                j_final_up_y[cellx] = jmx;
                j_final_up_y[celly] = jmy;
@@ -2153,7 +2161,8 @@ namespace st{
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = atomcell_volume * sot_sd_exchange[cell] * i_e * i_muB;
+               const double prefac_sc = atomcell_volume * sot_sd_exchange[cell] * i_e * i_muB/3.72;
+               //  const double prefac_sc = sot_sd_exchange[cell] * i_muB;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -2186,14 +2195,15 @@ namespace st{
                 double mlocal[3] = {m[3*cell], m[3*cell+1], m[3*cell+2]};
                 double mmod = sqrt(mlocal[0]*mlocal[0] + mlocal[1]*mlocal[1] + mlocal[2]*mlocal[2]);
                 if(mmod > 0.0) {mlocal[0] /= mmod; mlocal[1] /= mmod; mlocal[2] /= mmod;}
-                double Tx = prefac_sc*(mlocal[1]*saz-mlocal[2]*say);
-                double Ty = prefac_sc*(mlocal[2]*sax-mlocal[0]*saz);
-                double Tz = prefac_sc*(mlocal[0]*say-mlocal[1]*sax);
+                double Tx = prefac_sc*(mlocal[1]*saz-mlocal[2]*say);//(sax-mlocal[0]*sa_infinity[cell])/sa_infinity[cell]; //;
+                double Ty = prefac_sc*(mlocal[2]*sax-mlocal[0]*saz);//(sax-mlocal[1]*sa_infinity[cell])/sa_infinity[cell];//;
+                double Tz = prefac_sc*(mlocal[0]*say-mlocal[1]*sax);//(sax-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];//;
                 //Torque field in T. hard code in output to scale with m_s 3.72. Need to change
-                total_ST[cellx] = Ty*mlocal[2]-Tz*mlocal[1];
-                total_ST[celly] = Tz*mlocal[0]-Tx*mlocal[2];
-                total_ST[cellz] = Tx*mlocal[1]-Ty*mlocal[0];
-
+                  double prefac_sot = sot_sd_exchange[cell]*i_muB/3.72;
+                total_ST[cellx] = prefac_sot*(sax-mlocal[0]*sa_infinity[cell])/sa_infinity[cell];//prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//Ty*mlocal[2]-Tz*mlocal[1];
+                total_ST[celly] = prefac_sot*(say-mlocal[1]*sa_infinity[cell])/sa_infinity[cell];//(say-mlocal[1]*sa_infinity[cell]);//Tz*mlocal[0]-Tx*mlocal[2];
+                total_ST[cellz] = Tz;//prefac_sot*(saz-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];//(saz-mlocal[2]*sa_infinity[cell]);//Tx*mlocal[1]-Ty*mlocal[0];
+                  // if(cell == 1)  std::cout << "total st " << total_ST[celly] << std::endl;
                 ast[cellx] = -aj*SxSxSp[0];
                 ast[celly] = -aj*SxSxSp[1];
                 ast[cellz] = -aj*SxSxSp[2];

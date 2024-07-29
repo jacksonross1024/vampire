@@ -80,23 +80,23 @@ material[2]:sd-exchange-constant = 0.05 !eV #50 meV 8.010883e-21 J, Oppeneer
 material[1]:spin-diffusion-length = 2000.0
 material[1]:spin-polarisation-conductivity = 0.99 
 material[1]:spin-polarisation-diffusion = 0.99     
-material[1]:spin-accumulation = 0.0# to match Mn acc when current on
+material[1]:spin-accumulation = 1e7# to match Mn acc when current on
 material[1]:diffusion-constant = 1e-3 #m^2/s 
 material[1]:sd-exchange-constant =  8.010883e-25 #5 ueV
 
 #--------------
 # SOT (e.g. perpendicular plane) constants
 #--------------
-material[3]:sot-spin-diffusion-length = 10.5 # sdl and sd-exchange affect the out of plane component most
+material[3]:sot-spin-diffusion-length = 9.615 # sdl and sd-exchange affect the out of plane component most
 material[3]:sot-spin-polarisation-conductivity = 0.23
-material[3]:sot-spin-polarisation-diffusion = 3.425 #beta' seems to affect most the amount of x vs. y spin polarisation
+material[3]:sot-spin-polarisation-diffusion = 3.65 #beta' seems to affect most the amount of x vs. y spin polarisation
 material[3]:sot-spin-accumulation = 1.48e7 # 
 material[3]:sot-diffusion-constant = 0.007 #
 material[3]:sot-sd-exchange-constant = 0.3 !eV  #this combined with diffusion, beta', and spin accumulation determine the field. want 2-8 mT / 10e11 A/m^2
 
-material[2]:sot-spin-diffusion-length = 10.5 #
+material[2]:sot-spin-diffusion-length = 9.615 #
 material[2]:sot-spin-polarisation-conductivity = 0.23 #beta 
-material[2]:sot-spin-polarisation-diffusion = 3.425 
+material[2]:sot-spin-polarisation-diffusion = 3.65
 material[2]:sot-spin-accumulation = 1.48e7 
 material[2]:sot-diffusion-constant = 0.007 
 material[2]:sot-sd-exchange-constant = 0.3 !eV 
@@ -105,7 +105,7 @@ material[2]:sot-sd-exchange-constant = 0.3 !eV
 material[1]:sot-spin-diffusion-length = 2000.0
 material[1]:sot-spin-polarisation-conductivity = 0.99 
 material[1]:sot-spin-polarisation-diffusion = 0.99     
-material[1]:sot-spin-accumulation = 0.0# to match Mn acc when current on
+material[1]:sot-spin-accumulation = 1e7# to match Mn acc when current on
 material[1]:sot-diffusion-constant = 1e-3 #m^2/s 
 material[1]:sot-sd-exchange-constant =  8.010883e-25 #5 ueV
 
