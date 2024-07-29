@@ -65,14 +65,14 @@ spin-torque:enable-ST-fields #enable ST module
 spin-torque:SOT-spin-accumulation  #enable SOT spin acc codes
 spin-torque:current-direction= z #stack decomp direction, not true current value. sot acc set to E || x vector
 
-spin-torque:current-density = 10 e11 
+spin-torque:current-density = 20 e11 
 spin-torque:micro-cell-decomp = mpi #determines microcell based on mpi decomp
 spin-torque:micro-cell-size= 4,1,1 #number of mpi cores in each direction. right now only change the x value. Must be run with mpirun, even if -np 1 and micro-cell-size = 1,0,0
 spin-torque:micro-cell-thickness= 1.42316667 #partition perp current direction 
-spin-torque:spin-hall-angle= -0.001 #this is now depreciated for the sot module. We will call it the spin galvanic angle and I don't know what it is, so set to 1.
+spin-torque:spin-hall-angle= -0.16 #this is now depreciated for the sot module. We will call it the spin galvanic angle and I don't know what it is, so set to 1.
 spin-torque:initial-spin-polarisation = 0.23 #starting polarisation for x spin current for DWs
 spin-torque:finite-boundary-condition = false #no MTJ and infinite preceding AFM plane
-spin-torque:sot-check-only 
+#spin-torque:sot-check-only 
 spin-torque:ST-output-rate=1000
 spin-torque:output-torque-data = final #options 'init', 'int', 'final'. Final useful stats. others more for debugging.
 

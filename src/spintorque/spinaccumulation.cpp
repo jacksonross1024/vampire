@@ -2200,8 +2200,8 @@ namespace st{
                 double Tz = prefac_sc*(mlocal[0]*say-mlocal[1]*sax);//(sax-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];//;
                 //Torque field in T. hard code in output to scale with m_s 3.72. Need to change
                   double prefac_sot = sot_sd_exchange[cell]*i_muB/3.72;
-                total_ST[cellx] = prefac_sot*(sax-mlocal[0]*sa_infinity[cell])/sa_infinity[cell];//prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//Ty*mlocal[2]-Tz*mlocal[1];
-                total_ST[celly] = prefac_sot*(say-mlocal[1]*sa_infinity[cell])/sa_infinity[cell];//(say-mlocal[1]*sa_infinity[cell]);//Tz*mlocal[0]-Tx*mlocal[2];
+                total_ST[cellx] = prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//Ty*mlocal[2]-Tz*mlocal[1];
+                total_ST[celly] = prefac_sc*(say-mlocal[1]*sa_infinity[cell]);//(say-mlocal[1]*sa_infinity[cell]);//Tz*mlocal[0]-Tx*mlocal[2];
                 total_ST[cellz] = Tz;//prefac_sot*(saz-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];//(saz-mlocal[2]*sa_infinity[cell]);//Tx*mlocal[1]-Ty*mlocal[0];
                   // if(cell == 1)  std::cout << "total st " << total_ST[celly] << std::endl;
                 ast[cellx] = -aj*SxSxSp[0];
