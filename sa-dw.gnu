@@ -31,14 +31,13 @@ set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
 
 set terminal pngcairo font "helvetica, 14"
-chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 0) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
-chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 1 || sl_y != 0) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
+chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 11 && sl_y != 0) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
+chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 11 && sl_y != 0) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
 
-chck_dw_up(sl_x, sl_z, x) = (sl_z == 5) ? (sl_x) : (1/0)
-chck_dw_down(sl_x, sl_z, x) = (sl_z == 6) ? (sl_x): (1/0)
+chck_dw_up(sl_x, sl_z, x) = (sl_z == 10) ? (sl_x) : (1/0)
+chck_dw_down(sl_x, sl_z, x) = (sl_z == 11) ? (sl_x): (1/0)
 
 delta_S(t,m, sa) = ((t-sa*m)/sa)
-
 
 SA = 1.48e7
 cell_x = 1
@@ -48,11 +47,13 @@ set ytics 0.5
 
 fname = 4
 
-p1 = 210
-set xrange [p1-50:p1+50]
+p1 = 250
+set xrange [p1-75:p1+75]
+#set xrange [0:500]
+current = 1e11 
 
 file= sprintf("spin-acc/%.0f",fname)
-set output sprintf("sa-dw-sot-10e11-%.0f.png",fname)
+set output sprintf("sa-dw-sot-%f-%.0f.png", current, fname)
 
 set ylabel "sa (x 1.48e7 C/m^3)"
 set multiplot layout 2,1
@@ -65,8 +66,9 @@ plot file u (chck_dw_up($1,$3,$4)*cell_x):($7/SA) w p ls 3 title "sa_x",\
 "" u (chck_dw_up($1,$3,$4)*cell_x):($8/SA) w p ls 4 title "sa_y",\
 "" u (chck_dw_up($1,$3,$4)*cell_x):($9/SA) w p ls 5  title "sa_z"
 
-set ytics 0.005
+set ytics 5e-3
 unset title 
+set mytics
 set size 1,0.45
 set xlabel "Mn_1 SA ratio"
 
@@ -83,8 +85,8 @@ plot file u (chck_dw_up($1,$3,$4)*cell_x):(delta_S($7,$4, SA)) w p ls 3 title "d
 unset multiplot 
 
 set ytics 0.5
-set xrange [p1-50:p1+50]
-set output sprintf("J-sx-up-sot-10e11-%.0f.png",fname)
+#set xrange [p1-50:p1+50]
+set output sprintf("J-sx-up-sot_%f-%.0f.png",current, fname)
 
 set ylabel "Js^x (x 10^{10} A/m^2)"
 set xlabel "Position (nm)"
@@ -109,7 +111,7 @@ plot file u (chck_dw_down($1,$3,$4)*cell_x):($10/J_0)  w p ls 3 title "Js_x",\
 
 unset multiplot 
 
-set output sprintf("J_sy_up-sot-10e11-%.0f.png",fname)
+set output sprintf("J_sy_up-sot-%f-%.0f.png", current, fname)
 
 set multiplot layout 2,1
 #set title "spin current"
@@ -131,7 +133,7 @@ plot file u (chck_dw_down($1,$3,$4)*cell_x):($13/J_0)  w p ls 3 title "Js_x",\
 unset multiplot 
 
 
-set output sprintf("J_sy_down-sot-10e11-%.0f.png",fname)
+set output sprintf("J_sy_down-sot-%f-%.0f.png",current, fname)
 
 set multiplot layout 2,1
 #set title "spin current"
@@ -152,7 +154,7 @@ plot file u (chck_dw_down($1,$3,$4)*cell_x):($16/J_0)  w p ls 3 title "Js_x",\
 
 unset multiplot 
 
-set output sprintf("J_sx_total-sttsot-10e11-%.0f.png",fname)
+set output sprintf("J_sz_total-sttsot-%f-%.0f.png",current, fname)
 
 J_0 = 1e9
 
@@ -180,7 +182,7 @@ plot file u (chck_dw_down($1,$3,$4)*cell_x):($12/J_0)  w p ls 3 title "Js^x_z",\
 unset multiplot 
 
 
-set output sprintf("Torque-stt-sot-10e11-%.0f.png",fname)
+set output sprintf("Torque-stt-sot-%f-%.0f.png", current, fname)
 
 set multiplot layout 2,1
 set auto y 

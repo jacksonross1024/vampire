@@ -11,11 +11,11 @@
 dimensions:unit-cell-size-x = 3.328 !A
 dimensions:unit-cell-size-y = 3.328 !A
 dimensions:unit-cell-size-z = 8.539 !A #2.5658 c/a
-dimensions:system-size-x = 5 !nm
-dimensions:system-size-y = 5 !nm #0.6656 !nm #3 !nm #
-dimensions:system-size-z = 9.0 !nm # 0.8539 !nm # 3  !nm #
+dimensions:system-size-x = 499 !nm
+dimensions:system-size-y = 0.6656 !nm #0.6656 !nm #3 !nm #
+dimensions:system-size-z = 3.0 !nm # 0.8539 !nm # 3  !nm #
 
-create:periodic-boundaries-x
+#create:periodic-boundaries-x
 create:periodic-boundaries-y
 #create:periodic-boundaries-z #no pbc in z to keep Au cap
 
@@ -25,13 +25,12 @@ create:crystal-structure = mn2au
 exchange:interaction-range = 1.2 #1.65
 exchange:function = shell
 
-#sim:domain-wall-axis = x
-#sim:domain-wall-discretisation = 1,2,6   #discrete cell size for magnetisation statistics
-#sim:domain-wall-discretisation-type = unit-cell
-#sim:domain-wall-width = 179.70534 #A
-#sim:domain-wall-position = 5000 #A
-#sim::domain-wall-angle = 90
-#sim:domain-wall-anti-pbc-x
+sim:domain-wall-axis = x
+sim:domain-wall-discretisation = 2,2,21   #discrete cell size for magnetisation statistics
+sim:domain-wall-discretisation-type = unit-cell
+sim:domain-wall-width = 179.70534 #A
+sim:domain-wall-position = 2500 #A
+sim::domain-wall-angle = 90
 
 #------------------------------------------
 # Material Files:
@@ -46,9 +45,9 @@ sim:equilibration-temperature= 0.0
 sim:time-steps-increment = 1000
 sim:equilibration-time-steps = 1000 #0.1 ps; longer if higher temp
 #sim:preconditioning-steps = 500 #only use for non-zero K
-sim:total-time-steps = 50000  #5 ps, can be longer
+sim:total-time-steps = 5000  #5 ps, can be longer
 sim:time-step = 0.1 !fs
-sim:program = electrical-pulse
+sim:program = domain-wall
 #sim:spin-orbit-torque-polarization-unit-vector = 0,1,0
 #------------------------------------------
 # Program and integrator details
@@ -65,14 +64,14 @@ spin-torque:enable-ST-fields #enable ST module
 spin-torque:SOT-spin-accumulation  #enable SOT spin acc codes
 spin-torque:current-direction= z #stack decomp direction, not true current value. sot acc set to E || x vector
 
-spin-torque:current-density = 20 e11 
+spin-torque:current-density = 0e11 
 spin-torque:micro-cell-decomp = mpi #determines microcell based on mpi decomp
-spin-torque:micro-cell-size= 4,1,1 #number of mpi cores in each direction. right now only change the x value. Must be run with mpirun, even if -np 1 and micro-cell-size = 1,0,0
+spin-torque:micro-cell-size= 500,1,1 #number of mpi cores in each direction. right now only change the x value. Must be run with mpirun, even if -np 1 and micro-cell-size = 1,0,0
 spin-torque:micro-cell-thickness= 1.42316667 #partition perp current direction 
-spin-torque:spin-hall-angle= -0.16 #this is now depreciated for the sot module. We will call it the spin galvanic angle and I don't know what it is, so set to 1.
+spin-torque:spin-hall-angle= 0.16 #this is now depreciated for the sot module. We will call it the spin galvanic angle and I don't know what it is, so set to 1.
 spin-torque:initial-spin-polarisation = 0.23 #starting polarisation for x spin current for DWs
 spin-torque:finite-boundary-condition = false #no MTJ and infinite preceding AFM plane
-#spin-torque:sot-check-only 
+spin-torque:sot-check-only 
 spin-torque:ST-output-rate=1000
 spin-torque:output-torque-data = final #options 'init', 'int', 'final'. Final useful stats. others more for debugging.
 
