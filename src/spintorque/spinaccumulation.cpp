@@ -562,7 +562,7 @@ namespace st{
                else{
               //    std::cout << "problem " << std::endl;
                   m_local.x = 0.0;
-                  m_local.y = 0.0;
+                  m_local.y = 1.0;
                   m_local.z = 0.0;
                }
 
@@ -707,7 +707,7 @@ namespace st{
                   j_final_up_x[cellz] = jmz;//j_final_up_x[pcellz];
 
                }
-               if(output_torque_data == "final") {
+               if(output_torque_data == "init") {
                //--------------------------------------------
                // Step 5 calculate the spin torque of each cell
                //--------------------------------------------
@@ -937,7 +937,7 @@ namespace st{
                const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;
                //modify spin acc on Au depending on current. current Au m_inf = 0.0
-               if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+                if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
                const double a_local = sot_a[cell];
                const double b_local = sot_b[cell];
                const double two_a = 2.0*a_local;
@@ -1211,7 +1211,7 @@ namespace st{
                // Calculate mp(0), c and d
                const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;//sa_infinity[cell];
-                  if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+                   if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
                const double a_local = sot_a[cell];
                const double b_local = sot_b[cell];
                const double two_a = 2.0*a_local;
@@ -1787,7 +1787,7 @@ namespace st{
                // Calculate mp(0), c and d
                const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;// sa_infinity[cell];
-                  if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+                   if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
                const double a_local = sot_a[cell];
                const double b_local = sot_b[cell];
                const double two_a = 2.0*a_local;
@@ -2042,7 +2042,7 @@ namespace st{
 
                const double i_lsdl = 1.0/sot_lambda_sdl[cell];
                double mp_inf = modm;// sa_infinity[cell];
-                  if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
+                   if(sot_sa_source[cell]) mp_inf *= program::fractional_electric_field_strength;
                const double a_local = sot_a[cell];
                const double b_local = sot_b[cell];
                const double two_a = 2.0*a_local;
@@ -2106,10 +2106,10 @@ namespace st{
                
                //sot check output flag will run spin acc program without torque to calculate and output values
                if(!sot_check){
-                  double prefac_sot = sot_sd_exchange[cell]*i_muB;
-                  double mlocal[3] = {m[3*cell], m[3*cell+1], m[3*cell+2]};
-                  double mmod = sqrt(mlocal[0]*mlocal[0] + mlocal[1]*mlocal[1] + mlocal[2]*mlocal[2]);
-                     if(mmod > 0.0) {mlocal[0] /= mmod; mlocal[1] /= mmod; mlocal[2] /= mmod;}
+                  // double prefac_sot = sot_sd_exchange[cell]*i_muB;
+                  // double mlocal[3] = {m[3*cell], m[3*cell+1], m[3*cell+2]};
+                  // double mmod = sqrt(mlocal[0]*mlocal[0] + mlocal[1]*mlocal[1] + mlocal[2]*mlocal[2]);
+                  //    if(mmod > 0.0) {mlocal[0] /= mmod; mlocal[1] /= mmod; mlocal[2] /= mmod;}
                   // spin_torque[cellx] = prefac_sot*(sax-mlocal[0]*sa_infinity[cell])/sa_infinity[cell];
                   // spin_torque[celly] = prefac_sot*(say-mlocal[1]*sa_infinity[cell])/sa_infinity[cell];
                   // spin_torque[cellz] = prefac_sot*(saz-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];
@@ -2202,7 +2202,7 @@ namespace st{
                   double prefac_sot = sot_sd_exchange[cell]*i_muB/3.72;
                 total_ST[cellx] = prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//Ty*mlocal[2]-Tz*mlocal[1];
                 total_ST[celly] = prefac_sc*(say-mlocal[1]*sa_infinity[cell]);//(say-mlocal[1]*sa_infinity[cell]);//Tz*mlocal[0]-Tx*mlocal[2];
-                total_ST[cellz] = Tz;//prefac_sot*(saz-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];//(saz-mlocal[2]*sa_infinity[cell]);//Tx*mlocal[1]-Ty*mlocal[0];
+                total_ST[cellz] = prefac_sc*(saz-mlocal[2]*sa_infinity[cell]);;//prefac_sot*(saz-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];//(saz-mlocal[2]*sa_infinity[cell]);//Tx*mlocal[1]-Ty*mlocal[0];
                   // if(cell == 1)  std::cout << "total st " << total_ST[celly] << std::endl;
                 ast[cellx] = -aj*SxSxSp[0];
                 ast[celly] = -aj*SxSxSp[1];

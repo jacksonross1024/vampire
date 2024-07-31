@@ -120,7 +120,7 @@ namespace st{
                   ofile << coeff_nast_sum[cell] << "\t";
                   ofile << ast_sum[3*cell+0] << "\t" << ast_sum[3*cell+1] << "\t" << ast_sum[3*cell+2] << "\t";
                   ofile << nast_sum[3*cell+0] << "\t" << nast_sum[3*cell+1] << "\t" << nast_sum[3*cell+2] << "\t";
-                  ofile << total_ST_sum[3*cell+0] << "\t" << total_ST_sum[3*cell+1] << "\t" << total_ST_sum[3*cell+2] << "\t" << sqrt(total_ST_sum[3*cell+0]*total_ST_sum[3*cell+0] + total_ST_sum[3*cell+1]*total_ST_sum[3*cell+1] + total_ST_sum[3*cell+2]*total_ST_sum[3*cell+2])/3.72;
+                  ofile << total_ST_sum[3*cell+0] << "\t" << total_ST_sum[3*cell+1] << "\t" << total_ST_sum[3*cell+2] << "\t" << sqrt(total_ST_sum[3*cell+0]*total_ST_sum[3*cell+0] + total_ST_sum[3*cell+1]*total_ST_sum[3*cell+1] + total_ST_sum[3*cell+2]*total_ST_sum[3*cell+2]);
                   ofile << "\t" << cell_natom[cell] << "\n";
 
                   sa_sum[3*cell+0] = 0.0;

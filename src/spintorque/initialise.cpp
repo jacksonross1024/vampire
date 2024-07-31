@@ -313,7 +313,7 @@ void initialise(const double system_dimensions_x,
          st::internal::mpi_stack_list_y.push_back(s*vmpi::num_processors + vmpi::my_rank);
          mpi_stack_id_y.at(s*vmpi::num_processors + vmpi::my_rank) = 1;
       } 
-      if(residual > 0 && vmpi::my_rank < residual){
+      if(residual > 0 && vmpi::my_rank < residual) {
          st::internal::mpi_stack_list_y.push_back(removed_stacks_y - vmpi::my_rank -1);
          mpi_stack_id_y.at(removed_stacks_y - vmpi::my_rank -1) = 1;
       }   
@@ -355,7 +355,7 @@ void initialise(const double system_dimensions_x,
             err::vexit();
          }
          residual = removed_stacks_x % vmpi::num_processors;
-         if(residual > 0) std::cout << "may have mpi decomp problem" << std::endl;
+         if(residual > 0) std::cout << "may have mpi decomp problem with residual " << residual << std::endl;
          // st::internal::mpi_stack_list.resize(int(floor(st::internal::num_stacks/vmpi::num_processors))+1);
          for(int s = 0; s < int(floor(removed_stacks_x/vmpi::num_processors)); s++) {
             st::internal::mpi_stack_list_x.push_back(s*vmpi::num_processors + vmpi::my_rank);
