@@ -90,10 +90,11 @@ namespace program{
 			if (sim::domain_wall_axis == 0) {
 				//90 degree 
 				if(sim::domain_wall_angle == 0) {
-					double alpha = mp::material[1].temperature_rescaling_alpha;
+					double alpha = (mp::material[1].temperature_rescaling_alpha > 0.0) ? mp::material[1].temperature_rescaling_alpha : 1.0;
       				double Tc = mp::material[1].temperature_rescaling_Tc;
-					double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
-					std::cout <<mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
+					double rescaled_temperature = sim::temperature < Tc ? Tc*pow(sim::temperature/Tc,alpha) : sim::temperature;
+					double mag = pow((1.0 - (pow(rescaled_temperature/Tc, alpha))), 0.332);
+					std::cout << mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
 					sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
 
 					for(int atom=0;atom<num_local_atoms;atom++) {
@@ -106,8 +107,8 @@ namespace program{
 							double pos_x = std::cos(theta)*mod;
 							double pos_y = std::sin(theta)*mod; //std::tanh(pos-M_PI/4.0)/(std::cosh(pos-M_PI/4.0)*std::cosh(pos-M_PI/4.0));
 					
-							atoms::x_spin_array[atom] =  (mat==1?-1.0:1.0)* pos_x;
-							atoms::y_spin_array[atom] =  (mat==1?-1.0:1.0)* pos_y;
+							atoms::x_spin_array[atom] =  (mat==1?1.0:-1.0)* pos_x;
+							atoms::y_spin_array[atom] =  (mat==1?1.0:-1.0)* pos_y;
 							atoms::z_spin_array[atom] = 0.0;// (sim::domain_wall_second_vector_z[mat] - atoms::z_spin_array[atom])*theta;
 					//	}	
 						// int cat = atoms::sublayer_array[atom];

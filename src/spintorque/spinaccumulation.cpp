@@ -128,14 +128,14 @@ namespace st{
          const double microcell_volume = (micro_cell_size[stx] *
                                           micro_cell_size[sty] *
                                           micro_cell_thickness)*1.e-30; // m^3
-         const double atomcell_volume = 15.7624e-30;
+         const double atomcell_volume = 67.8e-30;
          // loop over all 1D stacks (in parallel)
          int int_stacks;
-         #ifdef MPICH
+         // #ifdef MPICH
             int_stacks = mpi_stack_list_y.size();
-         #else
-            int_stacks = stack_index_y.size();
-         #endif
+         // #else
+            // int_stacks = stack_index_y.size();
+         // #endif
          // std::vector<int> stacks_list;
          // stacks_list = mpi_stack_list           
         
@@ -143,12 +143,12 @@ namespace st{
          int stack = 0;
          // std::cout << int_stacks << ", " << mpi_stack_list.size() << std::endl;
          for(int s=0; s < int_stacks; ++s) {
-            #ifdef MPICH
+            // #ifdef MPICH
                stack = mpi_stack_list_y.at(s);
-            #else 
-               stack = stack_index_x.at(s);
-            #endif
-            // if(stack % 3 == 0) continue;
+            // #else 
+               // stack = stack_index_x.at(s);
+            // #endif
+            if(stack % 3 == 0) continue;
                // std::cout << stack << std::endl;
                // std::cout << spin_acc_sign[stack_index[stack]] << ", " << stack << std::endl;
       
@@ -2202,7 +2202,7 @@ namespace st{
                   double prefac_sot = sot_sd_exchange[cell]*i_muB/3.72;
                 total_ST[cellx] = prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//Ty*mlocal[2]-Tz*mlocal[1];
                 total_ST[celly] = prefac_sc*(say-mlocal[1]*sa_infinity[cell]);//(say-mlocal[1]*sa_infinity[cell]);//Tz*mlocal[0]-Tx*mlocal[2];
-                total_ST[cellz] = prefac_sc*(saz-mlocal[2]*sa_infinity[cell]);;//prefac_sot*(saz-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];//(saz-mlocal[2]*sa_infinity[cell]);//Tx*mlocal[1]-Ty*mlocal[0];
+                total_ST[cellz] = prefac_sc*(saz-mlocal[2]*sa_infinity[cell]);//prefac_sot*(saz-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];//(saz-mlocal[2]*sa_infinity[cell]);//Tx*mlocal[1]-Ty*mlocal[0];
                   // if(cell == 1)  std::cout << "total st " << total_ST[celly] << std::endl;
                 ast[cellx] = -aj*SxSxSp[0];
                 ast[celly] = -aj*SxSxSp[1];
