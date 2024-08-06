@@ -192,6 +192,7 @@ namespace st{
       // Shared functions used for the spin torque calculation
       //-----------------------------------------------------------------------------
       void output_microcell_data();
+      void output_microcell_sa_data();
       void output_base_microcell_data();
       void calculate_spin_accumulation();
       void calculate_sot_accumulation();

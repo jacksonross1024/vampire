@@ -59,7 +59,7 @@ namespace st{
          three_vector_t b3(0.0,0.0,1.0);
 
          // set local constants
-         double je_eff = program::fractional_electric_field_strength* je_eff; // current (C/s) 
+         double je_eff = program::fractional_electric_field_strength* je; // current (C/s) 
 
          //---------------------------------------------------------------------------------------------------
          //set parameters for TMR calculation
@@ -154,7 +154,7 @@ namespace st{
       
             // std::cout << vmpi::my_rank << ", " << stack << std::endl;
             // determine starting cell in stack
-            const int idx = stack_index_y[stack] + 1;
+            const int idx = stack_index_y[stack];
            // std::cout << stack << ", " << idx << std::endl;
             // set initial values
            if(fbc) { 
@@ -173,6 +173,7 @@ namespace st{
                j_final_up_x [3*idx+0] = initial_beta*je_eff*m [3*idx+0]*mod;
                j_final_up_x [3*idx+1] = initial_beta*je_eff*m [3*idx+1]*mod;
                j_final_up_x [3*idx+2] = initial_beta*je_eff*m [3*idx+2]*mod;
+            //  if(program::fractional_electric_field_strength > 0.0)  std::cout << m [3*idx+0]*mod << ", " << je_eff << ", " << initial_beta << std::endl;
            }
 
           //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << default_properties.sa_infinity << "\t" << init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << m[3*idx+0] << " \t" <<  m[3*idx+1] << "\t" << sa[3*idx+0] << "\t" << sa[3*idx+1] << std::endl;
@@ -397,7 +398,7 @@ namespace st{
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = microcell_volume * sd_exchange[cell] * i_e * i_muB;
+               const double prefac_sc = atomcell_volume * sd_exchange[cell] * i_e * i_muB/3.72;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -427,9 +428,17 @@ namespace st{
                 SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
                 //calculate directly from J(Sxm)
-                total_ST[cellx] = prefac_sc*(m_local.y*saz-m_local.z*say);
-                total_ST[celly] = prefac_sc*(m_local.z*sax-m_local.x*saz);
-                total_ST[cellz] = prefac_sc*(m_local.x*say-m_local.y*sax);
+               //  double mlocal[3] = {m[3*cell], m[3*cell+1], m[3*cell+2]};
+               //  double mmod = sqrt(mlocal[0]*mlocal[0] + mlocal[1]*mlocal[1] + mlocal[2]*mlocal[2]);
+               //  if(mmod > 0.0) {mlocal[0] /= mmod; mlocal[1] /= mmod; mlocal[2] /= mmod;}
+               //  double Tx = prefac_sc*(m_local.x*saz-mlocal[2]*say);//(sax-mlocal[0]*sa_infinity[cell])/sa_infinity[cell]; //;
+               //  double Ty = prefac_sc*(m_local.y*sax-mlocal[0]*saz);//(sax-mlocal[1]*sa_infinity[cell])/sa_infinity[cell];//;
+               //  double Tz = prefac_sc*(mlocal[0]*say-mlocal[1]*sax);//(sax-mlocal[2]*sa_infinity[cell])/sa_infinity[cell];//;
+                //Torque field in T. hard code in output to scale with m_s 3.72. Need to change
+                  // double prefac_sc = sot_sd_exchange[cell]*i_muB/3.72;
+                total_ST[cellx] = prefac_sc*(sax-m_local.x*sa_infinity[cell]);//prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//Ty*mlocal[2]-Tz*mlocal[1];
+                total_ST[celly] = prefac_sc*(say-m_local.y*sa_infinity[cell]);//(say-mlocal[1]*sa_infinity[cell]);//Tz*mlocal[0]-Tx*mlocal[2];
+                total_ST[cellz] = prefac_sc*(saz-m_local.z*sa_infinity[cell]);
 
                 ast[cellx] = -aj*SxSxSp[0];
                 ast[celly] = -aj*SxSxSp[1];
@@ -2245,7 +2254,7 @@ namespace st{
          #ifdef MPICF
             MPI_Allreduce(MPI_IN_PLACE, &spin_torque[0],spin_torque.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
          #endif
-         output_microcell_data();
+         output_microcell_sa_data();
 
          st::spin_acc_time += stopwatch.elapsed_seconds();
 

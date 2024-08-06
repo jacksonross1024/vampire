@@ -53,7 +53,7 @@ namespace st{
       int free_layer = 0;       /// index of free layer in magnetic tunnel junction
       int reference_layer = 0;  /// index of reference layer in magnetic tunnel junction
 
-      double je; // = 1.0e11; // current (C/s/m^2)
+      double je = 0.0; // = 1.0e11; // current (C/s/m^2)
       double initial_beta;
       double initial_theta = 0.2;
       
