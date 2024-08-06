@@ -502,6 +502,7 @@ namespace st{
 
          // need mpi run for now
          int   int_stacks = mpi_stack_list_x.size();
+         // std::cout << vmpi::my_rank << " core stack x size: " << int_stacks << std::endl;
          int stack = 0;
 
          //STT first
@@ -509,31 +510,32 @@ namespace st{
 
             stack = mpi_stack_list_x.at(s);          
             const int idx = stack_index_x[stack];
-   
+            if(sot_sa_source[idx]) continue;
+            // std::cout << vmpi::my_rank << " stack index: " << stack << ", cell: " << idx << std::endl;
            if(fbc) { //fbc uses initial beta for spin polarisation from injection
                j_final_up_x[3*idx+0] = initial_beta*je_eff*initial_m[0];
                j_final_up_x[3*idx+1] = initial_beta*je_eff*initial_m[1];
                j_final_up_x[3*idx+2] = initial_beta*je_eff*initial_m[2];
+               // std::cout << "bad" << std::endl;
            } else if (!fbc) { //assume infinite magnetisation precedding. 
                 double mod = sqrt(m[3*idx+0]*m[3*idx+0] + m[3*idx+1]*m[3*idx+1] + m[3*idx+2]*m[3*idx+2]);
                 if(mod > 1e-11) mod = 1.0/mod;
-               sa_int[3*idx+0] = sa_infinity[idx]*m[3*idx+0]*mod;
-               sa_int[3*idx+1] = sa_infinity[idx]*m[3*idx+1]*mod;
-               sa_int[3*idx+2] = sa_infinity[idx]*m[3*idx+2]*mod;
+                  sa_int[3*idx+0] = sa_infinity[idx]*m[3*idx+0]*mod;
+                  sa_int[3*idx+1] = sa_infinity[idx]*m[3*idx+1]*mod;
+                  sa_int[3*idx+2] = sa_infinity[idx]*m[3*idx+2]*mod;
 
                j_final_up_x[3*idx+0] = initial_beta*je_eff*m[3*idx+0]*mod; //need to remove beta_initial dependency
                j_final_up_x[3*idx+1] = initial_beta*je_eff*m[3*idx+1]*mod;
                j_final_up_x[3*idx+2] = initial_beta*je_eff*m[3*idx+2]*mod;
-
+               // std::cout << idx << ", " <<  cell_index_x[stack][1] << ", " << stack << ", je: " << j_final_up_x[3*idx+0]  << std::endl;
            }
-         
-            //standard stt method in x plane
-            std::vector<int> cell_container_list = cell_index_x[stack];
-            for(int xc = 1; xc < cell_container_list.size(); ++xc) {
-              
 
+            //standard stt method in x plane
+            // std::vector< int> cell_container_list = cell_index_x[stack];
+            for(int xc = 1; xc < cell_index_x[stack].size(); ++xc) {
+              
                int cell = cell_index_x[stack][xc];
-               
+               // std::cout << vmpi::my_rank << " cell: " << cell << " from stack: " << stack << std::endl;
                // calculate cell id's
                const int cellx = 3*cell+0;
                const int celly = 3*cell+1;
@@ -551,7 +553,7 @@ namespace st{
                   m_local.y = m[celly];
                   m_local.z = m[cellz]; // current cell new SA
 
-               const double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
+               double modm = sqrt(m_local.x*m_local.x + m_local.y*m_local.y + m_local.z*m_local.z);
                
                // Check for zero magnetization in normalization
                if(modm > 1.e-11){
@@ -564,6 +566,7 @@ namespace st{
                   m_local.x = 0.0;
                   m_local.y = 1.0;
                   m_local.z = 0.0;
+                  modm = 1.0;
                }
 
                //---------------------------------------------------------------------
@@ -767,7 +770,7 @@ namespace st{
                const double pm_b3 = pm_basis.z;
 
                // Calculate the spin torque coefficients describing ast and nast
-               const double prefac_sc = atomcell_volume * sd_exchange[cell] * i_e * i_muB;
+               double prefac_sc = atomcell_volume * sd_exchange[cell] * i_e * i_muB;
                const double plus_perp =  (pm_b2*pm_b2 + pm_b3*pm_b3);
                // const double minus_perp = (pm_b2*pm_b2 - pm_b3*pm_b3); // unused variable
 
@@ -797,12 +800,16 @@ namespace st{
                SxSxSp[2]= (m_local.x*SxSp[1]-m_local.y*SxSp[0]);
 
                //calculate directly from J(Sxm)
+               double mlocal[3] = {m[3*cell], m[3*cell+1], m[3*cell+2]};
+                double mmod = sqrt(mlocal[0]*mlocal[0] + mlocal[1]*mlocal[1] + mlocal[2]*mlocal[2]);
+                if(mmod > 0.0) {mlocal[0] /= mmod; mlocal[1] /= mmod; mlocal[2] /= mmod;}
+                prefac_sc = atomcell_volume * sot_sd_exchange[cell] * i_e * i_muB/3.72;
                 double Tx = prefac_sc*(m_local.y*saz-m_local.z*say);
                 double Ty = prefac_sc*(m_local.z*sax-m_local.x*saz);
                 double Tz = prefac_sc*(m_local.x*say-m_local.y*sax);
-                total_ST[cellx] = Ty*m_local.z-Tz*m_local.y;
-                total_ST[celly] = Tz*m_local.x-Tx*m_local.z;
-                total_ST[cellz] = Tx*m_local.y-Ty*m_local.x;
+                total_ST[cellx] = prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//prefac_sc*(sax-mlocal[0]*sa_infinity[cell]);//Ty*mlocal[2]-Tz*mlocal[1];
+                total_ST[celly] = prefac_sc*(say-mlocal[1]*sa_infinity[cell]);//(say-mlocal[1]*sa_infinity[cell]);//Tz*mlocal[0]-Tx*mlocal[2];
+                total_ST[cellz] = prefac_sc*(saz-mlocal[2]*sa_infinity[cell]);
 
                ast[cellx] += -aj*SxSxSp[0];
                ast[celly] += -aj*SxSxSp[1];
@@ -817,7 +824,7 @@ namespace st{
  
          //reduce for new mpi decomp 
          #ifdef MPICF
-            // MPI_Allreduce(MPI_IN_PLACE, &j_final_up_x[0],j_final_up_x.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            //MPI_Allreduce(MPI_IN_PLACE, &j_final_up_x[0],j_final_up_x.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(MPI_IN_PLACE, &sa_int[0],sa_int.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(MPI_IN_PLACE, &j_init_up_y[0],j_init_up_y.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(MPI_IN_PLACE, &j_init_down_y[0],j_init_down_y.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
