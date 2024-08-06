@@ -211,14 +211,14 @@ void initialise(const double system_dimensions_x,
          
          supercell_array[i][j].resize(ncz);
          // set starting cell for y stack
-         st::internal::stack_index_y[stack_y]=cell;
+         st::internal::stack_index_y.at(stack_y)=cell; 
         
          // increment y stack counter
          stack_y++;
          // store cell coordinates
          for(int k=0; k<ncz; ++k){
-            if(i ==0) st::internal::stack_index_x[stack_x] = cell;
-            st::internal::cell_index_x[stack_x].push_back(cell); 
+            if(i ==0) st::internal::stack_index_x.at(stack_x) = cell; 
+            st::internal::cell_index_x.at(stack_x).push_back(cell); 
             stack_x++;
             // associate cell with position i,j,k
             supercell_array[i][j][k]=cell;
@@ -226,7 +226,7 @@ void initialise(const double system_dimensions_x,
             st::internal::pos.at(3*cell+0)=i;
             st::internal::pos.at(3*cell+1)=j;
             st::internal::pos.at(3*cell+2)=k;
-            st::internal::cell_stack_index[cell] = stack_y;
+            st::internal::cell_stack_index.at(cell) = stack_y;
             // increment cell number
             cell++;
          }
