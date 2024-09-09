@@ -24,7 +24,7 @@ namespace program{
    // Externally visible variables
    //---------------------------------------------------------------------------
    int program = 0; // program type to be run in vampire
-   double fractional_electric_field_strength = 1.0; // factor controlling strength of stt/sot and voltage
+   double fractional_electric_field_strength = 0.0; // factor controlling strength of stt/sot and voltage
 
    namespace internal{
 
