@@ -55,7 +55,7 @@ void update_electric_field_strength(const double time_from_start){
       pg::fractional_electric_field_strength = 0.0;
    }
 
-   sim::H_actual = sim::H_applied*pg::fractional_electric_field_strength;
+   // sim::H_actual = sim::H_applied*pg::fractional_electric_field_strength;
    return;
 
 }
