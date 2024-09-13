@@ -14,8 +14,8 @@ export OMPI_CXX=g++ -std=c++0x
 #export MPICH_CXX=bgxlc++
 
 # Include the FFTW library by uncommenting the -DFFT (off by default)
-#export incFFT= -DFFT -DFFTW_OMP -fopenmp
-#export FFTLIBS= -lfftw3_omp -lfftw3
+export incFFT= -DFFT -DFFTW_OMP -fopenmp
+export FFTLIBS= -lfftw3_omp -lfftw3
 
 # Compilers
 ICC=icc -std=c++11 -DCOMP='"Intel C++ Compiler"'
@@ -26,7 +26,7 @@ IBM=bgxlc++ -DCOMP='"IBM XLC++ Compiler"'
 MPICC=mpicxx -DMPICF
 MPIICC=mpiicpc -DMPICF
 
-LIBS= -lstdc++ #$(FFTLIBS)  -lm -L/opt/local/lib/ 
+LIBS= -lstdc++ $(FFTLIBS)  -lm -L/opt/local/lib/ 
 
 CCC_CFLAGS=-I./hdr -I./src/qvoronoi -O0
 CCC_LDFLAGS=-I./hdr -I./src/qvoronoi -O0

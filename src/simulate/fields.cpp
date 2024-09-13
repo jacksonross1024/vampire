@@ -218,7 +218,7 @@ int calculate_applied_fields(const int start_index,const int end_index){
 	// if(sim::piezomagnetic_dipole_field_strength <= 0.0) return 0;
 
 	// Declare constant temporaries for global field
-	double cos_sq = std::cos(2.0*M_PI*sim::time*mp::dt_SI*7.45e12 - M_PI*0.5);// > 0 ? cos(2.0*M_PI*sim::time*7.45e12 - M_PI*0.5) : 0.0;
+	// double cos_sq = std::cos(2.0*M_PI*sim::time*mp::dt_SI*7.45e12 - M_PI*0.5);// > 0 ? cos(2.0*M_PI*sim::time*7.45e12 - M_PI*0.5) : 0.0;
 	
 	const double Hx=sim::H_vec[0]*sim::H_applied;
 	const double Hy=sim::H_vec[1]*sim::H_applied;
@@ -539,7 +539,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		const double sot_lambda = sot_asm[material];
 		double sot_factor = program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
 		// if(sim::time > 30000.0) sot_factor = 0.0;
-		if(sot_factor != sot_factor) sot_factor = 0.0;
+		// if(sot_factor != sot_factor) sot_factor = 0.0;
 		//  if(sot_factor < 0) std::cout << hx << ", " << hy << ", " << hz << ", " << sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy ) << std::endl;
 		// calculate field
 		hx += sot_factor * ( (sotrj-alpha*sotpj)*(sy*sotpz - sz*sotpy) + (sotpj+alpha*sotrj)*sotpx );
