@@ -7,64 +7,46 @@
 #------------------------------------------
 # Creation attributes:
 #------------------------------------------
-dimensions:unit-cell-size = 2.507 !A
+#dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 10 !nm
-dimensions:system-size-y = 10 !nm
-dimensions:system-size-z = 10 !nm
+dimensions:system-size-x = 100.1 !nm
+dimensions:system-size-y = 100.1 !nm
+dimensions:system-size-z = 2.616 !nm
 
-create:periodic-boundaries-x
-create:periodic-boundaries-y
-create:periodic-boundaries-x
-
-sim:domain-wall-axis=z
+#create:periodic-boundaries-x
+#create:periodic-boundaries-y
+#create:periodic-boundaries-z
 #------------------------------------------
 # Material Files:
 #------------------------------------------
-material:file = 
-#create:crystal-sublattice-materials=true
-create:crystal-structure = 
-
+material:unit-cell-file = CrI3.ucf
+material:file = CrI3.mat
+create:crystal-sublattice-materials=true
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
-#sim:minimum-temperature = 0
-#sim:maximum-temperature = 1400
-sim:equilibration-temperature = 300
-sim:temperature = 300
+sim:equilibration-temperature = 10
+sim:temperature = 10
 
 sim:time-steps-increment = 1
 
-sim:preconditioning-steps = 1000
-sim:equilibration-time-steps=5000
-sim:total-time-steps = 5000
-
-sim:electrical-pulse-rise-time = 10 !ps
-sim:electrical-pulse-time = 20 !ps
-sim:applied-field-strength = 1 #T
-sim:applied-field-unit-vector = 0,1,0 
-
-sim:spin-orbit-torque-polarization-unit-vector = 0,1,0
-
+sim:preconditioning-steps = 500
+sim:equilibration-time-steps=50000
+sim:loop-time-steps = 1000
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:program = electrical-pulse #time variable magnetic field; SOT; STT
-sim:integrator = llg-heun
+sim:program = time-series #time variable magnetic field; SOT; STT
+sim:integrator = monte-carlo
 
 #------------------------------------------
 # data output
 #------------------------------------------
+config:atoms = end 
 
-spin-torque:enable-ST-fields #turns on ST
-spin-torque:current-density = 1e11 #A/m^2 
-spin-torque:current-direction= x #stack decomp direction and current direction
-spin-torque:micro-cell-size= 10,10,100 #A -> <x cell, y cell, z lattice size>
-spin-torque:micro-cell-thickness= 2 #A 
-
-
+output:output-rate=1000
 output:time-steps
-output:material-magnetisation
+output:material-mean-magnetisation
 output:mean-total-torque
 output:total-energy 
 

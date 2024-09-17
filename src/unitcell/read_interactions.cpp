@@ -41,7 +41,7 @@ namespace unitcell{
 
       // process exchange string to set exchange type and normalisation
       const int num_exchange_values = unitcell::exchange_template_t::set_exchange_type(exchange_type_string);
-
+      // std::cout << exchange_type_string << " exchange type detected." << std::endl;
       if(num_interactions>=0) interaction.resize(num_interactions);
       else {
          terminaltextcolor(RED);
