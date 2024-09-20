@@ -1,0 +1,61 @@
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+#dimensions:unit-cell-size = 2.507 !A
+
+dimensions:system-size-x = 100.0 !nm
+dimensions:system-size-y = 100.0 !nm
+dimensions:system-size-z = 1.308 !nm
+
+#create:periodic-boundaries-x
+#create:periodic-boundaries-y
+#create:periodic-boundaries-z
+dipole:solver=atomistic-fft
+dipole:field-update-rate=1
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:unit-cell-file = CrI3.ucf
+material:file = CrI3.mat
+create:crystal-sublattice-materials=true
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+sim:equilibration-temperature = 10
+sim:temperature = 10
+
+sim:time-steps-increment = 500
+
+sim:preconditioning-steps = 500
+sim:equilibration-time-steps=500
+sim:loop-time-steps = 500
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program = time-series #time variable magnetic field; SOT; STT
+sim:integrator = monte-carlo
+
+#------------------------------------------
+# data output
+#------------------------------------------
+config:atoms = end 
+
+output:output-rate=1
+output:time-steps
+output:material-mean-magnetisation
+output:mean-total-torque
+output:total-energy 
+
+
+#material[]:spin-diffusion-length = 40 #A
+#material[]:spin-polarisation-conductivity =  # (spin-up - spin-down)/(spin-up + spin-down) [0,1]
+#material[]:spin-polarisation-diffusion =  #beta'
+#material[]:spin-accumulation =  # spin-up - spin-down C/m^3 = states/eV/atom * 25 meV (300K) [1e6 - 1e8 C/m^3]
+#material[]:diffusion-constant = # ms^2 [1e-2 - 1e-4]
+#material[]:sd-exchange-constant =  !eV #Jsd ~ ferromagnetic exch (50 meV)
