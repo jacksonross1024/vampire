@@ -40,6 +40,9 @@
          int unit_y;
          int dx = 0;
          int dy = 0;
+         int inter = 0;
+         int intra1 = 0;
+         int intra2 = 0;
    };
 
    class interaction {
@@ -63,7 +66,7 @@
    extern std::vector < spin > row4;
    extern std::vector < spin > all_m_atoms;
    extern std::vector < spin > all_nm_atoms;
-
+   extern std::vector < std::vector < std::vector <int> > > unit_cell_shifts;
    void read_in_atoms(std::string filename, int n_atoms, std::vector <spin > &atom2);
    void read_in_exchange(std::string filename, std::vector<std::vector<double> > &Jij);
    

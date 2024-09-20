@@ -22,6 +22,13 @@
    extern std::vector < std::vector < double > > Jinter;
    extern std::vector < std::vector < double > > Jintra1;
    extern std::vector < std::vector < double > > Jintra2;
+
+   extern double Jinter1_AB;
+   extern double Jinter2_AB;
+   extern double Jinter2_AB_prime;
+   extern double Jintra1_AB;
+   extern double Jintra2_AB;
+   extern double Jintra2_ABprime;
    extern std::vector < std::vector < double > > Dx_inter;
    extern std::vector < std::vector < double > > Dy_inter;
    extern std::vector < std::vector < double > > Dz_inter;
@@ -35,7 +42,8 @@
    void read_in_exchange(std::string filename);
    void read_in_dmi(std::string filename, std::vector < std::vector < double > > &Dx, std::vector < std::vector < double > > &Dy, std::vector < std::vector < double > > &Dz);
    void calc_in_plane_exchange(std::vector < spin > atom_list_1);
-   interaction calculate_Jani(spin &atom_i, spin &atom_j, double distance, bool oop);
+   interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance);
+   interaction calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance);
    void calc_interactions();
    void calc_out_of_plane_exchange(std::vector < spin > atom_list_1,std::vector < spin > atom_list_2);
    void print_interaction_header();

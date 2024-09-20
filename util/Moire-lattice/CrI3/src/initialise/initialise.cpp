@@ -27,7 +27,7 @@ double exchange34 = 0.0; // exchange constant between layers 3-4
 
 double separation = 0.0; // distance between layers 2-3
 
-
+std::vector < std::vector < std::vector <int> > > unit_cell_shifts;
 std::vector < spin > atom(num_atoms);
 std::vector < spin > nm_atom(num_nm_atoms);
 std::vector < spin > row1;
@@ -48,10 +48,11 @@ void resize_arrays(std::vector < std::vector < double > > &A, int sizex, int siz
 
 void initialise_variables(){
 
-   number_of_unit_cells_x = system_size_x/a0x;
-   number_of_unit_cells_y = system_size_y/a1y;
+   number_of_unit_cells_x = ceil(system_size_x/a0x);
+   number_of_unit_cells_y = ceil(system_size_y/a1y);
    system_size_z = number_of_unit_cells_z*c0;
 
+   std::cout << "Creating base lattice " << number_of_unit_cells_x << " by " << number_of_unit_cells_y << " rhombic unit cells" << std::endl;
    twist_angle = twist_angle*3.14159265359/180.0;
    resize_arrays(Jinter, 201,201);
    resize_arrays(Jintra1, 201,201);
@@ -71,4 +72,14 @@ void initialise_variables(){
    row2.reserve(int(estimated_system_spins/4));
    row3.reserve(int(estimated_system_spins/4));
    row4.reserve(int(estimated_system_spins/4));
+
+      
+
+   unit_cell_shifts.resize(number_of_unit_cells_x);
+   for(int i = 0; i < number_of_unit_cells_x; i++) {
+      unit_cell_shifts[i].resize(number_of_unit_cells_y);
+      for(int j = 0; j < number_of_unit_cells_y; j++) {
+         unit_cell_shifts[i][j].resize(3,0);
+      }
+   }
 }

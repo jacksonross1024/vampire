@@ -70,3 +70,41 @@ void read_in_dmi(std::string filename, std::vector < std::vector < double > > &D
  }
    ifile2.close();
 }
+
+void read_in_dft(std::string filename) {
+    std::ifstream ifile2(filename);
+    std::string line;
+
+    std::vector<std::vector< double> > Jinter;
+    std::vector<std::vector< double> > Jintra1;
+    std::vector<std::vector< double> > Jintra2;
+    std::vector<std::vector< std::vector< double> > > Dinter;
+    std::vector<std::vector< std::vector< double> > > Dintra1;
+    
+    Jinter.resize(40);
+    Jintra1.resize(40);
+    Jintra2.resize(40);
+    Dinter.resize(40);
+    Dintra1.resize(40);
+    double x_step = 0.05;
+    double y_step;
+    
+
+    for(int i=0; i<331; i++){
+        getline(ifile2,line);
+        std::stringstream liness(line.c_str());
+        double ii;
+        double ij;
+        double Jij;
+        double Jii;
+        double Dij;
+        double Dii90;
+        double Dii210;
+        double Dii310;
+        
+        liness >> ii >> ij >> Dx[ii][ij] >> Dy[ii][ij] >> Dz[ii][ij];
+   //   outfile <<atom_id[i] << "\t" << x_in[i] << '\t' << y_in[i] << "\t" << z_in[i] << "\t" << S_in[i] << "\t" << temp << "\t" << temp << std::endl;
+   // std::cout <<ii << "\t" << ij << "\t" <<  Dx[ii][ij]<< "\t" <<  Dy[ii][ij]<< "\t" <<  Dz[ii][ij] << std::endl;
+    }
+    ifile2.close();
+}

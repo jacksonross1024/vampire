@@ -33,7 +33,7 @@ set yrange [-1:1]
 
 
 set colorbox 
-set cbrange [-0.5:0.5]
+set auto cb
 unset colorbox 
 # 6.930   0.000   0.000
 #-3.465   6.002   0.000
@@ -50,7 +50,7 @@ set origin 0,0.4
 set size 0.5,0.6
 set key title "DFT"
 bounds(x,y,z) = (sqrt(x*x + y*y) > 6.93) ? (0.0) : (z)
-plot "exchange_interpolation_out.txt" u (a0x*($1*0.01-1)):(a0x*($2*0.01-1)):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$3)) w boxxy palette notitle
+plot "Jintra1_interpolation_out.txt" u (a0x*($1*0.01-1)):(a0x*($2*0.01-1)):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$3)) w boxxy palette notitle
 
 set origin 0.0,-0.1
 set size 0.5,0.6
