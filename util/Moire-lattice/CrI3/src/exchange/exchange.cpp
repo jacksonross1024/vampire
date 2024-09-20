@@ -432,6 +432,8 @@ std::vector < std::vector < double > > Dx_intra;
 std::vector < std::vector < double > > Dy_intra;
 std::vector < std::vector < double > > Dz_intra;
 
+std::vector < std::vector < std::vector< double> > > D_intra;
+std::vector < std::vector < std::vector< double> > > D_inter;
 
 std::vector <double > crossProduct(std::vector <double >A, std::vector <double > B){
    std::vector <double > P(3,0.0);
@@ -870,7 +872,8 @@ void calc_interactions() {
                               if(dL2 < r2 ){
                                  // std::cout << dL2 << ", " << r2 << ", " << x_i << ", " << y_i << ", " << z_i << ", " << x_j << ", " << y_j << ", " << z_j << std::endl;
                                  interaction bond_avg;
-                                 if(atom_i.S == atom_j.S) bond_avg  = calculate_intra_Jani(atom_i, atom_j, dL2);
+                                 double angle = atan2(ady,adx);
+                                 if(atom_i.S == atom_j.S) bond_avg  = calculate_intra_Jani(atom_i, atom_j, dL2, angle);
                                  else bond_avg  = calculate_inter_Jani(atom_i, atom_j, dL2);
                                  // interactions_list[atom_j.id*11 + interactions_list[atom_j.id*11]] = 0;
                                  // interactions_list[atom_j.id*11]++;
@@ -909,7 +912,7 @@ void calc_interactions() {
 
 }
 
-interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance){
+interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, double angle){
 
    interaction bond_avg;
    if (distance <= intra_nn_dist_1) {
@@ -917,6 +920,7 @@ interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance){
          bond_avg.xx = Jintra1_AB;
          bond_avg.yy = bond_avg.xx;
          bond_avg.zz = bond_avg.xx;
+         bond_avg.xy = 
       } else {
          bond_avg.xx = 0.5*J_constant*(Jintra1_AB+Jintra1[unit_cell_shifts[atom_j.unit_x][atom_j.unit_y][1]][unit_cell_shifts[atom_j.unit_x][atom_j.unit_y][2]]);
          bond_avg.yy = bond_avg.xx;

@@ -36,13 +36,17 @@
    extern std::vector < std::vector < double > > Dy_intra;
    extern std::vector < std::vector < double > > Dz_intra;
 
+   extern std::vector < std::vector < std::vector<double> > > D_intra;
+   extern std::vector < std::vector < std::vector<double> > > D_inter;
+
 
    extern std::ofstream outfile4;
 
    void read_in_exchange(std::string filename);
+   void read_in_dft(std::string filename);
    void read_in_dmi(std::string filename, std::vector < std::vector < double > > &Dx, std::vector < std::vector < double > > &Dy, std::vector < std::vector < double > > &Dz);
    void calc_in_plane_exchange(std::vector < spin > atom_list_1);
-   interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance);
+   interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
    interaction calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance);
    void calc_interactions();
    void calc_out_of_plane_exchange(std::vector < spin > atom_list_1,std::vector < spin > atom_list_2);

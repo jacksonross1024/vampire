@@ -12,7 +12,7 @@ set palette defined ( 0 '#04233B',\
 
 set palette defined (  0 'blue', 1 'white',  2 'red')
 
-set term pngcairo font "helvetica, 14"
+set term pngcairo font "helvetica, 14" size 900,900
 
 set xlabel "x (A)"
 set ylabel "y (A)"
@@ -33,7 +33,7 @@ set yrange [-1:1]
 
 
 set colorbox 
-set auto cb
+
 unset colorbox 
 # 6.930   0.000   0.000
 #-3.465   6.002   0.000
@@ -41,21 +41,35 @@ unset colorbox
 
 set output "Jinter.png"
 
-
 set xrange [-a0x:a0x]
 set yrange [-a0x:a0x]
-
-set multiplot 
-set origin 0,0.4
-set size 0.5,0.6
+set angles degrees
+set multiplot layout 3,3
+rot = 90+120.0+0.7
 set key title "DFT"
 bounds(x,y,z) = (sqrt(x*x + y*y) > 6.93) ? (0.0) : (z)
-plot "Jintra1_interpolation_out.txt" u (a0x*($1*0.01-1)):(a0x*($2*0.01-1)):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$3)) w boxxy palette notitle
+set cbrange [-0.1:0.1]
+plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($9) w boxxy palette notitle
 
-set origin 0.0,-0.1
-set size 0.5,0.6
-set key title "Interpolation"
-plot "files/interpolated_array" u (a0x*($1*0.02-1)):(a0x*($2*0.02-1)):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.02-1),a0x*($2*0.02-1),$3)) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($10) w boxxy palette notitle
+
+plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($11) w boxxy palette notitle
+
+plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)+a1y*sin(rot)*$1):(a0x*0.05):(a1y*0.0433):($9*cos(rot)-$10*sin(rot)) w boxxy palette notitle
+
+plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)+a1y*sin(rot)*$1):(a0x*0.05):(a1y*0.0433):($10*cos(rot)+$9*sin(rot)) w boxxy palette notitle
+
+plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)+a1y*sin(rot)*$1):(a0x*0.05):(a1y*0.0433):($11) w boxxy palette notitle
+
+plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($15) w boxxy palette notitle
+
+plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($16) w boxxy palette notitle
+
+plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($17) w boxxy palette notitle
+
+
+#set key title "Interpolation"
+#plot "files/interpolated_array" u (a0x*($1*0.02-1)):(a1y*($2*0.02-1)):(a0x*0.02):(a1y*0.02):(bounds(a0x*($1*0.02-1),a1y*($2*0.02-1),$3)) w boxxy palette notitle
 unset multiplot 
 
 

@@ -58,12 +58,23 @@ void initialise_variables(){
    resize_arrays(Jintra1, 201,201);
    resize_arrays(Jintra2, 201,201);
    
-   resize_arrays(Dx_inter, 201,201);
-   resize_arrays(Dy_inter, 201,201);
-   resize_arrays(Dz_inter, 201,201);
-   resize_arrays(Dx_intra, 201,201);
-   resize_arrays(Dy_intra, 201,201);
-   resize_arrays(Dz_intra, 201,201);
+   D_inter.resize(201);
+   D_intra.resize(201);
+   for(int i = 0; i < D_inter.size(); i++) {
+      D_inter[i].resize(201);
+      D_intra[i].resize(201);
+      for(int j = 0; j < D_inter[i].size(); j++) {
+         D_inter[i][j].resize(3,0);
+         D_intra[i][j].resize(9,0);
+      }
+
+   }
+   // resize_arrays(Dx_inter, 201,201);
+   // resize_arrays(Dy_inter, 201,201);
+   // resize_arrays(Dz_inter, 201,201);
+   // resize_arrays(Dx_intra, 201,201);
+   // resize_arrays(Dy_intra, 201,201);
+   // resize_arrays(Dz_intra, 201,201);
 
    int estimated_system_spins = round(system_size_x*system_size_y*8.0/41.8);
 
