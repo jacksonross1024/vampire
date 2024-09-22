@@ -36,8 +36,8 @@
    extern std::vector < std::vector < double > > Dy_intra;
    extern std::vector < std::vector < double > > Dz_intra;
 
-   extern std::vector < std::vector < std::vector<double> > > D_intra;
-   extern std::vector < std::vector < std::vector<double> > > D_inter;
+   // extern std::vector < std::vector < std::vector<double> > > D_intra;
+   // extern std::vector < std::vector < std::vector<double> > > D_inter;
 
 
    extern std::ofstream outfile4;

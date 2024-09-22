@@ -45,7 +45,8 @@ set xrange [-a0x:a0x]
 set yrange [-a0x:a0x]
 set angles degrees
 set multiplot layout 3,3
-rot = 90+120.0+0.7
+rot = 90.0
+rot2 = rot + 180.0
 set key title "DFT"
 bounds(x,y,z) = (sqrt(x*x + y*y) > 6.93) ? (0.0) : (z)
 set cbrange [-0.1:0.1]
@@ -61,11 +62,11 @@ plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)
 
 plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)+a1y*sin(rot)*$1):(a0x*0.05):(a1y*0.0433):($11) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($15) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1*cos(rot2)-a0x*$2*sin(rot2)):(a1y*($2)*cos(rot2)+a1y*sin(rot2)*$1):(a0x*0.05):(a1y*0.0433):($9*cos(rot2)-$10*sin(rot2)) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($16) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1*cos(rot2)-a0x*$2*sin(rot2)):(a1y*($2)*cos(rot2)+a1y*sin(rot2)*$1):(a0x*0.05):(a1y*0.0433):($10*cos(rot2)+$9*sin(rot2)) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($17) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1*cos(rot2)-a0x*$2*sin(rot2)):(a1y*($2)*cos(rot2)+a1y*sin(rot2)*$1):(a0x*0.05):(a1y*0.0433):($11) w boxxy palette notitle
 
 
 #set key title "Interpolation"
@@ -89,3 +90,14 @@ set size 0.5,0.5
 set key title "Interpolation"
 plot "files/interpolated_Dij_inter" u (a0x*$1*0.01-a0x):(a0x*$2*0.01-a0x):(a0x*0.01):(a1y*0.01):($5) w boxxy palette notitle
 unset multiplot 
+
+set auto y
+set auto x 
+
+set ylabel "nm"
+set xlabel "nm"
+set output "mag.png"
+set auto cb
+unset key 
+
+plot "cells-00000000.txt" u ($1*0.1):($2*0.1):(1.0):(1.0):($22*$24) w boxxy palette notitle 

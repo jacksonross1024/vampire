@@ -109,12 +109,12 @@ void read_in_dft(std::string filename) {
         Jinter.at(ii*5).at(ij*10) = Jij;
         Jintra1.at(ii*5).at(ij*10) = Jii;
         Jintra2.at(ii*5).at(ij*10) = Jii2;
-        D_inter.at(ii*5).at(ij*10) = Dvector_ij;
-        std::vector<double> Dvector_ii(9);
-        Dvector_ii = {Dii90_x, Dii90_y, Dii90_z,\
-                                Dii210_x, Dii210_y, Dii210_z, \
-                                Dii330_x, Dii330_y, Dii330_z };
-        D_intra.at(ii*5).at(ij*10) = Dvector_ii;
+        // D_inter.at(ii*5).at(ij*10) = Dvector_ij;
+        // std::vector<double> Dvector_ii(9);
+        // Dvector_ii = {Dii90_x, Dii90_y, Dii90_z,\
+        //                         Dii210_x, Dii210_y, Dii210_z, \
+        //                         Dii330_x, Dii330_y, Dii330_z };
+        // D_intra.at(ii*5).at(ij*10) = Dvector_ii;
     }
 
     for(int i = 0; i < Jinter.size()-1; i+=5){
