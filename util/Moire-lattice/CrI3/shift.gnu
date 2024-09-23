@@ -39,7 +39,7 @@ unset colorbox
 #-3.465   6.002   0.000
 # 0.000   0.000  25.000
 
-set output "Jinter.png"
+set output "Dintera-rotation.png"
 
 set xrange [-a0x:a0x]
 set yrange [-a0x:a0x]
@@ -75,20 +75,157 @@ unset multiplot
 
 
 set output "Dinter.png"
-set multiplot 
-set origin 0,0.5
-set size 0.5,0.5
+set multiplot layout 3,3
+
 set xrange [-a0x:a0x]
 set yrange [-a0x:a0x]
 
 
 set key title "DFT"
-plot "Maps/Interpolated_Dij_Inter" u (a0x*$1*0.01-a0x):(a1y*($2*0.01)-a1y):(a0x*0.01):(a1y*0.01):($5) w boxxy palette notitle
+plot "files/interpolated_Dij_inter" u (a0x*$1*0.01-a0x):(a0x*($2*0.01)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$3)) w boxxy palette notitle
 
-set origin 0,0.0
-set size 0.5,0.5
+plot "files/interpolated_Dij_inter" u (a0x*$1*0.01-a0x):(a0x*($2*0.01)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$4)) w boxxy palette notitle
+
+plot "files/interpolated_Dij_inter" u (a0x*$1*0.01-a0x):(a0x*($2*0.01)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$5)) w boxxy palette notitle
+
 set key title "Interpolation"
-plot "files/interpolated_Dij_inter" u (a0x*$1*0.01-a0x):(a0x*$2*0.01-a0x):(a0x*0.01):(a1y*0.01):($5) w boxxy palette notitle
+plot "Maps/Interpolated-Data/Interpolated_Dij_Inter.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$3)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_Dij_Inter.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$4)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_Dij_Inter.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$5)) w boxxy palette notitle
+
+plot "files/Dinter.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$3)) w boxxy palette notitle
+
+plot "files/Dinter.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$4)) w boxxy palette notitle
+
+plot "files/Dinter.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$5)) w boxxy palette notitle
+
+
+unset multiplot 
+
+set output "Dintra.png"
+set multiplot layout 3,3
+
+set xrange [-a0x:a0x]
+set yrange [-a0x:a0x]
+
+
+set key title "DFT"
+plot "files/interpolated_Dij_intra" u (a0x*$1*0.01-a0x):(a0x*($2*0.01)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$3)) w boxxy palette notitle
+
+plot "files/interpolated_Dij_intra" u (a0x*$1*0.01-a0x):(a0x*($2*0.01)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$4)) w boxxy palette notitle
+
+plot "files/interpolated_Dij_intra" u (a0x*$1*0.01-a0x):(a0x*($2*0.01)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$5)) w boxxy palette notitle
+
+set key title "Interpolation"
+plot "Maps/Interpolated-Data/Interpolated_1st_Dij_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$3)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_1st_Dij_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$4)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_1st_Dij_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$5)) w boxxy palette notitle
+
+plot "files/Dintra-correct.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$3)) w boxxy palette notitle
+
+plot "files/Dintra-correct.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$4)) w boxxy palette notitle
+
+plot "files/Dintra-correct.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$5)) w boxxy palette notitle
+
+
+unset multiplot 
+
+
+set output "Dintra2.png"
+set multiplot layout 3,3
+
+set xrange [-a0x:a0x]
+set yrange [-a0x:a0x]
+
+set cbrange [-0.20:0.20]
+set key title "DFT"
+plot "files/interpolated_Dij_intra" u (a0x*$1*0.01-a0x):(a0x*($2*0.01)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$3)) w boxxy palette notitle
+
+plot "files/interpolated_Dij_intra" u (a0x*$1*0.01-a0x):(a0x*($2*0.01)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$4)) w boxxy palette notitle
+
+plot "files/interpolated_Dij_intra" u (a0x*$1*0.01-a0x):(a0x*($2*0.01)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.01-1),a0x*($2*0.01-1),$5)) w boxxy palette notitle
+
+set key title "Interpolation"
+plot "Maps/Interpolated-Data/Interpolated_2nd_Dij_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$3)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_2nd_Dij_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$4)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_2nd_Dij_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$5)) w boxxy palette notitle
+
+plot "files/Dintra-correct.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$3)) w boxxy palette notitle
+
+plot "files/Dintra-correct.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$4)) w boxxy palette notitle
+
+plot "files/Dintra-correct.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$5)) w boxxy palette notitle
+
+
+unset multiplot 
+
+
+set cbrange [1.0:3.0]
+set output "Jintra.png"
+set multiplot layout 3,3
+
+set xrange [-a0x:a0x]
+set yrange [-a0x:a0x]
+
+
+set key title "DFT"
+plot "files/interpolated_J1_intra_AA.txt" u (a0x*$1*0.02-a0x):(a0x*($2*0.02)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.02-1),a0x*($2*0.02-1),$3)) w boxxy palette notitle
+
+plot "files/interpolated_J1_intra_AA.txt" u (a0x*$1*0.02-a0x):(a0x*($2*0.02)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.02-1),a0x*($2*0.02-1),$3)) w boxxy palette notitle
+
+plot "files/interpolated_J1_intra_AA.txt" u (a0x*$1*0.02-a0x):(a0x*($2*0.02)-a0x):(a0x*0.01):(a0x*0.01):(bounds(a0x*($1*0.02-1),a0x*($2*0.02-1),$3)) w boxxy palette notitle
+
+set key title "Interpolation"
+plot "Maps/Interpolated-Data/Interpolated_J1_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$3)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_J1_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$3)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_J1_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$3)) w boxxy palette notitle
+
+plot "files/Jintra_1N.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$3)) w boxxy palette notitle
+
+plot "files/Jintra_1N.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$3)) w boxxy palette notitle
+
+plot "files/Jintra_1N.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$3)) w boxxy palette notitle
+
+
+unset multiplot 
+
+set cbrange [0.30:0.90]
+set output "Jintra2.png"
+set multiplot layout 3,3
+
+set xrange [-a0x:a0x]
+set yrange [-a0x:a0x]
+
+
+set key title "DFT"
+plot "files/interpolated_J2_intra_AA.txt" u (a0x*$1*0.02-a0x):(a0x*($2*0.02)-a0x):(a0x*0.02):(a0x*0.02):(bounds(a0x*($1*0.02-1),a0x*($2*0.02-1),$3)) w boxxy palette notitle
+
+plot "files/interpolated_J2_intra_AA.txt" u (a0x*$1*0.02-a0x):(a0x*($2*0.02)-a0x):(a0x*0.02):(a0x*0.02):(bounds(a0x*($1*0.02-1),a0x*($2*0.02-1),$3)) w boxxy palette notitle
+
+plot "files/interpolated_J2_intra_AA.txt" u (a0x*$1*0.02-a0x):(a0x*($2*0.02)-a0x):(a0x*0.02):(a0x*0.02):(bounds(a0x*($1*0.02-1),a0x*($2*0.02-1),$3)) w boxxy palette notitle
+
+set key title "Interpolation"
+plot "Maps/Interpolated-Data/Interpolated_J2_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$3)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_J2_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$3)) w boxxy palette notitle
+
+plot "Maps/Interpolated-Data/Interpolated_J2_Intra.txt" u (a0x*(0.01*$2)):(a0x*(0.01*$1)):(0.01*a0x):(a0x*0.01):(bounds(a0x*($1*0.01),a0x*($2*0.01),$3)) w boxxy palette notitle
+
+plot "files/Jintra_2N.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$3)) w boxxy palette notitle
+
+plot "files/Jintra_2N.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$3)) w boxxy palette notitle
+
+plot "files/Jintra_2N.csv" u (a0x*$1):(a0x*$2):(0.05*a0x):(a0x*0.0866):(bounds(a0x*($1),a0x*($2),$3)) w boxxy palette notitle
+
+
 unset multiplot 
 
 set auto y

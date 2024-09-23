@@ -16,8 +16,8 @@ dimensions:system-size-z = 1.308 !nm
 #create:periodic-boundaries-x
 #create:periodic-boundaries-y
 #create:periodic-boundaries-z
-dipole:solver=atomistic-fft
-dipole:field-update-rate=1
+#dipole:solver=atomistic-fft
+#dipole:field-update-rate=1
 #------------------------------------------
 # Material Files:
 #------------------------------------------
@@ -27,20 +27,20 @@ create:crystal-sublattice-materials=true
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
-sim:equilibration-temperature = 10
-sim:temperature = 10
+sim:equilibration-temperature = 0
+sim:temperature =0
 
 sim:time-steps-increment = 500
 
-sim:preconditioning-steps = 500
-sim:equilibration-time-steps=500
-sim:loop-time-steps = 500
+#sim:preconditioning-steps = 500
+sim:equilibration-time-steps=1000
+sim:total-time-steps = 2000
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
 sim:program = time-series #time variable magnetic field; SOT; STT
-sim:integrator = monte-carlo
-
+sim:integrator = llg-heun
+sim:load-checkpoint = restart 
 #------------------------------------------
 # data output
 #------------------------------------------
@@ -49,6 +49,7 @@ config:atoms = end
 output:output-rate=1
 output:time-steps
 output:material-mean-magnetisation
+output:material-magnetisation
 output:mean-total-torque
 output:total-energy 
 
