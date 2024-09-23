@@ -47,7 +47,7 @@
 
    class interaction {
       public:
-         double xx= 0.0;
+         double xx= -1.0;
          double xy= 0.0;
          double xz= 0.0;
          double yx= 0.0;

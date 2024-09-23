@@ -10,7 +10,7 @@
 
 int main(){
 
-   twist_angle = 1.405; // 1.1
+   twist_angle = 1.4; // 1.1
    system_size_x = 1000; //4000
    system_size_y = 1000; //4000
    number_of_unit_cells_z = 1; //2

@@ -43,7 +43,7 @@ std::ofstream outfile4 ("interactions.ucf");
 void resize_arrays(std::vector < std::vector < double > > &A, int sizex, int sizey){
    A.resize(sizex);
       for (int i = 0; i < sizex; ++i)
-          A[i].resize(sizey, 0.0);
+          A[i].resize(sizey, -1.0);
 }
 
 void initialise_variables(){

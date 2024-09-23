@@ -200,7 +200,10 @@ void create_magnetic_atom_list(std::string filename){
                         Jintra2.at(i_shift).at(j_shift) <<  ", " << \
                         Dx_inter.at(i_shift).at(j_shift) << ", " << \
                         Dy_inter.at(i_shift).at(j_shift) << ", " << \
-                        Dz_inter.at(i_shift).at(j_shift) << "\n";
+                        Dz_inter.at(i_shift).at(j_shift) << ", " << \
+                        Dx_intra.at(i_shift).at(j_shift) << ", " << \
+                        Dy_intra.at(i_shift).at(j_shift) << ", " << \
+                        Dz_intra.at(i_shift).at(j_shift) << "\n";
       }
    }
     shift_file.close();

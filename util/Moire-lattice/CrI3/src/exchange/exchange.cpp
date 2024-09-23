@@ -876,13 +876,19 @@ void calc_interactions() {
                               if(dL2 < r2 ){
                                  // std::cout << dL2 << ", " << r2 << ", " << x_i << ", " << y_i << ", " << z_i << ", " << x_j << ", " << y_j << ", " << z_j << std::endl;
                                  interaction bond_avg;
-                                 double angle = atan2(ady,adx);
+                                 double angle = std::atan2(ady,adx);
                                  if(atom_i.S == atom_j.S) bond_avg  = calculate_intra_Jani(atom_i, atom_j, dL2, angle);
                                  else bond_avg  = calculate_inter_Jani(atom_i, atom_j, dL2);
                                  // interactions_list[atom_j.id*11 + interactions_list[atom_j.id*11]] = 0;
                                  // interactions_list[atom_j.id*11]++;
                                  // exchange_count[atom_index]++;
-                                 // if(bond_avg.xx == 0.0) continue;
+                                 if(bond_avg.xx == -1.0) continue;
+
+                                 if(atom_i.id == 46211) std::cout << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
+                                                  bond_avg.xx << "\t" << bond_avg.xy << "\t" << bond_avg.xz << "\t" << \
+                                                  bond_avg.yx << "\t" << bond_avg.yy << "\t" << bond_avg.yz << "\t" << \
+                                                  bond_avg.zx << "\t" << bond_avg.zy << "\t" << bond_avg.zz << "\t" << std::endl;
+                                 
                                  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
                                                   bond_avg.xx << "\t" << bond_avg.xy << "\t" << bond_avg.xz << "\t" << \
                                                   bond_avg.yx << "\t" << bond_avg.yy << "\t" << bond_avg.yz << "\t" << \
@@ -924,24 +930,25 @@ interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, do
          bond_avg.xx = Jintra1_AB;
          bond_avg.yy = bond_avg.xx;
          bond_avg.zz = bond_avg.xx;
-         bond_avg.xy = J_constant*D_intra_z_constant;
-         bond_avg.xz = -J_constant*(D_intra_x_constant*sin(angle*M_PI/180.0)+D_intra_y_constant*cos(angle*M_PI/180.0)); //-D_y
-         bond_avg.yx = -J_constant*D_intra_z_constant;
-         bond_avg.yz = J_constant*(D_intra_x_constant*cos(angle*M_PI/180.0)-D_intra_y_constant*sin(angle*M_PI/180.0)); //D_x
-         bond_avg.zx = J_constant*(D_intra_x_constant*sin(angle*M_PI/180.0)+D_intra_y_constant*cos(angle*M_PI/180.0));  //D_y
-         bond_avg.zy = -J_constant*(D_intra_x_constant*cos(angle*M_PI/180.0)-D_intra_y_constant*sin(angle*M_PI/180.0)); //-D_x
+         // bond_avg.xy = J_constant*D_intra_z_constant;
+         // bond_avg.xz = -J_constant*(D_intra_x_constant*sin(angle)+D_intra_y_constant*cos(angle)); //-D_y
+         // bond_avg.yx = -J_constant*D_intra_z_constant;
+         // bond_avg.yz = J_constant*(D_intra_x_constant*cos(angle)-D_intra_y_constant*sin(angle)); //D_x
+         // bond_avg.zx = J_constant*(D_intra_x_constant*sin(angle)+D_intra_y_constant*cos(angle));  //D_y
+         // bond_avg.zy = -J_constant*(D_intra_x_constant*cos(angle)-D_intra_y_constant*sin(angle)); //-D_x
       } else {
-         int x_shift = unit_cell_shifts[atom_j.unit_x][atom_j.unit_y][1];
-         int y_shift = unit_cell_shifts[atom_j.unit_x][atom_j.unit_y][2];
+         spin shift_atom = (atom_i.S == 3) ? atom_i : atom_j;
+         int x_shift = unit_cell_shifts[shift_atom.unit_x][shift_atom.unit_y][1];
+         int y_shift = unit_cell_shifts[shift_atom.unit_x][shift_atom.unit_y][2];
          bond_avg.xx = J_constant*Jintra1[x_shift][y_shift];
          bond_avg.yy = bond_avg.xx;
          bond_avg.zz = bond_avg.xx;
-         bond_avg.xy = J_constant*Dz_intra[x_shift][y_shift];
-         bond_avg.xz = -J_constant*(Dx_intra[x_shift][y_shift]*sin(angle*M_PI/180.0)+Dy_intra[x_shift][y_shift]*cos(angle*M_PI/180.0)); //-D_y
-         bond_avg.yx = -J_constant*Dz_intra[x_shift][y_shift];
-         bond_avg.yz = J_constant*(Dx_intra[x_shift][y_shift]*cos(angle*M_PI/180.0)-Dy_intra[x_shift][y_shift]*sin(angle*M_PI/180.0)); //D_x
-         bond_avg.zx = J_constant*(Dx_intra[x_shift][y_shift]*sin(angle*M_PI/180.0)+Dy_intra[x_shift][y_shift]*cos(angle*M_PI/180.0));  //D_y
-         bond_avg.zy = -J_constant*(Dx_intra[x_shift][y_shift]*cos(angle*M_PI/180.0)-Dy_intra[x_shift][y_shift]*sin(angle*M_PI/180.0)); //-D_x
+         // bond_avg.xy = J_constant*Dz_intra[x_shift][y_shift];
+         // bond_avg.xz = -J_constant*(Dx_intra[x_shift][y_shift]*sin(angle)+Dy_intra[x_shift][y_shift]*cos(angle)); //-D_y
+         // bond_avg.yx = -J_constant*Dz_intra[x_shift][y_shift];
+         // bond_avg.yz = J_constant*(Dx_intra[x_shift][y_shift]*cos(angle)-Dy_intra[x_shift][y_shift]*sin(angle)); //D_x
+         // bond_avg.zx = J_constant*(Dx_intra[x_shift][y_shift]*sin(angle)+Dy_intra[x_shift][y_shift]*cos(angle));  //D_y
+         // bond_avg.zy = -J_constant*(Dx_intra[x_shift][y_shift]*cos(angle)-Dy_intra[x_shift][y_shift]*sin(angle)); //-D_x
       }
       all_m_atoms[atom_i.id].intra1++;
       
@@ -951,7 +958,10 @@ interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, do
          bond_avg.yy = bond_avg.xx;
          bond_avg.zz = bond_avg.xx;
       } else {
-         bond_avg.xx = J_constant*Jintra2[unit_cell_shifts[atom_j.unit_x][atom_j.unit_y][1]][unit_cell_shifts[atom_j.unit_x][atom_j.unit_y][2]];
+         spin shift_atom = (atom_i.S == 3) ? atom_i : atom_j;
+         int x_shift = unit_cell_shifts[shift_atom.unit_x][shift_atom.unit_y][1];
+         int y_shift = unit_cell_shifts[shift_atom.unit_x][shift_atom.unit_y][2];
+         bond_avg.xx = J_constant*Jintra2[x_shift][y_shift];
          bond_avg.yy = bond_avg.xx;
          bond_avg.zz = bond_avg.xx;
       }
@@ -988,23 +998,23 @@ interaction calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance) {
             bond_avg.xx = Jinter[atom_i.dx][atom_i.dy]*J_constant;
             bond_avg.yy = bond_avg.xx;
             bond_avg.zz = bond_avg.xx;
-            bond_avg.xy = Dz_inter[atom_i.dx][atom_i.dy]*J_constant;
-            bond_avg.xz = -Dy_inter[atom_i.dx][atom_i.dy]*J_constant;
-            bond_avg.yx = -Dz_inter[atom_i.dx][atom_i.dy]*J_constant;
-            bond_avg.yz = Dx_inter[atom_i.dx][atom_i.dy]*J_constant;
-            bond_avg.zx = Dy_inter[atom_i.dx][atom_i.dy]*J_constant;
-            bond_avg.zy = -Dx_inter[atom_i.dx][atom_i.dy]*J_constant;
+            // bond_avg.xy = Dz_inter[atom_i.dx][atom_i.dy]*J_constant;
+            // bond_avg.xz = -Dy_inter[atom_i.dx][atom_i.dy]*J_constant;
+            // bond_avg.yx = -Dz_inter[atom_i.dx][atom_i.dy]*J_constant;
+            // bond_avg.yz = Dx_inter[atom_i.dx][atom_i.dy]*J_constant;
+            // bond_avg.zx = Dy_inter[atom_i.dx][atom_i.dy]*J_constant;
+            // bond_avg.zy = -Dx_inter[atom_i.dx][atom_i.dy]*J_constant;
             all_m_atoms[atom_i.id].inter++;
       }  else if ( atom_j.S == 3 && distance <= inter_nn_dist_1 ) {
             bond_avg.xx = Jinter[atom_j.dx][atom_j.dy]*J_constant;
             bond_avg.yy = bond_avg.xx;
             bond_avg.zz = bond_avg.xx;
-            bond_avg.xy = Dz_inter[atom_j.dx][atom_j.dy]*J_constant;
-            bond_avg.xz = -Dy_inter[atom_j.dx][atom_j.dy]*J_constant;
-            bond_avg.yx = -Dz_inter[atom_j.dx][atom_j.dy]*J_constant;
-            bond_avg.yz = Dx_inter[atom_j.dx][atom_j.dy]*J_constant;
-            bond_avg.zx = Dy_inter[atom_j.dx][atom_j.dy]*J_constant;
-            bond_avg.zy = -Dx_inter[atom_j.dx][atom_j.dy]*J_constant;
+            // bond_avg.xy = Dz_inter[atom_j.dx][atom_j.dy]*J_constant;
+            // bond_avg.xz = -Dy_inter[atom_j.dx][atom_j.dy]*J_constant;
+            // bond_avg.yx = -Dz_inter[atom_j.dx][atom_j.dy]*J_constant;
+            // bond_avg.yz = Dx_inter[atom_j.dx][atom_j.dy]*J_constant;
+            // bond_avg.zx = Dy_inter[atom_j.dx][atom_j.dy]*J_constant;
+            // bond_avg.zy = -Dx_inter[atom_j.dx][atom_j.dy]*J_constant;
             all_m_atoms[atom_i.id].inter++;
       }  
       return bond_avg;
