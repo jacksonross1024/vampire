@@ -39,8 +39,8 @@ int main(){
     read_in_exchange("Maps/interpolated_J1_intra-AA.txt", Jintra1);
     read_in_exchange("Maps/interpolated_J2_intra-AA.txt", Jintra2);
 
-    read_in_dmi("Maps/interpolated_1st_Dij_intra", Dx_intra, Dy_intra, Dz_intra);
-    read_in_dmi("Maps/interpolated_Dij_inter", Dx_inter, Dy_inter, Dz_inter);
+   //  read_in_dmi("Maps/interpolated_1st_Dij_intra", Dx_intra, Dy_intra, Dz_intra);
+   //  read_in_dmi("Maps/interpolated_Dij_inter", Dx_inter, Dy_inter, Dz_inter);
 
     create_magnetic_atom_list("atom_positions.ucf");
     //  create_nm_atom_list();
