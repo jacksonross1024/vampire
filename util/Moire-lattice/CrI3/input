@@ -27,19 +27,23 @@ create:crystal-sublattice-materials=true
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
-sim:equilibration-temperature = 0
-sim:temperature =0
+sim:equilibration-temperature = 4
+sim:temperature = 4
+#sim:minimum-temperature = 4
 
 sim:time-steps-increment = 500
 
-#sim:preconditioning-steps = 500
+sim:preconditioning-steps = 500
 sim:equilibration-time-steps=1000
-sim:total-time-steps = 2000
+sim:total-time-steps = 5000
+#sim:cooling-time = 
+#sim:cooling-function = linear
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
 sim:program = time-series #time variable magnetic field; SOT; STT
 sim:integrator = llg-heun
+
 sim:load-checkpoint = restart 
 #------------------------------------------
 # data output
@@ -53,10 +57,3 @@ output:material-magnetisation
 output:mean-total-torque
 output:total-energy 
 
-
-#material[]:spin-diffusion-length = 40 #A
-#material[]:spin-polarisation-conductivity =  # (spin-up - spin-down)/(spin-up + spin-down) [0,1]
-#material[]:spin-polarisation-diffusion =  #beta'
-#material[]:spin-accumulation =  # spin-up - spin-down C/m^3 = states/eV/atom * 25 meV (300K) [1e6 - 1e8 C/m^3]
-#material[]:diffusion-constant = # ms^2 [1e-2 - 1e-4]
-#material[]:sd-exchange-constant =  !eV #Jsd ~ ferromagnetic exch (50 meV)

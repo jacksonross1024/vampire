@@ -875,7 +875,7 @@ void calc_interactions() {
                               if(dL2 < r2 ){
                                  // std::cout << dL2 << ", " << r2 << ", " << x_i << ", " << y_i << ", " << z_i << ", " << x_j << ", " << y_j << ", " << z_j << std::endl;
                                  interaction bond_avg;
-                                 double angle = std::atan2(ady,adx) - M_PI*0.5;
+                                 double angle = std::atan2(ady,adx);// - M_PI*0.5;
                                  if(atom_i.S == atom_j.S) bond_avg  = calculate_intra_Jani(atom_i, atom_j, dL2, angle);
                                  else bond_avg  = calculate_inter_Jani(atom_i, atom_j, dL2);
                                  // interactions_list[atom_j.id*11 + interactions_list[atom_j.id*11]] = 0;
@@ -883,7 +883,6 @@ void calc_interactions() {
                                  // exchange_count[atom_index]++;
                                  if(bond_avg.xx == -10.0 || bond_avg.xx == 10.0 ) continue;
                                  
-
                                  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
                                                   bond_avg.xx << "\t" << bond_avg.xy << "\t" << bond_avg.xz << "\t" << \
                                                   bond_avg.yx << "\t" << bond_avg.yy << "\t" << bond_avg.yz << "\t" << \
@@ -939,8 +938,12 @@ interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, do
          bond_avg.yy = bond_avg.xx;
          bond_avg.zz = bond_avg.xx;
          bond_avg.xy = J_constant*Dz_intra[x_shift][y_shift];
-         bond_avg.xz = -J_constant*(Dx_intra[x_shift][y_shift]*sin(angle)+Dy_intra[x_shift][y_shift]*cos(angle)); //-D_y
          bond_avg.yx = -J_constant*Dz_intra[x_shift][y_shift];
+         if(atom_i.S == 3) {
+            bond_avg.xy *= -1;
+            bond_avg.yx *= -1;
+         }
+         bond_avg.xz = -J_constant*(Dx_intra[x_shift][y_shift]*sin(angle)+Dy_intra[x_shift][y_shift]*cos(angle)); //-D_y
          bond_avg.yz = J_constant*(Dx_intra[x_shift][y_shift]*cos(angle)-Dy_intra[x_shift][y_shift]*sin(angle)); //D_x
          bond_avg.zx = J_constant*(Dx_intra[x_shift][y_shift]*sin(angle)+Dy_intra[x_shift][y_shift]*cos(angle));  //D_y
          bond_avg.zy = -J_constant*(Dx_intra[x_shift][y_shift]*cos(angle)-Dy_intra[x_shift][y_shift]*sin(angle)); //-D_x
@@ -991,22 +994,24 @@ interaction calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance) {
       if( atom_i.S == 3 && distance < inter_nn_dist_1) {
             // int x_shift = atom_j.dx;
             // int y_shift = atom_j.dy;
-            int x_shift = round(-100.0*remainder(atom_j.x - atom_i.x,a0x)/a0x)+100;
-            int y_shift = round(-100.0*remainder(atom_j.y - atom_i.y,a1y)/a0x)+100;
-            bond_avg.xx = Jinter[x_shift][y_shift];
+            int x_shift = round(-100.0*((atom_j.x - atom_i.x)/a0x)-round((atom_j.x - atom_i.x)/a0x)/a0x)+100;
+            int y_shift = round(-100.0*((atom_j.y - atom_i.y)/a1y)-round((atom_j.y - atom_i.y)/a1y)/a1y)+100;
+            bond_avg.xx = Jinter[x_shift][y_shift]*J_constant;
             bond_avg.yy = bond_avg.xx;
             bond_avg.zz = bond_avg.xx;
-            bond_avg.xy = Dz_inter[x_shift][y_shift]*J_constant;
+            bond_avg.xy = -Dz_inter[x_shift][y_shift]*J_constant;
             bond_avg.xz = -Dy_inter[x_shift][y_shift]*J_constant;
-            bond_avg.yx = -Dz_inter[x_shift][y_shift]*J_constant;
+            bond_avg.yx = Dz_inter[x_shift][y_shift]*J_constant;
             bond_avg.yz = Dx_inter[x_shift][y_shift]*J_constant;
             bond_avg.zx = Dy_inter[x_shift][y_shift]*J_constant;
             bond_avg.zy = -Dx_inter[x_shift][y_shift]*J_constant;
             all_m_atoms[atom_i.id].inter++;
       }  else if ( atom_j.S == 3 && distance <= inter_nn_dist_1 ) {
-            int x_shift = round(-100.0*((atom_j.x - atom_i.x)/a0x)-round((atom_j.x - atom_i.x)/a0x)/a0x)+100;
-            int y_shift = round(-100.0*((atom_j.y - atom_i.y)/a1y)-round((atom_j.y - atom_i.y)/a1y)/a1y)+100;
-            bond_avg.xx = Jinter[x_shift][y_shift];
+            // int x_shift = round(-100.0*((atom_j.x - atom_i.x)/a0x)-round((atom_j.x - atom_i.x)/a0x)/a0x)+100;
+            // int y_shift = round(-100.0*((atom_j.y - atom_i.y)/a0x)-round((atom_j.y - atom_i.y)/a0x)/a0x)+100;
+            int x_shift = round(-100.0*remainder(atom_j.x - atom_i.x,a0x)/a0x)+100;
+            int y_shift = round(-100.0*remainder(atom_j.y - atom_i.y,a0x)/a0x)+100;
+            bond_avg.xx = Jinter[x_shift][y_shift]*J_constant;
             bond_avg.yy = bond_avg.xx;
             bond_avg.zz = bond_avg.xx;
             bond_avg.xy = Dz_inter[x_shift][y_shift]*J_constant;
@@ -1017,11 +1022,11 @@ interaction calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance) {
             bond_avg.zy = -Dx_inter[x_shift][y_shift]*J_constant;
             all_m_atoms[atom_i.id].inter++;
 
-            if(atom_i.id == 46122 ) std::cout << x_shift << ", " << y_shift << " from: [" << \
-            atom_i.x << ", " << atom_i.y << "] to [" << atom_j.x << ", " << atom_j.y << "] " << "\t" << \
-            bond_avg.xx << "\t" << bond_avg.xy << "\t" << bond_avg.xz << "\t" << \
-            bond_avg.yx << "\t" << bond_avg.yy << "\t" << bond_avg.yz << "\t" << \
-            bond_avg.zx << "\t" << bond_avg.zy << "\t" << bond_avg.zz << "\t" << std::endl;
+            // if(atom_i.id == 10000 ) std::cout << x_shift << ", " << y_shift << " from: [" << \
+            // atom_i.x << ", " << atom_i.y << "] to [" << atom_j.x << ", " << atom_j.y << "] " << "\t" << \
+            // bond_avg.xx << "\t" << bond_avg.xy << "\t" << bond_avg.xz << "\t" << \
+            // bond_avg.yx << "\t" << bond_avg.yy << "\t" << bond_avg.yz << "\t" << \
+            // bond_avg.zx << "\t" << bond_avg.zy << "\t" << bond_avg.zz << "\t" << std::endl;
       }  
       return bond_avg;
    }

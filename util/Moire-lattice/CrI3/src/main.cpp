@@ -10,7 +10,7 @@
 
 int main(){
 
-   twist_angle = 0.0; // 1.1
+   twist_angle = 0.5; // 1.1
    system_size_x = 1000; //4000
    system_size_y = 1000; //4000
    number_of_unit_cells_z = 1; //2
@@ -35,13 +35,13 @@ int main(){
     read_in_atoms("files/atom_list_aa_rhombic", num_atoms, atom);
    //  read_in_dft("files/criteria.txt");
     //  read_in_atoms("files/nm_atoms", num_nm_atoms, nm_atom);
-    read_in_exchange("files/interpolated_J_Inter.txt", Jinter);
-    read_in_exchange("files/interpolated_J1_Intra.txt", Jintra1);
-    read_in_exchange("files/interpolated_J2_Intra.txt", Jintra2);
+    read_in_exchange("files/Interpolated_J_Inter.txt", Jinter);
+    read_in_exchange("files/Interpolated_J1_Intra.txt", Jintra1);
+    read_in_exchange("files/Interpolated_J2_Intra.txt", Jintra2);
 
-    read_in_dmi("files/interpolated_1st_Dij_Intra.txt", Dx_intra, Dy_intra, Dz_intra);
+    read_in_dmi("files/Interpolated_1st_Dij_Intra.txt", Dx_intra, Dy_intra, Dz_intra);
    //  read_in_dmi("files/interpolated_1st_Dij_intra.txt", Dx_intra2, Dy_intra2, Dz_intra2);
-    read_in_dmi("files/interpolated_Dij_Inter.txt", Dx_inter, Dy_inter, Dz_inter);
+    read_in_dmi("files/Interpolated_Dij_Inter.txt", Dx_inter, Dy_inter, Dz_inter);
 
     create_magnetic_atom_list("atom_positions.ucf");
     //  create_nm_atom_list();
