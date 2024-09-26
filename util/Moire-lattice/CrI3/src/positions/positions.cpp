@@ -105,12 +105,14 @@ void create_magnetic_atom_list(std::string filename){
                         int dx_cell = floor(x_new / a0x);
                         // double unit_x = dx_cell*a0x + dy_cell*a1x + atom[atom_i].x;
                         // double unit_y = dy_cell*a1y + atom[atom_i].y;
-                        int changex = round(-100.0*remainder(x_new - x_j,a0x)/a0x)+100;
-                        int changey = round(-100.0*remainder(y_new - y_j,a0x)/a0x)+100;
-                        // int changex = round(-100.0*(((x_new - x_j)/a0x)-floor((x_new - x_j)/a0x)/a0x))+100;
-                        // int changey = round(-100.0*(((y_new - y_j)/a0x)-floor((y_new - y_j)/a0x)/a0x))+100;
+                        // int changex = round(-100.0*remainder(x_new - x_j,a0x)/a0x)+100;
+                        // int changey = round(-100.0*remainder(y_new - y_j,a1y)/a0x)+100;
+                        int changex =(x_new < x_j) ? round(100*(fmod(x_new-x_j + 0.001, a0x)/a0x))+100 : round(100*(fmod(x_new-x_j, a0x)/a0x))+100;
+                        int changey =(y_new < y_j) ? round(100*(fmod(y_new-y_j + 0.001, a1y)/a1y))+100 : round(100*(fmod(y_new-y_j, a1y)/a1y))+100;
+                        // int changex = round(-100.0*(((x_new - x_j)/a0x)-trunc((x_new - x_j-0.001)/a0x)))+100;
+                        // int changey = round(-100.0*(((y_new - y_j)/a0x)-trunc((y_new - y_j-0.001)/a0x)))+100;
                         if(changex > 200 || changex < 0 || changey > 200 || changey < 0) {
-                           std::cerr << "shift problem: (" << y_new << ", " << y_j << ") in cell: [" << dx_cell << ", " << dy_cell << "] indexing " << changex << ", " << changey  << std::endl;
+                           std::cerr << "shift problem: (" << x_new << ", " << x_j << ") in cell: [" << dx_cell << ", " << dy_cell << "] indexing " << changex << ", " << changey  << std::endl;
                             exit(1);
                         }
                         unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;

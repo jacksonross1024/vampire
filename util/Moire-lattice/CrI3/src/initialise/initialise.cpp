@@ -75,6 +75,9 @@ void initialise_variables(){
    resize_arrays(Dx_intra, 201,201);
    resize_arrays(Dy_intra, 201,201);
    resize_arrays(Dz_intra, 201,201);
+   resize_arrays(Dx_intra2, 201,201);
+   resize_arrays(Dy_intra2, 201,201);
+   resize_arrays(Dz_intra2, 201,201);
 
    int estimated_system_spins = round(system_size_x*system_size_y*8.0/41.8);
 
