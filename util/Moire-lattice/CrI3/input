@@ -28,23 +28,23 @@ create:crystal-sublattice-materials=true
 # Simulation attributes:
 #------------------------------------------
 sim:equilibration-temperature = 4
-sim:temperature = 4
-#sim:minimum-temperature = 4
-
-sim:time-steps-increment = 500
+sim:maximum-temperature = 4
+sim:minimum-temperature = 4
+sim:time-steps-increment = 1
 
 sim:preconditioning-steps = 500
-sim:equilibration-time-steps=1000
-sim:total-time-steps = 5000
-#sim:cooling-time = 
+sim:equilibration-time-steps= 50000
+sim:loop-time-steps = 2000
+#sim:cooling-time = 1 !ns #100000 fss
 #sim:cooling-function = linear
+#sim:time-step= 1 !fs #e6 fs/ns
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
 sim:program = time-series #time variable magnetic field; SOT; STT
-sim:integrator = llg-heun
+sim:integrator = monte-carlo
 
-sim:load-checkpoint = restart 
+sim:save-checkpoint = end 
 #------------------------------------------
 # data output
 #------------------------------------------
@@ -54,6 +54,7 @@ output:output-rate=1
 output:time-steps
 output:material-mean-magnetisation
 output:material-magnetisation
+output:mean-susceptibility
 output:mean-total-torque
 output:total-energy 
 
