@@ -34,7 +34,7 @@ void read_in_exchange(std::string filename, std::vector<std::vector<double>> & J
         std::stringstream liness(line.c_str());
         double ii;
         double ij;
-        liness >> ij >> ii >> Jij[ii+100][ij+100];
+        liness >> ij >> ii >> Jij[int(ii)+100][int(ij)+100];
         // std::cout << ii << ", " << ii*2 << std::endl;
    //   outfile <<atom_id[i] << "\t" << x_in[i] << '\t' << y_in[i] << "\t" << z_in[i] << "\t" << S_in[i] << "\t" << temp << "\t" << temp << std::endl;
    //   std::cout <<ii << "\t" << ij << "\t" <<  Jint[ii][ij] << std::endl;
@@ -51,7 +51,45 @@ void read_in_exchange(std::string filename, std::vector<std::vector<double>> & J
     //     }
     // }
     ifile2.close();
+    // double 
+    // double rad_120 = 120.0*M_PI/180.0;
+    // double rad_210 = -120.0*M_PI/180.0;
+    std::ofstream out_file(filename + "_out.txt");
+   if(!out_file.is_open()) {std::cerr << filename + "_out.txt is not open" << std::endl; exit(1);}
+   for(int i = 0; i < Jij.size(); i++) {
+    for(int j = 0; j < Jij[i].size(); j++) {
+        if((j > 100) && (i*0.0693 > (6.93+3.465-j*0.03465)) ) {
+            // out_file << i << "\t" << j << "\t" << Jij[i][j] << "\n";
+            double x = i*0.0693 - a0x;
+            double y = j*0.0693- a0x;
+            double theta = atan2(y,x);
+            double r = sqrt(x*x+y*y);
+            double dx = r*cos(theta+2*M_PI/3.0);//-y*sin(rad_120);
+            double dy = r*sin(theta+2*M_PI/3.0);//+x*sin(rad_120);
+            double dx2 = r*cos(theta + 4*M_PI/3.0);//-y*sin(rad_210);
+            double dy2 = r*sin(theta + 4*M_PI/3.0);//+x*sin(rad_210);
+            int dx_int = round(100*dx/a0x)+100;
+            int dy_int = round(100*dy/a0x)+100;
+            int dx2_int = round(100*dx2/a0x)+100;
+            int dy2_int = round(100*dy2/a0x)+100;
 
+            if(dx_int > 200 || dx_int < 0 || dy_int > 200 || dy_int < 0 || dx2_int > 200 || dx2_int < 0 || dy2_int > 200 || dy2_int < 0) continue;
+            out_file << i << "\t" << j << "\t" << Jij[i][j] << "\n";
+            Jij[dx_int][dy_int] = Jij[i][j];
+            Jij[dx2_int][dy2_int] = Jij[i][j];
+
+            
+            out_file << dx_int << "\t" << dy_int << "\t" << Jij[dx_int][dy_int] << "\n";
+            out_file << dx2_int << "\t" << dy2_int << "\t" << Jij[dx2_int][dy2_int] << "\n";
+            // out_file << dx_int << "\t" << dy_int << "\t" << Jij[i][j] << "\n";
+            // out_file << dx2_int << "\t" << dy2_int << "\t" << Jij[i][j] << "\n";
+            
+        }
+        // else if((i*0.0693-6.93-3.465) < (0- 0.03465*j) && i<100) out_file << i << "\t" << j << "\t" << Jij[Jij.size()-i][Jij[i].size()-j] << "\n";
+        // else  out_file << i << "\t" << j << "\t" << Jij[200+(200-i)][200+(200-j)] << "\n";
+    }
+   }
+   out_file.close();
 }
 
 
@@ -64,11 +102,20 @@ void read_in_dmi(std::string filename, std::vector < std::vector < double > > &D
      std::stringstream liness(line.c_str());
      double ii;
      double ij;
-     liness >> ij >> ii >> Dx[ii][ij] >> Dy[ii][ij] >> Dz[ii][ij];
+     liness >> ij >> ii >> Dx[ii+100][ij+100] >> Dy[ii+100][ij+100] >> Dz[ii+100][ij+100];
    //   outfile <<atom_id[i] << "\t" << x_in[i] << '\t' << y_in[i] << "\t" << z_in[i] << "\t" << S_in[i] << "\t" << temp << "\t" << temp << std::endl;
    // std::cout <<ii << "\t" << ij << "\t" <<  Dx[ii][ij]<< "\t" <<  Dy[ii][ij]<< "\t" <<  Dz[ii][ij] << std::endl;
  }
    ifile2.close();
+
+   std::ofstream out_file(filename + "_out.txt");
+   if(!out_file.is_open()) {std::cerr << filename + "_out.txt is not open" << std::endl; exit(1);}
+   for(int i = 0; i < Dx.size(); i++){
+    for(int j = 0; j < Dx[i].size(); j++) {
+        out_file << i << "\t" << j << "\t" << Dx[i][j] << "\t" << Dy[i][j] << "\t" << Dz[i][j] << "\n";
+    }
+   }
+   out_file.close();
 }
 
 void read_in_dft(std::string filename) {
