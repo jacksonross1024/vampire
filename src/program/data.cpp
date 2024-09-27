@@ -50,7 +50,7 @@ namespace program{
       //------------------------------------------------------------------------
       // Electrial pulse program
       //------------------------------------------------------------------------
-      double electrical_pulse_time      = 1.0e-9; // length of electrical pulses (1 ns default)
+      double electrical_pulse_time      = 0.0;//1.0e-9; // length of electrical pulses (1 ns default)
       double electrical_pulse_rise_time = 0.0;    // linear rise time for electrical pulse (0.0 default)
       double electrical_pulse_fall_time = 0.0;    // linear fall time for electrical pulse (0.0 default)
       int num_electrical_pulses         = 1;
