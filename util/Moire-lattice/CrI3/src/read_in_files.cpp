@@ -85,7 +85,7 @@ void read_in_dmi(std::string filename, std::vector < std::vector < double > > &D
      std::stringstream liness(line.c_str());
      double ii;
      double ij;
-     liness >> ij >> ii >> Dx[ii+100][ij+100] >> Dy[ii+100][ij+100] >> Dz[ii+100][ij+100];
+     liness >> ii >> ij >> Dx[ii+100][ij+100] >> Dy[ii+100][ij+100] >> Dz[ii+100][ij+100];
    //   outfile <<atom_id[i] << "\t" << x_in[i] << '\t' << y_in[i] << "\t" << z_in[i] << "\t" << S_in[i] << "\t" << temp << "\t" << temp << std::endl;
    // std::cout <<ii << "\t" << ij << "\t" <<  Dx[ii][ij]<< "\t" <<  Dy[ii][ij]<< "\t" <<  Dz[ii][ij] << std::endl;
  }
@@ -95,10 +95,10 @@ void read_in_dmi(std::string filename, std::vector < std::vector < double > > &D
    if(!out_file.is_open()) {std::cerr << filename + "_out.txt is not open" << std::endl; exit(1);}
    for(int i = 0; i < Dx.size(); i++) {
     for(int j = 0; j < Dx[i].size(); j++) {
-        if( j > 100 ) {
+        if( i > 100 ) {
 
-            int dx = i;//r*cos(theta+2*M_PI/3.0);//-y*sin(rad_120);
-            int dy = 200-j;//r*sin(theta+2*M_PI/3.0);//+x*sin(rad_120);
+            int dx = 200-i;//r*cos(theta+2*M_PI/3.0);//-y*sin(rad_120);
+            int dy = j;//r*sin(theta+2*M_PI/3.0);//+x*sin(rad_120);
             Dx[dx][dy] = Dx[i][j];
             Dy[dx][dy] = -Dy[i][j];
             // Dy[i][j] *= -1;
@@ -231,3 +231,136 @@ void read_in_dft(std::string filename) {
     ifile2.close();
     exit(1);
 }
+
+// void read_in_from_ucf(std::string filename) {
+//     std::ifstream ifile2(filename);
+//     std::string line;
+//     if(!ifile2.is_open()) {std::cerr << filename << " is not open" << std::endl; exit(1);}
+    
+//     unsigned int line_counter=0;
+// 	unsigned int line_id=0;
+
+//    std::string exchange_type_string; // string defining exchange type
+
+//    // defaults for interaction list
+//    unsigned int interaction_range = 1; // assume +-1 unit cell as default
+
+// 	// Loop over all lines
+// 	while (! ifile2.eof() ){
+// 		line_counter++;
+// 		// read in whole line
+// 		std::string line;
+// 		getline(ifile2,line);
+// 		//std::cout << line.c_str() << std::endl;
+
+// 		// ignore blank lines
+// 		std::string empty="";
+// 		if(line==empty) continue;
+
+// 		// set character triggers
+// 		const char* hash="#";	// Comment identifier
+
+// 		bool has_hash=false;
+// 		// Determine if line is a comment line
+// 		for(unsigned int i=0;i<line.length();i++){
+// 			char c=line.at(i);
+
+// 			if(c== *hash){
+// 					has_hash=true;
+// 					break;
+// 			}
+// 		}
+// 		// if hash character found then read next line
+// 		if(has_hash==true) continue;
+
+// 		// convert line to string stream
+// 		std::istringstream iss(line,std::istringstream::in);
+
+// 		// non-comment line found - check for line number
+//         double unit_cell_dimensions[3] = {0.0,0.0,0.0};
+//         double unit_cell_shape[3][3] = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
+//         double num_atoms = 0.0;
+// 		switch(line_id){
+// 			case 0:
+// 				iss >> unit_cell_dimensions[0] >> unit_cell_dimensions[1] >> unit_cell_dimensions[2];
+// 				break;
+// 			case 1:
+// 				iss >> unit_cell_shape[0][0] >> unit_cell_shape[0][1] >> unit_cell_shape[0][2];
+// 				break;
+// 			case 2:
+// 				iss >> unit_cell_shape[1][0] >> unit_cell_shape[1][1] >> unit_cell_shape[1][2];
+// 				break;
+// 			case 3:
+// 				iss >> unit_cell_shape[2][0] >> unit_cell_shape[2][1] >> unit_cell_shape[2][2];
+// 				break;
+// 			case 4:
+// 				int num_uc_atoms;
+// 				iss >> num_uc_atoms;
+// 				//std::cout << "Reading in " << num_uc_atoms << " atoms" << std::endl;
+// 				// resize unit_cell.atom array if within allowable bounds
+// 				if( (num_uc_atoms >0) && (num_uc_atoms <= 1000000)) num_atoms = num_uc_atoms;
+// 				else {
+					
+// 					std::cerr << "Error! Requested number of atoms " << num_uc_atoms << " on line " << line_counter
+// 					<< " of unit cell input file " << filename.c_str() << " is outside of valid range 1-1,000,000. Exiting" << std::endl; 
+					
+// 				}
+
+//            // loop over all atoms and read into class
+//             for(unsigned int i = 0; i < num_atoms; i++){
+
+// 					line_counter++;
+
+// 					// declare safe temporaries for atom input
+// 					int id=i;
+// 					double cx=2.0, cy=2.0,cz=2.0; // coordinates - default will give an error
+// 					int mat_id=0, lcat_id=0, hcat_id=0; // sensible defaults if omitted
+// 					// get line
+// 					std::string atom_line;
+// 					getline(ifile2,atom_line);
+// 					std::istringstream atom_iss(atom_line,std::istringstream::in);
+//                     spin new_atom;
+
+// 					atom_iss >> new_atom.id >> cx >> cy >> cz >> new_atom.S >> new_atom.l_id >> hcat_id;
+// 					//std::cout << id << "\t" << cx << "\t" << cy << "\t" << cz<< "\t"  << mat_id << "\t" << lcat_id << "\t" << hcat_id << std::endl;
+// 					//inputfile >> id >> cx >> cy >> cz >> mat_id >> lcat_id >> hcat_id;
+// 					// now check for mostly sane input
+// 					if(cx>=0.0 && cx <=1.0) new_atom.x=cx*unit_cell_dimensions[0];
+// 					else{
+					
+// 						std::cerr << "Error! atom x-coordinate for atom " << id << " on line " << line_counter
+// 									 << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
+// 						exit(1);
+// 					}
+// 					if(cy>=0.0 && cy <=1.0) new_atom.y=cy*unit_cell_dimensions[1];
+// 					else{
+						
+// 						std::cerr << "Error! atom y-coordinate for atom " << id << " on line " << line_counter
+// 									 << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
+// 						exit(1);
+// 					}
+// 					if(cz>=0.0 && cz <=1.0) new_atom.z=cz*unit_cell_dimensions[2];
+// 					else{
+						
+// 						std::cerr << "Error! atom z-coordinate for atom " << id << " on line " << line_counter
+// 						<< " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
+// 						exit(1);
+// 					}
+// 					all_m_atoms.push_back(new_atom);
+
+//                     if(double_bilayer) {
+//                         if(pristine_bilayer_type == "baab") {
+//                             if(new_atom.z > twist_loction) {
+//                                 spin new_atom_2;
+//                                 new_atom_2.z = 1.0*unit_cell_dimensions[2];
+//                                 if(new_atom.l_id) 
+//                             }
+
+
+//                         }
+//                     }
+                    
+//                }
+					
+// 				break;
+// }

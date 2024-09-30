@@ -85,28 +85,28 @@ set xrange [-a0x:a0x]
 set yrange [-a0x:a0x]
 set angles degrees
 set multiplot layout 3,3
-rot = 90.0
-rot2 = rot + 180.0
+rot = 120
+rot2 = 90.0
 set key title "DFT"
 bounds(x,y,z) = (sqrt(x*x + y*y) > 6.93) ? (0.0) : (z)
 set cbrange [-0.1:0.1]
-plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($9) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($12*cos(rot2)-$13*sin(rot2)) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($10) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($13*cos(rot2)+$12*sin(rot2)) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($11) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1):(a1y*($2)):(a0x*0.05):(a1y*0.0433):($14) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)+a1y*sin(rot)*$1):(a0x*0.05):(a1y*0.0433):($9*cos(rot)-$10*sin(rot)) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)+a1y*sin(rot)*$1):(a0x*0.05):(a1y*0.0433):(cos(rot2)*($9*cos(rot)-$10*sin(rot))-sin(rot2)*($10*cos(rot)+$9*sin(rot))) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)+a1y*sin(rot)*$1):(a0x*0.05):(a1y*0.0433):($10*cos(rot)+$9*sin(rot)) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)+a1y*sin(rot)*$1):(a0x*0.05):(a1y*0.0433):(cos(rot2)*($10*cos(rot)+$9*sin(rot))+sin(rot2)*($9*cos(rot)-$10*sin(rot))) w boxxy palette notitle
 
 plot "files/criteria.txt" u (a0x*$1*cos(rot)-a0x*$2*sin(rot)):(a1y*($2)*cos(rot)+a1y*sin(rot)*$1):(a0x*0.05):(a1y*0.0433):($11) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1*cos(rot2)-a0x*$2*sin(rot2)):(a1y*($2)*cos(rot2)+a1y*sin(rot2)*$1):(a0x*0.05):(a1y*0.0433):($9*cos(rot2)-$10*sin(rot2)) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1*cos(rot2)-a0x*$2*sin(rot2)):(a1y*($2)*cos(rot2)+a1y*sin(rot2)*$1):(a0x*0.05):(a1y*0.0433):($12) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1*cos(rot2)-a0x*$2*sin(rot2)):(a1y*($2)*cos(rot2)+a1y*sin(rot2)*$1):(a0x*0.05):(a1y*0.0433):($10*cos(rot2)+$9*sin(rot2)) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1*cos(rot2)-a0x*$2*sin(rot2)):(a1y*($2)*cos(rot2)+a1y*sin(rot2)*$1):(a0x*0.05):(a1y*0.0433):($13) w boxxy palette notitle
 
-plot "files/criteria.txt" u (a0x*$1*cos(rot2)-a0x*$2*sin(rot2)):(a1y*($2)*cos(rot2)+a1y*sin(rot2)*$1):(a0x*0.05):(a1y*0.0433):($11) w boxxy palette notitle
+plot "files/criteria.txt" u (a0x*$1*cos(rot2)-a0x*$2*sin(rot2)):(a1y*($2)*cos(rot2)+a1y*sin(rot2)*$1):(a0x*0.05):(a1y*0.0433):($14) w boxxy palette notitle
 
 
 #set key title "Interpolation"

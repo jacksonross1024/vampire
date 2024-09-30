@@ -10,7 +10,7 @@
 
 int main(){
 
-   twist_angle = 0.0; // 1.1
+   twist_angle = 1.41; // 1.1
    system_size_x = 1000; //4000
    system_size_y = 1000; //4000
    number_of_unit_cells_z = 1; //2
@@ -27,6 +27,8 @@ int main(){
    exchange34 = 1.0; // exchange constant between layers 3-4
 
    separation = 0.0; // distance between layers 2-3
+   // double_bilayer = false;
+   // if(double_bilayer) pristine_bilayer_type = "baab";
 
    initialise_variables();
 
@@ -39,10 +41,10 @@ int main(){
     read_in_exchange("files/Interpolated_J1_Intra", Jintra1);
     read_in_exchange("files/Interpolated_J2_Intra", Jintra2);
 
-   //  read_in_dmi("files/Interpolated_1st_Dij_Intra", Dx_intra, Dy_intra, Dz_intra);
-   //  read_in_dmi("files/Interpolated_2nd_Dij_Intra", Dx_intra2, Dy_intra2, Dz_intra2);
-   // //  read_in_dmi("files/interpolated_1st_Dij_intra.txt", Dx_intra2, Dy_intra2, Dz_intra2);
-   //  read_in_dmi("files/Interpolated_Dij_Inter", Dx_inter, Dy_inter, Dz_inter);
+   //  read_in_dmi("files/Interpolated_1st_Dij_Intra", Dx_intra, Dy_intra, Dz_intra, true);
+   //  read_in_dmi("files/Interpolated_2nd_Dij_Intra", Dx_intra2, Dy_intra2, Dz_intra2, false);
+   //  read_in_dmi("files/interpolated_1st_Dij_intra.txt", Dx_intra2, Dy_intra2, Dz_intra2);
+   //  read_in_dmi("files/Interpolated_Dij_Inter", Dx_inter, Dy_inter, Dz_inter, true);
 
     create_magnetic_atom_list("atom_positions.ucf");
     //  create_nm_atom_list();
