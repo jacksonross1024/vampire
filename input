@@ -18,11 +18,11 @@ dimensions:system-size-z = 7.7 !nm
 material:file = Co.mat
 
 
-local-temperature-pulse:cell-size = 80,80,1.42316667 
+local-temperature-pulse:cell-size = 80,80,1.42316667 #A
 local-temperature-pulse:temperature-profile = vertical
 local-temperature-pulse:penetration-depth = 300 !A
-local-temperature-pulse:electron-thermal-conductivity = 25
-local-temperature-pulse:phonon-thermal-conductivity = 5
+local-temperature-pulse:electron-thermal-conductivity = 25  #J/K/m/s
+local-temperature-pulse:phonon-thermal-conductivity = 5  #J/K/m/s
 local-temperature-pulse:substrate-temperature = 300.0 
 local-temperature-pulse:output-microcell-data
 
@@ -31,21 +31,21 @@ cells:macro-cell-size-y = 80 !nm
 cells:macro-cell-size-z = 1.42316667  !A
 cells:output-cells
 
-sim:two-temperature-phonon-heat-capacity = 6.934e6 #J/K/mol -> 1mol/(96.9 g) 
+sim:two-temperature-phonon-heat-capacity = 6.934e6 
 sim:two-temperature-electron-phonon-coupling = 2.5e17
-sim:two-temperature-electron-heat-capacity = 1e3 #J/K/mol
-sim:two-temperature-heat-sink-coupling =  0.05e12 
+sim:two-temperature-electron-heat-capacity = 1e3
+sim:two-temperature-heat-sink-coupling =  0.05e12  #1/s
 
-sim:laser-pulse-power= 0.0 #pulse_time 1 ps * 1e12 J/cm^2/s =  mJ/cm^2 
-sim:laser-pulse-time = 1 !ps # 5e-3 J/cm^2 / 5e-13 s -> 10 gw/cm^2
-sim:second-laser-pulse-delay-time = 0 !ps
+sim:laser-pulse-power= 1.0 #J/m^2
+sim:laser-pulse-time = 1 !ps # 
+sim:second-laser-pulse-delay-time = 0 !ps #used for square pulse with gaussian ramps
 
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
 
-sim:temperature = 10.0
-sim:equilibration-temperature = 10.0
+sim:temperature = 300.0
+sim:equilibration-temperature = 300.0
 sim:time-steps-increment = 1000
 sim:equilibration-time-steps = 1
 sim:total-time-steps = 100000
