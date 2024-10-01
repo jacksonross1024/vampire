@@ -27,11 +27,14 @@ namespace ltmp{
       extern bool output_microcell_data; /// enable verbose output data for temperature cells
       extern bool temperature_rescaling; /// enable rescaled temperature calculation
       extern bool gradient; /// enable temperature gradient
+      extern bool gradient_only;
+      
 
-      extern double micro_cell_size; /// lateral size of local temperature microcells (A)
+      extern std::vector<double> micro_cell_size; /// lateral size of local temperature microcells (A)
       extern double laser_spot_size; /// laser spot size for lateral profile (A)
       extern double penetration_depth; /// vertical laser penetration depth
-      extern double thermal_conductivity; //J/s/m/K
+      extern double electron_thermal_conductivity; //J/s/m/K
+      extern double phonon_thermal_conductivity; //J/s/m/K
 
       extern double pump_power; // laser pump power
       extern double pump_time; // laser pump time (s)
@@ -39,10 +42,12 @@ namespace ltmp{
       extern double TTCe; // electron heat capacity (T=0)
       extern double TTCl; // lattice heat capcity
       extern double dt; // time step
+      // extern double TTTeq;
+      extern double tau_s;
 
       extern double minimum_temperature; // Minimum temperature in temperature gradient
       extern double maximum_temperature; // Maximum temperature in temperature gradient
-
+      extern double substrate_temperature;
       extern int num_local_atoms; /// number of local atoms (ignores halo atoms in parallel simulation)
       extern int num_cells; /// number of temperature cells
       extern int my_first_cell; /// first cell on my CPU
@@ -73,7 +78,7 @@ namespace ltmp{
       void open_lateral_temperature_profile_file();
       void write_cell_temperature_data();
       void calculate_local_temperature_pulse(const double time_from_start);
-      void calculate_local_temperature_gradient();
+      void calculate_local_temperature_gradient(const double time_from_start);
 
    } // end of iternal namespace
 } // end of st namespace

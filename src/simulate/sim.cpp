@@ -141,12 +141,12 @@ namespace sim{
 	double cooling_time=100.0e-12; ///seconds
 	int cooling_function_flag=0; /// 0 = exp, 1 = gaussian
 	pump_functions_t pump_function=two_temperature;
-	double pump_power=20.0; // mJ/cm^2;
+	double pump_power=20.0; // J/m^2;
 	double pump_time=50.0e-15;
-	double double_pump_power=20.0; // mJ/cm^2;
-	double double_pump_Tmax=500.0;
-	double double_pump_time=50.0e-15;
-	double double_pump_delay=10.0e-12;
+	double double_pump_power=0.0;//20.0; // mJ/cm^2;
+	double double_pump_Tmax=0.0;//500.0;
+	double double_pump_time=0.0;//50.0e-15;
+	double double_pump_delay=0.0;//10.0e-12;
 	double HeatSinkCouplingConstant=0.0; ///1.1e12 ~ sensible value
 	double TTCe = 222.0; ///electron specific heat (gamma)
 	double TTCl = 2.3E06; ///phonon specific heat
@@ -215,6 +215,12 @@ int run(){
    // now seed generator
 	mtrandom::grnd.seed(vmpi::parallel_rng_seed(mtrandom::integration_seed));
 
+   // Check for load spin configurations from checkpoint
+   if(sim::load_checkpoint_flag) load_checkpoint();
+
+	// For continuous checkpoints inform user about I/O
+	if(sim::save_checkpoint_continuous_flag) zlog << zTs() << "Continuously writing checkpoints to disk throughout simulation." << std::endl;
+
    {
       // Set up statistical data sets
       #ifdef MPICF
@@ -230,16 +236,9 @@ int run(){
       stats::initialize(num_atoms_for_statistics, mp::num_materials, grains::num_grains, atoms::m_spin_array, atoms::type_array, atoms::grain_array, atoms::category_array, non_magnetic_materials_array);
    }
 
-	// Check for load spin configurations from checkpoint
-   if(sim::load_checkpoint_flag) load_checkpoint();
-
-   // Precalculate initial statistics and then reset averages if not continuing a previous simulation
-   // RE technically this double counts the last data point in the statistics, need to implement a reset_counter to fix.
+   // Precalculate initial statistics and then reset averages
    stats::update();
-   if(!load_checkpoint_continue_flag) stats::reset();
-
-   // For continuous checkpoints inform user about I/O
-   if(sim::save_checkpoint_continuous_flag) zlog << zTs() << "Continuously writing checkpoints to disk throughout simulation." << std::endl;
+	stats::reset();
 
    // Initialize GPU acceleration if enabled
    if(gpu::acceleration) gpu::initialize();
@@ -293,6 +292,9 @@ int run(){
                      atoms::num_atoms
    );
 
+
+
+
 	if(environment::enabled) environment::initialize(cs::system_dimensions[0],cs::system_dimensions[1],cs::system_dimensions[2]);
 
    // For MPI version, calculate initialisation time
@@ -309,7 +311,8 @@ int run(){
    stopwatch.start();
 
    // Precondition spins at equilibration temperature
-   montecarlo::monte_carlo_preconditioning();
+   if(program::program == 52) {} //delay preconditioning for Domain wall stats
+   else montecarlo::monte_carlo_preconditioning();
 
 	if(stats::calculate_spinwaves) stats::spinwaves.reset();
 	
@@ -472,7 +475,7 @@ int run(){
 	  		}
 	  		program::electrical_pulse();
 	  		break;
-		case 18:
+			case 18:
 	  		if(vmpi::my_rank==0){
 	    		std::cout << "field-pulse..." << std::endl;
 	    		zlog << "field-pulse..." << std::endl;
@@ -517,6 +520,14 @@ int run(){
 				zlog << "mm-A-calculation..." << std::endl;
 			}
 			program::mm_A_calculation();
+			break;
+		//------------------------------------------------------------------------
+		case 55:
+		 	if(vmpi::my_rank==0){
+				std::cout << "Domain walls..." << std::endl;
+				zlog << "Domain walls..." << std::endl;
+			}
+			program::domain_wall();
 			break;
 		//------------------------------------------------------------------------
 		case 70:
@@ -663,7 +674,7 @@ void integrate_serial(uint64_t n_steps){
    else{
 
    // Case statement to call integrator
-   switch(sim::integrator){
+   switch(sim::integrator) {
 
       case 0: // LLG Heun
          for(uint64_t ti=0;ti<n_steps;ti++){

@@ -27,7 +27,7 @@
 // Vampire headers
 #include "cells.hpp"
 #include "material.hpp"
-
+#include "vmpi.hpp"
 // cells module headers
 #include "internal.hpp"
 

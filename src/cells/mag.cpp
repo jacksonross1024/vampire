@@ -13,6 +13,7 @@
 #include <cmath>
 #include <algorithm>
 #include <vector>
+#include <fstream>
 
 // Vampire headers
 #include "cells.hpp"
@@ -43,6 +44,7 @@ namespace cells{
          cells::mag_array_x[i] = 0.0;
          cells::mag_array_y[i] = 0.0;
          cells::mag_array_z[i] = 0.0;
+         cells::mag_array_m[i] = 0.0;
       }
 
       #ifdef MPICF
@@ -55,14 +57,13 @@ namespace cells{
       for(int i=0;i<num_local_atoms;++i) {
          int cell = cells::atom_cell_id_array[i];
          int type = cells::internal::atom_type_array[i];
-         //// Consider only cells with n_atoms != 0
-         //if(cells::num_atoms_in_cell[cell]>0){
-            const double mus = mp::material[type].mu_s_SI;
             // Consider only magnetic elements
             if(mp::material[type].non_magnetic==0){
-               cells::mag_array_x[cell] += atoms::x_spin_array[i]*mus;
-               cells::mag_array_y[cell] += atoms::y_spin_array[i]*mus;
-               cells::mag_array_z[cell] += atoms::z_spin_array[i]*mus;
+               double mm = atoms::m_spin_array[i];
+               cells::mag_array_x[cell] += atoms::x_spin_array[i]*mm;//*mus;
+               cells::mag_array_y[cell] += atoms::y_spin_array[i]*mm;//*mus;
+               cells::mag_array_z[cell] += atoms::z_spin_array[i]*mm;//*mus;
+               cells::mag_array_m[cell] += mm;//*mus;
             }
          //}
       }
@@ -72,10 +73,28 @@ namespace cells{
       MPI_Allreduce(MPI_IN_PLACE, &cells::mag_array_x[0],   cells::mag_array_x.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &cells::mag_array_y[0],   cells::mag_array_y.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &cells::mag_array_z[0],   cells::mag_array_z.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &cells::mag_array_m[0],   cells::mag_array_m.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
       #endif
+      
+
+      // Calculate magnetisation length and normalize
+      for(int cell =0; cell < cells::mag_array_m.size(); ++cell){
+         if(cells::num_atoms_in_cell[cell] == 0 ) continue;
+         double msat = cells::mag_array_m[cell];
+         double magm = sqrt(cells::mag_array_x[cell]*cells::mag_array_x[cell] +
+                            cells::mag_array_y[cell]*cells::mag_array_y[cell] +
+                            cells::mag_array_z[cell]*cells::mag_array_z[cell]);
+
+         cells::mag_array_x[cell] = cells::mag_array_x[cell]/magm; 
+         cells::mag_array_y[cell] = cells::mag_array_y[cell]/magm;             
+         cells::mag_array_z[cell] = cells::mag_array_z[cell]/magm;               
+         cells::mag_array_m[cell] = magm/msat;                     
       }
 
+      if(output_microcells) {
+         cells::output_data();
+      }
       return EXIT_SUCCESS;
-
+      }
    }
 } // end of cells namespace

@@ -48,9 +48,8 @@ namespace stats{
          if(stats::calculate_material_torque)        stats::material_torque.reset_torque_averages();
 
          // update spin temp statistics
-         if(stats::calculate_system_spin_temp)          stats::system_spin_temp.reset_spin_temp_averages();
-         if(stats::calculate_grain_spin_temp)           stats::grain_spin_temp.reset_spin_temp_averages();
-         if(stats::calculate_material_spin_temp)        stats::material_spin_temp.reset_spin_temp_averages();
+         if(stats::calculate_system_spin_temperature)       stats::system_spin_temperature.reset();
+         if(stats::calculate_material_spin_temperature)     stats::material_spin_temperature.reset();
 
          // standard deviation in time-step
          if(stats::calculate_material_standard_deviation)     stats::material_standard_deviation.reset_averages();

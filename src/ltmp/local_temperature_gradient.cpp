@@ -23,24 +23,25 @@ namespace ltmp{
       //-----------------------------------------------------------------------------
       // Function to calculate the local temperature using the two temperature model
       //-----------------------------------------------------------------------------
-      void calculate_local_temperature_gradient(){
+      void calculate_local_temperature_gradient(const double time_from_start){
 
+         if(ltmp::equilibration_step) return;
          // Precalculate temperature gradient
          const double Tmin = ltmp::internal::minimum_temperature;
          const double Tmax = ltmp::internal::maximum_temperature;
 
          // Calculate new electron and lattice temperatures with temperature gradient
-         for(unsigned int cell=0; cell<ltmp::internal::attenuation_array.size(); ++cell){
+   
+            for(unsigned int cell=0; cell<ltmp::internal::attenuation_array.size(); ++cell){
 
-            // Determine cell temperature
-            const double sqrtT = sqrt(Tmin + Tmax*attenuation_array[cell]);
+               // Determine cell temperature
+               const double sqrtT = sqrt(Tmin + (Tmax-Tmin)*attenuation_array[cell]);
 
-            // Assume Te = Tp = T and save
-            root_temperature_array[2*cell+0] = sqrtT;
-            root_temperature_array[2*cell+1] = sqrtT;
+               // Assume Te = Tp = T and save
+               root_temperature_array[2*cell+0] = sqrtT;
+               root_temperature_array[2*cell+1] = sqrtT;
 
-         }
-
+            }
          // optionally output cell data
          if(ltmp::internal::output_microcell_data) ltmp::internal::write_cell_temperature_data();
 

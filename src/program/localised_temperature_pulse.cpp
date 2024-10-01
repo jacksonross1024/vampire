@@ -44,7 +44,7 @@ namespace program{
       for(uint64_t tt=0; tt < sim::partial_time; tt++){
 
          // Calculate temperature
-         ltmp::update_localised_temperature(-1.e-7);
+         ltmp::update_localised_temperature(0.0);
 
          sim::integrate(1);
 

@@ -123,10 +123,10 @@ void write_grain_file(){
                   break;
                //------------------------------------------
                //------------------------------------------
-               case grain::mean_spin_temp:
-                  // inline function to output grain data
-                  zgrain << stats::grain_spin_temp.output_spin_temp(header);
-                  break;
+               // case grain::mean_spin_temp:
+               //    // inline function to output grain data
+               //    zgrain << stats::grain_spin_temp.output_spin_temp(header);
+               //    break;
 
             } // end of case statement
 

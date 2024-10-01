@@ -36,7 +36,7 @@ namespace cells{
    double macro_cell_size_y = 10.0; /// macro-cells size (A)
    double macro_cell_size_z = 10.0; /// macro-cells size (A)
 
-
+   bool output_microcells = false;
    std::vector <int> local_cell_array;
    std::vector<int> num_atoms_in_cell; /// number of atoms in each cell
    std::vector<int> num_atoms_in_cell_global; /// global number of atoms in each cell
@@ -52,6 +52,7 @@ namespace cells{
    std::vector<double> mag_array_x; /// arrays to store cells magnetisation
    std::vector<double> mag_array_y;
    std::vector<double> mag_array_z;
+   std::vector<double> mag_array_m;
    std::vector<double> field_array_x; /// arrays to store cells field
    std::vector<double> field_array_y;
    std::vector<double> field_array_z;
@@ -67,6 +68,9 @@ namespace cells{
    //---------------------------------------------------------------------------
    int mag();
 
+        int output_counter = 0;
+    void open_output_data();
+      void output_data();
    namespace internal{
 
       //------------------------------------------------------------------------

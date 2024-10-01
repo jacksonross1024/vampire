@@ -490,22 +490,23 @@ namespace vout{
 
    // Output Function 74 - with Header
 
-   void sysspintemp(std::ostream& stream, bool header){
-      stream << stats::system_spin_temp.output_spin_temp(header);
-   }
+    //Output Function 75
+	void system_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::system_spin_temperature.output_spin_temperature(header);
+		
+	}
+	//Output Function 76
+	void material_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::material_spin_temperature.output_spin_temperature(header);
+		
+	}
+	//Output Function 77
+	void mean_system_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::system_spin_temperature.output_mean_spin_temperature(header);
+	}
 
-   // Output Function 75 - with Header
-   void mean_sysspintemp(std::ostream& stream, bool header){
-      stream << stats::system_spin_temp.output_mean_spin_temp(header);
-   }
-
-   // Output Function 76
-   void material_mean_sysspintemp(std::ostream& stream, bool header){
-      stream << stats::material_spin_temp.output_mean_spin_temp(header);
-   }
-
-   // Output Function 77
-   void material_spin_temp(std::ostream& stream, bool header){
-      stream << stats::material_spin_temp.output_spin_temp(header);
-   }
+	//Output Function 78
+	void mean_material_spin_temperature(std::ostream& stream, bool header) {
+		stream << stats::material_spin_temperature.output_mean_spin_temperature(header);
+	}
 }

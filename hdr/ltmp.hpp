@@ -92,7 +92,7 @@ namespace ltmp{
    // Function to check local temperature pulse is enabled
    //-----------------------------------------------------------------------------
    bool is_enabled();
-
+   extern bool equilibration_step; 
    //-----------------------------------------------------------------------------
    // Function to initialise localised temperature pulse calculation
    //-----------------------------------------------------------------------------

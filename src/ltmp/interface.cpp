@@ -34,10 +34,15 @@ namespace ltmp{
       //----------------------------------
       std::string test="cell-size";
       if(word==test){
-         double csize=atof(value.c_str());
+         // double csize=atof(value.c_str());
          // Test for valid range
-         vin::check_for_valid_value(csize, word, line, prefix, unit, "length", 0.1, 1.0e7,"input","0.1 Angstroms - 1 millimetre");
-         ltmp::internal::micro_cell_size = csize;
+         // vin::check_for_valid_value(csize, word, line, prefix, unit, "length", 0.1, 1.0e7,"input","0.1 Angstroms - 1 millimetre");
+         std::vector<double> u(3);
+         u=vin::doubles_from_string(value);
+         // Test for valid range
+         // vin::doubles_from_string(u);
+         ltmp::internal::micro_cell_size = u;
+         std::cout << "local tmp cells: <" << ltmp::internal::micro_cell_size[0] << ", " << ltmp::internal::micro_cell_size[1] << ", " << ltmp::internal::micro_cell_size[2] << ">" << std::endl;
          return true;
       }
       //--------------------------------------------------------------------
@@ -59,12 +64,28 @@ namespace ltmp{
          return true;
       }
       //--------------------------------------------------------------------
-      test="thermal-conductivity";
+      test="electron-thermal-conductivity";
       if(word==test){
          double tdc=atof(value.c_str());
          // Test for valid range
          vin::check_for_valid_value(tdc, word, line, prefix, unit, "none", 0.0, 100,"input","0.0 - 100.0 J/m/s/K");
-         ltmp::internal::thermal_conductivity = tdc;
+         ltmp::internal::electron_thermal_conductivity = tdc;
+         return true;
+      }
+      test="phonon-thermal-conductivity";
+      if(word==test){
+         double tdc=atof(value.c_str());
+         // Test for valid range
+         vin::check_for_valid_value(tdc, word, line, prefix, unit, "none", 0.0, 100,"input","0.0 - 100.0 J/m/s/K");
+         ltmp::internal::phonon_thermal_conductivity = tdc;
+         return true;
+      }
+      test="substrate-temperature";
+      if(word==test){
+         double tdc=atof(value.c_str());
+         // Test for valid range
+         vin::check_for_valid_value(tdc, word, line, prefix, unit, "K", 0.0, 10000,"input","0.0 - 10000.0 K");
+         ltmp::internal::substrate_temperature = tdc;
          return true;
       }
       //--------------------------------------------------------------------
@@ -111,6 +132,15 @@ namespace ltmp{
             ltmp::internal::vertical_discretisation = true;
             ltmp::internal::enabled = true;
             ltmp::internal::gradient = true;
+            return true;
+         }
+         test="lateral-gradient-only";
+         if(value==test){
+            ltmp::internal::lateral_discretisation = true;
+            ltmp::internal::vertical_discretisation = false;
+            ltmp::internal::enabled = true;
+            ltmp::internal::gradient = true;
+            ltmp::internal::gradient_only = true;
             return true;
          }
          else{

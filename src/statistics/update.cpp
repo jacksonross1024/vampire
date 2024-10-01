@@ -17,6 +17,8 @@
 #include "gpu.hpp"
 #include "sim.hpp"
 #include "stats.hpp"
+#include "cells.hpp"
+#include "../ltmp/internal.hpp"
 
 namespace stats{
 
@@ -37,6 +39,9 @@ namespace stats{
                   const std::vector<double>& bxe, // external fields
                   const std::vector<double>& bye,
                   const std::vector<double>& bze,
+                  const std::vector<double>& bxt, // external fields
+                  const std::vector<double>& byt,
+                  const std::vector<double>& bzt,
                   const std::vector<double>& mm,
                   const std::vector<int>& mat,
                   const double temperature
@@ -67,9 +72,12 @@ namespace stats{
             if(stats::calculate_material_torque)        stats::material_torque.calculate_torque(sx,sy,sz,bxs,bys,bzs,bxe,bye,bze,mm);
 
             // update spin temp
-            if(stats::calculate_system_spin_temp)          stats::system_spin_temp.calculate_spin_temp(sx,sy,sz,bxs,bys,bzs,bxe,bye,bze,mm);
-            if(stats::calculate_grain_spin_temp)           stats::grain_spin_temp.calculate_spin_temp(sx,sy,sz,bxs,bys,bzs,bxe,bye,bze,mm);
-            if(stats::calculate_material_spin_temp)        stats::material_spin_temp.calculate_spin_temp(sx,sy,sz,bxs,bys,bzs,bxe,bye,bze,mm);
+            if(stats::calculate_system_spin_temperature)       stats::system_spin_temperature.calculate(sx,sy,sz,mm,bxs,bys,bzs,bxt,byt,bzt);
+                                                            //   atoms::x_total_spin_field_array, atoms::y_total_spin_field_array, atoms::z_total_spin_field_array,
+                                                             //  atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array);
+                                                              
+                                                            
+            if(stats::calculate_material_spin_temperature)     stats::material_spin_temperature.calculate(sx,sy,sz,mm,bxs,bys,bzs,bxt,byt,bzt);
 
             // update specific heat statistics
             if(stats::calculate_system_specific_heat)         stats::system_specific_heat.calculate(stats::system_energy.get_total_energy());
@@ -89,6 +97,9 @@ namespace stats{
             if(stats::calculate_material_binder_cumulant)       stats::material_binder_cumulant.calculate(stats::material_magnetization.get_magnetization());
 
             if(stats::calculate_spinwaves)                     stats::spinwaves.update();
+            
+            if(cells::output_microcells) cells::mag();
+            if(ltmp::internal::output_microcell_data) ltmp::internal::write_cell_temperature_data();
          }
 
          return;
@@ -106,6 +117,7 @@ namespace stats{
       stats::internal::update(atoms::x_spin_array, 				  		atoms::y_spin_array, 				    atoms::z_spin_array,
    					            atoms::x_total_spin_field_array,     atoms::y_total_spin_field_array, 	 atoms::z_total_spin_field_array,
    					            atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array,
+                              atoms::thermal_x_field,             atoms::thermal_y_field, atoms::thermal_z_field,
    					            atoms::m_spin_array, 					   atoms::type_array, 						 sim::temperature);
 
       return;

@@ -126,10 +126,10 @@ namespace vout{
    void systorque(std::ostream& stream,bool header);
    void mean_systorque(std::ostream& stream,bool header);
 
-   void sysspintemp(std::ostream& stream,bool header);
-   void mean_sysspintemp(std::ostream& stream,bool header);
-   void material_mean_sysspintemp(std::ostream& stream,bool header);
-   void material_spin_temp(std::ostream& stream, bool header);
+   void system_spin_temperature(std::ostream& stream, bool header);
+   void material_spin_temperature(std::ostream& stream, bool header);
+   void mean_system_spin_temperature(std::ostream& stream, bool header);
+   void mean_material_spin_temperature(std::ostream& stream, bool header);
 
    void constraint_phi(std::ostream& stream,bool header);
    void constraint_theta(std::ostream& stream,bool header);
@@ -187,6 +187,7 @@ namespace vout{
    void domain_wall_position(std::ostream& stream,bool header);
    void domain_wall_velocity(std::ostream& stream,bool header);
    void MRresistance(std::ostream& stream, bool header);
+
 
    //-------------------------------------------------------------------------
    // Funciton protypes for functions inside: datalog.cpp
