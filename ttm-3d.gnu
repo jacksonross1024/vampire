@@ -35,43 +35,48 @@ set xlabel "Time (ps)"
 set ylabel "Depth (nm)"
 set ytics out nomirror
 set xtics out nomirror
-set xrange [-0.2:4]
-cell = 0.142316667 
 
-tp = 1.0 
-a = 30.0
-h = 10.6
-time = 12
+
+cell = 0.354
+
+tp = 1.0  #laser pulse, ps
+a = 30.0 #optical decay, nm
+h = 7.7 #height of lattice, nm
+time = 12 #window size, ps 
+
 set yrange [0:h]
-file = "vertical_temperature_profile.dat"
-set style fill solid 
 gaus(t,z) = exp(-z/a)* exp(-4*log(2)*((t-1.5*tp)/tp)**2.0)
 set colorbox 
 set cbrange [0:]
-s = 1e-2
-o = 0.2 
-set xrange [-0.2:12]
+set style fill solid 
+
+file = "vertical_temperature_profile.dat"
+
+s = 1 #time step to ps conversion
+o = 0.2  #equilibration time
+set xrange [-o:time]
 set output "TTM-gaussian-attentuation-lot.png"
 set cblabel "Intensity (1/I_0)"
 plot for [i=0:h/cell:1] file u ($1*s-o):(h-i*cell):(s):(cell):(gaus($1*s-o, h-i*cell)) w boxxy lc palette notitle
 
 set cbrange [300:]
-set xrange [0:time]
+set xrange [-o:time]
 set cblabel "Temperature (K)"
 set output "TTMe-gaussian-attenuation.png"
 plot for [i=0:h/cell:1] file  u ($1*s -o):(h-i*cell):(s):(cell):2+(2*i) w boxxy lc palette notitle
 
 
 set output "TTMp-gaussian-attenuation.png"
-set xrange [0:time]
+set xrange [-o:time]
 plot for [i=0:h/cell:1] file u ($1*s -o):(h-i*cell):(s):(cell):3+(2*i) w boxxy lc palette notitle
 
 
 set output "Mag-gaussian-attenuation.png"
-set cblabel "Magnetisation (m_x/m_s)"
-set xrange [0:time]
+set cblabel "Magnetisation (m_z/m_s)"
+set xrange [-o:time]
 set cbrange [-1:1]
-m(i) = (5 + 4*i)*(2 + 4*i)
+mag(z,m) = z*m
 
+print(h/cell)
 file_1 = "microcells.txt"
-plot for [i=0:h/cell:2] file_1  u ($1*s -o):(h-2*i*cell):(s):(cell*2):6+i*4 w boxxy lc palette notitle
+plot for [i=0:h/cell:1] file_1  u ($1*s -o):(h-i*cell):(s):(cell):(column(4+4*i)*column(5 +4*i)) w boxxy lc palette notitle
