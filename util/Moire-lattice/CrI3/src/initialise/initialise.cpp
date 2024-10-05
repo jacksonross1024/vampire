@@ -53,31 +53,86 @@ void initialise_variables(){
    system_size_z = number_of_unit_cells_z*c0;
 
    std::cout << "Creating base lattice " << number_of_unit_cells_x << " by " << number_of_unit_cells_y << " rhombic unit cells" << std::endl;
-   twist_angle = twist_angle*3.14159265359/180.0;
-   resize_arrays(Jinter, 201,201);
-   resize_arrays(Jintra1, 201,201);
-   resize_arrays(Jintra2, 201,201);
-   
-   // D_inter.resize(201);
-   // D_intra.resize(201);
-   // for(int i = 0; i < D_inter.size(); i++) {
-   //    D_inter[i].resize(201);
-   //    D_intra[i].resize(201);
-   //    for(int j = 0; j < D_inter[i].size(); j++) {
-   //       D_inter[i][j].resize(3,0);
-   //       D_intra[i][j].resize(3,0);
-   //    }
+   twist_angle = twist_angle*M_PI/180.0;
+   resize_arrays(Einter_Cr1, 895,6);
+   resize_arrays(Einter_Cr2, 895,6);
+   resize_arrays(Einter_Cr3, 895,6);
+   resize_arrays(Einter_Cr4, 895,6);
 
+   Eintra_Cr1_1NN.resize(10);
+   Eintra_Cr2_1NN.resize(10);
+   Eintra_Cr3_1NN.resize(10);
+   Eintra_Cr4_1NN.resize(10);
+
+   Eintra_Cr1_2NN.resize(10);
+   Eintra_Cr2_2NN.resize(10);
+   Eintra_Cr3_2NN.resize(10);
+   Eintra_Cr4_2NN.resize(10);
+
+   Eintra_Cr1_3NN.resize(10);
+   Eintra_Cr2_3NN.resize(10);
+   Eintra_Cr3_3NN.resize(10);
+   Eintra_Cr4_3NN.resize(10);
+
+   for(int i = 0; i < Eintra_Cr1_1NN.size(); i++) {
+      Eintra_Cr1_1NN[i].resize(11);
+      Eintra_Cr2_1NN[i].resize(11);
+      Eintra_Cr3_1NN[i].resize(11);
+      Eintra_Cr4_1NN[i].resize(11);
+
+      Eintra_Cr1_2NN[i].resize(11);
+      Eintra_Cr2_2NN[i].resize(11);
+      Eintra_Cr3_2NN[i].resize(11);
+      Eintra_Cr4_2NN[i].resize(11);
+
+      Eintra_Cr1_3NN[i].resize(11);
+      Eintra_Cr2_3NN[i].resize(11);
+      Eintra_Cr3_3NN[i].resize(11);
+      Eintra_Cr4_3NN[i].resize(11);
+      for(int j = 0; j < Eintra_Cr1_1NN[i].size(); j++) {
+         Eintra_Cr1_1NN[i][j].resize(3);
+         Eintra_Cr2_1NN[i][j].resize(3);//,std::vector<std::array<std::array<double,4>, 3> >(11));
+         Eintra_Cr3_1NN[i][j].resize(3);//,std::vector<std::array<std::array<double,4>, 3> >(11));
+         Eintra_Cr4_1NN[i][j].resize(3);
+
+         Eintra_Cr1_2NN[i][j].resize(6);
+         Eintra_Cr2_2NN[i][j].resize(6);//,std::vector<std::array<std::array<double,4>, 3> >(11));
+         Eintra_Cr3_2NN[i][j].resize(6);//,std::vector<std::array<std::array<double,4>, 3> >(11));
+         Eintra_Cr4_2NN[i][j].resize(6);
+
+         Eintra_Cr1_3NN[i][j].resize(3);
+         Eintra_Cr2_3NN[i][j].resize(3);//,std::vector<std::array<std::array<double,4>, 3> >(11));
+         Eintra_Cr3_3NN[i][j].resize(3);//,std::vector<std::array<std::array<double,4>, 3> >(11));
+         Eintra_Cr4_3NN[i][j].resize(3);
+         for(int k = 0; k < Eintra_Cr1_1NN[i][j].size(); k++ ) {
+            Eintra_Cr1_1NN[i][j][k].resize(4, -11.0);
+            Eintra_Cr2_1NN[i][j][k].resize(4, -12.0);
+            Eintra_Cr3_1NN[i][j][k].resize(4, -13.0);
+            Eintra_Cr4_1NN[i][j][k].resize(4, -14.0);
+            Eintra_Cr1_3NN[i][j][k].resize(4, -31.0);
+            Eintra_Cr2_3NN[i][j][k].resize(4, -32.0);
+            Eintra_Cr3_3NN[i][j][k].resize(4, -33.0);
+            Eintra_Cr4_3NN[i][j][k].resize(4, -34.0);
+         }
+         for(int k = 0; k < Eintra_Cr1_2NN[i][j].size(); k++ ) {
+            Eintra_Cr1_2NN[i][j][k].resize(4, -21.0);
+            Eintra_Cr2_2NN[i][j][k].resize(4, -22.0);
+            Eintra_Cr3_2NN[i][j][k].resize(4, -23.0);
+            Eintra_Cr4_2NN[i][j][k].resize(4, -24.0);
+         }
+      }
+   }
    
-   resize_arrays(Dx_inter, 201,201);
-   resize_arrays(Dy_inter, 201,201);
-   resize_arrays(Dz_inter, 201,201);
-   resize_arrays(Dx_intra, 201,201);
-   resize_arrays(Dy_intra, 201,201);
-   resize_arrays(Dz_intra, 201,201);
-   resize_arrays(Dx_intra2, 201,201);
-   resize_arrays(Dy_intra2, 201,201);
-   resize_arrays(Dz_intra2, 201,201);
+   
+   // resize_arrays(Dx_inter, 201,201);
+   // resize_arrays(Dy_inter, 201,201);
+   // resize_arrays(Dz_inter, 201,201);
+   // resize_arrays(Dx_intra, 201,201);
+   // resize_arrays(Dy_intra, 201,201);
+   // resize_arrays(Dz_intra, 201,201);
+   // resize_arrays(Dx_intra2, 201,201);
+   // resize_arrays(Dy_intra2, 201,201);
+   // resize_arrays(Dz_intra2, 201,201);
 
    int estimated_system_spins = round(system_size_x*system_size_y*8.0/41.8);
 
@@ -87,8 +142,7 @@ void initialise_variables(){
    row3.reserve(int(estimated_system_spins/4));
    row4.reserve(int(estimated_system_spins/4));
 
-      
-
+   
    unit_cell_shifts.resize(number_of_unit_cells_x);
    for(int i = 0; i < number_of_unit_cells_x; i++) {
       unit_cell_shifts[i].resize(number_of_unit_cells_y);

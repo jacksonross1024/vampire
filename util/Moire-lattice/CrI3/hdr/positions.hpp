@@ -6,7 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <cmath>
-
+#include <array>
 
    extern double twist_angle;
 
@@ -69,7 +69,10 @@
    extern std::vector < std::vector < std::vector <int> > > unit_cell_shifts;
    void read_in_atoms(std::string filename, int n_atoms, std::vector <spin > &atom2);
    void read_in_exchange(std::string filename, std::vector<std::vector<double> > &Jij);
-   
+   void read_in_inter_exchanges(std::string filename, std::vector<std::vector<double> > &Eij);
+   void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_1NN, \
+                                                   std::vector<std::vector< std::vector< std::vector<double> > > > &Eij_2NN, \
+                                                   std::vector<std::vector< std::vector< std::vector<double> > > > &Eij_3NN );
    void read_in_dmi(std::string filename, std::vector < std::vector < double > > &Dx, std::vector < std::vector < double > > &Dy, std::vector < std::vector < double > > &Dz, bool reflect);
 
    void print_header();

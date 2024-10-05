@@ -232,135 +232,119 @@ void read_in_dft(std::string filename) {
     exit(1);
 }
 
-// void read_in_from_ucf(std::string filename) {
-//     std::ifstream ifile2(filename);
-//     std::string line;
-//     if(!ifile2.is_open()) {std::cerr << filename << " is not open" << std::endl; exit(1);}
+void read_in_inter_exchanges(std::string filename, std::vector<std::vector<double> > &Eij) {
+    std::ifstream ifile2(filename);
+    std::string line;
+    if(!ifile2.is_open()) {std::cerr << filename << " is not open" << std::endl; exit(1);}
     
-//     unsigned int line_counter=0;
-// 	unsigned int line_id=0;
+    for(int i=0; i<Eij.size(); i++){
+        getline(ifile2,line);
+        std::stringstream liness(line.c_str());
+        double r;
+        double dz;
+        double J;
+        double Dx;
+        double Dy;
+        double Dz;
 
-//    std::string exchange_type_string; // string defining exchange type
+        liness >> r >> Eij[i][0] >> Eij[i][1] >> dz >> J >> Dx >> Dy >> Dz;
+        Eij[i][2] = J*J_constant;
+        Eij[i][3] = Dx*J_constant;
+        Eij[i][4] = Dy*J_constant;
+        Eij[i][5] = Dz*J_constant;
+    }
+}
 
-//    // defaults for interaction list
-//    unsigned int interaction_range = 1; // assume +-1 unit cell as default
+void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_1NN, \
+                                                   std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_2NN, \
+                                                   std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_3NN ) {
+    std::ifstream ifile2(filename);
+    std::string line;
+    if(!ifile2.is_open()) {std::cerr << filename << " is not open" << std::endl; exit(1);}
+    
+    for(int i=0; i<Eij_1NN.size(); i++){
+        for(int j = 0; j < 3; j++) {
+            getline(ifile2,line);
+            std::stringstream liness(line.c_str());
+            double r;
+            double dx;
+            double dy;
+            double dz;
+            double J;
+            double Dx;
+            double Dy;
+            double Dz;
+            double sx;
+            double sy;
+            double theta;
+            liness >> r >> dx >> dy >> dz >> J >> Dx >> Dy >> Dz >> sx >> sy;
 
-// 	// Loop over all lines
-// 	while (! ifile2.eof() ){
-// 		line_counter++;
-// 		// read in whole line
-// 		std::string line;
-// 		getline(ifile2,line);
-// 		//std::cout << line.c_str() << std::endl;
+            theta = std::abs(atan2(dy,dx))*180.0/M_PI;
+            // std::cout << round(theta/30.0) << ", " << dx << ", " << dy << std::endl;
+            int int_x = int(sx*10);
+            int int_y = int(sy*10);
+            int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : (round(theta/30.0 == 3.0) ? (0):-1) );
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] = J*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] = Dx*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] = Dy*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] = Dz*J_constant;
+             std::cout  <<  Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
+        }
+        for(int j = 0; j < 6; j++) {
+            getline(ifile2,line);
+            std::stringstream liness(line.c_str());
+            double r;
+            double dx;
+            double dy;
+            double dz;
+            double J;
+            double Dx;
+            double Dy;
+            double Dz;
+            double sx;
+            double sy;
+            double theta;
 
-// 		// ignore blank lines
-// 		std::string empty="";
-// 		if(line==empty) continue;
+            liness >> r >> dx >> dy >> dz >> J >> Dx >> Dy >> Dz >> sx >> sy;
+            theta = atan2(dy,dx);//*180.0/M_PI;
+            int theta_i = int(round(((theta < 0.0) ? (theta+=2*M_PI) : (theta)) *180.0/M_PI/60.0));
+           
+            // if(theta_i == 0) std::cout <<  theta << ", " << dx << ", " << dy << std::endl;
+            int int_x = int(sx*10);
+            int int_y = int(sy*10);
+            // int theta_i = (theta/30.0 == 5.0) ? (2) : ((theta/30.0 == 4.0) ? (1) : (theta/30.0 == 3.0 ? (0):-1) );
+            Eij_2NN.at(int_x).at(int_y).at(theta_i)[0] = J*J_constant;
+            Eij_2NN.at(int_x).at(int_y).at(theta_i)[1] = Dx*J_constant;
+            Eij_2NN.at(int_x).at(int_y).at(theta_i)[2] = Dy*J_constant;
+            Eij_2NN.at(int_x).at(int_y).at(theta_i)[3] = Dz*J_constant;
+             std::cout  <<  Eij_2NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_2NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_2NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_2NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
+        }
+        for(int j = 0; j < 3; j++) {
+            getline(ifile2,line);
+            std::stringstream liness(line.c_str());
+            double r;
+            double dx;
+            double dy;
+            double dz;
+            double J;
+            double Dx;
+            double Dy;
+            double Dz;
+            double sx;
+            double sy;
+            double theta;
+            liness >> r >> dx >> dy >> dz >> J >> Dx >> Dy >> Dz >> sx >> sy;
+            theta = std::abs(atan2(dy,dx))*180.0/M_PI;
+            // std::cout << round(theta/30.0) << ", " << dx << ", " << dy << std::endl;
+            int int_x = int(sx*10);
+            int int_y = int(sy*10);
+            int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0) == 1.0) ? (1) : (round(theta/30.0) == 3.0 ? (0):-1) );
+            Eij_3NN.at(int_x).at(int_y).at(theta_i)[0] = J*J_constant;
+            Eij_3NN.at(int_x).at(int_y).at(theta_i)[1] = Dx*J_constant;
+            Eij_3NN.at(int_x).at(int_y).at(theta_i)[2] = Dy*J_constant;
+            Eij_3NN.at(int_x).at(int_y).at(theta_i)[3] = Dz*J_constant;
+            std::cout  <<  Eij_3NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_3NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_3NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_3NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
+        }
+    }
+}
 
-// 		// set character triggers
-// 		const char* hash="#";	// Comment identifier
-
-// 		bool has_hash=false;
-// 		// Determine if line is a comment line
-// 		for(unsigned int i=0;i<line.length();i++){
-// 			char c=line.at(i);
-
-// 			if(c== *hash){
-// 					has_hash=true;
-// 					break;
-// 			}
-// 		}
-// 		// if hash character found then read next line
-// 		if(has_hash==true) continue;
-
-// 		// convert line to string stream
-// 		std::istringstream iss(line,std::istringstream::in);
-
-// 		// non-comment line found - check for line number
-//         double unit_cell_dimensions[3] = {0.0,0.0,0.0};
-//         double unit_cell_shape[3][3] = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
-//         double num_atoms = 0.0;
-// 		switch(line_id){
-// 			case 0:
-// 				iss >> unit_cell_dimensions[0] >> unit_cell_dimensions[1] >> unit_cell_dimensions[2];
-// 				break;
-// 			case 1:
-// 				iss >> unit_cell_shape[0][0] >> unit_cell_shape[0][1] >> unit_cell_shape[0][2];
-// 				break;
-// 			case 2:
-// 				iss >> unit_cell_shape[1][0] >> unit_cell_shape[1][1] >> unit_cell_shape[1][2];
-// 				break;
-// 			case 3:
-// 				iss >> unit_cell_shape[2][0] >> unit_cell_shape[2][1] >> unit_cell_shape[2][2];
-// 				break;
-// 			case 4:
-// 				int num_uc_atoms;
-// 				iss >> num_uc_atoms;
-// 				//std::cout << "Reading in " << num_uc_atoms << " atoms" << std::endl;
-// 				// resize unit_cell.atom array if within allowable bounds
-// 				if( (num_uc_atoms >0) && (num_uc_atoms <= 1000000)) num_atoms = num_uc_atoms;
-// 				else {
-					
-// 					std::cerr << "Error! Requested number of atoms " << num_uc_atoms << " on line " << line_counter
-// 					<< " of unit cell input file " << filename.c_str() << " is outside of valid range 1-1,000,000. Exiting" << std::endl; 
-					
-// 				}
-
-//            // loop over all atoms and read into class
-//             for(unsigned int i = 0; i < num_atoms; i++){
-
-// 					line_counter++;
-
-// 					// declare safe temporaries for atom input
-// 					int id=i;
-// 					double cx=2.0, cy=2.0,cz=2.0; // coordinates - default will give an error
-// 					int mat_id=0, lcat_id=0, hcat_id=0; // sensible defaults if omitted
-// 					// get line
-// 					std::string atom_line;
-// 					getline(ifile2,atom_line);
-// 					std::istringstream atom_iss(atom_line,std::istringstream::in);
-//                     spin new_atom;
-
-// 					atom_iss >> new_atom.id >> cx >> cy >> cz >> new_atom.S >> new_atom.l_id >> hcat_id;
-// 					//std::cout << id << "\t" << cx << "\t" << cy << "\t" << cz<< "\t"  << mat_id << "\t" << lcat_id << "\t" << hcat_id << std::endl;
-// 					//inputfile >> id >> cx >> cy >> cz >> mat_id >> lcat_id >> hcat_id;
-// 					// now check for mostly sane input
-// 					if(cx>=0.0 && cx <=1.0) new_atom.x=cx*unit_cell_dimensions[0];
-// 					else{
-					
-// 						std::cerr << "Error! atom x-coordinate for atom " << id << " on line " << line_counter
-// 									 << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
-// 						exit(1);
-// 					}
-// 					if(cy>=0.0 && cy <=1.0) new_atom.y=cy*unit_cell_dimensions[1];
-// 					else{
-						
-// 						std::cerr << "Error! atom y-coordinate for atom " << id << " on line " << line_counter
-// 									 << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
-// 						exit(1);
-// 					}
-// 					if(cz>=0.0 && cz <=1.0) new_atom.z=cz*unit_cell_dimensions[2];
-// 					else{
-						
-// 						std::cerr << "Error! atom z-coordinate for atom " << id << " on line " << line_counter
-// 						<< " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
-// 						exit(1);
-// 					}
-// 					all_m_atoms.push_back(new_atom);
-
-//                     if(double_bilayer) {
-//                         if(pristine_bilayer_type == "baab") {
-//                             if(new_atom.z > twist_loction) {
-//                                 spin new_atom_2;
-//                                 new_atom_2.z = 1.0*unit_cell_dimensions[2];
-//                                 if(new_atom.l_id) 
-//                             }
-
-
-//                         }
-//                     }
-                    
-//                }
-					
-// 				break;
-// }
