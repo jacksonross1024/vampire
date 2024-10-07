@@ -310,7 +310,7 @@ namespace vdc{
          ofile << vdc::cell_coords[3*cell + 0] << "\t" << vdc::cell_coords[3*cell + 1] << "\t" << vdc::cell_coords[3*cell + 2] << "\t";
          for( unsigned int m = 0; m < tmid; m++){
             ofile << vdc::cell_magnetization[cell][m][0] << "\t" << vdc::cell_magnetization[cell][m][1] << "\t" << vdc::cell_magnetization[cell][m][2] << "\t" << vdc::cell_magnetization[cell][m][3] << "\t";
-         ofile << num_atoms_in_cell[cell*tmid+m];
+         ofile << num_atoms_in_cell[cell*tmid+m] << "\t";
          }
        //  ofile << num_atoms_in_cell[cell*tmid];
          ofile << "\n";

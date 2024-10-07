@@ -24,21 +24,133 @@ set style line 100 pt 1 ps 1.2 lt 0 lc rgb "gray30" lw 2
 set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
 
-set term pngcairo 
+set term pngcairo size 600,600
 
-set output "config_energy.png" 
+
 
 set ylabel "y position (nm)"
 set xlabel "x position (nm)"
 
-set xrange [2:198]
-set yrange [2:198]
+set ytics 50 out 
+set xtics 50 out 
+set mytics 5 
+set mxtics 5
+set xrange [200:400]
+set yrange [200:400]
 set colorbox
-set cbrange [0.54:0.74]
-set palette defined (  0 'blue', 1 'white',  2 'red')
-set multiplot layout 1,2
-plot "config_energy.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
 
-plot "config_energy.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
+unset colorbox
+set palette defined (  0 'blue', 1 'white',  2 'red')
+
+set cbrange [0.5:1.1]
+
+set output "config_energy-1.41-1NN.png" 
+set multiplot layout 1,2
+
+set title "bottom layer"
+set size 0.5,0.5
+plot "config_energy-1.41-1NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
+
+set title "top layer"
+set size 0.5,0.5
+plot "config_energy-1.41-1NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
 
 unset multiplot 
+
+set cbrange [0.5:1.1]
+
+set output "config_energy-1.1-1NN.png" 
+set multiplot layout 1,2
+
+set title "bottom layer"
+set size 0.5,0.5
+plot "config_energy-1.1-1NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
+
+set title "top layer"
+set size 0.5,0.5
+plot "config_energy-1.1-1NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
+
+unset multiplot 
+
+set output "config_energy-0.5-1NN.png" 
+set multiplot layout 1,2
+
+set title "bottom layer"
+set size 0.5,0.5
+plot "config_energy-0.5-1NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
+
+set title "top layer"
+set size 0.5,0.5
+plot "config_energy-0.5-1NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
+
+unset multiplot 
+
+set cbrange [0.54:1.0]
+unset colorbox 
+set output "config_energy-0.5-2NN.png" 
+set multiplot layout 1,2
+
+set title "bottom layer"
+set size 0.5,0.5
+plot "config_energy-0.5-2NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
+
+set title "top layer"
+set size 0.5,0.5
+plot "config_energy-0.5-2NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
+
+unset multiplot 
+
+set output "config_energy-1.1-2NN.png" 
+set multiplot layout 1,2
+
+set title "bottom layer"
+set size 0.5,0.5
+plot "config_energy-1.1-2NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
+
+set title "top layer"
+set size 0.5,0.5
+plot "config_energy-1.1-2NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
+
+unset multiplot 
+
+set cbrange [0.32:0.76]
+set output "config_energy-1.41-3NN.png" 
+set multiplot layout 1,2
+
+set title "bottom layer"
+set size 0.5,0.5
+plot "config_energy-1.41-3NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
+
+set title "top layer"
+set size 0.5,0.5
+plot "config_energy-1.41-3NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
+
+unset multiplot 
+
+set output "config_energy-1.1-3NN.png" 
+set multiplot layout 1,2
+
+set title "bottom layer"
+set size 0.5,0.5
+plot "config_energy-1.1-3NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
+
+set title "top layer"
+set size 0.5,0.5
+plot "config_energy-1.1-3NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
+
+unset multiplot 
+
+
+set output "config_energy-0.5-3NN.png" 
+set multiplot layout 1,2
+
+set title "bottom layer"
+set size 0.5,0.5
+plot "config_energy-0.5-3NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
+
+set title "top layer"
+set size 0.5,0.5
+plot "config_energy-0.5-3NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
+
+unset multiplot 
+

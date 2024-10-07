@@ -18,6 +18,7 @@ double twist_loction;
 double dmi12 = 0.0; // DMI constant between layers 1-2
 double dmi23 = 0.0; // DMI constant between layers 2-3
 double dmi34 = 0.0; // DMI constant between layers 3-4
+bool DMI = false;
 
 double dmi_decay = 1.0; // distance-dependent DMI
 

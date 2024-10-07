@@ -40,9 +40,12 @@
          int unit_y;
          int dx = 0;
          int dy = 0;
-         int inter = 0;
+         int inter1 = 0;
+         int inter2 = 0;
+         int inter3 = 0;
          int intra1 = 0;
          int intra2 = 0;
+         int intra3 = 0;
    };
 
    class interaction {

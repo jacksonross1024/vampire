@@ -79,7 +79,7 @@ namespace cells{
 
       // Calculate magnetisation length and normalize
       for(int cell =0; cell < cells::mag_array_m.size(); ++cell){
-         if(cells::num_atoms_in_cell[cell] == 0 ) continue;
+         if(cells::num_atoms_in_cell_global[cell] == 0 ) continue;
          double msat = cells::mag_array_m[cell];
          double magm = sqrt(cells::mag_array_x[cell]*cells::mag_array_x[cell] +
                             cells::mag_array_y[cell]*cells::mag_array_y[cell] +

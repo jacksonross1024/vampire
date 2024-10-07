@@ -44,7 +44,7 @@ mag(t, T_C, beta) = (t>T_C) ? (0) : (1-t/T_C)**beta
 #fit [100:T_c_1] mvsT(x,a_1,b_1,T_c_1) "output-18nm3" u 1:(($4+$5)*0.5)via T_c_1
 
 set key  top right reverse title "0.0^0"
-#plot "output-0.0-1J-DMI-mvsT" u 1:9 w p ls 2 title "1NN",\
+plot "output-0.0-1J-DMI-mvsT" u 1:9 w p ls 2 title "1NN",\
 "output-0.0-2J-DMI-mvsT" u 1:9 w p ls 3 title "2NN",\
 "output-0.0-3J-DMI-mvsT" u 1:9 w p ls 4 title "3NN",\
 mag(x, T_C, beta) w l ls 5 title sprintf("T_C: %.0f; beta: %.3f", T_C, beta)
@@ -56,23 +56,8 @@ set palette defined (  0 'blue', 1 'white',  2 'red')
 
 set term pngcairo font "helvetica, 14" size 900,900
 
-set xlabel "x (A)"
-set ylabel "y (A)"
-set ytics out nomirror
-set xtics out nomirror
-
-a0x = 6.93
-a1x = -3.465
-a1y = 6.002
-
-set style fill solid noborder
 
 
-set xrange [-1:1]
-set yrange [-1:1]
-
-
-set colorbox 
 
 unset colorbox 
 # 6.930   0.000   0.000

@@ -10,16 +10,16 @@
 
 int main(){
 
-   twist_angle = 0.5; // 1.1
-   system_size_x = 2000; //4000
-   system_size_y = 2000; //4000
+   twist_angle = 1.41; // 1.1
+   system_size_x = 1000; //4000
+   system_size_y = 1000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants
    dmi12 = 1.0; // DMI constant between layers 1-2
    dmi23 = 1.0; // DMI constant between layers 2-3
    dmi34 = 1.0; // DMI constant between layers 3-4
-
+   
    dmi_decay = 1.0; // distance-dependent DMI
 
    exchange12 = 1.0; // exchange constant between layers 1-2
@@ -31,7 +31,7 @@ int main(){
    // if(double_bilayer) pristine_bilayer_type = "baab";
 
    initialise_variables();
-
+   DMI = true;
    twist_loction = 2*system_size_z/5 -0.01;
     std::cout << "twisting at: " << twist_loction << std::endl;
     read_in_atoms("files/atom_list_aa_rhombic", num_atoms, atom);
@@ -421,7 +421,6 @@ int main(){
    // exit(1);
    //  read_in_exchange("files/Interpolated_J1_Intra", Jintra1);
    //  read_in_exchange("files/Interpolated_J2_Intra", Jintra2);
-
    //  read_in_dmi("files/Interpolated_1st_Dij_Intra", Dx_intra, Dy_intra, Dz_intra, true);
    //  read_in_dmi("files/Interpolated_2nd_Dij_Intra", Dx_intra2, Dy_intra2, Dz_intra2, false);
    //  read_in_dmi("files/interpolated_1st_Dij_intra.txt", Dx_intra2, Dy_intra2, Dz_intra2);

@@ -8,7 +8,7 @@
 #include <fstream>
 #include <cmath>
 #include "positions.hpp"
-#include <omp.h>
+// ##include <omp.h>
 
    extern double nn_dist_1;
    extern double nn_dist_2;

@@ -19,7 +19,7 @@ extern double dmi12;
 extern double dmi23;
 extern double dmi34;
 extern double dmi_decay;
-
+extern bool DMI;
 extern double exchange12;
 extern double exchange23;
 extern double exchange34;

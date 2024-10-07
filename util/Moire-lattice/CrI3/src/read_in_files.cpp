@@ -241,13 +241,17 @@ void read_in_inter_exchanges(std::string filename, std::vector<std::vector<doubl
         getline(ifile2,line);
         std::stringstream liness(line.c_str());
         double r;
+        double dx; 
+        double dy;
         double dz;
         double J;
         double Dx;
         double Dy;
         double Dz;
 
-        liness >> r >> Eij[i][0] >> Eij[i][1] >> dz >> J >> Dx >> Dy >> Dz;
+        liness >> r >> dx >> dy >> dz >> J >> Dx >> Dy >> Dz;
+        Eij[i][0] = dx;
+        Eij[i][1] = dy;
         Eij[i][2] = J*J_constant;
         Eij[i][3] = Dx*J_constant;
         Eij[i][4] = Dy*J_constant;
