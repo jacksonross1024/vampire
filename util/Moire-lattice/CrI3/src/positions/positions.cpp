@@ -195,7 +195,7 @@ void create_magnetic_atom_list(std::string filename){
 
    for(int i = 0; i < unit_cell_shifts.size(); i++){
       for (int j = 0; j < unit_cell_shifts[i].size(); j++) {
-         double occupancy = std::max(1.0,unit_cell_shifts[i][j][0]);
+         double occupancy = std::max(1,unit_cell_shifts[i][j][0]);
          unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
          unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
          int i_shift = unit_cell_shifts[i][j][1];
