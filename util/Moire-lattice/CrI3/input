@@ -52,7 +52,7 @@ sim:save-checkpoint = end
 # data output
 #------------------------------------------
 config:atoms
-config:atoms-output-rate=10000
+config:atoms-output-rate=100000
 
 output:output-rate=10000
 output:time-steps
