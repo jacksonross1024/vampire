@@ -109,8 +109,8 @@ void create_magnetic_atom_list(std::string filename){
                         // int changex = round(-100.0*remainder(x_new - x_j,a0x)/a0x)+100;
                         // int changey = round(-100.0*remainder(y_new - y_j,a1y)/a0x)+100;
                         
-                        int changey = round(10*(fmod(std::abs(y_new-y_j) , a1y)/a1y));
-                        int changex = round(9*(fmod(std::abs(x_new-x_j +changey*a1y/11.0) , a0x)/a0x));
+                        int changey = int(round(10*(fmod(std::abs(y_new-y_j) , a1y)/a1y)));
+                        int changex = int(round(9*(fmod(std::abs(x_new-x_j +changey*a1y/11.0) , a0x)/a0x)));
                         
                         if(changex > 9 || changex < 0 || changey > 10 || changey < 0) {
                            std::cerr << "shift problem: (" << x_new << ", " << x_j << ") in cell: [" << dx_cell << ", " << dy_cell << "] indexing " << changex << ", " << changey  << std::endl;
@@ -153,9 +153,9 @@ void create_magnetic_atom_list(std::string filename){
                      new_atom.id = total_atoms;
                      new_atom.l_id = atom[atom_i].l_id;
                      // new_atom.S = 0;
-                     new_atom.unit_y = floor((y_j +0.00001)/ a1y);
+                     new_atom.unit_y = int(floor((y_j +0.00001)/ a1y));
                         // changex += dy_cell*std::abs(a1x);
-                     new_atom.unit_x = floor((x_j +0.00001)/ a0x);
+                     new_atom.unit_x = int(floor((x_j +0.00001)/ a0x));
                      if(new_atom.unit_x  > number_of_unit_cells_x || new_atom.unit_y > number_of_unit_cells_y) {
                         std::cerr << new_atom.unit_x  << ", " << new_atom.unit_y  << ", " << x_j << ", " << y_j << ", " << \
                          int(floor(y_j / a1y)) << ", " <<  int(floor(x_j / a0x)) << std::endl;
