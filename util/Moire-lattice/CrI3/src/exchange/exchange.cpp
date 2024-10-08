@@ -405,6 +405,8 @@ double inter_AB_dist_3 = 7.67;
 double nn_dist_1;
 double nn_dist_2;
 double nn_dist_3;
+
+double max_range = 9.9;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
 double J_constant = 1.0*eVtoJ/1000.0; //1 meV
@@ -795,7 +797,7 @@ void calc_interactions() {
    std::stringstream ss;
              
    // calculate max range squred
-   const double range = std::max(inter_nn_dist_3, intra_nn_dist_3);
+   const double range = max_range;//std::max(inter_nn_dist_3, intra_nn_dist_3);
    const double r2 = range*range;
    intra_nn_dist_1 *= intra_nn_dist_1;
    intra_nn_dist_2 *= intra_nn_dist_2;
@@ -867,7 +869,7 @@ void calc_interactions() {
    int interaction_estimate = all_m_atoms.size()*22*2;
    std::cout << "Generating estimated " << interaction_estimate << " interactions "  << std::flush;
    // std::vector< int> interactions_list;
-   std::vector<std::vector<std::array<double, 4> > > config_energy(number_of_unit_cells_x, std::vector<std::array<double, 4> >(number_of_unit_cells_y, {0.0,0.0,0.0,0.0}));
+   std::vector<std::vector<std::array<double, 10> > > config_energy(number_of_unit_cells_x, std::vector<std::array<double, 10> >(number_of_unit_cells_y, {0.0}));
    // config_energy.resize(number_of_unit_cells_x, )
 
    // interactions_list.resize(all_m_atoms.size()*11, 1);
@@ -922,7 +924,7 @@ void calc_interactions() {
                                  // std::cout << dL2 << ", " << r2 << ", " << x_i << ", " << y_i << ", " << z_i << ", " << x_j << ", " << y_j << ", " << z_j << std::endl;
                                  double angle_i = atan2(ady,adx);// - twist_angle;// - M_PI*0.5;
                                  double angle_j = atan2(-ady,-adx);// - twist_angle;
-                                 std::vector<double> exchange(4, -20);
+                                 std::vector<double> exchange(4, 0);
                                  if(atom_i.S == atom_j.S) {
                                     if(atom_i.l_id == 1) {
                                        if(dL2 < intra_nn_dist_1) {exchange = match_intra_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_1NN ); all_m_atoms[atom_i.id].intra1++;
@@ -995,6 +997,7 @@ void calc_interactions() {
                                        else if(dL2 < inter_nn_dist_3) {exchange = match_inter_exchange(adx, ady, Einter_Cr4);
                                        all_m_atoms[atom_i.id].inter3++;}
                                        else continue;
+                                       
                                     }
                                  }
                                     // bond_avg  = calculate_intra_Jani(atom_i, atom_j, dL2, angle);
@@ -1002,9 +1005,13 @@ void calc_interactions() {
                                  // interactions_list[atom_j.id*11 + interactions_list[atom_j.id*11]] = 0;
                                  // interactions_list[atom_j.id*11]++;
                                  // exchange_count[atom_index]++;
-                                 if(exchange[0] == -20.0 ) continue;
-                                 
-                           if(DMI) {      outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
+                                 if(exchange[0] == 0.0 ) continue;
+                                 config_energy[atom_i.unit_x][atom_i.unit_y][atom_i.S+1] += exchange[0]/J_constant;
+                                 config_energy[atom_i.unit_x][atom_i.unit_y][atom_i.S+3] += exchange[1]/J_constant;
+                                 config_energy[atom_i.unit_x][atom_i.unit_y][atom_i.S+5] += exchange[2]/J_constant;
+                                 config_energy[atom_i.unit_x][atom_i.unit_y][atom_i.S+7] += exchange[3]/J_constant;
+                                 config_energy[atom_i.unit_x][atom_i.unit_y][atom_i.S-1] += 1.0;
+                              if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
                                                 //xx                     xy-> Dz                 xz -> -Dy
                                                   exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
                                                 //yx -> -Dz              yy                      yz -> Dx
@@ -1019,8 +1026,7 @@ void calc_interactions() {
                               //zx -> Dy               yz -> -Dx               zz
                                  0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
 
-                                 config_energy[atom_i.unit_x][atom_i.unit_y][atom_i.S] += exchange[0]/J_constant;
-                                 config_energy[atom_i.unit_x][atom_i.unit_y][atom_i.S-2] += 1.0;
+                                 
                                  // std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady <<" 0 0 0 "<<\
                                  //                // xx                     xy-> Dz                 xz -> -Dy 
                                  //                  exchange[0]/J_constant << "\t" << exchange[3]/J_constant << "\t" << -exchange[2]/J_constant << "\t" << \
@@ -1053,7 +1059,9 @@ void calc_interactions() {
          for(int j = 0; j < number_of_unit_cells_y; j++){
             double bottom_occ = config_energy[i][j][0];
             double top_occ = config_energy[i][j][1];
-            config_output << i << ", " << j << ", " << bottom_occ<< ", " << top_occ << ", " << config_energy[i][j][2] << ", " << config_energy[i][j][3] << "\n";
+            config_output << i << ", " << j << ", " << bottom_occ<< ", " << top_occ << ", " << config_energy[i][j][2] << ", " << config_energy[i][j][3] << ", " << \
+            config_energy[i][j][4] << ", " << config_energy[i][j][5] << ", " << config_energy[i][j][6] << ", " << \
+            config_energy[i][j][7] << ", " << config_energy[i][j][8] << ", " << config_energy[i][j][9] << ", " << "\n";
          }
       }
       config_output.close();

@@ -18,6 +18,7 @@
    extern double J_intra_2;
    extern double J_intra_3;
    extern double J_constant;
+   extern double max_range;
    extern int number_of_interactions;
    
    extern std::vector < std::vector < double > > Jint;
