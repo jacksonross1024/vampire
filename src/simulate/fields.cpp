@@ -529,15 +529,32 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		//----------------------------------------------------------------------------------
 
 		// save polarization to temporary constant
-		const double sotpx = sot_polarization_unit_vector[0];
-		const double sotpy = sot_polarization_unit_vector[1];
-		const double sotpz = sot_polarization_unit_vector[2];
+		 double sotpx = sot_polarization_unit_vector[0];
+		 double sotpy = sot_polarization_unit_vector[1];
+		 double sotpz = sot_polarization_unit_vector[2];
 
-		const double sotrj = sot_rj[material];
-		const double sotpj = sot_pj[material];
+		 double sotrj = sot_rj[material];
+		 double sotpj = sot_pj[material];
 
-		const double sot_lambda = sot_asm[material];
+		double sot_lambda = sot_asm[material];
 		double sot_factor = program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
+		// if(sim::time > 30000.0) sot_factor = 0.0;
+		// if(sot_factor != sot_factor) sot_factor = 0.0;
+		//  if(sot_factor < 0) std::cout << hx << ", " << hy << ", " << hz << ", " << sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy ) << std::endl;
+		// calculate field
+		hx += sot_factor * ( (sotrj-alpha*sotpj)*(sy*sotpz - sz*sotpy) + (sotpj+alpha*sotrj)*sotpx );
+		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );
+		hz += sot_factor * ( (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz );
+		
+		sotpx = sot_polarization_unit_vector2[0];
+		sotpy = sot_polarization_unit_vector2[1];
+		sotpz = sot_polarization_unit_vector2[2];
+
+		sotrj = sot_rj2[material];
+		sotpj = sot_pj2[material];
+
+		sot_lambda = sot_asm2[material];
+		sot_factor = program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
 		// if(sim::time > 30000.0) sot_factor = 0.0;
 		// if(sot_factor != sot_factor) sot_factor = 0.0;
 		//  if(sot_factor < 0) std::cout << hx << ", " << hy << ", " << hz << ", " << sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy ) << std::endl;
