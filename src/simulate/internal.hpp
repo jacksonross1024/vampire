@@ -54,6 +54,9 @@ namespace sim{
          set_double_t sot_asm; // spin orbit torque asymmetry
          set_double_t sot_rj;  // spin orbit relaxation torque
          set_double_t sot_pj;  // spin orbit precession torque
+         set_double_t sot_asm2; // spin orbit torque asymmetry
+         set_double_t sot_rj2;  // spin orbit relaxation torque
+         set_double_t sot_pj2;
          set_double_t vcmak;   // voltage controlled anisotropy coefficient
          set_double_t lt_x;
          set_double_t lt_y;
@@ -76,7 +79,11 @@ namespace sim{
       extern std::vector<double> sot_asm; // array of spin orbit torque asymmetry
       extern std::vector<double> sot_rj; // array of adiabatic spin torques
       extern std::vector<double> sot_pj; // array of non-adiabatic spin torques
+      extern std::vector<double> sot_asm2; // array of spin orbit torque asymmetry
+      extern std::vector<double> sot_rj2; // array of adiabatic spin torques
+      extern std::vector<double> sot_pj2;
       extern std::vector<double> sot_polarization_unit_vector; // sot spin polarization direction
+      extern std::vector<double> sot_polarization_unit_vector2;
       extern double electrical_pulse_strength;
 
       extern std::vector<double> lot_lt_x;

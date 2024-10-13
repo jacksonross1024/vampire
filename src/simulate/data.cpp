@@ -106,10 +106,14 @@ namespace sim{
       std::vector<double> stt_pj; // array of non-adiabatic spin torques
       std::vector<double> stt_polarization_unit_vector(3,0.0); // stt spin polarization direction
 
-      std::vector<double> sot_asm; // array of spin orbit torque asymmetry
+      std::vector<double> sot_asm;
+      std::vector<double> sot_asm2; // array of spin orbit torque asymmetry
       std::vector<double> sot_rj;  // array of adiabatic spin torques
       std::vector<double> sot_pj;  // array of non-adiabatic spin torques
+      std::vector<double> sot_rj2;  // array of adiabatic spin torques
+      std::vector<double> sot_pj2;
       std::vector<double> sot_polarization_unit_vector(3,0.0); // sot spin polarization direction
+      std::vector<double> sot_polarization_unit_vector2(3,0.0);
       double electrical_pulse_strength = 0;
       std::vector<double> vcmak;   // voltage controlled anisotropy coefficient
 

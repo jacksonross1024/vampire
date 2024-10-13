@@ -57,6 +57,16 @@ namespace sim{
          sim::internal::sot_polarization_unit_vector = u;
          return true;
       }
+      test="spin-orbit-torque-polarization-unit-vector-2";
+      if(word==test){
+         std::vector<double> u(3);
+         u=vin::doubles_from_string(value);
+         // Test for valid range
+         vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
+         // save sanitized unit vector
+         sim::internal::sot_polarization_unit_vector2 = u;
+         return true;
+      }
       test="laser-torque-angle";
       if(word==test){
         double u=atof(value.c_str());
@@ -355,6 +365,31 @@ namespace sim{
          sim::internal::enable_spin_torque_fields = true;
          return true;
       }
+      //------------------------------------------------------------
+      // field-like parameter for material in spin orbit torque calculation
+      test = "spin-orbit-relaxation-torque-2";
+      test2 = "spin-orbit-anti-damping-torque-2";
+      if( word==test || word==test2 ){
+         double aj = atof(value.c_str());
+         // Test for valid range
+         vin::check_for_valid_value(aj, word, line, prefix, unit, "field", -1.0e2, 1.0e2,"input","-100 - 100T");
+         sim::internal::mp[super_index].sot_rj2.set(aj);
+         sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
+      //------------------------------------------------------------
+      test = "spin-orbit-precession-torque-2";
+      test2 = "spin-orbit-torque-2";
+      test3 = "spin-orbit-field-like-torque-2";
+      // damping-like parameter for material in spin orbit torque calculation
+      if( word==test || word==test2 || word==test3 ){
+         double bj = atof(value.c_str());
+         // Test for valid range
+         vin::check_for_valid_value(bj, word, line, prefix, unit, "field", -1.0e2, 1.0e2,"input","-100 - 100T");
+         sim::internal::mp[super_index].sot_pj2.set(bj);
+         sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
       test = "optical-torque";
       if( word==test ){
          std::cout << "Enabling LOT (yJ) material: ";
@@ -381,6 +416,16 @@ namespace sim{
          // Test for valid range
          vin::check_for_valid_value(sotasm, word, line, prefix, unit, "", 0.0, 1.0e2,"input","0 - 100");
          sim::internal::mp[super_index].sot_asm.set(sotasm);
+         return true;
+      }
+      //------------------------------------------------------------
+      test = "spin-orbit-torque-asymmetry-2";
+      // damping-like parameter for material in spin orbit torque calculation
+      if( word==test ){
+         double sotasm = atof(value.c_str());
+         // Test for valid range
+         vin::check_for_valid_value(sotasm, word, line, prefix, unit, "", 0.0, 1.0e2,"input","0 - 100");
+         sim::internal::mp[super_index].sot_asm2.set(sotasm);
          return true;
       }
       //------------------------------------------------------------

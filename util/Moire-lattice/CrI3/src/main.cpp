@@ -8,11 +8,23 @@
 #include "initialise.hpp"
 #include <array>
 
-int main(){
+int main(int argc, char* argv[]){
 
-   twist_angle = 1.41; // 1.1
-   system_size_x = 1000; //4000
-   system_size_y = 1000; //4000
+    std::string dmi_check = "--dmi";
+    if(argc < 2) {std::cerr << "need twist angle even if zero" << std::endl; exit(1);}
+    for(int a = 1; a < argc; a++) {
+        if(a == 1) {twist_angle = atof(argv[a]); // 1.1 
+        std::cout << "twist angle: "<< twist_angle << std::endl;}
+        if(a == 2) {max_range = atof(argv[a]);
+        std::cout << "max inter exchange range: " << max_range << std::endl;}
+        if(a == 3) {
+            if(argv[a]== dmi_check) {DMI = true;
+            std::cout << " with DMI " << std::endl;}
+        }
+    }
+
+   system_size_x = 2000; //4000
+   system_size_y = 2000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants
@@ -31,7 +43,7 @@ int main(){
    // if(double_bilayer) pristine_bilayer_type = "baab";
 
    initialise_variables();
-   DMI = true;
+
    twist_loction = 2*system_size_z/5 -0.01;
     std::cout << "twisting at: " << twist_loction << std::endl;
     read_in_atoms("files/atom_list_aa_rhombic", num_atoms, atom);

@@ -9,15 +9,15 @@
 #------------------------------------------
 #dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 100.0 !nm
-dimensions:system-size-y = 100.0 !nm
+dimensions:system-size-x = 200.0 !nm
+dimensions:system-size-y = 200.0 !nm
 dimensions:system-size-z = 1.308 !nm
 
 #create:periodic-boundaries-x
 #create:periodic-boundaries-y
 #create:periodic-boundaries-z
-#dipole:solver=atomistic-fft
-#dipole:field-update-rate=1
+#dipole:solver=tensor
+#dipole:field-update-rate=10
 #------------------------------------------
 # Material Files:
 #------------------------------------------
@@ -28,11 +28,11 @@ create:crystal-sublattice-materials=true
 # Simulation attributes:
 #------------------------------------------
 
-sim:total-time-steps=400000
+sim:total-time-steps=3500000
 sim:equilibration-temperature=40
 sim:equilibration-time-steps = 10000
 sim:time-steps-increment = 1
-sim:time-step= 1 !fs
+sim:time-step= 0.1 !fs
 
 sim:minimum-temperature=0
 sim:maximum-temperature=40.0
