@@ -517,7 +517,7 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		const double stpj = stt_pj[material];
 
 		const double stt_lambda = stt_asm[material];
-		const double factor = program::fractional_electric_field_strength*sim::internal::electrical_pulse_strength / (1.0 + stt_lambda*(sx*stpx + sy*stpy + sz*stpz) );
+		const double factor = program::fractional_electric_field_strength / (1.0 + stt_lambda*(sx*stpx + sy*stpy + sz*stpz) );
 
 		// calculate field
 		hx += factor * ( (strj-alpha*stpj)*(sy*stpz - sz*stpy) + (stpj+alpha*strj)*stpx );
