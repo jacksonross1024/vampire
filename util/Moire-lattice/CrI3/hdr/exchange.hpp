@@ -76,8 +76,8 @@
    std::vector<double> match_inter_exchange(double dx, double dy, std::vector<std::vector<double> > &Eij);
    std::vector<double> match_intra_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij);
    std::vector<double> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij);
-   interaction calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
-   interaction calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
+   std::vector<double> calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
+   std::vector<double> calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
    void calc_interactions();
 
    void calc_out_of_plane_exchange(std::vector < spin > atom_list_1,std::vector < spin > atom_list_2);

@@ -116,9 +116,7 @@ void create_magnetic_atom_list(std::string filename){
                            std::cerr << "shift problem: (" << x_new << ", " << x_j << ") in cell: [" << dx_cell << ", " << dy_cell << "] indexing " << changex << ", " << changey  << std::endl;
                             exit(1);
                         }
-                        unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
-                        unit_cell_shifts[dx_cell][dy_cell][1] += changex;
-                        unit_cell_shifts[dx_cell][dy_cell][2] += changey;
+                       
                         // Set layer number
                         new_atom.unit_x = dx_cell;
                         new_atom.unit_y = dy_cell;
@@ -127,6 +125,9 @@ void create_magnetic_atom_list(std::string filename){
                            new_atom.S = 2;
                            new_atom.dx = changex;
                            new_atom.dy = changey;
+                            unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
+                           unit_cell_shifts[dx_cell][dy_cell][1] += changex;
+                           unit_cell_shifts[dx_cell][dy_cell][2] += changey;
                            row3.push_back(new_atom);
                         } else if (z_j <= a0z*3){
                            new_atom.S = 2;
