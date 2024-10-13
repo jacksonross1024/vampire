@@ -1,0 +1,41 @@
+material:num-materials = 4
+#-------------------------------------------------------
+# Material 1
+#-------------------------------------------------------
+material[1]:material-name = Cr1
+material[1]:damping-constant = 1.0
+material[1]:atomic-spin-moment = 2.958 !muB
+material[1]:uniaxial-anisotropy-constant = 0.44 !meV
+material[1]:material-element = Cr
+material[1]:initial-spin-direction = random #0,0,-1
+material[1]:unit-cell-category = 1
+#-------------------------------------------------------
+# Material 2
+#-------------------------------------------------------
+material[2]:material-name = Cr2
+material[2]:damping-constant = 1.0
+material[2]:atomic-spin-moment = 2.958 !muB
+material[2]:uniaxial-anisotropy-constant = 0.86 !meV
+material[2]:material-element = Cr
+material[2]:initial-spin-direction = random
+material[2]:unit-cell-category = 2
+#-------------------------------------------------------
+# Material 3
+#-------------------------------------------------------
+material[3]:material-name = Cr3
+material[3]:damping-constant = 1.0
+material[3]:atomic-spin-moment = 2.958 !muB
+material[3]:uniaxial-anisotropy-constant = 0.86 !meV
+material[3]:material-element = Cr
+material[3]:initial-spin-direction = random
+material[3]:unit-cell-category = 3
+#-------------------------------------------------------
+# Material 4
+#-------------------------------------------------------
+material[4]:material-name = Cr4
+material[4]:damping-constant = 1.0
+material[4]:atomic-spin-moment = 2.958 !muB
+material[4]:uniaxial-anisotropy-constant = 0.44 !meV
+material[4]:material-element = Cr
+material[4]:initial-spin-direction = 0,0,-1
+material[4]:unit-cell-category = 4
