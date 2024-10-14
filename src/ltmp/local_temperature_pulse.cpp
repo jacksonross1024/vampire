@@ -44,7 +44,7 @@ namespace ltmp{
          const double dt = ltmp::internal::dt;
 
          // Precalculate heat transfer constant k*L/V (J/K/m^3/s) (divide by Angstroms^2)
-         const double dTe_diff_prefactor = 5*ltmp::internal::electron_thermal_conductivity/(2*ltmp::internal::micro_cell_size[0]*ltmp::internal::micro_cell_size[1]*1.e-20);
+         const double dTe_diff_prefactor = ltmp::internal::electron_thermal_conductivity/(2*ltmp::internal::micro_cell_size[0]*ltmp::internal::micro_cell_size[1]*1.e-20);
          const double dTp_diff_prefactor = ltmp::internal::phonon_thermal_conductivity/(2*ltmp::internal::micro_cell_size[0]*ltmp::internal::micro_cell_size[1]*1.e-20);
          // std::cout << dTe_diff_prefactor << ", " << dTp_diff_prefactor << std::endl;
          // Determine change in Te and Tp
@@ -61,13 +61,13 @@ namespace ltmp{
             double nTp = root_temperature_array[2*ncell+1]*root_temperature_array[2*ncell+1];
             dTe_diff += nTe - Te;
             dTp_diff += nTp - Tp;
-            // std::cout <<"first " << Te << ", " << nTe << ", " << dTe_diff << std::endl;
+            
          }
 
-         if(Te < 1.0) delta_temperature_array[2*0+0] = (G*(Tp-Te) + pump*attenuation_array[0] + 2*dTe_diff*dTe_diff_prefactor)*dt/(Ce);
-         else delta_temperature_array[2*0+0] = (G*(Tp-Te) + pump*attenuation_array[0] + 2*dTe_diff*dTe_diff_prefactor)*dt/(Ce*Te);
-         delta_temperature_array[2*0+1] = (G*(Te-Tp)                                + 2*dTp_diff*dTp_diff_prefactor)*dt/Cl;
-         
+         if(Te < 1.0) delta_temperature_array[2*0+0] = (G*(Tp-Te) + pump*attenuation_array[0] + 0.5*dTe_diff*dTe_diff_prefactor)*dt/(Ce);
+         else delta_temperature_array[2*0+0] = (G*(Tp-Te) + pump*attenuation_array[0] + 0.5*dTe_diff*dTe_diff_prefactor)*dt/(Ce*Te);
+         delta_temperature_array[2*0+1] = (G*(Te-Tp)                                + 0.5*dTp_diff*dTp_diff_prefactor)*dt/Cl -  (Tp-substrate_temperature)*tau_s*dt;
+         // std::cout << 0 << ", "  << Tp << ", " << dTp_diff << ", " << attenuation_array[0] << std::endl;
          for(unsigned int cell=1; cell<ltmp::internal::attenuation_array.size()-1; ++cell) {
 
             Te = root_temperature_array[2*cell+0]*root_temperature_array[2*cell+0];
@@ -97,7 +97,7 @@ namespace ltmp{
             if(Te < 1.0) delta_temperature_array[2*cell+0] = (G*(Tp-Te) + pump*attenuation_array[cell] + (dTe_diff+0.5*(ddTe2-ddTe1))*dTe_diff_prefactor)*dt/(Ce);
             else delta_temperature_array[2*cell+0] = (G*(Tp-Te) + pump*attenuation_array[cell] + (dTe_diff+0.5*(ddTe2-ddTe1))*dTe_diff_prefactor)*dt/(Ce*Te);
             delta_temperature_array[2*cell+1] = (G*(Te-Tp)                                + (dTp_diff+0.5*(ddTp2-ddTp1))*dTp_diff_prefactor)*dt/Cl;
-
+            // std::cout << cell << ", "  << Tp << ", " << dTp_diff << ", " << attenuation_array[cell] << std::endl;
          } // end of cell loop
 
          int cell = ltmp::internal::attenuation_array.size()-1;
@@ -115,10 +115,10 @@ namespace ltmp{
             dTp_diff += nTp - Tp;
             
          }
-         if(Te < 1.0) delta_temperature_array[2*cell+0] = (G*(Tp-Te) + pump*attenuation_array[cell] + 2*dTe_diff*dTe_diff_prefactor)*dt/(Ce);
-         else delta_temperature_array[2*cell+0] = (G*(Tp-Te) + pump*attenuation_array[cell] + 2*dTe_diff*dTe_diff_prefactor)*dt/(Ce*Te);
-         delta_temperature_array[2*cell+1] = (G*(Te-Tp)                                + 2*dTp_diff*dTp_diff_prefactor)*dt/Cl - (Tp-substrate_temperature)*tau_s*dt;
-
+         if(Te < 1.0) delta_temperature_array[2*cell+0] = (G*(Tp-Te) + pump*attenuation_array[cell] + dTe_diff*dTe_diff_prefactor)*dt/(Ce);
+         else delta_temperature_array[2*cell+0] = (G*(Tp-Te) + pump*attenuation_array[cell] + dTe_diff*dTe_diff_prefactor)*dt/(Ce*Te);
+         delta_temperature_array[2*cell+1] = (G*(Te-Tp)                                + dTp_diff*dTp_diff_prefactor)*dt/Cl;
+         // std::cout << cell << ", "  << Tp << ", " << dTp_diff << ", " << attenuation_array[cell] << std::endl;
          // Calculate new electron and lattice temperatures
          for(unsigned int cell=0; cell<ltmp::internal::attenuation_array.size(); ++cell){
 
