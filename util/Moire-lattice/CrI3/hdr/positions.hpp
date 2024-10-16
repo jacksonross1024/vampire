@@ -6,7 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <cmath>
-#include <array>
+// #include <array>
 
    extern double twist_angle;
 
@@ -36,6 +36,7 @@
          double S;
          int id;
          int l_id;
+         int h_id;
          int unit_x;
          int unit_y;
          int dx = 0;

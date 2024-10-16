@@ -15,7 +15,7 @@ void read_in_atoms(std::string filename, int n_atoms, std::vector <spin > &atom2
    for (int i = 0; i < n_atoms; i ++){
       getline(ifile,line);
      std::stringstream liness(line.c_str());
-     liness >> atom2[i].id >> atom2[i].x >> atom2[i].y >> atom2[i].z >> atom2[i].S >> atom2[i].l_id >> temp;
+     liness >> atom2[i].id >> atom2[i].x >> atom2[i].y >> atom2[i].z >> atom2[i].S >> atom2[i].l_id >> atom2[i].h_id;
      //   outfile <<atom_id[i] << "\t" << x_in[i] << '\t' << y_in[i] << "\t" << z_in[i] << "\t" << S_in[i] << "\t" << temp << "\t" << temp << std::endl;
 
    }

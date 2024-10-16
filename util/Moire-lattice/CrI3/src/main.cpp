@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
 
    twist_loction = 2*system_size_z/5 -0.01;
     std::cout << "twisting at: " << twist_loction << std::endl;
-    read_in_atoms("files/atom_list_aa_rhombic", num_atoms, atom);
+    read_in_atoms("files/atom_list_baab_rhombic", num_atoms, atom);
    //  read_in_dft("files/criteria.txt");
     //  read_in_atoms("files/nm_atoms", num_nm_atoms, nm_atom);
    //  read_in_exchange("files/Interpolated_J_Inter", Jinter);
