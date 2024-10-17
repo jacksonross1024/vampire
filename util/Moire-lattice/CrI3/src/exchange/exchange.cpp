@@ -469,6 +469,7 @@ std::vector < std::vector < double > > Dz_intra2;
 
 std::vector < std::vector < std::vector< double> > > D_intra;
 std::vector < std::vector < std::vector< double> > > D_inter;
+std::vector<std::vector<std::vector<double> > > config_energy(number_of_unit_cells_x, std::vector<std::vector<double> >(number_of_unit_cells_y, std::vector<double>(30,0.0)));//(number_of_unit_cells_x, std::vector<std::array<double, 30> >(number_of_unit_cells_y, {0.0}));
 
 std::vector <double > crossProduct(std::vector <double >A, std::vector <double > B){
    std::vector <double > P(3,0.0);
@@ -870,7 +871,7 @@ void calc_interactions() {
    int interaction_estimate = all_m_atoms.size()*22;
    std::cout << "Generating estimated " << interaction_estimate << " interactions "  << std::flush;
    // std::vector< int> interactions_list;
-   std::vector<std::vector<std::array<double, 20> > > config_energy(number_of_unit_cells_x, std::vector<std::array<double, 20> >(number_of_unit_cells_y, {0.0}));
+   
    // config_energy.resize(number_of_unit_cells_x, )
 
    // interactions_list.resize(all_m_atoms.size()*11, 1);
@@ -894,8 +895,22 @@ void calc_interactions() {
                      const bool x_ok = nx >= 0 && nx < xb;
                      const bool y_ok = ny >= 0 && ny < yb;
                      const bool z_ok = nz >= 0 && nz < zb;
-                     // only calculate neighbours for all x,y,z indices ok
+                     // int i_index = nx;
+                     // int j_index = ny;
+                     // int k_index = nz;
+                     // int pbc_x = 0;
+                     // int pbc_y = 0;
+                     // int pbc_z = 0;
+
+                     // if(nx < 0) {i_index = xb-1; pbc_x = -1;}
+                     // else if (nx >= xb) {i_index = 0; pbc_x = 1;}
+
+                     // if (ny < 0) {j_index = yb-1; pbc_y = -1;}
+                     // else if (ny >= yb) {j_index = 0; pbc_y = 1;}
+
+                     // if(nz < 0 || nz >= zb) continue;
                      if(x_ok && y_ok && z_ok){
+                     // only calculate neighbours for all x,y,z indices ok
                         // loop over all atoms in main box
                         for(int ai = 0; ai < boxes[i][j][k].size(); ai++){
                            // atom_index++;
@@ -904,7 +919,7 @@ void calc_interactions() {
                            const double x_i = atom_i.x;
                            const double y_i = atom_i.y;
                            const double z_i = atom_i.z;
-
+                           // if(atom_i.id == 0) continue;
                            // loop over all atoms in neighbour box
                            for(int aj = 0; aj < boxes[nx][ny][nz].size(); aj++){
 
@@ -918,8 +933,15 @@ void calc_interactions() {
                               const double z_j = atom_j.z;
                               double adx = x_j - x_i;
                               double ady = y_j - y_i;
+                              if(adx < -1*range) adx += system_size_x;
+                              else if(adx > 1*range) adx -= system_size_x;
+
+                              if(ady < -1*range) ady += system_size_y;
+                              else if(ady > 1*range) ady -= system_size_y;
+
                               const double adz = z_j - z_i;
                               double dL2 = adx*adx + ady*ady + adz*adz;
+
                               // check for atoms in interaction range, if so add to neighbour list
                               if(dL2 < r2 ){
                                  // std::cout << dL2 << ", " << r2 << ", " << x_i << ", " << y_i << ", " << z_i << ", " << x_j << ", " << y_j << ", " << z_j << std::endl;
@@ -1018,16 +1040,16 @@ void calc_interactions() {
                                  config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += exchange[1]/J_constant;
                                  config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += exchange[2]/J_constant;
                                  config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += exchange[3]/J_constant;
-                                 
-
-                              if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
+                              
+                              // 
+                              if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                                                 //xx                     xy-> Dz                 xz -> -Dy
                                                   exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
                                                 //yx -> -Dz              yy                      yz -> Dx
                                                  -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
                                                 //zx -> Dy               yz -> -Dx               zz
                                                   exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
-                              else {   outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
+                              else {   outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                               //xx                     xy-> Dz                 xz -> -Dy
                                  exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
                               //yx -> -Dz              yy                      yz -> Dx
@@ -1043,8 +1065,7 @@ void calc_interactions() {
                                  //                 -exchange[3]/J_constant << "\t" << exchange[0]/J_constant << "\t" <<  exchange[1]/J_constant << "\t" << \
                                  //                // zx -> Dy               yz -> -Dx               zz
                                  //                  exchange[2]/J_constant << "\t" <<-exchange[1]/J_constant << "\t" <<  exchange[0]/J_constant << std::endl;}
-                                 number_of_interactions++;
-                                                             
+                                 number_of_interactions++;                             
                               }
 
                            } // end of j atom loop
@@ -1059,8 +1080,210 @@ void calc_interactions() {
          }
       }
    }
-      std::cout << number_of_interactions << " [completed] [" << timer.elapsed_time() << " s]" << std::endl;
-      
+ /*     
+   if(ucf_file.is_open()) {
+      std::cout << "ucf file add on has been selected. reading secondary file..." << std::endl;
+      std::cout << "Warning. DMI rotation has not been designed yet." << std::endl;
+      std::cout << "Warning. Lattice basis unity has not been ensured yet." << std::endl;
+      std::string line;
+      // keep record of current line
+      unsigned int line_counter=0;
+      unsigned int line_id=0;
+
+      std::string exchange_type_string; // string defining exchange type
+
+      // defaults for interaction list
+      unsigned int interaction_range = 1; // assume +-1 unit cell as default
+
+      // Loop over all lines
+      while (! ucf_file.eof() ){
+         line_counter++;
+         // read in whole line
+         std::string line;
+         getline(ucf_file,line);
+         //std::cout << line.c_str() << std::endl;
+
+         // ignore blank lines
+         std::string empty="";
+         if(line==empty) continue;
+
+         // set character triggers
+         const char* hash="#";	// Comment identifier
+
+         bool has_hash=false;
+         // Determine if line is a comment line
+         for(unsigned int i=0;i<line.length();i++){
+            char c=line.at(i);
+
+            if(c== *hash){
+                  has_hash=true;
+                  break;
+            }
+         }
+         // if hash character found then read next line
+         if(has_hash==true) continue;
+
+         // convert line to string stream
+         std::istringstream iss(line,std::istringstream::in);
+
+         // non-comment line found - check for line number
+         switch(line_id){
+            case 0:
+               // iss >> unit_cell.dimensions[0] >> unit_cell.dimensions[1] >> unit_cell.dimensions[2];
+               break;
+            case 1:
+               // iss >> unit_cell.shape[0][0] >> unit_cell.shape[0][1] >> unit_cell.shape[0][2];
+               break;
+            case 2:
+               // iss >> unit_cell.shape[1][0] >> unit_cell.shape[1][1] >> unit_cell.shape[1][2];
+               break;
+            case 3:
+               // iss >> unit_cell.shape[2][0] >> unit_cell.shape[2][1] >> unit_cell.shape[2][2];
+               break;
+            case 4:
+               int num_uc_atoms;
+               iss >> num_uc_atoms;
+               //std::cout << "Reading in " << num_uc_atoms << " atoms" << std::endl;
+               // resize unit_cell.atom array if within allowable bounds
+               if( (num_uc_atoms >0) && (num_uc_atoms <= 1000000)) all_m_atoms.reserve(num_uc_atoms + all_m_atoms.size());
+               else {
+                  // terminaltextcolor(RED);
+                  std::cerr << "Error! Requested number of atoms " << num_uc_atoms << " on line " << line_counter
+                  << " of unit cell input file is outside of valid range 1-1,000,000. Exiting" << std::endl; exit(1);
+                  // terminaltextcolor(WHITE);
+               }
+
+               std::cout << "\nProcessing data for " << all_m_atoms.size() << " atoms..." << std::flush;
+               // zlog << zTs() << "\t" << "Processing data for " << unit_cell.atom.size() << " unit cell atoms..." << std::endl;
+
+            // loop over all atoms and read into class
+            for(unsigned int i = 0; i < all_m_atoms.size(); i++){
+
+                line_counter++;
+
+                // declare safe temporaries for atom input
+                int id=i;
+                double cx=2.0, cy=2.0,cz=2.0; // coordinates - default will give an error
+                int mat_id=0, lcat_id=0, hcat_id=0; // sensible defaults if omitted
+                // get line
+                std::string atom_line;
+                getline(ucf_file,atom_line);
+                std::istringstream atom_iss(atom_line,std::istringstream::in);
+                atom_iss >> id >> cx >> cy >> cz >> mat_id >> lcat_id >> hcat_id;
+                
+                spin new_atom;
+                id += all_m_atoms.size();
+                if(cx>=0.0 && cx <=1.0) new_atom.x=cx;
+                else{
+                    // terminaltextcolor(RED);
+                    std::cerr << "Error! atom x-coordinate for atom " << id << " on line " << line_counter
+                                    << " of unit cell input file is outside of valid range 0.0-1.0. Exiting" << std::endl;
+                    // terminaltextcolor(WHITE);
+                    // zlog << zTs() << "Error! atom x-coordinate for atom " << id << " on line " << line_counter
+                                //  << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
+                    exit(1);
+                }
+                if(cy>=0.0 && cy <=1.0) new_atom.y=cy;
+                else{
+                    // terminaltextcolor(RED);
+                    std::cerr << "Error! atom y-coordinate for atom " << id << " on line " << line_counter
+                                    << " of unit cell input file is outside of valid range 0.0-1.0. Exiting" << std::endl;
+                    // terminaltextcolor(WHITE);
+                    // zlog << zTs() << "Error! atom y-coordinate for atom " << id << " on line " << line_counter
+                    // 			     << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
+                    exit(1);
+                }
+                if(cz>=0.0 && cz <=1.0) new_atom.z=cz;
+                else{
+                    // terminaltextcolor(RED);
+                    std::cerr << "Error! atom z-coordinate for atom " << id << " on line " << line_counter
+                    << " of unit cell input file is outside of valid range 0.0-1.0. Exiting" << std::endl;
+                    // terminaltextcolor(WHITE);
+                    // zlog << zTs() << "Error! atom z-coordinate for atom " << id << " on line " << line_counter
+                    // 				  << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
+                    exit(1);
+                }
+                new_atom.unit_x = floor((cx +0.0000001)/ a1y);
+                // changex += dy_cell*std::abs(a1x);
+                new_atom.unit_y = floor((cy +0.0000001)/ a0x);
+                new_atom.S = 5;
+                new_atom.id = id;
+                new_atom.l_id =lcat_id;
+                new_atom.h_id = hcat_id;
+                all_m_atoms.push_back(new_atom);
+                //std::cout << i << "\t" << id << "\t" << cx << "\t" << cy << "\t" << cz << "\t" << mat_id << "\t" << lcat_id << "\t" << hcat_id << std::endl;
+            }
+            break;
+			case 5:{
+
+            int num_interactions = 0; // assume no interactions
+            std::string exchange_type_string; // string defining exchange type
+
+            // get number of exchange types
+            iss >> num_interactions >> exchange_type_string;
+
+            // loop over all interactions and read into class
+            for (int i=0; i<num_interactions; i++){
+
+                // Output progress counter to screen for large interaction counts
+                if( (i % (num_interactions/10 + 1)) == 0 && num_interactions > 10000) std::cout << "." << std::flush;
+
+                // declare safe temporaries for interaction input
+                int id=i;
+                int iatom=-1,jatom=-1; // atom pairs
+                int dx=0, dy=0,dz=0; // relative unit cell coordinates
+                // get line
+                std::string int_line;
+                getline(ucf_file,int_line);
+                //std::cout << int_line.c_str() << std::endl;
+                std::istringstream int_iss(int_line,std::istringstream::in);
+                int_iss >> id >> iatom >> jatom >> dx >> dy >> dz;
+                //inputfile >> id >> iatom >> jatom >> dx >> dy >> dz;
+                line_counter++;
+                // check for sane input
+                id += num_interactions;
+                iatom += all_m_atoms.size();
+                jatom += all_m_atoms.size();
+                // check for long range interactions
+                if(dx*dx+dy*dy+dz*dz > r2) continue;
+                interaction ucf_interaction;
+                            //xx                     xy-> Dz             xz -> -Dy
+                int_iss >> ucf_interaction.xx >> ucf_interaction.xy >> ucf_interaction.xz;
+                            //yx -> -Dz              yy                  yz -> Dx
+                int_iss >> ucf_interaction.yx >> ucf_interaction.yy >> ucf_interaction.yz;
+                            //zx -> Dy               yz -> -Dx           zz
+                int_iss >> ucf_interaction.zx >> ucf_interaction.zy >> ucf_interaction.zz;
+        
+                spin atom_i = all_m_atoms[id];
+                spin atom_j = all_m_atoms[id];
+                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+0] += 1.0;
+                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += ucf_interaction.xx/J_constant;
+                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += 0.5*(ucf_interaction.yz-ucf_interaction.zy)/J_constant;
+                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += 0.5*(ucf_interaction.zx-ucf_interaction.xz)/J_constant;
+                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += 0.5*(ucf_interaction.xy-ucf_interaction.yx)/J_constant;
+            
+                if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
+                    //xx                     xy-> Dz                 xz -> -Dy
+                        ucf_interaction.xx << "\t" << ucf_interaction.xy << "\t" << ucf_interaction.xz << "\t" << \
+                    //yx -> -Dz              yy                      yz -> Dx
+                        ucf_interaction.yx << "\t" << ucf_interaction.yy << "\t" <<  ucf_interaction.yz << "\t" << \
+                    //zx -> Dy               yz -> -Dx               zz
+                        ucf_interaction.zx << "\t" << ucf_interaction.yz << "\t" <<  ucf_interaction.zz << "\n"; }
+                else {   outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
+                    //xx                     xy-> Dz                 xz -> -Dy
+                        ucf_interaction.xx << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
+                    //yx -> -Dz              yy                      yz -> Dx
+                        0.0 << "\t" << ucf_interaction.yy << "\t" <<  0.0 << "\t" << \
+                    //zx -> Dy               yz -> -Dx               zz
+                        0.0 << "\t" << 0.0 << "\t" <<  ucf_interaction.zz << "\n"; }
+
+                    number_of_interactions++;
+                }
+            }
+	    }
+	    line_id++;
+    }
+    */
       // std::cout << "Writing data to file..." << std::flush;
       std::ofstream config_output;
       config_output.open("config_energy.txt");
@@ -1085,8 +1308,9 @@ void calc_interactions() {
       // outfile4 << ss.str();
       timer.stop();
       // std::cout << "done!  << std::endl;
-
-      return;
+      std::cout << number_of_interactions << " [completed] [" << timer.elapsed_time() << " s]" << std::endl;
+    
+    return;
 }
 
 std::array<double,4> match_intra_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij){

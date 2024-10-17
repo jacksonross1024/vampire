@@ -38,7 +38,6 @@ std::vector < spin > row4;
 std::vector < spin > all_m_atoms;
 std::vector < spin > all_nm_atoms;
 
-
 std::ofstream outfile4 ("interactions.ucf");
 
 void resize_arrays(std::vector < std::vector < double > > &A, int sizex, int sizey){
@@ -51,6 +50,9 @@ void initialise_variables(){
 
    number_of_unit_cells_x = ceil(system_size_x/a0x);
    number_of_unit_cells_y = ceil(system_size_y/a1y);
+   system_size_x = number_of_unit_cells_x*a0x;
+   system_size_y = number_of_unit_cells_y*a1y;
+   
    system_size_z = number_of_unit_cells_z*c0;
 
    std::cout << "Creating base lattice " << number_of_unit_cells_x << " by " << number_of_unit_cells_y << " rhombic unit cells" << std::endl;
@@ -138,17 +140,21 @@ void initialise_variables(){
    int estimated_system_spins = round(system_size_x*system_size_y*8.0/41.8);
 
    all_m_atoms.reserve(estimated_system_spins);
-   row1.reserve(int(estimated_system_spins/4));
-   row2.reserve(int(estimated_system_spins/4));
-   row3.reserve(int(estimated_system_spins/4));
-   row4.reserve(int(estimated_system_spins/4));
+   // row1.reserve(int(estimated_system_spins/4));
+   // row2.reserve(int(estimated_system_spins/4));
+   // row3.reserve(int(estimated_system_spins/4));
+   // row4.reserve(int(estimated_system_spins/4));
 
    
    unit_cell_shifts.resize(number_of_unit_cells_x);
+   config_energy.resize(number_of_unit_cells_x);
    for(int i = 0; i < number_of_unit_cells_x; i++) {
       unit_cell_shifts[i].resize(number_of_unit_cells_y);
+      config_energy[i].resize(number_of_unit_cells_y);
       for(int j = 0; j < number_of_unit_cells_y; j++) {
          unit_cell_shifts[i][j].resize(3,0);
+         config_energy[i][j].resize(30,0.0);
       }
    }
+   // std::vector<std::vector<std::vector<double> > > config_energy(number_of_unit_cells_x, std::vector<std::vector<double> >(number_of_unit_cells_y, std::vector<double>(30,0.0)));
 }

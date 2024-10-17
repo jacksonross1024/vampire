@@ -23,8 +23,8 @@ int main(int argc, char* argv[]){
         }
     }
 
-   system_size_x = 2000; //4000
-   system_size_y = 2000; //4000
+   system_size_x = 1000;//  25.00
+   system_size_y = 1000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
 
    twist_loction = 2*system_size_z/5 -0.01;
     std::cout << "twisting at: " << twist_loction << std::endl;
-    read_in_atoms("files/atom_list_baab_rhombic", num_atoms, atom);
+    read_in_atoms("files/atom_list_aa_rhombic", num_atoms, atom);
    //  read_in_dft("files/criteria.txt");
     //  read_in_atoms("files/nm_atoms", num_nm_atoms, nm_atom);
    //  read_in_exchange("files/Interpolated_J_Inter", Jinter);
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]){
    // read_in_intra_exchanges("bilayer_sliding/Cr3_intra.txt", Eintra_Cr3_1NN, Eintra_Cr3_2NN, Eintra_Cr3_3NN);
    // read_in_intra_exchanges("bilayer_sliding/Cr4_intra.txt", Eintra_Cr4_1NN, Eintra_Cr4_2NN, Eintra_Cr4_3NN);
    std::ifstream ifile1("bilayer_sliding/Cr1_intra.txt");
-    std::string line;
+   std::string line;
     if(!ifile1.is_open()) {std::cerr  << " is not open" << std::endl; exit(1);}
    for(int i=0; i<Eintra_Cr1_1NN.size()*11; i++){
         for(int j = 0; j < 3; j++) {
@@ -451,7 +451,11 @@ int main(int argc, char* argv[]){
    //  //  calc_out_of_plane_exchange(row4,row3);
    //  //  calc_out_of_plane_exchange(row3,row2);
    //  //  calc_out_of_plane_exchange(row2,row1);
+    // std::ifstream ucf_file;
+    // ucf_file.open("file.ucf");
+    // read_in_ucf(ucf_file);
     calc_interactions();
     print_interaction_header();
+
 
  }

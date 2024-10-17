@@ -64,10 +64,11 @@
 
    // extern std::vector < std::vector < std::vector<double> > > D_intra;
    // extern std::vector < std::vector < std::vector<double> > > D_inter;
-
+   extern std::vector<std::vector<std::vector<double> > > config_energy;
 
    extern std::ofstream outfile4;
-
+   // extern std::ifstream ucf_file;
+   
    void read_in_exchange(std::string filename);
    void read_in_dft(std::string filename);
    void read_in_dmi(std::string filename, std::vector < std::vector < double > > &Dx, std::vector < std::vector < double > > &Dy, std::vector < std::vector < double > > &Dz);
