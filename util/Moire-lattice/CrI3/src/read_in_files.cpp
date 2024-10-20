@@ -520,36 +520,37 @@ void read_in_ucf(std::ifstream &ucf_file) {
                 // jatom += all_m_atoms.size();
                 // check for long range interactions
                 // if(dx*dx+dy*dy+dz*dz > r2) continue;
+                double dummy;
                 interaction ucf_interaction;
                             //xx                     xy-> Dz             xz -> -Dy
-                int_iss >> ucf_interaction.xx >> ucf_interaction.xy >> ucf_interaction.xz;
+                int_iss >> ucf_interaction.J >> ucf_interaction.Dz >> dummy;
                             //yx -> -Dz              yy                  yz -> Dx
-                int_iss >> ucf_interaction.yx >> ucf_interaction.yy >> ucf_interaction.yz;
+                int_iss >> dummy >> ucf_interaction.J >> ucf_interaction.Dx;
                             //zx -> Dy               yz -> -Dx           zz
-                int_iss >> ucf_interaction.zx >> ucf_interaction.zy >> ucf_interaction.zz;
+                int_iss >> ucf_interaction.Dy >> dummy >> ucf_interaction.J;
 
                 spin atom_i = all_m_atoms[iatom];
                 spin atom_j = all_m_atoms[jatom];
                 config_energy.at(atom_i.unit_x).at(atom_i.unit_y).at((atom_i.S-1)*5+0) += 1.0;
-                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += ucf_interaction.xx/J_constant;
-                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += 0.5*(ucf_interaction.yz-ucf_interaction.zy)/J_constant;
-                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += 0.5*(ucf_interaction.zx-ucf_interaction.xz)/J_constant;
-                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += 0.5*(ucf_interaction.xy-ucf_interaction.yx)/J_constant;
+                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += ucf_interaction.J/J_constant;
+                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += ucf_interaction.Dx/J_constant;
+                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += ucf_interaction.Dy/J_constant;
+                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += ucf_interaction.Dz/J_constant;
             
                 if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
                     //xx                     xy-> Dz                 xz -> -Dy
-                        ucf_interaction.xx << "\t" << ucf_interaction.xy << "\t" << ucf_interaction.xz << "\t" << \
+                        ucf_interaction.J << "\t" << ucf_interaction.Dz << "\t" << -ucf_interaction.Dy << "\t" << \
                     //yx -> -Dz              yy                      yz -> Dx
-                        ucf_interaction.yx << "\t" << ucf_interaction.yy << "\t" <<  ucf_interaction.yz << "\t" << \
+                        -ucf_interaction.Dz << "\t" << ucf_interaction.J << "\t" <<  ucf_interaction.Dx << "\t" << \
                     //zx -> Dy               yz -> -Dx               zz
-                        ucf_interaction.zx << "\t" << ucf_interaction.yz << "\t" <<  ucf_interaction.zz << "\n"; }
+                        ucf_interaction.Dy << "\t" << -ucf_interaction.Dx << "\t" <<  ucf_interaction.J << "\n"; }
                 else {   outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
                     //xx                     xy-> Dz                 xz -> -Dy
-                        ucf_interaction.xx << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
+                        ucf_interaction.J << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
                     //yx -> -Dz              yy                      yz -> Dx
-                        0.0 << "\t" << ucf_interaction.yy << "\t" <<  0.0 << "\t" << \
+                        0.0 << "\t" << ucf_interaction.J << "\t" <<  0.0 << "\t" << \
                     //zx -> Dy               yz -> -Dx               zz
-                        0.0 << "\t" << 0.0 << "\t" <<  ucf_interaction.zz << "\n"; }
+                        0.0 << "\t" << 0.0 << "\t" <<  ucf_interaction.J << "\n"; }
 
                     number_of_interactions++;
                 }

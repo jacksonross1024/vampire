@@ -23,8 +23,8 @@ int main(int argc, char* argv[]){
         }
     }
 
-   system_size_x = 1000;//  25.00
-   system_size_y = 1000; //4000
+   system_size_x = 5000;//  25.00
+   system_size_y = 5000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants
