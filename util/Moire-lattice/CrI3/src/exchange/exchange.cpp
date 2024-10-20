@@ -872,7 +872,7 @@ void calc_interactions() {
    // std::vector< int> interactions_list;
    std::ofstream correlation_file;
    correlation_file.open("moire-lattice-constants.txt");
-   std::vector<std::array<double, 2> > zero_correlation;
+   std::vector<std::array<double, 3> > zero_correlation;
   
    // now calculate neighbour list looping over boxes
    vtimer_t timer;
@@ -924,7 +924,7 @@ void calc_interactions() {
 
                               // get atom number j
                               spin atom_j = boxes[nx][ny][nz][aj];
-                              if(atom_i.id == atom_j.id) continue;
+                              if((atom_i.id == atom_j.id)) continue;
                               // if(interactions_list[atom_i.id*11 + interactions_list[atom_j.id*11]])
                               // calculate distance
                               const double x_j = atom_j.x;
@@ -945,7 +945,7 @@ void calc_interactions() {
                               if(dL2 < 6.6*6.6 ){
                                  if(std::abs(adx) < 1e-2 && std::abs(ady) < 1e-2) {
                                     //correlation_file << std::abs(adx) << ", " << std::abs(ady) << ", " << atom_i.id << ", " << atom_i.x << ", " << atom_i.y << ", " << atom_j.id << ", " << atom_j.x << ", " << atom_j.y << std::endl;
-                                    zero_correlation.push_back({atom_i.x, atom_i.y});
+                                    zero_correlation.push_back({atom_i.x, atom_i.y, double(atom_i.l_id)});
                                  }
                                  // std::cout << dL2 << ", " << r2 << ", " << x_i << ", " << y_i << ", " << z_i << ", " << x_j << ", " << y_j << ", " << z_j << std::endl;
                               //    double angle_i = atan2(ady,adx);// - twist_angle;// - M_PI*0.5;
@@ -1296,7 +1296,7 @@ void calc_interactions() {
 	    line_id++;
     }
     */
-      
+      int max_symmetry = 0;
       for(int i = 0; i < zero_correlation.size(); i+=1) {
          double min_x = 1.0;
          double min_y = 1.0;
@@ -1312,6 +1312,10 @@ void calc_interactions() {
          double y10 = -1;
          double x11 = -1;
          double y11 = -1;
+         int max_local_symm = 0;
+         bool vector_id0 = false;// = (zero_correlation[j][2] == zero_correlation[i][2]) ? (true) : (false);
+         bool vector_id1 = false;// (zero_correlation[j][2] == zero_correlation[i][2]) ? (true) : (false);
+         std::vector<std::array<double, 6 > > orthogonal_set;
          for(int j = 0; j < zero_correlation.size(); j+=1) {
             if(i == j) continue;
             double dx = zero_correlation[j][0] - zero_correlation[i][0];
@@ -1319,7 +1323,8 @@ void calc_interactions() {
             double r = sqrt(dx*dx+dy*dy);
             dx /= r;
             dy /= r;
-            if( 1.0-std::abs(dx) < min_x) {
+            
+            // if( 1.0-std::abs(dx) < min_x) {
                min_x = 1.0-std::abs(dx);
                x_vec0 = dx;
                y_vec0 = dy;
@@ -1327,8 +1332,9 @@ void calc_interactions() {
                y00 = zero_correlation[i][1];
                x01 = zero_correlation[j][0];
                y01 = zero_correlation[j][1];
-            }
-            if( 1.0-std::abs(dy) < min_y) {
+               vector_id0 = (zero_correlation[j][2] == zero_correlation[i][2]) ? (true) : (false);
+            // }
+            // if( 1.0-std::abs(dy) < min_y) {
                min_y = 1.0-std::abs(dy);
                x_vec1 = dx;
                y_vec1 = dy;
@@ -1336,19 +1342,81 @@ void calc_interactions() {
                y10 = zero_correlation[i][1];
                x11 = zero_correlation[j][0];
                y11 = zero_correlation[j][1];
+               vector_id1 = (zero_correlation[j][2] == zero_correlation[i][2]) ? (true) : (false);
+            // }
+               if( vector_id0 && vector_id1) {
+                 
+                  orthogonal_set.push_back({x_vec0, y_vec0, x00, y00, x01, y01});
+                  // correlation_file << i << ", " << j << ", " << x_vec0 << ", " << y_vec0 << ", " << x00 << ", " << y00 << ", " << x01 << ", " << y01 << '\n';
+                  // correlation_file << i << ", " << j << ", " << x_vec1 << ", " << y_vec1 << ", " << x10 << ", " << y10 << ", " << x11 << ", " << y11 << '\n';
+               }
+         }
+         for(int k = 0; k < orthogonal_set.size(); k++) {
+            for(int kprime = k+1; kprime < orthogonal_set.size(); kprime++) {
+               if(k == kprime) continue;
+               if( std::abs(orthogonal_set[k][0]*orthogonal_set[kprime][0]+orthogonal_set[k][1]*orthogonal_set[kprime][1]) < 1e-4){
+                  max_local_symm++;
+                  correlation_file << i;
+                  for(int o = 0; o < orthogonal_set[k].size(); o++) correlation_file << ", " <<  orthogonal_set[k][o];
+                  for(int o = 0; o < orthogonal_set[kprime].size(); o++) correlation_file << ", " << orthogonal_set[kprime][o];
+                  correlation_file << "\n";
+                  // correlation_file << orthogonal_set[k][0] << ", " << orthogonal_set[k][1] << ", " << orthogonal_set[kprime][0] << ", " << orthogonal_set[kprime][1] << '\n';
+               }
             }
          }
-         if( (x_vec0*x_vec1 + y_vec0*y_vec1) < 1e-4) {
-            correlation_file << i << ", " << x_vec0 << ", " << y_vec0 << ", " << x00 << ", " << y00 << ", " << x01 << ", " << y01 << '\n';
-            correlation_file << i << ", " << x_vec1 << ", " << y_vec1 << ", " << x10 << ", " << y10 << ", " << x11 << ", " << y11 << '\n';
-         }
+      // if(max_local_symm > max_symmetry) {
+      //    std::cout << i << " with symm " << max_local_symm << std::endl;
+      //    max_symmetry = max_local_symm;
+      // }
       }
       correlation_file.close();
 
-   double x_offset = 914.76;//-a0x*0.5-0.001;
-   double y_offset = 4.00;
-   double max_x = 2751.21 - 0.001 - a0x;
-   double max_y = 1588.53  - 0.001-a1y; 
+   auto zero_zero_to_zero_one = [](double x, double y){
+      double x0 = 3669.43;
+      double x1 = 3659.04;
+      double y0 = 10.0089;
+      double y1 = 3185.05;
+
+      double y_prime = y0 + ((y1-y0)/(x1-x0))*(x - x0);
+      if(y >= y_prime) return true;
+      else return false;
+   };
+   auto zero_zero_to_one_zero = [](double x, double y){
+      double x0 = 3669.43;
+      double x1 = 6417.19;
+      double y0 = 10.0089;
+      double y1 = 1600.54;
+
+      double y_prime = y0 + ((y1-y0)/(x1-x0))*(x - x0);
+      if(y > y_prime) return true;
+      else return false;
+   };
+   auto zero_one_to_one_one = [](double x, double y){
+      double x0 = 3659.04;
+      double x1 = 7778.92;
+      double y0 = 3185.05;
+      double y1 = 7164.39;
+
+      double y_prime = -0.001 + y0 + ((y1-y0)/(x1-x0))*(x - x0);
+      if(y < y_prime) return true;
+      else return false;
+   };
+   auto one_zero_to_one_one = [](double x, double y){
+      double x0 = 6417.19;
+      double x1 = 7778.92;
+      double y0 = 1600.54;
+      double y1 = 7164.39;
+
+      double y_prime = -0.001 + y0 + ((y1-y0)/(x1-x0))*(x - x0);
+      if(y < y_prime) return true;
+      else return false;
+   };
+
+   
+   double x_offset = 3659.04;//-a0x*0.5-0.001;
+   double y_offset = 10.0089;
+   double max_x = 7778.92;// - 0.0001;
+   double max_y = 7164.39;//  - 0.0001; 
    const double new_system_size_x = max_x-x_offset;
    const double new_system_size_y = max_y-y_offset;
 
@@ -1358,30 +1426,40 @@ void calc_interactions() {
    all_m_atoms_offset.reserve(interaction_estimate);
    int new_atom_count = 0;
    std::ofstream outfile2;
-   outfile2.open("atom_positions.ucf");
+   outfile2.open("atom_positions.xyz");
    for(int i = 0; i < all_m_atoms.size(); i++) {
       spin offset_atom = all_m_atoms[i];
-      if(offset_atom.x >= x_offset-0.0 && offset_atom.x < max_x+0.0 && offset_atom.y >= y_offset-0.001 && offset_atom.y < max_y+0.001) {
-         // offset_atom.x >= x_offset-0.01 && offset_atom.x < max_x+0.01 &&
+      double x = offset_atom.x;
+      double y = offset_atom.y;
+      bool A_B = zero_zero_to_zero_one(x,y);
+      bool A_Aprime = zero_zero_to_one_zero(x,y);
+      bool B_Bprime = zero_one_to_one_one(x,y);
+      bool Aprime_Bprime = one_zero_to_one_one(x,y);
+      bool x_to_xprime = (x >= x_offset && x<max_x);
+      bool y_to_yprime = (y >= y_offset && y<max_y);
+      if(x_to_xprime && y_to_yprime && A_B && A_Aprime && B_Bprime && Aprime_Bprime) {
          offset_atom.id = new_atom_count;
          offset_atom.x -= x_offset;
          offset_atom.y -= y_offset;
-         // if(offset_atom.x < 0.0) offset_atom.x = 0.0;
-         // else if(offset_atom.x > new_system_size_x) offset_atom.x = new_system_size_x-0.01;
-
-         if(offset_atom.y < 0.0) offset_atom.y = 0.0;
-         else if (offset_atom.y > new_system_size_y) offset_atom.y = new_system_size_y-0.0001;
-
          all_m_atoms_offset.push_back(offset_atom);
-         outfile2 << new_atom_count << "\t" << offset_atom.x/(new_system_size_x) << '\t' <<  offset_atom.y/(new_system_size_y) <<  "\t" << offset_atom.z/system_size_z << "\t" << offset_atom.S-1 << "\t" << offset_atom.l_id << "\t" << offset_atom.h_id << "\n"; 
+         outfile2 << new_atom_count << "\t" << offset_atom.x << '\t' <<  offset_atom.y <<  "\t" << offset_atom.z << "\t" << offset_atom.S-1 << "\t" << offset_atom.l_id << "\t" << offset_atom.h_id << "\n"; 
          new_atom_count++;
       }
    }
    outfile2.close();
 
+   new_moire_lattice.reserve(total_atoms);
+   double Moire_a0x = 2758.15;
+   double Moire_a0y = 1590.5311;
+   double Moire_a1x = -10.39; 
+   double Moire_a1y = 3175.0441;
+   create_magnetic_atom_list_moire_unit("atom_positions.ucf", Moire_a0x,Moire_a0y,\
+                                                              Moire_a1x, Moire_a1y, \
+                                                              new_system_size_x, new_system_size_y, new_atom_count);
+
      // determine number of blocks in x,y,z
-     xb = ceil(new_system_size_x/bsize);
-     yb = ceil(new_system_size_x/bsize);
+   xb = ceil(new_system_size_x/bsize)+1;
+   yb = ceil(new_system_size_y/bsize)+1;
    //   zb = ceil(system_size_z/bsize)+1;
    std::cout << "decomposed into <" << xb << ", " << yb << ", " << zb << "> boxes." << std::endl;
    // create 4D array to generate blocks
@@ -1403,6 +1481,9 @@ void calc_interactions() {
       const double byi = y_i / bsize;
       const double bzi = z_i / bsize;
 
+      // if(bxi >= xb) bxi = xb-1;
+      // if(byi >= yb) byi = yb-1;
+
       // check that boxid is in range
       bool x_ok = bxi >= 0 && bxi < xb;
       bool y_ok = byi >= 0 && byi < yb;
@@ -1420,30 +1501,32 @@ void calc_interactions() {
    if(boxed != all_m_atoms_offset.size()) {
       std::cout << "atoms missed in supercell offset " << std::endl;
       exit(1);
-
    }
+
     interaction_estimate = all_m_atoms_offset.size()*22;
    // std::vector<interaction> interaction_list;
    // interaction_list.reserve(interaction_estimate);
 
 
    std::cout << "Generating estimated " << interaction_estimate << " interactions for remaining " << all_m_atoms_offset.size() << " atoms " << std::endl;
+      // exit(1);
+
    for(int i=0; i<xb; i++){
       if(i%10 == 0) std::cout << "." << std::flush;
       for(int j=0; j< yb; j++){
          for(int k=0; k<zb; k++){
 
             // loop over offsets
-            for(int dx = -2; dx < 3; dx++){
-               for(int dy = -2; dy < 3; dy++){
-                  for(int dz = -2; dz < 3; dz++){
+            for(int dx = -1; dx < 2; dx++){
+               for(int dy = -1; dy < 2; dy++){
+                  for(int dz = -1; dz < 2; dz++){
                      const int nx = i+dx; // neighbour box ids
                      const int ny = j+dy;
                      const int nz = k+dz;
                      
-                     // const bool x_ok = nx >= 0 && nx < xb;
-                     // const bool y_ok = ny >= 0 && ny < yb;
-                     // const bool z_ok = nz >= 0 && nz < zb;
+                     const bool x_ok = nx >= 0 && nx < xb;
+                     const bool y_ok = ny >= 0 && ny < yb;
+                     const bool z_ok = nz >= 0 && nz < zb;
                      int i_index = nx;
                      int j_index = ny;
                      int k_index = nz;
@@ -1451,14 +1534,14 @@ void calc_interactions() {
                      int pbc_y = 0;
                      int pbc_z = 0;
 
-                     if(nx < 0) {i_index = xb-1; pbc_x = -1;}
-                     else if (nx >= xb) {i_index = 0; pbc_x = 1;}
+                     // if(nx < 0) {i_index = xb-1; pbc_x = -1;}
+                     // else if (nx >= xb) {i_index = 0; pbc_x = 1;}
 
-                     if (ny < 0) {j_index = yb-1; pbc_y = -1;}
-                     else if (ny >= yb) {j_index = 0; pbc_y = 1;}
+                     // if (ny < 0) {j_index = yb-1; pbc_y = -1;}
+                     // else if (ny >= yb) {j_index = 0; pbc_y = 1;}
 
-                     if(nz < 0 || nz >= zb) continue;
-                     // if(x_ok && y_ok && z_ok){
+                     // if(nz < 0 || nz >= zb) continue;
+                     if(x_ok && y_ok && z_ok){
                      // only calculate neighbours for all x,y,z indices ok
                         // loop over all atoms in main box
                         for(int ai = 0; ai < new_boxes[i][j][k].size(); ai++){
@@ -1485,11 +1568,11 @@ void calc_interactions() {
 
                               double adx = x_j - x_i;
                               double ady = y_j - y_i;
-                              if(adx < -1*bsize) adx += new_system_size_x;
-                              else if(adx > 1*bsize) adx -= new_system_size_x;
+                              // if(adx < -2*bsize) adx += new_system_size_x;
+                              // else if(adx > 2*bsize) adx -= new_system_size_x;
 
-                              if(ady < -1*bsize) ady += new_system_size_y;
-                              else if(ady > 1*bsize) ady -= new_system_size_y;
+                              // if(ady < -2*bsize) ady += new_system_size_y;
+                              // else if(ady > 2*bsize) ady -= new_system_size_y;
 
                               // if(pbc_x != 0 || pbc_y != 0 ) std::cout << x_j - x_i << ", " << y_j - y_i << ", " <<  adx << ", " << ady << std::endl;
                               const double adz = z_j - z_i;
@@ -1632,6 +1715,7 @@ void calc_interactions() {
                         } // end of i atom loop
                      } // end of protection statement
                   }
+               }
             }// end of offset loops
          }
       }

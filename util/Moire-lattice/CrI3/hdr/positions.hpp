@@ -33,6 +33,9 @@
          double x;
          double y;
          double z;
+         int Gx = 0;
+         int Gy = 0;
+         int Gz = 0;
          double S;
          int id = 0;
          int l_id;
@@ -71,6 +74,7 @@
    extern std::vector < spin > all_m_atoms;
    extern std::vector < spin > all_nm_atoms;
    extern std::vector < spin > all_m_atoms_offset;
+   extern std::vector < spin > new_moire_lattice;
    extern std::vector < std::vector < std::vector <int> > > unit_cell_shifts;
 
    bool inside_system(double sx, double sy, double x, double y, double offset);
@@ -85,6 +89,11 @@
    void read_in_ucf(std::ifstream &ucf_file);
    void print_header();
    void create_magnetic_atom_list(std::string filename);
+   void create_magnetic_atom_list_moire_unit(std::string filename, \
+                  double Moire_a0x, double Moire_a0y, double Moire_a1x, double Moire_a1y, \
+                  double Moire_abs_x, double Moire_abs_y, int Moire_atom_size);
+
+   void create_magnetic_atom_list_moire_unit(std::string filename);
    void create_nm_atom_list();
 
 #endif

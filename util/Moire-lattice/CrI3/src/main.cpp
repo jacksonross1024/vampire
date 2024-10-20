@@ -23,8 +23,8 @@ int main(int argc, char* argv[]){
         }
     }
 
-   system_size_x = 5000;//  25.00
-   system_size_y = 5000; //4000
+   system_size_x = 10000;//  25.00
+   system_size_y = 10000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants
@@ -446,7 +446,6 @@ int main(int argc, char* argv[]){
    //  //  calc_in_plane_exchange(row2);
    //  //  calc_in_plane_exchange(row3);
    //  //  calc_in_plane_exchange(row4);
-
    //  //  // The order of these exchange calculations is important, as dx,dy shifts are NOT symmetric
    //  //  calc_out_of_plane_exchange(row4,row3);
    //  //  calc_out_of_plane_exchange(row3,row2);

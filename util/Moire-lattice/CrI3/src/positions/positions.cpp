@@ -244,7 +244,85 @@ void create_magnetic_atom_list(std::string filename){
    }
    shift_file.close();
    std::cout << total_atoms << " atoms; [complete]" << std::endl;
+}
 
+void create_magnetic_atom_list_moire_unit(std::string filename, \
+                  double Moire_a0x, double Moire_a0y, double Moire_a1x, double Moire_a1y, \
+                  double Moire_abs_x, double Moire_abs_y, int Moire_atom_size){
+   std::cout << "Generating lattice structure from Moire unit cell file...." << std::flush;
+   // double normalise_x = 100.0/(a0x*3.0);
+   // double normalise_y = 100.0/(a0x*sqrt(3));
+   std::ofstream shift_file;
+   shift_file.open("shifted_constants_Moire_ucf.txt");
+
+   std::ofstream new_moire_output(filename);
+   if(!new_moire_output.is_open()) {std::cout << "New moire did not open" << std::endl; exit(1);}
+
+   int number_of_Moire_unit_cells_x = ceil(system_size_x/Moire_abs_x);
+   int number_of_Moire_unit_cells_y = ceil(system_size_x/Moire_abs_y);
+   // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
+   // int total_atoms_kept = 1;
+   int new_lattice_atoms = 0;
+   for (int i = -1*number_of_Moire_unit_cells_x; i < 2*number_of_Moire_unit_cells_x; i++){
+         for (int j = -1*number_of_Moire_unit_cells_y; j < 2*number_of_Moire_unit_cells_y; j++){
+            // turn off replication in z to allow for explicit abba/abab stacking
+            //for (int k = 0; k < number_of_unit_cells_z; k++){
+               for (int atom_i = 0; atom_i < all_m_atoms_offset.size(); atom_i ++){
+
+                  double x_j = all_m_atoms_offset[atom_i].x + i*Moire_a0x + j*Moire_a0y;
+                  double y_j = all_m_atoms_offset[atom_i].y + i*Moire_a1x + j*Moire_a1y;
+                  double z_j = all_m_atoms_offset[atom_i].z;
+
+                  spin new_atom(all_m_atoms_offset[atom_i]);
+                  new_atom.x = x_j;
+                  new_atom.y = y_j;
+                  new_atom.Gx = i;
+                  new_atom.Gy = j;
+                  new_atom.id = new_lattice_atoms;
+
+                  int dy_cell = floor((y_j +0.0000001)/ a1y);
+                  int dx_cell = floor((x_j +0.0000001)/ a0x);
+                  new_atom.unit_x = dx_cell;
+                  new_atom.unit_y = dy_cell;
+
+                  if(new_atom.z >= a0z) {
+                        unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
+                        unit_cell_shifts[dx_cell][dy_cell][1] += new_atom.dx;
+                        unit_cell_shifts[dx_cell][dy_cell][2] += new_atom.dy;
+                        // row3.push_back(new_atom);
+                  }  
+   
+                  new_moire_output << new_lattice_atoms << "\t" << x_j/(Moire_abs_x) << '\t' <<  y_j/(Moire_abs_y) <<  "\t" << z_j/system_size_z << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
+                  new_lattice_atoms++;
+
+                     new_moire_lattice.push_back(new_atom);              
+                  
+               }  
+         } // j-loop
+   } // i-loop
+
+   for(int i = 0; i < unit_cell_shifts.size(); i++){
+      for (int j = 0; j < unit_cell_shifts[i].size(); j++) {
+         double occupancy = std::max(1,unit_cell_shifts[i][j][0]);
+         unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
+         unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
+         int i_shift = unit_cell_shifts[i][j][1];
+         int j_shift = unit_cell_shifts[i][j][2];
+         //  std::cout << "problems " << unit_cell_shifts[i][j][2] << ", " << j_shift << ", " << occupancy << std::endl;
+         shift_file << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << "\n";// << 
+                        // Einter_Cr1.at(i_shift).at(j_shift)[2]  << ", " <<\
+                        // Einter_Cr1.at(i_shift).at(j_shift) << ", " << \
+                        // Einter_Cr1.at(i_shift).at(j_shift) <<  ", " << \
+                        // Dx_inter.at(i_shift).at(j_shift) << ", " << \
+                        // Dy_inter.at(i_shift).at(j_shift) << ", " << \
+                        // Dz_inter.at(i_shift).at(j_shift) << ", " << \
+                        // Dx_intra.at(i_shift).at(j_shift) << ", " << \
+                        // Dy_intra.at(i_shift).at(j_shift) << ", " << \
+                        // Dz_intra.at(i_shift).at(j_shift) << "\n";
+      }
+   }
+   shift_file.close();
+   std::cout << total_atoms << " atoms; [complete]" << std::endl;
    
 }
 

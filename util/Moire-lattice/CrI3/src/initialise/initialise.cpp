@@ -37,6 +37,7 @@ std::vector < spin > row3;
 std::vector < spin > row4;
 std::vector < spin > all_m_atoms;
 std::vector < spin > all_m_atoms_offset;
+std::vector < spin > new_moire_lattice;
 std::vector < spin > all_nm_atoms;
 
 std::ofstream outfile4 ("interactions.ucf");
