@@ -51,15 +51,15 @@
 
    class interaction {
       public:
-         double xx= 10.0;
-         double xy= 0.0;
-         double xz= 0.0;
-         double yx= 0.0;
-         double yy= 0.0;
-         double yz= 0.0;
-         double zx= 0.0;
-         double zy= 0.0;
-         double zz= 0.0;
+         int id_i = -1;
+         int id_j = -1;
+         double J= 0.0;
+         double Dx= 0.0;
+         double Dy= 0.0;
+         double Dz= 0.0;
+         int pbc_x = 0;
+         int pbc_y = 0;
+         int pbc_z = 0;
    };
 
    extern std::vector < spin > atom;
@@ -70,8 +70,10 @@
    extern std::vector < spin > row4;
    extern std::vector < spin > all_m_atoms;
    extern std::vector < spin > all_nm_atoms;
+   extern std::vector < spin > all_m_atoms_offset;
    extern std::vector < std::vector < std::vector <int> > > unit_cell_shifts;
 
+   bool inside_system(double sx, double sy, double x, double y, double offset);
    bool inside_system(double x, double y, double offset);
    void read_in_atoms(std::string filename, int n_atoms, std::vector <spin > &atom2);
    void read_in_exchange(std::string filename, std::vector<std::vector<double> > &Jij);
