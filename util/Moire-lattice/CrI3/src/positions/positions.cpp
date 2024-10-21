@@ -73,8 +73,8 @@ void create_magnetic_atom_list(std::string filename){
    std::cout << "Generating lattice structure...." << std::flush;
    // double normalise_x = 100.0/(a0x*3.0);
    // double normalise_y = 100.0/(a0x*sqrt(3));
-   std::ofstream shift_file;
-   shift_file.open("shifted_constants.txt");
+   // std::ofstream shift_file;
+   // shift_file.open("shifted_constants.txt");
 
    // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
    // int total_atoms_kept = 1;
@@ -95,13 +95,13 @@ void create_magnetic_atom_list(std::string filename){
                      // calculate rotated atom positions
                      double x_new = x_j*cos(twist_angle*0.5) - y_j*sin(twist_angle*0.5);
                      double y_new = y_j*cos(twist_angle*0.5) + x_j*sin(twist_angle*0.5);
-                     if( !inside_system(system_size_x, system_size_y, x_new, y_new, 0.0) && (inside_system(system_size_x, system_size_y, x_new, y_new, -0.000)) ){
-                        if(x_new < 0.0) x_new = 0.0;
-                        else if(x_new > system_size_x) x_new = system_size_x-0.0001;
+                     // if( !inside_system(system_size_x, system_size_y, x_new, y_new, 0.0) && (inside_system(system_size_x, system_size_y, x_new, y_new, -0.000)) ){
+                     //    if(x_new < 0.0) x_new = 0.0;
+                     //    else if(x_new > system_size_x) x_new = system_size_x-0.0001;
 
-                        if(y_new < 0.0) y_new = 0.0;
-                        else if (y_new > system_size_y) y_new = system_size_y-0.0001;
-                     }
+                     //    if(y_new < 0.0) y_new = 0.0;
+                     //    else if (y_new > system_size_y) y_new = system_size_y-0.0001;
+                     // }
                      // if atom is in system bounds, then generate it
                      if (inside_system(system_size_x, system_size_y, x_new, y_new, 0.0)){
                         
@@ -142,9 +142,9 @@ void create_magnetic_atom_list(std::string filename){
                            new_atom.S = 3;
                            new_atom.dx = changex;
                            new_atom.dy = changey;
-                            unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
-                           unit_cell_shifts[dx_cell][dy_cell][1] += changex;
-                           unit_cell_shifts[dx_cell][dy_cell][2] += changey;
+                           //  unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
+                           // unit_cell_shifts[dx_cell][dy_cell][1] += changex;
+                           // unit_cell_shifts[dx_cell][dy_cell][2] += changey;
                            row3.push_back(new_atom);
                         } else if (z_j <= a0z*3){
                            new_atom.S = 3;
@@ -162,28 +162,30 @@ void create_magnetic_atom_list(std::string filename){
                         all_m_atoms.push_back(new_atom);
                         num_above_atoms++;
                      }
-                  } else if (inside_system(system_size_x, system_size_y, x_j, y_j, 0.0)){  // not twisted layer
+                  } else{
                      double x_new = x_j*cos(-twist_angle*0.5) - y_j*sin(-twist_angle*0.5);
                      double y_new = y_j*cos(-twist_angle*0.5) + x_j*sin(-twist_angle*0.5);
-                     if( !inside_system(system_size_x, system_size_y, x_j, y_j, 0.0) && (inside_system(system_size_x, system_size_y, x_j, y_j, -0.00)) ){
-                        if(x_new < 0.0) x_new = 0.0;
-                        else if(x_new > system_size_x) x_new = system_size_x-0.0001;
+                     if(inside_system(system_size_x, system_size_y, x_new, y_new, 0.0)) {  // not twisted layer
+                     
+                     // if( !inside_system(system_size_x, system_size_y, x_j, y_j, 0.0) && (inside_system(system_size_x, system_size_y, x_j, y_j, -0.00)) ){
+                     //    if(x_new < 0.0) x_new = 0.0;
+                     //    else if(x_new > system_size_x) x_new = system_size_x-0.0001;
 
-                        if(y_new < 0.0) y_new = 0.0;
-                        else if (y_new > system_size_y) y_new = system_size_y-0.0001;
-                     }
+                     //    if(y_new < 0.0) y_new = 0.0;
+                     //    else if (y_new > system_size_y) y_new = system_size_y-0.0001;
+                     // }
 
                      spin new_atom;
-                     new_atom.x = x_j;
-                     new_atom.y = y_j;
+                     new_atom.x = x_new;
+                     new_atom.y = y_new;
                      new_atom.z = z_j;
                      new_atom.id = total_atoms;
                      new_atom.l_id = atom[atom_i].l_id;
                      new_atom.h_id = atom[atom_i].h_id;
                      // new_atom.S = 0;
-                     new_atom.unit_y = int(floor((y_j +0.00001)/ a1y));
+                     new_atom.unit_y = int(floor((y_new +0.00001)/ a1y));
                         // changex += dy_cell*std::abs(a1x);
-                     new_atom.unit_x = int(floor((x_j +0.00001)/ a0x));
+                     new_atom.unit_x = int(floor((x_new +0.00001)/ a0x));
                      if(new_atom.unit_x  > number_of_unit_cells_x || new_atom.unit_y > number_of_unit_cells_y) {
                         std::cerr << new_atom.unit_x  << ", " << new_atom.unit_y  << ", " << x_j << ", " << y_j << ", " << \
                          int(floor(y_j / a1y)) << ", " <<  int(floor(x_j / a0x)) << std::endl;
@@ -208,9 +210,10 @@ void create_magnetic_atom_list(std::string filename){
                      }
                         // outfile2 << total_atoms << "\t" << x_j/(system_size_x) << '\t' <<  y_j/(system_size_y) <<  "\t" << z_j/system_size_z << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
                         total_atoms++;
-                     // }
+                     
                      all_m_atoms.push_back(new_atom);       
                      num_below_atoms++;
+                     }
                   } 
                }  
          } // j-loop
@@ -220,28 +223,27 @@ void create_magnetic_atom_list(std::string filename){
    //    std::cout << row1.size() << "\t" << row2.size() << "\t" << row3.size() << "\t" << row4.size() << std::endl;
    //    // exit(1);
    // }
-
-   for(int i = 0; i < unit_cell_shifts.size(); i++){
-      for (int j = 0; j < unit_cell_shifts[i].size(); j++) {
-         double occupancy = std::max(1,unit_cell_shifts[i][j][0]);
-         unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
-         unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
-         int i_shift = unit_cell_shifts[i][j][1];
-         int j_shift = unit_cell_shifts[i][j][2];
-         //  std::cout << "problems " << unit_cell_shifts[i][j][2] << ", " << j_shift << ", " << occupancy << std::endl;
-         shift_file << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << "\n";// << 
-                        // Einter_Cr1.at(i_shift).at(j_shift)[2]  << ", " <<\
-                        // Einter_Cr1.at(i_shift).at(j_shift) << ", " << \
-                        // Einter_Cr1.at(i_shift).at(j_shift) <<  ", " << \
-                        // Dx_inter.at(i_shift).at(j_shift) << ", " << \
-                        // Dy_inter.at(i_shift).at(j_shift) << ", " << \
-                        // Dz_inter.at(i_shift).at(j_shift) << ", " << \
-                        // Dx_intra.at(i_shift).at(j_shift) << ", " << \
-                        // Dy_intra.at(i_shift).at(j_shift) << ", " << \
-                        // Dz_intra.at(i_shift).at(j_shift) << "\n";
-      }
-   }
-   shift_file.close();
+   // for(int i = 0; i < unit_cell_shifts.size(); i++){
+   //    for (int j = 0; j < unit_cell_shifts[i].size(); j++) {
+   //       double occupancy = std::max(1,unit_cell_shifts[i][j][0]);
+   //       unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
+   //       unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
+   //       int i_shift = unit_cell_shifts[i][j][1];
+   //       int j_shift = unit_cell_shifts[i][j][2];
+   //       //  std::cout << "problems " << unit_cell_shifts[i][j][2] << ", " << j_shift << ", " << occupancy << std::endl;
+   //       shift_file << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << "\n";// << 
+   //                      // Einter_Cr1.at(i_shift).at(j_shift)[2]  << ", " <<\
+   //                      // Einter_Cr1.at(i_shift).at(j_shift) << ", " << \
+   //                      // Einter_Cr1.at(i_shift).at(j_shift) <<  ", " << \
+   //                      // Dx_inter.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dy_inter.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dz_inter.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dx_intra.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dy_intra.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dz_intra.at(i_shift).at(j_shift) << "\n";
+   //    }
+   // }
+   // shift_file.close();
    std::cout << total_atoms << " atoms; [complete]" << std::endl;
 }
 
@@ -263,8 +265,10 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
    // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
    // int total_atoms_kept = 1;
    int new_lattice_atoms = 0;
-   for (int i = -1*number_of_Moire_unit_cells_x; i < 2*number_of_Moire_unit_cells_x; i++){
-         for (int j = -1*number_of_Moire_unit_cells_y; j < 2*number_of_Moire_unit_cells_y; j++){
+   // for (int i = -1*number_of_Moire_unit_cells_x; i < 2*number_of_Moire_unit_cells_x; i++){
+   //       for (int j = -1*number_of_Moire_unit_cells_y; j < 2*number_of_Moire_unit_cells_y; j++){
+            for (int i = 0; i < number_of_Moire_unit_cells_x; i++){
+         for (int j = 0; j < number_of_Moire_unit_cells_y; j++){
             // turn off replication in z to allow for explicit abba/abab stacking
             //for (int k = 0; k < number_of_unit_cells_z; k++){
                for (int atom_i = 0; atom_i < all_m_atoms_offset.size(); atom_i ++){
@@ -304,7 +308,7 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
 
    for(int i = 0; i < unit_cell_shifts.size(); i++){
       for (int j = 0; j < unit_cell_shifts[i].size(); j++) {
-         double occupancy = std::max(1,unit_cell_shifts[i][j][0]);
+         int occupancy = std::max(1,unit_cell_shifts[i][j][0]);
          unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
          unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
          int i_shift = unit_cell_shifts[i][j][1];
@@ -324,7 +328,6 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
    }
    shift_file.close();
    std::cout << new_lattice_atoms << " atoms; [complete]" << std::endl;
-   
 }
 
 
