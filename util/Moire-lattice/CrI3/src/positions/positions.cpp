@@ -216,7 +216,6 @@ void create_magnetic_atom_list(std::string filename){
          } // j-loop
    } // i-loop
 
-  
    // if(row1.size() != row4.size() || row2.size() != row3.size() || total_atoms != all_m_atoms.size()) {
    //    std::cout << row1.size() << "\t" << row2.size() << "\t" << row3.size() << "\t" << row4.size() << std::endl;
    //    // exit(1);
@@ -247,7 +246,7 @@ void create_magnetic_atom_list(std::string filename){
 }
 
 void create_magnetic_atom_list_moire_unit(std::string filename, \
-                  double Moire_a0x, double Moire_a0y, double Moire_a1x, double Moire_a1y, \
+                  double Moire_aix, double Moire_aiy, double Moire_ajx, double Moire_ajy, \
                   double Moire_abs_x, double Moire_abs_y, int Moire_atom_size){
    std::cout << "Generating lattice structure from Moire unit cell file...." << std::flush;
    // double normalise_x = 100.0/(a0x*3.0);
@@ -258,8 +257,9 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
    std::ofstream new_moire_output(filename);
    if(!new_moire_output.is_open()) {std::cout << "New moire did not open" << std::endl; exit(1);}
 
-   int number_of_Moire_unit_cells_x = ceil(system_size_x/Moire_abs_x);
-   int number_of_Moire_unit_cells_y = ceil(system_size_x/Moire_abs_y);
+   int number_of_Moire_unit_cells_x = 1;//ceil(system_size_x/Moire_abs_x);
+   int number_of_Moire_unit_cells_y = 1;//ceil(system_size_x/Moire_abs_y);
+   std::cout << "reconstructing lattice using <" << number_of_Moire_unit_cells_x << ", " << number_of_Moire_unit_cells_y << "> unit cells " << std::endl;
    // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
    // int total_atoms_kept = 1;
    int new_lattice_atoms = 0;
@@ -269,34 +269,35 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
             //for (int k = 0; k < number_of_unit_cells_z; k++){
                for (int atom_i = 0; atom_i < all_m_atoms_offset.size(); atom_i ++){
 
-                  double x_j = all_m_atoms_offset[atom_i].x + i*Moire_a0x + j*Moire_a0y;
-                  double y_j = all_m_atoms_offset[atom_i].y + i*Moire_a1x + j*Moire_a1y;
+                  double x_j = all_m_atoms_offset[atom_i].x + i*Moire_aix + j*Moire_ajx;
+                  double y_j = all_m_atoms_offset[atom_i].y + i*Moire_aiy + j*Moire_ajy;
                   double z_j = all_m_atoms_offset[atom_i].z;
 
-                  spin new_atom(all_m_atoms_offset[atom_i]);
-                  new_atom.x = x_j;
-                  new_atom.y = y_j;
-                  new_atom.Gx = i;
-                  new_atom.Gy = j;
-                  new_atom.id = new_lattice_atoms;
+                  if(inside_system(system_size_x, system_size_y, x_j, y_j, 0.0)){
 
-                  int dy_cell = floor((y_j +0.0000001)/ a1y);
-                  int dx_cell = floor((x_j +0.0000001)/ a0x);
-                  new_atom.unit_x = dx_cell;
-                  new_atom.unit_y = dy_cell;
+                     spin new_atom(all_m_atoms_offset[atom_i]);
+                     new_atom.x = x_j;
+                     new_atom.y = y_j;
+                     new_atom.Gx = i;
+                     new_atom.Gy = j;
+                     // new_atom.id = new_lattice_atoms;
 
-                  if(new_atom.z >= a0z) {
-                        unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
-                        unit_cell_shifts[dx_cell][dy_cell][1] += new_atom.dx;
-                        unit_cell_shifts[dx_cell][dy_cell][2] += new_atom.dy;
-                        // row3.push_back(new_atom);
-                  }  
-   
-                  new_moire_output << new_lattice_atoms << "\t" << x_j/(Moire_abs_x) << '\t' <<  y_j/(Moire_abs_y) <<  "\t" << z_j/system_size_z << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
-                  new_lattice_atoms++;
+                     int dy_cell = floor((y_j +0.0000001)/ a1y);
+                     int dx_cell = floor((x_j +0.0000001)/ a0x);
+                     new_atom.unit_x = dx_cell;
+                     new_atom.unit_y = dy_cell;
+
+                     if(new_atom.z >= a0z) {
+                           unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
+                           unit_cell_shifts[dx_cell][dy_cell][1] += new_atom.dx;
+                           unit_cell_shifts[dx_cell][dy_cell][2] += new_atom.dy;
+                           // row3.push_back(new_atom);
+                     }  
+                     // new_moire_output << new_lattice_atoms << "\t" << x_j/(Moire_abs_x) << '\t' <<  y_j/(Moire_abs_y) <<  "\t" << z_j/system_size_z << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
+                     new_lattice_atoms++;
 
                      new_moire_lattice.push_back(new_atom);              
-                  
+                  }
                }  
          } // j-loop
    } // i-loop
@@ -322,7 +323,7 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
       }
    }
    shift_file.close();
-   std::cout << total_atoms << " atoms; [complete]" << std::endl;
+   std::cout << new_lattice_atoms << " atoms; [complete]" << std::endl;
    
 }
 
