@@ -75,7 +75,6 @@ void create_magnetic_atom_list(std::string filename){
    // double normalise_y = 100.0/(a0x*sqrt(3));
    // std::ofstream shift_file;
    // shift_file.open("shifted_constants.txt");
-
    // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
    // int total_atoms_kept = 1;
    for (int i = -1*number_of_unit_cells_x; i < 2*number_of_unit_cells_x; i++){
@@ -86,7 +85,6 @@ void create_magnetic_atom_list(std::string filename){
 
                   double x_j = atom[atom_i].x + i*a0x + j*a1x;
                   double y_j = atom[atom_i].y         + j*a1y;
-
                   double z_j = atom[atom_i].z; // + k*c0;
                   // std::cout << x_j << ", " << y_j << ", " << z_j << std::endl;
                   //std::cout << z_j << '\t' << twist_loction <<std::endl;
@@ -113,7 +111,6 @@ void create_magnetic_atom_list(std::string filename){
                         new_atom.l_id = atom[atom_i].l_id;
                         new_atom.h_id = atom[atom_i].h_id;
                         // new_atom.S = 1;
-                        
                         // double changex = std::abs(x_new - x_j);
                         // double changey = std::abs(y_new - y_j);
                         
@@ -265,10 +262,10 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
    // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
    // int total_atoms_kept = 1;
    int new_lattice_atoms = 0;
-   // for (int i = -1*number_of_Moire_unit_cells_x; i < 2*number_of_Moire_unit_cells_x; i++){
-   //       for (int j = -1*number_of_Moire_unit_cells_y; j < 2*number_of_Moire_unit_cells_y; j++){
-            for (int i = 0; i < number_of_Moire_unit_cells_x; i++){
-         for (int j = 0; j < number_of_Moire_unit_cells_y; j++){
+   for (int i = -1*number_of_Moire_unit_cells_x; i < 2*number_of_Moire_unit_cells_x; i++){
+         for (int j = -1*number_of_Moire_unit_cells_y; j < 2*number_of_Moire_unit_cells_y; j++){
+         //    for (int i = 0; i < number_of_Moire_unit_cells_x; i++){
+         // for (int j = 0; j < number_of_Moire_unit_cells_y; j++){
             // turn off replication in z to allow for explicit abba/abab stacking
             //for (int k = 0; k < number_of_unit_cells_z; k++){
                for (int atom_i = 0; atom_i < all_m_atoms_offset.size(); atom_i ++){
