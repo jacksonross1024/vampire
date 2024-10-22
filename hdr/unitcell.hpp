@@ -115,11 +115,11 @@ namespace unitcell{
       };
 
       void read_interactions(
-         const int num_atoms, // num atoms in unit cell
+         const uint64_t num_atoms, // num atoms in unit cell
          std::stringstream& ucf_file,
          std::istringstream& ucf_ss,
          std::string& filename,
-         unsigned int& line_counter,
+         uint64_t& line_counter,
          unsigned int& interaction_range);
 
       // function to set exchange type

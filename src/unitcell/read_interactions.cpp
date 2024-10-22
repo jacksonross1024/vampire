@@ -25,15 +25,15 @@ namespace unitcell{
 
    void unitcell::exchange_template_t::read_interactions(
       //unit_cell_t& unit_cell,
-      const int num_atoms, // num atoms in unit cell
+      const uint64_t num_atoms, // num atoms in unit cell
       std::stringstream& ucf_file,
       std::istringstream& ucf_ss,
       std::string& filename,
-      unsigned int& line_counter,
+      uint64_t& line_counter,
       unsigned int& interaction_range
    ){
 
-		int num_interactions = 0; // assume no interactions
+		uint64_t num_interactions = 0; // assume no interactions
       std::string exchange_type_string; // string defining exchange type
 
       // get number of exchange types
@@ -58,14 +58,14 @@ namespace unitcell{
       ni.resize(num_atoms, 0);
 
       // loop over all interactions and read into class
-      for (int i=0; i<num_interactions; i++){
+      for (uint64_t i=0; i<num_interactions; i++){
 
          // Output progress counter to screen for large interaction counts
          if( (i % (num_interactions/10 + 1)) == 0 && num_interactions > 10000) std::cout << "." << std::flush;
 
          // declare safe temporaries for interaction input
-         int id=i;
-         int iatom=-1,jatom=-1; // atom pairs
+         uint64_t id=i;
+         uint64_t iatom=0,jatom=0; // atom pairs
          int dx=0, dy=0,dz=0; // relative unit cell coordinates
          // get line
          std::string int_line;
@@ -74,6 +74,8 @@ namespace unitcell{
          std::istringstream int_iss(int_line,std::istringstream::in);
          int_iss >> id >> iatom >> jatom >> dx >> dy >> dz;
          //inputfile >> id >> iatom >> jatom >> dx >> dy >> dz;
+         // iatom--;
+         // jatom--;
          line_counter++;
          // check for sane input
          if(iatom>=0 && iatom < num_atoms) interaction[i].i=iatom;

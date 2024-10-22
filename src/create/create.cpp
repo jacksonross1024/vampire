@@ -109,7 +109,7 @@ int create(){
    const double ucx = unit_cell.dimensions[0];
    const double ucy = unit_cell.dimensions[1];
    const double ucz = unit_cell.dimensions[2];
-   const unsigned int na = unit_cell.atom.size();
+   const uint64_t na = unit_cell.atom.size();
 
    // Calculate number of global and local unit cells required (rounding up)
    // Must be set before rounding up system dimensions for periodic boundary conditions

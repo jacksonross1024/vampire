@@ -41,7 +41,7 @@ void read_unit_cell(unit_cell_t & unit_cell, std::string filename){
    zlog << zTs() << "Reading data completed. Processing unit cell data..." << std::endl;
 
 	// keep record of current line
-	unsigned int line_counter=0;
+	uint64_t line_counter=0;
 	unsigned int line_id=0;
 
    std::string exchange_type_string; // string defining exchange type
@@ -95,11 +95,11 @@ void read_unit_cell(unit_cell_t & unit_cell, std::string filename){
 				iss >> unit_cell.shape[2][0] >> unit_cell.shape[2][1] >> unit_cell.shape[2][2];
 				break;
 			case 4:
-				int num_uc_atoms;
+				unsigned int num_uc_atoms;
 				iss >> num_uc_atoms;
 				//std::cout << "Reading in " << num_uc_atoms << " atoms" << std::endl;
 				// resize unit_cell.atom array if within allowable bounds
-				if( (num_uc_atoms >0) && (num_uc_atoms <= 1000000)) unit_cell.atom.resize(num_uc_atoms);
+				if( (num_uc_atoms >0) && (num_uc_atoms <= 100000000)) unit_cell.atom.resize(num_uc_atoms);
 				else {
 					terminaltextcolor(RED);
 					std::cerr << "Error! Requested number of atoms " << num_uc_atoms << " on line " << line_counter
@@ -112,12 +112,12 @@ void read_unit_cell(unit_cell_t & unit_cell, std::string filename){
 
 
             // loop over all atoms and read into class
-            for(unsigned int i = 0; i < unit_cell.atom.size(); i++){
+            for(uint64_t i = 0; i < unit_cell.atom.size(); i++){
 
 					line_counter++;
 
 					// declare safe temporaries for atom input
-					int id=i;
+					uint64_t id=i;
 					double cx=2.0, cy=2.0,cz=2.0; // coordinates - default will give an error
 					int mat_id=0, lcat_id=0, hcat_id=0; // sensible defaults if omitted
 					// get line
@@ -125,6 +125,7 @@ void read_unit_cell(unit_cell_t & unit_cell, std::string filename){
 					getline(inputfile,atom_line);
 					std::istringstream atom_iss(atom_line,std::istringstream::in);
 					atom_iss >> id >> cx >> cy >> cz >> mat_id >> lcat_id >> hcat_id;
+					// id--;
 					//std::cout << id << "\t" << cx << "\t" << cy << "\t" << cz<< "\t"  << mat_id << "\t" << lcat_id << "\t" << hcat_id << std::endl;
 					//inputfile >> id >> cx >> cy >> cz >> mat_id >> lcat_id >> hcat_id;
 					// now check for mostly sane input

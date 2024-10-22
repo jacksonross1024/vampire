@@ -538,7 +538,7 @@ namespace create{
    void identify_mpi_boundary_atoms(std::vector<cs::catom_t>& catom_array, neighbours::list_t& cneighbourlist){
 
          // Find and mark boundary and unneeded halo atoms
-         for( unsigned int atom = 0; atom < catom_array.size(); atom++ ){
+         for( uint64_t atom = 0; atom < catom_array.size(); atom++ ){
 
             // define mpi type of local atom
             const int my_mpi_type = catom_array[atom].mpi_type;
@@ -579,7 +579,7 @@ namespace create{
       void mark_non_interacting_halo(std::vector<cs::catom_t>& catom_array){
 
          // Find and mark boundary and unneeded halo atoms
-         for( unsigned int atom = 0; atom < catom_array.size(); atom++ ){
+         for( uint64_t atom = 0; atom < catom_array.size(); atom++ ){
 
             // define mpi type of local atom
             const int my_mpi_type = catom_array[atom].mpi_type;
@@ -621,7 +621,7 @@ namespace create{
          std::list <data_t>::iterator it;
 
          // copy data to list
-         for(unsigned int atom=0;atom<catom_array.size();atom++){
+         for(uint64_t atom=0;atom<catom_array.size();atom++){
             data_t tmp;
             tmp.mpi_type=catom_array[atom].mpi_type;
             tmp.atom_number=atom;
@@ -654,7 +654,7 @@ namespace create{
          std::vector<int> inv_mpi_type_vec(catom_array.size());
 
          // loop over new atom list
-         for (unsigned int atom=0;atom<catom_array.size();atom++){
+         for (uint64_t atom=0;atom<catom_array.size();atom++){
             // store new atom number in array of old atom numbers
             inv_mpi_type_vec[mpi_type_vec[atom].atom_number]=atom;
 

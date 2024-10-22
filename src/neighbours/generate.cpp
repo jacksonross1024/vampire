@@ -48,7 +48,7 @@ namespace neighbours{
 //----------------------------------------------------------------------------------
 void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atoms (as reference for speed)
                unitcell::exchange_template_t& exchange, // exchange template to calculate neighbour list
-               const unsigned int num_atoms_in_unit_cell,        // number of atoms in each cell to estimate interaction numbers
+               const uint64_t num_atoms_in_unit_cell,        // number of atoms in each cell to estimate interaction numbers
                const double ucdx,                       // unit cell size
                const double ucdy,
                const double ucdz
@@ -64,7 +64,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	const int64_t max_nn = int64_t( 1.1*( double(exchange.interaction.size()) / double(num_atoms_in_unit_cell) ) );
 
 	// Reserve space for each atom in neighbour list according to material type
-	for(int atom=0; atom < num_atoms; atom++){
+	for(uint64_t atom=0; atom < num_atoms; atom++){
 		list.push_back(std::vector<neighbour_t>());
 		list[atom].reserve(max_nn);
 	}
@@ -75,7 +75,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    int64_t max[3] = {0,0,0}; // highest cell id
 
    // find supercell range of atoms on this CPU
-	for(int atom = 0; atom < num_atoms; atom++){
+	for(uint64_t atom = 0; atom < num_atoms; atom++){
 
 		int64_t c[3] = { atom_array[atom].scx,
                        atom_array[atom].scy,
@@ -115,11 +115,11 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	std::vector<std::vector<std::vector<std::vector<int> > > > supercell_array;
 
    // calculate total number of neighbours and inform user of memory needed
-   double num_neighbours = double(d[0]) * double(d[1]) * double(d[2]) * double(num_atoms_in_unit_cell);
+   uint64_t num_neighbours = d[0] * (d[1]) * (d[2]) * num_atoms_in_unit_cell;
    #ifdef MPICF
       // calculate total interactions for entire system
       double total_neighbours = 0.0;
-      MPI_Allreduce(&total_neighbours, &num_neighbours, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&total_neighbours, &num_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
          zlog << zTs() << "Memory required for neighbourlist calculation (each cpu):" <<
          8.0*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
@@ -174,7 +174,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    zlog << zTs() << "Populating supercell array for neighbourlist calculation..."<< std::endl;
 
 	// Populate supercell array with atom numbers
-	for(int atom=0; atom < num_atoms; atom++){
+	for(uint64_t atom=0; atom < num_atoms; atom++){
 
       // get supercell coordinates
       int64_t scc[3]={ atom_array[atom].scx - offset[0],

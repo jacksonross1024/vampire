@@ -96,9 +96,9 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 				// need to change this to accept non-orthogonal lattices
 				// Loop over atoms in unit cell
 				for(unsigned int uca=0;uca<unit_cell.atom.size();uca++){
-					double cx = (double(x)+unit_cell.atom[uca].x)*unit_cell.dimensions[0];
-					double cy = (double(y)+unit_cell.atom[uca].y)*unit_cell.dimensions[1];
-					double cz = (double(z)+unit_cell.atom[uca].z)*unit_cell.dimensions[2];
+					double cx = (double(x)*unit_cell.shape[0][0] + double(y)*unit_cell.shape[0][1] + double(z)*unit_cell.shape[0][2] + unit_cell.atom[uca].x)*unit_cell.dimensions[0];
+					double cy = (double(y)*unit_cell.shape[1][0] + double(y)*unit_cell.shape[1][1] + double(z)*unit_cell.shape[1][2] + unit_cell.atom[uca].y)*unit_cell.dimensions[1];
+					double cz = (double(x)*unit_cell.shape[2][0] + double(y)*unit_cell.shape[2][1] + double(z)*unit_cell.shape[2][2] + unit_cell.atom[uca].z)*unit_cell.dimensions[2];
 					#ifdef MPICF
 						if(vmpi::mpi_mode==0){
 							// only generate atoms within allowed dimensions

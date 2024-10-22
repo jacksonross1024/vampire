@@ -67,26 +67,30 @@ namespace vin {
 
          // get total number of characters in file
          len = contents.length();
-
+         
          // reserve correct amount of storage for message
          message.reserve(len);
 
          // copy contents to message buffer for broadcast
          std::copy(contents.begin(), contents.end(), std::back_inserter(message));
-
+         
       }
 
       #ifdef MPICF
 
          // broadcast string size from root (0) to all processors
          MPI_Bcast(&len, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-
+         if( vmpi::my_rank ==0) std::cout << "succesfully Bcast input length from " << filename << std::endl;
          // resize message buffer on all processors other than root
          if(!root) message.resize(len);
-
+         //check if multiple Bcasts required
+         if(len != int(message.size()) ) {
+            int first_block = floor(len /2);
+            MPI_Bcast(&message[0], first_block, MPI_CHAR, 0, MPI_COMM_WORLD);
+            MPI_Bcast(&message[first_block], len-first_block, MPI_CHAR, 0, MPI_COMM_WORLD);
+         } else MPI_Bcast(&message[0], message.size(), MPI_CHAR, 0, MPI_COMM_WORLD);
          // broadcast message buffer from root (0) to all processors
-         MPI_Bcast(&message[0], message.size(), MPI_CHAR, 0, MPI_COMM_WORLD);
-
+         
       #endif
 
       // return message array cast to a std::string on all processors
