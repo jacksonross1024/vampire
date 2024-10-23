@@ -188,6 +188,15 @@ const std::vector<double>& magnetization_statistic_t::get_magnetization(){
 
 }
 
+std::array<double,4> magnetization_statistic_t::return_magnetization(int mask_id){
+
+      return {magnetization[4*mask_id + 0],\
+              magnetization[4*mask_id + 1],\
+              magnetization[4*mask_id + 2],\
+              magnetization[4*mask_id + 3]};
+
+}
+
 //------------------------------------------------------------------------------------------------------
 // Function to get magnetisation data
 //------------------------------------------------------------------------------------------------------

@@ -509,10 +509,19 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		//----------------------------------------------------------------------------------
 
 		// save polarization to temporary constant
-		const double stpx = stt_polarization_unit_vector[0];
-		const double stpy = stt_polarization_unit_vector[1];
-		const double stpz = stt_polarization_unit_vector[2];
+		// const double stpx = stt_polarization_unit_vector[0];
+		// const double stpy = stt_polarization_unit_vector[1];
+		// const double stpz = stt_polarization_unit_vector[2];
 
+		int mag_mat = 1;
+		std::array<double, 4> mag_vector = stats::material_magnetization.return_magnetization(mag_mat);
+		// std::cout << mag_vector[0] << ", " << mag_vector[1] << ", " << mag_vector[2] << ", " << mag_vector[3] << std::endl;
+		double mag_y_length = mag_vector[1]*mag_vector[4];
+		//m x B
+		const double stpx = mag_vector[1]*stt_polarization_unit_vector[2]-mag_vector[2]*stt_polarization_unit_vector[1];
+		const double stpy = mag_vector[2]*stt_polarization_unit_vector[0]-mag_vector[0]*stt_polarization_unit_vector[2];
+		const double stpz = mag_vector[0]*stt_polarization_unit_vector[1]-mag_vector[1]*stt_polarization_unit_vector[0];
+	
 		const double strj = stt_rj[material];
 		const double stpj = stt_pj[material];
 
@@ -546,9 +555,14 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );
 		hz += sot_factor * ( (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz );
 		
-		sotpx = sot_polarization_unit_vector2[0];
-		sotpy = sot_polarization_unit_vector2[1];
-		sotpz = sot_polarization_unit_vector2[2];
+
+		// sotpx = sot_polarization_unit_vector2[0];
+		// sotpy = sot_polarization_unit_vector2[1];
+		// sotpz = sot_polarization_unit_vector2[2];
+		
+		sotpx = mag_y_length*mag_vector[0];
+		sotpx = mag_y_length*mag_vector[1];
+		sotpx = mag_y_length*mag_vector[2];
 
 		sotrj = sot_rj2[material];
 		sotpj = sot_pj2[material];

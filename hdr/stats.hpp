@@ -15,9 +15,11 @@
 // C++ include files
 #include <vector>
 #include <string>
+#include <array>
 
 // #include <fftw3.h>
 #include "sim.hpp"
+
 namespace stats
 //==========================================================
 // Namespace statistics
@@ -182,6 +184,7 @@ namespace stats
          void set_magnetization(std::vector<double>& magnetization, std::vector<double>& mean_magnetization, long counter);
          void reset_magnetization_averages();
          const std::vector<double>& get_magnetization();
+         std::array<double,4> return_magnetization(int mask_id);
          std::string output_magnetization(bool header);
          std::string output_normalized_magnetization(bool header);
          std::string output_normalized_magnetization_length(bool header);
