@@ -1,0 +1,71 @@
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+#dimensions:unit-cell-size = 2.507 !A
+
+dimensions:system-size-x = 400.0 !nm
+dimensions:system-size-y = 400.0 !nm
+dimensions:system-size-z = 26.16 !A
+
+#create:periodic-boundaries-x
+#create:periodic-boundaries-y
+#create:periodic-boundaries-z
+#dipole:solver=tensor
+#dipole:field-update-rate=10
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:unit-cell-file = CrI3.ucf
+material:file = CrI3.mat
+create:crystal-sublattice-materials=true
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+
+sim:total-time-steps=1000000
+sim:equilibration-temperature=40
+sim:equilibration-time-steps = 10000
+sim:time-steps-increment = 10000
+sim:time-step= 1 !fs
+
+sim:minimum-temperature=0
+sim:maximum-temperature=40.0
+sim:applied-field-strength=0.0 !T
+#sim:applied-field-unit-vector=0,0,1
+sim:cooling-time=2000!ps
+sim:cooling-function = gaussian 
+
+#cells:macro-cell-size-x = 2 !nm
+#cells:macro-cell-size-y = 2 !nm
+#cells:macro-cell-size-z = 2 !nm
+#cells:output-cells
+
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program = field-cool #time variable magnetic field; SOT; STT
+sim:integrator = llg-heun
+
+sim:save-checkpoint = continuous 
+sim:save-checkpoint-rate = 50 
+#------------------------------------------
+# data output
+#------------------------------------------
+config:atoms
+config:atoms-output-rate=50
+
+output:output-rate=10
+output:time-steps
+output:temperature
+output:material-mean-magnetisation
+output:material-magnetisation
+output:mean-susceptibility
+output:mean-total-torque
+output:total-energy 
+

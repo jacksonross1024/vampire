@@ -32,6 +32,10 @@
 #include <string>
 #include <vector>
 
+// Load standard forms of fixed-width types (needed for some compilers)
+using std::uint64_t;
+using std::int64_t;
+
 #ifdef MPICF
 	#include <mpi.h>
 #endif
@@ -121,6 +125,7 @@ namespace vmpi{
    extern void collate(std::vector<double>& input, std::vector<double>& output);
    extern void counts_and_displacements(std::vector<double>& input, std::vector<double>& output, std::vector<int>& counts, std::vector<int>& displacements);
    extern void fast_collate(std::vector<double>& input, std::vector<double>& output, std::vector<int>& counts, std::vector<int>& displacements);
+	extern void broadcast(std::vector<char>& message, int source_rank);
 
    // function to seed random numbers in parallel
    uint32_t parallel_rng_seed(int seed);
