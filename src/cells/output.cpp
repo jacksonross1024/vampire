@@ -25,7 +25,7 @@ namespace cells{
         std::ofstream output_file;
 
         void open_output_data() {
-            output_file.open("microcells.txt");
+            output_file.open("microcells" + std::to_string(output_counter) + ".txt");
 
          if(!output_file.is_open()) {
 				std::cerr << "Fatal file directory error for microcell output" << std::endl;
@@ -44,10 +44,10 @@ namespace cells{
         }
 
         void output_data() {
-
+            
             if(vmpi::my_rank == 0) {
-                output_file << output_counter << "\t";
-
+               // output_file << output_counter << "\t";
+                open_output_data();
                 for(int cell = 0; cell < cells::mag_array_m.size(); cell++) {
                     if(cells::num_atoms_in_cell_global[cell] == 0) continue;
                     // double mod = sqrt(mag_array_x[cell]*mag_array_x[cell]+ mag_array_y[cell]*mag_array_y[cell] + mag_array_z[cell]* mag_array_z[cell]);
