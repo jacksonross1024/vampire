@@ -22,7 +22,8 @@
 #include "vmpi.hpp"
 #include "create.hpp"
 #include "micromagnetic.hpp"
-
+#include "sim.hpp" 
+#include "vio.hpp"
 #include "atoms.hpp"
 
 // cells module internal headers
@@ -91,7 +92,7 @@ namespace cells{
          cells::mag_array_m[cell] = magm/msat;                     
       }
 
-      if(output_microcells) {
+      if(output_microcells && sim::time%vout::output_rate==0) {
          cells::output_data();
       }
       return EXIT_SUCCESS;

@@ -46,7 +46,7 @@ namespace cells{
         void output_data() {
 
             if(vmpi::my_rank == 0) {
-                output_file << output_counter << "\t";
+               // output_file << output_counter << "\t";
 
                 for(int cell = 0; cell < cells::mag_array_m.size(); cell++) {
                     if(cells::num_atoms_in_cell_global[cell] == 0) continue;
