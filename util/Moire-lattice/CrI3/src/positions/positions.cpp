@@ -77,7 +77,7 @@ void create_magnetic_atom_list(std::string filename){
    // shift_file.open("shifted_constants.txt");
    // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
    // int total_atoms_kept = 1;
-   for (int i = -1*number_of_unit_cells_x; i < 2*number_of_unit_cells_x; i++){
+   for (int i = -1*number_of_unit_cells_x; i < 2*number_of_unit_cells_x; i++) {
          for (int j = -1*number_of_unit_cells_y; j < 2*number_of_unit_cells_y; j++){
             // turn off replication in z to allow for explicit abba/abab stacking
             //for (int k = 0; k < number_of_unit_cells_z; k++){
@@ -288,7 +288,7 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
                      new_atom.unit_x = dx_cell;
                      new_atom.unit_y = dy_cell;
 
-                     if(new_atom.z >= a0z) {
+                     if(new_atom.z != 0.0) {
                            unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
                            unit_cell_shifts[dx_cell][dy_cell][1] += new_atom.dx;
                            unit_cell_shifts[dx_cell][dy_cell][2] += new_atom.dy;
