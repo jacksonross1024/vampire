@@ -50,10 +50,10 @@ void resize_arrays(std::vector < std::vector < double > > &A, int sizex, int siz
 
 void initialise_variables(){
 
-   number_of_unit_cells_x = ceil(system_size_x/a0x);
-   number_of_unit_cells_y = ceil(system_size_y/a1y);
-   system_size_x = number_of_unit_cells_x*a0x;
-   system_size_y = number_of_unit_cells_y*a1y;
+   number_of_unit_cells_x = ceil(system_size_x/a0x)+1;
+   number_of_unit_cells_y = ceil(system_size_y/a1y)+1;
+   // system_size_x = number_of_unit_cells_x*a0x;
+   // system_size_y = number_of_unit_cells_y*a1y;
    // number_of_unit_cells_x++;
    // number_of_unit_cells_y++;
    system_size_z = number_of_unit_cells_z*c0;
@@ -142,10 +142,10 @@ void initialise_variables(){
    int estimated_system_spins = round(system_size_x*system_size_y*8.0/41.8);
 
    all_m_atoms.reserve(estimated_system_spins);
-   row1.reserve(int(estimated_system_spins/2));
-   // row2.reserve(int(estimated_system_spins/4));
-   row3.reserve(int(estimated_system_spins/2));
-   // row4.reserve(int(estimated_system_spins/4));
+   // row1.reserve(int(estimated_system_spins/2));
+   // // row2.reserve(int(estimated_system_spins/4));
+   // row3.reserve(int(estimated_system_spins/2));
+   // // row4.reserve(int(estimated_system_spins/4));
 
    
    unit_cell_shifts.resize(number_of_unit_cells_x);
