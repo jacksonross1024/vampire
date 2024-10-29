@@ -398,9 +398,9 @@ double inter_nn_dist_1 = 7.0;
 double inter_nn_dist_2 = 7.77;
 double inter_nn_dist_3 = 9.9;
 
-double inter_AB_dist_1 = 6.541;
+double inter_AB_dist_1 = 7.0;
 double inter_AB_dist_2 = 7.77;
-double inter_AB_dist_3 = 7.77;
+double inter_AB_dist_3 = 9.9;
 // double nn_dist_3 = a0x*pow(1.3333333333,0.5);
 double nn_dist_1;
 double nn_dist_2;
@@ -414,19 +414,23 @@ double J_intra_1=2.5*J_constant;
 double J_intra_2=0.75*J_constant;
 double J_intra_3=-0.01*J_constant;
 
-double Jinter1_AB = 0.135*J_constant;
-double Jinter2_AB = 0.185*J_constant;
-double Jinter2_AB_prime = 0.15*J_constant;
-double Jintra1_AB = 1.98*J_constant;
-double Jintra2_AB = 0.275*J_constant;
-double Jintra2_ABprime = 0.305*J_constant;
+double Jinter1_AB = 0.13*J_constant;
+double Jinter2_AB = -0.07*J_constant;
+double Jinter3_AB = -0.035*J_constant;
 
-double D_intra_x_constant = 0.025*J_constant;
-double D_intra_y_constant =  0.03*J_constant;
-double D_intra_z_constant = 0.01*J_constant;
-double D_intra2_x_constant = 0.0125*J_constant;
-double D_intra2_y_constant = 0.015*J_constant;
-double D_intra2_z_constant = 0.015*J_constant;
+double Jintra1_AB = (2.7657+2.7657+2.4827)*J_constant/3.0;
+double Jintra2_AB = (0.7092+0.731+0.7652)*J_constant/3.0;
+double Jintra3_AB = (-0.1074-0.1074-0.0994)*J_constant/3.0;
+
+double D_intra_x_constant = 0.0*J_constant;
+double D_intra_y_constant =  (-0.0222+0.0767+0.0767)*J_constant/3.0;
+double D_intra_z_constant = (-0.0399-0.0399-0.0079)*J_constant/3.0;
+double D_intra2_x_constant = 0.1076*J_constant;
+double D_intra2_y_constant = -0.0093*J_constant;
+double D_intra2_z_constant = -0.0766*J_constant;
+double D_intra3_x_constant =	0*J_constant;
+double D_intra3_y_constant =  0.0176*J_constant;
+double D_intra3_z_constant = 0.0659*J_constant;
 //set the initial jumber of interactions to zero for counter
 int number_of_interactions = 0;
 
@@ -873,7 +877,6 @@ void calc_interactions() {
    // std::ofstream correlation_file;
    // correlation_file.open("moire-lattice-constants.txt");
    // std::vector<std::array<double, 3> > zero_correlation;
-  
    // now calculate neighbour list looping over boxes
    vtimer_t timer;
       timer.start();
@@ -949,7 +952,15 @@ void calc_interactions() {
                                  double angle_j = atan2(-ady,-adx);// - twist_angle;
                                  std::array<double, 4> exchange({0.0,0.0,0.0,0.0});
                                  if(atom_i.S == atom_j.S) {
-                                    if(atom_i.l_id == 1) {
+                                    if ( atom_i.S == 1) {
+                                       // angle_i += 0.5*twist_angle;
+                                       exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);  
+                                       // std::cout << atom_i.id << ", " << exchange[3]/J_constant << std::endl;
+                                    } else if(atom_i.S == 4) {
+                                       // angle_i -= 0.5*twist_angle;
+                                       exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);
+                                       exchange[3] *= -1;
+                                    } else if(atom_i.l_id == 1) {
                                        angle_i += twist_angle;
                                        angle_j += twist_angle;
                                        if(dL2 < intra_nn_dist_1) {exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_1NN ); all_m_atoms[atom_i.id].intra1++;}
@@ -993,17 +1004,11 @@ void calc_interactions() {
                                        double r_Dy = exchange[1]*sin(-0.5*twist_angle)+exchange[2]*cos(-0.5*twist_angle);
                                        exchange[1] = r_Dx;
                                        exchange[2] = r_Dy;
-                                    } else if(atom_i.S == 1) {
-                                       exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);
-                                       exchange[3] *= -1;
-                                       // std::cout << atom_i.id << ", " << exchange[3]/J_constant << std::endl;
-                                    } else if(atom_i.S == 4) {
-                                       angle_i -= twist_angle;
-                                       exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);
                                     } else continue;
+                                    // exchange[0] = 0.0;
                                  } else {
-                                    if (atom_j.h_id == 0 || atom_i.h_id == 0) exchange = calculate_inter_Jani(atom_i, atom_j, dL2, angle_i);
-                                    else if(atom_i.l_id == 1) {  
+                                    // if (atom_j.h_id == 0 || atom_i.h_id == 0) exchange = calculate_inter_Jani(atom_i, atom_j, dL2, angle_i);
+                                    if(atom_i.l_id == 1) {  
                                        if(dL2 <= inter_nn_dist_1) {exchange = match_inter_exchange(adx, ady, Einter_Cr1);
                                        all_m_atoms[atom_i.id].inter1++;}
                                        else if(dL2 <= inter_nn_dist_2) {exchange = match_inter_exchange(adx, ady, Einter_Cr1);
@@ -1020,8 +1025,8 @@ void calc_interactions() {
                                        all_m_atoms[atom_i.id].inter3++;}
                                        else continue;
                                     } else if(atom_i.l_id == 3) {
-                                       adx = adx*cos(-twist_angle)-ady*sin(-twist_angle);
-                                       ady = adx*sin(-twist_angle)+ady*cos(-twist_angle);
+                                       // adx = adx*cos(0.5*twist_angle)-ady*sin(-twist_angle);
+                                       // ady = adx*sin(-twist_angle)+ady*cos(-twist_angle);
                                        if(dL2 <= inter_nn_dist_1) {exchange = match_inter_exchange(adx, ady, Einter_Cr3);
                                        all_m_atoms[atom_i.id].inter1++;}
                                        else if(dL2 <= inter_nn_dist_2) {exchange = match_inter_exchange(adx, ady, Einter_Cr3);
@@ -1030,8 +1035,8 @@ void calc_interactions() {
                                        all_m_atoms[atom_i.id].inter3++;}
                                        else continue;
                                     } else if(atom_i.l_id == 4) {
-                                       adx = adx*cos(-twist_angle)-ady*sin(-twist_angle);
-                                       ady = adx*sin(-twist_angle)+ady*cos(-twist_angle);
+                                       // adx = adx*cos(-twist_angle)-ady*sin(-twist_angle);
+                                       // ady = adx*sin(-twist_angle)+ady*cos(-twist_angle);
                                        if(dL2 < inter_nn_dist_1) {exchange = match_inter_exchange(adx, ady, Einter_Cr4);
                                        all_m_atoms[atom_i.id].inter1++;}
                                        else if(dL2 < inter_nn_dist_2) {exchange = match_inter_exchange(adx, ady, Einter_Cr4);
@@ -1046,7 +1051,7 @@ void calc_interactions() {
                                  // interactions_list[atom_j.id*11 + interactions_list[atom_j.id*11]] = 0;
                                  // interactions_list[atom_j.id*11]++;
                                  // exchange_count[atom_index]++;
-                                 if(exchange[0] == 0.0 ) continue;
+                                 if(exchange[0] == 0.0 && exchange[1] == 0.0 && exchange[2] == 0.0 && exchange[3] == 0.0) continue;
 
                                  config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+0] += 1.0;
                                  config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
@@ -1107,11 +1112,11 @@ void calc_interactions() {
       if(!config_output.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
       for(int i = 0; i < number_of_unit_cells_x; i++) {
          for(int j = 0; j < number_of_unit_cells_y; j++){
-            double bottom_occ = config_energy[i][j][(2-1)*5+0];
-            double top_occ = config_energy[i][j][(3-1)*5+0];
-            if(bottom_occ == 0 && top_occ == 0) continue;
-            config_output << i << ", " << j << ", " << bottom_occ<< ", " << top_occ;
-            for(int k = 2; k < config_energy[i][j].size(); k++) config_output << ", " << config_energy[i][j][k]; 
+            // double bottom_occ = config_energy[i][j][(2-1)*5+0];
+            // double top_occ = config_energy[i][j][(3-1)*5+0];
+            // if(bottom_occ == 0 && top_occ == 0) continue;
+            config_output << i << ", " << j;// << bottom_occ<< ", " << top_occ;
+            for(int k = 0; k < config_energy[i][j].size(); k++) config_output << ", " << config_energy[i][j][k]; 
             config_output << "\n";
          }
       }
@@ -1145,11 +1150,11 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
    int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : ( round(theta/30.0) == 3.0 ? (0):-1) );
    theta =  std::abs(angle_j)*180.0/M_PI;
    int theta_j = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : (round(theta/30.0) == 3.0 ? (0):-1) );
-   if(theta_i == -1 || theta_j == -1) {
-      std::cout << "\n " << round(std::abs(angle_i)*180.0/M_PI/30.0) << ", " << round(std::abs(angle_j)*180.0/M_PI/30.0) << ", " << angle_i << ", " << angle_j << ", " << central_atom.Gx << ", " << central_atom.Gy << ", " << j_atom.Gx << ", " << j_atom.Gy <<  std::endl;
-      exit(1);
-      return exchange;
-   }
+   // if(theta_i == -1 || theta_j == -1) {
+   //    std::cout << "\n " << round(std::abs(angle_i)*180.0/M_PI/30.0) << ", " << round(std::abs(angle_j)*180.0/M_PI/30.0) << ", " << angle_i << ", " << angle_j << ", " << central_atom.Gx << ", " << central_atom.Gy << ", " << j_atom.Gx << ", " << j_atom.Gy <<  std::endl;
+   //    exit(1);
+   //    return exchange;
+   // }
    exchange[0] = 0.5*(Eij.at(i_x_shift).at(i_y_shift).at(theta_i)[0]+Eij[j_x_shift][j_y_shift].at(theta_j)[0]);
    exchange[1] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][1]-Eij[j_x_shift][j_y_shift][theta_j][1]);
    exchange[2] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][2]-Eij[j_x_shift][j_y_shift][theta_j][2]);
@@ -1173,11 +1178,11 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
    // theta =  std::abs(angle-180.0)*180.0/M_PI;
    int theta_j = int(round(((angle_j < 0.0) ? (angle_j+=2*M_PI) : (angle_j)) *180.0/M_PI/60.0));
 
-   if( theta_i > 5 || theta_j > 5 || theta_i < 0 || theta_j < 0 ) {
-      std::cout << "problem: " << theta_i << " , " << theta_j << ", " << angle_i << ", " << angle_j << std::endl;
-      exit(1);
-      return exchange;
-   }
+   // if( theta_i > 5 || theta_j > 5 || theta_i < 0 || theta_j < 0 ) {
+   //    std::cout << "problem: " << theta_i << " , " << theta_j << ", " << angle_i << ", " << angle_j << std::endl;
+   //    exit(1);
+   //    return exchange;
+   // }
    exchange[0] = 0.5*(Eij.at(i_x_shift).at(i_y_shift).at(theta_i)[0]+Eij[j_x_shift][j_y_shift].at(theta_j)[0]);
    exchange[1] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][1]-Eij[j_x_shift][j_y_shift][theta_j][1]);
    exchange[2] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][2]-Eij[j_x_shift][j_y_shift][theta_j][2]);
@@ -1201,11 +1206,11 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
    int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : ( round(theta/30.0) == 3.0 ? (0):-1) );
    theta =  std::abs(angle_j)*180.0/M_PI;
    int theta_j = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : (round(theta/30.0) == 3.0 ? (0):-1) );
-   if(theta_i == -1 || theta_j == -1) {
-      std::cout << "\n " << round(std::abs(angle_i)*180.0/M_PI/30.0) << ", " << round(std::abs(angle_j)*180.0/M_PI/30.0) << ", " << angle_i << ", " << angle_j << ", " << central_atom.Gx << ", " << central_atom.Gy << ", " << j_atom.Gx << ", " << j_atom.Gy <<  std::endl;
-      exit(1);
-      return exchange;
-   }
+   // if(theta_i == -1 || theta_j == -1) {
+   //    std::cout << "\n " << round(std::abs(angle_i)*180.0/M_PI/30.0) << ", " << round(std::abs(angle_j)*180.0/M_PI/30.0) << ", " << angle_i << ", " << angle_j << ", " << central_atom.Gx << ", " << central_atom.Gy << ", " << j_atom.Gx << ", " << j_atom.Gy <<  std::endl;
+   //    exit(1);
+   //    return exchange;
+   // }
    exchange[0] = 0.5*(Eij.at(i_x_shift).at(i_y_shift).at(theta_i)[0]+Eij[j_x_shift][j_y_shift].at(theta_j)[0]);
    exchange[1] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][1]-Eij[j_x_shift][j_y_shift][theta_j][1]);
    exchange[2] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][2]-Eij[j_x_shift][j_y_shift][theta_j][2]);
@@ -1218,13 +1223,13 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
 
 std::array<double,4> match_inter_exchange(double dx, double dy, std::vector<std::vector<double> > &Eij){
    std::array<double,4> exchange({-20.0});
-   double new_shift_error = 10.0;
-   double old_shift_error = 10.0;
+   double new_shift_error = 1000.0;
+   double old_shift_error = 1000.0;
    int min_index = -1;
 
    // #pragma omp parallel for num_threads(2) reduction(min, min_index)
    for(int i = 0; i < Eij.size(); i++) {
-      new_shift_error = sqrt((Eij[i][0] - dx)*(Eij[i][0] - dx) + (Eij[i][1] - dy)*(Eij[i][1] - dy));
+      new_shift_error = ((Eij[i][0] - dx)*(Eij[i][0] - dx) + (Eij[i][1] - dy)*(Eij[i][1] - dy));
       if(new_shift_error < old_shift_error) {
          old_shift_error = new_shift_error;
          min_index = i;
@@ -1248,9 +1253,17 @@ std::array<double,4> calculate_intra_Jani(spin &atom_i, spin &atom_j, double dis
       exchange[1] = (D_intra_x_constant*cos(angle)-D_intra_y_constant*sin(angle)); //D_x
       all_m_atoms[atom_i.id].intra1++;
    } else if (distance <= intra_nn_dist_2) {
-      if(atom_i.l_id == 5) exchange[0] = Jintra2_ABprime;
-      else exchange[0] = Jintra2_AB;
+      exchange[0] = Jintra2_AB;
+      exchange[3] = D_intra2_z_constant;
+      exchange[2] = (D_intra2_x_constant*sin(angle)+D_intra2_y_constant*cos(angle)); //-D_y
+      exchange[1] = (D_intra2_x_constant*cos(angle)-D_intra2_y_constant*sin(angle)); //D_x
       all_m_atoms[atom_i.id].intra2++;
+   } else if (distance <= intra_nn_dist_3) {
+      exchange[0] = Jintra3_AB;
+      exchange[3] = D_intra3_z_constant;
+      exchange[2] = (D_intra3_x_constant*sin(angle)+D_intra3_y_constant*cos(angle)); //-D_y
+      exchange[1] = (D_intra3_x_constant*cos(angle)-D_intra3_y_constant*sin(angle)); //D_x
+      all_m_atoms[atom_i.id].intra3++;
    }
    return exchange;
 }
@@ -1265,7 +1278,7 @@ std::array<double,4> calculate_inter_Jani(spin &atom_i, spin &atom_j, double dis
          exchange[0] = Jinter2_AB;
          all_m_atoms[atom_i.id].inter2++;
       }  else if (distance <= inter_AB_dist_3 && (atom_i.l_id == 5 || atom_j.l_id == 5)) {
-         exchange[0] = Jinter2_AB_prime;
+         // exchange[0] = Jinter2_AB_prime;
          all_m_atoms[atom_i.id].inter2++;
       }
       return exchange;

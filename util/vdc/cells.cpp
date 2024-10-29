@@ -150,7 +150,7 @@ namespace vdc{
          vdc::atom_cell_id[atom] = cellid;
 
          // accumulate number of atoms in each cell
-         init_num_atoms_in_cell[cellid*tmid + 0]++;
+         init_num_atoms_in_cell[cellid*tmid + tmid-1]++;
          init_num_atoms_in_cell[cellid*tmid + type]++;
 
       }
@@ -162,7 +162,7 @@ namespace vdc{
       std::vector<unsigned int> new_cell_number(total_cells, total_cells);
 
       for( unsigned int cell = 0; cell < total_cells; cell++){
-         if( init_num_atoms_in_cell[cell] > 0){
+         if( init_num_atoms_in_cell[cell*tmid + tmid-1] > 0) {
 
             // save new cell number for this cell
             new_cell_number[cell] = num_cells_with_atoms;
@@ -268,14 +268,14 @@ namespace vdc{
             const double norm = sqrt(mx*mx + my*my + mz*mz);
 
             // calculate inverse norm if norm is greater than 1e-9, otherwise zero
-            const double inorm = norm < 1.0e-9 ? 0.0 : 1.0/norm;
+            const double im = mm < 1.0e-9 ? 0.0 : 1.0/mm;
 
-            vdc::cell_magnetization[cell][m][0] = mx*inorm;
-            vdc::cell_magnetization[cell][m][1] = my*inorm;
-            vdc::cell_magnetization[cell][m][2] = mz*inorm;
+            vdc::cell_magnetization[cell][m][0] = mx*im;
+            vdc::cell_magnetization[cell][m][1] = my*im;
+            vdc::cell_magnetization[cell][m][2] = mz*im;
 
             // set magnetization of final cell to actual magnetization in mu_B
-            if(m == tmid -1) vdc::cell_magnetization[cell][m][3] = norm; // mu_B
+            if(m == (tmid-1)) vdc::cell_magnetization[cell][m][3] = mm; // mu_B
             // Otherwise normalise for material magnetization
             else mm < 1.0e-9 ? 0.0 : vdc::cell_magnetization[cell][m][3] = norm/mm; // m/m_s
 

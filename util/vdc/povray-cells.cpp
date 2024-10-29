@@ -58,7 +58,7 @@ void output_cells_inc_file(unsigned int spin_file_id){
    // step 1: parallel formatted output to stringstream in memory
    // step 2: binary write of formatted text to output file (awesomely fast!)
    //---------------------------------------------------------------------------
-   #pragma omp parallel
+   // #pragma omp parallel
    {
 
       std::stringstream otext;
@@ -68,13 +68,14 @@ void output_cells_inc_file(unsigned int spin_file_id){
       const double uz = vdc::cell_size[2]*0.5;
 
       // write to output text stream in parallel
-      #pragma omp for
+      // #pragma omp for
       for( unsigned int cell = 0; cell < total_cells; cell++){
 
          // get magnetization for colour contrast
-         double mx = vdc::cell_magnetization[cell][tmid][0];
-         double my = vdc::cell_magnetization[cell][tmid][1];
-         double mz = vdc::cell_magnetization[cell][tmid][2];
+         double mm = 1.0;//vdc::cell_magnetization[cell][tmid][3];
+         double mx = vdc::cell_magnetization[cell][tmid][0]*mm;
+         double my = vdc::cell_magnetization[cell][tmid][1]*mm;
+         double mz = vdc::cell_magnetization[cell][tmid][2]*mm;
 
          // temporary thread private variables defining spin colours
          double red=0.0, green=0.0, blue=1.0;
@@ -85,7 +86,7 @@ void output_cells_inc_file(unsigned int spin_file_id){
          double cx = vdc::cell_coords[3*cell + 0] - vdc::system_centre[0];
          double cy = vdc::cell_coords[3*cell + 1] - vdc::system_centre[1];
          double cz = vdc::cell_coords[3*cell + 2] - vdc::system_centre[2];
-
+         // if(cz >= -9.8) continue;
          // format text for povray file
          otext << "cell"<< "(" <<
                   cx << "," << cy << "," << cz << "," <<
@@ -97,7 +98,7 @@ void output_cells_inc_file(unsigned int spin_file_id){
       } // end of parallel for
 
       // force each thread to write to file in order
-      #pragma omp critical
+      // #pragma omp critical
       incfile << otext.str();
 
    } // end of parallel region
@@ -204,9 +205,9 @@ void output_povray_cells_file(){
    // output povray ini file for rendering all files by default
    //---------------------------------------------------------------------------
    std::ofstream pifile;
-	pifile.open("spins.ini");
+	pifile.open("cells.ini");
 
-   pifile << "Input_File_Name = \"spins.pov\"" << std::endl;
+   pifile << "Input_File_Name = \"cells.pov\"" << std::endl;
    pifile << "Width = 800"                     << std::endl;
    pifile << "Height = 600"                    << std::endl;
    pifile << "Antialias = On"                  << std::endl;

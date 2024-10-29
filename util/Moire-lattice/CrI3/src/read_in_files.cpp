@@ -9,7 +9,9 @@
 
 
 void read_in_atoms(std::string filename, int n_atoms, std::vector <spin > &atom2){
+    
    std::ifstream ifile(filename);
+   if(!ifile.is_open()) {std::cerr << filename << " is not open" << std::endl; exit(1);}
    std::string line;
    int temp;
    for (int i = 0; i < n_atoms; i ++){
