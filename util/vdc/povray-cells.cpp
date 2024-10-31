@@ -58,7 +58,7 @@ void output_cells_inc_file(unsigned int spin_file_id){
    // step 1: parallel formatted output to stringstream in memory
    // step 2: binary write of formatted text to output file (awesomely fast!)
    //---------------------------------------------------------------------------
-   // #pragma omp parallel
+   #pragma omp parallel num_threads(4)
    {
 
       std::stringstream otext;
@@ -68,7 +68,7 @@ void output_cells_inc_file(unsigned int spin_file_id){
       const double uz = vdc::cell_size[2]*0.5;
 
       // write to output text stream in parallel
-      // #pragma omp for
+      #pragma omp for
       for( unsigned int cell = 0; cell < total_cells; cell++){
 
          // get magnetization for colour contrast
@@ -98,7 +98,7 @@ void output_cells_inc_file(unsigned int spin_file_id){
       } // end of parallel for
 
       // force each thread to write to file in order
-      // #pragma omp critical
+      #pragma omp critical
       incfile << otext.str();
 
    } // end of parallel region
