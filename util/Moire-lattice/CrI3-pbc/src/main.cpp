@@ -50,11 +50,26 @@ int main(int argc, char* argv[]){
    //  read_in_dft("files/criteria.txt");
     //  read_in_atoms("files/nm_atoms", num_nm_atoms, nm_atom);
    //  read_in_exchange("files/Interpolated_J_Inter", Jinter);
-   read_in_inter_exchanges("bilayer_sliding/Cr1_inter.txt", Einter_Cr1);
-   read_in_inter_exchanges("bilayer_sliding/Cr2_inter.txt", Einter_Cr2);
-   read_in_inter_exchanges("bilayer_sliding/Cr3_inter.txt", Einter_Cr3);
-   read_in_inter_exchanges("bilayer_sliding/Cr4_inter.txt", Einter_Cr4);
-
+   read_in_inter_exchanges("bilayer_sliding/Cr1_inter_map.txt",\
+                           "bilayer_sliding/Cr1_Dx_inter_map_avg.txt",\
+                           "bilayer_sliding/Cr1_Dy_inter_map_avg.txt",\
+                           "bilayer_sliding/Cr1_Dz_inter_map_avg.txt", Einter_Cr1);
+    read_in_inter_exchanges("bilayer_sliding/Cr2_inter_map.txt",\
+                           "bilayer_sliding/Cr2_Dx_inter_map_avg.txt",\
+                           "bilayer_sliding/Cr2_Dy_inter_map_avg.txt",\
+                           "bilayer_sliding/Cr2_Dz_inter_map_avg.txt", Einter_Cr2);
+    read_in_inter_exchanges("bilayer_sliding/Cr2_inter_map.txt",\
+                           "bilayer_sliding/Cr3_Dx_inter_map_avg.txt",\
+                           "bilayer_sliding/Cr3_Dy_inter_map_avg.txt",\
+                           "bilayer_sliding/Cr3_Dz_inter_map_avg.txt", Einter_Cr3);
+    read_in_inter_exchanges("bilayer_sliding/Cr4_inter_map.txt",\
+                           "bilayer_sliding/Cr4_Dx_inter_map_avg.txt",\
+                           "bilayer_sliding/Cr4_Dy_inter_map_avg.txt",\
+                           "bilayer_sliding/Cr4_Dz_inter_map_avg.txt", Einter_Cr4);
+//    read_in_inter_exchanges("bilayer_sliding/Cr2_inter.txt", Einter_Cr2);
+//    read_in_inter_exchanges("bilayer_sliding/Cr3_inter.txt", Einter_Cr3);
+//    read_in_inter_exchanges("bilayer_sliding/Cr4_inter.txt", Einter_Cr4);
+    // exit(1);
    // read_in_intra_exchanges("bilayer_sliding/Cr1_intra.txt", Eintra_Cr1_1NN, Eintra_Cr1_2NN, Eintra_Cr1_3NN);
    // read_in_intra_exchanges("bilayer_sliding/Cr2_intra.txt", Eintra_Cr2_1NN, Eintra_Cr2_2NN, Eintra_Cr2_3NN);
    // read_in_intra_exchanges("bilayer_sliding/Cr3_intra.txt", Eintra_Cr3_1NN, Eintra_Cr3_2NN, Eintra_Cr3_3NN);

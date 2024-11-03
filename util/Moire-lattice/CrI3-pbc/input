@@ -28,44 +28,47 @@ create:crystal-sublattice-materials=true
 # Simulation attributes:
 #------------------------------------------
 
-sim:total-time-steps=1000000
-sim:equilibration-temperature=40
-sim:equilibration-time-steps = 10000
-sim:time-steps-increment = 10000
+sim:total-time-steps=100000
+sim:equilibration-temperature=4
+sim:temperature=4
+#sim:preconditioning-steps = 1000
+#sim:equilibration-time-steps = 1000
+sim:time-steps-increment = 1000
 sim:time-step= 1 !fs
 
-sim:minimum-temperature=0
-sim:maximum-temperature=40.0
-sim:applied-field-strength=0.0 !T
-#sim:applied-field-unit-vector=0,0,1
-sim:cooling-time=2000!ps
-sim:cooling-function = gaussian 
+#sim:minimum-temperature=0
+#sim:maximum-temperature=30.0
+sim:applied-field-strength=0.21 !T
+sim:applied-field-unit-vector=0.82,0,0.574
+#sim:cooling-time=500!ps
+#sim:cooling-function = linear 
 
 #cells:macro-cell-size-x = 2 !nm
 #cells:macro-cell-size-y = 2 !nm
-#cells:macro-cell-size-z = 2 !nm
+#cells:macro-cell-size-z = 3 !nm
 #cells:output-cells
 
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:program = field-cool #time variable magnetic field; SOT; STT
+sim:program = time-series #time variable magnetic field; SOT; STT
 sim:integrator = llg-heun
 
-sim:save-checkpoint = continuous 
-sim:save-checkpoint-rate = 50 
+sim:load-checkpoint = restart
+sim:save-checkpoint = end 
 #------------------------------------------
 # data output
 #------------------------------------------
 config:atoms
-config:atoms-output-rate=50
+config:atoms-output-rate=10
 
-output:output-rate=10
+output:output-rate=1
 output:time-steps
 output:temperature
-output:material-mean-magnetisation
+output:applied-field-strength
+output:magnetisation-length
 output:material-magnetisation
 output:mean-susceptibility
-output:mean-total-torque
+output:total-torque
 output:total-energy 
 

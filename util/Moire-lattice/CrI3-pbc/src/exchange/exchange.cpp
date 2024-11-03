@@ -907,7 +907,6 @@ void calc_interactions() {
 
                      // if(nx < 0) {i_index = xb-1; pbc_x = -1;}
                      // else if (nx >= xb) {i_index = 0; pbc_x = 1;}
-
                      // if (ny < 0) {j_index = yb-1; pbc_y = -1;}
                      // else if (ny >= yb) {j_index = 0; pbc_y = 1;}
 
@@ -1050,8 +1049,7 @@ void calc_interactions() {
                               //    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
                               //    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += exchange[1]/J_constant;
                               //    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += exchange[2]/J_constant;
-                              //    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += exchange[3]/J_constant;
-                              
+                              //    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += exchange[3]/J_constant; 
                               //     interaction new_interaction;
                               //     new_interaction.id_i = atom_i.id;
                               //     new_interaction.id_j = atom_j.id;
@@ -1595,7 +1593,8 @@ void calc_interactions() {
       // exit(1);
 
    for(int i=0; i<xb; i++){
-      if(i%10 == 0) std::cout << "." << std::flush;
+      if((1+number_of_interactions) % int(interaction_estimate*0.1) == 0) std::cout << "." << std::flush;
+      #pragma omp parallel for num_threads(16) schedule(dynamic)
       for(int j=0; j< yb; j++){
          for(int k=0; k<zb; k++){
 
@@ -1633,8 +1632,9 @@ void calc_interactions() {
                            // if(atom_i.id == 0) continue;
                            // if(pbc_x != 0 || pbc_y != 0 ) std::cout << i_index << ", " <<  j_index << ", " << k_index  << std::endl;
                            // loop over all atoms in neighbour box
+                           // #pragma omp parallel for num_threads(16) schedule(dynamic) 
                            for(int aj = 0; aj < new_boxes[i_index][j_index][k_index].size(); aj++){
-
+                              // std::cout << "box size " << new_boxes[i_index][j_index][k_index].size() << std::endl;
                               // get atom number j
                               spin atom_j = new_boxes[i_index][j_index][k_index][aj];
                               if(atom_i.id == atom_j.id) continue;
@@ -1674,7 +1674,7 @@ void calc_interactions() {
                                     } else if(atom_i.S == 4) {
                                        angle_i -= 0.5*twist_angle;
                                        exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);
-                                          exchange[3] *= -1;
+                                       exchange[3] *= -1;
                                     } else if(atom_i.l_id == 1) {
                                        angle_i += twist_angle;
                                        angle_j += twist_angle;
@@ -1782,20 +1782,20 @@ void calc_interactions() {
                                  //    new_interaction.Dx = exchange[3];
                                  // }
                                  // interaction_list.push_back(new_interaction);
-                              if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
-                                                //xx                     xy-> Dz                 xz -> -Dy
-                                                  exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
-                                                //yx -> -Dz              yy                      yz -> Dx
-                                                 -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
-                                                //zx -> Dy               yz -> -Dx               zz
-                                                  exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
-                              else {   outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
-                              //xx                     xy-> Dz                 xz -> -Dy
-                                 exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
-                              //yx -> -Dz              yy                      yz -> Dx
-                                 0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
-                              //zx -> Dy               yz -> -Dx               zz
-                                 0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
+                              // if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
+                              //                   //xx                     xy-> Dz                 xz -> -Dy
+                              //                     exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
+                              //                   //yx -> -Dz              yy                      yz -> Dx
+                              //                    -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
+                              //                   //zx -> Dy               yz -> -Dx               zz
+                              //                     exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
+                              // else {   outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
+                              // //xx                     xy-> Dz                 xz -> -Dy
+                              //    exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
+                              // //yx -> -Dz              yy                      yz -> Dx
+                              //    0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
+                              // //zx -> Dy               yz -> -Dx               zz
+                              //    0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
                               
                                  // std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady <<" 0 0 0 "<<\
                                  //                // xx                     xy-> Dz                 xz -> -Dy 
@@ -1804,7 +1804,9 @@ void calc_interactions() {
                                  //                 -exchange[3]/J_constant << "\t" << exchange[0]/J_constant << "\t" <<  exchange[1]/J_constant << "\t" << \
                                  //                // zx -> Dy               yz -> -Dx               zz
                                  //                  exchange[2]/J_constant << "\t" <<-exchange[1]/J_constant << "\t" <<  exchange[0]/J_constant << std::endl;}
-                                 number_of_interactions++;                          
+                                 #pragma omp critical
+                                 number_of_interactions++;    
+
                               }
                            } // end of j atom loop
                         } // end of i atom loop
@@ -1930,12 +1932,14 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
 }
 
 std::array<double,4> match_inter_exchange(double dx, double dy, std::vector<std::vector<double> > &Eij){
+   //  vtimer_t local;
+   //  local.start();
    std::array<double,4> exchange({-20.0});
-   double new_shift_error = 1000.0;
-   double old_shift_error = 1000.0;
-   int min_index = -1;
+   double new_shift_error = 100000.0;
+   double old_shift_error = 100000.0;
+   int min_index = 100000;
 
-   // #pragma omp parallel for num_threads(2) reduction(min, min_index)
+   // #pragma omp parallel for reduction(min: min_index) num_threads(1) schedule(static)
    for(int i = 0; i < Eij.size(); i++) {
       new_shift_error = ((Eij[i][0] - dx)*(Eij[i][0] - dx) + (Eij[i][1] - dy)*(Eij[i][1] - dy));
       if(new_shift_error < old_shift_error) {
@@ -1948,6 +1952,7 @@ std::array<double,4> match_inter_exchange(double dx, double dy, std::vector<std:
    exchange[1] = Eij[min_index][3];
    exchange[2] = Eij[min_index][4];
    exchange[3] = Eij[min_index][5];
+   // std::cout << local.elapsed_time() <<std::endl;
    return exchange;
 }
 
