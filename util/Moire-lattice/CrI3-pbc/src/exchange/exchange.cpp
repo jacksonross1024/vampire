@@ -1538,10 +1538,7 @@ void calc_interactions() {
                                                               Moire_ajx, Moire_ajy, \
                                                               new_system_size_x, new_system_size_y, new_atom_count);
    // exit(1);
-     // determine number of blocks in x,y,z
-   // xb = ceil(new_system_size_x/bsize)+1;
-   // yb = ceil(new_system_size_y/bsize)+1;
-   //   zb = ceil(system_size_z/bsize)+1;
+
    std::cout << "decomposed into <" << xb << ", " << yb << ", " << zb << "> boxes." << std::endl;
    // create 4D array to generate blocks
    std::vector< std::vector < std::vector < std::vector < spin > > > > new_boxes;
@@ -1588,13 +1585,14 @@ void calc_interactions() {
    // std::vector<interaction> interaction_list;
    // interaction_list.reserve(interaction_estimate);
 
-
    std::cout << "Generating estimated " << interaction_estimate << " interactions for remaining " << all_m_atoms_offset.size() << " atoms " << std::endl;
       // exit(1);
-
+   #pragma omp parallel num_threads(16) 
+   {
+   std::stringstream otext;
    for(int i=0; i<xb; i++){
-      if((1+number_of_interactions) % int(interaction_estimate*0.1) == 0) std::cout << "." << std::flush;
-      #pragma omp parallel for num_threads(16) schedule(dynamic)
+      if(number_of_interactions > 0) std::cout << 100*number_of_interactions/interaction_estimate << "%..." << std::flush;
+      #pragma omp for schedule(dynamic)
       for(int j=0; j< yb; j++){
          for(int k=0; k<zb; k++){
 
@@ -1782,20 +1780,20 @@ void calc_interactions() {
                                  //    new_interaction.Dx = exchange[3];
                                  // }
                                  // interaction_list.push_back(new_interaction);
-                              // if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
-                              //                   //xx                     xy-> Dz                 xz -> -Dy
-                              //                     exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
-                              //                   //yx -> -Dz              yy                      yz -> Dx
-                              //                    -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
-                              //                   //zx -> Dy               yz -> -Dx               zz
-                              //                     exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
-                              // else {   outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
-                              // //xx                     xy-> Dz                 xz -> -Dy
-                              //    exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
-                              // //yx -> -Dz              yy                      yz -> Dx
-                              //    0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
-                              // //zx -> Dy               yz -> -Dx               zz
-                              //    0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
+                              if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
+                                                //xx                     xy-> Dz                 xz -> -Dy
+                                                  exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
+                                                //yx -> -Dz              yy                      yz -> Dx
+                                                 -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
+                                                //zx -> Dy               yz -> -Dx               zz
+                                                  exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
+                              else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
+                              //xx                     xy-> Dz                 xz -> -Dy
+                                 exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
+                              //yx -> -Dz              yy                      yz -> Dx
+                                 0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
+                              //zx -> Dy               yz -> -Dx               zz
+                                 0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
                               
                                  // std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady <<" 0 0 0 "<<\
                                  //                // xx                     xy-> Dz                 xz -> -Dy 
@@ -1817,6 +1815,12 @@ void calc_interactions() {
          }
       }
    }
+   #pragma omp critical
+   outfile4 << otext.str();
+   }
+
+   outfile4 << std::flush;
+   outfile4.close();
 
       // std::cout << "Writing data to file..." << std::flush;
       std::ofstream config_output;
