@@ -220,10 +220,14 @@ int calculate_applied_fields(const int start_index,const int end_index){
 	// Declare constant temporaries for global field
 	// double cos_sq = std::cos(2.0*M_PI*sim::time*mp::dt_SI*7.45e12 - M_PI*0.5);// > 0 ? cos(2.0*M_PI*sim::time*7.45e12 - M_PI*0.5) : 0.0;
 	
-	const double Hx=sim::H_vec[0]*sim::H_applied;
-	const double Hy=sim::H_vec[1]*sim::H_applied;
-	const double Hz=sim::H_vec[2]*sim::H_applied;
+	// const double Hx=sim::H_vec[0]*sim::H_applied;
+	// const double Hy=sim::H_vec[1]*sim::H_applied;
+	// const double Hz=sim::H_vec[2]*sim::H_applied;
 
+	const double Hx = sim::actual_H_vector[0]*sim::actual_H_field;
+	const double Hy = sim::actual_H_vector[1]*sim::actual_H_field;
+	const double Hz = sim::actual_H_vector[2]*sim::actual_H_field;
+	
 	// if(start_index == 0) std::std::cout << sim::H_actual << std::endl;cout << "calculate_applied_fields has been called" << Hx << ", " << Hy << ", " << Hz << std::endl;
 	// Declare array for local (material specific) applied field
 	std::vector<double> Hlocal(0);

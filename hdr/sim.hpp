@@ -93,8 +93,16 @@ namespace sim{
 	extern double Teq;
 	extern double temperature;
 	extern double delta_temperature;
+
 	extern double H_applied;
 	extern double H_vec[3];
+	
+	extern double actual_H_field;
+	extern double actual_H_vector[3];
+	extern double applied_H_field;
+	extern double applied_H_vector[3];
+	extern double equilibrium_H_field;
+	extern double equilibrium_H_vector[3];
 	extern double Hmin; // T
 	extern double Hmax; // T
 	extern double Hinc; // T
