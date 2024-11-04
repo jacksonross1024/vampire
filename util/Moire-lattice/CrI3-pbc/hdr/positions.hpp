@@ -81,7 +81,7 @@
    bool inside_system(double x, double y, double offset);
    void read_in_atoms(std::string filename, int n_atoms, std::vector <spin > &atom2);
    void read_in_exchange(std::string filename, std::vector<std::vector<double> > &Jij);
-   void read_in_inter_exchanges(std::string filename, std::vector<std::vector<double> > &Eij);
+   void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std::string Dz, std::vector<std::vector<double> > &Eij);
    void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_1NN, \
                                                    std::vector<std::vector< std::vector< std::vector<double> > > > &Eij_2NN, \
                                                    std::vector<std::vector< std::vector< std::vector<double> > > > &Eij_3NN );

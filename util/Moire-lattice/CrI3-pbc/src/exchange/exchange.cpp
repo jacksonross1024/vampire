@@ -1414,11 +1414,17 @@ void calc_interactions() {
    }
    
    interaction_estimate = all_m_atoms_offset.size()*(12+10+10+9+10+9+10)/4.0;
+   // std::vector<interaction> interaction_list;
+   // interaction_list.reserve(interaction_estimate);
+
    std::cout << "Generating estimated " << interaction_estimate << " interactions for remaining " << all_m_atoms_offset.size() << " atoms " << std::endl;
       // exit(1);
-
+   #pragma omp parallel num_threads(16) 
+   {
+   std::stringstream otext;
    for(int i=0; i<xb; i++){
-      if(i%10 == 0) std::cout << "." << std::flush;
+      if(number_of_interactions > 0) std::cout << 100*number_of_interactions/interaction_estimate << "%..." << std::flush;
+      #pragma omp for schedule(dynamic)
       for(int j=0; j< yb; j++){
          for(int k=0; k<zb; k++){
 
@@ -1450,8 +1456,9 @@ void calc_interactions() {
                            const double z_i = atom_i.z;
                            
                            // loop over all atoms in neighbour box
+                           // #pragma omp parallel for num_threads(16) schedule(dynamic) 
                            for(int aj = 0; aj < new_boxes[i_index][j_index][k_index].size(); aj++){
-
+                              // std::cout << "box size " << new_boxes[i_index][j_index][k_index].size() << std::endl;
                               // get atom number j
                               spin atom_j = new_boxes[i_index][j_index][k_index][aj];
 
@@ -1580,21 +1587,23 @@ void calc_interactions() {
    
                                  if(exchange[0] == 0.0 && exchange[1] == 0.0 && exchange[2] == 0.0 && exchange[3] == 0.0) continue;
                                  //save energy in meV for analysis
-                                 config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+0] += 1.0;
-                                 config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
-                                 config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += exchange[1]/J_constant;
-                                 config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += exchange[2]/J_constant;
-                                 config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += exchange[3]/J_constant;
+                                 // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+0] += 1.0;
+                                 // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
+                                 // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += exchange[1]/J_constant;
+                                 // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += exchange[2]/J_constant;
+                                 // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += exchange[3]/J_constant;
                               
 
-                              if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
+                              // if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
+
+                              if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
                                                 //xx                     xy-> Dz                 xz -> -Dy
                                                   exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
                                                 //yx -> -Dz              yy                      yz -> Dx
                                                  -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
                                                 //zx -> Dy               yz -> -Dx               zz
                                                   exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
-                              else {   outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
+                              else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
                               //xx                     xy-> Dz                 xz -> -Dy
                                  exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
                               //yx -> -Dz              yy                      yz -> Dx
@@ -1609,7 +1618,9 @@ void calc_interactions() {
                                  //                 -exchange[3]/J_constant << "\t" << exchange[0]/J_constant << "\t" <<  exchange[1]/J_constant << "\t" << \
                                  //                // zx -> Dy               yz -> -Dx               zz
                                  //                  exchange[2]/J_constant << "\t" <<-exchange[1]/J_constant << "\t" <<  exchange[0]/J_constant << std::endl;}
-                                 number_of_interactions++;                          
+                                 #pragma omp critical
+                                 number_of_interactions++;    
+
                               }
                            } // end of j atom loop
                         } // end of i atom loop
@@ -1620,6 +1631,12 @@ void calc_interactions() {
          }
       }
    }
+   #pragma omp critical
+   outfile4 << otext.str();
+   }
+
+   outfile4 << std::flush;
+   outfile4.close();
 
       // std::cout << "Writing data to file..." << std::flush;
       std::ofstream config_output;
@@ -1733,12 +1750,14 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
 }
 
 std::array<double,4> match_inter_exchange(double dx, double dy, std::vector<std::vector<double> > &Eij){
+   //  vtimer_t local;
+   //  local.start();
    std::array<double,4> exchange({-20.0});
-   double new_shift_error = 1000.0;
-   double old_shift_error = 1000.0;
-   int min_index = -1;
+   double new_shift_error = 100000.0;
+   double old_shift_error = 100000.0;
+   int min_index = 100000;
 
-   // #pragma omp parallel for num_threads(2) reduction(min, min_index)
+   // #pragma omp parallel for reduction(min: min_index) num_threads(1) schedule(static)
    for(int i = 0; i < Eij.size(); i++) {
       new_shift_error = ((Eij[i][0] - dx)*(Eij[i][0] - dx) + (Eij[i][1] - dy)*(Eij[i][1] - dy));
       if(new_shift_error < old_shift_error) {
@@ -1751,6 +1770,7 @@ std::array<double,4> match_inter_exchange(double dx, double dy, std::vector<std:
    exchange[1] = Eij[min_index][3];
    exchange[2] = Eij[min_index][4];
    exchange[3] = Eij[min_index][5];
+   // std::cout << local.elapsed_time() <<std::endl;
    return exchange;
 }
 

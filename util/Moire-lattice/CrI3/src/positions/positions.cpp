@@ -13,10 +13,10 @@ double a0y= 0.0;
 double a1x = -3.465;
 double a1y = 6.002;
 
-double c0 = 26.16/2.0;
-double a0z = c0/2.0;
+double c0 = 26.16;
+double a0z = c0/4.0;
 
-int num_atoms = 4;
+int num_atoms = 8;
 int num_nm_atoms = 24;
 
 int number_of_unit_cells_x;
@@ -115,9 +115,9 @@ void create_magnetic_atom_list(std::string filename){
                         // double changex = std::abs(x_new - x_j);
                         // double changey = std::abs(y_new - y_j);
                         
-                        int dy_cell = floor((y_new +0.000000)/ a1y);
+                        int dy_cell = floor((y_new +0.0000001)/ a1y);
                         // changex += dy_cell*std::abs(a1x);
-                        int dx_cell = floor((x_new +0.000000)/ a0x);
+                        int dx_cell = floor((x_new +0.0000001)/ a0x);
                         
                         // double unit_x = dx_cell*a0x + dy_cell*a1x + atom[atom_i].x;
                         // double unit_y = dy_cell*a1y + atom[atom_i].y;
@@ -125,8 +125,8 @@ void create_magnetic_atom_list(std::string filename){
                         // int changey = round(-100.0*remainder(y_new - y_j,a1y)/a0x)+100;
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
-                        double x_ref = (i*a0x + j*a1x)*cos(twist_angle)-(((new_atom.l_id == 3) ? (4.0) : (0.0)) + j*a1y)*sin(twist_angle); 
-                        double y_ref = (i*a0x + j*a1x)*sin(twist_angle)+(((new_atom.l_id == 3) ? (4.0) : (0.0)) + j*a1y)*cos(twist_angle); 
+                        double x_ref = (i*a0x + j*a1x + 4.62)*cos(twist_angle)-(((new_atom.l_id == 1) ? (4.001) : (0.0)) + j*a1y)*sin(twist_angle); 
+                        double y_ref = (i*a0x + j*a1x + 4.62)*sin(twist_angle)+(((new_atom.l_id == 1) ? (4.001) : (0.0)) + j*a1y)*cos(twist_angle); 
                         
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));
                         int changex = int(round(9*(fmod(std::abs(x_eff-x_ref +changey*a1y/11.0) , a0x)/a0x)));
@@ -151,9 +151,10 @@ void create_magnetic_atom_list(std::string filename){
                            unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
                            unit_cell_shifts[dx_cell][dy_cell][1] += changex;
                            unit_cell_shifts[dx_cell][dy_cell][2] += changey;
+                           std::cout << dx_cell << ", " << dy_cell << ", " << changex << ", " << changey << std::endl;
                            // row3.push_back(new_atom);
                         } else if (z_j <= a0z*3){
-                           new_atom.S = 3;
+                           new_atom.S = 4;
                            // new_atom.dx = changex;
                            // new_atom.dy = changey;
                            // row4.push_back(new_atom);
@@ -188,9 +189,9 @@ void create_magnetic_atom_list(std::string filename){
                      new_atom.l_id = atom[atom_i].l_id;
                      new_atom.h_id = atom[atom_i].h_id;
                      // new_atom.S = 0;
-                     new_atom.unit_y = int(floor((y_new +0.00000)/ a1y));
+                     new_atom.unit_y = int(floor((y_new +0.000001)/ a1y));
                         // changex += dy_cell*std::abs(a1x);
-                     new_atom.unit_x = int(floor((x_new +0.00000)/ a0x));
+                     new_atom.unit_x = int(floor((x_new +0.000001)/ a0x));
                      if(new_atom.unit_x  >= number_of_unit_cells_x || new_atom.unit_y >= number_of_unit_cells_y) {
                         std::cerr << new_atom.unit_x  << ", " << new_atom.unit_y  << ", " << x_j << ", " << y_j << ", " << \
                          int(floor(y_j / a1y)) << ", " <<  int(floor(x_j / a0x)) << std::endl;
@@ -198,7 +199,7 @@ void create_magnetic_atom_list(std::string filename){
                      }
                      // Set layer number
                      if (z_j == 0.0){
-                        new_atom.S = 2;
+                        new_atom.S = 1;
                         // new_atom.dx = 0; // need a dx,dy to take into account the actual stacking!
                         // new_atom.dy = 0;
                         // row1.push_back(new_atom);

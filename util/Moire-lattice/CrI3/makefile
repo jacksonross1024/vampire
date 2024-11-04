@@ -8,8 +8,7 @@
 export OMPI_CXX=g++ -std=c++11
 
 # Compiler
-GCC=g++ -std=c++11 -DCOMP='"GNU C++ Compiler"'
-
+GCC=g++ -std=c++11 -DCOMP='"GNU C++ Compiler"' -fopenmp
 
 LIBS= -lstdc++
 #-lm $(FFTLIBS) -L/opt/local/lib/

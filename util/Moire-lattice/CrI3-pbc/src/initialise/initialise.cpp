@@ -59,10 +59,10 @@ void initialise_variables(){
 
    std::cout << "Creating base lattice " << number_of_unit_cells_x << " by " << number_of_unit_cells_y << " rhombic unit cells" << std::endl;
    twist_angle = twist_angle*M_PI/180.0;
-   resize_arrays(Einter_Cr1, 895,6);
-   resize_arrays(Einter_Cr2, 895,6);
-   resize_arrays(Einter_Cr3, 895,6);
-   resize_arrays(Einter_Cr4, 895,6);
+   resize_arrays(Einter_Cr1, 200*200,6);
+   resize_arrays(Einter_Cr2, 200*200,6);
+   resize_arrays(Einter_Cr3, 200*200,6);
+   resize_arrays(Einter_Cr4, 200*200,6);
 
    Eintra_Cr1_1NN.resize(10);
    Eintra_Cr2_1NN.resize(10);

@@ -234,31 +234,62 @@ void read_in_dft(std::string filename) {
     exit(1);
 }
 
-void read_in_inter_exchanges(std::string filename, std::vector<std::vector<double> > &Eij) {
-    std::ifstream ifile2(filename);
-    std::string line;
-    if(!ifile2.is_open()) {std::cerr << filename << " is not open" << std::endl; exit(1);}
+void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std::string Dz,  std::vector<std::vector<double> > &Eij ) {
+    std::ifstream J_file(J);
+    std::string Jline;
+    if(!J_file.is_open()) {std::cerr << J << " is not open" << std::endl; exit(1);}
     
-    for(int i=0; i<Eij.size(); i++){
-        getline(ifile2,line);
-        std::stringstream liness(line.c_str());
-        double r;
-        double dx; 
-        double dy;
-        double dz;
+    std::ifstream Dx_file(Dx);
+    std::string Dxline;
+    if(!Dx_file.is_open()) {std::cerr << Dx << " is not open" << std::endl; exit(1);}
+
+    std::ifstream Dy_file(Dy);
+    std::string Dyline;
+    if(!Dy_file.is_open()) {std::cerr << Dy << " is not open" << std::endl; exit(1);}
+
+    std::ifstream Dz_file(Dz);
+    std::string Dzline;
+    if(!Dz_file.is_open()) {std::cerr << Dz << " is not open" << std::endl; exit(1);}
+
+    const double a_0 = 7.3;
+    int i = 0;
+    while(i < 200){
+    int j  = 0;
+    while( j < 200) {
+        getline(J_file, Jline); 
+        getline(Dx_file, Dxline); 
+        getline(Dy_file, Dyline); 
+        getline(Dz_file, Dzline);
+        std::stringstream Jliness(Jline.c_str());
+        std::stringstream Dxliness(Dxline.c_str());
+        std::stringstream Dyliness(Dyline.c_str());
+        std::stringstream Dzliness(Dzline.c_str());
         double J;
         double Dx;
         double Dy;
         double Dz;
-
-        liness >> r >> dx >> dy >> dz >> J >> Dx >> Dy >> Dz;
-        Eij[i][0] = dx;
-        Eij[i][1] = dy;
-        Eij[i][2] = J*J_constant;
-        Eij[i][3] = Dx*J_constant;
-        Eij[i][4] = Dy*J_constant;
-        Eij[i][5] = Dz*J_constant;
+            Jliness >> J; 
+            Dxliness >> Dx; 
+            Dyliness >> Dy; 
+            Dzliness >> Dz;
+            Eij.at(i*200+j)[0] = j*0.01*a_0 - a_0; //x pos
+            Eij[i*200+j][1] = (199-i)*0.01*a_0 - a_0;
+         
+            Eij[i*200+j][2] = J*J_constant;
+            Eij[i*200+j][3] = Dx*J_constant;
+            Eij[i*200+j][4] = Dy*J_constant;
+            Eij[i*200+j][5] = Dz*J_constant;
+            j++;
+        }
+        i++;
     }
+
+    std::ofstream inter_out("Inter_exchange_out.txt");
+    for(i = 0; i < Eij.size(); i++) {
+        inter_out << Eij[i][0] << ", " << Eij[i][1] << ", " << Eij[i][2] << ", " << Eij[i][3] << ", " << Eij[i][4] << ", " << Eij[i][5] << "\n";
+    }
+    inter_out.close();
+    
 }
 
 void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_1NN, \
