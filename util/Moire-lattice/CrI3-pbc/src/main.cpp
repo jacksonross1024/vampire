@@ -10,6 +10,7 @@
 
 int main(int argc, char* argv[]){
 
+    // command line arguments; argv1: twist; argv2: max exchange limit; argv3: dmi included
     std::string dmi_check = "--dmi";
     if(argc < 2) {std::cerr << "need twist angle even if zero" << std::endl; exit(1);}
     for(int a = 1; a < argc; a++) {
@@ -23,42 +24,37 @@ int main(int argc, char* argv[]){
         }
     }
 
-   system_size_x = 6000;//  25.00
-   system_size_y = 6000; //4000
-   number_of_unit_cells_z = 1; //2
+   system_size_x = 9000; //A 
+   system_size_y = 9000; //A
+   number_of_unit_cells_z = 1; //unit cells
 
-   // set up new material constants
+    // (deprecated)
+   // set up new material constants 
    dmi12 = 1.0; // DMI constant between layers 1-2
    dmi23 = 1.0; // DMI constant between layers 2-3
    dmi34 = 1.0; // DMI constant between layers 3-4
-   
-   dmi_decay = 1.0; // distance-dependent DMI
-
+   dmi_decay = 1.0; // distance-dependent DMI (deprecated)
    exchange12 = 1.0; // exchange constant between layers 1-2
    exchange23 = 1.0; // exchange constant between layers 2-3
    exchange34 = 1.0; // exchange constant between layers 3-4
-
    separation = 0.0; // distance between layers 2-3
-   // double_bilayer = false;
-   // if(double_bilayer) pristine_bilayer_type = "baab";
+    // (deprecated)
 
    initialise_variables();
 
-   twist_loction = 2*system_size_z/5 -0.01;
+    twist_loction = 2*system_size_z/5 -0.01;
     std::cout << "twisting at: " << twist_loction << std::endl;
-    read_in_atoms("files/atom_list_abprimebprimea_rhombic", num_atoms, atom);
-   //  read_in_dft("files/criteria.txt");
-    //  read_in_atoms("files/nm_atoms", num_nm_atoms, nm_atom);
-   //  read_in_exchange("files/Interpolated_J_Inter", Jinter);
-   read_in_inter_exchanges("bilayer_sliding/Cr1_inter.txt", Einter_Cr1);
-   read_in_inter_exchanges("bilayer_sliding/Cr2_inter.txt", Einter_Cr2);
-   read_in_inter_exchanges("bilayer_sliding/Cr3_inter.txt", Einter_Cr3);
-   read_in_inter_exchanges("bilayer_sliding/Cr4_inter.txt", Einter_Cr4);
 
-   // read_in_intra_exchanges("bilayer_sliding/Cr1_intra.txt", Eintra_Cr1_1NN, Eintra_Cr1_2NN, Eintra_Cr1_3NN);
-   // read_in_intra_exchanges("bilayer_sliding/Cr2_intra.txt", Eintra_Cr2_1NN, Eintra_Cr2_2NN, Eintra_Cr2_3NN);
-   // read_in_intra_exchanges("bilayer_sliding/Cr3_intra.txt", Eintra_Cr3_1NN, Eintra_Cr3_2NN, Eintra_Cr3_3NN);
-   // read_in_intra_exchanges("bilayer_sliding/Cr4_intra.txt", Eintra_Cr4_1NN, Eintra_Cr4_2NN, Eintra_Cr4_3NN);
+    //pristine unit cell coordiantes/species
+    read_in_atoms("files/atom_list_abprimebprimea_rhombic", num_atoms, atom);
+   
+    //modulation data
+    read_in_inter_exchanges("bilayer_sliding/Cr1_inter.txt", Einter_Cr1);
+    read_in_inter_exchanges("bilayer_sliding/Cr2_inter.txt", Einter_Cr2);
+    read_in_inter_exchanges("bilayer_sliding/Cr3_inter.txt", Einter_Cr3);
+    read_in_inter_exchanges("bilayer_sliding/Cr4_inter.txt", Einter_Cr4);
+
+    //modulation data (should be own functions)
    std::ifstream ifile1("bilayer_sliding/Cr1_intra.txt");
    std::string line;
     if(!ifile1.is_open()) {std::cerr  << " is not open" << std::endl; exit(1);}
@@ -438,23 +434,10 @@ int main(int argc, char* argv[]){
    //  read_in_dmi("files/interpolated_1st_Dij_intra.txt", Dx_intra2, Dy_intra2, Dz_intra2);
    //  read_in_dmi("files/Interpolated_Dij_Inter", Dx_inter, Dy_inter, Dz_inter, true);
 
-    create_magnetic_atom_list("atom_positions.ucf");
-    //  create_nm_atom_list();
 
-    print_header();
-   //  //  calc_in_plane_exchange(row1);
-   //  //  calc_in_plane_exchange(row2);
-   //  //  calc_in_plane_exchange(row3);
-   //  //  calc_in_plane_exchange(row4);
-   //  //  // The order of these exchange calculations is important, as dx,dy shifts are NOT symmetric
-   //  //  calc_out_of_plane_exchange(row4,row3);
-   //  //  calc_out_of_plane_exchange(row3,row2);
-   //  //  calc_out_of_plane_exchange(row2,row1);
-    // std::ifstream ucf_file;
-    // ucf_file.open("file.ucf");
-    // read_in_ucf(ucf_file);
+    create_magnetic_atom_list("atom_positions.ucf");
+    // print_header();
     calc_interactions();
     print_interaction_header();
 
-
- }
+}
