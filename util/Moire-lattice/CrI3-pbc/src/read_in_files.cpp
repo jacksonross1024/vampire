@@ -273,10 +273,10 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
             Eij.at(i*200+j)[0] = j*0.01*a_0 - a_0; //x pos
             Eij[i*200+j][1] = (199-i)*0.01*a_0 - a_0;
          
-            Eij[i*200+j][2] = J*J_constant;
-            Eij[i*200+j][3] = Dx*J_constant;
-            Eij[i*200+j][4] = Dy*J_constant;
-            Eij[i*200+j][5] = Dz*J_constant;
+            Eij[i*200+j][2] = (J-J_inter_scaling*std::abs(J))*J_constant;
+            Eij[i*200+j][3] = DMI_inter_scaling*Dx*J_constant;
+            Eij[i*200+j][4] = DMI_inter_scaling*Dy*J_constant;
+            Eij[i*200+j][5] = DMI_inter_scaling*Dz*J_constant;
             j++;
         }
         i++;

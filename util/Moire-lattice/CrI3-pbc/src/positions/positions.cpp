@@ -17,6 +17,8 @@ double a1y = 6.002;
 double c0 = 26.16;
 double a0z = c0/4.0;
 
+double J_inter_scaling = 1.0;
+double DMI_inter_scaling = 1.0;
 //must change num_atoms according to unit cell info
 int num_atoms = 8;
 
@@ -108,8 +110,8 @@ void create_magnetic_atom_list(std::string filename){
                         //effective rotation in x vector basis
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
-                        double x_ref = (i*a0x + j*a1x)*cos(twist_angle)-(((new_atom.l_id == 3) ? (4.0) : (0.0)) + j*a1y)*sin(twist_angle); 
-                        double y_ref = (i*a0x + j*a1x)*sin(twist_angle)+(((new_atom.l_id == 3) ? (4.0) : (0.0)) + j*a1y)*cos(twist_angle); 
+                        double x_ref = (i*a0x + j*a1x + 4.62)*cos(twist_angle)-(((new_atom.l_id == 3) ? (4.00) : (0.0)) + j*a1y)*sin(twist_angle); 
+                        double y_ref = (i*a0x + j*a1x + 4.62)*sin(twist_angle)+(((new_atom.l_id == 3) ? (4.00) : (0.0)) + j*a1y)*cos(twist_angle); 
                         
                         //x and y shift in rhombehedral coordiante from x basis
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));

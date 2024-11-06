@@ -861,7 +861,7 @@ void calc_interactions() {
    //data structure for unit cell basis
    std::ofstream correlation_file;
    correlation_file.open("moire-lattice-constants.txt");
-   std::vector<std::array<double, 3> > zero_correlation;
+   std::vector<std::array<double, 4> > zero_correlation;
   
    // now calculate neighbour list looping over boxes
    vtimer_t timer;
@@ -914,7 +914,7 @@ void calc_interactions() {
                               const double adz = z_j - z_i;
                               double dL2 = adx*adx + ady*ady + adz*adz;
                               
-                              if(std::abs(adx) < 1e-2 && std::abs(ady) < 1e-2) zero_correlation.push_back({atom_i.x, atom_i.y, double(atom_i.l_id)});
+                              if(std::abs(adx) < 1e-2 && std::abs(ady) < 1e-2) zero_correlation.push_back({atom_i.x, atom_i.y, atom_i.z, double(atom_i.l_id)});
                               
                            } // end of j atom loop
 
@@ -1158,6 +1158,8 @@ void calc_interactions() {
          std::vector<std::array<double, 7 > > orthogonal_set;
          for(int j = 0; j < zero_correlation.size(); j+=1) {
             if(i == j) continue;
+            double dz = zero_correlation[j][2] - zero_correlation[i][2];
+            if(std::abs(dz) > 1e-5) continue;
             double dx = zero_correlation[j][0] - zero_correlation[i][0];
             double dy = zero_correlation[j][1] - zero_correlation[i][1];
             double r = sqrt(dx*dx+dy*dy);
@@ -1174,7 +1176,7 @@ void calc_interactions() {
             x01 = zero_correlation[j][0];
             y01 = zero_correlation[j][1];
             //ensure same spin species 
-            vector_id0 = (zero_correlation[j][2] == zero_correlation[i][2]) ? (true) : (false);
+            vector_id0 = (zero_correlation[j][3] == zero_correlation[i][3]) ? (true) : (false);
 
             //find y vector
             min_y = 1.0-std::abs(dy);
@@ -1185,7 +1187,7 @@ void calc_interactions() {
             x11 = zero_correlation[j][0];
             y11 = zero_correlation[j][1];
             //ensure same spin species
-            vector_id1 = (zero_correlation[j][2] == zero_correlation[i][2]) ? (true) : (false);
+            vector_id1 = (zero_correlation[j][3] == zero_correlation[i][3]) ? (true) : (false);
             
             //ensure same species before push back
             if( vector_id0 && vector_id1) {
@@ -1217,28 +1219,28 @@ void calc_interactions() {
 
    //comment out this exit once new moire lattice unit cell points selected
 //==============================
-      exit(1);
+      // exit(1);
 //==============================
 
    // //0.5 degree square periodic
-   double x00 =  3668.08;//
-   double y00 =  2858.98;// 
-   double x01 =  3668.08;//
-   double y01 =  5241.79;// 
-   double x10 =  5043.7;// 
-   double y10 =  2858.98;// 
-   double x11 =  5043.7;//
-   double y11 =  5241.79;//
+   double x00 =  3437.89;//3668.08;//
+   double y00 =  3044.05;//2858.98;// 
+   double x01 =  3437.89;//3668.08;//
+   double y01 =  5426.86;//5241.79;// 
+   double x10 =  4813.51; //5043.7;// 
+   double y10 =  3044.05;//;//2858.98;// 
+   double x11 =  4813.51;//5043.7;//
+   double y11 =  5426.86;//;//5241.79;//
 
    // //1.1 degree square periodic
-   // double x00 =  3439.17;// 
-   // double y00 =  5595.12;// 
-   // double x01 =  3439.17;//
-   // double y01 =  8122.08;// 
-   // double x10 =  7815.67;// 
-   // double y10 =  5595.12;// 
-   // double x11 =  7815.67;// 
-   // double y11 =  8122.08;//
+   // double x00 =  2397.31; //3439.17;// 
+   // double y00 =   4872.85;//5595.12;// 
+   // double x01 =  2397.31;//3439.17;//
+   // double y01 =  7399.81;//8122.08;// 
+   // double x10 =  6773.81; //7815.67;// 
+   // double y10 =   4872.85; //5595.12;// 
+   // double x11 =  6773.81;// 7815.67;// 
+   // double y11 =  7399.81;// 8122.08;//
 
    double rAAprime = sqrt((x10-x00)*(x10-x00)+(y10-y00)*(y10-y00));
    double rAB      = sqrt((x01-x00)*(x01-x00)+(y01-y00)*(y01-y00));
@@ -1247,7 +1249,6 @@ void calc_interactions() {
 
    //ensure uniform cell bounds
    std::cout << rAAprime << " == " << rBBprime << " != " << rAB << " == " << rAprimeBprime << std::endl;
-
 
    double Moire_aix = x10-x00;
    double Moire_aiy = y10-y00;
@@ -1339,8 +1340,8 @@ void calc_interactions() {
       // bool A_Aprime = zero_zero_to_one_zero(x,y);
       // bool B_Bprime = zero_one_to_one_one(x,y);
       // bool Aprime_Bprime = one_zero_to_one_one(x,y);
-      bool x_to_xprime = (x >= x_offset && x<(max_x-0.001)); //necessary offset to prevent double spins
-      bool y_to_yprime = (y >= y_offset && y<(max_y-0.001)); //necessary offset to prevent double spins
+      bool x_to_xprime = (x >= x_offset && x<(max_x-0.01)); //necessary offset to prevent double spins
+      bool y_to_yprime = (y >= y_offset && y<(max_y-0.01)); //necessary offset to prevent double spins
       
       if(x_to_xprime && y_to_yprime ) {
          offset_atom.id = new_atom_count;
@@ -1419,11 +1420,11 @@ void calc_interactions() {
 
    std::cout << "Generating estimated " << interaction_estimate << " interactions for remaining " << all_m_atoms_offset.size() << " atoms " << std::endl;
       // exit(1);
-   #pragma omp parallel num_threads(16) 
+   #pragma omp parallel num_threads(4) 
    {
    std::stringstream otext;
    for(int i=0; i<xb; i++){
-      if(number_of_interactions > 0) std::cout << 100*number_of_interactions/interaction_estimate << "%..." << std::flush;
+      // if(number_of_interactions > 0) std::cout << 100*number_of_interactions/interaction_estimate << "%..." << std::flush;
       #pragma omp for schedule(dynamic)
       for(int j=0; j< yb; j++){
          for(int k=0; k<zb; k++){
@@ -1481,22 +1482,23 @@ void calc_interactions() {
                                 //calculate relative bond angle for modulated constants
                                  double angle_i = atan2(ady,adx);// - twist_angle;// - M_PI*0.5;
                                  double angle_j = atan2(-ady,-adx);// - twist_angle;
-                                 std::array<double, 4> exchange({0.0,0.0,0.0,0.0});
+                                 std::array<double, 4> exchange({-60.0,0.0,0.0,0.0});
 
                                  //intralayer exchange
                                  if(atom_i.S == atom_j.S) {
                                     //spins species 1 is pristine
-                                    if(atom_i.S == 1) {
+                                    // if(atom_i.S == 1) {
                                        
-                                       exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);
-                                       //spin species 4 is pristine but needs negative Dz
-                                    } else if(atom_i.S == 4) {
+                                    //    exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);
+                                    //    //spin species 4 is pristine but needs negative Dz
+                                    // } else if(atom_i.S == 4) {
                                        
-                                       exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);
-                                          exchange[3] *= -1;
+                                    //    exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);
+                                    //       exchange[3] *= -1;
 
-                                    //probably wont need any of this since not modulating exchange
-                                    } else if(atom_i.l_id == 1) {
+                                    // //probably wont need any of this since not modulating exchange
+                                    // } else
+                                     if(atom_i.l_id == 1) {
                                        angle_i += twist_angle;
                                        angle_j += twist_angle;
                                        if(dL2 < intra_nn_dist_1) exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_1NN );
@@ -1585,7 +1587,7 @@ void calc_interactions() {
                                     } else continue;
                                  }
    
-                                 if(exchange[0] == 0.0 && exchange[1] == 0.0 && exchange[2] == 0.0 && exchange[3] == 0.0) continue;
+                                 if(exchange[0] == -60.0) continue;
                                  //save energy in meV for analysis
                                  // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+0] += 1.0;
                                  // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
