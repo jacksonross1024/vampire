@@ -151,7 +151,7 @@ void create_magnetic_atom_list(std::string filename){
                            unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
                            unit_cell_shifts[dx_cell][dy_cell][1] += changex;
                            unit_cell_shifts[dx_cell][dy_cell][2] += changey;
-                           std::cout << dx_cell << ", " << dy_cell << ", " << changex << ", " << changey << std::endl;
+                           // std::cout << dx_cell << ", " << dy_cell << ", " << changex << ", " << changey << std::endl;
                            // row3.push_back(new_atom);
                         } else if (z_j <= a0z*3){
                            new_atom.S = 4;
@@ -214,7 +214,7 @@ void create_magnetic_atom_list(std::string filename){
                            std::cerr << "Error! Atom " << total_atoms << " twist layer: " << z_j << " > " << twist_loction << std::endl;
                            exit(1);
                      }
-                        outfile2 << total_atoms << "\t" << x_j/(system_size_x) << '\t' <<  y_j/(system_size_y) <<  "\t" << z_j/system_size_z << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
+                        outfile2 << total_atoms << "\t" << x_new/(system_size_x) << '\t' <<  y_new/(system_size_y) <<  "\t" << z_j/system_size_z << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
                         total_atoms++;
                      
                      all_m_atoms.push_back(new_atom);       
