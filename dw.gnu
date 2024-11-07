@@ -102,9 +102,9 @@ set auto x
 s = 1e-4 
 set ylabel "Torque (J)"
 set xlabel "position (nm)"
-plot "output" u ($1*s):40 w l title "T_x",\
-"" u ($1*s):40 w l title "T_y",\
-"" u ($1*s):40 w l title "T_z" 
+plot "output" u ($1*s):16 w l title "T_x",\
+"" u ($1*s):17 w l title "T_y",\
+"" u ($1*s):18 w l title "T_z" 
 
 p_1 = 250
 w_1 = 50
@@ -136,5 +136,5 @@ set auto x
 set ylabel "width (nm)" 
 set xlabel "Time Step"
 
-plot "dw-mc-dynamics.txt" u ($0*100.0):1 w l ls 1 notitle
+plot "dw-mc-dynamics.txt" u ($0*100.0):3 w l ls 1 notitle
 
