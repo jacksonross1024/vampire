@@ -21,6 +21,14 @@ int main(int argc, char* argv[]){
             if(argv[a]== dmi_check) {DMI = true;
             std::cout << " with DMI " << std::endl;}
         }
+        if(a == 4) {
+            J_inter_scaling = atof(argv[a]);
+            std::cout << " inter exchange scaling: "<< 1-J_inter_scaling << std::endl;
+        }
+        if(a == 5) {
+            DMI_inter_scaling = atof(argv[a]);
+            std::cout << " inter DMI scaling: " << DMI_inter_scaling << std::endl;
+        }
     }
 
    system_size_x = 1000;//  25.00

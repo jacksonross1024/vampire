@@ -25,6 +25,8 @@ int number_of_unit_cells_y;
 int num_above_atoms =0;
 int num_below_atoms =0;
 
+double J_inter_scaling = 0.0;
+double DMI_inter_scaling = 1.0;
 
 int total_atoms = 0;
 int total_nm_atoms = 0;
@@ -46,7 +48,7 @@ void print_header(){
 
 bool inside_system(double sx, double sy, double x, double y, double offset){
 
-   if (x >=offset && x <= sx-offset && y >=offset && y <= sy -offset) return true;
+   if ((x >=offset) && (x <= sx-offset) && (y >=offset) && (y <= sy-offset)) return true;
    else return false;
 }
 
@@ -115,9 +117,9 @@ void create_magnetic_atom_list(std::string filename){
                         // double changex = std::abs(x_new - x_j);
                         // double changey = std::abs(y_new - y_j);
                         
-                        int dy_cell = floor((y_new +0.0000001)/ a1y);
+                        int dy_cell = floor((y_new +0.000000)/ a1y);
                         // changex += dy_cell*std::abs(a1x);
-                        int dx_cell = floor((x_new +0.0000001)/ a0x);
+                        int dx_cell = floor((x_new + 0.000000)/ a0x);
                         
                         // double unit_x = dx_cell*a0x + dy_cell*a1x + atom[atom_i].x;
                         // double unit_y = dy_cell*a1y + atom[atom_i].y;
@@ -139,7 +141,8 @@ void create_magnetic_atom_list(std::string filename){
                         // Set layer number
                         new_atom.unit_x = dx_cell;
                         new_atom.unit_y = dy_cell;
-                        if(new_atom.unit_x  >= number_of_unit_cells_x || new_atom.unit_y >= number_of_unit_cells_y) {
+                        if(new_atom.unit_x  >= number_of_unit_cells_x || new_atom.unit_y >= number_of_unit_cells_y \
+                           || new_atom.unit_x < 0 || new_atom.unit_y < 0) {
                            std::cerr << new_atom.unit_x  << ", " << new_atom.unit_y  << ", " << x_j << ", " << y_j << ", " << \
                            int(floor(y_j / a1y)) << ", " <<  int(floor(x_j / a0x)) << std::endl;
                            std::exit(1);
@@ -151,7 +154,7 @@ void create_magnetic_atom_list(std::string filename){
                            unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
                            unit_cell_shifts[dx_cell][dy_cell][1] += changex;
                            unit_cell_shifts[dx_cell][dy_cell][2] += changey;
-                           std::cout << dx_cell << ", " << dy_cell << ", " << changex << ", " << changey << std::endl;
+                           // std::cout << dx_cell << ", " << dy_cell << ", " << changex << ", " << changey << std::endl;
                            // row3.push_back(new_atom);
                         } else if (z_j <= a0z*3){
                            new_atom.S = 4;
@@ -189,10 +192,11 @@ void create_magnetic_atom_list(std::string filename){
                      new_atom.l_id = atom[atom_i].l_id;
                      new_atom.h_id = atom[atom_i].h_id;
                      // new_atom.S = 0;
-                     new_atom.unit_y = int(floor((y_new +0.000001)/ a1y));
+                     new_atom.unit_y = int(floor((y_new +0.00000)/ a1y));
                         // changex += dy_cell*std::abs(a1x);
-                     new_atom.unit_x = int(floor((x_new +0.000001)/ a0x));
-                     if(new_atom.unit_x  >= number_of_unit_cells_x || new_atom.unit_y >= number_of_unit_cells_y) {
+                     new_atom.unit_x = int(floor((x_new +0.00000)/ a0x));
+                     if(new_atom.unit_x  >= number_of_unit_cells_x || new_atom.unit_y >= number_of_unit_cells_y || \
+                        new_atom.unit_x  < 0 || new_atom.unit_y < 0) {
                         std::cerr << new_atom.unit_x  << ", " << new_atom.unit_y  << ", " << x_j << ", " << y_j << ", " << \
                          int(floor(y_j / a1y)) << ", " <<  int(floor(x_j / a0x)) << std::endl;
                          std::exit(1);
@@ -214,7 +218,7 @@ void create_magnetic_atom_list(std::string filename){
                            std::cerr << "Error! Atom " << total_atoms << " twist layer: " << z_j << " > " << twist_loction << std::endl;
                            exit(1);
                      }
-                        outfile2 << total_atoms << "\t" << x_j/(system_size_x) << '\t' <<  y_j/(system_size_y) <<  "\t" << z_j/system_size_z << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
+                        outfile2 << total_atoms << "\t" << x_new/(system_size_x) << '\t' <<  y_new/(system_size_y) <<  "\t" << z_j/system_size_z << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
                         total_atoms++;
                      
                      all_m_atoms.push_back(new_atom);       

@@ -28,6 +28,9 @@
    extern int num_above_atoms;
    extern int num_below_atoms;
 
+   extern double J_inter_scaling;
+   extern double DMI_inter_scaling;
+   
    class spin {
       public:
          double x;

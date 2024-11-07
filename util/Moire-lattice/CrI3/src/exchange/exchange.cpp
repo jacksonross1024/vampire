@@ -881,7 +881,7 @@ void calc_interactions() {
    vtimer_t timer;
       timer.start();
    
-   #pragma omp parallel num_threads(14)
+   #pragma omp parallel num_threads(4)
    {
    std::stringstream otext;
    for(int i=0; i<xb; i++){

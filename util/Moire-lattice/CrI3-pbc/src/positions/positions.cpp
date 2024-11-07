@@ -17,7 +17,7 @@ double a1y = 6.002;
 double c0 = 26.16;
 double a0z = c0/4.0;
 
-double J_inter_scaling = 1.0;
+double J_inter_scaling = 0.0;
 double DMI_inter_scaling = 1.0;
 //must change num_atoms according to unit cell info
 int num_atoms = 8;
