@@ -99,20 +99,29 @@ int curie_temperature(){
    if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag){
       sim::temperature+=sim::delta_temperature;
    }
-   else sim::temperature=sim::Tmin;
+   else sim::temperature=sim::Teq;
 
 	// Perform Temperature Loop
-	while(sim::temperature<=sim::Tmax){
+	while(sim::temperature<=sim::Tmax && sim::temperature>=sim::Tmin){
 
+		sim::actual_H_field = sim::equilibrium_H_field;
+		sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+		sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+		sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 		// Equilibrate system
 		sim::integrate(sim::equilibration_time);
-
+		stats::update();
+		vout::data();
 		// Reset mean magnetisation counters
 		stats::reset();
 
 		// Reset start time
 		int start_time=sim::time;
 
+		sim::actual_H_field = sim::applied_H_field;
+		sim::actual_H_vector[0] = sim::applied_H_vector[0];
+		sim::actual_H_vector[1] = sim::applied_H_vector[1];
+		sim::actual_H_vector[2] = sim::applied_H_vector[2];
 		// Simulate system
 		while(sim::time<sim::loop_time+start_time){
 

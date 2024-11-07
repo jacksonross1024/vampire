@@ -44,7 +44,10 @@ void time_series(){
 
 	// Output data
 	vout::data();
-
+	sim::actual_H_field = sim::equilibrium_H_field;
+	sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+	sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+	sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 	// Equilibrate system
 	while(sim::time<sim::equilibration_time){
 
@@ -68,6 +71,10 @@ void time_series(){
       stats::reset();
 
    }
+	sim::actual_H_field = sim::applied_H_field;
+	sim::actual_H_vector[0] = sim::applied_H_vector[0];
+	sim::actual_H_vector[1] = sim::applied_H_vector[1];
+	sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
 	// Perform Time Series
 	while(sim::time<sim::equilibration_time+sim::total_time){

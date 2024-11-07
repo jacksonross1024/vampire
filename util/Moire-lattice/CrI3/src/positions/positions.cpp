@@ -221,6 +221,7 @@ void create_magnetic_atom_list(std::string filename){
                      num_below_atoms++;
                      }
                   } 
+               
                }  
          } // j-loop
    } // i-loop

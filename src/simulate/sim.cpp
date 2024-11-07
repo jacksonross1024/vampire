@@ -92,8 +92,16 @@ namespace sim{
 	double Teq=300.0;
 	double temperature=300.0;
 	double delta_temperature=10.0;
-	double H_applied=0.0;
-	double H_vec[3]={0.0,0.0,1.0};
+	double H_applied= 0;
+	double H_vec[3] = {0.0,0.0,1.0};
+	
+	double applied_H_field=0.0;
+	double applied_H_vector[3]={0.0,0.0,1.0};
+	double actual_H_field=0.0;
+	double actual_H_vector[3]={0.0,0.0,1.0};
+	double equilibrium_H_field=0.0;
+	double equilibrium_H_vector[3]={0.0,0.0,1.0};
+
 	double Hmin=-1.0; // T
 	double Hmax=+1.0; // T
 	double Hinc= 0.1; // T

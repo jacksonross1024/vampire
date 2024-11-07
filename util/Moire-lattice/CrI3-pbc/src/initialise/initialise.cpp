@@ -50,12 +50,11 @@ void resize_arrays(std::vector < std::vector < double > > &A, int sizex, int siz
 
 void initialise_variables(){
 
-   number_of_unit_cells_x = ceil(system_size_x/a0x);
-   number_of_unit_cells_y = ceil(system_size_y/a1y);
+   number_of_unit_cells_x = ceil(system_size_x/a0x)+1;
+   number_of_unit_cells_y = ceil(system_size_y/a1y)+1;
    system_size_x = number_of_unit_cells_x*a0x;
    system_size_y = number_of_unit_cells_y*a1y;
-   // number_of_unit_cells_x++;
-   // number_of_unit_cells_y++;
+
    system_size_z = number_of_unit_cells_z*c0;
 
    std::cout << "Creating base lattice " << number_of_unit_cells_x << " by " << number_of_unit_cells_y << " rhombic unit cells" << std::endl;
@@ -158,5 +157,4 @@ void initialise_variables(){
          config_energy[i][j].resize(30,0.0);
       }
    }
-   // std::vector<std::vector<std::vector<double> > > config_energy(number_of_unit_cells_x, std::vector<std::vector<double> >(number_of_unit_cells_y, std::vector<double>(30,0.0)));
 }

@@ -555,7 +555,7 @@ namespace vin{
         if(word==test){
             double H=atof(value.c_str());
             check_for_valid_value(H, word, line, prefix, unit, "field", -1.e4, 1.0e4,"input","+/- 10,000 T");
-            sim::H_applied=H;
+            sim::applied_H_field=H;
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
@@ -575,11 +575,11 @@ namespace vin{
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
-        test="equilibration-applied-field-strength";
+        test="equilibration-field-strength";
         if(word==test){
             double H=atof(value.c_str());
             check_for_valid_value(H, word, line, prefix, unit, "field", 0.0, 1.0e3,"input","0 - 1,000 T");
-            sim::Heq=H;
+            sim::equilibrium_H_field=H;
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
@@ -616,9 +616,22 @@ namespace vin{
             double u_old[3] = {u[0],u[1],u[2]};
             check_for_valid_unit_vector(u, word, line, prefix, "input");
             if(u_old[0] != u[0] || u_old[1] != u[1] || u_old[2] != u[2]) std::cout << "unit vector normalised from <" << u_old[0] << ", " << u_old[1] << ", " << u_old[2] << "> to <" << u[0] << ", " << u[1] << ", " << u[2] << ">" << std::endl;
-            sim::H_vec[0]=u.at(0);
-            sim::H_vec[1]=u.at(1);
-            sim::H_vec[2]=u.at(2);
+            sim::applied_H_vector[0]=u.at(0);
+            sim::applied_H_vector[1]=u.at(1);
+            sim::applied_H_vector[2]=u.at(2);
+            sim::applied_field_set_by_angle=false;
+            return EXIT_SUCCESS;
+        }
+        test="equilibration-field-unit-vector";
+        if(word==test){
+            std::vector<double> u(3);
+            u=doubles_from_string(value);
+            double u_old[3] = {u[0],u[1],u[2]};
+            check_for_valid_unit_vector(u, word, line, prefix, "input");
+            if(u_old[0] != u[0] || u_old[1] != u[1] || u_old[2] != u[2]) std::cout << "unit vector normalised from <" << u_old[0] << ", " << u_old[1] << ", " << u_old[2] << "> to <" << u[0] << ", " << u[1] << ", " << u[2] << ">" << std::endl;
+            sim::equilibrium_H_vector[0]=u.at(0);
+            sim::equilibrium_H_vector[1]=u.at(1);
+            sim::equilibrium_H_vector[2]=u.at(2);
             sim::applied_field_set_by_angle=false;
             return EXIT_SUCCESS;
         }

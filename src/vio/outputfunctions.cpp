@@ -76,7 +76,7 @@ namespace vout{
 
    // Output Function 3 - with Header
    void Happ(std::ostream& stream, bool header){
-      stream << generic_output_double("B_applied" , sim::H_applied, header);
+      stream << generic_output_double("B_applied" , sim::actual_H_field, header);
    }
    void lot_strength(std::ostream& stream, bool header){
       stream << generic_output_double("lot_strength" , sim::laser_torque_strength, header);
@@ -87,7 +87,7 @@ namespace vout{
       std::ostringstream res;
       vout::fixed_width_output result(res,vout::fw_size);
       if(header) result << "B_vector_x" << "B_vector_y" << "B_vector_z";
-      else result << sim::H_vec[0] << sim::H_vec[1] << sim::H_vec[2];
+      else result << sim::actual_H_vector[0] << sim::actual_H_vector[1] << sim::actual_H_vector[2];
       stream << result.str();
    }
 
