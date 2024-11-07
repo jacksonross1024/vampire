@@ -78,7 +78,7 @@ namespace unitcell{
          // jatom--;
          line_counter++;
          // check for sane input
-         if(iatom>=0 && iatom < num_atoms) interaction[id].i=iatom;
+         if(iatom>=0 && iatom < num_atoms && id < num_interactions) interaction[id].i=iatom;
          else if(iatom>=0 && iatom >= num_atoms){
             terminaltextcolor(RED);
             std::cerr << std::endl << "Error! iatom number "<< iatom <<" for interaction id " << id << " on line " << line_counter
@@ -100,6 +100,7 @@ namespace unitcell{
            err::vexit();
          }
          if(iatom>=0 && jatom < num_atoms) interaction[id].j=jatom;
+         
          else{
             terminaltextcolor(RED);
             std::cerr << std::endl << "Error! jatom number "<< jatom <<" for interaction id " << id << " on line " << line_counter
@@ -114,6 +115,7 @@ namespace unitcell{
          interaction[id].dx=dx;
          interaction[id].dy=dy;
          interaction[id].dz=dz;
+
 
          // check for long range interactions
          if(static_cast<unsigned int>(abs(dx))>interaction_range) interaction_range=abs(dx);
@@ -136,6 +138,7 @@ namespace unitcell{
                int_iss >> interaction[id].Jij[0][0] >> interaction[id].Jij[0][1] >> interaction[id].Jij[0][2];
                int_iss >> interaction[id].Jij[1][0] >> interaction[id].Jij[1][1] >> interaction[id].Jij[1][2];
                int_iss >> interaction[id].Jij[2][0] >> interaction[id].Jij[2][1] >> interaction[id].Jij[2][2];
+ 
                break;
             default:
                terminaltextcolor(RED);
