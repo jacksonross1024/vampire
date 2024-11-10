@@ -59,9 +59,9 @@ namespace vdc{
       }
 
       // calculate number of cells
-      unsigned int nx = ceil( (atoms_max[0] - atoms_min[0])/cell_size_x );
-      unsigned int ny = ceil( (atoms_max[1] - atoms_min[1])/cell_size_y );
-      unsigned int nz = ceil( (atoms_max[2] - atoms_min[2])/cell_size_z );
+      unsigned int nx = 1+ceil( (atoms_max[0] - atoms_min[0])/cell_size_x );
+      unsigned int ny = 1+ceil( (atoms_max[1] - atoms_min[1])/cell_size_y );
+      unsigned int nz = 1+ceil( (atoms_max[2] - atoms_min[2])/cell_size_z );
 
       // check for zero cell size and ensure a minimum of 1 cell in x,y,z
       if( nx == 0 ) nx = 1;
@@ -77,6 +77,7 @@ namespace vdc{
 
       // allocate storage for cell coordinates and cell magnetization
       vdc::total_cells = num_cells[0] * num_cells[1] * num_cells[2];
+      if(vdc::verbose) std::cout << nx << ", " << ny << ", " << nz << " cells for " << total_cells << " total cells" << std::endl;
 
       // total number of materials + 1
       const unsigned int tmid = 1+vdc::materials.size();
@@ -109,7 +110,7 @@ namespace vdc{
             }
          }
       }
-
+      if(vdc::verbose) std::cout << "cell made; assigning initial cells..." << std::flush;
       // Allocate storage for cell id for each atom
       vdc::atom_cell_id.resize(vdc::sliced_atoms_list.size(),0);
 
@@ -146,7 +147,7 @@ namespace vdc{
          }*/
 
          // Assign atom to cell
-         int cellid = supercell_array[scc[0]][scc[1]][scc[2]];
+         int cellid = supercell_array.at(scc[0]).at(scc[1]).at(scc[2]);
          vdc::atom_cell_id[atom] = cellid;
 
          // accumulate number of atoms in each cell
@@ -154,7 +155,7 @@ namespace vdc{
          init_num_atoms_in_cell[cellid*tmid + type]++;
 
       }
-
+      if(vdc::verbose) std::cout << "cells assigned; optimising cell structure..." << std::flush;
       // accumulate total number of cells with atoms
       unsigned num_cells_with_atoms = 0;
 
