@@ -32,10 +32,6 @@ material[3]:fourth-order-rotational-anisotropy-constant = 8.00109e-25 # k4para c
 material[3]:temperature-rescaling-exponent = 2.0
 material[3]:temperature-rescaling-curie-temperature=1250.35
 
-#material[3]:spin-orbit-field-like-torque = 0.1 #T
-#material[3]:spin-orbit-anti-damping-torque = 0.018 #T
-#material[3]:spin-orbit-torque-asymmetry = 0
-
 #---------------------------------------------------
 # Material 2 Mn	2      
 #---------------------------------------------------
@@ -59,9 +55,6 @@ material[2]:fourth-order-rotational-anisotropy-constant = 8.00109e-25 #k4para co
 material[2]:temperature-rescaling-exponent = 2.0
 material[2]:temperature-rescaling-curie-temperature=1250.35
 
-#material[2]:spin-orbit-field-like-torque = -0.1 #T 8 mT/10^11 A/m^2 Behovits et al 2023
-#material[2]:spin-orbit-anti-damping-torque = -0.018 #T  0.15*8
-#material[2]:spin-orbit-torque-asymmetry = 0
 
 #2 mT/10^11 A/m^2
 material[3]:spin-diffusion-length = 14 #
@@ -71,12 +64,6 @@ material[3]:spin-accumulation = 1.48e7 #
 material[3]:diffusion-constant = 0.01 #
 material[3]:sd-exchange-constant = 0.2 !eV 
 
-#material[3]:spin-diffusion-length = 5 #
-#material[3]:spin-polarisation-diffusion = 3.6
-##material[3]:spin-polarisation-conductivity = 0.23
-#material[3]:spin-accumulation = 1.68e7 # 
-#material[3]:diffusion-constant = 0.0011 #
-#material[3]:sd-exchange-constant = 0.25 !eV 
 
 material[2]:spin-diffusion-length = 14 #
 material[2]:spin-polarisation-conductivity = 0.23 
