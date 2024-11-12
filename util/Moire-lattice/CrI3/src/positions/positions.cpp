@@ -158,8 +158,8 @@ void create_magnetic_atom_list(std::string filename){
                            // row3.push_back(new_atom);
                         } else if (z_j <= a0z*3){
                            new_atom.S = 4;
-                           // new_atom.dx = changex;
-                           // new_atom.dy = changey;
+                           new_atom.dx = 6;
+                           new_atom.dy = 0;
                            // row4.push_back(new_atom);
                         } else {
                            std::cerr << "Error! Atom " << total_atoms << " twist layer: " << z_j << " < " << twist_loction << std::endl;
@@ -204,8 +204,8 @@ void create_magnetic_atom_list(std::string filename){
                      // Set layer number
                      if (z_j == 0.0){
                         new_atom.S = 1;
-                        // new_atom.dx = 0; // need a dx,dy to take into account the actual stacking!
-                        // new_atom.dy = 0;
+                        new_atom.dx = 6;
+                        new_atom.dy = 0;
                         // row1.push_back(new_atom);
                         //std::cout << total_atoms << "\t" << new_atom.S << "\t" << new_atom.dx << "\t" << new_atom.dy << "\t" << Jint[new_atom.dx][new_atom.dy] << std::endl;
                      } else if (z_j <= a0z){
