@@ -26,12 +26,16 @@
 #define SIM_H_
 
 //Headers
+
+#include <cstdint>
 #include <fstream>
 #include <stdint.h>
 #include <string>
 #include <valarray>
 #include <vector>
 
+using std::uint64_t;
+using std::int64_t;
 /// Enumerated lists for code readability
 enum pump_functions_t {square=0, two_temperature, double_pump_two_temperature, double_pump_square};
 

@@ -103,7 +103,7 @@ namespace exchange{
          //       - must be normalised in statistics to account for double sum
    		energy -= (Jij[0][0] * S[0] * sx + Jij[0][1] * S[1] * sx + Jij[0][2] * S[2] * sx +
    					  Jij[1][0] * S[0] * sy + Jij[1][1] * S[1] * sy + Jij[1][2] * S[2] * sy +
-   					  Jij[2][0] * S[0] * sz + Jij[2][1] * S[1] * sz + Jij[2][2] * S[2] * sz);
+   					  Jij[2][0] * S[0] * sz + Jij[2][1] * S[1] * sz + Jij[2][2] * S[2] * sz)*1.602176634e-22/(2.98*9.274e-24);
 
    	}
 

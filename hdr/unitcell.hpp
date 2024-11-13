@@ -16,6 +16,10 @@
 // C++ standard library headers
 #include <string>
 #include <vector>
+#include <cstdint>
+
+using std::uint64_t;
+using std::int64_t;
 
 // Vampire headers
 #include "exchange_types.hpp" // needed for exchange interaction type definition

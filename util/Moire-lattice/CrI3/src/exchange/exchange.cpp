@@ -5,6 +5,7 @@
 #include <cmath>
 #include "initialise.hpp"
 #include "exchange.hpp"
+#include <omp.h>
 
 // System headers
 #include <chrono>
@@ -409,7 +410,7 @@ double nn_dist_3;
 double max_range = 9.9;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
-double J_constant = 1.0*eVtoJ/1000.0; //1 meV
+double J_constant = 1.0;//*eVtoJ/1000.0; //1 meV
 double J_intra_1=2.5*J_constant;
 double J_intra_2=0.75*J_constant;
 double J_intra_3=-0.01*J_constant;
@@ -883,6 +884,9 @@ void calc_interactions() {
    
    #pragma omp parallel num_threads(16)
    {
+      #pragma omp single 
+      std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
+
    std::stringstream otext;
    for(int i=0; i<xb; i++){
 
@@ -1092,11 +1096,11 @@ void calc_interactions() {
                               all_m_atoms[atom_i.id].Dx_inter += exchange[1]/J_constant;
                               all_m_atoms[atom_i.id].Dy_inter += exchange[2]/J_constant;
                               all_m_atoms[atom_i.id].Dz_inter += exchange[3]/J_constant;
-                              // if(atom_i.id == 100023) { std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady << "\t" << adz << "\t" << \
-                              //                   // xx                     xy-> Dz                 xz -> -Dy 
-                              //                     exchange[0]/J_constant << "\t" << exchange[1]/J_constant << "\t" << exchange[2]/J_constant << "\t" << \
-                              //                   // yx -> -Dz              yy                      yz -> Dx
-                              //                    exchange[3]/J_constant << std::endl;}
+                              if(atom_i.id == 100023) { std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady << "\t" << adz << "\t" << \
+                                                // xx                     xy-> Dz                 xz -> -Dy 
+                                                  exchange[0]/J_constant << "\t" << exchange[1]/J_constant << "\t" << exchange[2]/J_constant << "\t" << \
+                                                // yx -> -Dz              yy                      yz -> Dx
+                                                 exchange[3]/J_constant << std::endl;}
 
                                  #pragma omp critical 
                                  {

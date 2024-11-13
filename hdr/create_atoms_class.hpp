@@ -13,6 +13,9 @@
 #ifndef CREATE_ATOMS_CLASS_H_
 #define CREATE_ATOMS_CLASS_H_
 
+#include <cstdint>
+using std::uint64_t;
+using std::int64_t;
 //namespace create{
 namespace cs{
 

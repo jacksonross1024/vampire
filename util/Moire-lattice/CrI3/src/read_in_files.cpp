@@ -322,10 +322,10 @@ void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::
             int int_x = int(sx*10);
             int int_y = int(sy*10);
             int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : (round(theta/30.0 == 3.0) ? (0):-1) );
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] = J*J_constant;
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] = Dx*J_constant;
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] = Dy*J_constant;
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] = Dz*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] = (J-J_inter_scaling*std::abs(J))*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] = DMI_inter_scaling*Dx*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] = DMI_inter_scaling*Dy*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] = DMI_inter_scaling*Dz*J_constant;
              std::cout  <<  Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
         }
         for(int j = 0; j < 6; j++) {
@@ -351,10 +351,10 @@ void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::
             int int_x = int(sx*10);
             int int_y = int(sy*10);
             // int theta_i = (theta/30.0 == 5.0) ? (2) : ((theta/30.0 == 4.0) ? (1) : (theta/30.0 == 3.0 ? (0):-1) );
-            Eij_2NN.at(int_x).at(int_y).at(theta_i)[0] = J*J_constant;
-            Eij_2NN.at(int_x).at(int_y).at(theta_i)[1] = Dx*J_constant;
-            Eij_2NN.at(int_x).at(int_y).at(theta_i)[2] = Dy*J_constant;
-            Eij_2NN.at(int_x).at(int_y).at(theta_i)[3] = Dz*J_constant;
+            Eij_2NN.at(int_x).at(int_y).at(theta_i)[0] = (J-J_inter_scaling*std::abs(J))*J_constant;
+            Eij_2NN.at(int_x).at(int_y).at(theta_i)[1] = DMI_inter_scaling*Dx*J_constant;
+            Eij_2NN.at(int_x).at(int_y).at(theta_i)[2] = DMI_inter_scaling*Dy*J_constant;
+            Eij_2NN.at(int_x).at(int_y).at(theta_i)[3] = DMI_inter_scaling*Dz*J_constant;
              std::cout  <<  Eij_2NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_2NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_2NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_2NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
         }
         for(int j = 0; j < 3; j++) {
@@ -377,10 +377,10 @@ void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::
             int int_x = int(sx*10);
             int int_y = int(sy*10);
             int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0) == 1.0) ? (1) : (round(theta/30.0) == 3.0 ? (0):-1) );
-            Eij_3NN.at(int_x).at(int_y).at(theta_i)[0] = J*J_constant;
-            Eij_3NN.at(int_x).at(int_y).at(theta_i)[1] = Dx*J_constant;
-            Eij_3NN.at(int_x).at(int_y).at(theta_i)[2] = Dy*J_constant;
-            Eij_3NN.at(int_x).at(int_y).at(theta_i)[3] = Dz*J_constant;
+            Eij_3NN.at(int_x).at(int_y).at(theta_i)[0] = (J-J_inter_scaling*std::abs(J))*J_constant;
+            Eij_3NN.at(int_x).at(int_y).at(theta_i)[1] = DMI_inter_scaling*Dx*J_constant;
+            Eij_3NN.at(int_x).at(int_y).at(theta_i)[2] = DMI_inter_scaling*Dy*J_constant;
+            Eij_3NN.at(int_x).at(int_y).at(theta_i)[3] = DMI_inter_scaling*Dz*J_constant;
             std::cout  <<  Eij_3NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_3NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_3NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_3NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
         }
     }

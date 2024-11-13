@@ -5,7 +5,7 @@
 #===================================================================
 
 # Specify compiler for MPI compilation with openmpi
-export OMPI_CXX=g++ -std=c++0x
+export OMPI_CXX=g++ -std=c++11
 
 #export OMPI_CXX=icc
 #export OMPI_CXX=pathCC
@@ -14,19 +14,20 @@ export OMPI_CXX=g++ -std=c++0x
 #export MPICH_CXX=bgxlc++
 
 # Include the FFTW library by uncommenting the -DFFT (off by default)
-export incFFT= -DFFT -DFFTW_OMP -fopenmp
-export FFTLIBS= -lfftw3_omp -lfftw3
+#export incFFT= -DFFT -DFFTW_OMP -fopenmp
+#export FFTLIBS= -lfftw3_omp -lfftw3
 
 # Compilers
 ICC=icc -std=c++11 -DCOMP='"Intel C++ Compiler"'
-GCC=g++ -std=c++0x -DCOMP='"GNU C++ Compiler"' -fopenmp
+GCC=g++ -std=c++11 -DCOMP='"GNU C++ Compiler"'
 LLVM=g++ -std=c++11 -DCOMP='"LLVM C++ Compiler"'
 PCC=pathCC -DCOMP='"Pathscale C++ Compiler"'
 IBM=bgxlc++ -DCOMP='"IBM XLC++ Compiler"'
 MPICC=mpicxx -DMPICF
 MPIICC=mpiicpc -DMPICF
 
-LIBS= -lstdc++ $(FFTLIBS)  -lm -L/opt/local/lib/ 
+LIBS= -lstdc++
+#-lm $(FFTLIBS) -L/opt/local/lib/
 
 CCC_CFLAGS=-I./hdr -I./src/qvoronoi -O0
 CCC_LDFLAGS=-I./hdr -I./src/qvoronoi -O0
@@ -36,7 +37,7 @@ export LC_ALL=C
 
 # LIBS
 
-CUDALIBS=-L/usr/local/cuda/lib64/ -lcuda -lcudart
+CUDALIBS=-L/usr/local/cuda/lib64/ -lcuda -lcudart -lcusparse
 
 # Debug Flags
 ICC_DBCFLAGS= -O0 -C -I./hdr -I./src/qvoronoi
@@ -62,8 +63,8 @@ ICC_LDFLAGS= -I./hdr -I./src/qvoronoi -axCORE-AVX2
 LLVM_CFLAGS= -Wall -pedantic -O3 -mtune=native -funroll-loops -I./hdr -I./src/qvoronoi
 LLVM_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi
 
-GCC_CFLAGS= -O3 -mtune=native -funroll-all-loops -fexpensive-optimizations -funroll-loops -I./hdr -I./src/qvoronoi -std=c++0x -Wsign-compare -I/opt/local/include/
-GCC_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi -Wsign-compare -I/opt/local/include/
+GCC_CFLAGS=-O3 -mtune=native -funroll-all-loops -fexpensive-optimizations -funroll-loops -I./hdr -I./src/qvoronoi -std=c++11 -Wsign-compare
+GCC_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi -Wsign-compare
 
 PCC_CFLAGS=-O2 -march=barcelona -ipa -I./hdr -I./src/qvoronoi
 PCC_LDFLAGS= -I./hdr -I./src/qvoronoi -O2 -march=barcelona -ipa
@@ -152,10 +153,10 @@ include src/statistics/makefile
 include src/unitcell/makefile
 include src/vio/makefile
 include src/environment/makefile
-
+include src/opencl/makefile
 # Cuda must be last for some odd reason
 include src/cuda/makefile
-include src/opencl/makefile
+
 
 ICC_OBJECTS=$(OBJECTS:.o=_i.o)
 LLVM_OBJECTS=$(OBJECTS:.o=_llvm.o)

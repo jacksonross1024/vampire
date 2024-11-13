@@ -25,6 +25,7 @@
 #ifndef VIO_H_
 #define VIO_H_
 
+#include <cstdint>
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -44,6 +45,9 @@
 #include <iomanip>
 #include <vector>
 
+// Load standard forms of fixed-width types (needed for some compilers)
+using std::uint64_t;
+using std::int64_t;
 // Global Output Streams
 extern std::ofstream zinfo;
 extern std::ofstream zmag;

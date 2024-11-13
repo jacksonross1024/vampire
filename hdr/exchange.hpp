@@ -47,7 +47,7 @@ class zvec_t{
 
 class zten_t{
 	public:
-	double Jij[3][3];
+	float Jij[3][3];
 
 	// constructor
 	zten_t()

@@ -5,6 +5,7 @@
 #include <cmath>
 #include "initialise.hpp"
 #include "exchange.hpp"
+#include "omp.h"
 
 // System headers
 #include <chrono>
@@ -1420,10 +1421,15 @@ void calc_interactions() {
 
    std::cout << "Generating estimated " << interaction_estimate << " interactions for remaining " << all_m_atoms_offset.size() << " atoms " << std::endl;
       // exit(1);
-   #pragma omp parallel num_threads(4) 
+   #pragma omp parallel num_threads(16) 
    {
    std::stringstream otext;
+         #pragma omp single 
+      std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
+
    for(int i=0; i<xb; i++){
+       #pragma omp single nowait
+      if(i%int(xb*0.1) == 0) std::cout << "." << std::flush;
       // if(number_of_interactions > 0) std::cout << 100*number_of_interactions/interaction_estimate << "%..." << std::flush;
       #pragma omp for schedule(dynamic)
       for(int j=0; j< yb; j++){
@@ -1670,11 +1676,20 @@ void calc_interactions() {
 std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij){
    std::array<double,4> exchange({0.0});
 
-   int i_x_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][1]);
-   int i_y_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][2]);
+   int i_x_shift, i_y_shift, j_x_shift, j_y_shift;
 
-   int j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
-   int j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
+   if(central_atom.S == 2 || central_atom.S == 3) {
+      i_x_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][1]);
+      i_y_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][2]);
+
+      j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
+      j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
+   } else if(central_atom.S == 1 || central_atom.S == 4) {
+      i_x_shift = 6;
+      i_y_shift = 0;
+      j_x_shift = 6;
+      j_y_shift = 0;
+   }
 
    double theta =  std::abs(angle_i)*180.0/M_PI;
    int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : ( round(theta/30.0) == 3.0 ? (0):-1) );
@@ -1697,12 +1712,20 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
 
 std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij){
    std::array<double,4> exchange({0.0});
-   int i_x_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][1]);
-   int i_y_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][2]);
+   int i_x_shift, i_y_shift, j_x_shift, j_y_shift;
 
-   int j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
-   int j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
+   if(central_atom.S == 2 || central_atom.S == 3) {
+      i_x_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][1]);
+      i_y_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][2]);
 
+      j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
+      j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
+   } else if(central_atom.S == 1 || central_atom.S == 4) {
+      i_x_shift = 6;
+      i_y_shift = 0;
+      j_x_shift = 6;
+      j_y_shift = 0;
+   }
    // double theta =  std::abs(angle)*180.0/M_PI;
    int theta_i = int(round(((angle_i < 0.0) ? (angle_i+=2*M_PI) : (angle_i)) *180.0/M_PI/60.0));
    // theta =  std::abs(angle-180.0)*180.0/M_PI;
@@ -1726,12 +1749,20 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
 std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij){
    std::array<double,4> exchange({0.0});
 
-   int i_x_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][1]);
-   int i_y_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][2]);
+   int i_x_shift, i_y_shift, j_x_shift, j_y_shift;
 
-   int j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
-   int j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
+   if(central_atom.S == 2 || central_atom.S == 3) {
+      i_x_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][1]);
+      i_y_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][2]);
 
+      j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
+      j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
+   } else if(central_atom.S == 1 || central_atom.S == 4) {
+      i_x_shift = 6;
+      i_y_shift = 0;
+      j_x_shift = 6;
+      j_y_shift = 0;
+   }
    double theta =  std::abs(angle_i)*180.0/M_PI;
    int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : ( round(theta/30.0) == 3.0 ? (0):-1) );
    theta =  std::abs(angle_j)*180.0/M_PI;
@@ -1754,10 +1785,10 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
 std::array<double,4> match_inter_exchange(double dx, double dy, std::vector<std::vector<double> > &Eij){
    //  vtimer_t local;
    //  local.start();
-   std::array<double,4> exchange({-20.0});
+   std::array<double,4> exchange({-60.0});
    double new_shift_error = 100000.0;
    double old_shift_error = 100000.0;
-   int min_index = 100000;
+   int min_index = -1;
 
    // #pragma omp parallel for reduction(min: min_index) num_threads(1) schedule(static)
    for(int i = 0; i < Eij.size(); i++) {
