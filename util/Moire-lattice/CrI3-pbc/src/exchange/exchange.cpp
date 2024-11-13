@@ -413,7 +413,7 @@ double nn_dist_3;
 double max_range = 9.9;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
-double J_constant = 1.0*eVtoJ/1000.0; //1 meV
+double J_constant = 1.0;//1.0*eVtoJ/1000.0; //1 meV
 
 double J_intra_1=2.5*J_constant;
 double J_intra_2=0.75*J_constant;
