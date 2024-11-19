@@ -9,9 +9,9 @@
 #------------------------------------------
 #dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 200.0 !nm
-dimensions:system-size-y = 200.0 !nm
-dimensions:system-size-z = 1.308 !nm
+dimensions:system-size-x = 100.0 !nm
+dimensions:system-size-y = 100.0 !nm
+dimensions:system-size-z = 26.15 !A
 
 #create:periodic-boundaries-x
 #create:periodic-boundaries-y
@@ -28,37 +28,39 @@ create:crystal-sublattice-materials=true
 # Simulation attributes:
 #------------------------------------------
 
-sim:total-time-steps=3500000
-sim:equilibration-temperature=40
-sim:equilibration-time-steps = 10000
+sim:loop-time-steps=1000
+sim:equilibration-temperature=0
+sim:temperature=0
+sim:equilibration-time-steps = 1000
 sim:time-steps-increment = 1
-sim:time-step= 0.1 !fs
 
-sim:minimum-temperature=0
-sim:maximum-temperature=40.0
-sim:applied-field-strength=0.0 !T
-#sim:applied-field-unit-vector=0,0,1
-sim:cooling-time=100!ps
-sim:cooling-function = gaussian 
+sim:temperature-increment = 5
+sim:minimum-temperature=5
+sim:maximum-temperature=65
+#sim:equilibration-field-strength=0.51 !T
+#sim:equilibration-field-unit-vector=0,0,1
 
+#sim:applied-field-strength=0.51 !T
+#sim:applied-field-unit-vector=0.0,0.0,1.0 #,.82,0,0.574
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:program = field-cool #time variable magnetic field; SOT; STT
-sim:integrator = llg-heun
+sim:program =curie-temperature #time variable magnetic field; SOT; STT
+sim:integrator = monte-carlo
 
-sim:save-checkpoint = end 
+#sim:load-checkpoint=restart
+#sim:save-checkpoint = end 
 #------------------------------------------
 # data output
 #------------------------------------------
-config:atoms
-config:atoms-output-rate=100000
+#config:atoms
+#config:atoms-output-rate=1
 
-output:output-rate=10000
+output:output-rate=1
 output:time-steps
 output:temperature
+output:mean-magnetisation-length
 output:material-mean-magnetisation
-output:material-magnetisation
 output:mean-susceptibility
 output:mean-total-torque
 output:total-energy 
