@@ -9,12 +9,12 @@
 #------------------------------------------
 #dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 400.0 !nm
-dimensions:system-size-y = 400.0 !nm
+dimensions:system-size-x = 200.0 !nm
+dimensions:system-size-y = 200.0 !nm
 dimensions:system-size-z = 26.16 !A
 
-#create:periodic-boundaries-x
-#create:periodic-boundaries-y
+create:periodic-boundaries-x
+create:periodic-boundaries-y
 #create:periodic-boundaries-z
 #dipole:solver=tensor
 #dipole:field-update-rate=10
@@ -28,18 +28,19 @@ create:crystal-sublattice-materials=true
 # Simulation attributes:
 #------------------------------------------
 
-sim:total-time-steps=100000
-sim:equilibration-temperature=4
-sim:temperature=4
+sim:loop-time-steps=1000
+sim:equilibration-temperature=0
+#sim:temperature=4
+sim:temperature-increment = 5
 #sim:preconditioning-steps = 1000
-#sim:equilibration-time-steps = 1000
-sim:time-steps-increment = 1000
-sim:time-step= 1 !fs
+sim:equilibration-time-steps = 1000
+sim:time-steps-increment = 1
+#sim:time-step= 1 !fs
 
-#sim:minimum-temperature=0
-#sim:maximum-temperature=30.0
-sim:applied-field-strength=0.21 !T
-sim:applied-field-unit-vector=0.82,0,0.574
+sim:minimum-temperature=0
+sim:maximum-temperature=65.0
+#sim:applied-field-strength=0.21 !T
+#sim:applied-field-unit-vector=0.82,0,0.574
 #sim:cooling-time=500!ps
 #sim:cooling-function = linear 
 
@@ -51,23 +52,23 @@ sim:applied-field-unit-vector=0.82,0,0.574
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:program = time-series #time variable magnetic field; SOT; STT
-sim:integrator = llg-heun
+sim:program = curie-temperature #time variable magnetic field; SOT; STT
+sim:integrator = monte-carlo
 
-sim:load-checkpoint = restart
-sim:save-checkpoint = end 
+#sim:load-checkpoint = restart
+#sim:save-checkpoint = end 
 #------------------------------------------
 # data output
 #------------------------------------------
-config:atoms
-config:atoms-output-rate=10
+#config:atoms
+#config:atoms-output-rate=10
 
 output:output-rate=1
 output:time-steps
 output:temperature
-output:applied-field-strength
-output:magnetisation-length
-output:material-magnetisation
+#output:applied-field-strength
+output:mean-magnetisation-length
+output:material-mean-magnetisation
 output:mean-susceptibility
 output:total-torque
 output:total-energy 
