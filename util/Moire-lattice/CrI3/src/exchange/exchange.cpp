@@ -1018,6 +1018,9 @@ void calc_interactions() {
                                        exchange[2] = r_Dy;
                                     } else continue;
                                     // exchange[0] = 0.0;
+                                    // exchange[1] = 0.0;
+                                    // exchange[2] = 0.0;
+                                    // exchange[3] = 0.0;
                                  } else {
                                     // if (atom_j.h_id == 0 || atom_i.h_id == 0) exchange = calculate_inter_Jani(atom_i, atom_j, dL2, angle_i);
                                     if(atom_i.l_id == 1) {  
@@ -1057,6 +1060,7 @@ void calc_interactions() {
                                        all_m_atoms[atom_i.id].inter3++;}
                                        else continue;                                      
                                     } else continue;
+                                    // exchange[0] = 0.0;
                                  }
                                     // bond_avg  = calculate_intra_Jani(atom_i, atom_j, dL2, angle);
                                  // else bond_avg  = calculate_inter_Jani(atom_i, atom_j, dL2, angle);
@@ -1076,7 +1080,22 @@ void calc_interactions() {
                                  //    new_interaction.Dx = exchange[3];
                                  // }
                                  // interaction_list.push_back(new_interaction);
-                              if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
+                              
+                              
+                              all_m_atoms[atom_i.id].inter_count++;
+                              all_m_atoms[atom_i.id].J_inter += exchange[0]/J_constant;
+                              all_m_atoms[atom_i.id].Dx_inter += exchange[1]/J_constant;
+                              all_m_atoms[atom_i.id].Dy_inter += exchange[2]/J_constant;
+                              all_m_atoms[atom_i.id].Dz_inter += exchange[3]/J_constant;
+                              if(atom_i.id == 100023) { std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady << "\t" << adz << "\t" << \
+                                                // xx                     xy-> Dz                 xz -> -Dy 
+                                                  exchange[0]/J_constant << "\t" << exchange[1]/J_constant << "\t" << exchange[2]/J_constant << "\t" << \
+                                                // yx -> -Dz              yy                      yz -> Dx
+                                                 exchange[3]/J_constant << std::endl;}
+
+                                 #pragma omp critical 
+                                 {
+                                   if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                                                 //xx                     xy-> Dz                 xz -> -Dy
                                                   exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
                                                 //yx -> -Dz              yy                      yz -> Dx
@@ -1090,21 +1109,6 @@ void calc_interactions() {
                                  0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
                               //zx -> Dy               yz -> -Dx               zz
                                  0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
-                              
-                              all_m_atoms[atom_i.id].inter_count ++;
-                              all_m_atoms[atom_i.id].J_inter += exchange[0]/J_constant;
-                              all_m_atoms[atom_i.id].Dx_inter += exchange[1]/J_constant;
-                              all_m_atoms[atom_i.id].Dy_inter += exchange[2]/J_constant;
-                              all_m_atoms[atom_i.id].Dz_inter += exchange[3]/J_constant;
-                              if(atom_i.id == 100023) { std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady << "\t" << adz << "\t" << \
-                                                // xx                     xy-> Dz                 xz -> -Dy 
-                                                  exchange[0]/J_constant << "\t" << exchange[1]/J_constant << "\t" << exchange[2]/J_constant << "\t" << \
-                                                // yx -> -Dz              yy                      yz -> Dx
-                                                 exchange[3]/J_constant << std::endl;}
-
-                                 #pragma omp critical 
-                                 {
-                                   
                                     // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+0] += 1.0;
                                     // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
                                     // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += exchange[1]/J_constant;

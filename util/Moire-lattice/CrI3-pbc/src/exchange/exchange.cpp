@@ -1511,8 +1511,8 @@ void calc_interactions() {
                                        else if (dL2 < intra_nn_dist_2) exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_2NN ); 
                                        else if (dL2 < intra_nn_dist_3) exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_3NN ); 
                                        else continue;     
-                                       double r_Dx = exchange[1]*cos(-0.5*twist_angle)-exchange[2]*sin(-0.5*twist_angle);
-                                       double r_Dy = exchange[1]*sin(-0.5*twist_angle)+exchange[2]*cos(-0.5*twist_angle);
+                                       double r_Dx = exchange[1]*cos(-1.5*twist_angle)-exchange[2]*sin(-1.5*twist_angle);
+                                       double r_Dy = exchange[1]*sin(-1.5*twist_angle)+exchange[2]*cos(-1.5*twist_angle);
                                        exchange[1] = r_Dx;
                                        exchange[2] = r_Dy;                            
                                     } else if (atom_i.l_id == 2) {
@@ -1522,8 +1522,8 @@ void calc_interactions() {
                                        else if (dL2 < intra_nn_dist_2) exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr2_2NN ); 
                                        else if (dL2 < intra_nn_dist_3) exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr2_3NN ); 
                                        else continue;
-                                       double r_Dx = exchange[1]*cos(-0.5*twist_angle)-exchange[2]*sin(-0.5*twist_angle);
-                                       double r_Dy = exchange[1]*sin(-0.5*twist_angle)+exchange[2]*cos(-0.5*twist_angle);
+                                       double r_Dx = exchange[1]*cos(-1.5*twist_angle)-exchange[2]*sin(-1.5*twist_angle);
+                                       double r_Dy = exchange[1]*sin(-1.5*twist_angle)+exchange[2]*cos(-1.5*twist_angle);
                                        exchange[1] = r_Dx;
                                        exchange[2] = r_Dy;
                                     } else if (atom_i.l_id == 3) {
@@ -1533,8 +1533,8 @@ void calc_interactions() {
                                        else if (dL2 < intra_nn_dist_2) exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_2NN ); 
                                        else if (dL2 < intra_nn_dist_3) exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_3NN ); 
                                        else continue;
-                                       double r_Dx = exchange[1]*cos(-1.5*twist_angle)-exchange[2]*sin(-1.5*twist_angle);
-                                       double r_Dy = exchange[1]*sin(-1.5*twist_angle)+exchange[2]*cos(-1.5*twist_angle);
+                                       double r_Dx = exchange[1]*cos(-0.5*twist_angle)-exchange[2]*sin(-0.5*twist_angle);
+                                       double r_Dy = exchange[1]*sin(-0.5*twist_angle)+exchange[2]*cos(-0.5*twist_angle);
                                        exchange[1] = r_Dx;
                                        exchange[2] = r_Dy;
                                     } else if (atom_i.l_id == 4) {
@@ -1544,8 +1544,8 @@ void calc_interactions() {
                                        else if (dL2 < intra_nn_dist_2) exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_2NN ); 
                                        else if (dL2 < intra_nn_dist_3) exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_3NN ); 
                                        else continue;
-                                       double r_Dx = exchange[1]*cos(-1.5*twist_angle)-exchange[2]*sin(-1.5*twist_angle);
-                                       double r_Dy = exchange[1]*sin(-1.5*twist_angle)+exchange[2]*cos(-1.5*twist_angle);
+                                       double r_Dx = exchange[1]*cos(-0.5*twist_angle)-exchange[2]*sin(-0.5*twist_angle);
+                                       double r_Dy = exchange[1]*sin(-0.5*twist_angle)+exchange[2]*cos(-0.5*twist_angle);
                                        exchange[1] = r_Dx;
                                        exchange[2] = r_Dy;
                                     }  else continue;
@@ -1604,20 +1604,7 @@ void calc_interactions() {
 
                               // if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
 
-                              if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
-                                                //xx                     xy-> Dz                 xz -> -Dy
-                                                  exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
-                                                //yx -> -Dz              yy                      yz -> Dx
-                                                 -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
-                                                //zx -> Dy               yz -> -Dx               zz
-                                                  exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
-                              else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
-                              //xx                     xy-> Dz                 xz -> -Dy
-                                 exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
-                              //yx -> -Dz              yy                      yz -> Dx
-                                 0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
-                              //zx -> Dy               yz -> -Dx               zz
-                                 0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
+
                               
                                  // std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady <<" 0 0 0 "<<\
                                  //                // xx                     xy-> Dz                 xz -> -Dy 
@@ -1627,8 +1614,23 @@ void calc_interactions() {
                                  //                // zx -> Dy               yz -> -Dx               zz
                                  //                  exchange[2]/J_constant << "\t" <<-exchange[1]/J_constant << "\t" <<  exchange[0]/J_constant << std::endl;}
                                  #pragma omp critical
+                                 {
+                                    if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
+                                    //xx                     xy-> Dz                 xz -> -Dy
+                                       exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
+                                    //yx -> -Dz              yy                      yz -> Dx
+                                       -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
+                                    //zx -> Dy               yz -> -Dx               zz
+                                       exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
+                              else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
+                              //xx                     xy-> Dz                 xz -> -Dy
+                                 exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
+                              //yx -> -Dz              yy                      yz -> Dx
+                                 0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
+                              //zx -> Dy               yz -> -Dx               zz
+                                 0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
                                  number_of_interactions++;    
-
+                                 }
                               }
                            } // end of j atom loop
                         } // end of i atom loop
