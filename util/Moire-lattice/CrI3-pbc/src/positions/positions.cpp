@@ -93,7 +93,7 @@ void create_magnetic_atom_list(std::string filename){
                      // calculate rotated atom positions
                      double x_new = x_j*cos(twist_angle*0.5) - y_j*sin(twist_angle*0.5);
                      double y_new = y_j*cos(twist_angle*0.5) + x_j*sin(twist_angle*0.5);
-                     if (inside_system(system_size_x, system_size_y, x_new, y_new, 0.0)){
+                     if (inside_system(system_size_x, system_size_y, x_new, y_new, 0.0001)){
                         
                         spin new_atom;
                         new_atom.x = x_new;
@@ -104,8 +104,8 @@ void create_magnetic_atom_list(std::string filename){
                         new_atom.h_id = atom[atom_i].h_id;
                         
                         //new lattice cell after rotation
-                        int dy_cell = floor((y_new +0.000000)/ a1y);
-                        int dx_cell = floor((x_new +0.000000)/ a0x);
+                        int dy_cell = floor((y_new -0.000000)/ a1y);
+                        int dx_cell = floor((x_new -0.000000)/ a0x);
                         
                         //effective rotation in x vector basis
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
@@ -155,7 +155,7 @@ void create_magnetic_atom_list(std::string filename){
                      // twist negative 1/2 twist angle above twist location
                      double x_new = x_j*cos(-twist_angle*0.5) - y_j*sin(-twist_angle*0.5);
                      double y_new = y_j*cos(-twist_angle*0.5) + x_j*sin(-twist_angle*0.5);
-                     if(inside_system(system_size_x, system_size_y, x_new, y_new, 0.0)) {  
+                     if(inside_system(system_size_x, system_size_y, x_new, y_new, 0.0001)) {  
   
                      spin new_atom;
                      new_atom.x = x_new;
@@ -218,7 +218,7 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
                   double y_j = all_m_atoms_offset[atom_i].y + i*Moire_aiy + j*Moire_ajy;
                   double z_j = all_m_atoms_offset[atom_i].z;
 
-                  if(inside_system(system_size_x, system_size_y, x_j, y_j, 0.0)){
+                  if(inside_system(system_size_x, system_size_y, x_j, y_j, 0.0001)){
 
                      //create new spin using only spin info.
                      spin new_atom(all_m_atoms_offset[atom_i]);
