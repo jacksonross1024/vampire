@@ -1135,6 +1135,7 @@ void calc_interactions() {
     }
     */
       
+   if(twist_angle != 0.0) {
    //code for lattice unit cell basis vectors
       int max_symmetry = 0;
       for(int i = 0; i < zero_correlation.size(); i+=1) {
@@ -1217,7 +1218,7 @@ void calc_interactions() {
       }
       }
       correlation_file.close();
-
+   }
    //comment out this exit once new moire lattice unit cell points selected
 //==============================
       // exit(1);
