@@ -81,8 +81,8 @@ void create_magnetic_atom_list(std::string filename){
    outfile2.open("atom_positions.xyz");
    // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
    // int total_atoms_kept = 1;
-   for (int i = -1*number_of_unit_cells_x; i < 2*number_of_unit_cells_x; i++) {
-         for (int j = -1*number_of_unit_cells_y; j < 2*number_of_unit_cells_y; j++){
+   for (int i = -2*number_of_unit_cells_x; i < 3*number_of_unit_cells_x; i++) {
+         for (int j = -2*number_of_unit_cells_y; j < 3*number_of_unit_cells_y; j++){
             // turn off replication in z to allow for explicit abba/abab stacking
             //for (int k = 0; k < number_of_unit_cells_z; k++){
                for (int atom_i = 0; atom_i < num_atoms; atom_i ++){
@@ -127,8 +127,8 @@ void create_magnetic_atom_list(std::string filename){
                         // int changey = round(-100.0*remainder(y_new - y_j,a1y)/a0x)+100;
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
-                        double x_ref = (i*a0x + j*a1x + 4.62)*cos(twist_angle)-(((new_atom.l_id == 1) ? (4.001) : (0.0)) + j*a1y)*sin(twist_angle); 
-                        double y_ref = (i*a0x + j*a1x + 4.62)*sin(twist_angle)+(((new_atom.l_id == 1) ? (4.001) : (0.0)) + j*a1y)*cos(twist_angle); 
+                        double x_ref = (i*a0x + j*a1x + 4.62)*cos(twist_angle)-(((new_atom.l_id == 1) ? (4.00) : (0.0)) + j*a1y)*sin(twist_angle); 
+                        double y_ref = (i*a0x + j*a1x + 4.62)*sin(twist_angle)+(((new_atom.l_id == 1) ? (4.00) : (0.0)) + j*a1y)*cos(twist_angle); 
                         
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));
                         int changex = int(round(9*(fmod(std::abs(x_eff-x_ref +changey*a1y/11.0) , a0x)/a0x)));

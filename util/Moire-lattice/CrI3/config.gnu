@@ -24,8 +24,7 @@ set style line 100 pt 1 ps 1.2 lt 0 lc rgb "gray30" lw 2
 set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
 
-set term pngcairo size 600,600
-
+set term pngcairo size 1600,1600
 
 
 set ylabel "y position (nm)"
@@ -36,501 +35,72 @@ set xtics 50 out
 set mytics 5 
 set mxtics 5
 
-set colorbox
-
-unset colorbox
 set palette defined (  0 'blue', 1 'white',  2 'red')
 
-
+chck(S,s,E,n) = (S == s) ? (E/n):(1/0)
 set colorbox
+set style fill solid noborder 
 
 set xrange [2:198]
 set yrange [2:198]
 
-file = "config_energy-0.5-2NN-DMI"
+file = "config_energy"
 set output sprintf("%s.png", file)
-set multiplot layout 2,3
+set multiplot layout 5,4
 
-set colorbox
-set title "bottom layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($7/$3) w boxxy palette notitle 
 
-unset colorbox 
-unset ylabel 
-unset xlabel 
 
-set title "bottom layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($9/$3) w boxxy palette notitle 
+layer = 2
+set title sprintf("layer %.f, J", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $4,$8)) w boxxy palette notitle 
 
-set title "bottom layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($11/$3) w boxxy palette notitle 
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $5,$8))  w boxxy palette notitle 
 
-set ylabel "y position (nm)"
-set xlabel "x position (nm)"
-set colorbox
-set title "top layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($8/$4) w boxxy palette notitle  
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $6,$8)) w boxxy palette notitle 
 
-unset colorbox 
-unset ylabel 
-unset xlabel 
-set title "top layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($10/$4) w boxxy palette notitle  
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $7,$8)) w boxxy palette notitle  
 
-set title "top layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($12/$4) w boxxy palette notitle  
+layer = 1
+set title sprintf("layer %.f, J", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $4,$8)) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $5,$8))  w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $6,$8)) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $7,$8)) w boxxy palette notitle  
+
+layer = 4
+set title sprintf("layer %.f, J", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $4,$8)) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $5,$8))  w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $6,$8)) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $7,$8)) w boxxy palette notitle  
+
+layer = 3
+set title sprintf("layer %.f, J", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $4,$8)) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $5,$8))  w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $6,$8)) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u ($2*0.1):($3*0.1):(0.693):(0.6002):(chck($1,layer, $7,$8)) w boxxy palette notitle  
+
 
 unset multiplot 
-
-file = "config_energy-1.1-2NN-DMI"
-set output sprintf("%s.png", file)
-set multiplot layout 2,3
-
-set colorbox
-set title "bottom layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($7/$3) w boxxy palette notitle 
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-
-set title "bottom layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($9/$3) w boxxy palette notitle 
-
-set title "bottom layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($11/$3) w boxxy palette notitle 
-
-set ylabel "y position (nm)"
-set xlabel "x position (nm)"
-set colorbox
-set title "top layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($8/$4) w boxxy palette notitle  
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-set title "top layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($10/$4) w boxxy palette notitle  
-
-set title "top layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($12/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-file = "config_energy-0.5-3NN-DMI"
-set output sprintf("%s.png", file)
-set multiplot layout 2,3
-
-set colorbox
-set title "bottom layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($7/$3) w boxxy palette notitle 
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-
-set title "bottom layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($9/$3) w boxxy palette notitle 
-
-set title "bottom layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($11/$3) w boxxy palette notitle 
-
-set ylabel "y position (nm)"
-set xlabel "x position (nm)"
-set colorbox
-set title "top layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($8/$4) w boxxy palette notitle  
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-set title "top layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($10/$4) w boxxy palette notitle  
-
-set title "top layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($12/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-file = "config_energy-1.1-3NN-DMI"
-set output sprintf("%s.png", file)
-set multiplot layout 2,3
-
-set colorbox
-set title "bottom layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($7/$3) w boxxy palette notitle 
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-
-set title "bottom layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($9/$3) w boxxy palette notitle 
-
-set title "bottom layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($11/$3) w boxxy palette notitle 
-
-set ylabel "y position (nm)"
-set xlabel "x position (nm)"
-set colorbox
-set title "top layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($8/$4) w boxxy palette notitle  
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-set title "top layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($10/$4) w boxxy palette notitle  
-
-set title "top layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($12/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-file = "config_energy-1.41-3NN-DMI"
-set output sprintf("%s.png", file)
-set multiplot layout 2,3
-
-set colorbox
-set title "bottom layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($7/$3) w boxxy palette notitle 
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-
-set title "bottom layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($9/$3) w boxxy palette notitle 
-
-set title "bottom layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($11/$3) w boxxy palette notitle 
-
-set ylabel "y position (nm)"
-set xlabel "x position (nm)"
-set colorbox
-set title "top layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($8/$4) w boxxy palette notitle  
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-set title "top layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($10/$4) w boxxy palette notitle  
-
-set title "top layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($12/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-file = "config_energy-1.41-2NN-DMI"
-set output sprintf("%s.png", file)
-set multiplot layout 2,3
-
-set colorbox
-set title "bottom layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($7/$3) w boxxy palette notitle 
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-
-set title "bottom layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($9/$3) w boxxy palette notitle 
-
-set title "bottom layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($11/$3) w boxxy palette notitle 
-
-set ylabel "y position (nm)"
-set xlabel "x position (nm)"
-set colorbox
-set title "top layer, D_x"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($8/$4) w boxxy palette notitle  
-
-unset colorbox 
-unset ylabel 
-unset xlabel 
-set title "top layer, D_y"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($10/$4) w boxxy palette notitle  
-
-set title "top layer, D_z"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($12/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-file = "config_energy-1.41-2NN-inter"
-set output sprintf("%s.png", file)
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-file = "config_energy-1.1-2NN-inter"
-set output sprintf("%s.png", file)
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-
-set xrange [2:198]
-set yrange [2:198]
-file = "config_energy-0.5-2NN-inter"
-set output sprintf("%s.png", file)
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set cbrange [-1:1]
-set xrange [2:198]
-set yrange [2:198]
-file = "config_energy-0.0-2NN-inter"
-set output sprintf("%s.png", file)
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set cbrange [-0.1:0.1]
-set xrange [2:198]
-set yrange [2:198]
-file = "config_energy-0.0-3NN-inter"
-set output sprintf("%s.png", file)
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($5) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($6) w boxxy palette notitle  
-
-unset multiplot 
-
-set cbrange [-0.1:0.1]
-set xrange [2:198]
-set yrange [2:198]
-file = "config_energy-0.5-3NN-inter"
-set output sprintf("%s.png", file)
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set xrange [2:98]
-set yrange [2:98]
-set cbrange [-0.1:0.1]
-file = "config_energy-1.1-3NN-inter"
-set output sprintf("%s.png", file)
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set cbrange [-0.1:0.1]
-file = "config_energy-1.41-3NN-inter"
-set output sprintf("%s.png", file)
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-
-set cbrange [0.5:1.1]
-
-set output "config_energy-1.41-1NN.png" 
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot "config_energy-1.41-1NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot "config_energy-1.41-1NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set cbrange [0.5:1.1]
-
-set output "config_energy-1.1-1NN.png" 
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot "config_energy-1.1-1NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot "config_energy-1.1-1NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set output "config_energy-0.5-1NN.png" 
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot "config_energy-0.5-1NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot "config_energy-0.5-1NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set cbrange [0.54:1.0]
-unset colorbox 
-set output "config_energy-0.5-2NN.png" 
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot "config_energy-0.5-2NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot "config_energy-0.5-2NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set output "config_energy-1.1-2NN.png" 
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot "config_energy-1.1-2NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot "config_energy-1.1-2NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set cbrange [0.32:0.76]
-set output "config_energy-1.41-3NN.png" 
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot "config_energy-1.41-3NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot "config_energy-1.41-3NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-set output "config_energy-1.1-3NN.png" 
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot "config_energy-1.1-3NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot "config_energy-1.1-3NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
-
-set output "config_energy-0.5-3NN.png" 
-set multiplot layout 1,2
-
-set title "bottom layer"
-set size 0.5,0.5
-plot "config_energy-0.5-3NN.txt" u 1:2:(0.693):(0.6002):($5/$3) w boxxy palette notitle 
-
-set title "top layer"
-set size 0.5,0.5
-plot "config_energy-0.5-3NN.txt" u 1:2:(0.693):(0.6002):($6/$4) w boxxy palette notitle  
-
-unset multiplot 
-
