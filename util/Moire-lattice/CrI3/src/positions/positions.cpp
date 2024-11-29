@@ -81,8 +81,8 @@ void create_magnetic_atom_list(std::string filename){
    outfile2.open("atom_positions.xyz");
    // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
    // int total_atoms_kept = 1;
-   for (int i = -1*number_of_unit_cells_x; i < 2*number_of_unit_cells_x; i++) {
-         for (int j = -1*number_of_unit_cells_y; j < 2*number_of_unit_cells_y; j++){
+   for (int i = -2*number_of_unit_cells_x; i < 3*number_of_unit_cells_x; i++) {
+         for (int j = -2*number_of_unit_cells_y; j < 3*number_of_unit_cells_y; j++){
             // turn off replication in z to allow for explicit abba/abab stacking
             //for (int k = 0; k < number_of_unit_cells_z; k++){
                for (int atom_i = 0; atom_i < num_atoms; atom_i ++){

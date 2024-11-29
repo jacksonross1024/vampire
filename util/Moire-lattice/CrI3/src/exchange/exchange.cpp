@@ -397,11 +397,11 @@ double intra_nn_dist_3 = 8.01; //A
 
 double inter_nn_dist_1 = 7.0;
 double inter_nn_dist_2 = 7.77;
-double inter_nn_dist_3 = 9.9;
+double inter_nn_dist_3 = 9.99;
 
 double inter_AB_dist_1 = 7.0;
 double inter_AB_dist_2 = 7.77;
-double inter_AB_dist_3 = 9.9;
+double inter_AB_dist_3 = 9.99;
 // double nn_dist_3 = a0x*pow(1.3333333333,0.5);
 double nn_dist_1;
 double nn_dist_2;
@@ -1017,7 +1017,7 @@ void calc_interactions() {
                                        exchange[1] = r_Dx;
                                        exchange[2] = r_Dy;
                                     } else continue;
-                                    // exchange[0] = 0.0;
+                                    exchange[0] = 0.0;
                                     // exchange[1] = 0.0;
                                     // exchange[2] = 0.0;
                                     // exchange[3] = 0.0;
@@ -1052,11 +1052,11 @@ void calc_interactions() {
                                     } else if(atom_i.l_id == 4) {
                                        // adx = adx*cos(-twist_angle)-ady*sin(-twist_angle);
                                        // ady = adx*sin(-twist_angle)+ady*cos(-twist_angle);
-                                       if(dL2 < inter_nn_dist_1) {exchange = match_inter_exchange(adx, ady, Einter_Cr4);
+                                       if(dL2 <= inter_nn_dist_1) {exchange = match_inter_exchange(adx, ady, Einter_Cr4);
                                        all_m_atoms[atom_i.id].inter1++;}
-                                       else if(dL2 < inter_nn_dist_2) {exchange = match_inter_exchange(adx, ady, Einter_Cr4);
+                                       else if(dL2 <= inter_nn_dist_2) {exchange = match_inter_exchange(adx, ady, Einter_Cr4);
                                        all_m_atoms[atom_i.id].inter2++;}
-                                       else if(dL2 < inter_nn_dist_3) {exchange = match_inter_exchange(adx, ady, Einter_Cr4);
+                                       else if(dL2 <= inter_nn_dist_3) {exchange = match_inter_exchange(adx, ady, Einter_Cr4);
                                        all_m_atoms[atom_i.id].inter3++;}
                                        else continue;                                      
                                     } else continue;
@@ -1087,14 +1087,17 @@ void calc_interactions() {
                               all_m_atoms[atom_i.id].Dx_inter += exchange[1]/J_constant;
                               all_m_atoms[atom_i.id].Dy_inter += exchange[2]/J_constant;
                               all_m_atoms[atom_i.id].Dz_inter += exchange[3]/J_constant;
-                              if(atom_i.id == 100023) { std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady << "\t" << adz << "\t" << \
-                                                // xx                     xy-> Dz                 xz -> -Dy 
-                                                  exchange[0]/J_constant << "\t" << exchange[1]/J_constant << "\t" << exchange[2]/J_constant << "\t" << \
-                                                // yx -> -Dz              yy                      yz -> Dx
-                                                 exchange[3]/J_constant << std::endl;}
+
+
+                              // if(atom_i.id == 100023) { std::cout << number_of_interactions <<  "\t" << adx << '\t' << ady << "\t" << adz << "\t" << \
+                              //                   // xx                     xy-> Dz                 xz -> -Dy 
+                              //                     exchange[0]/J_constant << "\t" << exchange[1]/J_constant << "\t" << exchange[2]/J_constant << "\t" << \
+                              //                   // yx -> -Dz              yy                      yz -> Dx
+                              //                    exchange[3]/J_constant << std::endl;}
 
                                  #pragma omp critical 
                                  {
+
                                    if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                                                 //xx                     xy-> Dz                 xz -> -Dy
                                                   exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
@@ -1102,18 +1105,18 @@ void calc_interactions() {
                                                  -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
                                                 //zx -> Dy               yz -> -Dx               zz
                                                   exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
-                              else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
+                                 else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                               //xx                     xy-> Dz                 xz -> -Dy
                                  exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
                               //yx -> -Dz              yy                      yz -> Dx
                                  0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
                               //zx -> Dy               yz -> -Dx               zz
                                  0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
-                                    // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+0] += 1.0;
-                                    // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
-                                    // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += exchange[1]/J_constant;
-                                    // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += exchange[2]/J_constant;
-                                    // config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += exchange[3]/J_constant;
+                                    config_energy.at(atom_i.unit_x).at(atom_i.unit_y).at((atom_i.S-1)*5+0) += 1.0;
+                                    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
+                                    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += exchange[1]/J_constant;
+                                    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += exchange[2]/J_constant;
+                                    config_energy[atom_i.unit_x][atom_i.unit_y].at((atom_i.S-1)*5+4) += exchange[3]/J_constant;
                                     number_of_interactions++;    
                                  }                           
                               }
@@ -1132,12 +1135,18 @@ void calc_interactions() {
       outfile4 << otext.str();
    
    }
-
    outfile4 << std::flush;
    outfile4.close();
-      // std::cout << "Writing data to file..." << std::flush;
+
+   timer.stop();
+   // std::cout << "done!  << std::endl;
+   std::cout << number_of_interactions << " [completed] [" << timer.elapsed_time() << " s]" << std::endl;
+   std::cout << "outputting extra file info:" << std::endl;
+   
+
+   std::cout << "config atoms started..." << std::flush;
       std::ofstream config_output;
-      config_output.open("config_energy.txt");
+      config_output.open("config_energy_atomic.txt");
       if(!config_output.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
       for(int i = 0; i < all_m_atoms.size(); i++) {
 
@@ -1145,25 +1154,43 @@ void calc_interactions() {
             // double bottom_occ = config_energy[i][j][(2-1)*5+0];
             // double top_occ = config_energy[i][j][(3-1)*5+0];
             // if(bottom_occ == 0 && top_occ == 0) continue;
-            config_output << all_m_atoms[i].S << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y << ", " << all_m_atoms[i].J_inter << ", " << all_m_atoms[i].Dx_inter << ", " <<  all_m_atoms[i].Dy_inter << ", " << all_m_atoms[i].Dz_inter << ", " << all_m_atoms[i].inter_count  << '\n';// << bottom_occ<< ", " << top_occ;
+            config_output << all_m_atoms[i].S << ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y << ", " << all_m_atoms[i].J_inter << ", " << all_m_atoms[i].Dx_inter << ", " <<  all_m_atoms[i].Dy_inter << ", " << all_m_atoms[i].Dz_inter << ", " << all_m_atoms[i].inter_count  << '\n';// << bottom_occ<< ", " << top_occ;
             // for(int k = 0; k < config_energy[i][j].size(); k++) config_output << ", " << config_energy[i][j][k]; 
             // config_output << "\n";
-         
+      
       }
       config_output.close();
+      std::cout << "config atoms done." << std::endl;
+      std::cout << "config cells started..." << std::flush;
+
+      std::ofstream config_output1;
+      config_output1.open("config_energy_cells.txt");
+      if(!config_output1.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
+      for(int i = 0; i < config_energy.size(); i++) {
+         for(int j = 0; j < config_energy[i].size(); j++){
+            // double bottom_occ = config_energy[i][j][(2-1)*5+0];
+            // double top_occ = config_energy[i][j][(3-1)*5+0];
+            // if(bottom_occ == 0 && top_occ == 0) continue;
+            config_output1 << i << ", " << j << ", ";
+            // config_output << all_m_atoms[i].S << ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y << ", " << all_m_atoms[i].J_inter << ", " << all_m_atoms[i].Dx_inter << ", " <<  all_m_atoms[i].Dy_inter << ", " << all_m_atoms[i].Dz_inter << ", " << all_m_atoms[i].inter_count  << '\n';// << bottom_occ<< ", " << top_occ;
+            for(int k = 0; k < config_energy[i][j].size(); k++) config_output1 << ", " << config_energy[i][j][k]; 
+            config_output1 << "\n";
+         }
+      }
+      config_output1.close();
+      std::cout << "config cells done." << std::endl;
+      std::cout << "interaction counts started..." << std::flush;
 
       std::ofstream interaction_counts;
       interaction_counts.open("interaction_counts.txt");
       if(!interaction_counts.is_open()) {std::cout << "interaction counts did not open" << std::endl; exit(1);}
       for(int i = 0; i < all_m_atoms.size(); i++){
-         interaction_counts << all_m_atoms[i].S  << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y <<  ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \
+         interaction_counts << all_m_atoms[i].S  << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y <<  ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \
                                                    << ", " << all_m_atoms[i].intra1 << ", " << all_m_atoms[i].intra2 << ", " << all_m_atoms[i].intra3 <<"\n";
       }
       interaction_counts.close();
       // outfile4 << ss.str();
-      timer.stop();
-      // std::cout << "done!  << std::endl;
-      std::cout << number_of_interactions << " [completed] [" << timer.elapsed_time() << " s]" << std::endl;
+      std::cout << "interaction counts done." << std::endl;
       return;
 }
 
@@ -1285,7 +1312,7 @@ std::array<double,4> match_inter_exchange(double dx, double dy, std::vector<std:
 
    // #pragma omp parallel for num_threads(2) reduction(min, min_index)
    for(int i = 0; i < Eij.size(); i++) {
-      new_shift_error = sqrt((Eij[i][0] - dx)*(Eij[i][0] - dx) + (Eij[i][1] - dy)*(Eij[i][1] - dy));
+      new_shift_error = ((Eij[i][0] - dx)*(Eij[i][0] - dx) + (Eij[i][1] - dy)*(Eij[i][1] - dy));
       if(new_shift_error < old_shift_error) {
          old_shift_error = new_shift_error;
          min_index = i;
