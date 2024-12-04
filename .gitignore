@@ -37,6 +37,8 @@
 *.json
 vampire.pkg # installation package
 
+dw/*
+spin-acc/*
 #----------------------------------------------
 # Profiling and debugging extensions
 #----------------------------------------------

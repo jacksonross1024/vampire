@@ -1,0 +1,83 @@
+
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+dimensions:unit-cell-size-x = 3.328 !A
+dimensions:unit-cell-size-y = 3.328 !A
+dimensions:unit-cell-size-z = 8.539 !A #2.5658 c/a
+dimensions:system-size-x = 499 !nm
+dimensions:system-size-y = 0.6656 !nm #0.6656 !nm #3 !nm #
+dimensions:system-size-z = 0.8539 !nm # 3  !nm #
+
+#create:periodic-boundaries-x
+create:periodic-boundaries-y
+#create:periodic-boundaries-z #no pbc in z to keep Au cap
+
+create:crystal-sublattice-materials=true
+create:crystal-structure = mn2au
+
+exchange:interaction-range = 1.2 #1.65
+exchange:function = shell
+
+sim:domain-wall-axis = x
+sim:domain-wall-discretisation = 1,0.6656,0.8  #discrete cell size for magnetisation statistics
+sim:domain-wall-discretisation-type = nm
+sim:domain-wall-width = 179.70534 #A
+sim:domain-wall-position = 2500 #A
+sim:domain-wall-angle = 90
+
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:file = Mn2Au-Jenkins.mat
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+sim:temperature= 0.0
+sim:equilibration-temperature= 0.0
+sim:time-steps-increment = 10000
+sim:equilibration-time-steps = 1000 #0.1 ps; longer if higher temp
+#sim:preconditioning-steps = 500 #only use for non-zero K
+sim:total-time-steps = 500000  #5 ps, can be longer
+sim:time-step = 0.1 !fs
+sim:program = domain-wall
+#sim:spin-orbit-torque-polarization-unit-vector = 0,1,0
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:integrator = llg-heun
+
+sim:electrical-pulse-rise-time = 2 !ps
+sim:electrical-pulse-time = 25 !ps
+#------------------------------------------
+# data output
+#------------------------------------------
+sim:save-checkpoint=end
+spin-torque:enable-ST-fields #enable ST module
+spin-torque:current-direction= x #dont change
+spin-torque:micro-cell-decomp = A #dont change
+spin-torque:micro-cell-size= 5000,10,1.42316667 #dont change
+spin-torque:current-density = 1e11 #can change
+spin-torque:micro-cell-thickness= 10 #dont change
+spin-torque:initial-spin-polarisation = 0.23 #dont change
+spin-torque:finite-boundary-condition = false #dont change
+spin-torque:ST-output-rate=10000 #can change
+spin-torque:output-torque-data = final #dont change
+
+output:output-rate=1
+output:time-steps
+output:temperature
+output:fractional-electric-field-strength
+output:magnetisation-length
+output:material-magnetisation
+output:total-torque
+output:material-torque
+
+
