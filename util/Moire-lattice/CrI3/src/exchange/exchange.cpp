@@ -1062,6 +1062,13 @@ void calc_interactions() {
                                        else continue;                                      
                                     } else continue;
                                     if(atom_i.h_id == 1 && atom_j.h_id == 1) exchange[0] *= J_twist_reduction;
+                                    else {
+                                       exchange[0] = 0.0;
+                                       exchange[1] = 0.0;
+                                       exchange[2] = 0.0;
+                                       exchange[3] = 0.0;
+                                    }
+
                                     // exchange[0] = 0.0;
                                  }
                                     // bond_avg  = calculate_intra_Jani(atom_i, atom_j, dL2, angle);
