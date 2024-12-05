@@ -963,6 +963,7 @@ void calc_interactions() {
                                  double angle_j = atan2(-ady,-adx);// - twist_angle;
                                  std::array<double, 4> exchange({-60.0,0.0,0.0,0.0});
                                  if(atom_i.S == atom_j.S) {
+                                    continue;
                                     // if ( atom_i.S == 1) {
                                     //    // angle_i += 0.5*twist_angle;
                                     //    exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);  
@@ -1060,6 +1061,14 @@ void calc_interactions() {
                                        all_m_atoms[atom_i.id].inter3++;}
                                        else continue;                                      
                                     } else continue;
+                                    if(atom_i.h_id == 1 && atom_j.h_id == 1) exchange[0] *= J_twist_reduction;
+                                    else {
+                                       exchange[0] = 0.0;
+                                       exchange[1] = 0.0;
+                                       exchange[2] = 0.0;
+                                       exchange[3] = 0.0;
+                                    }
+
                                     // exchange[0] = 0.0;
                                     if(atom_i.h_id == 1 && atom_j.h_id == 1) exchange[0] *= J_twist_reduction;
                                  }
