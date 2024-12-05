@@ -26,6 +26,7 @@ int num_above_atoms =0;
 int num_below_atoms =0;
 
 double J_inter_scaling = 0.0;
+double J_twist_reduction = 1.0;
 double DMI_inter_scaling = 1.0;
 
 int total_atoms = 0;
