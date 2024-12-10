@@ -176,8 +176,8 @@ void read_unit_cell(unit_cell_t & unit_cell, std::string filename){
 				break;
 			case 5:{
 
-            // read (bilinear) exchange interactions
-            unit_cell.bilinear.read_interactions(num_uc_atoms, inputfile, iss, filename, line_counter, interaction_range);
+            	// read (bilinear) exchange interactions
+            	unit_cell.bilinear.num_interactions = unit_cell.bilinear.read_interactions_stack(num_uc_atoms, inputfile, iss, filename, line_counter, interaction_range);
 				break;
 
          }
@@ -218,7 +218,7 @@ void read_unit_cell(unit_cell_t & unit_cell, std::string filename){
    std::cout << "done!" << std::endl;
    zlog << zTs() << "Verifying unit cell exchange interactions completed" << std::endl;
 	zlog << zTs() << "\t" << "Number of atoms read-in: " << unit_cell.atom.size() << std::endl;
-	zlog << zTs() << "\t" << "Number of bilinear interactions read-in: " << unit_cell.bilinear.interaction.size() << std::endl;
+	zlog << zTs() << "\t" << "Number of bilinear interactions read-in: " << unit_cell.bilinear.num_interactions << std::endl;
    zlog << zTs() << "\t" << "Number of biquadratic interactions read-in: " << unit_cell.biquadratic.interaction.size() << std::endl;
 	zlog << zTs() << "\t" << "Exchange type: " << exchange_type_string << std::endl;
 	zlog << zTs() << "\t" << "Calculated interaction range: " << unit_cell.interaction_range << " Unit Cells" << std::endl;

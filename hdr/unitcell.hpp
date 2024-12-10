@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <list>
 
 using std::uint64_t;
 using std::int64_t;
@@ -64,8 +65,8 @@ namespace unitcell{
    //---------------------------------------------------------------------------
 	class interaction_t {
 	public:
-      unsigned int i; /// atom unit cell id
-      unsigned int j; /// neighbour atom unit cell id
+      uint64_t i; /// atom unit cell id
+      uint64_t j; /// neighbour atom unit cell id
       unsigned int mat_i; /// atom material category
       unsigned int mat_j; /// neighbour material category
       unsigned int shell; // shell number of interaction
@@ -74,6 +75,7 @@ namespace unitcell{
       int dz; /// delta z in unit cells
       double rij; // interaction range (unit cells)
       float Jij[3][3]; /// Exchange tensor
+      uint64_t id;
 	};
 
    //------------------------------------------------------------------------
@@ -102,10 +104,10 @@ namespace unitcell{
       exchange::exchange_t exchange_type; // exchange type to use in simulation
       bool use_material_exchange_constants; // flag to enable material exchange parameters
       int num_unit_cell_atoms; // number of atoms in unit cell
-
+      uint64_t num_interactions;
       // list of interactions in each unit cell
       std::vector <unitcell::interaction_t> interaction;
-
+      std::list <unitcell::interaction_t> interaction_stack;
       // list of number of interactions from template for each atom in unit cell
       std::vector <int> ni;
 
@@ -119,6 +121,14 @@ namespace unitcell{
       };
 
       void read_interactions(
+         const uint64_t num_atoms, // num atoms in unit cell
+         std::stringstream& ucf_file,
+         std::istringstream& ucf_ss,
+         std::string& filename,
+         uint64_t& line_counter,
+         unsigned int& interaction_range);
+      
+      uint64_t read_interactions_stack(
          const uint64_t num_atoms, // num atoms in unit cell
          std::stringstream& ucf_file,
          std::istringstream& ucf_ss,

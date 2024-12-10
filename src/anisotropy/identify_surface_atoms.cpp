@@ -57,7 +57,7 @@ namespace anisotropy{
       //--------------------------------------------------------------------------------------------
 
       // vector to store interactions within range
-      std::vector<bool> nn_interaction(cs::unit_cell.bilinear.interaction.size(),false);
+      std::vector<bool> nn_interaction(cs::unit_cell.bilinear.num_interactions, false);
 
       // save nn_distance for performance
       const double rsq = internal::nearest_neighbour_distance * internal::nearest_neighbour_distance;
@@ -68,20 +68,21 @@ namespace anisotropy{
       const double ucdz = cs::unit_cell.dimensions[2];
 
       // loop over all interactions in unit cell
-      for(unsigned int itr = 0; itr < cs::unit_cell.bilinear.interaction.size(); itr++){
-
+      uint64_t interaction_count = 0;
+      for(auto itr = cs::unit_cell.bilinear.interaction_stack.begin(); itr != cs::unit_cell.bilinear.interaction_stack.end(); ++itr){
+         unitcell::interaction_t tmp = *itr;
          // get distance to neighbouring unit cell in unit cells
-         double nndx = double(cs::unit_cell.bilinear.interaction[itr].dx);
-         double nndy = double(cs::unit_cell.bilinear.interaction[itr].dy);
-         double nndz = double(cs::unit_cell.bilinear.interaction[itr].dz);
+         double nndx = double(tmp.dx);
+         double nndy = double(tmp.dy);
+         double nndz = double(tmp.dz);
 
          // load positions of i and j atoms to temporary coordinates and convert to angstroms
-         double ix = (cs::unit_cell.atom[cs::unit_cell.bilinear.interaction[itr].i].x) * ucdx;
-         double iy = (cs::unit_cell.atom[cs::unit_cell.bilinear.interaction[itr].i].y) * ucdy;
-         double iz = (cs::unit_cell.atom[cs::unit_cell.bilinear.interaction[itr].i].z) * ucdz;
-         double jx = (cs::unit_cell.atom[cs::unit_cell.bilinear.interaction[itr].j].x + nndx)*ucdx;
-         double jy = (cs::unit_cell.atom[cs::unit_cell.bilinear.interaction[itr].j].y + nndy)*ucdy;
-         double jz = (cs::unit_cell.atom[cs::unit_cell.bilinear.interaction[itr].j].z + nndz)*ucdz;
+         double ix = (cs::unit_cell.atom[tmp.i].x) * ucdx;
+         double iy = (cs::unit_cell.atom[tmp.i].y) * ucdy;
+         double iz = (cs::unit_cell.atom[tmp.i].z) * ucdz;
+         double jx = (cs::unit_cell.atom[tmp.j].x + nndx)*ucdx;
+         double jy = (cs::unit_cell.atom[tmp.j].y + nndy)*ucdy;
+         double jz = (cs::unit_cell.atom[tmp.j].z + nndz)*ucdz;
 
          // calculate reduced coordinates
          double dx = jx - ix;
@@ -90,7 +91,8 @@ namespace anisotropy{
 
          // calculate interaction range and check if less than nn distance
          const double range = (dx*dx + dy*dy + dz*dz);
-         if(range <=rsq) nn_interaction[itr]=true;
+         if(range <=rsq) nn_interaction[interaction_count]=true;
+         interaction_count++;
       }
 
       //------------------------------------------------------------

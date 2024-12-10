@@ -61,7 +61,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	list.reserve(num_atoms);
 
 	// estimate number of interactions per atom
-	const int64_t max_nn = int64_t( 1.1*( double(exchange.interaction.size()) / double(num_atoms_in_unit_cell) ) );
+	const int64_t max_nn = int64_t( 1.1*( double(exchange.num_interactions) / double(num_atoms_in_unit_cell) ) );
 
 	// Reserve space for each atom in neighbour list according to material type
 	for(uint64_t atom=0; atom < num_atoms; atom++){
@@ -236,7 +236,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    zlog << zTs() << "\tPopulating supercell array completed"<< std::endl;
 
    // calculate total number of neighbours and inform user of memory needed
-   num_neighbours = double(num_cells)*double(exchange.interaction.size());
+   num_neighbours = double(num_cells)*double(exchange.num_interactions);
    #ifdef MPICF
       // calculate total interactions for entire system
       total_neighbours = 0.0;
@@ -260,7 +260,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	neighbour_t tmp_nt;
 
    // copy number of interactions to temporary constant
-   const unsigned int num_interactions = exchange.interaction.size();
+   const unsigned int num_interactions = exchange.num_interactions;
 
 	// Loop over all cells
 	for(uint64_t cell = 0; cell < num_cells; cell++){
@@ -276,14 +276,14 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                    cell_coord_array[cell][2]};
 
 		// Loop over all interactions in exchange template
-		for(unsigned int i = 0; i < num_interactions; i++){
+		for(auto itr = exchange.interaction_stack.begin(); itr != exchange.interaction_stack.end(); ++itr){
+         unitcell::interaction_t tmp = *itr;
+			const int atom= tmp.i;
+			const int natom= tmp.j;
 
-			const int atom=exchange.interaction[i].i;
-			const int natom=exchange.interaction[i].j;
-
-			int nx = exchange.interaction[i].dx + scc[0];
-			int ny = exchange.interaction[i].dy + scc[1];
-			int nz = exchange.interaction[i].dz + scc[2];
+			int nx = tmp.dx + scc[0];
+			int ny = tmp.dy + scc[1];
+			int nz = tmp.dz + scc[2];
 
          // vector from i->j
          double vx=0.0;
@@ -364,7 +364,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 
                // set neighbour data
                tmp_nt.nn = supercell_array[nx][ny][nz][natom]; // atom ID of neighbour
-               tmp_nt.i = i;                                   // interaction type
+               tmp_nt.i = tmp.id;                                   // interaction type
                tmp_nt.vx = vx;                                 // position vector i->j
                tmp_nt.vy = vy;
                tmp_nt.vz = vz;

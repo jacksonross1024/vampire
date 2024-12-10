@@ -165,10 +165,11 @@ namespace unitcell{
          // ternery function to grab exchange type
          std::string extype = uc.bilinear.use_material_exchange_constants ? norm_exchange_names[uc.bilinear.exchange_type] : exchange_names[uc.bilinear.exchange_type];
 
-         ofile << fw5(uc.bilinear.interaction.size()) << "\t" << fw(extype) << std::endl;
+         ofile << fw5(uc.bilinear.num_interactions) << "\t" << fw(extype) << std::endl;
          // loop over all exchange interations
          int count = 0;
-         for(auto uci : uc.bilinear.interaction){
+         for(auto itr = uc.bilinear.interaction_stack.begin(); itr != uc.bilinear.interaction_stack.end(); ++itr){
+         unitcell::interaction_t uci = *itr;
             ofile << fw5(count) << "\t" << fw5(uci.i) << "\t" << fw5(uci.j) << "\t"
                   << fw5(uci.dx) << "\t" << fw5(uci.dy) << "\t" << fw5(uci.dz) << "\t";
             switch(uc.bilinear.exchange_type){
