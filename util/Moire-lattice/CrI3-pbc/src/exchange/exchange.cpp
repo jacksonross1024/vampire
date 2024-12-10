@@ -1550,6 +1550,7 @@ void calc_interactions() {
                                        exchange[1] = r_Dx;
                                        exchange[2] = r_Dy;
                                     }  else continue;
+                                    exchange[0] *= J_intra_reduction;
                                  //interlayer exchange
                                  } else {
                                     //optional selection for additional species control
@@ -1592,6 +1593,8 @@ void calc_interactions() {
                                        all_m_atoms_offset[atom_i.id].inter3++;}
                                        else continue;                                      
                                     } else continue;
+                                    if(atom_i.h_id == 1 && atom_j.h_id == 1) exchange[0] *= J_twist_reduction;
+                                    
                                  }
    
                                  if(exchange[0] == -60.0) continue;

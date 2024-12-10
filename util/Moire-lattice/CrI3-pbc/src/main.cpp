@@ -12,23 +12,33 @@ int main(int argc, char* argv[]){
 
     // command line arguments; argv1: twist; argv2: max exchange limit; argv3: dmi included
     std::string dmi_check = "--dmi";
+    DMI = true;
+     std::cout << " with DMI " << std::endl;
     if(argc < 2) {std::cerr << "need twist angle even if zero" << std::endl; exit(1);}
     for(int a = 1; a < argc; a++) {
         if(a == 1) {twist_angle = atof(argv[a]); // 1.1 
         std::cout << "twist angle: "<< twist_angle << std::endl;}
         if(a == 2) {max_range = atof(argv[a]);
         std::cout << "max inter exchange range: " << max_range << std::endl;}
+        // if(a == 3) {
+        //     if(argv[a]== dmi_check) {DMI = true;
+        //     std::cout << " with DMI " << std::endl;}
+        // }
         if(a == 3) {
-            if(argv[a]== dmi_check) {DMI = true;
-            std::cout << " with DMI " << std::endl;}
-        }
-        if(a == 4) {
             J_inter_scaling = atof(argv[a]);
             std::cout << " inter exchange scaling: "<< 1-J_inter_scaling << std::endl;
         }
-        if(a == 5) {
+        if(a == 4) {
             DMI_inter_scaling = atof(argv[a]);
             std::cout << " inter DMI scaling: " << DMI_inter_scaling << std::endl;
+        }
+        if(a == 5) {
+            J_twist_reduction = atof(argv[a]);
+            std::cout << " J twist exchange reduction: " << J_twist_reduction << std::endl;
+        }
+        if(a == 6) {
+            J_intra_reduction = atof(argv[a]);
+            std::cout << " J intra exchange reduction: " << J_intra_reduction << std::endl;
         }
 
     }

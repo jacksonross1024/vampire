@@ -18,6 +18,8 @@ double c0 = 26.16;
 double a0z = c0/4.0;
 
 double J_inter_scaling = 0.0;
+double J_twist_reduction = 1.0;
+double J_intra_reduction = 1.0;
 double DMI_inter_scaling = 1.0;
 //must change num_atoms according to unit cell info
 int num_atoms = 8;
@@ -231,8 +233,8 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
                      new_atom.Gx = i;
                      new_atom.Gy = j;
                      
-                     int dy_cell = floor((y_j +0.0000001)/ a1y);
-                     int dx_cell = floor((x_j +0.0000001)/ a0x);
+                     int dy_cell = floor((y_j +0.000000)/ a1y);
+                     int dx_cell = floor((x_j +0.000000)/ a0x);
                      new_atom.unit_x = dx_cell;
                      new_atom.unit_y = dy_cell;
 
