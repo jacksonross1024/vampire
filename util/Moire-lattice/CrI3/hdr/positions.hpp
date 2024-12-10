@@ -30,6 +30,7 @@
 
    extern double J_inter_scaling;
    extern double J_twist_reduction;
+   extern double J_intra_reduction;
    extern double DMI_inter_scaling;
    
    class spin {

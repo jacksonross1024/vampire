@@ -33,10 +33,14 @@ int main(int argc, char* argv[]){
             J_twist_reduction = atof(argv[a]);
             std::cout << " J twist exchange reduction: " << J_twist_reduction << std::endl;
         }
+        if(a == 7) {
+            J_intra_reduction = atof(argv[a]);
+            std::cout << " J twist exchange reduction: " << J_intra_reduction << std::endl;
+        }
     }
 
-   system_size_x = 3000;//  25.00
-   system_size_y = 3000; //4000
+   system_size_x = 2000;//  25.00
+   system_size_y = 2000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants

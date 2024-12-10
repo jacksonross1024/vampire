@@ -926,6 +926,7 @@ void calc_interactions() {
                            // atom_index++;
                            // get atom number i
                            spin atom_i = boxes[i][j][k][ai];
+                           //if(atom_i.S == 5) continue;
                            const double x_i = atom_i.x;
                            const double y_i = atom_i.y;
                            const double z_i = atom_i.z;
@@ -1018,6 +1019,7 @@ void calc_interactions() {
                                        exchange[1] = r_Dx;
                                        exchange[2] = r_Dy;
                                     } else continue;
+                                    exchange[0] *= J_intra_reduction;
                                     // exchange[0] = 0.0;
                                     // exchange[1] = 0.0;
                                     // exchange[2] = 0.0;
