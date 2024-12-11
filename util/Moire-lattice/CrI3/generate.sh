@@ -1,30 +1,43 @@
 #!/bin/bash
 
+# Slurm job options (name, compute nodes, job time)
+#SBATCH --job-name=CrI3-setup
+#SBATCH --time=2:00:00
+#SBATCH --nodes=1
+#SBATCH --tasks-per-node=1
+#SBATCH --cpus-per-task=1
 
-for angle in "0.5" "1.1" "2.0"
+#SBATCH --account=e89-ed_p
+#SBATCH --partition=serial
+#SBATCH --qos=serial
+module load PrgEnv-gnu
+export OMP_NUM_THREADS=1
+
+rm -r param*
+for angle in "1.1"
 do
-    for J in "0.2" "0.25" "0.3"
+    for J in "0.2" "0.25" "0.3" "0.35"
     do
-        for DMI in "7"
+        for DMI in  "4" "7" "10"
         do
-            for J_twist in "0.975" "0.95" "0.9"
+            for J_twist in "1.0" "0.9"
             do 
-            ./main $angle 9.9 --dmi $J $DMI $J_twist 
-            mv config_energy_atomic.txt config-energy-atomic-$angle-$J-$DMI-$J_twist.txt
-            mv config_energy_cells.txt config-energy-cells-$angle-$J-$DMI-$J_twist.txt
-            cat header.ucf atom_positions.xyz header_interactions.ucf interactions.ucf > CrI3.ucf
+                for J_intra in "1.0" "1.2"
+                do
+                mkdir param-$angle-$J-$DMI-$J_twist-$J_intra
+                ../main $angle 9.9 --dmi $J $DMI $J_twist $J_intra
+                mv config_energy_atomic.txt  param-$angle-$J-$DMI-$J_twist-$J_intra/config-energy-atomic-$angle-$J-$DMI-$J_twist_$J_intra.txt
+                mv config_energy_cells.txt  param-$angle-$J-$DMI-$J_twist-$J_intra/config-energy-cells-$angle-$J-$DMI-$J_twist_$J_intra.txt
+                mv header.ucf atom_positions.xyz header_interactions.ucf interactions.ucf  param-$angle-$J-$DMI-$J_twist-$J_intra/
 
-            cat input-mc > input
-            mpirun -np 16 ../../../vampire-parallel
-            ../../vdc/vdc --cells --cell-size 20,20,30
-            mv cells-00000000.txt cells-$angle-5K-$J-$DMI-$J_twist-FC.txt
-            mv cells-00000001.txt cells-$angle-5K-$J-$DMI-$J_twist-AF.txt
-            ../../vdc/vdc --cells --cell-size 100,100,30
-            mv cells-00000000.txt cells-lowres-$angle-5K-$J-$DMI-$J_twist-FC.txt
-            mv cells-00000001.txt cells-lowres-$angle-5K-$J-$DMI-$J_twist-AF.txt
-            cat input-dipole > input
-            mpirun -np 16 ../../../vampire-parallel
-            paste cells-coords.cfg cells-00000000.cfg > dipole-cells-$angle-5K-$J-$DMI-$J_twist-AF.data
+                cp input-mc input-dipole CrI3.mat  param-$angle-$J-$DMI-$J_twist-$J_intra/
+                cd param-$angle-$J-$DMI-$J_twist-$J_intra/
+                cat header.ucf atom_positions.xyz header_interactions.ucf interactions.ucf > CrI3.ucf
+                
+                #sbatch vmpr.sh
+                cd ../
+
+                done
             done
         done
     done

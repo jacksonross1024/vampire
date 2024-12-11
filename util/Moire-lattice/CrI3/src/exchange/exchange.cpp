@@ -882,7 +882,7 @@ void calc_interactions() {
    vtimer_t timer;
       timer.start();
    
-   #pragma omp parallel num_threads(16)
+   #pragma omp parallel num_threads(1)
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
@@ -1155,10 +1155,14 @@ void calc_interactions() {
    std::cout << number_of_interactions << " [completed] [" << timer.elapsed_time() << " s]" << std::endl;
    std::cout << "outputting extra file info:" << std::endl;
    
+   char directory [256];
+      if(getcwd(directory, sizeof(directory)) == NULL){
+         std::cerr << "Fatal getcwd error in datalog." << std::endl;
+      }
 
    std::cout << "config atoms started..." << std::flush;
-      std::ofstream config_output;
-      config_output.open("config_energy_atomic.txt");
+      std::ofstream config_output(std::string(directory) + "/config_energy_atomic.txt");
+
       if(!config_output.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
       for(int i = 0; i < all_m_atoms.size(); i++) {
 
@@ -1175,8 +1179,7 @@ void calc_interactions() {
       std::cout << "config atoms done." << std::endl;
       std::cout << "config cells started..." << std::flush;
 
-      std::ofstream config_output1;
-      config_output1.open("config_energy_cells.txt");
+      std::ofstream config_output1(std::string(directory) + "/config_energy_cells.txt");
       if(!config_output1.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
       for(int i = 0; i < config_energy.size(); i++) {
          for(int j = 0; j < config_energy[i].size(); j++){
@@ -1193,8 +1196,7 @@ void calc_interactions() {
       std::cout << "config cells done." << std::endl;
       std::cout << "interaction counts started..." << std::flush;
 
-      std::ofstream interaction_counts;
-      interaction_counts.open("interaction_counts.txt");
+      std::ofstream interaction_counts(std::string(directory) + "/interaction_counts.txt");
       if(!interaction_counts.is_open()) {std::cout << "interaction counts did not open" << std::endl; exit(1);}
       for(int i = 0; i < all_m_atoms.size(); i++){
          interaction_counts << all_m_atoms[i].S  << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y <<  ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \

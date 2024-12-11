@@ -17,10 +17,10 @@ dimensions:system-size-z = 26.15 !A
 #create:periodic-boundaries-y
 #create:periodic-boundaries-z
 
-dipole:solver=atomistic
+dipole:solver=macrocell
 dipole:field-update-rate=1
-cells:macro-cell-size-x = 20 !nm
-cells:macro-cell-size-y = 20 !nm
+cells:macro-cell-size-x = 10 !nm
+cells:macro-cell-size-y = 10 !nm
 cells:macro-cell-size-z = 0.6 !nm
 
 config:macro-cells = continuous
@@ -63,8 +63,6 @@ sim:load-checkpoint=restart
 #------------------------------------------
 # data output
 #------------------------------------------
-config:atoms
-config:atoms-output-rate=1
 
 output:output-rate=1
 output:time-steps
