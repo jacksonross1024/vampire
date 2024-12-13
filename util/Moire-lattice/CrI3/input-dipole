@@ -9,18 +9,18 @@
 #------------------------------------------
 #dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 200.0 !nm
-dimensions:system-size-y = 200.0 !nm
+dimensions:system-size-x = 100.0 !nm
+dimensions:system-size-y = 100.0 !nm
 dimensions:system-size-z = 26.15 !A
 
 #create:periodic-boundaries-x
 #create:periodic-boundaries-y
 #create:periodic-boundaries-z
 
-dipole:solver=atomistic
+dipole:solver=macrocell
 dipole:field-update-rate=1
-cells:macro-cell-size-x = 20 !nm
-cells:macro-cell-size-y = 20 !nm
+cells:macro-cell-size-x = 10 !nm
+cells:macro-cell-size-y = 10 !nm
 cells:macro-cell-size-z = 0.6 !nm
 
 config:macro-cells = continuous

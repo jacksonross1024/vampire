@@ -9,8 +9,8 @@
 #------------------------------------------
 #dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 200.0 !nm
-dimensions:system-size-y = 200.0 !nm
+dimensions:system-size-x = 100.0 !nm
+dimensions:system-size-y = 100.0 !nm
 dimensions:system-size-z = 26.15 !A
 
 #create:periodic-boundaries-x
@@ -28,20 +28,20 @@ create:crystal-sublattice-materials=true
 # Simulation attributes:
 #------------------------------------------
 
-sim:loop-time-steps=20000
+sim:total-time-steps=200000
 sim:equilibration-temperature=5
-sim:temperature=5
-sim:equilibration-time-steps = 20000
+sim:temperature=40
+sim:equilibration-time-steps = 0
 sim:time-steps-increment = 2000
-
-sim:temperature-increment = -20
+sim:time-step = 0.1 !fs
+#sim:temperature-increment = -20
 sim:minimum-temperature=5
-sim:maximum-temperature=5
+sim:maximum-temperature=40
 sim:equilibration-field-strength=0.51 !T
 sim:equilibration-field-unit-vector=0,0,1#0.82,0.0,0.574#0,0,1
 
-sim:applied-field-strength=0.21 !T
-sim:applied-field-unit-vector= 0.82,0.0,0.574 #,.82,0,0.574
+sim:applied-field-strength=0.51 !T
+sim:applied-field-unit-vector= 0,0,1 #0.82,0.0,0.574 #,.82,0,0.574
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------

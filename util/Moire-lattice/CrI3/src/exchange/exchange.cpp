@@ -882,7 +882,7 @@ void calc_interactions() {
    vtimer_t timer;
       timer.start();
    
-   #pragma omp parallel num_threads(16)
+   #pragma omp parallel num_threads(4)
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
@@ -1020,11 +1020,12 @@ void calc_interactions() {
                                        exchange[2] = r_Dy;
                                     } else continue;
                                     exchange[0] *= J_intra_reduction;
-                                    // exchange[0] = 0.0;
+                                    // exchange[0] = -60.0;
                                     // exchange[1] = 0.0;
                                     // exchange[2] = 0.0;
                                     // exchange[3] = 0.0;
                                  } else {
+                                    continue;
                                     // if (atom_j.h_id == 0 || atom_i.h_id == 0) exchange = calculate_inter_Jani(atom_i, atom_j, dL2, angle_i);
                                     if(atom_i.l_id == 1) {  
                                        if(dL2 <= inter_nn_dist_1) {exchange = match_inter_exchange(adx, ady, Einter_Cr1);
@@ -1064,12 +1065,12 @@ void calc_interactions() {
                                        else continue;                                      
                                     } else continue;
                                     if(atom_i.h_id == 1 && atom_j.h_id == 1) exchange[0] *= J_twist_reduction;
-                                    // else {
-                                    //    exchange[0] = 0.0;
-                                    //    exchange[1] = 0.0;
-                                    //    exchange[2] = 0.0;
-                                    //    exchange[3] = 0.0;
-                                    // }
+                                    else {
+                                       exchange[0] = -60.0;
+                                       exchange[1] = 0.0;
+                                       exchange[2] = 0.0;
+                                       exchange[3] = 0.0;
+                                    }
 
                                     // exchange[0] = 0.0;
                                     // if(atom_i.h_id == 1 && atom_j.h_id == 1) exchange[0] *= J_twist_reduction;
@@ -1239,7 +1240,7 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
    exchange[3] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][3]-Eij[j_x_shift][j_y_shift][theta_j][3]);
    
    // all_m_atoms[central_atom.id].intra1++;
-   // std::cout << i_x_shift << ", " << i_y_shift << ", " << j_x_shift << ", " << j_y_shift << ", " << 0.5*(J_i+J_j) << ", " << Dx*cos(twist_angle)-Dy*sin(twist_angle) << ", " <<  Dx*sin(twist_angle)+Dy*cos(twist_angle) << ", " << Dz << std::endl;
+   // if(central_atom.S == 2) std::cout << i_x_shift << ", " << i_y_shift << ", " << j_x_shift << ", " << j_y_shift << ", " << exchange[0] << std::endl;
    return exchange;
 }
 
