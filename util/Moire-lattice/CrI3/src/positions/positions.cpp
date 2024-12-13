@@ -35,7 +35,14 @@ int total_nm_atoms = 0;
 
 void print_header(){
 
-   std::ofstream outfile1 ("header.ucf");
+   char directory [256];
+      if(getcwd(directory, sizeof(directory)) == NULL){
+         std::cerr << "Fatal getcwd error in datalog." << std::endl;
+      }
+   
+      std::string header = "/header.ucf";
+      std::ofstream outfile1(std::string(directory) + header);
+   // std::ofstream outfile1 ("header.ucf");
 
    outfile1 << " #unit cell size " << std::endl;
    outfile1 << system_size_x << '\t' << system_size_y << '\t' << system_size_z << std::endl;
@@ -77,10 +84,18 @@ void create_magnetic_atom_list(std::string filename){
    std::cout << "Generating lattice structure...." << std::flush;
    // double normalise_x = 100.0/(a0x*3.0);
    // double normalise_y = 100.0/(a0x*sqrt(3));
-   std::ofstream shift_file;
-   shift_file.open("shifted_constants.txt");
-   std::ofstream outfile2;
-   outfile2.open("atom_positions.xyz");
+   char directory [256];
+      if(getcwd(directory, sizeof(directory)) == NULL){
+         std::cerr << "Fatal getcwd error in datalog." << std::endl;
+      }
+   
+   // std::string file = ;
+
+   std::ofstream shift_file(std::string(directory) + "/shifted_constants.txt");
+   // shift_file.open("shifted_constants.txt");
+
+   std::ofstream outfile2(std::string(directory) + "/atom_positions.xyz");
+   // outfile2.open();
    // resize_arrays(unit_cell_shifts, number_of_unit_cells_x, number_of_unit_cells_y);
    // int total_atoms_kept = 1;
    for (int i = -2*number_of_unit_cells_x; i < 3*number_of_unit_cells_x; i++) {
@@ -261,6 +276,7 @@ void create_magnetic_atom_list(std::string filename){
       }
    }
    shift_file.close();
+   outfile2.close();
    std::cout << total_atoms << " atoms; [complete]" << std::endl;
 }
 

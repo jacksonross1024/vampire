@@ -6,6 +6,8 @@
 #include <sstream>
 #include <fstream>
 #include <cmath>
+
+#include <unistd.h>
 // #include <array>
 
    extern double twist_angle;

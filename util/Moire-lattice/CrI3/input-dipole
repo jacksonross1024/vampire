@@ -63,8 +63,6 @@ sim:load-checkpoint=restart
 #------------------------------------------
 # data output
 #------------------------------------------
-config:atoms
-config:atoms-output-rate=1
 
 output:output-rate=1
 output:time-steps
