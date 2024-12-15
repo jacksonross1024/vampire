@@ -134,10 +134,12 @@ void create_magnetic_atom_list(std::string filename){
                         // double changex = std::abs(x_new - x_j);
                         // double changey = std::abs(y_new - y_j);
                         
-                        int dy_cell = floor((y_new +0.000000)/ a1y);
+                        int dy_cell = int(floor((y_new +0.000000)/ a1y));
                         // changex += dy_cell*std::abs(a1x);
-                        int dx_cell = floor((x_new + 0.000000)/ a0x);
+                        int dx_cell = int(floor((x_new + 0.000000)/ a0x));
                         
+                        new_atom.unit_y_lr = int(floor((y_new +0.000000)/ (3*a1y)));
+                        new_atom.unit_x_lr = int(floor((x_new +0.000000)/ (3*a0x)));
                         // double unit_x = dx_cell*a0x + dy_cell*a1x + atom[atom_i].x;
                         // double unit_y = dy_cell*a1y + atom[atom_i].y;
                         // int changex = round(-100.0*remainder(x_new - x_j,a0x)/a0x)+100;
@@ -158,6 +160,9 @@ void create_magnetic_atom_list(std::string filename){
                         // Set layer number
                         new_atom.unit_x = dx_cell;
                         new_atom.unit_y = dy_cell;
+                         
+                       
+                        
                         if(new_atom.unit_x  >= number_of_unit_cells_x || new_atom.unit_y >= number_of_unit_cells_y \
                            || new_atom.unit_x < 0 || new_atom.unit_y < 0) {
                            std::cerr << new_atom.unit_x  << ", " << new_atom.unit_y  << ", " << x_j << ", " << y_j << ", " << \
@@ -208,20 +213,26 @@ void create_magnetic_atom_list(std::string filename){
                      spin new_atom;
                      new_atom.x = x_new;
                      new_atom.y = y_new;
+                     
                      new_atom.z = z_j;
                      new_atom.id = total_atoms;
                      new_atom.l_id = atom[atom_i].l_id;
                      new_atom.h_id = atom[atom_i].h_id;
                      // new_atom.S = 0;
                      new_atom.unit_y = int(floor((y_new +0.00000)/ a1y));
-                        // changex += dy_cell*std::abs(a1x);
                      new_atom.unit_x = int(floor((x_new +0.00000)/ a0x));
+
+                     new_atom.unit_y_lr = int(floor((y_new +0.000000)/ (3*a1y)));
+                     new_atom.unit_x_lr = int(floor((x_new +0.000000)/ (3*a0x)));
                      if(new_atom.unit_x  >= number_of_unit_cells_x || new_atom.unit_y >= number_of_unit_cells_y || \
                         new_atom.unit_x  < 0 || new_atom.unit_y < 0) {
                         std::cerr << new_atom.unit_x  << ", " << new_atom.unit_y  << ", " << x_j << ", " << y_j << ", " << \
                          int(floor(y_j / a1y)) << ", " <<  int(floor(x_j / a0x)) << std::endl;
                          std::exit(1);
                      }
+                     
+                     
+
                      // Set layer number
                      if (z_j == 0.0){
                         new_atom.S = 1;

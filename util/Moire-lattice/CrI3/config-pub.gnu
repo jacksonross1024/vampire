@@ -24,123 +24,70 @@ set style line 100 pt 1 ps 1.2 lt 0 lc rgb "gray30" lw 2
 set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
 
-set term pngcairo size 1600,1600
+set term pngcairo size 1600,1600 font "helvetica, 14"
 
 
-set ylabel "y position (nm)"
-set xlabel "x position (nm)"
+unset ylabel 
+unset xlabel 
 
-set ytics 50 out 
-set xtics 50 out 
-set mytics 5 
-set mxtics 5
+unset ytics
+unset xtics 
 
-set palette defined ( 0 'blue', 1 'white',  2 'red')
+set cbrange [-0.15:0.6]
+
 
 chck(S,s,E,n) = (S == s) ? (E/n):(1/0)
-set colorbox
-set cblabel "meV/mu_B^2"
-set style fill solid noborder 
+set colorbox user origin 0.8,0.25 size 0.025,0.3
+set size 0.8,0.8
+set style fill solid 0.95 noborder 
 
 set xrange [2:198]
 set yrange [2:198]
 
+angle = '1.1'
+J_index = '0.2'
+DMI_index = '1.0'
+J_twist = '1.0'
+J_intra = '1.0'
+
+set ticslevel 0  
+set dgrid3d 30,30  
+#set palette defined (0 "blue", 0.75 "white", 1.4 "red")  
+set style lines 100 lt 5 lw 0.5  
+#set pm3d hidden3d 100  
+set grid  
+set view 74,216  
+unset key  
+
 do for [angle in "0.5 1.1 2.0"] {
-do for [J_index in "0.2 0.25 0.3"] {
-do for [DMI_index in "7"] {
-do for [J_twist in "0.98 0.96 0.94 0.92"] {
-#do for [J_twist in "0.95"] {
+do for [J_index in "0.2 0.25 0.3 0.35"] {
+do for [J_twist in "1.0 0.9 0.8"] {
+do for [J_intra in "1.0"] {
+do for [DMI_index in "2 4 8"] {
 
-file = sprintf("config-energy-cells-%s-%s-%s-%s", angle, J_index, DMI_index, J_twist) 
+set palette defined (-0.15 '#81B1CB', 0.0 '#f5f0f7', 0.1 '#7A5FA9',  0.6'#614199')
+
+file = sprintf("config-energy-cells-%s-%s-%s-%s-%s-Jinter", angle, J_index, DMI_index, J_twist, J_intra) 
 print(file.".txt")
+normalise = 2.98*2.98*2
+
 set output sprintf("%s.png", file)
+set cbrange [-0.15:0.6]
+#set auto cb
+set cbtics -0.15, 0.35,0.6 nomirror scale 1.0
+set cbtics add  ("0" 0.0)
+set cbtics add  ("0.6" 0.6)
+set zrange [-0.15:0.6]
+
+clr(c,e) = (c > 24 || c < 24) ? ( 1/0) : ( e)
 
 
-set multiplot layout 4,4
+cell = 1.0
+len(x,y,z) = sqrt(x*x + y*y + z*z)
 
-normalise = 2.98*2.98
-
-layer = 1
-#set title sprintf("layer %.f, J_{inter}", layer)
-#plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($5/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_x", layer)
-#plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($6/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_y", layer)
-#plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($7/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_z", layer)
-#plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($8/normalise) w boxxy palette notitle 
-
-layer = 2
-set title sprintf("layer %.f, J", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_x", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($11/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_y", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($12/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_z", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($13/normalise) w boxxy palette notitle 
-
-layer = 3
-set title sprintf("layer %.f, J", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_x", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($16/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_y", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($17/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_z", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($18/normalise) w boxxy palette notitle 
-
-
-set title "layer 2 + 3"
-#set title sprintf("layer %s, J", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):(($10+$15)/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_x", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):(($11+$16)/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_y", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):(($12+$17)/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_z", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):(($13+$18)/normalise) w boxxy palette notitle 
-
-set title "layer 1 + 2 + 3 + 4"
-#set title sprintf("layer %s, J", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):(($5+$10+$15+$20)/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_x", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):(($6+$11+$16+$21)/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_y", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):(($7+$12+$17+$22)/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_z", layer)
-plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):(($8+$13+$18+$23)/normalise) w boxxy palette notitle 
-
-
-#set title sprintf("layer %.f, J", layer)
-#plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($20/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_x", layer)
-#plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($21/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_y", layer)
-#plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($22/normalise) w boxxy palette notitle 
-
-#set title sprintf("layer %.f, D_z", layer)
-#plot file.".txt" u ($1*0.693):($2*0.6002):(0.693/2.0):(0.6002/2.0):($23/normalise) w boxxy palette notitle 
-
-
-unset multiplot 
+splot file.".txt" u (clr($9,$2*0.6)):($1*0.693):(($10+$15)/normalise) w pm3d notitle 
+#show cbrange
+}
 }
 }
 }

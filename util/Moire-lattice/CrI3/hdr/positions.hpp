@@ -49,6 +49,8 @@
          int h_id;
          int unit_x;
          int unit_y;
+         int unit_x_lr;
+         int unit_y_lr;
          int dx = 0;
          int dy = 0;
          int inter1 = 0;

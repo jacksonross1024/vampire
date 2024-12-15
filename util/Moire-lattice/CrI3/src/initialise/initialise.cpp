@@ -160,12 +160,21 @@ void initialise_variables(){
 
    
    unit_cell_shifts.resize(number_of_unit_cells_x);
-   config_energy.resize(number_of_unit_cells_x);
+  
    for(int i = 0; i < number_of_unit_cells_x; i++) {
       unit_cell_shifts[i].resize(number_of_unit_cells_y);
-      config_energy[i].resize(number_of_unit_cells_y);
+    
       for(int j = 0; j < number_of_unit_cells_y; j++) {
          unit_cell_shifts[i][j].resize(3,0);
+        
+      }
+   }
+   config_energy.resize(number_of_unit_cells_x/3 + 2);
+   for(int i = 0; i < number_of_unit_cells_x/3 + 2; i++) {
+     
+      config_energy[i].resize(number_of_unit_cells_y/3 + 2);
+      for(int j = 0; j < number_of_unit_cells_y/3 + 2; j++) {
+         
          config_energy[i][j].resize(30,0.0);
       }
    }

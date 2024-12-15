@@ -474,7 +474,9 @@ std::vector < std::vector < double > > Dz_intra2;
 
 std::vector < std::vector < std::vector< double> > > D_intra;
 std::vector < std::vector < std::vector< double> > > D_inter;
-std::vector<std::vector<std::vector<double> > > config_energy(number_of_unit_cells_x, std::vector<std::vector<double> >(number_of_unit_cells_y, std::vector<double>(30,0.0)));//(number_of_unit_cells_x, std::vector<std::array<double, 30> >(number_of_unit_cells_y, {0.0}));
+int config_cells_x = (number_of_unit_cells_x/2)+1;
+int config_cells_y = (number_of_unit_cells_y/2)+1;
+std::vector<std::vector<std::vector<double> > > config_energy(config_cells_x, std::vector<std::vector<double> >( config_cells_y, std::vector<double>(30,0.0)));//(number_of_unit_cells_x, std::vector<std::array<double, 30> >(number_of_unit_cells_y, {0.0}));
 
 std::vector <double > crossProduct(std::vector <double >A, std::vector <double > B){
    std::vector <double > P(3,0.0);
@@ -881,8 +883,8 @@ void calc_interactions() {
    // now calculate neighbour list looping over boxes
    vtimer_t timer;
       timer.start();
-   
-   #pragma omp parallel num_threads(1)
+
+   #pragma omp parallel num_threads(16)
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
@@ -964,7 +966,7 @@ void calc_interactions() {
                                  double angle_j = atan2(-ady,-adx);// - twist_angle;
                                  std::array<double, 4> exchange({-60.0,0.0,0.0,0.0});
                                  if(atom_i.S == atom_j.S) {
-                                    // continue;
+                                    continue;
                                     // if ( atom_i.S == 1) {
                                     //    // angle_i += 0.5*twist_angle;
                                     //    exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);  
@@ -1025,7 +1027,7 @@ void calc_interactions() {
                                     // exchange[2] = 0.0;
                                     // exchange[3] = 0.0;
                                  } else {
-                                    continue;
+                                    // continue;
                                     // if (atom_j.h_id == 0 || atom_i.h_id == 0) exchange = calculate_inter_Jani(atom_i, atom_j, dL2, angle_i);
                                     if(atom_i.l_id == 1) {  
                                        if(dL2 <= inter_nn_dist_1) {exchange = match_inter_exchange(adx, ady, Einter_Cr1);
@@ -1125,11 +1127,13 @@ void calc_interactions() {
                                  0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
                               //zx -> Dy               yz -> -Dx               zz
                                  0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
-                                    config_energy.at(atom_i.unit_x).at(atom_i.unit_y).at((atom_i.S-1)*5+0) += 1.0;
-                                    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
-                                    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += exchange[1]/J_constant;
-                                    config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += exchange[2]/J_constant;
-                                    config_energy[atom_i.unit_x][atom_i.unit_y].at((atom_i.S-1)*5+4) += exchange[3]/J_constant;
+                                    config_energy.at(atom_i.unit_x_lr).at(atom_i.unit_y_lr).at((atom_i.S-1)*5+0) += 1.0;
+                                    config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
+                                    config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*5+2] += exchange[1]/J_constant;
+                                    config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*5+3] += exchange[2]/J_constant;
+                                    config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr].at((atom_i.S-1)*5+4) += exchange[3]/J_constant;
+
+                                    
                                     number_of_interactions++;    
                                  }                           
                               }
