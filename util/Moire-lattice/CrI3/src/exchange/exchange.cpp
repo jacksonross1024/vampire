@@ -853,6 +853,7 @@ void calc_interactions() {
 
    // determine boxid of each atom and save atoms in boxes
    for(int i=0; i < all_m_atoms.size(); i++){
+      if(all_m_atoms[i].S == 5) continue;
       double x_i = all_m_atoms[i].x;// - min[0];
       double y_i = all_m_atoms[i].y;// - min[1];
       double z_i = all_m_atoms[i].z;// - min[2];
@@ -928,7 +929,7 @@ void calc_interactions() {
                            // atom_index++;
                            // get atom number i
                            spin atom_i = boxes[i][j][k][ai];
-                           //if(atom_i.S == 5) continue;
+                           if(atom_i.S == 5) continue;
                            const double x_i = atom_i.x;
                            const double y_i = atom_i.y;
                            const double z_i = atom_i.z;
@@ -966,7 +967,7 @@ void calc_interactions() {
                                  double angle_j = atan2(-ady,-adx);// - twist_angle;
                                  std::array<double, 4> exchange({-60.0,0.0,0.0,0.0});
                                  if(atom_i.S == atom_j.S) {
-                                    continue;
+                                    // continue;
                                     // if ( atom_i.S == 1) {
                                     //    // angle_i += 0.5*twist_angle;
                                     //    exchange = calculate_intra_Jani(atom_i, atom_j, dL2, angle_i);  
@@ -1067,12 +1068,12 @@ void calc_interactions() {
                                        else continue;                                      
                                     } else continue;
                                     if(atom_i.h_id == 1 && atom_j.h_id == 1) exchange[0] *= J_twist_reduction;
-                                    else {
-                                       exchange[0] = -60.0;
-                                       exchange[1] = 0.0;
-                                       exchange[2] = 0.0;
-                                       exchange[3] = 0.0;
-                                    }
+                                    // else {
+                                    //    exchange[0] = -60.0;
+                                    //    exchange[1] = 0.0;
+                                    //    exchange[2] = 0.0;
+                                    //    exchange[3] = 0.0;
+                                    // }
 
                                     // exchange[0] = 0.0;
                                     // if(atom_i.h_id == 1 && atom_j.h_id == 1) exchange[0] *= J_twist_reduction;

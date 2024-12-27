@@ -9,19 +9,23 @@
 #------------------------------------------
 #dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 100.0 !nm
-dimensions:system-size-y = 100.0 !nm
+dimensions:system-size-x = 200.0 !nm
+dimensions:system-size-y = 200.0 !nm
 dimensions:system-size-z = 60.01 !A
 
 #create:periodic-boundaries-x
 #create:periodic-boundaries-y
 #create:periodic-boundaries-z
-#dipole:solver=tensor
-#dipole:field-update-rate=1
-#cells:macro-cell-size-x = 100
-#cells:macro-cell-size-y = 100
-#cells:macro-cell-size-z = 30
 
+dipole:solver=macrocell
+dipole:field-update-rate=1
+cells:macro-cell-size-x = 5 !nm
+cells:macro-cell-size-y = 5 !nm
+cells:macro-cell-size-z = 3 !nm
+
+config:macro-cells = end
+config:output-mode = legacy
+config:macro-cells-output-rate = 1
 #------------------------------------------
 # Material Files:
 #------------------------------------------
@@ -32,32 +36,33 @@ create:crystal-sublattice-materials=true
 # Simulation attributes:
 #------------------------------------------
 
-sim:loop-time-steps=100000
-sim:equilibration-temperature=20
-sim:temperature=20
-sim:equilibration-time-steps = 100000
-sim:time-steps-increment = 100000
+sim:total-time-steps=1
+sim:loop-time-steps=1
+sim:equilibration-temperature=5
+sim:temperature=5
+sim:equilibration-time-steps = 0
+sim:time-steps-increment = 1
 
-sim:temperature-increment = -15
-sim:minimum-temperature=5
-sim:maximum-temperature=20
+sim:temperature-increment = 5
+sim:minimum-temperature=0
+sim:maximum-temperature=5
+
 sim:equilibration-field-strength=0.51 !T
-sim:equilibration-field-unit-vector=0,0,1#0.82,0.0,0.574#0,0,1
+sim:equilibration-field-unit-vector=0,0,1
 
 sim:applied-field-strength=0.21 !T
-sim:applied-field-unit-vector= 0.82,0.0,0.574 #,.82,0,0.574
+sim:applied-field-unit-vector= 0.82,0,0.574
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:program =curie-temperature #time variable magnetic field; SOT; STT
+sim:program = time-series #time variable magnetic field; SOT; STT
 sim:integrator = monte-carlo
 
-sim:save-checkpoint = end 
+sim:load-checkpoint=restart
+#sim:save-checkpoint = end 
 #------------------------------------------
 # data output
 #------------------------------------------
-config:atoms
-config:atoms-output-rate=1
 
 output:output-rate=1
 output:time-steps
@@ -67,3 +72,4 @@ output:material-mean-magnetisation
 output:mean-susceptibility
 output:mean-total-torque
 output:total-energy 
+

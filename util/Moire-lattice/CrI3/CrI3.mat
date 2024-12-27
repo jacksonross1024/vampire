@@ -1,4 +1,4 @@
-material:num-materials = 4
+material:num-materials = 5
 #-------------------------------------------------------
 # Material 1
 #-------------------------------------------------------
@@ -37,3 +37,12 @@ material[4]:uniaxial-anisotropy-constant = 0.86 !meV
 material[4]:material-element = Cr
 material[4]:initial-spin-direction =  random#0,0,1
 material[4]:unit-cell-category = 4
+
+
+material[5]:material-name="Au"
+#material[5]:non-magnetic=keep
+material[5]:damping-constant = 1
+material[5]:atomic-spin-moment = 0.1 !muB
+material[5]:unit-cell-category = 5
+material[5]:material-element= "Au"
+material[5]:uniaxial-anisotropy-constant = 0.86 !meV

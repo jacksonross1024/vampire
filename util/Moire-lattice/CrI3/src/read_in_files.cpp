@@ -255,27 +255,27 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
     const double a_1 = 7.302;
     int i = 0;
     while(i < 200){
-    int j  = 0;
-    while( j < 200) {
-        getline(J_file, Jline); 
-        getline(Dx_file, Dxline); 
-        getline(Dy_file, Dyline); 
-        getline(Dz_file, Dzline);
-        std::stringstream Jliness(Jline.c_str());
-        std::stringstream Dxliness(Dxline.c_str());
-        std::stringstream Dyliness(Dyline.c_str());
-        std::stringstream Dzliness(Dzline.c_str());
-        double J;
-        double Dx;
-        double Dy;
-        double Dz;
+        int j  = 0;
+        while( j < 200) {
+            getline(J_file, Jline); 
+            getline(Dx_file, Dxline); 
+            getline(Dy_file, Dyline); 
+            getline(Dz_file, Dzline);
+            std::stringstream Jliness(Jline.c_str());
+            std::stringstream Dxliness(Dxline.c_str());
+            std::stringstream Dyliness(Dyline.c_str());
+            std::stringstream Dzliness(Dzline.c_str());
+            double J;
+            double Dx;
+            double Dy;
+            double Dz;
             Jliness >> J; 
             Dxliness >> Dx; 
             Dyliness >> Dy; 
             Dzliness >> Dz;
             Eij.at(i*200+j)[0] = j*0.01*a_0 - a_0; //x pos
             Eij[i*200+j][1] = (199-i)*0.01*a_1 - a_1;
-         
+        
             Eij[i*200+j][2] = (J-J_inter_scaling*std::abs(J))*J_constant;
             Eij[i*200+j][3] = DMI_inter_scaling*Dx*J_constant;
             Eij[i*200+j][4] = DMI_inter_scaling*Dy*J_constant;
