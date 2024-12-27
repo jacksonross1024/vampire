@@ -19,7 +19,9 @@ srun --distribution=block:cyclic:block /work/e89/e89/jross71/vampire/moire/vampi
 ../../../../vdc/vdc --cells --cell-size 50,50,30
 mv cells-00000000.txt cells-20K-AF.txt
 mv cells-00000001.txt cells-20K-FC.txt
-
+../../../../vdc/vdc --cells --cell-size 10,10,30
+mv cells-00000000.txt cells-20K-AF-hr.txt
+mv cells-00000001.txt cells-20K-FC-hr.txt
 
 cat input-dipole-20K > input
 srun --distribution=block:cyclic:block /work/e89/e89/jross71/vampire/moire/vampire-parallel
@@ -31,7 +33,9 @@ srun --distribution=block:cyclic:block /work/e89/e89/jross71/vampire/moire/vampi
 ../../../../vdc/vdc --cells --cell-size 50,50,30
 mv cells-00000000.txt cells-5K-AF.txt
 mv cells-00000001.txt cells-5K-FC.txt
-
+../../../../vdc/vdc --cells --cell-size 10,10,30
+mv cells-00000000.txt cells-5K-AF-hr.txt
+mv cells-00000001.txt cells-5K-FC-hr.txt
 
 cat input-dipole-5K > input
 srun --distribution=block:cyclic:block /work/e89/e89/jross71/vampire/moire/vampire-parallel
