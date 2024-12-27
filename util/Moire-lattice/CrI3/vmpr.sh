@@ -16,7 +16,7 @@ export OMP_NUM_THREADS=1
 
 input-mc-20K > input
 srun --distribution=block:cyclic:block /work/e89/e89/jross71/vampire/moire/vampire-parallel
-../../../../vdc/vdc --cells --cell-size 10,10,30
+../../../../vdc/vdc --cells --cell-size 50,50,30
 mv cells-00000000.txt cells-20K-AF.txt
 mv cells-00000001.txt cells-20K-FC.txt
 
@@ -28,7 +28,7 @@ paste cells-coords.cfg cells-00000000.cfg > dipole-cells-20K-AF.data
 
 input-mc-5K > input
 srun --distribution=block:cyclic:block /work/e89/e89/jross71/vampire/moire/vampire-parallel
-../../../../vdc/vdc --cells --cell-size 10,10,30
+../../../../vdc/vdc --cells --cell-size 50,50,30
 mv cells-00000000.txt cells-5K-AF.txt
 mv cells-00000001.txt cells-5K-FC.txt
 
