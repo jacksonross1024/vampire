@@ -1,0 +1,69 @@
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+#dimensions:unit-cell-size = 2.507 !A
+
+dimensions:system-size-x = 200.0 !nm
+dimensions:system-size-y = 200.0 !nm
+dimensions:system-size-z = 60.01 !A
+
+#create:periodic-boundaries-x
+#create:periodic-boundaries-y
+#create:periodic-boundaries-z
+#dipole:solver=tensor
+#dipole:field-update-rate=1
+#cells:macro-cell-size-x = 100
+#cells:macro-cell-size-y = 100
+#cells:macro-cell-size-z = 30
+
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:unit-cell-file = CrI3.ucf
+material:file = CrI3.mat
+create:crystal-sublattice-materials=true
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+
+sim:loop-time-steps=100000
+sim:equilibration-temperature=19
+sim:temperature=20
+sim:equilibration-time-steps = 100000
+sim:time-steps-increment = 100000
+
+sim:temperature-increment = -15
+sim:minimum-temperature=19
+sim:maximum-temperature=20
+sim:equilibration-field-strength=0.51 !T
+sim:equilibration-field-unit-vector=0,0,1#0.82,0.0,0.574#0,0,1
+
+sim:applied-field-strength=0.21 !T
+sim:applied-field-unit-vector= 0.82,0.0,0.574 #,.82,0,0.574
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program =curie-temperature #time variable magnetic field; SOT; STT
+sim:integrator = monte-carlo
+
+sim:save-checkpoint = end 
+#------------------------------------------
+# data output
+#------------------------------------------
+config:atoms
+config:atoms-output-rate=1
+
+output:output-rate=1
+output:time-steps
+output:temperature
+output:mean-magnetisation-length
+output:material-mean-magnetisation
+output:mean-susceptibility
+output:mean-total-torque
+output:total-energy 
