@@ -53,7 +53,7 @@ namespace program{
 
 		
 		program::internal::num_mag_cat = (3 + 3); // mag_x,y,z and K,J,LOT energy
-		program::internal::num_mag_types = mp::num_materials -1;
+		program::internal::num_mag_types = mp::num_materials;
 		
 
 		//if(sim::domain_wall_discretisation == 1) 
@@ -333,23 +333,6 @@ namespace program{
 	switch(sim::integrator){
 		case 0: { // LLG Heun
 			while(sim::time<sim::equilibration_time+sim::total_time) {
-				
-				double time_from_start = mp::dt_SI * double(sim::time-sim::equilibration_time);
-				if(time_from_start < program::internal::electrical_pulse_rise_time ) {
-					program::fractional_electric_field_strength = time_from_start / program::internal::electrical_pulse_rise_time;
-				}
-				// implement continuous current
-				else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time) ){
-					program::fractional_electric_field_strength = 1.0;
-				}
-				// implement fall time
-				else if(time_from_start < (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time + program::internal::electrical_pulse_fall_time)) {
-					const double fractional_fall_time = time_from_start - (program::internal::electrical_pulse_rise_time + program::internal::electrical_pulse_time);
-					program::fractional_electric_field_strength = 1.0 - fractional_fall_time / program::internal::electrical_pulse_fall_time;
-				}
-				else{
-					program::fractional_electric_field_strength = 0.0;
-				}
 
 				for(int cell = 0; cell < program::internal::num_dw_cells; cell++) {
 						// std::cout << mat << '\t' << cell << "\t" << mag_x[num_dw_cells*mat + cell] << "\t" << mag_y[num_dw_cells*mat + cell] << "\t" << mag_z[num_dw_cells*mat + cell] << std::endl;
@@ -501,7 +484,7 @@ namespace program{
 				
 				}	
 				stats::update();
-				output_dw_data(sim::partial_time);
+				output_dw_data(1);
 				vout::data;
 				}
 			}
@@ -635,16 +618,16 @@ namespace program{
 		
 			string dwpos = "/dw-pos.txt";
 			dw_pos.open (string(directory) + dwpos);
-			if(!dw_pos.is_open()) {
-				std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
-			}
+			// if(!dw_pos.is_open()) {
+			// 	std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
+			// }
 			double avg_topological_charge_acc = 0.0;
 			std::vector< double> domain_tracks;
 			int domain_counter = 0;
 			std::ofstream dw_res;
 			string dwres = "/dw/dw-" + std::to_string(sim::time) + ".txt";
 			dw_res.open (string(directory) + dwres);
-			if(!dw_res.is_open()) {
+			if(!dw_res.is_open() && sim::time == 0) {
 				std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
 			}
 			
