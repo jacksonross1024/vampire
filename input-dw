@@ -30,7 +30,7 @@ sim:domain-wall-discretisation-type = nm
 sim:domain-wall-position = 5000 #A
 sim:domain-wall-width = 86.738   #A
 sim::domain-wall-angle = 90 #180
-
+#sim:domain-wall-random-start #forces +/- z spin orientation for +/- 10% of spins along dw axis even with random spin configuration
 #------------------------------------------
 # Material Files:
 #------------------------------------------
