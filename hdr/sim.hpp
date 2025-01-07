@@ -277,6 +277,7 @@ namespace sim{
 	extern double domain_wall_width;
 	extern int domain_wall_discretisation_type;
 	extern int domain_wall_angle;
+	extern bool domain_wall_random_start;
 	extern double unit_cell_x;
     extern double unit_cell_y;
     extern double unit_cell_z;
