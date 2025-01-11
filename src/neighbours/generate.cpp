@@ -275,6 +275,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                    cell_coord_array[cell][1],
                    cell_coord_array[cell][2]};
 
+      int interaction_count = 0;
 		// Loop over all interactions in exchange template
 		for(auto itr = exchange.interaction_stack.begin(); itr != exchange.interaction_stack.end(); ++itr){
          unitcell::interaction_t tmp = *itr;
@@ -364,14 +365,14 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 
                // set neighbour data
                tmp_nt.nn = supercell_array[nx][ny][nz][natom]; // atom ID of neighbour
-               tmp_nt.i = tmp.id;                                   // interaction type
+               tmp_nt.i = interaction_count;                                   // interaction type
                tmp_nt.vx = vx;                                 // position vector i->j
                tmp_nt.vy = vy;
                tmp_nt.vz = vz;
 
                // push back array of class
                list[supercell_array[scc[0]][scc[1]][scc[2]][atom]].push_back(tmp_nt);
-
+               interaction_count++;
             }
 			}
 		}

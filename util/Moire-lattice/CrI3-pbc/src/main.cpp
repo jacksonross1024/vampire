@@ -24,27 +24,27 @@ int main(int argc, char* argv[]){
         //     if(argv[a]== dmi_check) {DMI = true;
         //     std::cout << " with DMI " << std::endl;}
         // }
-        if(a == 3) {
+        if(a == 4) {
             J_inter_scaling = atof(argv[a]);
             std::cout << " inter exchange scaling: "<< 1-J_inter_scaling << std::endl;
         }
-        if(a == 4) {
+        if(a == 5) {
             DMI_inter_scaling = atof(argv[a]);
             std::cout << " inter DMI scaling: " << DMI_inter_scaling << std::endl;
         }
-        if(a == 5) {
+        if(a == 6) {
             J_twist_reduction = atof(argv[a]);
             std::cout << " J twist exchange reduction: " << J_twist_reduction << std::endl;
         }
-        if(a == 6) {
+        if(a == 7) {
             J_intra_reduction = atof(argv[a]);
             std::cout << " J intra exchange reduction: " << J_intra_reduction << std::endl;
         }
 
     }
 
-   system_size_x = 9000; //A 
-   system_size_y = 9000; //A
+   system_size_x = 8000; //A 
+   system_size_y = 8000; //A
    number_of_unit_cells_z = 1; //unit cells
 
     // (deprecated)

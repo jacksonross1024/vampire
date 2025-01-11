@@ -95,7 +95,7 @@ void create_magnetic_atom_list(std::string filename){
                      // calculate rotated atom positions
                      double x_new = x_j*cos(twist_angle*0.5) - y_j*sin(twist_angle*0.5);
                      double y_new = y_j*cos(twist_angle*0.5) + x_j*sin(twist_angle*0.5);
-                     if (inside_system(system_size_x, system_size_y, x_new, y_new, 0.0001)){
+                     if (inside_system(system_size_x, system_size_y, x_new, y_new, 0.0000)){
                         
                         spin new_atom;
                         new_atom.x = x_new;
@@ -112,9 +112,8 @@ void create_magnetic_atom_list(std::string filename){
                         //effective rotation in x vector basis
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
-                        double x_ref = (i*a0x + j*a1x + 4.62)*cos(twist_angle)-(((new_atom.l_id == 3) ? (4.00) : (0.0)) + j*a1y)*sin(twist_angle); 
-                        double y_ref = (i*a0x + j*a1x + 4.62)*sin(twist_angle)+(((new_atom.l_id == 3) ? (4.00) : (0.0)) + j*a1y)*cos(twist_angle); 
-                        
+                        double x_ref = (i*a0x + j*a1x + 4.62); 
+                        double y_ref = (((new_atom.l_id == 1) ? (4.001) : (0.0)) + j*a1y); 
                         //x and y shift in rhombehedral coordiante from x basis
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));
                         int changex = int(round(9*(fmod(std::abs(x_eff-x_ref +changey*a1y/11.0) , a0x)/a0x)));
@@ -143,7 +142,9 @@ void create_magnetic_atom_list(std::string filename){
                            
                         } else if (z_j <= a0z*3){
                            new_atom.S = 4;
-                        } else {
+                        } else if (z_j == 600.0){
+                           new_atom.S = 5;
+                        }else {
                            std::cerr << "Error! Atom " << total_atoms << " twist layer: " << z_j << " < " << twist_loction << std::endl;
                            
                            exit(1);
@@ -157,7 +158,7 @@ void create_magnetic_atom_list(std::string filename){
                      // twist negative 1/2 twist angle above twist location
                      double x_new = x_j*cos(-twist_angle*0.5) - y_j*sin(-twist_angle*0.5);
                      double y_new = y_j*cos(-twist_angle*0.5) + x_j*sin(-twist_angle*0.5);
-                     if(inside_system(system_size_x, system_size_y, x_new, y_new, 0.0001)) {  
+                     if(inside_system(system_size_x, system_size_y, x_new, y_new, 0.0000)) {  
   
                      spin new_atom;
                      new_atom.x = x_new;
@@ -238,12 +239,12 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
                      new_atom.unit_x = dx_cell;
                      new_atom.unit_y = dy_cell;
 
-                     if(new_atom.z == 2*a0z) {
-                           unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
-                           unit_cell_shifts[dx_cell][dy_cell][1] += new_atom.dx;
-                           unit_cell_shifts[dx_cell][dy_cell][2] += new_atom.dy;
-                           // row3.push_back(new_atom);
-                     }  
+                     // if(new_atom.z == 2*a0z) {
+                     //       unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
+                     //       unit_cell_shifts[dx_cell][dy_cell][1] += new_atom.dx;
+                     //       unit_cell_shifts[dx_cell][dy_cell][2] += new_atom.dy;
+                     //       // row3.push_back(new_atom);
+                     // }  
                      new_lattice_atoms++;
                      new_moire_lattice.push_back(new_atom);              
                   }

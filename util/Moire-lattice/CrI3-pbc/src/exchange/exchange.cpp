@@ -821,7 +821,7 @@ void calc_interactions() {
    inter_AB_dist_2 *= inter_AB_dist_2;
    inter_AB_dist_3 *= inter_AB_dist_3;
 
-   const double bsize = 1.5*range;
+   const double bsize = 1.2*range;
    std::cout << "Generating Moire unit cell..." << std::flush;
    // determine number of blocks in x,y,z
     int xb = ceil(system_size_x/bsize)+1;
@@ -839,6 +839,7 @@ void calc_interactions() {
 
    // determine boxid of each atom and save atoms in boxes
    for(int i=0; i < all_m_atoms.size(); i++){
+      if(all_m_atoms[i].S == 5) continue;
       double x_i = all_m_atoms[i].x;// - min[0];
       double y_i = all_m_atoms[i].y;// - min[1];
       double z_i = all_m_atoms[i].z;// - min[2];
@@ -1225,24 +1226,24 @@ void calc_interactions() {
 //==============================
 
    // //0.5 degree square periodic
-   double x00 =  3437.89;//3668.08;//
-   double y00 =  3044.05;//2858.98;// 
-   double x01 =  3437.89;//3668.08;//
-   double y01 =  5426.86;//5241.79;// 
-   double x10 =  4813.51; //5043.7;// 
-   double y10 =  3044.05;//;//2858.98;// 
-   double x11 =  4813.51;//5043.7;//
-   double y11 =  5426.86;//;//5241.79;//
+   // double x00 =  3437.89;//3668.08;//
+   // double y00 =  3044.05;//2858.98;// 
+   // double x01 =  3437.89;//3668.08;//
+   // double y01 =  5426.86;//5241.79;// 
+   // double x10 =  4813.51; //5043.7;// 
+   // double y10 =  3044.05;//;//2858.98;// 
+   // double x11 =  4813.51;//5043.7;//
+   // double y11 =  5426.86;//;//5241.79;//
 
    // //1.1 degree square periodic
-   // double x00 =  2397.31; //3439.17;// 
-   // double y00 =   4872.85;//5595.12;// 
-   // double x01 =  2397.31;//3439.17;//
-   // double y01 =  7399.81;//8122.08;// 
-   // double x10 =  6773.81; //7815.67;// 
-   // double y10 =   4872.85; //5595.12;// 
-   // double x11 =  6773.81;// 7815.67;// 
-   // double y11 =  7399.81;// 8122.08;//
+   double x00 =  2397.31; //3439.17;// 
+   double y00 =   4872.85;//5595.12;// 
+   double x01 =  2397.31;//3439.17;//
+   double y01 =  7399.81;//8122.08;// 
+   double x10 =  6773.81; //7815.67;// 
+   double y10 =   4872.85; //5595.12;// 
+   double x11 =  6773.81;// 7815.67;// 
+   double y11 =  7399.81;// 8122.08;//
 
    double rAAprime = sqrt((x10-x00)*(x10-x00)+(y10-y00)*(y10-y00));
    double rAB      = sqrt((x01-x00)*(x01-x00)+(y01-y00)*(y01-y00));
@@ -1351,7 +1352,7 @@ void calc_interactions() {
          all_m_atoms_offset.push_back(offset_atom);
 
          //output kept atoms with offset positions
-         outfile2 << new_atom_count << "\t" << (offset_atom.x-x_offset)/new_system_size_x << '\t' <<  (offset_atom.y-y_offset)/new_system_size_y <<  "\t" << offset_atom.z/system_size_z << "\t" << offset_atom.S-1 << "\t" << offset_atom.l_id << "\t" << offset_atom.h_id << "\n"; 
+         outfile2 << new_atom_count << "\t" << (offset_atom.x-x_offset)/new_system_size_x << '\t' <<  (offset_atom.y-y_offset)/new_system_size_y <<  "\t" << offset_atom.z/601.0 << "\t" << offset_atom.S-1 << "\t" << offset_atom.l_id << "\t" << offset_atom.h_id << "\n"; 
          new_atom_count++;
       }
    }
@@ -1360,14 +1361,14 @@ void calc_interactions() {
    std::ofstream outfile1 ("header.ucf");
 
    outfile1 << " #unit cell size " << std::endl;
-   outfile1 << new_system_size_x << '\t' << new_system_size_y << '\t' << system_size_z << std::endl;
+   outfile1 << new_system_size_x << '\t' << new_system_size_y << '\t' << 601.0 << std::endl;
    outfile1 << " #unit cell vectors" << std::endl;
    outfile1 << " " <<  Moire_aix/new_system_size_x << '\t' << Moire_aiy/new_system_size_x << '\t' <<  "0" << std::endl;
    outfile1 << " " <<  Moire_ajx/new_system_size_y << '\t' << Moire_ajy/new_system_size_y << '\t' <<  "0" << std::endl;
    outfile1 << " 0  0  1" << std::endl;
    outfile1 << " #Atoms" << std::endl;
                                        // number of material species
-   outfile1 << new_atom_count << '\t'	<< 4 << std::endl;
+   outfile1 << new_atom_count << '\t'	<< 5 << std::endl;
 
    outfile1.close();
    std::cout << "[" << new_atom_count << "] Moire unit cell atoms " << std::flush;
@@ -1392,6 +1393,7 @@ void calc_interactions() {
    // determine boxid of each atom and save atoms in boxes
    //atom list is new total lattice from second moire creation
    for(int i=0; i < new_moire_lattice.size(); i++){
+      if(new_moire_lattice[i].S == 5) continue;
       double x_i = new_moire_lattice[i].x;// - min[0];
       double y_i = new_moire_lattice[i].y;// - min[1];
       double z_i = new_moire_lattice[i].z;// - min[2];
