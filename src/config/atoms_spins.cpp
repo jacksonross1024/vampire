@@ -34,7 +34,7 @@ namespace config{
 namespace internal{
 
 //------------------------------------------------------------------------------
-// Function to output atomic spin positions to disk
+// Function to output atomic spin positions to diskasdf
 //------------------------------------------------------------------------------
 void atoms(){
 

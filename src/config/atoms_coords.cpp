@@ -45,7 +45,7 @@ void atoms_coords()
       //------------------------------------------
       // Output Meta Data from root process
       //------------------------------------------
-      // set number of files
+      // set number of files   asdf
       // const int files = config::internal::num_io_groups; //unused variable
 
       if(config::internal::mode != legacy && vmpi::my_rank == 0){

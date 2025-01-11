@@ -38,7 +38,7 @@ void collate_double_data(std::vector<double>& source, std::vector<double>& colla
 void atoms_non_magnetic(){
 
       //------------------------------------------------------------
-      // Determine non magnetic atoms to be outputted to coord list
+      // Determine non magnetic atoms to be outputted to coord listsadf
       //------------------------------------------------------------
 
       // array of atom numbers to be outputted
