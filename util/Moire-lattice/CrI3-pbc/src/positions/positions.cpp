@@ -22,7 +22,7 @@ double J_twist_reduction = 1.0;
 double J_intra_reduction = 1.0;
 double DMI_inter_scaling = 1.0;
 //must change num_atoms according to unit cell info
-int num_atoms = 8;
+int num_atoms = 9;
 
 //((deprecated))
 int num_nm_atoms = 24;
