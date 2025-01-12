@@ -1390,10 +1390,11 @@ void calc_interactions() {
       }
    }
    int boxed = 0;
+   int missed = 0;
    // determine boxid of each atom and save atoms in boxes
    //atom list is new total lattice from second moire creation
    for(int i=0; i < new_moire_lattice.size(); i++){
-      if(new_moire_lattice[i].S == 5) continue;
+      if(new_moire_lattice[i].S == 5) {missed++; continue;}
       double x_i = new_moire_lattice[i].x;// - min[0];
       double y_i = new_moire_lattice[i].y;// - min[1];
       double z_i = new_moire_lattice[i].z;// - min[2];
@@ -1413,8 +1414,8 @@ void calc_interactions() {
       boxed++;
       new_boxes[bxi][byi][bzi].push_back(new_moire_lattice[i]);
    }
-   if(boxed != new_moire_lattice.size()) {
-      std::cout << "atoms missed in supercell offset " << std::endl;
+   if(boxed  + missed != new_moire_lattice.size()) {
+      std::cout << "atoms missed in supercell offset: " << boxed << " + " << missed  << " != " << new_moire_lattice.size() <<  std::endl;
       exit(1);
    }
    
