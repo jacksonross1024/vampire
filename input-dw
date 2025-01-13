@@ -42,11 +42,11 @@ material:file = Mn2Au-Jenkins.mat
 #------------------------------------------
 sim:temperature= 0.0
 sim:equilibration-temperature= 0.0
-sim:time-steps-increment = 1000
+sim:time-steps-increment = 10000
 sim:equilibration-time-steps = 1000 #0.1 ps; longer if higher temp
 #sim:preconditioning-steps = 500 #only use for non-zero K
-sim:total-time-steps = 50000  #5 ps, can be longer
-sim:time-step = 1 !fs
+sim:total-time-steps = 500000  #5 ps, can be longer
+sim:time-step = 0.1 !fs
 sim:program = domain-wall
 #sim:spin-orbit-torque-polarization-unit-vector = 0,1,0
 #------------------------------------------
