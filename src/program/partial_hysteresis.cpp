@@ -80,8 +80,11 @@ void partial_hysteresis_loop(){
    for(int H=iHmin;H<=iHmax;H+=iHinc){
 
       // Set applied field (Tesla)
-      sim::H_applied=double(H)*parity*1.0e-6;
-
+      // sim::H_applied=double(H)*parity*1.0e-6;
+      sim::actual_H_field = double(H)*parity*1.0e-6;
+      sim::actual_H_vector[0] = 0.0;
+      sim::actual_H_vector[1] = 0.0;
+      sim::actual_H_vector[2] = 1.0;
       // Reset start time
       uint64_t start_time=sim::time;
 

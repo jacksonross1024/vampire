@@ -840,7 +840,7 @@ void calc_interactions() {
     int xb = ceil(system_size_x/bsize)+1;
     int yb = ceil(system_size_y/bsize)+1;
     int zb = ceil(system_size_z/bsize)+1;
-   // std::/cout << "decomposed into <" << xb << ", " << yb << ", " << zb << "> boxes...." << std::flush;
+   std::cout << "decomposed into <" << xb << ", " << yb << ", " << zb << "> boxes...." << std::flush;
    // create 4D array to generate blocks
    std::vector< std::vector < std::vector < std::vector < spin > > > > boxes;
    boxes.resize(xb);
@@ -885,7 +885,7 @@ void calc_interactions() {
    vtimer_t timer;
       timer.start();
 
-   #pragma omp parallel num_threads(16)
+   #pragma omp parallel num_threads(10)
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
