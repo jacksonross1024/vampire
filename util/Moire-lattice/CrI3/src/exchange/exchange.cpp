@@ -819,7 +819,7 @@ void calc_interactions() {
    inter_AB_dist_2 *= inter_AB_dist_2;
    inter_AB_dist_3 *= inter_AB_dist_3;
 
-   const double bsize = 1.5*range;
+   const double bsize = 1.2*range;
    std::cout << "Generating Moire unit cell...." << std::flush;
    // calculate min and max xyz
    // double min[3] = {1.0e8, 1.0e8, 1.0e8};
@@ -1028,7 +1028,7 @@ void calc_interactions() {
                                     // exchange[2] = 0.0;
                                     // exchange[3] = 0.0;
                                  } else {
-                                    // continue;
+                                    //continue;
                                     // if (atom_j.h_id == 0 || atom_i.h_id == 0) exchange = calculate_inter_Jani(atom_i, atom_j, dL2, angle_i);
                                     if(atom_i.l_id == 1) {  
                                        if(dL2 <= inter_nn_dist_1) {exchange = match_inter_exchange(adx, ady, Einter_Cr1);

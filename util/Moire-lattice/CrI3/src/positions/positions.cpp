@@ -45,7 +45,7 @@ void print_header(){
    // std::ofstream outfile1 ("header.ucf");
 
    outfile1 << " #unit cell size " << std::endl;
-   outfile1 << system_size_x << '\t' << system_size_y << '\t' << 61.0 << std::endl;
+   outfile1 << system_size_x << '\t' << system_size_y << '\t' << 601.0 << std::endl;
    outfile1 << " #unit cell vectors" << std::endl;
    outfile1 << " 1     0	   0" << std::endl;
    outfile1 << " 0     1	   0" << std::endl;
@@ -147,7 +147,7 @@ void create_magnetic_atom_list(std::string filename){
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
                         double x_ref = (i*a0x + j*a1x + 4.62); 
-                        double y_ref = (((new_atom.l_id == 1) ? (4.00) : (0.0)) + j*a1y); 
+                        double y_ref = (((new_atom.l_id == 1) ? (4.001) : (0.0)) + j*a1y); 
                         
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));
                         int changex = int(round(9*(fmod(std::abs(x_eff-x_ref +changey*a1y/11.0) , a0x)/a0x)));
@@ -185,14 +185,14 @@ void create_magnetic_atom_list(std::string filename){
                         // } else if (z_j >= a0z*3) {
                         //    new_atom.S = 5;
                         // } 
-                        } else if (z_j == 60.0) {
+                        } else if (z_j == 600.0) {
                            new_atom.S = 5;
                         }else {
                            std::cerr << "Error! Atom " << total_atoms << " twist layer: " << z_j << " < " << twist_loction << std::endl;
                            
                            exit(1);
                         }    
-                           outfile2 << total_atoms << "\t" << x_new/(system_size_x) << '\t' <<  y_new/(system_size_y) <<  "\t" << z_j/61.0 << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
+                           outfile2 << total_atoms << "\t" << x_new/(system_size_x) << '\t' <<  y_new/(system_size_y) <<  "\t" << z_j/601.0 << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
                            total_atoms++;
                         // }
                         all_m_atoms.push_back(new_atom);
@@ -250,7 +250,7 @@ void create_magnetic_atom_list(std::string filename){
                            std::cerr << "Error! Atom " << total_atoms << " twist layer: " << z_j << " > " << twist_loction << std::endl;
                            exit(1);
                      }
-                        outfile2 << total_atoms << "\t" << x_new/(system_size_x) << '\t' <<  y_new/(system_size_y) <<  "\t" << z_j/61.0 << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
+                        outfile2 << total_atoms << "\t" << x_new/(system_size_x) << '\t' <<  y_new/(system_size_y) <<  "\t" << z_j/601.0 << "\t" << new_atom.S-1 << "\t" << new_atom.l_id << "\t" << new_atom.h_id << "\n"; 
                         total_atoms++;
                      
                      all_m_atoms.push_back(new_atom);       
