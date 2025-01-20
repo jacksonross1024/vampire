@@ -147,7 +147,7 @@ void create_magnetic_atom_list(std::string filename){
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
                         double x_ref = (i*a0x + j*a1x + 4.62); 
-                        double y_ref = (((new_atom.l_id == 1) ? (4.00) : (0.0)) + j*a1y); 
+                        double y_ref = (((new_atom.l_id == 1) ? (4.001) : (0.0)) + j*a1y); 
                         
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));
                         int changex = int(round(9*(fmod(std::abs(x_eff-x_ref +changey*a1y/11.0) , a0x)/a0x)));
