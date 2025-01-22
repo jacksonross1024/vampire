@@ -885,7 +885,7 @@ void calc_interactions() {
    vtimer_t timer;
       timer.start();
 
-   #pragma omp parallel num_threads(10)
+   #pragma omp parallel num_threads(16)
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
