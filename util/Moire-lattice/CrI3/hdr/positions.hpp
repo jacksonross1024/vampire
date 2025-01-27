@@ -33,6 +33,7 @@
    extern double J_inter_scaling;
    extern double J_twist_reduction;
    extern double J_intra_reduction;
+   extern double J_prist_reduction;
    extern double DMI_inter_scaling;
    
    class spin {
@@ -53,18 +54,59 @@
          int unit_y_lr;
          int dx = 0;
          int dy = 0;
-         int inter1 = 0;
-         int inter2 = 0;
-         int inter3 = 0;
-         int intra1 = 0;
-         int intra2 = 0;
-         int intra3 = 0;
+         
+         int inter_twist1_count = 0;
+         int inter_twist2_count = 0;
+         int inter_twist3_count = 0;
 
-         int inter_count = 0;
-         double J_inter = 0.0;
-         double Dx_inter = 0.0;
-         double Dy_inter = 0.0;
-         double Dz_inter = 0.0;
+         double J_inter_twist1 = 0;
+         double J_inter_twist2 = 0;
+         double J_inter_twist3 = 0;
+         double Dx_inter_twist1 = 0;
+         double Dx_inter_twist2 = 0;
+         double Dx_inter_twist3 = 0;
+         double Dy_inter_twist1 = 0;
+         double Dy_inter_twist2 = 0;
+         double Dy_inter_twist3 = 0;
+         double Dz_inter_twist1 = 0;
+         double Dz_inter_twist2 = 0;
+         double Dz_inter_twist3 = 0;
+
+
+         int inter1_count = 0;
+         int inter2_count = 0;
+         int inter3_count = 0;
+
+         double J_inter1 = 0;
+         double J_inter2 = 0;
+         double J_inter3 = 0;
+         double Dx_inter1 = 0;
+         double Dx_inter2 = 0;
+         double Dx_inter3 = 0;
+         double Dy_inter1 = 0;
+         double Dy_inter2 = 0;
+         double Dy_inter3 = 0;
+         double Dz_inter1 = 0;
+         double Dz_inter2 = 0;
+         double Dz_inter3 = 0;
+
+
+         int intra1_count = 0;
+         int intra2_count = 0;
+         int intra3_count = 0;
+         
+         double J_intra1 = 0;
+         double J_intra2 = 0;
+         double J_intra3 = 0;
+         double Dx_intra1 = 0;
+         double Dx_intra2 = 0;
+         double Dx_intra3 = 0;
+         double Dy_intra1 = 0;
+         double Dy_intra2 = 0;
+         double Dy_intra3 = 0;
+         double Dz_intra1 = 0;
+         double Dz_intra2 = 0;
+         double Dz_intra3 = 0;
    };
 
    class interaction {

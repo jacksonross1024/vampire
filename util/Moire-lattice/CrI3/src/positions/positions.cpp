@@ -28,6 +28,7 @@ int num_below_atoms =0;
 double J_inter_scaling = 0.0;
 double J_twist_reduction = 1.0;
 double J_intra_reduction = 1.0;
+double J_prist_reduction = 1.0;
 double DMI_inter_scaling = 1.0;
 
 int total_atoms = 0;
@@ -146,8 +147,8 @@ void create_magnetic_atom_list(std::string filename){
                         // int changey = round(-100.0*remainder(y_new - y_j,a1y)/a0x)+100;
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
-                        double x_ref = (i*a0x + j*a1x + 4.62); 
-                        double y_ref = (((new_atom.l_id == 1) ? (4.001) : (0.0)) + j*a1y); 
+                        double x_ref =  ((new_atom.l_id == 3 || new_atom.l_id == 4) ? (4.62)  : (0.0)) + (i*a0x + j*a1x); 
+                        double y_ref = (((new_atom.l_id == 1 || new_atom.l_id == 3) ? (4.001) : (0.0)) + j*a1y); 
                         
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));
                         int changex = int(round(9*(fmod(std::abs(x_eff-x_ref +changey*a1y/11.0) , a0x)/a0x)));
@@ -242,8 +243,8 @@ void create_magnetic_atom_list(std::string filename){
                         //std::cout << total_atoms << "\t" << new_atom.S << "\t" << new_atom.dx << "\t" << new_atom.dy << "\t" << Jint[new_atom.dx][new_atom.dy] << std::endl;
                      } else if (z_j <= a0z){
                         new_atom.S = 2;
-                        // new_atom.dx = 0; // need a dx,dy to take into account the actual stacking!
-                        // new_atom.dy = 0;
+                        new_atom.dx = 6; // need a dx,dy to take into account the actual stacking!
+                        new_atom.dy = 0;
                         // row2.push_back(new_atom);
                         //std::cout << total_atoms << "\t" << new_atom.S << "\t" << new_atom.dx << "\t" << new_atom.dy << "\t" << Jint[new_atom.dx][new_atom.dy] << std::endl;
                      } else {

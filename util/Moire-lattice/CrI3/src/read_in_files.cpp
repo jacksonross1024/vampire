@@ -251,9 +251,10 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
     std::string Dzline;
     if(!Dz_file.is_open()) {std::cerr << Dz << " is not open" << std::endl; exit(1);}
 
-    const double a_0 = 7.276;
-    const double a_1 = 7.302;
+    const double a_0 = 7.286;
+    const double a_1 = 7.286;
     int i = 0;
+    int total = 0;
     while(i < 200){
         int j  = 0;
         while( j < 200) {
@@ -281,10 +282,12 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
             Eij[i*200+j][4] = DMI_inter_scaling*Dy*J_constant;
             Eij[i*200+j][5] = DMI_inter_scaling*Dz*J_constant;
             j++;
+            total++;
         }
         i++;
     }
-
+    std::cout << total << std::endl;
+    
     std::ofstream inter_out("Inter_exchange_out.txt");
     for(i = 0; i < Eij.size(); i++) {
         inter_out << Eij[i][0] << ", " << Eij[i][1] << ", " << Eij[i][2] << ", " << Eij[i][3] << ", " << Eij[i][4] << ", " << Eij[i][5] << "\n";
@@ -606,13 +609,13 @@ void read_in_ucf(std::ifstream &ucf_file) {
       }
       config_output.close();
 
-      std::ofstream interaction_counts;
-      interaction_counts.open("interaction_counts.txt");
-      for(int i = 0; i < all_m_atoms.size(); i++){
-         interaction_counts << all_m_atoms[i].S  << ", " <<  all_m_atoms[i].l_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \
-                                                   << ", " << all_m_atoms[i].intra1 << ", " << all_m_atoms[i].intra2 << ", " << all_m_atoms[i].intra3 <<"\n";
-      }
-      interaction_counts.close();
+    //   std::ofstream interaction_counts;
+    //   interaction_counts.open("interaction_counts.txt");
+    //   for(int i = 0; i < all_m_atoms.size(); i++){
+    //      interaction_counts << all_m_atoms[i].S  << ", " <<  all_m_atoms[i].l_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \
+    //                                                << ", " << all_m_atoms[i].intra1 << ", " << all_m_atoms[i].intra2 << ", " << all_m_atoms[i].intra3 <<"\n";
+    //   }
+    //   interaction_counts.close();
       // outfile4 << ss.str();
     //   timer.stop();
       // std::cout << "done!  << std::endl;
