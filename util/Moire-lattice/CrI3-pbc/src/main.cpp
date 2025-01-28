@@ -37,6 +37,10 @@ int main(int argc, char* argv[]){
             std::cout << " J twist exchange reduction: " << J_twist_reduction << std::endl;
         }
         if(a == 7) {
+            J_prist_reduction = atof(argv[a]);
+            std::cout << " J twist exchange reduction: " << J_prist_reduction << std::endl;
+        }
+        if(a == 8) {
             J_intra_reduction = atof(argv[a]);
             std::cout << " J intra exchange reduction: " << J_intra_reduction << std::endl;
         }
@@ -77,7 +81,7 @@ int main(int argc, char* argv[]){
                            "../../bilayer_sliding/Cr2_Dx_inter_map_avg.txt",\
                            "../../bilayer_sliding/Cr2_Dy_inter_map_avg.txt",\
                            "../../bilayer_sliding/Cr2_Dz_inter_map_avg.txt", Einter_Cr2);
-    read_in_inter_exchanges("../../bilayer_sliding/Cr2_inter_map.txt",\
+    read_in_inter_exchanges("../../bilayer_sliding/Cr3_inter_map.txt",\
                            "../../bilayer_sliding/Cr3_Dx_inter_map_avg.txt",\
                            "../../bilayer_sliding/Cr3_Dy_inter_map_avg.txt",\
                            "../../bilayer_sliding/Cr3_Dz_inter_map_avg.txt", Einter_Cr3);

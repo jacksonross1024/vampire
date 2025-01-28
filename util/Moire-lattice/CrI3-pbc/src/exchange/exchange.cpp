@@ -1596,8 +1596,8 @@ void calc_interactions() {
                                        all_m_atoms_offset[atom_i.id].inter3++;}
                                        else continue;                                      
                                     } else continue;
-                                    if(atom_i.h_id == 1 && atom_j.h_id == 1) exchange[0] *= J_twist_reduction;
-                                    
+                                    if(atom_i.h_id ==  atom_j.h_id ) exchange[0] *= J_twist_reduction;
+                                    else exchange[0] *= J_prist_reduction;
                                  }
    
                                  if(exchange[0] == -60.0) continue;

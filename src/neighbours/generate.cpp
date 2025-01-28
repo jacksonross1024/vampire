@@ -66,7 +66,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	// Reserve space for each atom in neighbour list according to material type
 	for(uint64_t atom=0; atom < num_atoms; atom++){
 		list.push_back(std::vector<neighbour_t>());
-		list[atom].reserve(max_nn);
+		// list[atom].reserve(max_nn);/
 	}
 
    // Calculate system dimensions and number of supercells
@@ -118,13 +118,13 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    uint64_t num_neighbours = d[0] * (d[1]) * (d[2]) * num_atoms_in_unit_cell;
    #ifdef MPICF
       // calculate total interactions for entire system
-      double total_neighbours = 0.0;
-      MPI_Allreduce(&total_neighbours, &num_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+      uint64_t total_neighbours = 0.0;
+      MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
          zlog << zTs() << "Memory required for neighbourlist calculation (each cpu):" <<
-         8.0*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
+         sizeof(int)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
          zlog << zTs() << "Memory required for neighbourlist calculation (all cpus):" <<
-         8.0*total_neighbours/1.0e6 << " MB" << std::endl;
+         sizeof(int)*total_neighbours/1.0e6 << " MB from <" << d[0]  << ", " << (d[1]) << ", " << (d[2]) << "> supercells with " << num_atoms_in_unit_cell << " each " << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbourlist calculation:" <<
@@ -236,16 +236,17 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    zlog << zTs() << "\tPopulating supercell array completed"<< std::endl;
 
    // calculate total number of neighbours and inform user of memory needed
-   num_neighbours = double(num_cells)*double(exchange.num_interactions);
+   num_neighbours = (num_cells)*(exchange.num_interactions);
    #ifdef MPICF
       // calculate total interactions for entire system
       total_neighbours = 0.0;
-      MPI_Allreduce(&total_neighbours, &num_neighbours, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
          zlog << zTs() << "Memory required for neighbour list (each cpu):" <<
-         8.0*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
+         sizeof(unitcell::interaction_t)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
          zlog << zTs() << "Memory required for neighbour list (all cpus):" <<
-         8.0*total_neighbours/1.0e6 << " MB" << std::endl;
+         sizeof(unitcell::interaction_t)*total_neighbours/1.0e6 << " MB from " << num_cells << " cells with " << exchange.num_interactions \
+         << " interactions for " << num_atoms_in_unit_cell << " atoms per cell vs. " << num_atoms << " atoms per cpu; (" << num_atoms*vmpi::num_processors << " total)"  << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbour list:" <<

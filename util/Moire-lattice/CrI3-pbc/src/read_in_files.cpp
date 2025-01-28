@@ -251,8 +251,8 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
     std::string Dzline;
     if(!Dz_file.is_open()) {std::cerr << Dz << " is not open" << std::endl; exit(1);}
 
-    const double a_0 = 7.276;
-    const double a_1 = 7.302;
+    const double a_0 = 7.286;
+    const double a_1 = 7.286;
     int i = 0;
     while(i < 200){
     int j  = 0;

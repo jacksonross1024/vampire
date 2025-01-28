@@ -20,6 +20,7 @@ double a0z = c0/4.0;
 double J_inter_scaling = 0.0;
 double J_twist_reduction = 1.0;
 double J_intra_reduction = 1.0;
+double J_prist_reduction = 1.0;
 double DMI_inter_scaling = 1.0;
 //must change num_atoms according to unit cell info
 int num_atoms = 9;
@@ -112,8 +113,8 @@ void create_magnetic_atom_list(std::string filename){
                         //effective rotation in x vector basis
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
-                        double x_ref = (i*a0x + j*a1x + 4.62); 
-                        double y_ref = (((new_atom.l_id == 1) ? (4.001) : (0.0)) + j*a1y); 
+                        double x_ref =  ((new_atom.l_id == 3 || new_atom.l_id == 4) ? (4.62)  : (0.0)) + (i*a0x + j*a1x); 
+                        double y_ref = (((new_atom.l_id == 1 || new_atom.l_id == 3) ? (4.001) : (0.0)) + j*a1y); 
                         //x and y shift in rhombehedral coordiante from x basis
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));
                         int changex = int(round(9*(fmod(std::abs(x_eff-x_ref +changey*a1y/11.0) , a0x)/a0x)));
@@ -154,7 +155,7 @@ void create_magnetic_atom_list(std::string filename){
                         all_m_atoms.push_back(new_atom);
                         num_above_atoms++;
                      }
-                  } else{
+                  } else {
                      // twist negative 1/2 twist angle above twist location
                      double x_new = x_j*cos(-twist_angle*0.5) - y_j*sin(-twist_angle*0.5);
                      double y_new = y_j*cos(-twist_angle*0.5) + x_j*sin(-twist_angle*0.5);
