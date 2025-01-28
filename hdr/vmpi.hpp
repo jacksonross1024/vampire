@@ -62,7 +62,8 @@ namespace vmpi{
 	extern int my_io_group;				///< Local CPU IO Comm Group Rank
 	extern int io_processor;			///< The group rank of processor who performs IO
 #ifdef MPICF
-	extern MPI_Comm io_comm;			///< MPI Communicator for IO
+	extern MPI_Comm io_comm;
+	extern MPI_Win node_window;		///< MPI Communicator for IO
 #endif
 
 

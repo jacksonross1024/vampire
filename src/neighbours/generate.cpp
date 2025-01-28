@@ -56,7 +56,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 
 	// put number of atoms into temporary variable
 	const int num_atoms = atom_array.size();
-
+   std::cout << num_atoms << " on " << vmpi::my_rank << std::endl;
 	// Reserve space for num_atoms
 	list.reserve(num_atoms);
 
@@ -119,12 +119,12 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    #ifdef MPICF
       // calculate total interactions for entire system
       uint64_t total_neighbours = 0.0;
-      MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+      // MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
          zlog << zTs() << "Memory required for neighbourlist calculation (each cpu):" <<
-         sizeof(int)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
+         sizeof(int)*num_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
          zlog << zTs() << "Memory required for neighbourlist calculation (all cpus):" <<
-         sizeof(int)*total_neighbours/1.0e6 << " MB from <" << d[0]  << ", " << (d[1]) << ", " << (d[2]) << "> supercells with " << num_atoms_in_unit_cell << " each " << std::endl;
+         sizeof(int)*num_neighbours/1.0e6 << " MB from <" << d[0]  << ", " << (d[1]) << ", " << (d[2]) << "> supercells with " << num_atoms_in_unit_cell << " each " << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbourlist calculation:" <<
@@ -240,13 +240,13 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    #ifdef MPICF
       // calculate total interactions for entire system
       total_neighbours = 0.0;
-      MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+      // MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
          zlog << zTs() << "Memory required for neighbour list (each cpu):" <<
-         sizeof(unitcell::interaction_t)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
+         sizeof(unitcell::interaction_t)*num_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
          zlog << zTs() << "Memory required for neighbour list (all cpus):" <<
-         sizeof(unitcell::interaction_t)*total_neighbours/1.0e6 << " MB from " << num_cells << " cells with " << exchange.num_interactions \
-         << " interactions for " << num_atoms_in_unit_cell << " atoms per cell vs. " << num_atoms << " atoms per cpu; (" << num_atoms*vmpi::num_processors << " total)"  << std::endl;
+         sizeof(unitcell::interaction_t)*num_neighbours/1.0e6 << " MB from " << num_cells << " cells with " << exchange.num_interactions \
+         << " interactions for " << num_atoms_in_unit_cell << " atoms per cell vs. " << num_atoms << " atoms  total"  << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbour list:" <<
@@ -264,6 +264,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    const unsigned int num_interactions = exchange.num_interactions;
 
 	// Loop over all cells
+   total_interactions = 0;
 	for(uint64_t cell = 0; cell < num_cells; cell++){
 
       // Print out progress indicator to user
@@ -374,6 +375,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                // push back array of class
                list[atomi].push_back(tmp_nt);
                interaction_count++;
+               total_interactions++;
             }
 			}
 		}

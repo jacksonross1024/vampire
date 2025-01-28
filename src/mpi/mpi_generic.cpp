@@ -70,6 +70,7 @@ void initialise(int argc, char *argv[]){
    // set master flag on master (root) process
    if(vmpi::my_rank == 0) vmpi::master = true;
 
+	// MPI_Win vmpi::node_window;
 	MPI_Get_processor_name(name, &resultlen);
 	//IOCommunicator(num_io_processors);
 	// Start MPI Timer
@@ -149,7 +150,7 @@ int finalise(){
 	//for(int p=0; p<vmpi::num_processors;p++){
 	//	std::cout << "node01:" << p << " " << sizes.at(p) << std::endl;
 	//}
-
+	
 	// Gather timings
 	if(DetailedMPITiming){
 		std::vector<double> AllTimes(0);

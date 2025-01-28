@@ -1313,7 +1313,7 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
    //    return exchange;
    // }
    exchange[0] = 0.5*(Eij.at(i_x_shift).at(i_y_shift).at(theta_i)[0]+Eij[j_x_shift][j_y_shift].at(theta_j)[0]);
-   exchange[1] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][1]=Eij[j_x_shift][j_y_shift][theta_j][1]);
+   exchange[1] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][1]+Eij[j_x_shift][j_y_shift][theta_j][1]);
    exchange[2] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][2]+Eij[j_x_shift][j_y_shift][theta_j][2]);
    exchange[3] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][3]+Eij[j_x_shift][j_y_shift][theta_j][3]);
 

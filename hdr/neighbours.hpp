@@ -50,7 +50,7 @@ namespace neighbours{
 
       // list of neighbours in terms of atom IDs
       std::vector<std::vector <neighbours::neighbour_t> > list;
-
+      uint64_t total_interactions = 0;
       // generate neighbour list from interaction template and list of atoms
       void generate(std::vector<cs::catom_t>& atoms,
                     unitcell::exchange_template_t& exchange,

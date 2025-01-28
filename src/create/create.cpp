@@ -146,9 +146,22 @@ int create(){
    neighbours::list_t bilinear; // bilinear exchange list
    neighbours::list_t biquadratic; // biquadratic exchange list
 
-   // generate bilinear exchange list
-   bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
+    // generate bilinear exchange list
+	//create shared window so only master populates the array
+	#ifdef MPICH
+	
+	// neighbours::list_t* neighbours_buffer;
+	
+	
+	if(vmpi::master) bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
 
+	MPI_Barrier( MPI_COMM_WORLD);
+
+	MPI_Win_allocate_shared(bilinear.total_interactions*sizeof(neighbours::neighbour_t); sizeof(neighbours::neighbour_t) , MPI_INFO_NULL, MPI_COMM_WORLD, &bilinear.total_interactions, &vmpi::node_window);	
+
+	#else
+	bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
+	#endif
    // optionally create a biquadratic neighbour list
    if(exchange::biquadratic){
       biquadratic.generate(catom_array, cs::unit_cell.biquadratic, na, ucx, ucy, ucz);
@@ -195,10 +208,13 @@ int create(){
 	MPI_Reduce(&my_num_atoms,&total_num_atoms, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 	std::cout << "Total number of atoms (all CPUs): " << total_num_atoms << std::endl;
    zlog << zTs() << "Total number of atoms (all CPUs): " << total_num_atoms << std::endl;
+
+    // MPI_Win_free(&vmpi::node_window);
 	#else
 	std::cout << "Number of atoms generated: " << atoms::num_atoms << std::endl;
    zlog << zTs() << "Number of atoms generated: " << atoms::num_atoms << std::endl;
 
+	
 	#endif
 
 	return EXIT_SUCCESS;

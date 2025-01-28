@@ -113,7 +113,7 @@ int main(int argc, char* argv[]){
    #ifdef MPICF
       // nullify non root cout stream
       if(vmpi::my_rank!=0){
-         vout::nullify(std::cout);
+         // vout::nullify(std::cout);
       }
    #endif
 
