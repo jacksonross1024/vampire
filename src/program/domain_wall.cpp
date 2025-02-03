@@ -248,9 +248,9 @@ namespace program{
 								double pos_y = 0.0;
 								double pos_z = std::sin(theta)*mod; 
 						
-								atoms::x_spin_array[atom] =  mp::material[mat].initial_spin[0] * pos_x;
-								atoms::y_spin_array[atom] =  mp::material[mat].initial_spin[1] * pos_y;
-								atoms::z_spin_array[atom] =  mp::material[mat].initial_spin[2] * pos_z;
+								atoms::x_spin_array[atom] = pos_x;
+								atoms::y_spin_array[atom] = pos_y;
+								atoms::z_spin_array[atom] = pos_z;
 							}
 						
 							int x_cell = (atom_y_pos+0.01)/sim::domain_wall_discretisation[0];
