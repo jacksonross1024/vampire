@@ -45,119 +45,120 @@ namespace internal{
       if(!internal::enable_kitaev) return;
 
       // Print informative message to log file
-      zlog << zTs() << "Calculating Kitaev interactions" << std::endl;
+      zlog << zTs() << "No Kitaev interactions in Moire yet" << std::endl;
 
-      // temporary tensor for calculating sum
-      std::vector<double> tmp_tensor(9,0.0);
 
-      // get cutoff range
-      const double kcor = internal::kitaev_cutoff_range;
-      const double cutoff_sq = kcor * kcor;
+      // // temporary tensor for calculating sum
+      // std::vector<double> tmp_tensor(9,0.0);
 
-      unsigned int counter = 0;
+      // // get cutoff range
+      // const double kcor = internal::kitaev_cutoff_range;
+      // const double cutoff_sq = kcor * kcor;
 
-      //std::ofstream ofile("kitaev.txt");
+      // unsigned int counter = 0;
 
-      //	Loop over all atoms i
-      for(uint64_t i=0; i < static_cast<uint64_t>(atoms::num_atoms); i++){
+      // //std::ofstream ofile("kitaev.txt");
 
-         // get material id for atom
-         const unsigned int imat = atoms::type_array[i];
+      // //	Loop over all atoms i
+      // for(uint64_t i=0; i < static_cast<uint64_t>(atoms::num_atoms); i++){
 
-         // get inverse moment (for normalisation)
-         const double i_mu_s = 1.0/mp::material[imat].mu_s_SI;
+      //    // get material id for atom
+      //    const unsigned int imat = atoms::type_array[i];
 
-         // loop over all neighbours j
-         for(unsigned int j = 0; j < cneighbourlist[i].size(); j++){
+      //    // get inverse moment (for normalisation)
+      //    const double i_mu_s = 1.0/mp::material[imat].mu_s_SI;
 
-            // get atom number for neighbour i
-            const unsigned int nj = cneighbourlist[i][j].nn;
+      //    // loop over all neighbours j
+      //    for(unsigned int j = 0; j < cneighbourlist[i].size(); j++){
 
-            // get material id for j atom
-            const unsigned int jmat = atoms::type_array[nj];
+      //       // get atom number for neighbour i
+      //       const unsigned int nj = cneighbourlist[i][j].nn;
 
-            // ignore self interaction
-            if(i != nj){
+      //       // get material id for j atom
+      //       const unsigned int jmat = atoms::type_array[nj];
 
-               // get atomic position vector i->j
-               double eij[3]={cneighbourlist[i][j].vx, cneighbourlist[i][j].vy, cneighbourlist[i][j].vz};
+      //       // ignore self interaction
+      //       if(i != nj){
 
-               // get length of vector
-               const double mod_eij_sq = eij[0]*eij[0] + eij[1]*eij[1] + eij[2]*eij[2];
+      //          // get atomic position vector i->j
+      //          double eij[3]={cneighbourlist[i][j].vx, cneighbourlist[i][j].vy, cneighbourlist[i][j].vz};
 
-               //ofile << i << "\t" << nj << std::endl <<
-               //         "\t\teij: " << eij[0]/sqrt(mod_eij_sq) << "\t" << eij[1]/sqrt(mod_eij_sq) << "\t" << eij[2]/sqrt(mod_eij_sq) << std::endl;
+      //          // get length of vector
+      //          const double mod_eij_sq = eij[0]*eij[0] + eij[1]*eij[1] + eij[2]*eij[2];
 
-               // check if that the bond length is less than cutoff range
-               if( mod_eij_sq <= cutoff_sq){
+      //          //ofile << i << "\t" << nj << std::endl <<
+      //          //         "\t\teij: " << eij[0]/sqrt(mod_eij_sq) << "\t" << eij[1]/sqrt(mod_eij_sq) << "\t" << eij[2]/sqrt(mod_eij_sq) << std::endl;
 
-                  // normalise to unit vector
-                  const double inv_rij=1.0/sqrt(mod_eij_sq);
+      //          // check if that the bond length is less than cutoff range
+      //          if( mod_eij_sq <= cutoff_sq){
 
-                  // reinitialise exchange tensor for each i-j interaction
-                  for(int idx = 0; idx < 9; idx++) tmp_tensor[idx] = 0.0;
+      //             // normalise to unit vector
+      //             const double inv_rij=1.0/sqrt(mod_eij_sq);
 
-                  // normalise components to unit vector
-                  for(int idx = 0; idx < 3; idx++){
-                     eij[idx] = eij[idx] * inv_rij;
-                  }
+      //             // reinitialise exchange tensor for each i-j interaction
+      //             for(int idx = 0; idx < 9; idx++) tmp_tensor[idx] = 0.0;
 
-                  // Set pair Kitaev constant normalised to mu_s_i
-                  const double Kij = exchange::internal::mp[imat].kitaev[jmat] * i_mu_s;
+      //             // normalise components to unit vector
+      //             for(int idx = 0; idx < 3; idx++){
+      //                eij[idx] = eij[idx] * inv_rij;
+      //             }
 
-                  //---------------------------------------------------------------
-                  //        Expression of Kitaev within the exchange tensor
-                  //---------------------------------------------------------------
-                  //
-                  //       E = Kij (Si . e_ij)(Sj . e_ij)
-                  //
-                  //       Si . e_ij = Si[0]*eij[0] + Si[1]*eij[1] + Si[2]*eij[2]
-                  //       Sj . e_ij = Sj[0]*eij[0] + Sj[1]*eij[1] + Sj[2]*eij[2]
-                  //
-                  // Exchange tensor format
-                  //
-                  //     E = Si eijT Sj = eijx*eijx + ...
-                  //
-                  //---------------------------------------------------------------
-                  //
-                  tmp_tensor[0] -= Kij * eij[0]*eij[0]; // Kxx
-                  tmp_tensor[1] -= Kij * eij[0]*eij[1]; // Kxy
-                  tmp_tensor[2] -= Kij * eij[0]*eij[2]; // Kxz
-                  tmp_tensor[3] -= Kij * eij[1]*eij[0]; // Kyx
-                  tmp_tensor[4] -= Kij * eij[1]*eij[1]; // Kyx
-                  tmp_tensor[5] -= Kij * eij[1]*eij[2]; // Kyz
-                  tmp_tensor[6] -= Kij * eij[2]*eij[0]; // Kzx
-                  tmp_tensor[7] -= Kij * eij[2]*eij[1]; // Kzy
-                  tmp_tensor[8] -= Kij * eij[2]*eij[2]; // Kzy
+      //             // Set pair Kitaev constant normalised to mu_s_i
+      //             const double Kij = exchange::internal::mp[imat].kitaev[jmat] * i_mu_s;
 
-               } // end of cutoff range if
+      //             //---------------------------------------------------------------
+      //             //        Expression of Kitaev within the exchange tensor
+      //             //---------------------------------------------------------------
+      //             //
+      //             //       E = Kij (Si . e_ij)(Sj . e_ij)
+      //             //
+      //             //       Si . e_ij = Si[0]*eij[0] + Si[1]*eij[1] + Si[2]*eij[2]
+      //             //       Sj . e_ij = Sj[0]*eij[0] + Sj[1]*eij[1] + Sj[2]*eij[2]
+      //             //
+      //             // Exchange tensor format
+      //             //
+      //             //     E = Si eijT Sj = eijx*eijx + ...
+      //             //
+      //             //---------------------------------------------------------------
+      //             //
+      //             tmp_tensor[0] -= Kij * eij[0]*eij[0]; // Kxx
+      //             tmp_tensor[1] -= Kij * eij[0]*eij[1]; // Kxy
+      //             tmp_tensor[2] -= Kij * eij[0]*eij[2]; // Kxz
+      //             tmp_tensor[3] -= Kij * eij[1]*eij[0]; // Kyx
+      //             tmp_tensor[4] -= Kij * eij[1]*eij[1]; // Kyx
+      //             tmp_tensor[5] -= Kij * eij[1]*eij[2]; // Kyz
+      //             tmp_tensor[6] -= Kij * eij[2]*eij[0]; // Kzx
+      //             tmp_tensor[7] -= Kij * eij[2]*eij[1]; // Kzy
+      //             tmp_tensor[8] -= Kij * eij[2]*eij[2]; // Kzy
 
-            } // end of i!= j if
+      //          } // end of cutoff range if
 
-            //ofile << "-------------------" << std::endl;
-            //std::cout << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t'<<
-            //         tmp_tensor [0] << "\t" << tmp_tensor [1] << "\t" << tmp_tensor [2] << "\t" <<
-            //         tmp_tensor [3] << "\t" << tmp_tensor [4] << "\t" << tmp_tensor [5] << "\t" <<
-            //         tmp_tensor [6] << "\t" << tmp_tensor [7] << "\t" << tmp_tensor [8] << "\n" << std::endl;
+      //       } // end of i!= j if
 
-            // save tensor for interaction i-j
-            atoms::t_exchange_list[counter].Jij[0][0] += tmp_tensor [0];
-            atoms::t_exchange_list[counter].Jij[0][1] += tmp_tensor [1];
-            atoms::t_exchange_list[counter].Jij[0][2] += tmp_tensor [2];
+      //       //ofile << "-------------------" << std::endl;
+      //       //std::cout << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t'<<
+      //       //         tmp_tensor [0] << "\t" << tmp_tensor [1] << "\t" << tmp_tensor [2] << "\t" <<
+      //       //         tmp_tensor [3] << "\t" << tmp_tensor [4] << "\t" << tmp_tensor [5] << "\t" <<
+      //       //         tmp_tensor [6] << "\t" << tmp_tensor [7] << "\t" << tmp_tensor [8] << "\n" << std::endl;
 
-            atoms::t_exchange_list[counter].Jij[1][0] += tmp_tensor [3];
-            atoms::t_exchange_list[counter].Jij[1][1] += tmp_tensor [4];
-            atoms::t_exchange_list[counter].Jij[1][2] += tmp_tensor [5];
+      //       // save tensor for interaction i-j
+      //       atoms::t_exchange_list[counter].Jij[0][0] += tmp_tensor [0];
+      //       atoms::t_exchange_list[counter].Jij[0][1] += tmp_tensor [1];
+      //       atoms::t_exchange_list[counter].Jij[0][2] += tmp_tensor [2];
 
-            atoms::t_exchange_list[counter].Jij[2][0] += tmp_tensor [6];
-            atoms::t_exchange_list[counter].Jij[2][1] += tmp_tensor [7];
-            atoms::t_exchange_list[counter].Jij[2][2] += tmp_tensor [8];
+      //       atoms::t_exchange_list[counter].Jij[1][0] += tmp_tensor [3];
+      //       atoms::t_exchange_list[counter].Jij[1][1] += tmp_tensor [4];
+      //       atoms::t_exchange_list[counter].Jij[1][2] += tmp_tensor [5];
 
-            counter++; // increment interaction counter
+      //       atoms::t_exchange_list[counter].Jij[2][0] += tmp_tensor [6];
+      //       atoms::t_exchange_list[counter].Jij[2][1] += tmp_tensor [7];
+      //       atoms::t_exchange_list[counter].Jij[2][2] += tmp_tensor [8];
 
-         }
+      //       counter++; // increment interaction counter
 
-      } // end of atom loop
+      //    }
+
+      // } // end of atom loop
 
       //ofile.close();
 

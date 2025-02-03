@@ -55,8 +55,8 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
              ){
 
 	// put number of atoms into temporary variable
-	const int num_atoms = atom_array.size();
-   std::cout << num_atoms << " on " << vmpi::my_rank << std::endl;
+	const uint64_t num_atoms = atom_array.size();
+   // std::cout << num_atoms << " on " << vmpi::my_rank << std::endl;
 	// Reserve space for num_atoms
 	list.reserve(num_atoms);
 
@@ -112,19 +112,19 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                           ( max_cell[2] - offset[2] + 1 )};
 
 	// Declare temporary array for 3D supercell array
-	std::vector<std::vector<std::vector<std::vector<int> > > > supercell_array;
+	std::vector<std::vector<std::vector<std::vector<uint64_t> > > > supercell_array;
 
    // calculate total number of neighbours and inform user of memory needed
    uint64_t num_neighbours = d[0] * (d[1]) * (d[2]) * num_atoms_in_unit_cell;
    #ifdef MPICF
       // calculate total interactions for entire system
       uint64_t total_neighbours = 0.0;
-      // MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
          zlog << zTs() << "Memory required for neighbourlist calculation (each cpu):" <<
-         sizeof(int)*num_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
+         sizeof(uint64_t)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
          zlog << zTs() << "Memory required for neighbourlist calculation (all cpus):" <<
-         sizeof(int)*num_neighbours/1.0e6 << " MB from <" << d[0]  << ", " << (d[1]) << ", " << (d[2]) << "> supercells with " << num_atoms_in_unit_cell << " each " << std::endl;
+         sizeof(uint64_t)*total_neighbours/1.0e6 << " MB from <" << d[0]  << ", " << (d[1]) << ", " << (d[2]) << "> supercells with " << num_atoms_in_unit_cell << " each " << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbourlist calculation:" <<
@@ -240,12 +240,12 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    #ifdef MPICF
       // calculate total interactions for entire system
       total_neighbours = 0.0;
-      // MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
          zlog << zTs() << "Memory required for neighbour list (each cpu):" <<
-         sizeof(unitcell::interaction_t)*num_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
+         sizeof(neighbour_t)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
          zlog << zTs() << "Memory required for neighbour list (all cpus):" <<
-         sizeof(unitcell::interaction_t)*num_neighbours/1.0e6 << " MB from " << num_cells << " cells with " << exchange.num_interactions \
+         sizeof(neighbour_t)*total_neighbours/1.0e6 << " MB from " << num_cells << " cells with " << exchange.num_interactions \
          << " interactions for " << num_atoms_in_unit_cell << " atoms per cell vs. " << num_atoms << " atoms  total"  << std::endl;
       }
    #else
@@ -261,10 +261,10 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	neighbour_t tmp_nt;
 
    // copy number of interactions to temporary constant
-   const unsigned int num_interactions = exchange.num_interactions;
+   const uint64_t num_interactions = exchange.num_interactions;
 
 	// Loop over all cells
-   total_interactions = 0;
+   // total_interactions = 0;
 	for(uint64_t cell = 0; cell < num_cells; cell++){
 
       // Print out progress indicator to user
@@ -281,8 +281,8 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 		// Loop over all interactions in exchange template
 		for(auto itr = exchange.interaction_stack.begin(); itr != exchange.interaction_stack.end(); ++itr){
          unitcell::interaction_t tmp = *itr;
-			const int atom= tmp.i;
-			const int natom= tmp.j;
+			const uint64_t atom= tmp.i;
+			const uint64_t natom= tmp.j;
 
 			int nx = tmp.dx + scc[0];
 			int ny = tmp.dy + scc[1];
@@ -338,8 +338,8 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
             if((supercell_array[scc[0]][scc[1]][scc[2]][atom]!=-1) && (supercell_array[nx][ny][nz][natom]!=-1)){
 
                // need actual atom numbers...
-               int atomi = supercell_array[scc[0]][scc[1]][scc[2]][atom];
-               int atomj = supercell_array[nx][ny][nz][natom];
+               uint64_t atomi = supercell_array[scc[0]][scc[1]][scc[2]][atom];
+               uint64_t atomj = supercell_array[nx][ny][nz][natom];
 
                //std::cout << "int_id: " << i << "\tatom i: " << atomi << "\tatom j: " << atomj << "\tuc_i: " << atom << "\tuc_j: " << natom << std::endl;
 
@@ -368,9 +368,9 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                // set neighbour data
                tmp_nt.nn = atomj;//supercell_array[nx][ny][nz][natom]; // atom ID of neighbour
                tmp_nt.i = interaction_count;                                   // interaction type
-               tmp_nt.vx = vx;                                 // position vector i->j
-               tmp_nt.vy = vy;
-               tmp_nt.vz = vz;
+               // tmp_nt.vx = vx;                                 // position vector i->j
+               // tmp_nt.vy = vy;
+               // tmp_nt.vz = vz;
 
                // push back array of class
                list[atomi].push_back(tmp_nt);
