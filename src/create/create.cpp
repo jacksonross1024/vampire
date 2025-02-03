@@ -148,20 +148,20 @@ int create(){
 
     // generate bilinear exchange list
 	//create shared window so only master populates the array
-	#ifdef MPICH
+	// #ifdef MPICH
 	
 	// neighbours::list_t* neighbours_buffer;
 	
 	
-	if(vmpi::master) bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
+	// if(vmpi::master) bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
 
-	MPI_Barrier( MPI_COMM_WORLD);
+	// MPI_Barrier( MPI_COMM_WORLD);
 
-	MPI_Win_allocate_shared(bilinear.total_interactions*sizeof(neighbours::neighbour_t); sizeof(neighbours::neighbour_t) , MPI_INFO_NULL, MPI_COMM_WORLD, &bilinear.total_interactions, &vmpi::node_window);	
+	// MPI_Win_allocate_shared(bilinear.total_interactions*sizeof(neighbours::neighbour_t); sizeof(neighbours::neighbour_t) , MPI_INFO_NULL, MPI_COMM_WORLD, &bilinear.total_interactions, &vmpi::node_window);	
 
-	#else
+	// #else
 	bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
-	#endif
+	// #endif
    // optionally create a biquadratic neighbour list
    if(exchange::biquadratic){
       biquadratic.generate(catom_array, cs::unit_cell.biquadratic, na, ucx, ucy, ucz);
