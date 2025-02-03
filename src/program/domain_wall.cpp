@@ -78,7 +78,7 @@ namespace program{
 			std::cout << "system dimension x: " << cs::system_dimensions[0] << ", discretisation cells x (A): " << sim::domain_wall_discretisation[0] << ", num cells(per type): " << program::internal::num_dw_cells_x << ", types: " << program::internal::num_mag_types << std::endl;
 			std::cout << "system dimension y: " << cs::system_dimensions[1] << ", discretisation cells y (A): " << sim::domain_wall_discretisation[1] << ", num cells(per type): " << program::internal::num_dw_cells_y << ", types: " << program::internal::num_mag_types << std::endl;
 			std::cout << "system dimension z: " << cs::system_dimensions[2] << ", discretisation cells z (A): " << sim::domain_wall_discretisation[2] << ", num cells(per type): " << program::internal::num_dw_cells_z << ", types: " << program::internal::num_mag_types << std::endl;
-
+		
 		program::internal::num_dw_cells = program::internal::num_mag_types*program::internal::num_dw_cells_z*program::internal::num_dw_cells_y*program::internal::num_dw_cells_x;
 		// int num_categories = 6;
 		program::internal::atom_to_cell_array.resize(num_local_atoms,0.0);
@@ -138,7 +138,7 @@ namespace program{
 					}
 					for(int atom=0;atom<num_local_atoms;atom++) {
 							double atom_x_pos = atoms::x_coord_array[atom];
-							int mat = atoms::type_array[atom]-1;
+							int mat = atoms::type_array[atom];
 							if(sim::domain_wall_random_start) {
 								if (atom_x_pos/cs::system_dimensions[0] < 0.1){
 									atoms::x_spin_array[atom] =  0;
@@ -156,8 +156,8 @@ namespace program{
 								double theta = 2.0*std::atan(exp(-1.0*(atom_x_pos - sim::domain_wall_position)/sim::domain_wall_width)) - M_PI*0.5;
 								
 								double pos_x = std::cos(theta)*mod;
-								double pos_y = 0.0;
-								double pos_z = std::sin(theta)*mod; 
+								double pos_y = std::sin(theta)*mod; 
+								double pos_z = 0.0;
 						
 								atoms::x_spin_array[atom] =  pos_x;
 								atoms::y_spin_array[atom] =  pos_y;
@@ -191,7 +191,7 @@ namespace program{
 					for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
 						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*30.0) {
-							int mat = atoms::type_array[atom]-1;
+							int mat = atoms::type_array[atom];
 							double mod = 1.0;///sqrt(pos_x*pos_x + pos_y*pos_y + 1.0);
 						//if(sim::num_monte_carlo_preconditioning_steps == 0) {
 							double theta = std::atan(exp(-1.0*(atoms::y_coord_array[atom] - sim::domain_wall_position)/sim::domain_wall_width)) - M_PI*0.25;//  + std::atan(exp(1.0*(atoms::x_coord_array[atom] - 15000.0)/sim::domain_wall_width)) -M_PI*0.25;
@@ -228,7 +228,7 @@ namespace program{
 					}
 					for(int atom=0;atom<num_local_atoms;atom++) {
 							double atom_y_pos = atoms::y_coord_array[atom];
-							int mat = atoms::type_array[atom]-1;
+							int mat = atoms::type_array[atom];
 							if(sim::domain_wall_random_start) {
 								if (atom_y_pos/cs::system_dimensions[1] < 0.1){
 									atoms::x_spin_array[atom] =  0;
@@ -245,16 +245,16 @@ namespace program{
 								double theta = 2.0*std::atan(exp(-1.0*(atom_y_pos - sim::domain_wall_position)/sim::domain_wall_width)) - M_PI*0.5;
 								
 								double pos_x = std::cos(theta)*mod;
-								double pos_y = 0.0;
-								double pos_z = std::sin(theta)*mod; 
+								double pos_y = std::sin(theta)*mod; 
+								double pos_z = 0.0;
 						
 								atoms::x_spin_array[atom] = pos_x;
 								atoms::y_spin_array[atom] = pos_y;
 								atoms::z_spin_array[atom] = pos_z;
 							}
 						
-							int x_cell = (atom_y_pos+0.01)/sim::domain_wall_discretisation[0];
-							int y_cell = (atoms::y_coord_array[atom]+0.010)/sim::domain_wall_discretisation[1];
+							int x_cell = (atoms::x_coord_array[atom]+0.010+0.01)/sim::domain_wall_discretisation[0];
+							int y_cell = (atom_y_pos+0.010)/sim::domain_wall_discretisation[1];
 							int z_cell = (atoms::z_coord_array[atom]+0.010)/sim::domain_wall_discretisation[2];
 					
 							int cell = z_cell*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y*program::internal::num_mag_types + x_cell*program::internal::num_dw_cells_y*program::internal::num_mag_types + y_cell*program::internal::num_mag_types + mat;
@@ -271,7 +271,7 @@ namespace program{
 		} else {
 					for(int atom=0;atom<num_local_atoms;atom++) {
 					
-						int mat = atoms::type_array[atom]-1;
+						int mat = atoms::type_array[atom];
 						int x_cell = (atoms::x_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[0];
 						int y_cell = (atoms::y_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[1];
 						int z_cell = (atoms::z_coord_array[atom]+0.0001)/sim::domain_wall_discretisation[2];
@@ -337,6 +337,7 @@ namespace program{
 				
 		}
 		output_dw_data(1);
+		vout::data();
 	
 
 		// Set temperature and reset stats only if continue checkpoint not loaded
@@ -454,6 +455,7 @@ namespace program{
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*1.5 - (M_PI+atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]));
 			}
 			output_dw_data(1);
+			vout::data();
 		}
 		//vout::data;
 		}
@@ -746,7 +748,7 @@ namespace program{
 				
 			} dw_pos << std::endl;
 		
-		vout::data();
+		// vout::data();
 		if(vmpi::my_rank==0) dw_pos.close();
 		}
 	}
