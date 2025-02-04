@@ -91,13 +91,13 @@ namespace program{
 			if (sim::domain_wall_axis == 0) {
 				//90 degree 
 				if(sim::domain_wall_angle == 0) {
-					if(mp::material[1].temperature_rescaling_Tc > 0.0) {
-						double alpha = mp::material[1].temperature_rescaling_alpha;
-						double Tc = mp::material[1].temperature_rescaling_Tc;
-						double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
-						std::cout << mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
-						sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
-					}
+					// if(mp::material[1].temperature_rescaling_Tc > 0.0) {
+					// 	double alpha = mp::material[1].temperature_rescaling_alpha;
+					// 	double Tc = mp::material[1].temperature_rescaling_Tc;
+					// 	double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
+					// 	std::cout << mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
+					// 	sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
+					// }
 					for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
 						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*30.0) {
@@ -129,13 +129,13 @@ namespace program{
 						program::internal::num_atoms_in_cell[cell]++;
 					}
 				} else if(sim::domain_wall_angle == 1) { //180 degree:
-					if(mp::material[1].temperature_rescaling_Tc > 0.0) {
-						double alpha = mp::material[1].temperature_rescaling_alpha;
-						double Tc = mp::material[1].temperature_rescaling_Tc;
-						double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
-						std::cout << mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
-						sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
-					}
+					// if(mp::material[1].temperature_rescaling_Tc > 0.0) {
+					// 	double alpha = mp::material[1].temperature_rescaling_alpha;
+					// 	double Tc = mp::material[1].temperature_rescaling_Tc;
+					// 	double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
+					// 	std::cout << mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
+					// 	sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
+					// }
 					for(int atom=0;atom<num_local_atoms;atom++) {
 							double atom_x_pos = atoms::x_coord_array[atom];
 							int mat = atoms::type_array[atom];
@@ -181,13 +181,13 @@ namespace program{
 			} else if (sim::domain_wall_axis == 1) {
 				//90 degree 
 				if(sim::domain_wall_angle == 0) {
-					if(mp::material[1].temperature_rescaling_Tc > 0.0) {
-						double alpha = mp::material[1].temperature_rescaling_alpha;
-						double Tc = mp::material[1].temperature_rescaling_Tc;
-						double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
-						std::cout << mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
-						sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
-					}
+					// if(mp::material[1].temperature_rescaling_Tc > 0.0) {
+						// double alpha = mp::material[0].temperature_rescaling_alpha;
+						// double Tc = mp::material[0].temperature_rescaling_Tc;
+						// double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
+						// std::cout << mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
+						// sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
+					// }
 					for(int atom=0;atom<num_local_atoms;atom++) {
 					//		std::cout <<atom << '\t' <<  atoms::x_coord_array[atom] << "\t" << cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width/2.0 << std::endl;
 						// if (atoms::x_coord_array[atom] > cs::system_dimensions[0]*sim::domain_wall_position -sim::domain_wall_width*30.0) {
@@ -219,13 +219,13 @@ namespace program{
 						program::internal::num_atoms_in_cell[cell]++;
 					}
 				} else if(sim::domain_wall_angle == 1) { //180 degree:
-					if(mp::material[1].temperature_rescaling_Tc > 0.0) {
-						double alpha = mp::material[1].temperature_rescaling_alpha;
-						double Tc = mp::material[1].temperature_rescaling_Tc;
-						double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
-						std::cout << mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
-						sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
-					}
+					// if(mp::material[1].temperature_rescaling_Tc > 0.0) {
+					// 	double alpha = mp::material[1].temperature_rescaling_alpha;
+					// 	double Tc = mp::material[1].temperature_rescaling_Tc;
+					// 	double mag = pow((1.0 - (pow(sim::temperature/Tc, alpha))), 0.332);
+					// 	std::cout << mag << ", Temperature rescaling domain wall starting width: " << sim::domain_wall_width << " -> " << sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77)) << std::endl;
+					// 	sim::domain_wall_width =sim::domain_wall_width*sqrt(pow(mag,1.83)/pow(mag,9.77));
+					// }
 					for(int atom=0;atom<num_local_atoms;atom++) {
 							double atom_y_pos = atoms::y_coord_array[atom];
 							int mat = atoms::type_array[atom];
@@ -253,7 +253,7 @@ namespace program{
 								atoms::z_spin_array[atom] = pos_z;
 							}
 						
-							int x_cell = (atoms::x_coord_array[atom]+0.010+0.01)/sim::domain_wall_discretisation[0];
+							int x_cell = (atoms::x_coord_array[atom]+0.01)/sim::domain_wall_discretisation[0];
 							int y_cell = (atom_y_pos+0.010)/sim::domain_wall_discretisation[1];
 							int z_cell = (atoms::z_coord_array[atom]+0.010)/sim::domain_wall_discretisation[2];
 					
