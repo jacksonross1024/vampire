@@ -124,9 +124,9 @@ void spin_temperature_statistic_t::calculate(const std::vector<double>& sx, cons
     const std::vector<double>& Hx_ext, const std::vector<double>& Hy_ext, const std::vector<double>& Hz_ext) {
  
     //zero spin_temperature array
-  
+     const int64_t num_atoms = sx.size();
      if(sim::integrator == sim::monte_carlo || sim::integrator == sim::cmc || sim::integrator == sim::hybrid_cmc || sim::integrator == sim::suzuki_trotter_spin){
-      const int64_t num_atoms = sx.size();
+     
       sim::calculate_spin_fields(0, num_atoms);
       sim::calculate_external_fields(0, num_atoms);
    } 

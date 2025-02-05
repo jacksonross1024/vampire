@@ -336,7 +336,7 @@ namespace program{
 			program::internal::mag[cell+ 5] += (cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
 				
 		}
-		output_dw_data(1);
+		// output_dw_data(1);
 		vout::data();
 	
 
@@ -387,7 +387,7 @@ namespace program{
 					}
 
 					double ftime = mp::dt_SI*double(sim::time-sim::equilibration_time);
-					const double i_pump_time = 1.0/sim::pump_time;
+					const double i_pump_time = (sim::pump_time > 0.0) ? 1.0/sim::pump_time : 1.0;
 					double reduced_time = (ftime-1.5*sim::pump_time)*i_pump_time;
 					const double four_ln_2 = 2.77258872224; // 4 ln 2
 					double gaussian = exp(-four_ln_2*reduced_time*reduced_time);
@@ -417,6 +417,7 @@ namespace program{
 
 					// std::cout << sim::TTTe << ", " << sim::TTTp << ", " << sim::Teq << std::endl;
 					sim::temperature = sim::TTTe;
+					std::cout << sim::temperature << ", " << Te << ", " << Tp << ", " << Ce << ", " << sim::pump_power << ", " << gaussian << std::endl;
 					#ifdef MPICF
 				// Select CUDA version if supported
 					#ifdef CUDA
@@ -454,7 +455,7 @@ namespace program{
 
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*1.5 - (M_PI+atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]));
 			}
-			output_dw_data(1);
+			// output_dw_data(1);
 			vout::data();
 		}
 		//vout::data;
@@ -509,7 +510,7 @@ namespace program{
 				
 				}	
 				stats::update();
-				output_dw_data(1);
+				// output_dw_data(1);
 				vout::data;
 				}
 			}
