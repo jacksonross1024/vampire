@@ -511,7 +511,7 @@ namespace program{
 				}	
 				stats::update();
 				// output_dw_data(1);
-				vout::data;
+				vout::data();
 				}
 			}
 			break;
