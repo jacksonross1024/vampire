@@ -7,6 +7,8 @@
 #include "positions.hpp"
 #include "initialise.hpp"
 
+
+
 double system_size_x;
 double system_size_y;
 double system_size_z;
@@ -40,7 +42,8 @@ std::vector < spin > all_m_atoms_offset;
 std::vector < spin > new_moire_lattice;
 std::vector < spin > all_nm_atoms;
 
-std::ofstream outfile4 ("interactions.ucf");
+
+std::ofstream outfile4;
 
 void resize_arrays(std::vector < std::vector < double > > &A, int sizex, int sizey){
    A.resize(sizex);
@@ -50,6 +53,14 @@ void resize_arrays(std::vector < std::vector < double > > &A, int sizex, int siz
 
 void initialise_variables(){
 
+   char directory [256];
+      if(getcwd(directory, sizeof(directory)) == NULL){
+         std::cerr << "Fatal getcwd error in datalog." << std::endl;
+      }
+   
+      std::string interactions = "/interactions.ucf";
+      outfile4.open (std::string(directory) + interactions);
+   
    number_of_unit_cells_x = ceil(system_size_x/a0x)+1;
    number_of_unit_cells_y = ceil(system_size_y/a1y)+1;
    // system_size_x = number_of_unit_cells_x*a0x;
@@ -149,12 +160,21 @@ void initialise_variables(){
 
    
    unit_cell_shifts.resize(number_of_unit_cells_x);
-   config_energy.resize(number_of_unit_cells_x);
+  
    for(int i = 0; i < number_of_unit_cells_x; i++) {
       unit_cell_shifts[i].resize(number_of_unit_cells_y);
-      config_energy[i].resize(number_of_unit_cells_y);
+    
       for(int j = 0; j < number_of_unit_cells_y; j++) {
          unit_cell_shifts[i][j].resize(3,0);
+        
+      }
+   }
+   config_energy.resize(number_of_unit_cells_x/2 + 2);
+   for(int i = 0; i < number_of_unit_cells_x/2 + 2; i++) {
+     
+      config_energy[i].resize(number_of_unit_cells_y/2 + 2);
+      for(int j = 0; j < number_of_unit_cells_y/2 + 2; j++) {
+         
          config_energy[i][j].resize(30,0.0);
       }
    }

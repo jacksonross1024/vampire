@@ -33,12 +33,12 @@ namespace neighbours{
    class neighbour_t {
 	public:
 
-		int nn; // atom id of neighbour
-		int i; // interaction type of neighbour
+		uint64_t nn; // atom id of neighbour
+		uint64_t i; // interaction type of neighbour
 
-      double vx; // real coordinate vector between atoms i->j
-      double vy;
-      double vz;
+      // double vx; // real coordinate vector between atoms i->j
+      // double vy;
+      // double vz;
 
 	};
 

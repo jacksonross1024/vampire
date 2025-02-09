@@ -251,39 +251,43 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
     std::string Dzline;
     if(!Dz_file.is_open()) {std::cerr << Dz << " is not open" << std::endl; exit(1);}
 
-    const double a_0 = 7.3;
+    const double a_0 = 7.275;
+    const double a_1 = 7.275;
     int i = 0;
+    int total = 0;
     while(i < 200){
-    int j  = 0;
-    while( j < 200) {
-        getline(J_file, Jline); 
-        getline(Dx_file, Dxline); 
-        getline(Dy_file, Dyline); 
-        getline(Dz_file, Dzline);
-        std::stringstream Jliness(Jline.c_str());
-        std::stringstream Dxliness(Dxline.c_str());
-        std::stringstream Dyliness(Dyline.c_str());
-        std::stringstream Dzliness(Dzline.c_str());
-        double J;
-        double Dx;
-        double Dy;
-        double Dz;
+        int j  = 0;
+        while( j < 200) {
+            getline(J_file, Jline); 
+            getline(Dx_file, Dxline); 
+            getline(Dy_file, Dyline); 
+            getline(Dz_file, Dzline);
+            std::stringstream Jliness(Jline.c_str());
+            std::stringstream Dxliness(Dxline.c_str());
+            std::stringstream Dyliness(Dyline.c_str());
+            std::stringstream Dzliness(Dzline.c_str());
+            double J;
+            double Dx;
+            double Dy;
+            double Dz;
             Jliness >> J; 
             Dxliness >> Dx; 
             Dyliness >> Dy; 
             Dzliness >> Dz;
             Eij.at(i*200+j)[0] = j*0.01*a_0 - a_0; //x pos
-            Eij[i*200+j][1] = (199-i)*0.01*a_0 - a_0;
-         
+            Eij[i*200+j][1] = (199-i)*0.01*a_1 - a_1;
+            if(std::abs(Dz) > 0.2) std::cout << i << ", " << j << ", "  << j*0.01*a_0 - a_0 << ", " << (199-i)*0.01*a_1 - a_1 << ", " <<  Dz << std::endl;
             Eij[i*200+j][2] = (J-J_inter_scaling*std::abs(J))*J_constant;
             Eij[i*200+j][3] = DMI_inter_scaling*Dx*J_constant;
             Eij[i*200+j][4] = DMI_inter_scaling*Dy*J_constant;
             Eij[i*200+j][5] = DMI_inter_scaling*Dz*J_constant;
             j++;
+            total++;
         }
         i++;
     }
-
+    std::cout << total << std::endl;
+    
     std::ofstream inter_out("Inter_exchange_out.txt");
     for(i = 0; i < Eij.size(); i++) {
         inter_out << Eij[i][0] << ", " << Eij[i][1] << ", " << Eij[i][2] << ", " << Eij[i][3] << ", " << Eij[i][4] << ", " << Eij[i][5] << "\n";
@@ -322,10 +326,10 @@ void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::
             int int_x = int(sx*10);
             int int_y = int(sy*10);
             int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : (round(theta/30.0 == 3.0) ? (0):-1) );
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] = J*J_constant;
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] = Dx*J_constant;
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] = Dy*J_constant;
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] = Dz*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] = (J-J_inter_scaling*std::abs(J))*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] = DMI_inter_scaling*Dx*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] = DMI_inter_scaling*Dy*J_constant;
+            Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] = DMI_inter_scaling*Dz*J_constant;
              std::cout  <<  Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
         }
         for(int j = 0; j < 6; j++) {
@@ -605,13 +609,13 @@ void read_in_ucf(std::ifstream &ucf_file) {
       }
       config_output.close();
 
-      std::ofstream interaction_counts;
-      interaction_counts.open("interaction_counts.txt");
-      for(int i = 0; i < all_m_atoms.size(); i++){
-         interaction_counts << all_m_atoms[i].S  << ", " <<  all_m_atoms[i].l_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \
-                                                   << ", " << all_m_atoms[i].intra1 << ", " << all_m_atoms[i].intra2 << ", " << all_m_atoms[i].intra3 <<"\n";
-      }
-      interaction_counts.close();
+    //   std::ofstream interaction_counts;
+    //   interaction_counts.open("interaction_counts.txt");
+    //   for(int i = 0; i < all_m_atoms.size(); i++){
+    //      interaction_counts << all_m_atoms[i].S  << ", " <<  all_m_atoms[i].l_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \
+    //                                                << ", " << all_m_atoms[i].intra1 << ", " << all_m_atoms[i].intra2 << ", " << all_m_atoms[i].intra3 <<"\n";
+    //   }
+    //   interaction_counts.close();
       // outfile4 << ss.str();
     //   timer.stop();
       // std::cout << "done!  << std::endl;

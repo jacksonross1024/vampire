@@ -84,9 +84,9 @@ namespace exchange{
    			zlog << zTs() << "Unrolled exchange template requires " << 9.0*double(cs::unit_cell.bilinear.interaction.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
    			// unroll isotopic interactions
    			atoms::t_exchange_list.reserve(cs::unit_cell.bilinear.interaction.size());
-   			for(unsigned int i=0;i<cs::unit_cell.bilinear.interaction.size();i++){
-   				int iatom = cs::unit_cell.bilinear.interaction[i].i;
-   				int imat = cs::unit_cell.atom[iatom].mat;
+   			for(uint64_t i=0;i<cs::unit_cell.bilinear.interaction.size();i++){
+   				uint64_t iatom = cs::unit_cell.bilinear.interaction[i].i;
+   				uint64_t imat = cs::unit_cell.atom[iatom].mat;
    				atoms::t_exchange_list.push_back(tmp_zten);
 
    				atoms::t_exchange_list[i].Jij[0][0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0]/mp::material[imat].mu_s_SI;

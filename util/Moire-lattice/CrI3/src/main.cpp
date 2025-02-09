@@ -11,6 +11,8 @@
 int main(int argc, char* argv[]){
 
     std::string dmi_check = "--dmi";
+    DMI = true;
+     std::cout << " with DMI " << std::endl;
     if(argc < 2) {std::cerr << "need twist angle even if zero" << std::endl; exit(1);}
     for(int a = 1; a < argc; a++) {
         if(a == 1) {twist_angle = atof(argv[a]); // 1.1 
@@ -29,10 +31,22 @@ int main(int argc, char* argv[]){
             DMI_inter_scaling = atof(argv[a]);
             std::cout << " inter DMI scaling: " << DMI_inter_scaling << std::endl;
         }
+        if(a == 6) {
+            J_twist_reduction = atof(argv[a]);
+            std::cout << " J twist exchange reduction: " << J_twist_reduction << std::endl;
+        }
+        if(a == 7) {
+            J_prist_reduction = atof(argv[a]);
+            std::cout << " J twist exchange reduction: " << J_prist_reduction << std::endl;
+        }
+        if(a == 8) {
+            J_intra_reduction = atof(argv[a]);
+            std::cout << " J intra exchange reduction: " << J_intra_reduction << std::endl;
+        }
     }
 
-   system_size_x = 4000;//  25.00
-   system_size_y = 4000; //4000
+   system_size_x = 1000;//  25.00
+   system_size_y = 1000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants
@@ -67,7 +81,7 @@ int main(int argc, char* argv[]){
                            "bilayer_sliding/Cr2_Dx_inter_map_avg.txt",\
                            "bilayer_sliding/Cr2_Dy_inter_map_avg.txt",\
                            "bilayer_sliding/Cr2_Dz_inter_map_avg.txt", Einter_Cr2);
-    read_in_inter_exchanges("bilayer_sliding/Cr2_inter_map.txt",\
+    read_in_inter_exchanges("bilayer_sliding/Cr3_inter_map.txt",\
                            "bilayer_sliding/Cr3_Dx_inter_map_avg.txt",\
                            "bilayer_sliding/Cr3_Dy_inter_map_avg.txt",\
                            "bilayer_sliding/Cr3_Dz_inter_map_avg.txt", Einter_Cr3);
@@ -305,6 +319,7 @@ int main(int argc, char* argv[]){
             double Dx;
             double Dy;
             double Dz;
+            
             double sx;
             double sy;
             double theta;

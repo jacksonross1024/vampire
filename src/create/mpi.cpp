@@ -730,9 +730,9 @@ namespace create{
                temp_nt.i=interaction_id;
 
                // Actual neighbours stay the same so simply copy separation vectors
-               temp_nt.vx=bilinear.list[old_atom_num][nn].vx;
-               temp_nt.vy=bilinear.list[old_atom_num][nn].vy;
-               temp_nt.vz=bilinear.list[old_atom_num][nn].vz;
+               // temp_nt.vx=bilinear.list[old_atom_num][nn].vx;
+               // temp_nt.vy=bilinear.list[old_atom_num][nn].vy;
+               // temp_nt.vz=bilinear.list[old_atom_num][nn].vz;
 
                // ignore all halo-x interactions but not x-halo
                if(!(mpi_type_vec[atom].mpi_type==2)) tmp_bilinear[atom].push_back(temp_nt);
@@ -756,9 +756,9 @@ namespace create{
                   temp_nt.i = interaction_id;
 
                   // Actual neighbours stay the same so simply copy separation vectors
-                  temp_nt.vx = biquadratic.list[old_atom_num][nn].vx;
-                  temp_nt.vy = biquadratic.list[old_atom_num][nn].vy;
-                  temp_nt.vz = biquadratic.list[old_atom_num][nn].vz;
+                  // temp_nt.vx = biquadratic.list[old_atom_num][nn].vx;
+                  // temp_nt.vy = biquadratic.list[old_atom_num][nn].vy;
+                  // temp_nt.vz = biquadratic.list[old_atom_num][nn].vz;
 
                   // ignore all halo-x interactions but not x-halo
                   if(!(mpi_type_vec[atom].mpi_type==2)) tmp_biquadratic[atom].push_back(temp_nt);
