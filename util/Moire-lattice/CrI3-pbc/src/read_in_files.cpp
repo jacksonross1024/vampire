@@ -249,7 +249,7 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
     std::string Dzline;
     if(!Dz_file.is_open()) {std::cerr << Dz << " is not open" << std::endl; exit(1);}
 
-    const double a_0 = 7.3;
+    const double a_0 = 7.285;
     int i = 0;
     while(i < 200){
     int j  = 0;
@@ -603,13 +603,13 @@ void read_in_ucf(std::ifstream &ucf_file) {
       }
       config_output.close();
 
-      std::ofstream interaction_counts;
-      interaction_counts.open("interaction_counts.txt");
-      for(int i = 0; i < all_m_atoms.size(); i++){
-         interaction_counts << all_m_atoms[i].S  << ", " <<  all_m_atoms[i].l_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \
-                                                   << ", " << all_m_atoms[i].intra1 << ", " << all_m_atoms[i].intra2 << ", " << all_m_atoms[i].intra3 <<"\n";
-      }
-      interaction_counts.close();
+    //   std::ofstream interaction_counts;
+    //   interaction_counts.open("interaction_counts.txt");
+    //   for(int i = 0; i < all_m_atoms.size(); i++){
+    //      interaction_counts << all_m_atoms[i].S  << ", " <<  all_m_atoms[i].l_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \
+    //                                                << ", " << all_m_atoms[i].intra1 << ", " << all_m_atoms[i].intra2 << ", " << all_m_atoms[i].intra3 <<"\n";
+    //   }
+    //   interaction_counts.close();
       // outfile4 << ss.str();
     //   timer.stop();
       // std::cout << "done!  << std::endl;

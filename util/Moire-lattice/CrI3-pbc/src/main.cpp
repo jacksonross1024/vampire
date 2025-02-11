@@ -10,8 +10,9 @@
 
 int main(int argc, char* argv[]){
 
-    // command line arguments; argv1: twist; argv2: max exchange limit; argv3: dmi included
     std::string dmi_check = "--dmi";
+    DMI = true;
+     std::cout << " with DMI " << std::endl;
     if(argc < 2) {std::cerr << "need twist angle even if zero" << std::endl; exit(1);}
     for(int a = 1; a < argc; a++) {
         if(a == 1) {twist_angle = atof(argv[a]); // 1.1 
@@ -30,11 +31,22 @@ int main(int argc, char* argv[]){
             DMI_inter_scaling = atof(argv[a]);
             std::cout << " inter DMI scaling: " << DMI_inter_scaling << std::endl;
         }
-
+        if(a == 6) {
+            J_twist_reduction = atof(argv[a]);
+            std::cout << " J twist exchange reduction: " << J_twist_reduction << std::endl;
+        }
+        if(a == 7) {
+            J_prist_reduction = atof(argv[a]);
+            std::cout << " J twist exchange reduction: " << J_prist_reduction << std::endl;
+        }
+        if(a == 8) {
+            J_intra_reduction = atof(argv[a]);
+            std::cout << " J intra exchange reduction: " << J_intra_reduction << std::endl;
+        }
     }
 
-   system_size_x = 9000; //A 
-   system_size_y = 9000; //A
+   system_size_x = 8000; //A 
+   system_size_y = 8000; //A
    number_of_unit_cells_z = 1; //unit cells
 
     // (deprecated)
@@ -55,35 +67,35 @@ int main(int argc, char* argv[]){
     std::cout << "twisting at: " << twist_loction << std::endl;
 
     //pristine unit cell coordiantes/species
-    read_in_atoms("files/atom_list_abprimebprimea_rhombic", num_atoms, atom);
+    read_in_atoms("../../files/atom_list_abprimebprimea_rhombic", num_atoms, atom);
    //  read_in_dft("files/criteria.txt");
     //  read_in_atoms("files/nm_atoms", num_nm_atoms, nm_atom);
    //  read_in_exchange("files/Interpolated_J_Inter", Jinter);
-   read_in_inter_exchanges("bilayer_sliding/Cr1_inter_map.txt",\
-                           "bilayer_sliding/Cr1_Dx_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr1_Dy_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr1_Dz_inter_map_avg.txt", Einter_Cr1);
-    read_in_inter_exchanges("bilayer_sliding/Cr2_inter_map.txt",\
-                           "bilayer_sliding/Cr2_Dx_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr2_Dy_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr2_Dz_inter_map_avg.txt", Einter_Cr2);
-    read_in_inter_exchanges("bilayer_sliding/Cr2_inter_map.txt",\
-                           "bilayer_sliding/Cr3_Dx_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr3_Dy_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr3_Dz_inter_map_avg.txt", Einter_Cr3);
-    read_in_inter_exchanges("bilayer_sliding/Cr4_inter_map.txt",\
-                           "bilayer_sliding/Cr4_Dx_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr4_Dy_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr4_Dz_inter_map_avg.txt", Einter_Cr4);
-//    read_in_inter_exchanges("bilayer_sliding/Cr2_inter.txt", Einter_Cr2);
-//    read_in_inter_exchanges("bilayer_sliding/Cr3_inter.txt", Einter_Cr3);
-//    read_in_inter_exchanges("bilayer_sliding/Cr4_inter.txt", Einter_Cr4);
+   read_in_inter_exchanges("../../bilayer_sliding/Cr1_inter_map.txt",\
+                           "../../bilayer_sliding/Cr1_Dx_inter_map_avg.txt",\
+                           "../../bilayer_sliding/Cr1_Dy_inter_map_avg.txt",\
+                           "../../bilayer_sliding/Cr1_Dz_inter_map_avg.txt", Einter_Cr1);
+    read_in_inter_exchanges("../../bilayer_sliding/Cr2_inter_map.txt",\
+                           "../../bilayer_sliding/Cr2_Dx_inter_map_avg.txt",\
+                           "../../bilayer_sliding/Cr2_Dy_inter_map_avg.txt",\
+                           "../../bilayer_sliding/Cr2_Dz_inter_map_avg.txt", Einter_Cr2);
+    read_in_inter_exchanges("../../bilayer_sliding/Cr2_inter_map.txt",\
+                           "../../bilayer_sliding/Cr3_Dx_inter_map_avg.txt",\
+                           "../../bilayer_sliding/Cr3_Dy_inter_map_avg.txt",\
+                           "../../bilayer_sliding/Cr3_Dz_inter_map_avg.txt", Einter_Cr3);
+    read_in_inter_exchanges("../../bilayer_sliding/Cr4_inter_map.txt",\
+                           "../../bilayer_sliding/Cr4_Dx_inter_map_avg.txt",\
+                           "../../bilayer_sliding/Cr4_Dy_inter_map_avg.txt",\
+                           "../../bilayer_sliding/Cr4_Dz_inter_map_avg.txt", Einter_Cr4);
+//    read_in_inter_exchanges("../../bilayer_sliding/Cr2_inter.txt", Einter_Cr2);
+//    read_in_inter_exchanges("../../bilayer_sliding/Cr3_inter.txt", Einter_Cr3);
+//    read_in_inter_exchanges("../../bilayer_sliding/Cr4_inter.txt", Einter_Cr4);
     // exit(1);
-   // read_in_intra_exchanges("bilayer_sliding/Cr1_intra.txt", Eintra_Cr1_1NN, Eintra_Cr1_2NN, Eintra_Cr1_3NN);
-   // read_in_intra_exchanges("bilayer_sliding/Cr2_intra.txt", Eintra_Cr2_1NN, Eintra_Cr2_2NN, Eintra_Cr2_3NN);
-   // read_in_intra_exchanges("bilayer_sliding/Cr3_intra.txt", Eintra_Cr3_1NN, Eintra_Cr3_2NN, Eintra_Cr3_3NN);
-   // read_in_intra_exchanges("bilayer_sliding/Cr4_intra.txt", Eintra_Cr4_1NN, Eintra_Cr4_2NN, Eintra_Cr4_3NN);
-   std::ifstream ifile1("bilayer_sliding/Cr1_intra.txt");
+   // read_in_intra_exchanges("../../bilayer_sliding/Cr1_intra.txt", Eintra_Cr1_1NN, Eintra_Cr1_2NN, Eintra_Cr1_3NN);
+   // read_in_intra_exchanges("../../bilayer_sliding/Cr2_intra.txt", Eintra_Cr2_1NN, Eintra_Cr2_2NN, Eintra_Cr2_3NN);
+   // read_in_intra_exchanges("../../bilayer_sliding/Cr3_intra.txt", Eintra_Cr3_1NN, Eintra_Cr3_2NN, Eintra_Cr3_3NN);
+   // read_in_intra_exchanges("../../bilayer_sliding/Cr4_intra.txt", Eintra_Cr4_1NN, Eintra_Cr4_2NN, Eintra_Cr4_3NN);
+   std::ifstream ifile1("../../bilayer_sliding/Cr1_intra.txt");
    std::string line;
     if(!ifile1.is_open()) {std::cerr  << " is not open" << std::endl; exit(1);}
    for(int i=0; i<Eintra_Cr1_1NN.size()*11; i++){
@@ -175,7 +187,7 @@ int main(int argc, char* argv[]){
 
    ifile1.close();
 
-   std::ifstream ifile2("bilayer_sliding/Cr2_intra.txt");
+   std::ifstream ifile2("../../bilayer_sliding/Cr2_intra.txt");
    //  std::string line;
     if(!ifile2.is_open()) {std::cerr  << " is not open" << std::endl; exit(1);}
    for(int i=0; i<Eintra_Cr2_1NN.size()*11; i++){
@@ -265,7 +277,7 @@ int main(int argc, char* argv[]){
     }
     ifile2.close();
 
-    std::ifstream ifile3("bilayer_sliding/Cr3_intra.txt");
+    std::ifstream ifile3("../../bilayer_sliding/Cr3_intra.txt");
    //  std::string line;
     if(!ifile3.is_open()) {std::cerr  << " is not open" << std::endl; exit(1);}
    for(int i=0; i<Eintra_Cr3_1NN.size()*11; i++){
@@ -355,7 +367,7 @@ int main(int argc, char* argv[]){
     }
     ifile3.close();
 
-    std::ifstream ifile4("bilayer_sliding/Cr4_intra.txt");
+    std::ifstream ifile4("../../bilayer_sliding/Cr4_intra.txt");
    //  std::string line;
     if(!ifile4.is_open()) {std::cerr  << " is not open" << std::endl; exit(1);}
    for(int i=0; i<Eintra_Cr4_1NN.size()*11; i++){

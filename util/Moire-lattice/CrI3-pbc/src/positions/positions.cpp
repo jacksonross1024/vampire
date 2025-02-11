@@ -17,9 +17,7 @@ double a1y = 6.002;
 double c0 = 26.16;
 double a0z = c0/4.0;
 
-double J_inter_scaling = 0.0;
-double DMI_inter_scaling = 1.0;
-//must change num_atoms according to unit cell info
+// unit cell info
 int num_atoms = 8;
 
 //((deprecated))
@@ -31,6 +29,13 @@ int number_of_unit_cells_y;
 //(deprecated)
 int num_above_atoms =0;
 int num_below_atoms =0;
+
+double J_inter_scaling = 0.0;
+double J_twist_reduction = 1.0;
+double J_intra_reduction = 1.0;
+double J_prist_reduction = 1.0;
+double DMI_inter_scaling = 1.0;
+
 
 int total_atoms = 0;
 
@@ -107,13 +112,11 @@ void create_magnetic_atom_list(std::string filename){
                         int dy_cell = floor((y_new +0.000000)/ a1y);
                         int dx_cell = floor((x_new +0.000000)/ a0x);
                         
-                        //effective rotation in x vector basis
                         double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
-                        double x_ref = (i*a0x + j*a1x + 4.62)*cos(twist_angle)-(((new_atom.l_id == 3) ? (4.00) : (0.0)) + j*a1y)*sin(twist_angle); 
-                        double y_ref = (i*a0x + j*a1x + 4.62)*sin(twist_angle)+(((new_atom.l_id == 3) ? (4.00) : (0.0)) + j*a1y)*cos(twist_angle); 
+                        double x_ref =  ((new_atom.l_id == 3 || new_atom.l_id == 4) ? (4.62)  : (0.0)) + (i*a0x + j*a1x); 
+                        double y_ref = (((new_atom.l_id == 1 || new_atom.l_id == 3) ? (4.001) : (0.0)) + j*a1y); 
                         
-                        //x and y shift in rhombehedral coordiante from x basis
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));
                         int changex = int(round(9*(fmod(std::abs(x_eff-x_ref +changey*a1y/11.0) , a0x)/a0x)));
                         
@@ -231,17 +234,17 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
                      new_atom.Gx = i;
                      new_atom.Gy = j;
                      
-                     int dy_cell = floor((y_j +0.0000001)/ a1y);
-                     int dx_cell = floor((x_j +0.0000001)/ a0x);
+                     int dy_cell = floor((y_j +0.000000)/ a1y);
+                     int dx_cell = floor((x_j +0.000000)/ a0x);
                      new_atom.unit_x = dx_cell;
                      new_atom.unit_y = dy_cell;
 
-                     if(new_atom.z == 2*a0z) {
-                           unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
-                           unit_cell_shifts[dx_cell][dy_cell][1] += new_atom.dx;
-                           unit_cell_shifts[dx_cell][dy_cell][2] += new_atom.dy;
-                           // row3.push_back(new_atom);
-                     }  
+                     // if(new_atom.z == 2*a0z) {
+                     //       unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
+                     //       unit_cell_shifts[dx_cell][dy_cell][1] += new_atom.dx;
+                     //       unit_cell_shifts[dx_cell][dy_cell][2] += new_atom.dy;
+                     //       // row3.push_back(new_atom);
+                     // }  
                      new_lattice_atoms++;
                      new_moire_lattice.push_back(new_atom);              
                   }
