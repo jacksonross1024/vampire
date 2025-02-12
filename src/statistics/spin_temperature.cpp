@@ -56,12 +56,12 @@ void spin_temp_statistic_t::set_mask(const int in_mask_size, std::vector<int> in
    mask_size = in_mask_size - 1;
    mean_counter = 0.0;
    mask=in_mask; // copy contents of vector
-   spin_temp.resize(in_mask_size, 0.0);
-   mean_spin_temp.resize(in_mask_size, 0.0);
+   spin_temp.resize(mask_size, 0.0);
+   mean_spin_temp.resize(mask_size, 0.0);
 
    // determine mask id's with no atoms
-   num_atoms_in_mask.resize(in_mask_size,0);
-   for(unsigned int atom=0; atom<in_mask.size(); ++atom){
+   num_atoms_in_mask.resize(mask_size,0);
+   for(unsigned int atom=0; num_atoms; ++atom){
       int mask_id = in_mask[atom];
       // add atoms to mask
       num_atoms_in_mask[mask_id]++;
@@ -115,7 +115,11 @@ void spin_temp_statistic_t::calculate_spin_temp(const std::vector<double>& sx, /
    std::fill(spin_temp.begin(),spin_temp.end(),0.0);
 
    const int64_t num_atoms = sx.size();
-   sim::calculate_spin_fields(0, num_atoms);
+    if(sim::integrator == sim::monte_carlo || sim::integrator == sim::cmc || sim::integrator == sim::hybrid_cmc){
+      
+      sim::calculate_spin_fields(0, num_atoms);
+      sim::calculate_external_fields(0, num_atoms);
+   } 
 
    double SxH2=0.0;
    double SH=0.0;

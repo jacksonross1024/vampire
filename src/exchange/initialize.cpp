@@ -282,6 +282,7 @@ namespace exchange{
       // Calculate Dzyaloshinskii-Moriya interactions (must be done after exchange unrolling)
       exchange::internal::calculate_dmi(bilinear);
 
+      exchange::internal::calculate_static_dmi(bilinear);
       // Calculate Kitaev interactions (must be done after exchange unrolling)
       exchange::internal::calculate_kitaev(bilinear);
 

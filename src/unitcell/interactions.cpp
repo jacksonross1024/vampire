@@ -164,19 +164,22 @@ void calculate_interactions(unit_cell_t& unit_cell){
 
                // save initial shell
                tmp.shell = 0;
-
+               double exchange = uc::internal::exchange(range, interaction_cutoff_range[ratoms[i].mat][ratoms[j].mat], ratoms[i].mat, ratoms[j].mat);
                // Determine normalised exchange constants
-               tmp.Jij[0][0] = uc::internal::exchange(range, interaction_cutoff_range[ratoms[i].mat][ratoms[j].mat], ratoms[i].mat, ratoms[j].mat); // xx
+               tmp.Jij[0][0] = exchange; // xx
                tmp.Jij[0][1] = 0.0; // xy
                tmp.Jij[0][2] = 0.0; // xz
 
                tmp.Jij[1][0] = 0.0; // yx
-               tmp.Jij[1][1] = uc::internal::exchange(range, interaction_cutoff_range[ratoms[i].mat][ratoms[j].mat], ratoms[i].mat, ratoms[j].mat); // yy
+               tmp.Jij[1][1] = exchange; //uc::internal::exchange(range, interaction_cutoff_range[ratoms[i].mat][ratoms[j].mat], ratoms[i].mat, ratoms[j].mat); // yy
                tmp.Jij[1][2] = 0.0; // yz
 
                tmp.Jij[2][0] = 0.0; // zx
                tmp.Jij[2][1] = 0.0; // zy
-               tmp.Jij[2][2] = uc::internal::exchange(range, interaction_cutoff_range[ratoms[i].mat][ratoms[j].mat], ratoms[i].mat, ratoms[j].mat); // zz
+               tmp.Jij[2][2] = exchange; //uc::internal::exchange(range, interaction_cutoff_range[ratoms[i].mat][ratoms[j].mat], ratoms[i].mat, ratoms[j].mat); // zz
+               
+               
+               // if(exchange == 0.0) tmp.keep = false;
 
                unit_cell.bilinear.interaction.push_back(tmp);
 

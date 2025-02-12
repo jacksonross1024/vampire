@@ -1,41 +1,66 @@
 #------------------------------------------
-# Sample vampire input file to perform
-# benchmark calculation for v4.0
-#
+# System:
 #------------------------------------------
+dimensions:system-size-x = 30 !nm
+dimensions:system-size-y = 30 !nm
+dimensions:system-size-z = 0.6 !nm # 7247.207731 unit cells in total => 28988.83 atoms in total
+create:periodic-boundaries-x
+create:periodic-boundaries-y
 
 #------------------------------------------
-# Creation attributes:
+# Material:
 #------------------------------------------
-dimensions:unit-cell-size = 3.54 !A
-dimensions:system-size-x = 7.7 !nm
-dimensions:system-size-y = 7.7 !nm
-dimensions:system-size-z = 7.7 !nm
+material:file= Co.mat
+create:crystal-structure=fcc
+dimensions:unit-cell-size = 3.524 !A
+exchange:dmi-cutoff-range =  4.5 !A
 
+exchange:static-dmi-vector = 0,0,1
 #------------------------------------------
-# Material Files:
+# Simulation attributes: 
 #------------------------------------------
-material:file = Co.mat
+# real total time = equilibration-time-steps + total-time-steps
+sim:total-time-steps=1000000
+sim:equilibration-temperature=500
+sim:time-steps-increment=10000
+sim:time-step=1e-15 # 0.1 fs
 
-#------------------------------------------
-# Simulation attributes:
-#------------------------------------------
-sim:temperature = 300.0
-sim:time-steps-increment = 1000
-sim:total-time-steps = 10000
-sim:time-step = 1 !fs
+sim:temperature=500
+sim:maximum-temperature=500
+sim:minimum-temperature=0
+sim:cooling-time=500!ps
+sim:cooling-function = linear
 
+sim:applied-field-strength=0.01
+sim:applied-field-unit-vector = 0,0,1
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:program = benchmark
-sim:integrator = llg-heun
+sim:integrator-random-seed = 1537
 
-#------------------------------------------
+sim:program=field-cool
+sim:integrator=llg-heun
+
+sim:save-checkpoint = end
+#------------------------------------------0
 # data output
 #------------------------------------------
-output:real-time
-output:magnetisation
+screen:real-time
 
-screen:time-steps
-screen:magnetisation-length
+output:column-headers
+output:real-time
+output:temperature
+output:applied-field-strength
+output:applied-field-unit-vector 
+output:magnetisation-length
+output:material-magnetisation
+output:total-energy
+
+#output:spin-temperature
+#output:mean-spin-temperature
+#output:material-spin-temperature
+
+output:output-rate=1
+
+config:atoms
+config:atoms-output-rate=10

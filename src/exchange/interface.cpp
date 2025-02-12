@@ -115,6 +115,19 @@ namespace exchange{
          internal::fs_cutoff_2 = cr;
          return true;
       }
+      test="static-dmi-vector";
+      if(word==test){
+       // temporary storage container
+            std::vector<double> u(3);
+            // read values from string
+            u = vin::doubles_from_string(value);
+            // check for sane input and normalise if necessary
+            vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
+            // Copy sanitised unit vector to material
+            
+            internal::DMI_vector = u;
+            return true;
+      }
       //--------------------------------------------------------------------
       // Keyword not found
       //--------------------------------------------------------------------
@@ -147,6 +160,15 @@ namespace exchange{
          internal::enable_dmi = true; // Switch on dmi calculation and fully unrolled tensorial anisotropy
          return true;
       }
+     test = "static-dmi-constant"; // short form
+      if( (word == test)){
+         double dmi = atof(value.c_str());
+         vin::check_for_valid_value(dmi, word, line, prefix, unit, "energy", -1e-17, 1e-17,"material"," < +/- 1.0e17");
+         internal::mp[super_index].static_dmi[sub_index] = dmi;
+         internal::enable_static_dmi = true; // Switch on dmi calculation and fully unrolled tensorial anisotropy
+         return true;
+      }
+      
       //------------------------------------------------------------------------
       test = "exchange-matrix";
       if( word == test ){

@@ -40,13 +40,16 @@ namespace exchange{
       bool enable_dmi = false; // flag to enable dmi calculation
       bool enable_kitaev = false; // flag to enable Kitaev calculation
       bool enable_fourspin=false; //flag to enable Four-spin exchange
+      bool enable_static_dmi = false;
 
       double dmi_cutoff_range = 2.6; // cutoff range for DMI calculation (Ångstroms)
       double kitaev_cutoff_range = 2.6; // cutoff range for Kitaev calculation (Ångstroms)
       double exchange_factor = 1.0; // scaling factor for exchange constants (usually to correct for ab-initio)
       double fs_cutoff_1=1.0;
       double fs_cutoff_2=1.414;
-
+      std::vector<double> DMI_vector;
+      // DMI_vector = {0,0,1};
+      //DMI_vector[2] = 1;
       exchange_t exchange_type = isotropic; // exchange type to use in simulation
       exchange_t biquadratic_exchange_type = isotropic; // biquadratic exchange type to use in simulation
 
