@@ -400,7 +400,7 @@ double inter_nn_dist_2 = 7.77;
 double inter_nn_dist_3 = 9.99;
 
 double inter_AB_dist_1 = 7.0;
-double inter_AB_dist_2 = 7.77;
+double inter_AB_dist_2 = 8.20;
 double inter_AB_dist_3 = 9.99;
 // double nn_dist_3 = a0x*pow(1.3333333333,0.5);
 double nn_dist_1;
@@ -885,11 +885,11 @@ void calc_interactions() {
    vtimer_t timer;
       timer.start();
    //(J-J_inter_scaling*std::abs(J))*J_constant;
-   Jinter1_AB = Jinter1_AB - std::abs(Jinter1_AB)*J_inter_scaling*2;
-   Jinter2_AB = Jinter2_AB - std::abs(Jinter2_AB)*J_inter_scaling*2;
-   Jinter3_AB = Jinter3_AB - std::abs(Jinter3_AB)*J_inter_scaling*2;
+   // Jinter1_AB = Jinter1_AB - std::abs(Jinter1_AB)*J_inter_scaling*2;
+   // Jinter2_AB = Jinter2_AB - std::abs(Jinter2_AB)*J_inter_scaling*2;
+   // Jinter3_AB = Jinter3_AB - std::abs(Jinter3_AB)*J_inter_scaling*2;
 
-   #pragma omp parallel num_threads(16) reduction(+:number_of_interactions)
+   #pragma omp parallel num_threads(8) reduction(+:number_of_interactions)
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
@@ -969,7 +969,7 @@ void calc_interactions() {
                                  // std::cout << dL2 << ", " << r2 << ", " << x_i << ", " << y_i << ", " << z_i << ", " << x_j << ", " << y_j << ", " << z_j << std::endl;
                                  double angle_i = atan2(ady,adx);// - twist_angle;// - M_PI*0.5;
                                  double angle_j = atan2(-ady,-adx);// - twist_angle;
-                                 std::array<double, 4> exchange({-60.0,0.0,0.0,0.0});
+                                 std::array<double, 4> exchange({0.0,0.0,0.0,0.0});
                                  if(atom_i.S == atom_j.S) {
                                  
                                     if(atom_i.l_id == 1) {
@@ -1111,7 +1111,7 @@ void calc_interactions() {
                                        }
 
                                     } else {
-                                       if(dL2 <= inter_nn_dist_1) {
+                                       if(dL2 <= inter_AB_dist_1) {
                                           exchange[0] = Jinter1_AB;
                                           exchange[0] *= J_prist_reduction;
                                           all_m_atoms[atom_i.id].inter1_count++;
@@ -1119,7 +1119,7 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_inter1 += exchange[1]/J_constant;
                                           all_m_atoms[atom_i.id].Dy_inter1 += exchange[2]/J_constant;
                                           all_m_atoms[atom_i.id].Dz_inter1 += exchange[3]/J_constant;
-                                       } else if (dL2 <= inter_nn_dist_2) {
+                                       } else if (dL2 <= inter_AB_dist_2) {
                                           exchange[0] = Jinter2_AB;
                                           exchange[0] *= J_prist_reduction;
                                           all_m_atoms[atom_i.id].inter2_count++;
@@ -1140,7 +1140,7 @@ void calc_interactions() {
                                     }
                                  }
                                                               
-                                 if(exchange[0] == -60) continue;
+                                 // if(exchange[0] == -60) continue;
 
                               // ##pragma omp critical 
                                  // {
@@ -1181,8 +1181,10 @@ void calc_interactions() {
          }
       }
       #pragma omp critical
-      outfile4 << otext.str();
-   
+      {
+         outfile4 << otext.str();
+         std::cout << omp_get_thread_num() << " calculated " << number_of_interactions << " of interactions" << std::endl;
+      }
    }
    outfile4 << std::flush;
    outfile4.close();

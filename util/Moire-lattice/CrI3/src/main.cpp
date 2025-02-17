@@ -33,15 +33,15 @@ int main(int argc, char* argv[]){
         }
         if(a == 6) {
             J_twist_reduction = atof(argv[a]);
-            std::cout << " J twist exchange reduction: " << J_twist_reduction << std::endl;
+            std::cout << " J twist exchange scaling: " << J_twist_reduction << std::endl;
         }
         if(a == 7) {
             J_prist_reduction = atof(argv[a]);
-            std::cout << " J twist exchange reduction: " << J_prist_reduction << std::endl;
+            std::cout << " J prist exchange scaling: " << J_prist_reduction << std::endl;
         }
         if(a == 8) {
             J_intra_reduction = atof(argv[a]);
-            std::cout << " J intra exchange reduction: " << J_intra_reduction << std::endl;
+            std::cout << " J intra exchange scaling: " << J_intra_reduction << std::endl;
         }
     }
 
@@ -73,22 +73,22 @@ int main(int argc, char* argv[]){
    //  read_in_dft("files/criteria.txt");
     //  read_in_atoms("files/nm_atoms", num_nm_atoms, nm_atom);
    //  read_in_exchange("files/Interpolated_J_Inter", Jinter);
-   read_in_inter_exchanges("bilayer_sliding/Cr1_inter_map.txt",\
-                           "bilayer_sliding/Cr1_Dx_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr1_Dy_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr1_Dz_inter_map_avg.txt", Einter_Cr1);
-    read_in_inter_exchanges("bilayer_sliding/Cr2_inter_map.txt",\
-                           "bilayer_sliding/Cr2_Dx_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr2_Dy_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr2_Dz_inter_map_avg.txt", Einter_Cr2);
-    read_in_inter_exchanges("bilayer_sliding/Cr3_inter_map.txt",\
-                           "bilayer_sliding/Cr3_Dx_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr3_Dy_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr3_Dz_inter_map_avg.txt", Einter_Cr3);
-    read_in_inter_exchanges("bilayer_sliding/Cr4_inter_map.txt",\
-                           "bilayer_sliding/Cr4_Dx_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr4_Dy_inter_map_avg.txt",\
-                           "bilayer_sliding/Cr4_Dz_inter_map_avg.txt", Einter_Cr4);
+   read_in_inter_exchanges("bilayer_sliding/Cr1_inter_map_2.txt",\
+                           "bilayer_sliding/Cr1_Dx_inter_map_2_avg.txt",\
+                           "bilayer_sliding/Cr1_Dy_inter_map_2_avg.txt",\
+                           "bilayer_sliding/Cr1_Dz_inter_map_2_avg.txt", Einter_Cr1);
+    read_in_inter_exchanges("bilayer_sliding/Cr2_inter_map_2.txt",\
+                           "bilayer_sliding/Cr2_Dx_inter_map_2_avg.txt",\
+                           "bilayer_sliding/Cr2_Dy_inter_map_2_avg.txt",\
+                           "bilayer_sliding/Cr2_Dz_inter_map_2_avg.txt", Einter_Cr2);
+    read_in_inter_exchanges("bilayer_sliding/Cr3_inter_map_2.txt",\
+                           "bilayer_sliding/Cr3_Dx_inter_map_2_avg.txt",\
+                           "bilayer_sliding/Cr3_Dy_inter_map_2_avg.txt",\
+                           "bilayer_sliding/Cr3_Dz_inter_map_2_avg.txt", Einter_Cr3);
+    read_in_inter_exchanges("bilayer_sliding/Cr4_inter_map_2.txt",\
+                           "bilayer_sliding/Cr4_Dx_inter_map_2_avg.txt",\
+                           "bilayer_sliding/Cr4_Dy_inter_map_2_avg.txt",\
+                           "bilayer_sliding/Cr4_Dz_inter_map_2_avg.txt", Einter_Cr4);
                            
    // read_in_intra_exchanges("bilayer_sliding/Cr1_intra.txt", Eintra_Cr1_1NN, Eintra_Cr1_2NN, Eintra_Cr1_3NN);
    // read_in_intra_exchanges("bilayer_sliding/Cr2_intra.txt", Eintra_Cr2_1NN, Eintra_Cr2_2NN, Eintra_Cr2_3NN);
