@@ -131,10 +131,11 @@ int curie_temperature(){
 			// Calculate magnetisation statistics
 			stats::update();
 
+			vout::data();
 		}
 
 		// Output data
-		vout::data();
+		// vout::data();
 
 		// Increment temperature
 		sim::temperature+=sim::delta_temperature;

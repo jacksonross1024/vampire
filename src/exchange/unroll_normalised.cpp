@@ -138,26 +138,26 @@ namespace exchange{
                   // set exchange field, normalising to mu_s^i
                   // future development may allow for generic inclusion of DMI parameter from exchange tensor, but not currently enabled
                   if( Jij.size() == 3 ){
-                     atoms::t_exchange_list[nn].Jij[0][0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[0][1] = cs::unit_cell.bilinear.interaction[i].Jij[0][1] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[0][2] = cs::unit_cell.bilinear.interaction[i].Jij[0][2] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[1][0] = cs::unit_cell.bilinear.interaction[i].Jij[1][0] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[1][1] = cs::unit_cell.bilinear.interaction[i].Jij[1][1] * Jij[1] * imus;
-                     atoms::t_exchange_list[nn].Jij[1][2] = cs::unit_cell.bilinear.interaction[i].Jij[1][2] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[2][0] = cs::unit_cell.bilinear.interaction[i].Jij[2][0] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[2][1] = cs::unit_cell.bilinear.interaction[i].Jij[2][1] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[2][2] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[2] * imus;
+                     atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[0][1] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[0][2] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[3] = cs::unit_cell.bilinear.interaction[i].Jij[1][0] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[4] = cs::unit_cell.bilinear.interaction[i].Jij[1][1] * Jij[1] * imus;
+                     atoms::t_exchange_list[nn].Jij[5] = cs::unit_cell.bilinear.interaction[i].Jij[1][2] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[6] = cs::unit_cell.bilinear.interaction[i].Jij[2][0] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[7] = cs::unit_cell.bilinear.interaction[i].Jij[2][1] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[2] * imus;
                   }
                   else if( Jij.size() == 1 ){
-                     atoms::t_exchange_list[nn].Jij[0][0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[0][1] = cs::unit_cell.bilinear.interaction[i].Jij[0][1] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[0][2] = cs::unit_cell.bilinear.interaction[i].Jij[0][2] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[1][0] = cs::unit_cell.bilinear.interaction[i].Jij[1][0] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[1][1] = cs::unit_cell.bilinear.interaction[i].Jij[1][1] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[1][2] = cs::unit_cell.bilinear.interaction[i].Jij[1][2] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[2][0] = cs::unit_cell.bilinear.interaction[i].Jij[2][0] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[2][1] = cs::unit_cell.bilinear.interaction[i].Jij[2][1] * 0.0;
-                     atoms::t_exchange_list[nn].Jij[2][2] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[0][1] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[0][2] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[3] = cs::unit_cell.bilinear.interaction[i].Jij[1][0] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[4] = cs::unit_cell.bilinear.interaction[i].Jij[1][1] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[5] = cs::unit_cell.bilinear.interaction[i].Jij[1][2] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[6] = cs::unit_cell.bilinear.interaction[i].Jij[2][0] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[7] = cs::unit_cell.bilinear.interaction[i].Jij[2][1] * 0.0;
+                     atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[0] * imus;
                   }
                   else{
                      std::cerr     << "Programmer error! Exchange values size of " << Jij.size() << " must be 1 or 3 values. Exiting" << std::endl;

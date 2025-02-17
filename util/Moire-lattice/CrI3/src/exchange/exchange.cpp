@@ -433,7 +433,7 @@ double D_intra3_x_constant =	0*J_constant;
 double D_intra3_y_constant =  0.0176*J_constant;
 double D_intra3_z_constant = 0.0659*J_constant;
 //set the initial jumber of interactions to zero for counter
-int number_of_interactions = 0;
+uint64_t number_of_interactions = 0;
 
 //initialise arrays to store exchage interactions
 std::vector < std::vector < double > > Jint;
@@ -889,7 +889,7 @@ void calc_interactions() {
    Jinter2_AB = Jinter2_AB - std::abs(Jinter2_AB)*J_inter_scaling*2;
    Jinter3_AB = Jinter3_AB - std::abs(Jinter3_AB)*J_inter_scaling*2;
 
-   #pragma omp parallel num_threads(16)
+   #pragma omp parallel num_threads(16) reduction(+:number_of_interactions)
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
@@ -1142,8 +1142,8 @@ void calc_interactions() {
                                                               
                                  if(exchange[0] == -60) continue;
 
-                                 #pragma omp critical 
-                                 {
+                              // ##pragma omp critical 
+                                 // {
 
                                    if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                                                 //xx                     xy-> Dz                 xz -> -Dy
@@ -1166,8 +1166,8 @@ void calc_interactions() {
                                     // config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr].at((atom_i.S-1)*5+4) += exchange[3]/J_constant;
 
                                     
-                                    number_of_interactions++;    
-                                 }                           
+                                    number_of_interactions++;
+                                 // }                           
                               }
                            } // end of j atom loop
 

@@ -69,7 +69,7 @@ namespace unitcell{
       int dy; /// delta y in unit cells
       int dz; /// delta z in unit cells
       double rij; // interaction range (unit cells)
-      double Jij[3][3]; /// Exchange tensor
+      float Jij[3][3]; /// Exchange tensor
 	};
 
    //------------------------------------------------------------------------
@@ -98,7 +98,7 @@ namespace unitcell{
       exchange::exchange_t exchange_type; // exchange type to use in simulation
       bool use_material_exchange_constants; // flag to enable material exchange parameters
       uint64_t num_unit_cell_atoms; // number of atoms in unit cell
-
+      
       // list of interactions in each unit cell
       std::vector <unitcell::interaction_t> interaction;
 

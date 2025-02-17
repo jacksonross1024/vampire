@@ -25,7 +25,7 @@
    extern int num_atoms;
    extern int num_nm_atoms;
    extern double twist_loction;
-   extern int total_atoms;
+   extern uint64_t total_atoms;
    extern int total_nm_atoms;
    extern int num_above_atoms;
    extern int num_below_atoms;
@@ -45,7 +45,7 @@
          int Gy = 0;
          int Gz = 0;
          double S;
-         int id = 0;
+         uint64_t id = 0;
          int l_id;
          int h_id;
          int unit_x;

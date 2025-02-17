@@ -174,7 +174,7 @@ namespace exchange{
       extern double dmi_cutoff_range;    // cutoff range for DMI calculation (Ångstroms)
       extern double kitaev_cutoff_range; // cutoff range for Kitaev calculation (Ångstroms)
       extern double exchange_factor;     // scaling factor for exchange constants (usually to correct for ab-initio)
-
+      extern bool meV_interactions;
       extern exchange_t exchange_type; // exchange type to use in simulation
       extern exchange_t biquadratic_exchange_type; // biquadratic exchange type to use in simulation
 

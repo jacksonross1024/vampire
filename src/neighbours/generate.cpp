@@ -122,9 +122,9 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
       MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
          zlog << zTs() << "Memory required for neighbourlist calculation (each cpu):" <<
-         sizeof(neighbour_t)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
+         sizeof(uint64_t)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
          zlog << zTs() << "Memory required for neighbourlist calculation (all cpus):" <<
-         sizeof(neighbour_t)*total_neighbours/1.0e6 << " MB" << std::endl;
+         sizeof(uint64_t)*total_neighbours/1.0e6 << " MB" << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbourlist calculation:" <<
@@ -278,8 +278,8 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 		// Loop over all interactions in exchange template
 		for(uint64_t i = 0; i < num_interactions; i++){
 
-			const uint64_t atom=exchange.interaction[i].i;
-			const uint64_t natom=exchange.interaction[i].j;
+			const uint64_t atom = exchange.interaction[i].i;
+			const uint64_t natom = exchange.interaction[i].j;
 
 			int nx = exchange.interaction[i].dx + scc[0];
 			int ny = exchange.interaction[i].dy + scc[1];
@@ -363,7 +363,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                // int index = list[supercell_array[scc[0]][scc[1]][scc[2]][atom]].size(); // unused variable
 
                // set neighbour data
-               tmp_nt.nn = supercell_array[nx][ny][nz][natom]; // atom ID of neighbour
+               tmp_nt.nn = atomj;// supercell_array[nx][ny][nz][natom]; // atom ID of neighbour
                tmp_nt.i = i;                                   // interaction type
                // tmp_nt.vx = vx;                                 // position vector i->j
                // tmp_nt.vy = vy;
