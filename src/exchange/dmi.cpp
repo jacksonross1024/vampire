@@ -263,9 +263,9 @@ namespace internal{
       // counter for total number of interactions
       unsigned int total_counter = 0;
 
-      std::cout << "test " << std::endl;
+      // std::cout << "test " << std::endl;
 
-      std::cout << internal::DMI_vector[0] << " , " <<  internal::DMI_vector[1] << ", " <<  internal::DMI_vector[2] << std::endl;
+      // std::cout << internal::DMI_vector[0] << " , " <<  internal::DMI_vector[1] << ", " <<  internal::DMI_vector[2] << std::endl;
 
       //std::ofstream ofile("dmi.txt");
       double D_ref[3] = {internal::DMI_vector[0], internal::DMI_vector[1], internal::DMI_vector[2]};
@@ -279,7 +279,7 @@ namespace internal{
 
          // get inverse moment
          const double i_mu_s = 1.0/mp::material[imat].mu_s_SI;
-         std::cout << "static DMI counts for atom " << i << ", " << cneighbourlist[i].size() << std::endl;
+         // std::cout << "static DMI counts for atom " << i << ", " << cneighbourlist[i].size() << std::endl;
          // loop over all neighbours j
          for(unsigned int j = 0; j < cneighbourlist[i].size(); j++) {
 
@@ -318,8 +318,8 @@ namespace internal{
                         }
 
                         // Set pair dmi constant average between i=->k and j->k normalised to mu_s_i
-                        std::cout << "DMI static constant: " << exchange::internal::mp[imat].static_dmi[jmat] << std::endl;
-                        const double Dij = exchange::internal::mp[imat].static_dmi[jmat] * i_mu_s;
+                        // std::cout << "DMI static constant: " << exchange::internal::mp[imat].static_dmi[jmat] << std::endl;
+                        const double Dij = (atoms::z_coord_array[i] < 3.55 ? 1.0 : exp(-(atoms::z_coord_array[i]-3.55)))*exchange::internal::mp[imat].static_dmi[jmat] * i_mu_s;
                         if(fabs(Dij) < 1e-12) continue;
                         // compute direction of Dij
                         const double Dx = D_ref[1]*eij[2] - D_ref[2]*eij[1];
