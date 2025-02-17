@@ -49,8 +49,8 @@ namespace internal{
       if(!internal::enable_dmi) return;
 
       // Print informative message to log file
-      zlog << zTs() << "Calculating Dzyaloshinskii-Moriya interactions" << std::endl;
-
+      zlog << zTs() << " no Calculating Dzyaloshinskii-Moriya interactions" << std::endl;
+      exit(1);
       // // temporary tensor for calculating sum
       // std::vector<double> tmp_tensor(9,0.0);
 

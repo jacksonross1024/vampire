@@ -159,8 +159,8 @@ namespace program{
 								double pos_y = std::sin(theta)*mod; 
 								double pos_z = 0.0;
 						
-								atoms::x_spin_array[atom] =  pos_x;
-								atoms::y_spin_array[atom] =  pos_y;
+								atoms::x_spin_array[atom] = mp::material[mat].initial_spin[1]* pos_x;
+								atoms::y_spin_array[atom] = mp::material[mat].initial_spin[1]* pos_y;
 								atoms::z_spin_array[atom] =  pos_z;
 							}
 						
@@ -248,8 +248,8 @@ namespace program{
 								double pos_y = std::sin(theta)*mod; 
 								double pos_z = 0.0;
 						
-								atoms::x_spin_array[atom] = pos_x;
-								atoms::y_spin_array[atom] = pos_y;
+								atoms::x_spin_array[atom] = mp::material[mat].initial_spin[1]* pos_x;
+								atoms::y_spin_array[atom] = mp::material[mat].initial_spin[1]* pos_y;
 								atoms::z_spin_array[atom] = pos_z;
 							}
 						
