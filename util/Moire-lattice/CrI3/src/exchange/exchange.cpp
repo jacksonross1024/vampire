@@ -1243,11 +1243,11 @@ void calc_interactions() {
       // }
       // config_output1.close();
       // std::cout << "config cells done." << std::endl;
-      // std::cout << "interaction counts started..." << std::flush;
+      // // std::cout << "interaction counts started..." << std::flush;
 
       // std::ofstream interaction_counts(std::string(directory) + "/interaction_counts.txt");
       // if(!interaction_counts.is_open()) {std::cout << "interaction counts did not open" << std::endl; exit(1);}
-      // for(int i = 0; i < all_m_atoms.size(); i++){
+      // // for(int i = 0; i < all_m_atoms.size(); i++){
       //    interaction_counts << all_m_atoms[i].S  << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y <<  ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].inter1 << ", " << all_m_atoms[i].inter2 << ", " << all_m_atoms[i].inter3 \
       //                                              << ", " << all_m_atoms[i].intra1 << ", " << all_m_atoms[i].intra2 << ", " << all_m_atoms[i].intra3 <<"\n";
       // }
@@ -1385,8 +1385,6 @@ std::array<double,4> match_inter_exchange(int atom_id, int nn_id, double dx, dou
    exchange[1] = Eij[min_index][3];
    exchange[2] = Eij[min_index][4];
    exchange[3] = Eij[min_index][5];
-
-   
  
    return exchange;
 }
