@@ -66,7 +66,7 @@
 
    // extern std::vector < std::vector < std::vector<double> > > D_intra;
    // extern std::vector < std::vector < std::vector<double> > > D_inter;
-   extern std::vector<std::vector<std::vector<double> > > config_energy;
+   
 
    extern std::ofstream outfile4;
    // extern std::ifstream ucf_file;
