@@ -1273,6 +1273,7 @@ void calc_interactions() {
             for(int k = 0; k < global_config_energy[i][j].size(); k++) config_output1 << global_config_energy[i][j][k] << ", "; 
             config_output1 << "\n";
          }
+         config_output1 << "\n";
       }
       config_output1.close();
       std::cout << "config cells done." << std::endl;
