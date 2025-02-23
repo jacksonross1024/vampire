@@ -151,7 +151,7 @@ void create_magnetic_atom_list(std::string filename){
                         double y_ref = (((new_atom.l_id == 1 || new_atom.l_id == 3) ? (4.001) : (0.0)) + j*a1y); 
                         
                         int changey = int(round(10*(fmod(std::abs(y_eff-y_ref) , a1y)/a1y)));
-                        int changex = int(round(9*(fmod(std::abs(x_eff-x_ref) , a0x)/a0x)));
+                        int changex = int(round(9*(fmod(std::abs(x_eff-x_ref +changey*a1y/11.0) , a0x)/a0x)));
                         
                         if(changex > 9 || changex < 0 || changey > 10 || changey < 0) {
                            std::cerr << "shift problem: (" << x_new << ", " << x_j << ") in cell: [" << dx_cell << ", " << dy_cell << "] indexing " << changex << ", " << changey  << std::endl;
