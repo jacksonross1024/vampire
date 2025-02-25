@@ -97,6 +97,10 @@ namespace exchange{
          else internal::exchange_factor = 1.0;
          return true;
       }
+      if( word == "meV_interaction_unit" ){
+         internal::meV_interactions = true;
+         return true;
+      }
       //--------------------------------------------------------------------
       // Keyword not found
       //--------------------------------------------------------------------
