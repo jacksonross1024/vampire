@@ -37,7 +37,7 @@ double J_prist_reduction = 1.0;
 double DMI_inter_scaling = 1.0;
 
 
-int total_atoms = 0;
+uint64_t total_atoms = 0;
 
 //(deprecated)
 int total_nm_atoms = 0;
@@ -200,7 +200,7 @@ void create_magnetic_atom_list(std::string filename){
 
 void create_magnetic_atom_list_moire_unit(std::string filename, \
                   double Moire_aix, double Moire_aiy, double Moire_ajx, double Moire_ajy, \
-                  double Moire_abs_x, double Moire_abs_y, int Moire_atom_size){
+                  double Moire_abs_x, double Moire_abs_y, uint64_t Moire_atom_size){
    
    std::ofstream shift_file;
    shift_file.open("shifted_constants_Moire_ucf.txt");
@@ -215,7 +215,7 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
    int new_lattice_atoms = 0;
    for (int i = -1*number_of_Moire_unit_cells_x; i < 2*number_of_Moire_unit_cells_x; i++){
          for (int j = -1*number_of_Moire_unit_cells_y; j < 2*number_of_Moire_unit_cells_y; j++){
-               for (int atom_i = 0; atom_i < all_m_atoms_offset.size(); atom_i ++){
+               for (size_t atom_i = 0; atom_i < all_m_atoms_offset.size(); atom_i ++){
 
                   double x_j = all_m_atoms_offset[atom_i].x + i*Moire_aix + j*Moire_ajx;
                   double y_j = all_m_atoms_offset[atom_i].y + i*Moire_aiy + j*Moire_ajy;
