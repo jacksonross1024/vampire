@@ -7,75 +7,52 @@
 #------------------------------------------
 # Creation attributes:
 #------------------------------------------
-dimensions:unit-cell-size-x = 3.328 !A
-dimensions:unit-cell-size-y = 3.328 !A
-dimensions:unit-cell-size-z = 8.539 !A #2.5658 c/a
-dimensions:system-size-x = 2500.0 !nm
-dimensions:system-size-y = 40.0 !nm
-dimensions:system-size-z = 10.0  !nm
+#dimensions:unit-cell-size = 2.507 !A
+
+dimensions:system-size-x = 100.1 !nm
+dimensions:system-size-y = 100.1 !nm
+dimensions:system-size-z = 3.2 !nm
 
 #create:periodic-boundaries-x
-create:periodic-boundaries-y
-create:periodic-boundaries-z
-
-create:crystal-sublattice-materials=true
-create:crystal-structure = mn2au
-
-exchange:interaction-range = 1.2
-exchange:function = shell
-
-sim:domain-wall-axis = x #y
-sim:domain-wall-discretisation = 1,2,10  #discrete cell size for magnetisation statistics
-sim:domain-wall-discretisation-type = nm
-sim:domain-wall-position = 5000 #A
-sim:domain-wall-width = 86.738   #A
-sim::domain-wall-angle = 90 #180
-#sim:domain-wall-random-start #forces +/- z spin orientation for +/- 10% of spins along dw axis even with random spin configuration
+#create:periodic-boundaries-y
+#create:periodic-boundaries-z
 #------------------------------------------
 # Material Files:
 #------------------------------------------
-material:file = Mn2Au-Shick.mat
+material:unit-cell-file = CrSBr-Multilayer-Scaled-DMI.ucf
+material:file = CrSBr-Multilayer-Scaled-Anisotropy.mat
+create:crystal-sublattice-materials=true
+
+sim:domain-wall-discretisation = 1,10,1
+sim:domain-wall-discretisation-type = nm
+sim:domain-wall-axis = x
+sim:domain-wall-angle = 180
+sim:domain-wall-width = 50
+sim:domain-wall-position = 1000 
 
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
-sim:temperature= 300.0
-sim:equilibration-temperature = 300.0
-sim:time-steps-increment = 10000
-#sim:preconditioning-steps=500
-sim:equilibration-time-steps = 200000 #20ps
-sim:total-time-steps = 400000 # 40ps
-sim:time-step = 0.1 !fs
-sim:program = domain-wall
-sim:integrator-random-seed = 6802
+sim:equilibration-temperature = 0
+sim:temperature = 0
 
+sim:time-steps-increment = 1
+sim:equilibration-time-steps=1
+sim:total-time-steps = 10
+sim:time-step = 0.1 !fs
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:integrator = llg-heun #mc; suzuki-trotter
-
-sim:laser-pulse-time= 40 !ps #full width half max gaussian
-#sim:second-laser-pulse-delay-time = 0 !ps #constant laser insert at gaussian centre
-sim:two-temperature-phonon-heat-capacity = 6.934e6 #J/K/m^3 
-sim:two-temperature-electron-phonon-coupling = 2.5e17 #J/K/s/m^3
-sim:two-temperature-electron-heat-capacity = 1e3 #J/K/m^3
-sim:two-temperature-heat-sink-coupling = 0.01e12 #1/s 
-sim:laser-pulse-power= 30.0 #J/m^2
+sim:program = domain-wall #time variable magnetic field; SOT; STT
+sim:integrator = llg-heun
 
 #------------------------------------------
 # data output
 #------------------------------------------
-output:fixed-width
+config:atoms 
+
 output:output-rate=1
 output:time-steps
-output:fractional-electric-field-strength
-output:lot-strength
-output:temperature
-output:magnetisation-length
 output:material-magnetisation
 output:total-torque
-output:material-torque
-output:electron-temperature
-output:phonon-temperature
-
-
+output:total-energy 

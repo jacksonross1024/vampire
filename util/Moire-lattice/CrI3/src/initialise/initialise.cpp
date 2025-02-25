@@ -31,6 +31,8 @@ double exchange34 = 0.0; // exchange constant between layers 3-4
 double separation = 0.0; // distance between layers 2-3
 
 std::vector < std::vector < std::vector <int> > > unit_cell_shifts;
+std::vector<std::vector<std::vector<double> > > config_energy; //(config_cells_x, std::vector<std::vector<double> >( config_cells_y, std::vector<double>(30,0.0)));//(number_of_unit_cells_x, std::vector<std::array<double, 30> >(number_of_unit_cells_y, {0.0}));
+std::vector<std::vector<std::vector<double> > > global_config_energy;
 std::vector < spin > atom(num_atoms);
 std::vector < spin > nm_atom(num_nm_atoms);
 std::vector < spin > row1;
@@ -169,14 +171,17 @@ void initialise_variables(){
         
       }
    }
-   config_energy.resize(number_of_unit_cells_x/2 + 2);
-   for(int i = 0; i < number_of_unit_cells_x/2 + 2; i++) {
+
+    
+      global_config_energy.resize(number_of_unit_cells_x/2 + 2);
+      for(int i = 0; i < number_of_unit_cells_x/2 + 2; i++) {
      
-      config_energy[i].resize(number_of_unit_cells_y/2 + 2);
-      for(int j = 0; j < number_of_unit_cells_y/2 + 2; j++) {
+         global_config_energy[i].resize(number_of_unit_cells_y/2 + 2);
+         for(int j = 0; j < number_of_unit_cells_y/2 + 2; j++) {
          
-         config_energy[i][j].resize(30,0.0);
+            global_config_energy[i][j].resize(4*7,0.0);
+         }
       }
-   }
+   
    // std::vector<std::vector<std::vector<double> > > config_energy(number_of_unit_cells_x, std::vector<std::vector<double> >(number_of_unit_cells_y, std::vector<double>(30,0.0)));
 }

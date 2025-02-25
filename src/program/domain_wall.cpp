@@ -333,10 +333,10 @@ namespace program{
 			program::internal::mag[cell+ 2] += S[2];
 			program::internal::mag[cell+ 3] += exchange::single_spin_energy(atom, S[0], S[1], S[2]);
 			program::internal::mag[cell+ 4] += anisotropy::single_spin_energy(atom,mat , S[0], S[1], S[2], sim::temperature);
-			program::internal::mag[cell+ 5] += (cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
+			// program::internal::mag[cell+ 5] += (cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
 				
 		}
-		// output_dw_data(1);
+		output_dw_data(1);
 		vout::data();
 	
 
@@ -417,7 +417,7 @@ namespace program{
 
 					// std::cout << sim::TTTe << ", " << sim::TTTp << ", " << sim::Teq << std::endl;
 					sim::temperature = sim::TTTe;
-					std::cout << sim::temperature << ", " << Te << ", " << Tp << ", " << Ce << ", " << sim::pump_power << ", " << gaussian << std::endl;
+					//std::cout << sim::temperature << ", " << Te << ", " << Tp << ", " << Ce << ", " << sim::pump_power << ", " << gaussian << std::endl;
 					#ifdef MPICF
 				// Select CUDA version if supported
 					#ifdef CUDA
@@ -451,11 +451,11 @@ namespace program{
 				program::internal::mag[program::internal::num_mag_cat*cell+2] += S[2];
 				program::internal::mag[program::internal::num_mag_cat*cell+3] += exchange::single_spin_energy(atom, S[0], S[1], S[2]);
 				program::internal::mag[program::internal::num_mag_cat*cell+4] += anisotropy::single_spin_energy(atom,mat , S[0], S[1], S[2], sim::temperature);
-				program::internal::mag[program::internal::num_mag_cat*cell+5] += sim::laser_torque_strength*(cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
+				// program::internal::mag[program::internal::num_mag_cat*cell+5] += sim::laser_torque_strength*(cos(atan2(S[1],S[0])*2.0))*sim::internal::lot_lt_z[mat];
 
 				// topological_charge[num_dw_cells*cat + cell] += M_PI*1.5 - (M_PI+atan2(atoms::y_spin_array[atom], atoms::x_spin_array[atom]));
 			}
-			// output_dw_data(1);
+			output_dw_data(1);
 			vout::data();
 		}
 		//vout::data;
@@ -644,9 +644,9 @@ namespace program{
 		
 			string dwpos = "/dw-pos.txt";
 			dw_pos.open (string(directory) + dwpos);
-			// if(!dw_pos.is_open()) {
-			// 	std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
-			// }
+			if(!dw_pos.is_open()) {
+				std::cerr << "Fatal dw directory error for dw-" + std::to_string(sim::time) << std::endl;
+			}
 			double avg_topological_charge_acc = 0.0;
 			std::vector< double> domain_tracks;
 			int domain_counter = 0;
@@ -659,14 +659,14 @@ namespace program{
 			
 			dw_res.precision(10);
     		dw_res << std::scientific;
-			int mat_type = 0;
+			int mat_type = 1;
 			double avg = 1.0/double(counter);
 			for (int z_cell = 0; z_cell < program::internal::num_dw_cells_z-1; z_cell++) {
 				for(int y_cell = 0; y_cell < program::internal::num_dw_cells_y-1; y_cell++) {
-					double mag_x_1 = 1.0/sqrt(2.0);
-					double mag_y_1 = 1.0/sqrt(2.0);
-					double mag_x_2 = 1.0/sqrt(2.0);
-					double mag_y_2 = 1.0/sqrt(2.0);
+					// double mag_x_1 = 1.0/sqrt(2.0);
+					// double mag_y_1 = 1.0/sqrt(2.0);
+					// double mag_x_2 = 1.0/sqrt(2.0);
+					// double mag_y_2 = 1.0/sqrt(2.0);
 					double d_topological_charge_acc = 0.0;
 					double d_topological_charge = 0.0;
 				
@@ -678,7 +678,7 @@ namespace program{
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +4]*num << "\t" <<\
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +5]*num << "\t" <<\
 									d_topological_charge << "\t"  << d_topological_charge_acc  << "\t" << 1.0/num << '\n';
-					
+					// std::cout << program::internal::num_dw_cells_x-1 << std::endl;
 				for(int x_cell = 1; x_cell < program::internal::num_dw_cells_x-1; x_cell++) {
 						 cell = z_cell*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y*program::internal::num_mag_types + y_cell*program::internal::num_dw_cells_x*program::internal::num_mag_types + x_cell*program::internal::num_mag_types + mat_type;	
 					//std::cout << cell << std::endl;
@@ -691,33 +691,33 @@ namespace program{
 									// mag[num_mag_cat*cell +4]/num << "\t" << //anisotropy energy/
 									// mag[num_mag_cat*cell +5]/num << "\t" << //LOT energy/
 									// d_topological_charge << "\t"  << d_topological_charge_acc  <<  std::endl;
-					mag_x_1 = avg*program::internal::mag[program::internal::num_mag_cat*(cell-2) + 0] / double(program::internal::num_atoms_in_cell[cell-2]);
-					mag_y_1 = avg*program::internal::mag[program::internal::num_mag_cat*(cell-2) + 1] /double(program::internal::num_atoms_in_cell[cell-2]);
-					mag_x_2 = avg*program::internal::mag[program::internal::num_mag_cat*cell   +0] *num;
-					mag_y_2 = avg*program::internal::mag[(program::internal::num_mag_cat*cell) +1] *num;
+					// mag_x_1 = avg*program::internal::mag[program::internal::num_mag_cat*(cell-2) + 0] / double(program::internal::num_atoms_in_cell[cell-2]);
+					// mag_y_1 = avg*program::internal::mag[program::internal::num_mag_cat*(cell-2) + 1] /double(program::internal::num_atoms_in_cell[cell-2]);
+					// mag_x_2 = avg*program::internal::mag[program::internal::num_mag_cat*cell   +0] *num;
+					// mag_y_2 = avg*program::internal::mag[(program::internal::num_mag_cat*cell) +1] *num;
 					
-					if((mag_y_2 != 0.0 || mag_x_2 != 0.0) && (mag_y_1!= 0.0 || mag_x_1 != 0.0) ) {
-						d_topological_charge =  atan2(mag_y_1, mag_x_1) -atan2(mag_y_2, mag_x_2);
-						if(d_topological_charge > M_PI*0.5) d_topological_charge -= 2.0*M_PI;
-						else if (d_topological_charge < -M_PI*0.5) d_topological_charge += 2.0*M_PI;
-					}
+					// if((mag_y_2 != 0.0 || mag_x_2 != 0.0) && (mag_y_1!= 0.0 || mag_x_1 != 0.0) ) {
+					// 	d_topological_charge =  atan2(mag_y_1, mag_x_1) -atan2(mag_y_2, mag_x_2);
+					// 	if(d_topological_charge > M_PI*0.5) d_topological_charge -= 2.0*M_PI;
+					// 	else if (d_topological_charge < -M_PI*0.5) d_topological_charge += 2.0*M_PI;
+					// }
 					//if(std::abs(d_x) > 1e-4 || std::abs(d_y) > 1e-4) topological_charge_1[cat] = atan2(d_y,d_x);
-					if( (mag_x_1*mag_x_2 < 0.0) != (mag_y_1*mag_y_2 < 0.0) ) {
+					// if( (mag_x_1*mag_x_2 < 0.0) != (mag_y_1*mag_y_2 < 0.0) ) {
 						  //90 degree change only
-						double x = program::internal::cell_to_lattice_array[3*cell+0]*sim::domain_wall_discretisation[0];// + sl_offset[cell_to_lattice_array[3*cell+2]];
-						double y = program::internal::cell_to_lattice_array[3*cell+1]*sim::domain_wall_discretisation[1];// + sl_offset[cell_to_lattice_array[3*cell+2]];
-						double z = program::internal::cell_to_lattice_array[3*cell+2]*sim::domain_wall_discretisation[2];
-							domain_tracks.push_back(x);
-							domain_tracks.push_back(y);
-							domain_tracks.push_back(z);
-							domain_counter++;
-					//	std::cout << cell << ", " << x << ", " << mag_x_1 << ", " << mag_x_2 << ", " << mag_y_1 << ", " << mag_y_2 << std::endl;
-					}
-					d_topological_charge_acc += d_topological_charge;
-					avg_topological_charge_acc += d_topological_charge_acc;
-					//if(d_topological_charge < 1e-6) std::cout << d_topological_charge << std::endl;
-					// if (num > 0 ) {
-						if(sim::temperature > 1.0 || std::abs(d_topological_charge) > 1e-7){
+					// 	double x = program::internal::cell_to_lattice_array[3*cell+0]*sim::domain_wall_discretisation[0];// + sl_offset[cell_to_lattice_array[3*cell+2]];
+					// 	double y = program::internal::cell_to_lattice_array[3*cell+1]*sim::domain_wall_discretisation[1];// + sl_offset[cell_to_lattice_array[3*cell+2]];
+					// 	double z = program::internal::cell_to_lattice_array[3*cell+2]*sim::domain_wall_discretisation[2];
+					// 		domain_tracks.push_back(x);
+					// 		domain_tracks.push_back(y);
+					// 		domain_tracks.push_back(z);
+					// 		domain_counter++;
+					// //	std::cout << cell << ", " << x << ", " << mag_x_1 << ", " << mag_x_2 << ", " << mag_y_1 << ", " << mag_y_2 << std::endl;
+					// // }
+					// d_topological_charge_acc += d_topological_charge;
+					// avg_topological_charge_acc += d_topological_charge_acc;
+					// //if(d_topological_charge < 1e-6) std::cout << d_topological_charge << std::endl;
+					// // if (num > 0 ) {
+					// 	if(sim::temperature > 1.0 || std::abs(d_topological_charge) > 1e-7){
 							dw_res << x_cell*sim::domain_wall_discretisation[0]  << '\t' << y_cell << '\t' << z_cell << '\t' <<\
 							         avg*program::internal::mag[program::internal::num_mag_cat*cell]*num << "\t" << avg*program::internal::mag[program::internal::num_mag_cat*cell + 1] *num << "\t" << avg*program::internal::mag[program::internal::num_mag_cat*cell + 2] *num <<"\t"<<\
 									avg*program::internal::mag[program::internal::num_mag_cat*cell +3]*num << "\t" << //exchange energy
@@ -726,7 +726,7 @@ namespace program{
 									d_topological_charge << "\t"  << d_topological_charge_acc  << "\t" << 1.0/num << "\n";
 					
 						// }
-						}
+						// }
 				}
 			
 					// cell = (program::internal::num_dw_cells_z-2)*program::internal::num_dw_cells_x*program::internal::num_dw_cells_y*program::internal::num_mag_types + (program::internal::num_dw_cells_y-2)*program::internal::num_dw_cells_x*program::internal::num_mag_types + (program::internal::num_dw_cells_x-1)*program::internal::num_mag_types + mat_type;

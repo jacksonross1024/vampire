@@ -249,39 +249,43 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
     std::string Dzline;
     if(!Dz_file.is_open()) {std::cerr << Dz << " is not open" << std::endl; exit(1);}
 
-    const double a_0 = 7.285;
+    const double a_0 = 7.276;
+    const double a_1 = 7.402;
     int i = 0;
+    int total = 0;
     while(i < 200){
-    int j  = 0;
-    while( j < 200) {
-        getline(J_file, Jline); 
-        getline(Dx_file, Dxline); 
-        getline(Dy_file, Dyline); 
-        getline(Dz_file, Dzline);
-        std::stringstream Jliness(Jline.c_str());
-        std::stringstream Dxliness(Dxline.c_str());
-        std::stringstream Dyliness(Dyline.c_str());
-        std::stringstream Dzliness(Dzline.c_str());
-        double J;
-        double Dx;
-        double Dy;
-        double Dz;
+        int j  = 0;
+        while( j < 200) {
+            getline(J_file, Jline); 
+            getline(Dx_file, Dxline); 
+            getline(Dy_file, Dyline); 
+            getline(Dz_file, Dzline);
+            std::stringstream Jliness(Jline.c_str());
+            std::stringstream Dxliness(Dxline.c_str());
+            std::stringstream Dyliness(Dyline.c_str());
+            std::stringstream Dzliness(Dzline.c_str());
+            double J;
+            double Dx;
+            double Dy;
+            double Dz;
             Jliness >> J; 
             Dxliness >> Dx; 
             Dyliness >> Dy; 
             Dzliness >> Dz;
             Eij.at(i*200+j)[0] = j*0.01*a_0 - a_0; //x pos
-            Eij[i*200+j][1] = (199-i)*0.01*a_0 - a_0;
-         
+            Eij[i*200+j][1] = (199-i)*0.01*a_1 - a_1;
+            //if(std::abs(Dz) > 0.2) std::cout << i << ", " << j << ", "  << j*0.01*a_0 - a_0 << ", " << (199-i)*0.01*a_1 - a_1 << ", " <<  Dz << std::endl;
             Eij[i*200+j][2] = (J-J_inter_scaling*std::abs(J))*J_constant;
             Eij[i*200+j][3] = DMI_inter_scaling*Dx*J_constant;
             Eij[i*200+j][4] = DMI_inter_scaling*Dy*J_constant;
             Eij[i*200+j][5] = DMI_inter_scaling*Dz*J_constant;
             j++;
+            total++;
         }
         i++;
     }
-
+    std::cout << total << std::endl;
+    
     std::ofstream inter_out("Inter_exchange_out.txt");
     for(i = 0; i < Eij.size(); i++) {
         inter_out << Eij[i][0] << ", " << Eij[i][1] << ", " << Eij[i][2] << ", " << Eij[i][3] << ", " << Eij[i][4] << ", " << Eij[i][5] << "\n";

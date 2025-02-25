@@ -19,7 +19,7 @@
    extern double J_intra_3;
    extern double J_constant;
    extern double max_range;
-   extern int number_of_interactions;
+   extern uint64_t number_of_interactions;
    
    extern std::vector < std::vector < double > > Jint;
    extern std::vector < std::vector < double > > Jinter;
@@ -64,7 +64,7 @@
 
    // extern std::vector < std::vector < std::vector<double> > > D_intra;
    // extern std::vector < std::vector < std::vector<double> > > D_inter;
-   extern std::vector<std::vector<std::vector<double> > > config_energy;
+   //extern std::vector<std::vector<std::vector<double> > > config_energy;
 
    extern std::ofstream outfile4;
    // extern std::ifstream ucf_file;

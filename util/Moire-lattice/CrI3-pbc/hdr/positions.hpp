@@ -25,7 +25,7 @@
    extern int num_atoms;
    extern int num_nm_atoms;
    extern double twist_loction;
-   extern int total_atoms;
+   extern uint64_t total_atoms;
    extern int total_nm_atoms;
    extern int num_above_atoms;
    extern int num_below_atoms;
@@ -45,7 +45,7 @@
          int Gy = 0;
          int Gz = 0;
          double S;
-         int id = 0;
+         uint64_t id = 0;
          int l_id;
          int h_id;
          int unit_x;
@@ -148,7 +148,7 @@
    void create_magnetic_atom_list(std::string filename);
    void create_magnetic_atom_list_moire_unit(std::string filename, \
                   double Moire_a0x, double Moire_a0y, double Moire_a1x, double Moire_a1y, \
-                  double Moire_abs_x, double Moire_abs_y, int Moire_atom_size);
+                  double Moire_abs_x, double Moire_abs_y, uint64_t Moire_atom_size);
 
    void create_magnetic_atom_list_moire_unit(std::string filename);
    void create_nm_atom_list();

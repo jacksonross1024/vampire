@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[]){
 
-    std::string dmi_check = "--dmi";
+    std::string dmi_check = "--nodmi";
     DMI = true;
      std::cout << " with DMI " << std::endl;
     if(argc < 2) {std::cerr << "need twist angle even if zero" << std::endl; exit(1);}
@@ -20,12 +20,12 @@ int main(int argc, char* argv[]){
         if(a == 2) {max_range = atof(argv[a]);
         std::cout << "max inter exchange range: " << max_range << std::endl;}
         if(a == 3) {
-            if(argv[a]== dmi_check) {DMI = true;
+            if(argv[a]== dmi_check) {DMI = false;
             std::cout << " with DMI " << std::endl;}
         }
         if(a == 4) {
             J_inter_scaling = atof(argv[a]);
-            std::cout << " inter exchange scaling: "<< 1-J_inter_scaling << std::endl;
+            std::cout << " inter exchange scaling: "<< -J_inter_scaling << std::endl;
         }
         if(a == 5) {
             DMI_inter_scaling = atof(argv[a]);
@@ -45,8 +45,8 @@ int main(int argc, char* argv[]){
         }
     }
 
-   system_size_x = 1000;//  25.00
-   system_size_y = 1000; //4000
+   system_size_x = 2000;//  25.00
+   system_size_y = 2000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
                            "bilayer_sliding/Cr4_Dy_inter_map_2_avg.txt",\
                            "bilayer_sliding/Cr4_Dz_inter_map_2_avg.txt", Einter_Cr4);
                            
-   // read_in_intra_exchanges("bilayer_sliding/Cr1_intra.txt", Eintra_Cr1_1NN, Eintra_Cr1_2NN, Eintra_Cr1_3NN);
+//    read_in_intra_exchanges("bilayer_sliding/Cr1_intra.txt", Eintra_Cr1_1NN, Eintra_Cr1_2NN, Eintra_Cr1_3NN);
    // read_in_intra_exchanges("bilayer_sliding/Cr2_intra.txt", Eintra_Cr2_1NN, Eintra_Cr2_2NN, Eintra_Cr2_3NN);
    // read_in_intra_exchanges("bilayer_sliding/Cr3_intra.txt", Eintra_Cr3_1NN, Eintra_Cr3_2NN, Eintra_Cr3_3NN);
    // read_in_intra_exchanges("bilayer_sliding/Cr4_intra.txt", Eintra_Cr4_1NN, Eintra_Cr4_2NN, Eintra_Cr4_3NN);
