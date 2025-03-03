@@ -255,9 +255,9 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
     const double a_1 = 7.402;
     int i = 0;
     int total = 0;
-    while(i < 200){
+    while(i < 100){
         int j  = 0;
-        while( j < 200) {
+        while( j < 100) {
             getline(J_file, Jline); 
             getline(Dx_file, Dxline); 
             getline(Dy_file, Dyline); 
@@ -274,13 +274,13 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
             Dxliness >> Dx; 
             Dyliness >> Dy; 
             Dzliness >> Dz;
-            Eij.at(i*200+j)[0] = j*0.01*a_0 - a_0; //x pos
-            Eij[i*200+j][1] = (199-i)*0.01*a_1 - a_1;
+            Eij.at(i*100+j)[0] = j*0.02*a_0 - a_0; //x pos
+            Eij[i*100+j][1] = (99-i)*0.02*a_1 - a_1;
             //if(std::abs(Dz) > 0.2) std::cout << i << ", " << j << ", "  << j*0.01*a_0 - a_0 << ", " << (199-i)*0.01*a_1 - a_1 << ", " <<  Dz << std::endl;
-            Eij[i*200+j][2] = (J > 0.0) ? (J-J_inter_scaling)*J_constant*1.0 : (J-J_inter_scaling)*J_constant;
-            Eij[i*200+j][3] = DMI_inter_scaling*Dx*J_constant;
-            Eij[i*200+j][4] = DMI_inter_scaling*Dy*J_constant;
-            Eij[i*200+j][5] = DMI_inter_scaling*Dz*J_constant;
+            Eij[i*100+j][2] = (J > 0.0) ? (J-J_inter_scaling)*J_constant*1.0 : (J-J_inter_scaling)*J_constant;
+            Eij[i*100+j][3] = DMI_inter_scaling*Dx*J_constant;
+            Eij[i*100+j][4] = DMI_inter_scaling*Dy*J_constant;
+            Eij[i*100+j][5] = DMI_inter_scaling*Dz*J_constant;
             j++;
             total++;
         }
@@ -296,98 +296,127 @@ void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std:
     
 }
 
-void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_1NN, \
-                                                   std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_2NN, \
-                                                   std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_3NN ) {
+void read_in_intra_exchanges(std::string filename, std::vector<std::vector<double > > &Eij_1NN, \
+                                                   std::vector<std::vector<double > > &Eij_2NN, \
+                                                   std::vector<std::vector<double > > &Eij_3NN ) {
 
-    std::ifstream ifile2(filename);
+    std::ifstream ifile1(filename);
     std::string line;
-    if(!ifile2.is_open()) {std::cerr << filename << " is not open" << std::endl; exit(1);}
-    
-    for(int i=0; i<Eij_1NN.size(); i++){
-        for(int j = 0; j < 3; j++) {
-            getline(ifile2,line);
-            std::stringstream liness(line.c_str());
-            double r;
-            double dx;
-            double dy;
-            double dz;
-            double J;
-            double Dx;
-            double Dy;
-            double Dz;
-            double sx;
-            double sy;
-            double theta;
-            liness >> r >> dx >> dy >> dz >> J >> Dx >> Dy >> Dz >> sx >> sy;
-
-            theta = std::abs(atan2(dy,dx))*180.0/M_PI;
-            // std::cout << round(theta/30.0) << ", " << dx << ", " << dy << std::endl;
-            int int_x = int(sx*10);
-            int int_y = int(sy*10);
-            int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : (round(theta/30.0 == 3.0) ? (0):-1) );
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] = (J-J_inter_scaling*std::abs(J))*J_constant;
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] = DMI_inter_scaling*Dx*J_constant;
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] = DMI_inter_scaling*Dy*J_constant;
-            Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] = DMI_inter_scaling*Dz*J_constant;
-             std::cout  <<  Eij_1NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_1NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
-        }
-        for(int j = 0; j < 6; j++) {
-            getline(ifile2,line);
-            std::stringstream liness(line.c_str());
-            double r;
-            double dx;
-            double dy;
-            double dz;
-            double J;
-            double Dx;
-            double Dy;
-            double Dz;
-            double sx;
-            double sy;
-            double theta;
-
-            liness >> r >> dx >> dy >> dz >> J >> Dx >> Dy >> Dz >> sx >> sy;
-            theta = atan2(dy,dx);//*180.0/M_PI;
-            int theta_i = int(round(((theta < 0.0) ? (theta+=2*M_PI) : (theta)) *180.0/M_PI/60.0));
+    if(!ifile1.is_open()) {std::cerr  << " is not open" << std::endl; exit(1);}
+        std::cout << "1NN by thread " << omp_get_thread_num() << std::endl;
+    int count = 0;
+    for(int k = 0; k < 3; k++) {
+        
+        for(int i = 0; i < 100; i++) {
            
-            // if(theta_i == 0) std::cout <<  theta << ", " << dx << ", " << dy << std::endl;
-            int int_x = int(sx*10);
-            int int_y = int(sy*10);
-            // int theta_i = (theta/30.0 == 5.0) ? (2) : ((theta/30.0 == 4.0) ? (1) : (theta/30.0 == 3.0 ? (0):-1) );
-            Eij_2NN.at(int_x).at(int_y).at(theta_i)[0] = J*J_constant;
-            Eij_2NN.at(int_x).at(int_y).at(theta_i)[1] = Dx*J_constant;
-            Eij_2NN.at(int_x).at(int_y).at(theta_i)[2] = Dy*J_constant;
-            Eij_2NN.at(int_x).at(int_y).at(theta_i)[3] = Dz*J_constant;
-             std::cout  <<  Eij_2NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_2NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_2NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_2NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
-        }
-        for(int j = 0; j < 3; j++) {
-            getline(ifile2,line);
-            std::stringstream liness(line.c_str());
-            double r;
-            double dx;
-            double dy;
-            double dz;
-            double J;
-            double Dx;
-            double Dy;
-            double Dz;
-            double sx;
-            double sy;
-            double theta;
-            liness >> r >> dx >> dy >> dz >> J >> Dx >> Dy >> Dz >> sx >> sy;
-            theta = std::abs(atan2(dy,dx))*180.0/M_PI;
-            // std::cout << round(theta/30.0) << ", " << dx << ", " << dy << std::endl;
-            int int_x = int(sx*10);
-            int int_y = int(sy*10);
-            int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0) == 1.0) ? (1) : (round(theta/30.0) == 3.0 ? (0):-1) );
-            Eij_3NN.at(int_x).at(int_y).at(theta_i)[0] = J*J_constant;
-            Eij_3NN.at(int_x).at(int_y).at(theta_i)[1] = Dx*J_constant;
-            Eij_3NN.at(int_x).at(int_y).at(theta_i)[2] = Dy*J_constant;
-            Eij_3NN.at(int_x).at(int_y).at(theta_i)[3] = Dz*J_constant;
-            std::cout  <<  Eij_3NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eij_3NN.at(int_x).at(int_y).at(theta_i)[1] << ", " << Eij_3NN.at(int_x).at(int_y).at(theta_i)[2] << ", " << Eij_3NN.at(int_x).at(int_y).at(theta_i)[3] << std::endl;
+           for(int j = 0; j < 100; j++) {
+        
+                getline(ifile1,line);
+                std::stringstream liness(line.c_str());
+                
+                double dx;
+                double dy;
+                
+                double J;
+                double Dx;
+                double Dy;
+                double Dz;
+
+                double theta;
+                liness >> dx >> dy >> J >> Dx >> Dy >> Dz;
+
+                theta = std::abs(atan2(dy,dx))*180.0/M_PI;
+                
+                            // std::cout << int_x << ", " << int_y << std::endl;
+                int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : (round(theta/30.0 == 3.0) ? (0):-1) );
+                if(theta_i < 0) std::cout << k << ", " << i << ", " << j << ", " << round(theta/30.0) << ", " << dx << ", " << dy << std::endl;
+                Eij_1NN.at(i*100 + j).at(theta_i*4 + 0) = J*J_constant;
+                Eij_1NN[i*100 + j][theta_i*4 + 1] = DMI_inter_scaling*Dx*J_constant;
+                Eij_1NN[i*100 + j][theta_i*4 + 2] = DMI_inter_scaling*Dy*J_constant;
+                Eij_1NN[i*100 + j][theta_i*4 + 3] = DMI_inter_scaling*Dz*J_constant;
+            //  std::cout  <<  Eintra_Cr1_1NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eintra_Cr1_1NN.at(int_x).at(int_y).at(theta_i*4 + 1) << ", " << Eintra_Cr1_1NN.at(int_x).at(int_y).at(theta_i*4 + 2) << ", " << Eintra_Cr1_1NN.at(int_x).at(int_y).at(theta_i*4 + 3) << std::endl;
+                count++;
+            }
+       
         }
     }
+
+     std::cout << "2NN by thread " << omp_get_thread_num() << std::endl;
+    for(int k = 0; k < 6; k++) {
+       
+        for(int i = 0; i < 100; i++) {
+           
+           for(int j = 0; j < 100; j++) {
+            getline(ifile1,line);
+            std::stringstream liness(line.c_str());
+                double dx;
+                double dy;
+                
+                double J;
+                double Dx;
+                double Dy;
+                double Dz;
+                
+                double theta;
+                liness >> dx >> dy >> J >> Dx >> Dy >> Dz;
+            theta = atan2(dy,dx);//*180.0/M_PI;
+            int theta_i = int(round(((theta < 0.0) ? (theta+=2*M_PI) : (theta)) *179.0/M_PI/60.0));
+           
+            // if(theta_i == 0) std::cout <<  theta << ", " << dx << ", " << dy << std::endl;
+            if(theta_i < 0 || theta_i > 5) std::cout << k << ", " << i << ", " << j << ", " << theta << ", " << theta_i << ", " << dx << ", " << dy << std::endl;
+            // int theta_i = (theta/30.0 == 5.0) ? (2) : ((theta/30.0 == 4.0) ? (1) : (theta/30.0 == 3.0 ? (0):-1) );
+            Eij_2NN.at(i*100 + j).at(theta_i*4 + 0) = J*J_constant;
+            Eij_2NN[i*100 + j][theta_i*4 + 1] = DMI_inter_scaling*Dx*J_constant;
+            Eij_2NN[i*100 + j][theta_i*4 + 2] = DMI_inter_scaling*Dy*J_constant;
+            Eij_2NN[i*100 + j][theta_i*4 + 3] = DMI_inter_scaling*Dz*J_constant;
+            //  std::cout  <<  Eintra_Cr1_2NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eintra_Cr1_2NN.at(int_x).at(int_y).at(theta_i*4 + 1) << ", " << Eintra_Cr1_2NN.at(int_x).at(int_y).at(theta_i*4 + 2) << ", " << Eintra_Cr1_2NN.at(int_x).at(int_y).at(theta_i*4 + 3) << std::endl;
+            count++;
+            }
+        }
+        
+    }
+     std::cout << "3NN by thread " << omp_get_thread_num() << std::endl;
+    for(int k = 0; k < 3; k++) {
+        for(int i = 0; i < 100; i++) {
+           
+           for(int j = 0; j < 100; j++) {
+                getline(ifile1,line);
+                std::stringstream liness(line.c_str());
+                double dx;
+                double dy;
+                
+                double J;
+                double Dx;
+                double Dy;
+                double Dz;
+  
+                double theta;
+                liness >> dx >> dy >> J >> Dx >> Dy >> Dz;
+
+                theta = std::abs(atan2(dy,dx))*180.0/M_PI;
+                // std::cout << round(theta/30.0) << ", " << dx << ", " << dy << std::endl;
+                
+                int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0) == 1.0) ? (1) : (round(theta/30.0) == 3.0 ? (0):-1) );
+                if(theta_i < 0) std::cout << k << ", " << i << ", " << j << ", " << round(theta/30.0) << ", " << dx << ", " << dy << std::endl;
+                Eij_3NN.at(i*100 + j).at(theta_i*4 + 0) = J*J_constant;
+                Eij_3NN[i*100 + j][theta_i*4 + 1] = DMI_inter_scaling*Dx*J_constant;
+                Eij_3NN[i*100 + j][theta_i*4 + 2] = DMI_inter_scaling*Dy*J_constant;
+                Eij_3NN[i*100 + j][theta_i*4 + 3] = DMI_inter_scaling*Dz*J_constant;
+            // std::cout  <<  Eintra_Cr1_3NN.at(int_x).at(int_y).at(theta_i)[0] << ", " << Eintra_Cr1_3NN.at(int_x).at(int_y).at(theta_i*4 + 1) << ", " << Eintra_Cr1_3NN.at(int_x).at(int_y).at(theta_i*4 + 2) << ", " << Eintra_Cr1_3NN.at(int_x).at(int_y).at(theta_i*4 + 3) << std::endl;
+                count++;
+            }
+        }
+    }
+    if(count != 120000) std::cout << count  << std::endl;
+    std::ofstream intra_out("Intra_exchange_out_" + std::to_string(omp_get_thread_num()) + ".txt");
+    for(int i = 0; i < Eij_3NN.size(); i++) {
+        intra_out << int(i/100) << ", " << i%100  ;
+        for(int j = 0; j < Eij_3NN[0].size(); j++) {intra_out << ", " <<  Eij_3NN[i][j]; }
+        intra_out << "\n";
+    }
+    intra_out.close();
+
+   ifile1.close();
 }
 
 void read_in_ucf(std::ifstream &ucf_file) {

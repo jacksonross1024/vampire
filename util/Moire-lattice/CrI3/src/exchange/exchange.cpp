@@ -5,7 +5,7 @@
 #include <cmath>
 #include "initialise.hpp"
 #include "exchange.hpp"
-#include <omp.h>
+
 
 // System headers
 #include <chrono>
@@ -410,7 +410,7 @@ double nn_dist_3;
 double max_range = 9.9;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
-double J_constant = 1.0;//*eVtoJ/1000.0; //1 meV
+double J_constant = eVtoJ/1000.0; //1 meV
 double J_intra_1=2.5*J_constant;
 double J_intra_2=0.75*J_constant;
 double J_intra_3=-0.01*J_constant;
@@ -443,20 +443,20 @@ std::vector < std::vector < double > > Einter_Cr2;
 std::vector < std::vector < double > > Einter_Cr3;
 std::vector < std::vector < double > > Einter_Cr4;
 
-std::vector < std::vector < std::vector<std::vector<double > > > > Eintra_Cr1_1NN;
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr2_1NN;
-std::vector < std::vector < std::vector<std::vector<double > > > > Eintra_Cr3_1NN;
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr4_1NN;
+std::vector < std::vector < double  > > Eintra_Cr1_1NN;
+std::vector < std::vector < double  > > Eintra_Cr2_1NN;
+std::vector < std::vector < double  > > Eintra_Cr3_1NN;
+std::vector < std::vector < double  > > Eintra_Cr4_1NN;
 
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr1_2NN;
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr2_2NN;
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr3_2NN;
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr4_2NN;
+std::vector < std::vector < double  > > Eintra_Cr1_2NN;
+std::vector < std::vector < double  > > Eintra_Cr2_2NN;
+std::vector < std::vector < double  > > Eintra_Cr3_2NN;
+std::vector < std::vector < double  > > Eintra_Cr4_2NN;
 
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr1_3NN;
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr2_3NN;
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr3_3NN;
-std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr4_3NN;
+std::vector < std::vector < double  > > Eintra_Cr1_3NN;
+std::vector < std::vector < double  > > Eintra_Cr2_3NN;
+std::vector < std::vector < double  > > Eintra_Cr3_3NN;
+std::vector < std::vector < double  > > Eintra_Cr4_3NN;
 
 
 std::vector < std::vector < double > > Jintra1;
@@ -985,8 +985,8 @@ void calc_interactions() {
                                  if(atom_i.S == atom_j.S) {
                                  
                                     if(atom_i.l_id == 1) {
-                                       angle_i += twist_angle;
-                                       angle_j += twist_angle;
+                                       // angle_i += twist_angle;
+                                       // angle_j += twist_angle;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_1NN );
                                           all_m_atoms[atom_i.id].intra1_count++;
@@ -1010,8 +1010,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
                                        } else continue;                              
                                     } if(atom_i.l_id == 2) {
-                                       angle_i += twist_angle;
-                                       angle_j += twist_angle;
+                                       // angle_i += twist_angle;
+                                       // angle_j += twist_angle;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr2_1NN );
                                           all_m_atoms[atom_i.id].intra1_count++;
@@ -1035,10 +1035,11 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
                                        } else continue;                              
                                     } if(atom_i.l_id == 3) {
-                                       angle_i += twist_angle;
-                                       angle_j += twist_angle;
+                                       angle_i -= twist_angle*0.9;
+                                       angle_j -= twist_angle*0.9;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_1NN );
+                                
                                           all_m_atoms[atom_i.id].intra1_count++;
                                           all_m_atoms[atom_i.id].J_intra1 += exchange[0];
                                           all_m_atoms[atom_i.id].Dx_intra1 += exchange[1];
@@ -1060,8 +1061,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
                                        } else continue;                              
                                     }if(atom_i.l_id == 4) {
-                                       angle_i += twist_angle;
-                                       angle_j += twist_angle;
+                                       angle_i -= twist_angle*0.9;
+                                       angle_j -= twist_angle*0.9;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_1NN );
                                           all_m_atoms[atom_i.id].intra1_count++;
@@ -1174,7 +1175,7 @@ void calc_interactions() {
                                                 //yx -> -Dz              yy                      yz -> Dx
                                                  -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
                                                 //zx -> Dy               yz -> -Dx               zz
-                                                  exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0] << "\n"; }
+                                                  exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0]*1.0 << "\n"; }
                                  else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                               //xx                     xy-> Dz                 xz -> -Dy
                                  exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
@@ -1291,7 +1292,7 @@ void calc_interactions() {
       return;
 }
 
-std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij){
+std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< double > > &Eij){
    std::array<double,4> exchange({0.0});
 
    int i_x_shift, i_y_shift, j_x_shift, j_y_shift;
@@ -1303,9 +1304,9 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
       j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
       j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
    } else  {
-      i_x_shift = 6;
+      i_x_shift = 67;
       i_y_shift = 0;
-      j_x_shift = 6;
+      j_x_shift = 67;
       j_y_shift = 0;
    }
 
@@ -1318,17 +1319,26 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
    //    exit(1);
    //    return exchange;
    // }
-   exchange[0] = 0.5*(Eij.at(i_x_shift).at(i_y_shift).at(theta_i)[0]+Eij[j_x_shift][j_y_shift].at(theta_j)[0]);
-   exchange[1] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][1]+Eij[j_x_shift][j_y_shift][theta_j][1]);
-   exchange[2] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][2]+Eij[j_x_shift][j_y_shift][theta_j][2]);
-   exchange[3] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][3]+Eij[j_x_shift][j_y_shift][theta_j][3]);
-   
+   if(central_atom.S == 1 || central_atom.S == 2) {
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+   } else if(central_atom.S == 3 || central_atom.S == 4) {
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
+      exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+   }
+
    // all_m_atoms[central_atom.id].intra1++;
    // if(central_atom.S == 2) std::cout << i_x_shift << ", " << i_y_shift << ", " << j_x_shift << ", " << j_y_shift << ", " << exchange[0] << std::endl;
    return exchange;
 }
 
-std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij){
+std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<  double > > &Eij){
    std::array<double,4> exchange({0.0});
    int i_x_shift, i_y_shift, j_x_shift, j_y_shift;
    
@@ -1339,32 +1349,38 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
       j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
       j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
    } else  {
-      i_x_shift = 6;
+      i_x_shift = 67;
       i_y_shift = 0;
-      j_x_shift = 6;
+      j_x_shift = 67;
       j_y_shift = 0;
    }
    // double theta =  std::abs(angle)*180.0/M_PI;
-   int theta_i = int(round(((angle_i < 0.0) ? (angle_i+=2*M_PI) : (angle_i)) *180.0/M_PI/60.0));
+   int theta_i = int(round(((angle_i < 0.0) ? (angle_i+=2*M_PI) : (angle_i)) *179.0/M_PI/60.0));
    // theta =  std::abs(angle-180.0)*180.0/M_PI;
-   int theta_j = int(round(((angle_j < 0.0) ? (angle_j+=2*M_PI) : (angle_j)) *180.0/M_PI/60.0));
+   int theta_j = int(round(((angle_j < 0.0) ? (angle_j+=2*M_PI) : (angle_j)) *179.0/M_PI/60.0));
 
    // if( theta_i > 5 || theta_j > 5 || theta_i < 0 || theta_j < 0 ) {
    //    std::cout << "problem: " << theta_i << " , " << theta_j << ", " << angle_i << ", " << angle_j << std::endl;
    //    exit(1);
    //    return exchange;
    // }
-   exchange[0] = 0.5*(Eij.at(i_x_shift).at(i_y_shift).at(theta_i)[0]+Eij[j_x_shift][j_y_shift].at(theta_j)[0]);
-   exchange[1] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][1]+Eij[j_x_shift][j_y_shift][theta_j][1]);
-   exchange[2] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][2]+Eij[j_x_shift][j_y_shift][theta_j][2]);
-   exchange[3] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][3]+Eij[j_x_shift][j_y_shift][theta_j][3]);
-
-   // all_m_atoms[central_atom.id].intra2++;
-
+   if(central_atom.S == 1 || central_atom.S == 2) {
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+   } else if(central_atom.S == 3 || central_atom.S == 4) {
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
+      exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+   }
    return exchange;
 }
 
-std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij){
+std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< double > > &Eij){
    std::array<double,4> exchange({0.0});
 
    int i_x_shift=0, i_y_shift=0, j_x_shift =0, j_y_shift = 0;
@@ -1376,9 +1392,9 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
       j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
       j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
    } else {
-      i_x_shift = 6;
+      i_x_shift = 67;
       i_y_shift = 0;
-      j_x_shift = 6;
+      j_x_shift = 67;
       j_y_shift = 0;
    }
 
@@ -1391,11 +1407,19 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
    //    exit(1);
    //    return exchange;
    // }
-   exchange[0] = 0.5*(Eij.at(i_x_shift).at(i_y_shift).at(theta_i)[0]+Eij[j_x_shift][j_y_shift].at(theta_j)[0]);
-   exchange[1] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][1]+Eij[j_x_shift][j_y_shift][theta_j][1]);
-   exchange[2] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][2]+Eij[j_x_shift][j_y_shift][theta_j][2]);
-   exchange[3] = 0.5*(Eij[i_x_shift][i_y_shift][theta_i][3]+Eij[j_x_shift][j_y_shift][theta_j][3]);
-   
+   if(central_atom.S == 1 || central_atom.S == 2) {
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+   } else if(central_atom.S == 3 || central_atom.S == 4) {
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
+      exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+   }
    // all_m_atoms[central_atom.id].intra3++;
    // std::cout << i_x_shift << ", " << i_y_shift << ", " << j_x_shift << ", " << j_y_shift << ", " << 0.5*(J_i+J_j) << ", " << Dx*cos(twist_angle)-Dy*sin(twist_angle) << ", " <<  Dx*sin(twist_angle)+Dy*cos(twist_angle) << ", " << Dz << std::endl;
    return exchange;

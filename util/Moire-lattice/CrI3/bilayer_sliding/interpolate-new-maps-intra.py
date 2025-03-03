@@ -4,23 +4,9 @@ import numpy as np
 from scipy.interpolate import griddata
 from scipy.interpolate import CloughTocher2DInterpolator
 import matplotlib.pyplot as plt
+from scipy.ndimage import spline_filter
 
-
-path = os.getcwd() + "/Cr1_intra.txt"
-print(path)
-# x_pos = np.genfromtxt(path, dtype=None, usecols = 1)
-# y_pos = np.genfromtxt(path, dtype=None, usecols = 2)
-# J_inter = np.genfromtxt(path, dtype=None, usecols = 4)
-# Dx_inter = np.genfromtxt(path, dtype=None, usecols = 5)
-# Dy_inter = np.genfromtxt(path, dtype=None, usecols = 6)
-# Dz_inter = np.genfromtxt(path, dtype=None, usecols = 7)
-# shift_x = np.genfromtxt(path, dtype=None, usecols = 8)
-# shift_y = np.genfromtxt(path, dtype=None, usecols = 9)
-intra_data = np.genfromtxt(path, dtype=float, delimiter='\t', unpack='False')
-#print(intra_data[4][::12])
-
-
-grid_x, grid_y = np.mgrid[0:6.002:40j, 0:6.93:40j]
+grid_x, grid_y = np.mgrid[0:1:100j, 0:1:100j]
 grid_J = np.array((40,40))
 grid_Dx = np.array((40,40))
 grid_Dy = np.array((40,40))
@@ -28,217 +14,146 @@ grid_Dz = np.array((40,40))
 plt.plot()
 plt.gcf().set_size_inches(6, 8)
 #print(x_pos[...])
+J_avg = [[[]]]
+Dx_avg = [[[]]]
+Dy_avg = [[[]]]
+Dz_avg = [[[]]]
+
+file1 = 'Cr1_intra'
+file2 = 'Cr2_intra'
+file3 = 'Cr3_intra'
+file4 = 'Cr4_intra'
+#for file in ["Cr1_intra", "Cr2_intra", "Cr3_intra", "Cr4_intra"]:
+path1 = os.getcwd() + "/" + file1 + ".txt"
+path2 = os.getcwd() + "/" + file2 + ".txt"
+path3 = os.getcwd() + "/" + file3 + ".txt"
+path4 = os.getcwd() + "/" + file4 + ".txt"
+
+
+#with open(file + '_data.txt', 'wb') as f:
+f1 = open(file1 + '_data.txt', 'wb')
+f2 = open(file2 + '_data.txt', 'wb')
+f3 = open(file3 + '_data.txt', 'wb')
+f4 = open(file4 + '_data.txt', 'wb')
+intra_data1 = np.genfromtxt(path1, dtype=float, delimiter='\t', unpack='False')
+intra_data2 = np.genfromtxt(path2, dtype=float, delimiter='\t', unpack='False')
+intra_data3 = np.genfromtxt(path3, dtype=float, delimiter='\t', unpack='False')
+intra_data4 = np.genfromtxt(path4, dtype=float, delimiter='\t', unpack='False')
 for i in range(12):
-    grid_Ji  = griddata((6.93*intra_data[8][i::12],6.002*intra_data[9][i::12]),intra_data[4][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
-    grid_Dx1_1 = griddata((6.93*intra_data[8][i::12],6.002*intra_data[9][i::12]),intra_data[5][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
-    grid_Dy1_1 = griddata((6.93*intra_data[8][i::12],6.002*intra_data[9][i::12]),intra_data[6][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
-    grid_Dz1_1 = griddata((6.93*intra_data[8][i::12],6.002*intra_data[9][i::12]),intra_data[7][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Ji_1  = griddata((intra_data1[8][i::12], intra_data1[9][i::12]), intra_data1[4][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dx1_1 = griddata((intra_data1[8][i::12], intra_data1[9][i::12]),intra_data1[5][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dy1_1 = griddata((intra_data1[8][i::12], intra_data1[9][i::12]),intra_data1[6][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dz1_1 = griddata((intra_data1[8][i::12], intra_data1[9][i::12]),intra_data1[7][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
 
+    grid_Ji_2  = griddata((intra_data2[8][i::12], intra_data2[9][i::12]), intra_data2[4][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dx1_2 = griddata((intra_data2[8][i::12], intra_data2[9][i::12]),intra_data2[5][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dy1_2 = griddata((intra_data2[8][i::12], intra_data2[9][i::12]),intra_data2[6][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dz1_2 = griddata((intra_data2[8][i::12], intra_data2[9][i::12]),intra_data2[7][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
 
-    plt.imshow(grid_Dx1_1.T, extent=(0.0,6.93, 0.0,6.002), origin='lower')
-    plt.title("Cr1_intra " + str(i))
-    plt.savefig("Cr_J_" + str(i) + "_intra.png", bbox_inches = 'tight')
+    grid_Ji_3  = griddata((intra_data3[8][i::12], intra_data3[9][i::12]), intra_data3[4][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dx1_3 = griddata((intra_data3[8][i::12], intra_data3[9][i::12]),intra_data3[5][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dy1_3 = griddata((intra_data3[8][i::12], intra_data3[9][i::12]),intra_data3[6][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dz1_3 = griddata((intra_data3[8][i::12], intra_data3[9][i::12]),intra_data3[7][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
 
+    grid_Ji_4  = griddata((intra_data4[8][i::12], intra_data4[9][i::12]), intra_data4[4][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dx1_4 = griddata((intra_data4[8][i::12], intra_data4[9][i::12]),intra_data4[5][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dy1_4 = griddata((intra_data4[8][i::12], intra_data4[9][i::12]),intra_data4[6][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    grid_Dz1_4 = griddata((intra_data4[8][i::12], intra_data4[9][i::12]),intra_data4[7][i::12], (grid_x, grid_y), method="cubic", fill_value=0.0)
+    
+    grid_J_avg = np.add(np.add(np.add(grid_Ji_1, grid_Ji_2), grid_Ji_3), grid_Ji_4)/4.0
+    if(i < 3 or i > 8): 
+        grid_Dx_avg = np.add(np.add(np.add(grid_Dx1_1, -1*grid_Dx1_2), -1*grid_Dx1_3), grid_Dx1_1)/4.0
+        grid_Dy_avg = np.add(np.add(np.add(grid_Dy1_1, -1*grid_Dy1_2), -1*grid_Dy1_3), grid_Dy1_4)/4.0
+        grid_Dz_avg = np.add(np.add(np.add(grid_Dz1_1, -1*grid_Dz1_2), -1*grid_Dz1_3), grid_Dz1_4)/4.0
 
+        x_vec1 = np.full((np.size(grid_J_avg),1), intra_data1[1][i])
+        y_vec1 = np.full((np.size(grid_J_avg),1), intra_data1[2][i])
+        x_vec2 = np.full((np.size(grid_J_avg),1), intra_data2[1][i])
+        y_vec2 = np.full((np.size(grid_J_avg),1), intra_data2[2][i])
+        x_vec3 = np.full((np.size(grid_J_avg),1), intra_data3[1][i])
+        y_vec3 = np.full((np.size(grid_J_avg),1), intra_data3[2][i])
+        x_vec4 = np.full((np.size(grid_J_avg),1), intra_data4[1][i])
+        y_vec4 = np.full((np.size(grid_J_avg),1), intra_data4[2][i])
 
-path = os.getcwd() + "/Cr2_inter.txt"
-print(path)
-x_pos = np.genfromtxt(path, dtype=None, usecols = 1)
-y_pos = np.genfromtxt(path, dtype=None, usecols = 2)
-J_inter = np.genfromtxt(path, dtype=None, usecols = 4)
-Dx_inter = np.genfromtxt(path, dtype=None, usecols = 5)
-Dy_inter = np.genfromtxt(path, dtype=None, usecols = 6)
-Dz_inter = np.genfromtxt(path, dtype=None, usecols = 7)
-y_pos = y_pos*-1
+        x_shift = np.reshape(grid_x, (np.size(grid_J_avg),1))
+        y_shift = np.reshape(grid_y, (np.size(grid_J_avg),1))
 
-#grid_x, grid_y = np.mgrid[np.min(x_pos):np.max(x_pos):200j, np.min(y_pos):np.max(y_pos):200j]
-#print(x_pos[...])
-grid_J2 = griddata((x_pos,y_pos),J_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr2_J_inter_map_2.txt", (-1*(grid_J2.T) ), delimiter='\t', fmt='%.4f')
-grid_D2x = griddata((x_pos,y_pos), Dx_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr2_Dx_inter_map_2.txt", -1*(grid_D2x.T ), delimiter='\t', fmt='%.4f')
-y_pos = y_pos*-1
-grid_D2y = griddata((x_pos,y_pos), Dy_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr2_Dy_inter_map_2.txt", -1*(grid_D2y.T ), delimiter='\t', fmt='%.4f')
-grid_D2z = griddata((x_pos,y_pos), Dz_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr2_Dz_inter_map_2.txt", -1*(grid_D2z.T ), delimiter='\t', fmt='%.4f')
+        J_data1 = np.reshape(grid_J_avg.T, (np.size(grid_J_avg),1))
+        Dx_data1 = np.reshape(grid_Dx_avg.T, (np.size(grid_Dx_avg),1))
+        Dy_data1 = np.reshape(grid_Dy_avg.T, (np.size(grid_Dy_avg),1))
+        Dz_data1 = np.reshape(grid_Dz_avg.T, (np.size(grid_Dz_avg),1))
 
-grid_J = np.add(grid_J1, grid_J2,  dtype=np.float64)
-grid_Dx = np.add(grid_D1x, -1*grid_D2x,  dtype=np.float64)
-grid_Dy = np.add(grid_D1y, -1*grid_D2y,  dtype=np.float64)
-grid_Dz = np.add(grid_D1z, -1*grid_D2z,  dtype=np.float64)
+        J_data2 = np.reshape(grid_J_avg.T, (np.size(grid_J_avg),1))
+        Dx_data2 = np.reshape(grid_Dx_avg.T, (np.size(grid_Dx_avg),1))
+        Dy_data2 = np.reshape(grid_Dy_avg.T, (np.size(grid_Dy_avg),1))
+        Dz_data2 = np.reshape(grid_Dz_avg.T, (np.size(grid_Dz_avg),1))
 
-path = os.getcwd() + "/Cr3_inter.txt"
-print(path)
-x_pos = np.genfromtxt(path, dtype=None, usecols = 1)
-y_pos = np.genfromtxt(path, dtype=None, usecols = 2)
-J_inter = np.genfromtxt(path, dtype=None, usecols = 4)
-Dx_inter = np.genfromtxt(path, dtype=None, usecols = 5)
-Dy_inter = np.genfromtxt(path, dtype=None, usecols = 6)
-Dz_inter = np.genfromtxt(path, dtype=None, usecols = 7)
-x_pos = x_pos * -1
+        J_data3 = np.reshape(grid_J_avg.T, (np.size(grid_J_avg),1))
+        Dx_data3 = np.reshape(grid_Dx_avg.T, (np.size(grid_Dx_avg),1))
+        Dy_data3 = np.reshape(grid_Dy_avg.T, (np.size(grid_Dy_avg),1))
+        Dz_data3 = np.reshape(grid_Dz_avg.T, (np.size(grid_Dz_avg),1))
 
-#grid_x, grid_y = np.mgrid[np.min(x_pos):np.max(x_pos):200j, np.min(y_pos):np.max(y_pos):200j]
-#print(x_pos[...])
-grid_J3 = griddata((x_pos,y_pos), J_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr3_J_inter_map_2.txt", (grid_J3.T ), delimiter='\t', fmt='%.4f')
-grid_D3x = griddata((x_pos,y_pos), Dx_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr3_Dx_inter_map_2.txt", -1*(grid_D3x.T ), delimiter='\t', fmt='%.4f')
-grid_D3y = griddata((x_pos,y_pos), Dy_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr3_Dy_inter_map_2.txt", (grid_D3y.T ), delimiter='\t', fmt='%.4f')
-grid_D3z = griddata((x_pos,y_pos), Dz_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr3_Dz_inter_map_2.txt", -1*(grid_D3z.T ), delimiter='\t', fmt='%.4f')
+        J_data4 = np.reshape(grid_J_avg.T, (np.size(grid_J_avg),1))
+        Dx_data4 = np.reshape(grid_Dx_avg.T, (np.size(grid_Dx_avg),1))
+        Dy_data4 = np.reshape(grid_Dy_avg.T, (np.size(grid_Dy_avg),1))
+        Dz_data4 = np.reshape(grid_Dz_avg.T, (np.size(grid_Dz_avg),1))
 
-grid_J = np.add(grid_J, grid_J3,  dtype=np.float64)
-grid_Dx = np.add(grid_Dx, -1*grid_D3x,  dtype=np.float64)
-grid_Dy = np.add(grid_Dy, grid_D3y,  dtype=np.float64)
-grid_Dz = np.add(grid_Dz, -1*grid_D3z,  dtype=np.float64)
+        np.savetxt(file1 + "_" + str(i) + "avg.txt", (np.concatenate((x_shift, y_shift, J_data1, Dx_data1, Dy_data1, Dz_data1), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(file2 + "_" + str(i) + "avg.txt", (np.concatenate((x_shift, y_shift, J_data2, Dx_data2, Dy_data2, Dz_data2), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(file3 + "_" + str(i) + "avg.txt", (np.concatenate((x_shift, y_shift, J_data3, Dx_data3, Dy_data3, Dz_data3), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(file4 + "_" + str(i) + "avg.txt", (np.concatenate((x_shift, y_shift, J_data4, Dx_data4, Dy_data4, Dz_data4), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(f1, (np.concatenate((x_vec1, y_vec1, J_data1, Dx_data1, Dy_data1, Dz_data1), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(f2, (np.concatenate((x_vec2, y_vec2, J_data2, -1*Dx_data2, -1*Dy_data2, -1*Dz_data2), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(f3, (np.concatenate((x_vec3, y_vec3, J_data3, -1*Dx_data3, -1*Dy_data3, -1*Dz_data3), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(f4, (np.concatenate((x_vec4, y_vec4, J_data4, Dx_data4, Dy_data4, Dz_data4), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
 
-path = os.getcwd() + "/Cr4_inter.txt"
-print(path)
-x_pos = np.genfromtxt(path, dtype=None, usecols = 1)
-y_pos = np.genfromtxt(path, dtype=None, usecols = 2)
-J_inter = np.genfromtxt(path, dtype=None, usecols = 4)
-Dx_inter = np.genfromtxt(path, dtype=None, usecols = 5)
-Dy_inter = np.genfromtxt(path, dtype=None, usecols = 6)
-Dz_inter = np.genfromtxt(path, dtype=None, usecols = 7)
+    elif(i < 9):
+        # grid_Dx_avg = grid_Dx1_1 # np.add(np.add(np.add(grid_Dx1_1, -1*grid_Dx1_2), -1*grid_Dx1_3), grid_Dx1_1)/4.0
+        # grid_Dy_avg = grid_Dy1_1 #np.add(np.add(np.add(grid_Dy1_1, -1*grid_Dy1_2), -1*grid_Dy1_3), grid_Dy1_4)/4.0
+        # grid_Dz_avg = np.add(np.add(np.add(grid_Dz1_1, -1*grid_Dz1_2), -1*grid_Dz1_3), grid_Dz1_4)/4.0
 
-x_pos = x_pos*-1
-y_pos = y_pos*-1
+        x_vec1 = np.full((np.size(grid_J_avg),1), intra_data1[1][i])
+        y_vec1 = np.full((np.size(grid_J_avg),1), intra_data1[2][i])
+        x_vec2 = np.full((np.size(grid_J_avg),1), intra_data2[1][i])
+        y_vec2 = np.full((np.size(grid_J_avg),1), intra_data2[2][i])
+        x_vec3 = np.full((np.size(grid_J_avg),1), intra_data3[1][i])
+        y_vec3 = np.full((np.size(grid_J_avg),1), intra_data3[2][i])
+        x_vec4 = np.full((np.size(grid_J_avg),1), intra_data4[1][i])
+        y_vec4 = np.full((np.size(grid_J_avg),1), intra_data4[2][i])
 
-#grid_x, grid_y = np.mgrid[np.min(x_pos):np.max(x_pos):200j, np.min(y_pos):np.max(y_pos):200j]
-#print(x_pos[...])
-grid_J4 = griddata((x_pos,y_pos), J_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr4_J_inter_map_2.txt", (grid_J4.T ), delimiter='\t', fmt='%.4f')
-grid_D4x = griddata((x_pos,y_pos), Dx_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr4_Dx_inter_map_2.txt", (grid_D4x.T ), delimiter='\t', fmt='%.4f')
-grid_D4y = griddata((x_pos,y_pos), Dy_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr4_Dy_inter_map_2.txt", (grid_D4y.T ), delimiter='\t', fmt='%.4f')
-grid_D4z = griddata((x_pos,y_pos), Dz_inter, (grid_x, grid_y), method="cubic", fill_value=0.0)
-np.savetxt("Cr4_Dz_inter_map_2.txt", (grid_D4z.T ), delimiter='\t', fmt='%.4f')
+        x_shift = np.reshape(grid_x, (np.size(grid_J_avg),1))
+        y_shift = np.reshape(grid_y, (np.size(grid_J_avg),1))
 
-grid_J = np.add(grid_J, grid_J4,  dtype=np.float64)/4.0
-grid_Dx = np.add(grid_Dx, grid_D4x,  dtype=np.float64)/4.0
-grid_Dy = np.add(grid_Dy, grid_D4y,  dtype=np.float64)/4.0
-grid_Dz = np.add(grid_Dz, grid_D4z,  dtype=np.float64)/4.0
+        J_data1 = np.reshape(grid_J_avg.T, (np.size(grid_J_avg),1))
+        Dx_data1 = np.reshape(grid_Dx1_1.T, (np.size(grid_Dx1_1),1))
+        Dy_data1 = np.reshape(grid_Dy1_1.T, (np.size(grid_Dy1_1),1))
+        Dz_data1 = np.reshape(grid_Dz1_1.T, (np.size(grid_Dz1_1),1))
 
-np.savetxt("J_total_inter_map_2.txt", (grid_J.T), delimiter='\t', fmt='%.4f')
-np.savetxt("Dx_total_inter_map_2.txt", (grid_Dx.T), delimiter='\t', fmt='%.4f')
-np.savetxt("Dy_total_inter_map_2.txt", (grid_Dy.T), delimiter='\t', fmt='%.4f')
-np.savetxt("Dz_total_inter_map_2.txt", (grid_Dz.T), delimiter='\t', fmt='%.4f')
+        J_data2 = np.reshape(grid_J_avg.T, (np.size(grid_J_avg),1))
+        Dx_data2 = np.reshape(grid_Dx1_2.T, (np.size(grid_Dx1_2),1))
+        Dy_data2 = np.reshape(grid_Dy1_2.T, (np.size(grid_Dy1_2),1))
+        Dz_data2 = np.reshape(grid_Dz1_2.T, (np.size(grid_Dz1_2),1))
 
-np.savetxt("Cr1_inter_map_2.txt", np.ravel(grid_J.T), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr1_Dx_inter_map_2_avg.txt", np.ravel(grid_Dx.T ), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr1_Dy_inter_map_2_avg.txt", np.ravel(grid_Dy.T ), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr1_Dz_inter_map_2_avg.txt", np.ravel(grid_Dz.T ), delimiter='\t', fmt='%.4f')
+        J_data3 = np.reshape(grid_J_avg.T, (np.size(grid_J_avg),1))
+        Dx_data3 = np.reshape(grid_Dx1_1.T, (np.size(grid_Dx1_1),1))
+        Dy_data3 = np.reshape(grid_Dy1_1.T, (np.size(grid_Dy1_1),1))
+        Dz_data3 = np.reshape(grid_Dz1_1.T, (np.size(grid_Dz1_1),1))
 
-np.savetxt("Cr2_inter_map_2.txt", np.ravel(np.flip(grid_J.T,0)), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr2_Dx_inter_map_2_avg.txt", np.ravel(-1*(np.flip(grid_Dx.T, 0) )), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr2_Dy_inter_map_2_avg.txt", np.ravel(-1*(grid_Dy.T )), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr2_Dz_inter_map_2_avg.txt", np.ravel(-1*(grid_Dz.T )), delimiter='\t', fmt='%.4f')
+        J_data4 = np.reshape(grid_J_avg.T, (np.size(grid_J_avg),1))
+        Dx_data4 = np.reshape(grid_Dx1_2.T, (np.size(grid_Dx1_2),1))
+        Dy_data4 = np.reshape(grid_Dy1_2.T, (np.size(grid_Dy1_2),1))
+        Dz_data4 = np.reshape(grid_Dz1_2.T, (np.size(grid_Dz1_2),1))
 
-np.savetxt("Cr3_inter_map_2.txt", np.ravel(np.flip(grid_J.T,1)), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr3_Dx_inter_map_2_avg.txt", np.ravel(-1*np.flip(grid_Dx.T,1 )), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr3_Dy_inter_map_2_avg.txt", np.ravel(np.flip(grid_Dy.T,1 )), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr3_Dz_inter_map_2_avg.txt", np.ravel(-1*np.flip(grid_Dz.T,1 )), delimiter='\t', fmt='%.4f')
-
-np.savetxt("Cr4_inter_map_2.txt", np.ravel(np.flip(grid_J.T, (0,1))), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr4_Dx_inter_map_2_avg.txt", np.ravel(np.flip(grid_Dx.T, (0,1) )), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr4_Dy_inter_map_2_avg.txt", np.ravel(np.flip(grid_Dy.T, (0,1) )), delimiter='\t', fmt='%.4f')
-np.savetxt("Cr4_Dz_inter_map_2_avg.txt", np.ravel(np.flip(grid_Dz.T, (0,1) )), delimiter='\t', fmt='%.4f')
+        np.savetxt(file1 + "_" + str(i) + "avg.txt", (np.concatenate((x_shift, y_shift, J_data1, Dx_data1, Dy_data1, Dz_data1), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(file2 + "_" + str(i) + "avg.txt", (np.concatenate((x_shift, y_shift, J_data2, Dx_data2, Dy_data2, Dz_data2), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(file3 + "_" + str(i) + "avg.txt", (np.concatenate((x_shift, y_shift, J_data3, -1*Dx_data3, -1*Dy_data3, -1*Dz_data3), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(file4 + "_" + str(i) + "avg.txt", (np.concatenate((x_shift, y_shift, J_data4, -1*Dx_data4, -1*Dy_data4, -1*Dz_data4), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(f1, (np.concatenate((x_vec1, y_vec1, J_data1, Dx_data1, Dy_data1, Dz_data1), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(f2, (np.concatenate((x_vec2, y_vec2, J_data2, Dx_data2, Dy_data2, Dz_data2), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(f3, (np.concatenate((x_vec3, y_vec3, J_data3, -1*Dx_data3, -1*Dy_data3, -1*Dz_data3), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
+        np.savetxt(f4, (np.concatenate((x_vec4, y_vec4, J_data4, -1*Dx_data4, -1*Dy_data4, -1*Dz_data4), axis=1)) , delimiter='\t', newline='\n', fmt='%.4f')
 
 
 
-plt.subplot(422)
-plt.imshow(grid_J.T, extent=(-7.276,7.276,-7.402,7.402), origin='lower', interpolation='spline36')
-plt.title("Cr1_inter")
-plt.subplot(424)
-plt.imshow(np.flip(grid_J.T,0), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr2_inter")
-plt.subplot(426)
-plt.imshow(np.flip(grid_J.T,1), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr3_inter")
-plt.subplot(428)
-plt.imshow(np.flip(grid_J.T, (0,1)), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr4_inter")
 
-plt.subplot(421)
-plt.imshow(grid_J1.T, extent=(-7.276,7.276,-7.402,7.402), origin='lower', interpolation='spline36')
-plt.title("Cr1_inter")
-plt.subplot(423)
-plt.imshow(np.flip(grid_J2.T,0), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr2_inter")
-plt.subplot(425)
-plt.imshow(np.flip(grid_J3.T,1), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr3_inter")
-plt.subplot(427)
-plt.imshow(np.flip(grid_J4.T, (0,1)), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr4_inter")
 
-plt.gcf().set_size_inches(6, 8)
-
-plt.savefig("Cr_J_inter.png", bbox_inches = 'tight')
-
-plt.subplot(422)
-plt.imshow(grid_Dx.T, extent=(-7.276,7.276,-7.402,7.402), origin='lower', interpolation='spline36')
-plt.title("Cr1_inter")
-plt.subplot(424)
-plt.imshow(-1*(np.flip(grid_Dx.T, 0) ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr2_inter")
-plt.subplot(426)
-plt.imshow(-1*np.flip(grid_Dx.T,1 ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr3_inter")
-plt.subplot(428)
-plt.imshow(np.flip(grid_Dx.T, (0,1) ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr4_Dy_inter")
-
-plt.subplot(421)
-plt.imshow(grid_D1x.T, extent=(-7.276,7.276,-7.402,7.402), origin='lower', interpolation='spline36')
-plt.title("Cr1_inter")
-plt.subplot(423)
-plt.imshow(-1*(np.flip(grid_D2x.T, 0) ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr2_inter")
-plt.subplot(425)
-plt.imshow(-1*np.flip(grid_D3x.T,1 ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr3_inter")
-plt.subplot(427)
-plt.imshow(np.flip(grid_D4x.T, (0,1) ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr4_Dy_inter")
-
-plt.gcf().set_size_inches(6, 6)
-
-plt.savefig("Cr_Dx_inter.png", bbox_inches = 'tight')
-
-plt.subplot(221)
-plt.imshow(grid_Dy.T, extent=(-7.276,7.276,-7.402,7.402), origin='lower', interpolation='spline36')
-plt.title("Cr1_inter")
-plt.subplot(222)
-plt.imshow(-1*(grid_Dy.T ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr2_inter")
-plt.subplot(223)
-plt.imshow(np.flip(grid_Dy.T,1 ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr3_inter")
-plt.subplot(224)
-plt.imshow(np.flip(grid_Dy.T, (0,1) ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr4_Dy_inter")
-
-plt.gcf().set_size_inches(6, 6)
-
-plt.savefig("Cr_Dy_inter.png", bbox_inches = 'tight')
-
-plt.subplot(221)
-plt.imshow(grid_Dz.T, extent=(-7.276,7.276,-7.402,7.402), origin='lower', interpolation='spline36')
-plt.title("Cr1_inter")
-plt.subplot(222)
-plt.imshow(-1*(grid_Dz.T ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr2_inter")
-plt.subplot(223)
-plt.imshow(-1*np.flip(grid_Dz.T,1 ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr3_inter")
-plt.subplot(224)
-plt.imshow(np.flip(grid_Dz.T, (0,1) ), extent=(-7.276,7.276,-7.402,7.402), origin='lower')
-plt.title("Cr4_Dz_inter")
-
-plt.gcf().set_size_inches(6, 6)
-
-plt.savefig("Cr_Dz_inter.png", bbox_inches = 'tight')
