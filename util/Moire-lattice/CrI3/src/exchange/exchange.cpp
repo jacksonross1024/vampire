@@ -487,7 +487,10 @@ std::vector <double > crossProduct(std::vector <double >A, std::vector <double >
 
 void print_interaction_header(){
    std::ofstream outfile3 ("header_interactions.ucf");
-   outfile3 << number_of_interactions <<  "\t" << "tensorial"<< std::endl;//<<" 0 0 0 "<<J3S2_x << " 0 0 0 " << J3S2_z << std::endl;
+   std::string interaction_type;
+   if(DMI) interaction_type = "tensorial";
+   else interaction_type = "normalised-isotropic";
+   outfile3 << number_of_interactions <<  "\t" << interaction_type << std::endl;//<<" 0 0 0 "<<J3S2_x << " 0 0 0 " << J3S2_z << std::endl;
    
 }
 
@@ -1178,11 +1181,12 @@ void calc_interactions() {
                                                   exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0]*1.0 << "\n"; }
                                  else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                               //xx                     xy-> Dz                 xz -> -Dy
-                                 exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
+                                 exchange[0] << "\n";// << 0.0 << "\t" << 0.0 << "\t" << \
                               //yx -> -Dz              yy                      yz -> Dx
-                                 0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
+                             //    0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
                               //zx -> Dy               yz -> -Dx               zz
-                                 0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; }
+                              //   0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; 
+                                 }
                                     // config_energy.at(atom_i.unit_x_lr).at(atom_i.unit_y_lr).at((atom_i.S-1)*5+0) += 1.0;
                                     // config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*5+1] += exchange[0]/J_constant;
                                     // config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*5+2] += exchange[1]/J_constant;

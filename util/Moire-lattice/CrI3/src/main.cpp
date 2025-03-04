@@ -23,7 +23,8 @@ int main(int argc, char* argv[]){
         std::cout << "max inter exchange range: " << max_range << std::endl;}
         if(a == 3) {
             if(argv[a]== dmi_check) {DMI = false;
-            std::cout << " with DMI " << std::endl;}
+            J_constant = 1.0;//eVtoJ/1000.0; //1 meV
+            std::cout << " without DMI " << std::endl;}
         }
         if(a == 4) {
             J_inter_scaling = atof(argv[a]);
@@ -46,6 +47,7 @@ int main(int argc, char* argv[]){
             std::cout << " J intra exchange scaling: " << J_intra_reduction << std::endl;
         }
     }
+
 
    system_size_x = 1000;//  25.00
    system_size_y = 1000; //4000
