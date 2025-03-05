@@ -822,6 +822,11 @@ void calc_interactions() {
    inter_AB_dist_3 *= inter_AB_dist_3;
 
    const double bsize = 1.2*range;
+
+   Jinter1_AB = 0.1379*J_constant;
+   Jinter2_AB = -0.10125*J_constant;
+   Jinter3_AB = -0.035*J_constant;
+   
    std::cout << "Generating Moire unit cell...." << std::flush;
    // calculate min and max xyz
    // double min[3] = {1.0e8, 1.0e8, 1.0e8};
