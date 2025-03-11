@@ -135,12 +135,15 @@ void create_magnetic_atom_list(std::string filename){
                         // double changex = std::abs(x_new - x_j);
                         // double changey = std::abs(y_new - y_j);
                         
-                        int dy_cell = int(floor((y_new +0.000000)/ a1y));
-                        // changex += dy_cell*std::abs(a1x);
-                        int dx_cell = int(floor((x_new + 0.000000)/ a0x));
+                        
                         
                         new_atom.unit_y_lr = int(floor((y_new +0.000000)/ (2*a1y)));
                         new_atom.unit_x_lr = int(floor((x_new +0.000000)/ (2*a0x)));
+
+                        int dy_cell = new_atom.unit_y_lr;
+                        // changex += dy_cell*std::abs(a1x);
+                        int dx_cell = new_atom.unit_x_lr;
+
                         // double unit_x = dx_cell*a0x + dy_cell*a1x + atom[atom_i].x;
                         // double unit_y = dy_cell*a1y + atom[atom_i].y;
                         // int changex = round(-100.0*remainder(x_new - x_j,a0x)/a0x)+100;
@@ -155,15 +158,14 @@ void create_magnetic_atom_list(std::string filename){
                         double changey = (y_new - y_ref)/a1y;
                         
                         if(changey < 0.0) changey += 1.0;
-                        else if (changey > 1.0) changey -= 1.0;
-
-
+                        else if (changey >= 1.0) changey -= 1.0;
                         double changex = (x_new - (x_ref + changey*a1x))/a0x;
                         // double changex = (x_new - (x_ref))/a0x;
                         if(changex < 0.0) changex += 1.0;
-                        else if (changex >= 1.0) changex -= 1.0;
-
-                        
+                        else if (changex > 1.0) changex -= 1.0;
+                         
+                        // changey = fabs(changey);
+                        // changex = fabs(changex);
                         int dx = int(round(changex*99.0));
                         int dy = int(round(changey*99.0));
 
@@ -238,11 +240,15 @@ void create_magnetic_atom_list(std::string filename){
                      new_atom.l_id = atom[atom_i].l_id;
                      new_atom.h_id = atom[atom_i].h_id;
                      // new_atom.S = 0;
-                     new_atom.unit_y = int(floor((y_new +0.00000)/ a1y));
-                     new_atom.unit_x = int(floor((x_new +0.00000)/ a0x));
+                     // new_atom.unit_y = int(floor((y_new +0.00000)/ a1y));
+                     // new_atom.unit_x = int(floor((x_new +0.00000)/ a0x));
 
                      new_atom.unit_y_lr = int(floor((y_new +0.000000)/ (2*a1y)));
                      new_atom.unit_x_lr = int(floor((x_new +0.000000)/ (2*a0x)));
+
+                     new_atom.unit_x = new_atom.unit_x_lr;
+                     new_atom.unit_y = new_atom.unit_y_lr;
+
                      if(new_atom.unit_x  >= number_of_unit_cells_x || new_atom.unit_y >= number_of_unit_cells_y || \
                         new_atom.unit_x  < 0 || new_atom.unit_y < 0) {
                         std::cerr << new_atom.unit_x  << ", " << new_atom.unit_y  << ", " << x_j << ", " << y_j << ", " << \
@@ -287,9 +293,14 @@ void create_magnetic_atom_list(std::string filename){
    // }
    for(int i = 0; i < unit_cell_shifts.size(); i++){
       for (int j = 0; j < unit_cell_shifts[i].size(); j++) {
-         double occupancy = std::max(1,unit_cell_shifts[i][j][0]);
-         unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
-         unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
+         int occupancy = unit_cell_shifts[i][j][0];
+         if(occupancy > 0) {
+            unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
+            unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
+         } else {
+            unit_cell_shifts[i][j][1] = 67;
+         }
+        
          int i_shift = unit_cell_shifts[i][j][1];
          int j_shift = unit_cell_shifts[i][j][2];
          //  std::cout << "problems " << unit_cell_shifts[i][j][2] << ", " << j_shift << ", " << occupancy << std::endl;

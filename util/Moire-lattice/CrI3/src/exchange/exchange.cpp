@@ -1043,8 +1043,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
                                        } else continue;                              
                                     } if(atom_i.l_id == 3) {
-                                       angle_i -= twist_angle*0.9;
-                                       angle_j -= twist_angle*0.9;
+                                       angle_i -= twist_angle*0.99;
+                                       angle_j -= twist_angle*0.99;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_1NN );
                                 
@@ -1069,8 +1069,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
                                        } else continue;                              
                                     }if(atom_i.l_id == 4) {
-                                       angle_i -= twist_angle*0.9;
-                                       angle_j -= twist_angle*0.9;
+                                       angle_i -= twist_angle*0.99;
+                                       angle_j -= twist_angle*0.99;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_1NN );
                                           all_m_atoms[atom_i.id].intra1_count++;
@@ -1329,17 +1329,17 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
    //    return exchange;
    // }
    if(central_atom.S == 1 || central_atom.S == 2) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
-      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
    } else if(central_atom.S == 3 || central_atom.S == 4) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
-      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
       exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
    }
 
    // all_m_atoms[central_atom.id].intra1++;
@@ -1374,17 +1374,17 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
    //    return exchange;
    // }
    if(central_atom.S == 1 || central_atom.S == 2) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
-      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
    } else if(central_atom.S == 3 || central_atom.S == 4) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
-      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
       exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
    }
    return exchange;
 }
@@ -1417,17 +1417,17 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
    //    return exchange;
    // }
    if(central_atom.S == 1 || central_atom.S == 2) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
-      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
    } else if(central_atom.S == 3 || central_atom.S == 4) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0)+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
-      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
       exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3]+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
    }
    // all_m_atoms[central_atom.id].intra3++;
    // std::cout << i_x_shift << ", " << i_y_shift << ", " << j_x_shift << ", " << j_y_shift << ", " << 0.5*(J_i+J_j) << ", " << Dx*cos(twist_angle)-Dy*sin(twist_angle) << ", " <<  Dx*sin(twist_angle)+Dy*cos(twist_angle) << ", " << Dz << std::endl;

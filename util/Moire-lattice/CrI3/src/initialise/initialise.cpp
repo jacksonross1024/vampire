@@ -144,12 +144,16 @@ void initialise_variables(){
    int estimated_system_spins = round(system_size_x*system_size_y*8.0/41.8);
 
    all_m_atoms.reserve(estimated_system_spins);
-
-   unit_cell_shifts.resize(number_of_unit_cells_x);
-   for(int i = 0; i < number_of_unit_cells_x; i++) {
-      unit_cell_shifts[i].resize(number_of_unit_cells_y);
-      for(int j = 0; j < number_of_unit_cells_y; j++) {
-         unit_cell_shifts[i][j].resize(3,0);
+   std::vector<int> default_shift(3,0);
+   default_shift[0] = 1;
+   default_shift[1] = 67;
+   default_shift[2] = 0;
+   unit_cell_shifts.resize(number_of_unit_cells_x/2);
+   for(int i = 0; i < number_of_unit_cells_x/2; i++) {
+      unit_cell_shifts[i].resize(number_of_unit_cells_y/2);
+      for(int j = 0; j < number_of_unit_cells_y/2; j++) {
+         unit_cell_shifts[i][j].resize(3, 0);
+         // unit_cell_shifts[i][j] = default_shift;
       }
    }
 
