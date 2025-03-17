@@ -192,14 +192,14 @@ void create_magnetic_atom_list(std::string filename){
                            unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
                            unit_cell_shifts[dx_cell][dy_cell][1] += dx;
                            unit_cell_shifts[dx_cell][dy_cell][2] += dy;
-                           global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*7 + 0] += 1;
+                           global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*10 + 0] += 1;
                            // std::cout << dx_cell << ", " << dy_cell << ", " << changex << ", " << changey << std::endl;
                            // row3.push_back(new_atom);
                         } else if (z_j <= a0z*3){
                            new_atom.S = 4;
                            new_atom.dx = 67;
                            new_atom.dy = 0;
-                           global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*7 + 0] += 1;
+                           global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*10 + 0] += 1;
                            // row4.push_back(new_atom);
                         // } else if (z_j >= a0z*3) {
                         //    new_atom.S = 5;
@@ -261,14 +261,14 @@ void create_magnetic_atom_list(std::string filename){
                         new_atom.S = 1;
                         new_atom.dx = 67;
                         new_atom.dy = 0;
-                        global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*7 + 0] += 1;
+                        global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*10 + 0] += 1;
                         // row1.push_back(new_atom);
                         //std::cout << total_atoms << "\t" << new_atom.S << "\t" << new_atom.dx << "\t" << new_atom.dy << "\t" << Jint[new_atom.dx][new_atom.dy] << std::endl;
                      } else if (z_j <= a0z){
                         new_atom.S = 2;
                         new_atom.dx = 67; // need a dx,dy to take into account the actual stacking!
                         new_atom.dy = 0;
-                        global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*7 + 0] += 1;
+                        global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*10 + 0] += 1;
                         // row2.push_back(new_atom);
                         //std::cout << total_atoms << "\t" << new_atom.S << "\t" << new_atom.dx << "\t" << new_atom.dy << "\t" << Jint[new_atom.dx][new_atom.dy] << std::endl;
                      } else {

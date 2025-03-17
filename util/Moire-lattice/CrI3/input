@@ -9,9 +9,9 @@
 #------------------------------------------
 #dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 100.0 !nm
-dimensions:system-size-y = 100.0 !nm
-dimensions:system-size-z = 2.6 !nm
+dimensions:system-size-x = 200.0 !nm
+dimensions:system-size-y = 200.0 !nm
+dimensions:system-size-z = 2.5 !nm
 
 #create:periodic-boundaries-x
 #create:periodic-boundaries-y
@@ -24,23 +24,23 @@ dimensions:system-size-z = 2.6 !nm
 material:unit-cell-file = CrI3.ucf
 material:file = CrI3.mat
 create:crystal-sublattice-materials=true
-exchange:meV_interaction_unit
+
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
 
-sim:loop-time-steps=1000000
+sim:loop-time-steps=200000
 sim:equilibration-temperature=4.2
 sim:temperature = 4.2
-sim:equilibration-time-steps = 10000
-sim:time-steps-increment = 10000
+sim:equilibration-time-steps = 0
+sim:time-steps-increment = 20000
 sim:time-step= 0.1 !fs
 
 sim:temperature-increment = 4.2
 sim:minimum-temperature=4.2
 sim:maximum-temperature=5
 
-sim:applied-field-strength=0.0 !T
+sim:applied-field-strength=0.51 !T
 
 #sim:applied-field-unit-vector=0,0,1
 #sim:cooling-time=100!ps
@@ -57,7 +57,7 @@ sim:save-checkpoint = end
 # data output
 #------------------------------------------
 config:atoms
-config:atoms-output-rate=10
+config:atoms-output-rate=1
 
 output:output-rate=1
 output:time-steps

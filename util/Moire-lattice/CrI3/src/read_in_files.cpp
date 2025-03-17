@@ -303,7 +303,7 @@ void read_in_intra_exchanges(std::string filename, std::vector<std::vector<doubl
     std::ifstream ifile1(filename);
     std::string line;
     if(!ifile1.is_open()) {std::cerr  << " is not open" << std::endl; exit(1);}
-        std::cout << "1NN by thread " << omp_get_thread_num() << std::endl;
+    
     int count = 0;
     for(int k = 0; k < 3; k++) {
         
@@ -340,8 +340,8 @@ void read_in_intra_exchanges(std::string filename, std::vector<std::vector<doubl
        
         }
     }
-
-     std::cout << "2NN by thread " << omp_get_thread_num() << std::endl;
+ std::cout << "1NN by thread " << omp_get_thread_num() << " count: " << count << std::endl;
+    
     for(int k = 0; k < 6; k++) {
        
         for(int i = 0; i < 100; i++) {
@@ -375,7 +375,8 @@ void read_in_intra_exchanges(std::string filename, std::vector<std::vector<doubl
         }
         
     }
-     std::cout << "3NN by thread " << omp_get_thread_num() << std::endl;
+     std::cout << "2NN by thread " << omp_get_thread_num() << " count: " << count << std::endl;
+    
     for(int k = 0; k < 3; k++) {
         for(int i = 0; i < 100; i++) {
            
@@ -407,7 +408,8 @@ void read_in_intra_exchanges(std::string filename, std::vector<std::vector<doubl
             }
         }
     }
-    if(count != 120000) std::cout << count  << std::endl;
+     std::cout << "3NN by thread " << omp_get_thread_num() << " count: " << count << std::endl;
+    // if(count != 100*100*12) std::cout << count  << std::endl;
     std::ofstream intra_out("Intra_exchange_out_" + std::to_string(omp_get_thread_num()) + ".txt");
     for(int i = 0; i < Eij_3NN.size(); i++) {
         intra_out << int(i/100) << ", " << i%100  ;

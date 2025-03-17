@@ -157,12 +157,12 @@ void initialise_variables(){
       }
    }
 
-   global_config_energy.resize(number_of_unit_cells_x/2 + 2);
-   for(int i = 0; i < number_of_unit_cells_x/2 + 2; i++) {
+   global_config_energy.resize(number_of_unit_cells_x/2 + 1);
+   for(int i = 0; i < number_of_unit_cells_x/2 + 1; i++) {
    
-      global_config_energy[i].resize(number_of_unit_cells_y/2 + 2);
-      for(int j = 0; j < number_of_unit_cells_y/2 + 2; j++) {
-         global_config_energy[i][j].resize(4*7,0.0);
+      global_config_energy[i].resize(number_of_unit_cells_y/2 + 1);
+      for(int j = 0; j < number_of_unit_cells_y/2 + 1; j++) {
+         global_config_energy[i][j].resize(4*10,0.0);
       }
    }
    

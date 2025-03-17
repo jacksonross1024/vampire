@@ -909,7 +909,7 @@ void calc_interactions() {
          local_config_energy[i].resize(number_of_unit_cells_y/2 + 2);
          for(int j = 0; j < number_of_unit_cells_y/2 + 2; j++) {
          
-            local_config_energy[i][j].resize(4*7,0.0);
+            local_config_energy[i][j].resize(4*10,0.0);
          }
       }
    std::stringstream otext;
@@ -955,7 +955,7 @@ void calc_interactions() {
                            const double x_i = atom_i.x;
                            const double y_i = atom_i.y;
                            const double z_i = atom_i.z;
-                           // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 0] += 1;
+                           // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 0] += 1;
                            // if(atom_i.unit_x_lr == 20 && atom_i.unit_y_lr == 20) std::cout << atom_i.id << ", " << x_i << ", " << y_i << std::endl;
                            // if(atom_i.id == 0) continue;
                            // loop over all atoms in neighbour box
@@ -1002,6 +1002,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra1 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra1 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra1 += exchange[3];
+                                          
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 1] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_2) {
                                           exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_2NN );
                                           all_m_atoms[atom_i.id].intra2_count++;
@@ -1009,6 +1011,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra2 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra2 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra2 += exchange[3];
+                                          
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_3) {
                                           exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_3NN );
                                           all_m_atoms[atom_i.id].intra3_count++;
@@ -1016,6 +1020,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra3 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra3 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
+                                          
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
                                        } else continue;                              
                                     } if(atom_i.l_id == 2) {
                                        // angle_i += twist_angle;
@@ -1027,6 +1033,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra1 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra1 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra1 += exchange[3];
+                                          
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 1] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_2) {
                                           exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr2_2NN );
                                           all_m_atoms[atom_i.id].intra2_count++;
@@ -1034,6 +1042,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra2 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra2 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra2 += exchange[3];
+                                          
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_3) {
                                           exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr2_3NN );
                                           all_m_atoms[atom_i.id].intra3_count++;
@@ -1041,6 +1051,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra3 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra3 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
                                        } else continue;                              
                                     } if(atom_i.l_id == 3) {
                                        angle_i -= twist_angle*0.99;
@@ -1053,6 +1065,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra1 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra1 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra1 += exchange[3];
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 1] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_2) {
                                           exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_2NN );
                                           all_m_atoms[atom_i.id].intra2_count++;
@@ -1060,6 +1074,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra2 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra2 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra2 += exchange[3];
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_3) {
                                           exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_3NN );
                                           all_m_atoms[atom_i.id].intra3_count++;
@@ -1067,6 +1083,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra3 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra3 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
                                        } else continue;                              
                                     }if(atom_i.l_id == 4) {
                                        angle_i -= twist_angle*0.99;
@@ -1078,6 +1096,9 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra1 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra1 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra1 += exchange[3];
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 1] += exchange[0];
+
                                        } else if (dL2 < intra_nn_dist_2) {
                                           exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_2NN );
                                           all_m_atoms[atom_i.id].intra2_count++;
@@ -1085,6 +1106,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra2 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra2 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra2 += exchange[3];
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_3) {
                                           exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_3NN );
                                           all_m_atoms[atom_i.id].intra3_count++;
@@ -1092,6 +1115,8 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_intra3 += exchange[1];
                                           all_m_atoms[atom_i.id].Dy_intra3 += exchange[2];
                                           all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
                                        } else continue;   
                                                               
                                     }
@@ -1101,10 +1126,10 @@ void calc_interactions() {
                                     // exchange[2] = 0.0;
                                     // exchange[3] = 0.0;
                                    
-                                    local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 2] += exchange[0];
-                                    local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 4] += exchange[1];
-                                    local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 5] += exchange[2];
-                                    local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 6] += exchange[3];   
+                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
+                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 4] += exchange[1];
+                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 5] += exchange[2];
+                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 6] += exchange[3];   
                                  } else {
                                     if(atom_i.h_id == atom_j.h_id) {
                                        if(atom_i.l_id == 1) {exchange = match_inter_exchange(atom_i.id, atom_j.id, adx, ady, dL2, Einter_Cr1);}
@@ -1123,18 +1148,28 @@ void calc_interactions() {
                                           all_m_atoms[atom_i.id].Dx_inter_twist1 += exchange[1]/J_constant;
                                           all_m_atoms[atom_i.id].Dy_inter_twist1 += exchange[2]/J_constant;
                                           all_m_atoms[atom_i.id].Dz_inter_twist1 += exchange[3]/J_constant;
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 4]++;
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 5] += exchange[0];
                                        } else if (dL2 <= inter_nn_dist_2) {
                                           all_m_atoms[atom_i.id].inter_twist2_count++;
                                           all_m_atoms[atom_i.id].J_inter_twist2 += exchange[0]/J_constant;
                                           all_m_atoms[atom_i.id].Dx_inter_twist2 += exchange[1]/J_constant;
                                           all_m_atoms[atom_i.id].Dy_inter_twist2 += exchange[2]/J_constant;
                                           all_m_atoms[atom_i.id].Dz_inter_twist2 += exchange[3]/J_constant;
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 6]++;
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 7] += exchange[0];
+
                                        } else {
                                           all_m_atoms[atom_i.id].inter_twist3_count++;
                                           all_m_atoms[atom_i.id].J_inter_twist3 += exchange[0]/J_constant;
                                           all_m_atoms[atom_i.id].Dx_inter_twist3 += exchange[1]/J_constant;
                                           all_m_atoms[atom_i.id].Dy_inter_twist3 += exchange[2]/J_constant;
                                           all_m_atoms[atom_i.id].Dz_inter_twist3 += exchange[3]/J_constant;
+
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 8]++;
+                                          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 9] += exchange[0];
                                        }
 
                                     } else {
@@ -1165,11 +1200,11 @@ void calc_interactions() {
                                        }
                                        
                                     }
-                                    local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 1] += 1;
-                                    local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 3] += exchange[0];
-                                    local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 4] += exchange[1];
-                                    local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 5] += exchange[2];
-                                    local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*7 + 6] += exchange[3];
+                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 1] += 1;
+                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
+                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 4] += exchange[1];
+                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 5] += exchange[2];
+                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 6] += exchange[3];
                                  }
                                                               
                                  // if(exchange[0] == -60) continue;
@@ -1252,20 +1287,21 @@ void calc_interactions() {
             // double bottom_occ = config_energy[i][j][(2-1)*5+0];
             // double top_occ = config_energy[i][j][(3-1)*5+0];
             // if(bottom_occ == 0 && top_occ == 0) continue;
-            config_output << atom.S << ", " << atom.l_id << ", " <<  atom.h_id << ", " \
-            << atom.x << ", " << atom.y << ", " \
-            << atom.intra1_count << ", " << atom.J_intra1 << ", " << atom.Dx_intra1 << ", " << atom.Dy_intra1 << ", " << atom.Dz_intra1 << ", " \
-            << atom.intra2_count << ", " << atom.J_intra2 << ", " << atom.Dx_intra2 << ", " << atom.Dy_intra2 << ", " << atom.Dz_intra2 << ", " \
-            << atom.intra3_count << ", " << atom.J_intra3 << ", " << atom.Dx_intra3 << ", " << atom.Dy_intra3 << ", " << atom.Dz_intra3 << ", " \
-            << atom.inter1_count << ", " << atom.J_inter1 << ", " << atom.Dx_inter1 << ", " << atom.Dy_inter1 << ", " << atom.Dz_inter1 << ", " \
-            << atom.inter2_count << ", " << atom.J_inter2 << ", " << atom.Dx_inter2 << ", " << atom.Dy_inter2 << ", " << atom.Dz_inter2 << ", " \
-            << atom.inter3_count << ", " << atom.J_inter3 << ", " << atom.Dx_inter3 << ", " << atom.Dy_inter3 << ", " << atom.Dz_inter3 << ", " \
-            << atom.inter_twist1_count << ", " << atom.J_inter_twist1 << ", " << atom.Dx_inter_twist1 << ", " << atom.Dy_inter_twist1 << ", " << atom.Dz_inter_twist1 << ", " \
-            << atom.inter_twist2_count << ", " << atom.J_inter_twist2 << ", " << atom.Dx_inter_twist2 << ", " << atom.Dy_inter_twist2 << ", " << atom.Dz_inter_twist2 << ", " \
-            << atom.inter_twist3_count << ", " << atom.J_inter_twist3 << ", " << atom.Dx_inter_twist3 << ", " << atom.Dy_inter_twist3 << ", " << atom.Dz_inter_twist3 << std::endl;
-            // for(int k = 0; k < config_energy[i][j].size(); k++) config_output << ", " << config_energy[i][j][k]; 
-            // config_output << "\n";
-      
+            if(2000 < atom.x && atom.x < 3400 && 4750 < atom.y  && atom.y < 5900) {
+               config_output << atom.S << ", " << atom.l_id << ", " <<  atom.h_id << ", " \
+               << atom.x << ", " << atom.y << ", " \
+               << atom.intra1_count << ", " << atom.J_intra1 << ", " << atom.Dx_intra1 << ", " << atom.Dy_intra1 << ", " << atom.Dz_intra1 << ", " \
+               << atom.intra2_count << ", " << atom.J_intra2 << ", " << atom.Dx_intra2 << ", " << atom.Dy_intra2 << ", " << atom.Dz_intra2 << ", " \
+               << atom.intra3_count << ", " << atom.J_intra3 << ", " << atom.Dx_intra3 << ", " << atom.Dy_intra3 << ", " << atom.Dz_intra3 << ", " \
+               << atom.inter1_count << ", " << atom.J_inter1 << ", " << atom.Dx_inter1 << ", " << atom.Dy_inter1 << ", " << atom.Dz_inter1 << ", " \
+               << atom.inter2_count << ", " << atom.J_inter2 << ", " << atom.Dx_inter2 << ", " << atom.Dy_inter2 << ", " << atom.Dz_inter2 << ", " \
+               << atom.inter3_count << ", " << atom.J_inter3 << ", " << atom.Dx_inter3 << ", " << atom.Dy_inter3 << ", " << atom.Dz_inter3 << ", " \
+               << atom.inter_twist1_count << ", " << atom.J_inter_twist1 << ", " << atom.Dx_inter_twist1 << ", " << atom.Dy_inter_twist1 << ", " << atom.Dz_inter_twist1 << ", " \
+               << atom.inter_twist2_count << ", " << atom.J_inter_twist2 << ", " << atom.Dx_inter_twist2 << ", " << atom.Dy_inter_twist2 << ", " << atom.Dz_inter_twist2 << ", " \
+               << atom.inter_twist3_count << ", " << atom.J_inter_twist3 << ", " << atom.Dx_inter_twist3 << ", " << atom.Dy_inter_twist3 << ", " << atom.Dz_inter_twist3 << std::endl;
+               // for(int k = 0; k < config_energy[i][j].size(); k++) config_output << ", " << config_energy[i][j][k]; 
+               // config_output << "\n";
+            }
       }
       config_output.close();
       std::cout << "config atoms done." << std::endl;
@@ -1278,12 +1314,15 @@ void calc_interactions() {
             // double bottom_occ = config_energy[i][j][(2-1)*5+0];
             // double top_occ = config_energy[i][j][(3-1)*5+0];
             // if(bottom_occ == 0 && top_occ == 0) continue;
-            config_output1 << i << ", " << j << ", ";
-            // config_output << all_m_atoms[i].S << ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y << ", " << all_m_atoms[i].J_inter << ", " << all_m_atoms[i].Dx_inter << ", " <<  all_m_atoms[i].Dy_inter << ", " << all_m_atoms[i].Dz_inter << ", " << all_m_atoms[i].inter_count  << '\n';// << bottom_occ<< ", " << top_occ;
-            for(int k = 0; k < global_config_energy[i][j].size(); k++) config_output1 << global_config_energy[i][j][k] << ", "; 
-            config_output1 << "\n";
+            if(i*2*0.693 <= 340 && i*2*0.693 >= 200 && j*2.0*0.6002 <= 590 && j*2.0*0.6002 >= 475) {
+               config_output1 << i*2.0*0.693 << ", " << 2.0*0.6002*j << ", ";
+               // config_output << all_m_atoms[i].S << ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y << ", " << all_m_atoms[i].J_inter << ", " << all_m_atoms[i].Dx_inter << ", " <<  all_m_atoms[i].Dy_inter << ", " << all_m_atoms[i].Dz_inter << ", " << all_m_atoms[i].inter_count  << '\n';// << bottom_occ<< ", " << top_occ;
+               for(int k = 0; k < global_config_energy[i][j].size(); k++) config_output1 << global_config_energy[i][j][k] << ", "; 
+               config_output1 << "\n";
+            }
+            // config_output1 << "\n";
          }
-         config_output1 << "\n";
+         
       }
       config_output1.close();
       std::cout << "config cells done." << std::endl;
