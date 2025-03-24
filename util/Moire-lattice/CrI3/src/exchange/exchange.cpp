@@ -901,7 +901,7 @@ void calc_interactions() {
    // Jinter3_AB = Jinter3_AB - std::abs(Jinter3_AB)*J_inter_scaling*2;
 
 
-   #pragma omp parallel num_threads(8) reduction(+:number_of_interactions) 
+   #pragma omp parallel num_threads(32) reduction(+:number_of_interactions) 
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
