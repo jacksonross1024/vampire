@@ -9,8 +9,8 @@
 #------------------------------------------
 #dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 200.0 !nm
-dimensions:system-size-y = 200.0 !nm
+dimensions:system-size-x = 100.0 !nm
+dimensions:system-size-y = 100.0 !nm
 dimensions:system-size-z = 2.5 !nm
 
 #create:periodic-boundaries-x

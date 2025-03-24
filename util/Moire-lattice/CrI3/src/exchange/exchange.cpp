@@ -400,7 +400,7 @@ double inter_nn_dist_2 = 7.77;
 double inter_nn_dist_3 = 9.99;
 
 double inter_AB_dist_1 = 7.0;
-double inter_AB_dist_2 = 8.20;
+double inter_AB_dist_2 = 8.30;
 double inter_AB_dist_3 = 9.99;
 // double nn_dist_3 = a0x*pow(1.3333333333,0.5);
 double nn_dist_1;
@@ -433,6 +433,9 @@ double D_intra3_x_constant =	0*J_constant;
 double D_intra3_y_constant =  0.0176*J_constant;
 double D_intra3_z_constant = 0.0659*J_constant;
 //set the initial jumber of interactions to zero for counter
+
+double Dx_substrate = 0.025;
+double Dy_substrate = 0.0;
 uint64_t number_of_interactions = 0;
 
 //initialise arrays to store exchage interactions
@@ -457,7 +460,6 @@ std::vector < std::vector < double  > > Eintra_Cr1_3NN;
 std::vector < std::vector < double  > > Eintra_Cr2_3NN;
 std::vector < std::vector < double  > > Eintra_Cr3_3NN;
 std::vector < std::vector < double  > > Eintra_Cr4_3NN;
-
 
 std::vector < std::vector < double > > Jintra1;
 std::vector < std::vector < double > > Jintra2;
@@ -827,6 +829,8 @@ void calc_interactions() {
    Jinter2_AB = -0.10125*J_constant;
    Jinter3_AB = -0.035*J_constant;
    
+   Dx_substrate =  0.00606458;//  0.009; // 0.01819374; 
+   
    std::cout << "Generating Moire unit cell...." << std::flush;
    // calculate min and max xyz
    // double min[3] = {1.0e8, 1.0e8, 1.0e8};
@@ -998,59 +1002,61 @@ void calc_interactions() {
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_1NN );
                                           all_m_atoms[atom_i.id].intra1_count++;
-                                          all_m_atoms[atom_i.id].J_intra1 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra1 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra1 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra1 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra1 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra1 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra1 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra1 += exchange[3]/J_constant;
                                           
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 1] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_2) {
                                           exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_2NN );
                                           all_m_atoms[atom_i.id].intra2_count++;
-                                          all_m_atoms[atom_i.id].J_intra2 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra2 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra2 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra2 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra2 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra2 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra2 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra2 += exchange[3]/J_constant;
                                           
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_3) {
                                           exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_3NN );
                                           all_m_atoms[atom_i.id].intra3_count++;
-                                          all_m_atoms[atom_i.id].J_intra3 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra3 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra3 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra3 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra3 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra3 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra3 += exchange[3]/J_constant;
                                           
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
-                                       } else continue;                              
+                                       } else continue;   
+                                       
+                                       
                                     } if(atom_i.l_id == 2) {
                                        // angle_i += twist_angle;
                                        // angle_j += twist_angle;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr2_1NN );
                                           all_m_atoms[atom_i.id].intra1_count++;
-                                          all_m_atoms[atom_i.id].J_intra1 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra1 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra1 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra1 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra1 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra1 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra1 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra1 += exchange[3]/J_constant;
                                           
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 1] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_2) {
                                           exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr2_2NN );
                                           all_m_atoms[atom_i.id].intra2_count++;
-                                          all_m_atoms[atom_i.id].J_intra2 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra2 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra2 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra2 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra2 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra2 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra2 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra2 += exchange[3]/J_constant;
                                           
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_3) {
                                           exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr2_3NN );
                                           all_m_atoms[atom_i.id].intra3_count++;
-                                          all_m_atoms[atom_i.id].J_intra3 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra3 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra3 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra3 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra3 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra3 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra3 += exchange[3]/J_constant;
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
                                        } else continue;                              
@@ -1061,28 +1067,28 @@ void calc_interactions() {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_1NN );
                                 
                                           all_m_atoms[atom_i.id].intra1_count++;
-                                          all_m_atoms[atom_i.id].J_intra1 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra1 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra1 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra1 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra1 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra1 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra1 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra1 += exchange[3]/J_constant;
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 1] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_2) {
                                           exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_2NN );
                                           all_m_atoms[atom_i.id].intra2_count++;
-                                          all_m_atoms[atom_i.id].J_intra2 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra2 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra2 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra2 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra2 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra2 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra2 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra2 += exchange[3]/J_constant;
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_3) {
                                           exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_3NN );
                                           all_m_atoms[atom_i.id].intra3_count++;
-                                          all_m_atoms[atom_i.id].J_intra3 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra3 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra3 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra3 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra3 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra3 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra3 += exchange[3]/J_constant;
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
                                        } else continue;                              
@@ -1092,44 +1098,34 @@ void calc_interactions() {
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_1NN );
                                           all_m_atoms[atom_i.id].intra1_count++;
-                                          all_m_atoms[atom_i.id].J_intra1 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra1 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra1 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra1 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra1 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra1 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra1 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra1 += exchange[3]/J_constant;
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 1] += exchange[0];
 
                                        } else if (dL2 < intra_nn_dist_2) {
                                           exchange = match_intra2_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_2NN );
                                           all_m_atoms[atom_i.id].intra2_count++;
-                                          all_m_atoms[atom_i.id].J_intra2 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra2 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra2 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra2 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra2 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra2 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra2 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra2 += exchange[3]/J_constant;
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
                                        } else if (dL2 < intra_nn_dist_3) {
                                           exchange = match_intra3_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_3NN );
                                           all_m_atoms[atom_i.id].intra3_count++;
-                                          all_m_atoms[atom_i.id].J_intra3 += exchange[0];
-                                          all_m_atoms[atom_i.id].Dx_intra3 += exchange[1];
-                                          all_m_atoms[atom_i.id].Dy_intra3 += exchange[2];
-                                          all_m_atoms[atom_i.id].Dz_intra3 += exchange[3];
+                                          all_m_atoms[atom_i.id].J_intra3 += exchange[0]/J_constant;
+                                          all_m_atoms[atom_i.id].Dx_intra3 += exchange[1]/J_constant;
+                                          all_m_atoms[atom_i.id].Dy_intra3 += exchange[2]/J_constant;
+                                          all_m_atoms[atom_i.id].Dz_intra3 += exchange[3]/J_constant;
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
-                                       } else continue;   
-                                                              
+                                       } else continue;                          
                                     }
-                                    exchange[0] *= J_intra_reduction;
-                                    // exchange[0] = -60.0;
-                                    // exchange[1] = 0.0;
-                                    // exchange[2] = 0.0;
-                                    // exchange[3] = 0.0;
-                                   
-                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 2] += exchange[0];
-                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 4] += exchange[1];
-                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 5] += exchange[2];
-                                    // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 6] += exchange[3];   
+                               
                                  } else {
                                     if(atom_i.h_id == atom_j.h_id) {
                                        if(atom_i.l_id == 1) {exchange = match_inter_exchange(atom_i.id, atom_j.id, adx, ady, dL2, Einter_Cr1);}
@@ -1287,7 +1283,7 @@ void calc_interactions() {
             // double bottom_occ = config_energy[i][j][(2-1)*5+0];
             // double top_occ = config_energy[i][j][(3-1)*5+0];
             // if(bottom_occ == 0 && top_occ == 0) continue;
-            if(2000 < atom.x && atom.x < 3400 && 4750 < atom.y  && atom.y < 5900) {
+            // if(2000 < atom.x && atom.x < 3400 && 4750 < atom.y  && atom.y < 5900) {
                config_output << atom.S << ", " << atom.l_id << ", " <<  atom.h_id << ", " \
                << atom.x << ", " << atom.y << ", " \
                << atom.intra1_count << ", " << atom.J_intra1 << ", " << atom.Dx_intra1 << ", " << atom.Dy_intra1 << ", " << atom.Dz_intra1 << ", " \
@@ -1301,7 +1297,7 @@ void calc_interactions() {
                << atom.inter_twist3_count << ", " << atom.J_inter_twist3 << ", " << atom.Dx_inter_twist3 << ", " << atom.Dy_inter_twist3 << ", " << atom.Dz_inter_twist3 << std::endl;
                // for(int k = 0; k < config_energy[i][j].size(); k++) config_output << ", " << config_energy[i][j][k]; 
                // config_output << "\n";
-            }
+            // }
       }
       config_output.close();
       std::cout << "config atoms done." << std::endl;
@@ -1367,20 +1363,54 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
    //    exit(1);
    //    return exchange;
    // }
-   if(central_atom.S == 1 || central_atom.S == 2) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+   
+   if(central_atom.S == 1) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+
+      double DMI = Dx_substrate*exchange[0];
+      double D_vec_x = 1.0;
+      double D_vec_y = 0.0;
+      double D_vec_z = 0.0;
+      double ex_vec_x = cos(angle_i);
+      double ex_vec_y = sin(angle_i);
+      double ex_vec_z = 0.0;
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+
+   //   std::cout << 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2/J_constant << " + " << Dx_substrate*exchange[0]/J_constant << " = " << exchange[1]/J_constant << std::endl;
+   } else if(central_atom.S == 2) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
       exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
       exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
       exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
-   } else if(central_atom.S == 3 || central_atom.S == 4) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+   } else if(central_atom.S == 3) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
       double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
       double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
       exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
       exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
-   }
+   } else if(central_atom.S == 4) {
+      
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;
 
+      double DMI = Dx_substrate*exchange[0];
+      double D_vec_x = 1.0;
+      double D_vec_y = 0.0;
+      double D_vec_z = 0.0;
+      double ex_vec_x = cos(angle_i);
+      double ex_vec_y = sin(angle_i);
+      double ex_vec_z = 0.0;
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+
+      exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
+      exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+   }
+   //exchange[0] *= J_intra_reduction;
    // all_m_atoms[central_atom.id].intra1++;
    // if(central_atom.S == 2) std::cout << i_x_shift << ", " << i_y_shift << ", " << j_x_shift << ", " << j_y_shift << ", " << exchange[0] << std::endl;
    return exchange;
@@ -1412,19 +1442,52 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
    //    exit(1);
    //    return exchange;
    // }
-   if(central_atom.S == 1 || central_atom.S == 2) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+   if(central_atom.S == 1) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+
+      double DMI = Dx_substrate*exchange[0];
+      double D_vec_x = 1.0;
+      double D_vec_y = 0.0;
+      double D_vec_z = 0.0;
+      double ex_vec_x = cos(angle_i);
+      double ex_vec_y = sin(angle_i);
+      double ex_vec_z = 0.0;
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+   } else if(central_atom.S == 2) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
       exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
       exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
       exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
-   } else if(central_atom.S == 3 || central_atom.S == 4) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+   } else if(central_atom.S == 3) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
       double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
       double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
       exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
       exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+   } else if(central_atom.S == 4) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;
+
+      double DMI = Dx_substrate*exchange[0];
+      double D_vec_x = 1.0;
+      double D_vec_y = 0.0;
+      double D_vec_z = 0.0;
+      double ex_vec_x = cos(angle_i);
+      double ex_vec_y = sin(angle_i);
+      double ex_vec_z = 0.0;
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+
+      exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
+      exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
    }
+
+
+   // exchange[0] *= J_intra_reduction;
    return exchange;
 }
 
@@ -1455,19 +1518,50 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
    //    exit(1);
    //    return exchange;
    // }
-   if(central_atom.S == 1 || central_atom.S == 2) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+   if(central_atom.S == 1) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+
+      double DMI = Dx_substrate*exchange[0];
+      double D_vec_x = 1.0;
+      double D_vec_y = 0.0;
+      double D_vec_z = 0.0;
+      double ex_vec_x = cos(angle_i);
+      double ex_vec_y = sin(angle_i);
+      double ex_vec_z = 0.0;
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+   } else if(central_atom.S == 2) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
       exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
       exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
       exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
-   } else if(central_atom.S == 3 || central_atom.S == 4) {
-      exchange[0] = 0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
+   } else if(central_atom.S == 3) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
       double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
       double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
       exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
       exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+   } else if(central_atom.S == 4) {
+      exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;
+
+      double DMI = Dx_substrate*exchange[0];
+      double D_vec_x = 1.0;
+      double D_vec_y = 0.0;
+      double D_vec_z = 0.0;
+      double ex_vec_x = cos(angle_i);
+      double ex_vec_y = sin(angle_i);
+      double ex_vec_z = 0.0;
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+
+      exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
+      exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
    }
+   // exchange[0] *= J_intra_reduction;
    // all_m_atoms[central_atom.id].intra3++;
    // std::cout << i_x_shift << ", " << i_y_shift << ", " << j_x_shift << ", " << j_y_shift << ", " << 0.5*(J_i+J_j) << ", " << Dx*cos(twist_angle)-Dy*sin(twist_angle) << ", " <<  Dx*sin(twist_angle)+Dy*cos(twist_angle) << ", " << Dz << std::endl;
    return exchange;
