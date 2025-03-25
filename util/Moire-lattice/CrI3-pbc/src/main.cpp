@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[]){
 
-    std::string dmi_check = "--dmi";
+    std::string dmi_check = "--nodmi";
     DMI = true;
      std::cout << " with DMI " << std::endl;
     if(argc < 2) {std::cerr << "need twist angle even if zero" << std::endl; exit(1);}
@@ -20,7 +20,8 @@ int main(int argc, char* argv[]){
         if(a == 2) {max_range = atof(argv[a]);
         std::cout << "max inter exchange range: " << max_range << std::endl;}
         if(a == 3) {
-            if(argv[a]== dmi_check) {DMI = true;
+            if(argv[a]== dmi_check) {DMI = false;
+            J_constant = 1.0;//eVtoJ/1000.0; //1 meV
             std::cout << " with DMI " << std::endl;}
         }
         if(a == 4) {

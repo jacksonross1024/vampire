@@ -413,7 +413,7 @@ double nn_dist_3;
 double max_range = 9.9;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
-double J_constant = 1.0*eVtoJ/1000.0; //1 meV
+double J_constant = eVtoJ/1000.0; //1 meV
 
 double J_intra_1=2.5*J_constant;
 double J_intra_2=0.75*J_constant;
@@ -492,7 +492,10 @@ std::vector <double > crossProduct(std::vector <double >A, std::vector <double >
 
 void print_interaction_header(){
    std::ofstream outfile3 ("header_interactions.ucf");
-   outfile3 << number_of_interactions <<  "\t" << "tensorial"<< std::endl;//<<" 0 0 0 "<<J3S2_x << " 0 0 0 " << J3S2_z << std::endl;
+   std::string interaction_type;
+   if(DMI) interaction_type = "tensorial";
+   else interaction_type = "normalised-isotropic";
+   outfile3 << number_of_interactions <<  "\t" << interaction_type << std::endl;//<<" 0 0 0 "<<J3S2_x << " 0 0 0 " << J3S2_z << std::endl;
    
 }
 
@@ -1352,8 +1355,8 @@ void calc_interactions() {
       // bool A_Aprime = zero_zero_to_one_zero(x,y);
       // bool B_Bprime = zero_one_to_one_one(x,y);
       // bool Aprime_Bprime = one_zero_to_one_one(x,y);
-      bool x_to_xprime = (x >= x_offset && x<(max_x-0.01)); //necessary offset to prevent double spins
-      bool y_to_yprime = (y >= y_offset && y<(max_y-0.01)); //necessary offset to prevent double spins
+      bool x_to_xprime = (x >= x_offset && x<(max_x-0.020875)); //necessary offset to prevent double spins
+      bool y_to_yprime = (y >= y_offset && y<(max_y-0.020875)); //necessary offset to prevent double spins
       
       if(x_to_xprime && y_to_yprime ) {
          offset_atom.id = new_atom_count;
@@ -1662,28 +1665,28 @@ void calc_interactions() {
 
                                        if(dL2 <= inter_nn_dist_1) {
                                           all_m_atoms_offset[atom_i.id].inter_twist1_count++;
-                                          all_m_atoms_offset[atom_i.id].J_inter_twist1 += exchange[0]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dx_inter_twist1 += exchange[1]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dy_inter_twist1 += exchange[2]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dz_inter_twist1 += exchange[3]/J_constant;
+                                          all_m_atoms_offset[atom_i.id].J_inter_twist1 += exchange[0];
+                                          all_m_atoms_offset[atom_i.id].Dx_inter_twist1 += exchange[1];
+                                          all_m_atoms_offset[atom_i.id].Dy_inter_twist1 += exchange[2];
+                                          all_m_atoms_offset[atom_i.id].Dz_inter_twist1 += exchange[3];
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 4]++;
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 5] += exchange[0];
                                        } else if (dL2 <= inter_nn_dist_2) {
                                           all_m_atoms_offset[atom_i.id].inter_twist2_count++;
-                                          all_m_atoms_offset[atom_i.id].J_inter_twist2 += exchange[0]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dx_inter_twist2 += exchange[1]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dy_inter_twist2 += exchange[2]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dz_inter_twist2 += exchange[3]/J_constant;
+                                          all_m_atoms_offset[atom_i.id].J_inter_twist2 += exchange[0];
+                                          all_m_atoms_offset[atom_i.id].Dx_inter_twist2 += exchange[1];
+                                          all_m_atoms_offset[atom_i.id].Dy_inter_twist2 += exchange[2];
+                                          all_m_atoms_offset[atom_i.id].Dz_inter_twist2 += exchange[3];
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 6]++;
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 7] += exchange[0];
                                        } else {
                                           all_m_atoms_offset[atom_i.id].inter_twist3_count++;
-                                          all_m_atoms_offset[atom_i.id].J_inter_twist3 += exchange[0]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dx_inter_twist3 += exchange[1]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dy_inter_twist3 += exchange[2]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dz_inter_twist3 += exchange[3]/J_constant;
+                                          all_m_atoms_offset[atom_i.id].J_inter_twist3 += exchange[0];
+                                          all_m_atoms_offset[atom_i.id].Dx_inter_twist3 += exchange[1];
+                                          all_m_atoms_offset[atom_i.id].Dy_inter_twist3 += exchange[2];
+                                          all_m_atoms_offset[atom_i.id].Dz_inter_twist3 += exchange[3];
 
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 8]++;
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 9] += exchange[0];
@@ -1694,40 +1697,40 @@ void calc_interactions() {
                                           exchange[0] = Jinter1_AB;
                                           exchange[0] *= J_prist_reduction;
                                           all_m_atoms_offset[atom_i.id].inter1_count++;
-                                          all_m_atoms_offset[atom_i.id].J_inter1 += exchange[0]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dx_inter1 += exchange[1]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dy_inter1 += exchange[2]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dz_inter1 += exchange[3]/J_constant;
+                                          all_m_atoms_offset[atom_i.id].J_inter1 += exchange[0];
+                                          all_m_atoms_offset[atom_i.id].Dx_inter1 += exchange[1];
+                                          all_m_atoms_offset[atom_i.id].Dy_inter1 += exchange[2];
+                                          all_m_atoms_offset[atom_i.id].Dz_inter1 += exchange[3];
                                        } else if (dL2 <= inter_AB_dist_2) {
                                           exchange[0] = Jinter2_AB;
                                           exchange[0] *= J_prist_reduction;
                                           all_m_atoms_offset[atom_i.id].inter2_count++;
-                                          all_m_atoms_offset[atom_i.id].J_inter2 += exchange[0]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dx_inter2 += exchange[1]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dy_inter2 += exchange[2]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dz_inter2 += exchange[3]/J_constant;
+                                          all_m_atoms_offset[atom_i.id].J_inter2 += exchange[0];
+                                          all_m_atoms_offset[atom_i.id].Dx_inter2 += exchange[1];
+                                          all_m_atoms_offset[atom_i.id].Dy_inter2 += exchange[2];
+                                          all_m_atoms_offset[atom_i.id].Dz_inter2 += exchange[3];
                                        } else {
                                           exchange[0] = Jinter3_AB;
                                           exchange[0] *= J_prist_reduction;
                                           all_m_atoms_offset[atom_i.id].inter3_count++;
-                                          all_m_atoms_offset[atom_i.id].J_inter3 += exchange[0]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dx_inter3 += exchange[1]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dy_inter3 += exchange[2]/J_constant;
-                                          all_m_atoms_offset[atom_i.id].Dz_inter3 += exchange[3]/J_constant;
+                                          all_m_atoms_offset[atom_i.id].J_inter3 += exchange[0];
+                                          all_m_atoms_offset[atom_i.id].Dx_inter3 += exchange[1];
+                                          all_m_atoms_offset[atom_i.id].Dy_inter3 += exchange[2];
+                                          all_m_atoms_offset[atom_i.id].Dz_inter3 += exchange[3];
                                        }
                                        
                                     }
                                  }
                                                               
                                  
-                                    if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
+                                    if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
                                        //xx                     xy-> Dz                 xz -> -Dy
                                          exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
                                        //yx -> -Dz              yy                      yz -> Dx
                                         -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
                                        //zx -> Dy               yz -> -Dx               zz
                                          exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0]*1.0 << "\n"; }
-                                    else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
+                                    else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << atom_j.Gz << '\t' <<\
                                        //xx                     xy-> Dz                 xz -> -Dy
                                        exchange[0] << "\n";// << 0.0 << "\t" << 0.0 << "\t" << \
                                        //yx -> -Dz              yy                      yz -> Dx
@@ -1781,7 +1784,7 @@ void calc_interactions() {
       std::ofstream config_output(std::string(directory) + "/config_energy_atomic.txt");
 
       if(!config_output.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
-      for(int i = 0; i < all_m_atoms.size(); i++) {
+      for(int i = 0; i < all_m_atoms_offset.size(); i++) {
          spin atom = all_m_atoms_offset[i];
          // for(int j = 0; j < number_of_unit_cells_y; j++){
             // double bottom_occ = config_energy[i][j][(2-1)*5+0];
@@ -1790,15 +1793,15 @@ void calc_interactions() {
             // if(2000 < atom.x && atom.x < 3400 && 4750 < atom.y  && atom.y < 5900) {
                config_output << atom.S << ", " << atom.l_id << ", " <<  atom.h_id << ", " \
                << atom.x << ", " << atom.y << ", " \
-               << atom.intra1_count << ", " << atom.J_intra1 << ", " << atom.Dx_intra1 << ", " << atom.Dy_intra1 << ", " << atom.Dz_intra1 << ", " \
-               << atom.intra2_count << ", " << atom.J_intra2 << ", " << atom.Dx_intra2 << ", " << atom.Dy_intra2 << ", " << atom.Dz_intra2 << ", " \
-               << atom.intra3_count << ", " << atom.J_intra3 << ", " << atom.Dx_intra3 << ", " << atom.Dy_intra3 << ", " << atom.Dz_intra3 << ", " \
-               << atom.inter1_count << ", " << atom.J_inter1 << ", " << atom.Dx_inter1 << ", " << atom.Dy_inter1 << ", " << atom.Dz_inter1 << ", " \
-               << atom.inter2_count << ", " << atom.J_inter2 << ", " << atom.Dx_inter2 << ", " << atom.Dy_inter2 << ", " << atom.Dz_inter2 << ", " \
-               << atom.inter3_count << ", " << atom.J_inter3 << ", " << atom.Dx_inter3 << ", " << atom.Dy_inter3 << ", " << atom.Dz_inter3 << ", " \
-               << atom.inter_twist1_count << ", " << atom.J_inter_twist1 << ", " << atom.Dx_inter_twist1 << ", " << atom.Dy_inter_twist1 << ", " << atom.Dz_inter_twist1 << ", " \
-               << atom.inter_twist2_count << ", " << atom.J_inter_twist2 << ", " << atom.Dx_inter_twist2 << ", " << atom.Dy_inter_twist2 << ", " << atom.Dz_inter_twist2 << ", " \
-               << atom.inter_twist3_count << ", " << atom.J_inter_twist3 << ", " << atom.Dx_inter_twist3 << ", " << atom.Dy_inter_twist3 << ", " << atom.Dz_inter_twist3 << std::endl;
+               << atom.intra1_count << ", " << atom.J_intra1/J_constant << ", " << atom.Dx_intra1/J_constant << ", " << atom.Dy_intra1/J_constant << ", " << atom.Dz_intra1/J_constant << ", " \
+               << atom.intra2_count << ", " << atom.J_intra2/J_constant << ", " << atom.Dx_intra2/J_constant << ", " << atom.Dy_intra2/J_constant << ", " << atom.Dz_intra2/J_constant << ", " \
+               << atom.intra3_count << ", " << atom.J_intra3/J_constant << ", " << atom.Dx_intra3/J_constant << ", " << atom.Dy_intra3/J_constant << ", " << atom.Dz_intra3/J_constant << ", " \
+               << atom.inter1_count << ", " << atom.J_inter1/J_constant << ", " << atom.Dx_inter1/J_constant << ", " << atom.Dy_inter1/J_constant << ", " << atom.Dz_inter1/J_constant << ", " \
+               << atom.inter2_count << ", " << atom.J_inter2/J_constant << ", " << atom.Dx_inter2/J_constant << ", " << atom.Dy_inter2/J_constant << ", " << atom.Dz_inter2/J_constant << ", " \
+               << atom.inter3_count << ", " << atom.J_inter3/J_constant << ", " << atom.Dx_inter3/J_constant << ", " << atom.Dy_inter3/J_constant << ", " << atom.Dz_inter3/J_constant << ", " \
+               << atom.inter_twist1_count << ", " << atom.J_inter_twist1/J_constant << ", " << atom.Dx_inter_twist1/J_constant << ", " << atom.Dy_inter_twist1/J_constant << ", " << atom.Dz_inter_twist1/J_constant << ", " \
+               << atom.inter_twist2_count << ", " << atom.J_inter_twist2/J_constant << ", " << atom.Dx_inter_twist2/J_constant << ", " << atom.Dy_inter_twist2/J_constant << ", " << atom.Dz_inter_twist2/J_constant << ", " \
+               << atom.inter_twist3_count << ", " << atom.J_inter_twist3/J_constant << ", " << atom.Dx_inter_twist3/J_constant << ", " << atom.Dy_inter_twist3/J_constant << ", " << atom.Dz_inter_twist3/J_constant << std::endl;
                // for(int k = 0; k < config_energy[i][j].size(); k++) config_output << ", " << config_energy[i][j][k]; 
                // config_output << "\n";
             // }
@@ -1817,7 +1820,7 @@ void calc_interactions() {
             if(global_config_energy[i][j][0] != 0) {
                config_output1 << i*2.0*0.693 << ", " << 2.0*0.6002*j << ", ";
                // config_output << all_m_atoms[i].S << ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y << ", " << all_m_atoms[i].J_inter << ", " << all_m_atoms[i].Dx_inter << ", " <<  all_m_atoms[i].Dy_inter << ", " << all_m_atoms[i].Dz_inter << ", " << all_m_atoms[i].inter_count  << '\n';// << bottom_occ<< ", " << top_occ;
-               for(int k = 0; k < global_config_energy[i][j].size(); k++) config_output1 << global_config_energy[i][j][k] << ", "; 
+               for(int k = 0; k < global_config_energy[i][j].size(); k++) config_output1 << global_config_energy[i][j][k]/J_constant << ", "; 
                config_output1 << "\n";
             }
             // config_output1 << "\n";
