@@ -133,15 +133,17 @@
    extern std::vector < spin > all_m_atoms_offset;
    extern std::vector < spin > new_moire_lattice;
    extern std::vector < std::vector < std::vector <int> > > unit_cell_shifts;
-
+   extern std::vector < std::vector < std::vector <double> > > config_energy;
+   extern std::vector<std::vector<std::vector<double> > > global_config_energy;
+   
    bool inside_system(double sx, double sy, double x, double y, double offset);
    bool inside_system(double x, double y, double offset);
    void read_in_atoms(std::string filename, int n_atoms, std::vector <spin > &atom2);
    void read_in_exchange(std::string filename, std::vector<std::vector<double> > &Jij);
    void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std::string Dz, std::vector<std::vector<double> > &Eij);
-   void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_1NN, \
-                                                   std::vector<std::vector< std::vector< std::vector<double> > > > &Eij_2NN, \
-                                                   std::vector<std::vector< std::vector< std::vector<double> > > > &Eij_3NN );
+   void read_in_intra_exchanges(std::string filename, std::vector<std::vector<double > > &Eij_1NN, \
+                                                   std::vector<std::vector<double > > &Eij_2NN, \
+                                                   std::vector<std::vector<double > > &Eij_3NN );
    void read_in_dmi(std::string filename, std::vector < std::vector < double > > &Dx, std::vector < std::vector < double > > &Dy, std::vector < std::vector < double > > &Dz, bool reflect);
    void read_in_ucf(std::ifstream &ucf_file);
    void print_header();

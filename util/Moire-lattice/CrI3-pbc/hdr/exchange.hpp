@@ -8,7 +8,10 @@
 #include <fstream>
 #include <cmath>
 #include "positions.hpp"
-// ##include <omp.h>
+
+
+#include <unistd.h>
+#include <omp.h>
 
    extern double nn_dist_1;
    extern double nn_dist_2;
@@ -28,20 +31,20 @@
    extern std::vector < std::vector < double > > Einter_Cr3;
    extern std::vector < std::vector < double > > Einter_Cr4;
 
-   extern std::vector < std::vector < std::vector<std::vector<double > > > > Eintra_Cr1_1NN;
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr2_1NN;
-   extern std::vector < std::vector < std::vector<std::vector<double > > > > Eintra_Cr3_1NN;
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr4_1NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr1_1NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr2_1NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr3_1NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr4_1NN;
 
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr1_2NN;
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr2_2NN;
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr3_2NN;
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr4_2NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr1_2NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr2_2NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr3_2NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr4_2NN;
 
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr1_3NN;
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr2_3NN;
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr3_3NN;
-   extern std::vector < std::vector < std::vector<std::vector<double> > > > Eintra_Cr4_3NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr1_3NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr2_3NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr3_3NN;
+   extern std::vector < std::vector < double  > > Eintra_Cr4_3NN;
 
    extern std::vector < std::vector < double > > Jintra1;
    extern std::vector < std::vector < double > > Jintra2;
@@ -75,9 +78,9 @@
    void calc_in_plane_exchange(std::vector < spin > atom_list_1);
 
    std::array<double,4> match_inter_exchange(int atomi_id, int nn_id, double dx, double dy, double dr, std::vector<std::vector<double> > &Eij);
-   std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij);
-   std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij);
-   std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< std::vector< std::vector<double> >  > > &Eij);
+   std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
+   std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
+   std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
    std::array<double,4> calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
    std::array<double,4> calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
    void calc_interactions();
