@@ -186,7 +186,7 @@ void build_fe3gate2(unitcell::unit_cell_t& unit_cell){
   unit_cell.atom.at(16).lc=4;
 
   unit_cell.atom.at(17).x=x4;
-  unit_cell.atom.at(17).y=y5;
+  unit_cell.atom.at(17).y=y1;
   unit_cell.atom.at(17).z=z6;
   unit_cell.atom.at(17).mat=0;
   unit_cell.atom.at(17).hc=1;
