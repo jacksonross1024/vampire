@@ -926,7 +926,7 @@ void calc_interactions() {
                               const double adz = z_j - z_i;
                               double dL2 = adx*adx + ady*ady + adz*adz;
                               
-                              if(std::abs(adx) < 1e-2 && std::abs(ady) < 1e-2) zero_correlation.push_back({atom_i.x, atom_i.y, atom_i.z, double(atom_i.l_id)});
+                              if(std::abs(adx) < 9e-3 && std::abs(ady) < 9e-3) zero_correlation.push_back({atom_i.x, atom_i.y, atom_i.z, double(atom_i.l_id)});
                               
                            } // end of j atom loop
 
@@ -1205,6 +1205,7 @@ void calc_interactions() {
             //ensure same species before push back
             if( vector_id0 && vector_id1) {
                orthogonal_set.push_back({x_vec0, y_vec0, r, x00, y00, x01, y01});
+               // std::cout << zero_correlation[i][2] << ", " << zero_correlation[i][3] << ", " << zero_correlation[j][2] << ", " << zero_correlation[j][3] << std::endl;
             }
          }
          //output orthogonal basis
@@ -1237,25 +1238,25 @@ void calc_interactions() {
 //   310, -1, 1.79703e-07, 1375.62, 4813.51, 3044.05, 3437.89, 3044.05, -8.25131e-07, -1, 2382.82, 4813.51, 3044.05, 4813.51, 661.23
  // 311, -1, -1.79703e-07, 1375.62, 4813.51, 3044.04, 3437.89, 3044.04, 8.25131e-07, -1, 2382.82, 4813.51, 3044.04, 4813.51, 661.222
    // //0.5 degree square periodic
-   double x00 =  917.076;//3668.08;//
-   double y00 =   1322.45; //2858.98;// 
-   double x01 =  917.076;//3668.08;//
-   double y01 =  3705.27;//5241.79;// 
-   double x10 =  2292.69; //5043.7;// 
-   double y10 =  1322.45;//;//2858.98;// 
-   double x11 =  2292.69;//5043.7;//
-   double y11 =  3705.27;//;//5241.79;//
+   // double x00 =  917.076;//3668.08;//
+   // double y00 =   1322.45; //2858.98;// 
+   // double x01 =  917.076;//3668.08;//
+   // double y01 =  3705.27;//5241.79;// 
+   // double x10 =  2292.69; //5043.7;// 
+   // double y10 =  1322.45;//;//2858.98;// 
+   // double x11 =  2292.69;//5043.7;//
+   // double y11 =  3705.27;//;//5241.79;//
 
    //138, 6.67563e-07, 1, 2526.96, 2292.78, 3369.28, 2292.78, 5896.23, 1, 7.52479e-07, 4376.5, 2292.78, 3369.28, 6669.28, 3369.28
    // //1.1 degree square periodic
-   // double x00 =  2292.78; //3439.17;// 
-   // double y00 =   3369.28;//5595.12;// 
-   // double x01 =  2292.78;//3439.17;//
-   // double y01 =  5896.23;//8122.08;// 
-   // double x10 =  6669.28; //7815.67;// 
-   // double y10 =   3369.28; //5595.12;// 
-   // double x11 =  6669.28;// 7815.67;// 
-   // double y11 =  5896.23;// 8122.08;//
+   double x00 = 3439.17;
+   double y00 = 3068.16;
+   double x01 = 3439.17;
+   double y01 = 5595.12;
+   double x10 = 7815.67;
+   double y10 = 3068.16;
+   double x11 = 7815.67;
+   double y11 = 5595.12;
 
    double rAAprime = sqrt((x10-x00)*(x10-x00)+(y10-y00)*(y10-y00));
    double rAB      = sqrt((x01-x00)*(x01-x00)+(y01-y00)*(y01-y00));
@@ -1355,8 +1356,11 @@ void calc_interactions() {
       // bool A_Aprime = zero_zero_to_one_zero(x,y);
       // bool B_Bprime = zero_one_to_one_one(x,y);
       // bool Aprime_Bprime = one_zero_to_one_one(x,y);
-      bool x_to_xprime = (x >= x_offset && x<(max_x-0.020875)); //necessary offset to prevent double spins
-      bool y_to_yprime = (y >= y_offset && y<(max_y-0.020875)); //necessary offset to prevent double spins
+      // bool x_to_xprime = (x >= x_offset && x<(max_x-0.020875)); //necessary offset to prevent double spins
+      // bool y_to_yprime = (y >= y_offset && y<(max_y-0.020875)); //necessary offset to prevent double spins
+      
+       bool x_to_xprime = (x >= x_offset && x<(max_x-0.03)); //necessary offset to prevent double spins
+      bool y_to_yprime = (y >= y_offset && y<(max_y-0.03)); //necessary offset to prevent double spins
       
       if(x_to_xprime && y_to_yprime ) {
          offset_atom.id = new_atom_count;
@@ -1526,7 +1530,7 @@ void calc_interactions() {
                                  if(atom_i.S == atom_j.S) {
                                  
                                     if(atom_i.l_id == 1) {
-                                       angle_i += twist_angle*0.501;
+                                       angle_i += twist_angle*0.52;
                                        // angle_j += twist_angle*0.4999;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr1_1NN );
@@ -1557,7 +1561,7 @@ void calc_interactions() {
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
                                        } else continue;                              
                                     } if(atom_i.l_id == 2) {
-                                       angle_i += twist_angle*0.501;
+                                       angle_i += twist_angle*0.52;
                                        // angle_j += twist_angle*0.51;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr2_1NN );
@@ -1588,8 +1592,8 @@ void calc_interactions() {
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
                                        } else continue;                              
                                     } if(atom_i.l_id == 3) {
-                                       angle_i -= twist_angle*0.49;
-                                       angle_j -= twist_angle*0.49;
+                                       angle_i -= twist_angle*0.499;
+                                       // angle_j -= twist_angle*0.49;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr3_1NN );
                                           all_m_atoms_offset[atom_i.id].intra1_count++;
@@ -1619,8 +1623,8 @@ void calc_interactions() {
                                           local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*10 + 3] += exchange[0];
                                        } else continue;                              
                                     }if(atom_i.l_id == 4) {
-                                       angle_i -= twist_angle*0.49;
-                                       angle_j -= twist_angle*0.49;
+                                       angle_i -= twist_angle*0.499;
+                                       // angle_j -= twist_angle*0.49;
                                        if(dL2 < intra_nn_dist_1) {
                                           exchange = match_intra1_exchange(angle_i, angle_j, atom_i, atom_j, Eintra_Cr4_1NN );
                                           all_m_atoms_offset[atom_i.id].intra1_count++;
@@ -1912,7 +1916,7 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
    //int theta_j = int(round(((angle_j < 0.0) ? (angle_j+=2*M_PI) : (angle_j)) *179.0/M_PI/60.0));
 
     if( theta_i > 5 || theta_i < 0) {
-      std::cout << "problem: " << central_atom.l_id << ", " << central_atom.x << ", " << central_atom.y << ", " << j_atom.x << ", " << j_atom.y  << ", " << angle_i << ", " << ((angle_i < 0.0) ? (angle_i+2*M_PI) : (angle_i)) *179.0/M_PI/60.0  << std::endl;
+      std::cout << "problem: " << central_atom.l_id << ", " <<  j_atom.x - central_atom.x << ", " << j_atom.y - central_atom.y << ", " << atan2(j_atom.y - central_atom.y , j_atom.x - central_atom.x) << ", " << angle_i << ", " << ((angle_i < 0.0) ? (angle_i+2*M_PI) : (angle_i)) *179.0/M_PI/60.0  << std::endl;
       exit(1);
    }
    if(central_atom.S == 1) {
