@@ -829,7 +829,7 @@ void calc_interactions() {
    Jinter2_AB = -0.10125*J_constant;
    Jinter3_AB = -0.035*J_constant;
    
-   Dx_substrate = 0.01819374; 
+   Dx_substrate = 0.01819374; // 0.00606458;//  0.009; // 0.01819374; 
    
    std::cout << "Generating Moire unit cell...." << std::flush;
    // calculate min and max xyz
@@ -902,6 +902,7 @@ void calc_interactions() {
 
 
    #pragma omp parallel num_threads(8) reduction(+:number_of_interactions) 
+   #pragma omp parallel num_threads(8) reduction(+:number_of_interactions) 
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
@@ -917,6 +918,7 @@ void calc_interactions() {
          }
       }
    std::stringstream otext;
+   otext.precision(6);
    for(int i=0; i<xb; i++){
 
        #pragma omp single nowait
