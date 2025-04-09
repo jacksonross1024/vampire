@@ -150,8 +150,9 @@ void create_magnetic_atom_list(std::string filename){
                         // int changey = round(-100.0*remainder(y_new - y_j,a1y)/a0x)+100;
                         // double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         // double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
-                        double x_ref = (((new_atom.l_id == 3 || new_atom.l_id == 4) ? (4.62)  : (0.0)) + (int(floor(x_new/ a0x))*a0x)); 
-                        double y_ref = (((new_atom.l_id == 1 || new_atom.l_id == 3) ? (4.001) : (0.0)) + int(floor(y_new/ a1y))*a1y); 
+                       // double x_ref = int(floor(x_new/ a0x))*a0x; 
+                        double x_ref = ((j % 2 != 0) ? (a1x)  : (0.0)) + int(floor(x_new/ a0x))*a0x;
+                        double y_ref = (((new_atom.l_id == 1 || new_atom.l_id == 3) ? (4.001) : (-0.000001)) + int(floor(y_new/ a1y))*a1y); 
                         
                         // double changex = x_ref*cos(-0.5*twist_angle) - y_ref*sin(-0.5*twist_angle);
                         // double changey = y_ref*cos(-0.5*twist_angle) + x_ref*sin(-0.5*twist_angle);
@@ -162,7 +163,7 @@ void create_magnetic_atom_list(std::string filename){
                         double changex = (x_new - (x_ref + changey*a1x))/a0x;
                         // double changex = (x_new - (x_ref))/a0x;
                         if(changex < 0.0) changex += 1.0;
-                        else if (changex > 1.0) changex -= 1.0;
+                        else if (changex >= 1.0) changex -= 1.0;
                          
                         // changey = fabs(changey);
                         // changex = fabs(changex);
@@ -189,6 +190,7 @@ void create_magnetic_atom_list(std::string filename){
                            new_atom.S = 3;
                            new_atom.dx = dx;
                            new_atom.dy = dy;
+                          // if(dy != 0) std::cout << atom[atom_i].y << ", " << int(floor(y_new/ a1y))*a1y << ", " << y_ref << ", " << changey << ", " << dy << std::endl;
                            unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
                            unit_cell_shifts[dx_cell][dy_cell][1] += dx;
                            unit_cell_shifts[dx_cell][dy_cell][2] += dy;
@@ -197,7 +199,7 @@ void create_magnetic_atom_list(std::string filename){
                            // row3.push_back(new_atom);
                         } else if (z_j <= a0z*3){
                            new_atom.S = 4;
-                           new_atom.dx = 67;
+                           new_atom.dx = 66;
                            new_atom.dy = 0;
                            global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*10 + 0] += 1;
                            // row4.push_back(new_atom);
@@ -259,14 +261,14 @@ void create_magnetic_atom_list(std::string filename){
                      // Set layer number
                      if (z_j == 0.0){
                         new_atom.S = 1;
-                        new_atom.dx = 67;
+                        new_atom.dx = 66;
                         new_atom.dy = 0;
                         global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*10 + 0] += 1;
                         // row1.push_back(new_atom);
                         //std::cout << total_atoms << "\t" << new_atom.S << "\t" << new_atom.dx << "\t" << new_atom.dy << "\t" << Jint[new_atom.dx][new_atom.dy] << std::endl;
                      } else if (z_j <= a0z){
                         new_atom.S = 2;
-                        new_atom.dx = 67; // need a dx,dy to take into account the actual stacking!
+                        new_atom.dx = 66; // need a dx,dy to take into account the actual stacking!
                         new_atom.dy = 0;
                         global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*10 + 0] += 1;
                         // row2.push_back(new_atom);

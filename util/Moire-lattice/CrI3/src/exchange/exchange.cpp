@@ -829,7 +829,7 @@ void calc_interactions() {
    Jinter2_AB = -0.10125*J_constant;
    Jinter3_AB = -0.035*J_constant;
    
-   Dx_substrate =  0.00606458;//  0.009; // 0.01819374; 
+   Dx_substrate = 0.01819374; // 0.00606458;//  0.009; // 0.01819374; 
    
    std::cout << "Generating Moire unit cell...." << std::flush;
    // calculate min and max xyz
@@ -901,7 +901,7 @@ void calc_interactions() {
    // Jinter3_AB = Jinter3_AB - std::abs(Jinter3_AB)*J_inter_scaling*2;
 
 
-   #pragma omp parallel num_threads(32) reduction(+:number_of_interactions) 
+   #pragma omp parallel num_threads(8) reduction(+:number_of_interactions) 
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
@@ -917,6 +917,7 @@ void calc_interactions() {
          }
       }
    std::stringstream otext;
+   otext.precision(6);
    for(int i=0; i<xb; i++){
 
        #pragma omp single nowait
@@ -1310,12 +1311,12 @@ void calc_interactions() {
             // double bottom_occ = config_energy[i][j][(2-1)*5+0];
             // double top_occ = config_energy[i][j][(3-1)*5+0];
             // if(bottom_occ == 0 && top_occ == 0) continue;
-            if(i*2*0.693 <= 340 && i*2*0.693 >= 200 && j*2.0*0.6002 <= 590 && j*2.0*0.6002 >= 475) {
+           // if(i*2*0.693 <= 340 && i*2*0.693 >= 200 && j*2.0*0.6002 <= 590 && j*2.0*0.6002 >= 475) {
                config_output1 << i*2.0*0.693 << ", " << 2.0*0.6002*j << ", ";
                // config_output << all_m_atoms[i].S << ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y << ", " << all_m_atoms[i].J_inter << ", " << all_m_atoms[i].Dx_inter << ", " <<  all_m_atoms[i].Dy_inter << ", " << all_m_atoms[i].Dz_inter << ", " << all_m_atoms[i].inter_count  << '\n';// << bottom_occ<< ", " << top_occ;
                for(int k = 0; k < global_config_energy[i][j].size(); k++) config_output1 << global_config_energy[i][j][k] << ", "; 
                config_output1 << "\n";
-            }
+          //  }
             // config_output1 << "\n";
          }
          
