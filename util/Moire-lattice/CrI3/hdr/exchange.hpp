@@ -80,6 +80,8 @@
    std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
    std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
    std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
+   void spin_config_energy(spin & atom_i, double dr2, spin & atom_j, std::array<double, 4> &exchange, std::vector<std::vector<std::vector<double> > > & local_config_energy);
+
    std::array<double,4> calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
    std::array<double,4> calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
    void calc_interactions();
