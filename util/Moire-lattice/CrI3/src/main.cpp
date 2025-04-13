@@ -46,11 +46,36 @@ int main(int argc, char* argv[]){
             J_intra_reduction = atof(argv[a]);
             std::cout << " J intra exchange scaling: " << J_intra_reduction << std::endl;
         }
+        if(a == 9) {
+            DMI_sub_scaling = atof(argv[a]);
+            std::cout << " DMI substrate exchange scaling: " << DMI_sub_scaling << std::endl;
+        }
+        if(a == 10) {
+            int basis = atof(argv[a]);
+            if(basis == 1) {
+                DMI_sub_vector_x = 1;
+                DMI_sub_vector_y = 0;
+                DMI_sub_vector_z = 0;
+            } else if(basis == 2) {
+                DMI_sub_vector_x = 0;
+                DMI_sub_vector_y = 1;
+                DMI_sub_vector_z = 0;
+            } else if(basis == 3) {
+                DMI_sub_vector_x = 0;
+                DMI_sub_vector_y = 0;
+                DMI_sub_vector_z = 1;
+            } else {
+                std::cout << "DMI sub vector read error: exiting" << std::endl;
+                exit(1);
+            }
+            std::cout << " DMI_sub_vector: < " << DMI_sub_vector_x << ", " << DMI_sub_vector_y << ", " << DMI_sub_vector_z << "> " << std::endl;
+        }
+
     }
 
 
-   system_size_x = 4500;//  25.00
-   system_size_y = 4500; //4000
+   system_size_x = 4000;//  25.00
+   system_size_y = 4000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants

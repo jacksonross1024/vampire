@@ -30,6 +30,10 @@ double J_twist_reduction = 1.0;
 double J_intra_reduction = 1.0;
 double J_prist_reduction = 1.0;
 double DMI_inter_scaling = 1.0;
+double DMI_sub_scaling = 0.0;
+double DMI_sub_vector_x = 0.0;
+double DMI_sub_vector_y = 0.0;
+double DMI_sub_vector_z = 1.0;
 
 uint64_t total_atoms = 0;
 int total_nm_atoms = 0;
@@ -92,7 +96,7 @@ void create_magnetic_atom_list(std::string filename){
    
    // std::string file = ;
 
-   std::ofstream shift_file(std::string(directory) + "/shifted_constants.txt");
+   // std::ofstream shift_file(std::string(directory) + "/shifted_constants.txt");
    // shift_file.open("shifted_constants.txt");
 
    std::ofstream outfile2(std::string(directory) + "/atom_positions.xyz");
@@ -151,29 +155,36 @@ void create_magnetic_atom_list(std::string filename){
                         // double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         // double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
                        // double x_ref = int(floor(x_new/ a0x))*a0x; 
-                        double x_ref = ((j % 2 != 0) ? (a1x)  : (0.0)) + int(floor(x_new/ a0x))*a0x;
-                        double y_ref = (((new_atom.l_id == 1 || new_atom.l_id == 3) ? (4.001) : (-0.000001)) + int(floor(y_new/ a1y))*a1y); 
+                        double x_ref = (j % 2 != 0) ? int(floor((x_new-a1x)/ (2*a0x)))*2*a0x-a1x : int(floor(x_new/ (2*a0x)))*2*a0x;
+                        double y_ref = (new_atom.l_id == 3) ? int(floor( (y_new-4.001)/ (2*a1y)))*2*a1y + 4.001 : int(floor(y_new/ (2*a1y)))*2*a1y; 
                         
-                        // double changex = x_ref*cos(-0.5*twist_angle) - y_ref*sin(-0.5*twist_angle);
-                        // double changey = y_ref*cos(-0.5*twist_angle) + x_ref*sin(-0.5*twist_angle);
-                        double changey = (y_new - y_ref)/a1y;
-                        
-                        if(changey < 0.0) changey += 1.0;
-                        else if (changey >= 1.0) changey -= 1.0;
-                        double changex = (x_new - (x_ref + changey*a1x))/a0x;
-                        // double changex = (x_new - (x_ref))/a0x;
+                        double changey = (y_new - y_ref)/(a1y);
+                         if(changey < 0.0) changey *= -1.0;
+                        else if (changey > 1.0) changey = 2 - changey;
+                       
+                        double changex = (x_new - (x_ref + changey*a1x))/(a0x);
+                        //  if(changey < 0.0) changey += 1.0;
+                        // else if (changey >= 1.0) changey -= 1.0;
                         if(changex < 0.0) changex += 1.0;
                         else if (changex >= 1.0) changex -= 1.0;
+                        
+                        
+                        // if(changex < 0.0) changex *= -1.0;
+                        // else if (changex > 1.0) changex = 2 - changex;
+
+                        // double changex = (x_new - (x_ref))/a0x;
+                        
+                        
                          
                         // changey = fabs(changey);
                         // changex = fabs(changex);
                         int dx = int(round(changex*99.0));
                         int dy = int(round(changey*99.0));
 
-                        if(dx > 99 || dx < 0 || dy > 99 || dy < 0) {
-                           std::cerr << "shift problem: (" << x_new << ", " << y_new << ") in cell: [" << x_ref << ", " << y_ref << "] indexing " << dx << ", " << dy  << ", " << changex << ", " << changey << ", " << ((x_new - x_ref)*2.0)/a0x << ", " << ((y_new - y_ref)*2.0)/a1y << std::endl;
-                            exit(1);
-                        }
+                        // if(dx > 99 || dx < 0 || dy > 99 || dy < 0) {
+                        //    std::cerr << "shift problem: (" << x_new << ", " << y_new << ") in cell: [" << x_ref << ", " << y_ref << "] indexing " << dx << ", " << dy  << ", " << changex << ", " << changey << ", " << ((x_new - x_ref- ((y_new - y_ref)/a1y)*a1x))/a0x << ", " << ((y_new - y_ref))/a1y << std::endl;
+                        //     exit(1);
+                        // }
                        
                         // Set layer number
                         new_atom.unit_x = dx_cell;
@@ -191,9 +202,9 @@ void create_magnetic_atom_list(std::string filename){
                            new_atom.dx = dx;
                            new_atom.dy = dy;
                           // if(dy != 0) std::cout << atom[atom_i].y << ", " << int(floor(y_new/ a1y))*a1y << ", " << y_ref << ", " << changey << ", " << dy << std::endl;
-                           unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
-                           unit_cell_shifts[dx_cell][dy_cell][1] += dx;
-                           unit_cell_shifts[dx_cell][dy_cell][2] += dy;
+                           // unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
+                           // unit_cell_shifts[dx_cell][dy_cell][1] += dx;
+                           // unit_cell_shifts[dx_cell][dy_cell][2] += dy;
                            global_config_energy[new_atom.unit_x_lr][new_atom.unit_y_lr][(new_atom.S-1)*16] += 1;
                            // std::cout << dx_cell << ", " << dy_cell << ", " << changex << ", " << changey << std::endl;
                            // row3.push_back(new_atom);
@@ -293,32 +304,32 @@ void create_magnetic_atom_list(std::string filename){
    //    std::cout << row1.size() << "\t" << row2.size() << "\t" << row3.size() << "\t" << row4.size() << std::endl;
    //    // exit(1);
    // }
-   for(int i = 0; i < unit_cell_shifts.size(); i++){
-      for (int j = 0; j < unit_cell_shifts[i].size(); j++) {
-         int occupancy = unit_cell_shifts[i][j][0];
-         if(occupancy > 0) {
-            unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
-            unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
-         } else {
-            unit_cell_shifts[i][j][1] = 67;
-         }
+   // for(int i = 0; i < unit_cell_shifts.size(); i++){
+   //    for (int j = 0; j < unit_cell_shifts[i].size(); j++) {
+   //       int occupancy = unit_cell_shifts[i][j][0];
+   //       if(occupancy > 0) {
+   //          unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
+   //          unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
+   //       } else {
+   //          unit_cell_shifts[i][j][1] = 67;
+   //       }
         
-         int i_shift = unit_cell_shifts[i][j][1];
-         int j_shift = unit_cell_shifts[i][j][2];
-         //  std::cout << "problems " << unit_cell_shifts[i][j][2] << ", " << j_shift << ", " << occupancy << std::endl;
-         shift_file << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << "\n";// << 
-                        // Einter_Cr1.at(i_shift).at(j_shift)[2]  << ", " <<\
-                        // Einter_Cr1.at(i_shift).at(j_shift) << ", " << \
-                        // Einter_Cr1.at(i_shift).at(j_shift) <<  ", " << \
-                        // Dx_inter.at(i_shift).at(j_shift) << ", " << \
-                        // Dy_inter.at(i_shift).at(j_shift) << ", " << \
-                        // Dz_inter.at(i_shift).at(j_shift) << ", " << \
-                        // Dx_intra.at(i_shift).at(j_shift) << ", " << \
-                        // Dy_intra.at(i_shift).at(j_shift) << ", " << \
-                        // Dz_intra.at(i_shift).at(j_shift) << "\n";
-      }
-   }
-   shift_file.close();
+   //       int i_shift = unit_cell_shifts[i][j][1];
+   //       int j_shift = unit_cell_shifts[i][j][2];
+   //       //  std::cout << "problems " << unit_cell_shifts[i][j][2] << ", " << j_shift << ", " << occupancy << std::endl;
+   //       shift_file << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << "\n";// << 
+   //                      // Einter_Cr1.at(i_shift).at(j_shift)[2]  << ", " <<\
+   //                      // Einter_Cr1.at(i_shift).at(j_shift) << ", " << \
+   //                      // Einter_Cr1.at(i_shift).at(j_shift) <<  ", " << \
+   //                      // Dx_inter.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dy_inter.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dz_inter.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dx_intra.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dy_intra.at(i_shift).at(j_shift) << ", " << \
+   //                      // Dz_intra.at(i_shift).at(j_shift) << "\n";
+   //    }
+   // }
+   // shift_file.close();
    outfile2.close();
    std::cout << total_atoms << " atoms; [complete]" << std::endl;
 }

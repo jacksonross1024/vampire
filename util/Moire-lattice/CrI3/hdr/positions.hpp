@@ -35,6 +35,10 @@
    extern double J_intra_reduction;
    extern double J_prist_reduction;
    extern double DMI_inter_scaling;
+   extern double DMI_sub_scaling;
+   extern double DMI_sub_vector_x;
+   extern double DMI_sub_vector_y;
+   extern double DMI_sub_vector_z;
    
    class spin {
       public:

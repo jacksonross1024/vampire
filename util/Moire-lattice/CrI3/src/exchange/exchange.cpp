@@ -5,7 +5,7 @@
 #include <cmath>
 #include "initialise.hpp"
 #include "exchange.hpp"
-
+#include <list>
 
 // System headers
 #include <chrono>
@@ -829,23 +829,24 @@ void calc_interactions() {
    Jinter2_AB = -0.10125*J_constant;
    Jinter3_AB = -0.035*J_constant;
    
-   Dx_substrate = 0.01819374; // 0.00606458;//  0.009; // 0.01819374; 
+   Dx_substrate = 0.01819374 * DMI_sub_scaling; // 0.00606458;//  0.009; // 0.01819374; 
    
    std::cout << "Generating Moire unit cell...." << std::flush;
    // calculate min and max xyz
-   // double min[3] = {1.0e8, 1.0e8, 1.0e8};
-   // double max[3] = {-1.0e8, -1.0e8, -1.0e8};
-   // for(int i=0; i < all_m_atoms.size(); i++){
-   //    double x_i = all_m_atoms[i].x;
-   //    double y_i = all_m_atoms[i].y;
-   //    double z_i = all_m_atoms[i].z;
-   //    if(x_i < min[0]) min[0] = x_i;
-   //    if(y_i < min[1]) min[1] = y_i;
-   //    if(z_i < min[2]) min[2] = z_i;
-   //    if(x_i > max[0]) max[0] = x_i;
-   //    if(y_i > max[1]) max[1] = y_i;
-   //    if(z_i > max[2]) max[2] = z_i;
-   // }
+   double min[3] = {1.0e8, 1.0e8, 1.0e8};
+   double max[3] = {-1.0e8, -1.0e8, -1.0e8};
+   for(int i=0; i < all_m_atoms.size(); i++){
+      if(all_m_atoms[i].S == 1 || all_m_atoms[i].S == 4 ) continue;
+      double x_i = all_m_atoms[i].x;
+      double y_i = all_m_atoms[i].y;
+      double z_i = all_m_atoms[i].z;
+      if(x_i < min[0]) min[0] = x_i;
+      if(y_i < min[1]) min[1] = y_i;
+      if(z_i < min[2]) min[2] = z_i;
+      if(x_i > max[0]) max[0] = x_i;
+      if(y_i > max[1]) max[1] = y_i;
+      if(z_i > max[2]) max[2] = z_i;
+   }
 
    // determine number of blocks in x,y,z
     int xb = ceil(system_size_x/bsize)+1;
@@ -853,7 +854,202 @@ void calc_interactions() {
     int zb = ceil(system_size_z/bsize)+1;
    std::cout << "decomposed into <" << xb << ", " << yb << ", " << zb << "> boxes...." << std::flush;
    // create 4D array to generate blocks
-   std::vector< std::vector < std::vector < std::vector < spin > > > > boxes;
+   std::vector< std::vector < std::vector < std::vector < spin > > > > shift_boxes;
+   shift_boxes.resize(xb);
+   for(int i=0; i<xb; i++){
+      shift_boxes[i].resize(yb);
+      for(int j=0; j<yb; j++){
+         shift_boxes[i][j].resize(zb);
+      }
+   }
+
+   // determine boxid of each atom and save atoms in boxes
+   for(int i=0; i < all_m_atoms.size(); i++){
+      if(all_m_atoms[i].S == 1 || all_m_atoms[i].S == 4) continue;
+      double x_i = all_m_atoms[i].x - min[0];
+      double y_i = all_m_atoms[i].y - min[1];
+      double z_i = all_m_atoms[i].z - min[2];
+      const double bxi = x_i / bsize;
+      const double byi = y_i / bsize;
+      const double bzi = z_i / bsize;
+
+      // check that boxid is in range
+      bool x_ok = bxi >= 0 && bxi < xb;
+      bool y_ok = byi >= 0 && byi < yb;
+      bool z_ok = bzi >= 0 && bzi < zb;
+      if( !(x_ok && y_ok && z_ok) ){
+         std::cerr << "Error! Atom " << i << " out of box range " << bxi << "\t" << byi << "\t" << bzi << "\t" << xb << "\t" << yb << "\t" << zb << std::endl;
+         std::cout << x_ok << "\t" << y_ok << "\t" << z_ok << "\t" << (x_ok && y_ok && z_ok) << "\t" << !(x_ok && y_ok && z_ok ) << std::endl;
+         exit(1);
+      }
+      // std::cout << "here?" << std::endl;
+      // add atom to box list
+      shift_boxes[bxi][byi][bzi].push_back(all_m_atoms[i]);
+   }
+
+   std::cout << "[complete]" << std::endl;
+   
+   // // std::vector< int> interactions_list;
+   // std::ofstream correlation_file;
+   // correlation_file.open("moire-lattice-constants.txt");
+   // std::vector<std::array<double, 3> > zero_correlation;
+   // now calculate neighbour list looping over boxes
+   vtimer_t timer;
+      timer.start();
+   //(J-J_inter_scaling*std::abs(J))*J_constant;
+   // Jinter1_AB = Jinter1_AB - std::abs(Jinter1_AB)*J_inter_scaling*2;
+   // Jinter2_AB = Jinter2_AB - std::abs(Jinter2_AB)*J_inter_scaling*2;
+   // Jinter3_AB = Jinter3_AB - std::abs(Jinter3_AB)*J_inter_scaling*2;
+   std::vector< std::list< spin > > moire_shift(all_m_atoms.size());
+   for(int i=0; i<xb; i++){
+      for(int j=0; j< yb; j++){
+         for(int k=0; k<zb; k++){
+
+            // loop over offsets
+            for(int dx = -1; dx < 2; dx++){
+               for(int dy = -1; dy < 2; dy++){
+                  for(int dz = -1; dz < 2; dz++){
+                     const int nx = i+dx; // neighbour box ids
+                     const int ny = j+dy;
+                     const int nz = k+dz;
+                     
+                     const bool x_ok = nx >= 0 && nx < xb;
+                     const bool y_ok = ny >= 0 && ny < yb;
+                     const bool z_ok = nz >= 0 && nz < zb;
+                     // int i_index = nx;
+                     // int j_index = ny;
+                     // int k_index = nz;
+                     // int pbc_x = 0;
+                     // int pbc_y = 0;
+                     // int pbc_z = 0;
+                     // if(nx < 0) {i_index = xb-1; pbc_x = -1;}
+                     // else if (nx >= xb) {i_index = 0; pbc_x = 1;}
+                     // if (ny < 0) {j_index = yb-1; pbc_y = -1;}
+                     // else if (ny >= yb) {j_index = 0; pbc_y = 1;}
+                     // if(nz < 0 || nz >= zb) continue;
+                     if(x_ok && y_ok && z_ok){
+                     // only calculate neighbours for all x,y,z indices ok
+                        // loop over all atoms in main box
+                        for(int ai = 0; ai < shift_boxes[i][j][k].size(); ai++){
+                           // atom_index++;
+                           // get atom number i
+                           spin atom_i = shift_boxes[i][j][k][ai];
+                           if(atom_i.S == 2) continue;
+
+                           //moire_shift[atom_i.id].push_back(atom_i);
+                           const double x_i = atom_i.x;
+                           const double y_i = atom_i.y;
+                           const double z_i = atom_i.z;
+
+                           for(int aj = 0; aj < shift_boxes[nx][ny][nz].size(); aj++){
+
+                              // get atom number j
+                              spin atom_j = shift_boxes[nx][ny][nz][aj];
+                              if(atom_i.S == atom_j.S || atom_i.id == atom_j.id) continue;
+  
+                              // calculate distance
+                              const double x_j = atom_j.x;
+                              const double y_j = atom_j.y;
+                              const double z_j = atom_j.z;
+                              double adx = x_j - x_i;
+                              double ady = y_j - y_i;
+
+                              if(adx*adx <= (6.93*6.93) && ady*ady <= (6.003*6.003) && ((atom_i.l_id-2) == atom_j.l_id)){
+                                 moire_shift[atom_i.id].push_back(atom_j);
+                                 // if(adx == 0.0 && ady == 0.0) std::cout << atom_i.l_id << ", " << atom_j.l_id << ", " << x_i << ", " << y_i << ", " << x_j << ", " << y_j << std::endl;
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   for(int i = 0; i < moire_shift.size(); i++) {
+      double min_x = a0x;
+      double min_y = a1y;
+      double min_r = 100.0;
+      spin ref_spin = all_m_atoms[i];
+      if(ref_spin.S != 3) continue;
+      std::list<spin> ref_list = moire_shift[i];
+      int count = 0;
+
+      for(auto shift = ref_list.begin(); shift != ref_list.end(); ++shift) {
+         spin shift_spin = *shift;
+         
+         double dx = ref_spin.x - shift_spin.x ;
+         double dy = ref_spin.y - shift_spin.y ;
+         double dr = (dx*dx + dy*dy);
+         if(dr < min_r) {
+            min_r = dr;
+            min_x = dx;
+            min_y = dy;
+            // if(dx == 0.0 && dy == 0.0) std::cout << i << ", " <<  shift_spin.id << ", " << shift_spin.x << ", " << ref_spin.x << std::endl;
+         }
+         count++;
+      }
+      // if(count == 0 ) continue;
+      // if( count > 3 ) std::cout << i << ", " <<  count << ", " << min_x << ", " << min_y << std::endl;
+      int dx_cell = ref_spin.unit_x_lr;
+      int dy_cell = ref_spin.unit_y_lr;
+      
+      double change_x = min_x;
+      double change_y = min_y;
+      change_y = fabs(change_y)/a1y;
+      
+
+      change_x = (change_x - change_y*a1x)/a0x;
+      if(change_x < 0.0) change_x += 1.0;
+      else if (change_x >= 1.0) change_x -= 1.0;
+
+      int dx = int(round(change_x*99.0));
+      int dy = int(round(change_y*99.0));
+       if(dx > 99 || dx < 0 || dy > 99 || dy < 0) {
+         std::cerr << "shift problem: (" <<  dx << ", " << dy  << ", " << change_x << ", " << change_y << ", " << min_x << ", " << min_y << std::endl;
+            exit(1);
+      }
+      
+      unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
+      unit_cell_shifts[dx_cell][dy_cell][1] += dx;
+      unit_cell_shifts[dx_cell][dy_cell][2] += dy;
+   }
+
+      char directory [256];
+      if(getcwd(directory, sizeof(directory)) == NULL){
+         std::cerr << "Fatal getcwd error in datalog." << std::endl;
+      }
+      std::ofstream shift_file(std::string(directory) + "/shifted_constants.txt");
+      for(int i = 0; i < unit_cell_shifts.size(); i++){
+      for (int j = 0; j < unit_cell_shifts[i].size(); j++) {
+         int occupancy = unit_cell_shifts[i][j][0];
+         if(occupancy > 0) {
+            unit_cell_shifts[i][j][1] = round(unit_cell_shifts[i][j][1]/occupancy);
+            unit_cell_shifts[i][j][2] = round(unit_cell_shifts[i][j][2]/occupancy);
+         } else {
+            unit_cell_shifts[i][j][1] = 67;
+         }
+        
+         int i_shift = unit_cell_shifts[i][j][1];
+         int j_shift = unit_cell_shifts[i][j][2];
+         if(i_shift > 99 || j_shift >> 99) std::cout << "problems " << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << std::endl;
+         shift_file << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << "\n";// << 
+                        // Einter_Cr1.at(i_shift).at(j_shift)[2]  << ", " <<\
+                        // Einter_Cr1.at(i_shift).at(j_shift) << ", " << \
+                        // Einter_Cr1.at(i_shift).at(j_shift) <<  ", " << \
+                        // Dx_inter.at(i_shift).at(j_shift) << ", " << \
+                        // Dy_inter.at(i_shift).at(j_shift) << ", " << \
+                        // Dz_inter.at(i_shift).at(j_shift) << ", " << \
+                        // Dx_intra.at(i_shift).at(j_shift) << ", " << \
+                        // Dy_intra.at(i_shift).at(j_shift) << ", " << \
+                        // Dz_intra.at(i_shift).at(j_shift) << "\n";
+      }
+   }
+   shift_file.close();
+
+      std::vector< std::vector < std::vector < std::vector < spin > > > > boxes;
    boxes.resize(xb);
    for(int i=0; i<xb; i++){
       boxes[i].resize(yb);
@@ -861,10 +1057,9 @@ void calc_interactions() {
          boxes[i][j].resize(zb);
       }
    }
-
    // determine boxid of each atom and save atoms in boxes
    for(int i=0; i < all_m_atoms.size(); i++){
-      if(all_m_atoms[i].S == 5) continue;
+      
       double x_i = all_m_atoms[i].x;// - min[0];
       double y_i = all_m_atoms[i].y;// - min[1];
       double z_i = all_m_atoms[i].z;// - min[2];
@@ -887,22 +1082,8 @@ void calc_interactions() {
    }
 
    std::cout << "[complete]" << std::endl;
-   
-   // // std::vector< int> interactions_list;
-   // std::ofstream correlation_file;
-   // correlation_file.open("moire-lattice-constants.txt");
-   // std::vector<std::array<double, 3> > zero_correlation;
-   // now calculate neighbour list looping over boxes
-   vtimer_t timer;
-      timer.start();
-   //(J-J_inter_scaling*std::abs(J))*J_constant;
-   // Jinter1_AB = Jinter1_AB - std::abs(Jinter1_AB)*J_inter_scaling*2;
-   // Jinter2_AB = Jinter2_AB - std::abs(Jinter2_AB)*J_inter_scaling*2;
-   // Jinter3_AB = Jinter3_AB - std::abs(Jinter3_AB)*J_inter_scaling*2;
-
-
-   #pragma omp parallel num_threads(8) reduction(+:number_of_interactions) 
-   #pragma omp parallel num_threads(8) reduction(+:number_of_interactions) 
+   // exit(1);
+   #pragma omp parallel num_threads(36) reduction(+:number_of_interactions) 
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
@@ -1240,10 +1421,6 @@ void calc_interactions() {
    std::cout << number_of_interactions << " [completed] [" << timer.elapsed_time() << " s]" << std::endl;
    std::cout << "outputting extra file info:" << std::endl;
    
-   char directory [256];
-      if(getcwd(directory, sizeof(directory)) == NULL){
-         std::cerr << "Fatal getcwd error in datalog." << std::endl;
-      }
 
    std::cout << "config atoms started..." << std::flush;
       std::ofstream config_output(std::string(directory) + "/config_energy_atomic.txt");
@@ -1324,26 +1501,22 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
    int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : ( round(theta/30.0) == 3.0 ? (0):-1) );
    theta =  std::abs(angle_j)*180.0/M_PI;
    int theta_j = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : (round(theta/30.0) == 3.0 ? (0):-1) );
-   // if(theta_i == -1 || theta_j == -1) {
-   //    std::cout << "\n " << round(std::abs(angle_i)*180.0/M_PI/30.0) << ", " << round(std::abs(angle_j)*180.0/M_PI/30.0) << ", " << angle_i << ", " << angle_j << ", " << central_atom.Gx << ", " << central_atom.Gy << ", " << j_atom.Gx << ", " << j_atom.Gy <<  std::endl;
-   //    exit(1);
-   //    return exchange;
-   // }
-   
+
+      // double DMI_sub_vector_x = 0.0;
+      // double DMI_sub_vector_y = 0.0;
+      // double DMI_sub_vector_z = 1.0;
+      double ex_vec_x = cos(angle_i);
+      double ex_vec_y = sin(angle_i);
+      double ex_vec_z = 0.0;
    if(central_atom.S == 1) {
       exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
 
       double DMI = Dx_substrate*exchange[0];
-      double D_vec_x = 1.0;
-      double D_vec_y = 0.0;
-      double D_vec_z = 0.0;
-      double ex_vec_x = cos(angle_i);
-      double ex_vec_y = sin(angle_i);
-      double ex_vec_z = 0.0;
-      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(DMI_sub_vector_y*ex_vec_z - ex_vec_y*(-DMI_sub_vector_z));//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*((-DMI_sub_vector_z)*ex_vec_x - ex_vec_z*DMI_sub_vector_x);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(DMI_sub_vector_x*ex_vec_y - ex_vec_x*DMI_sub_vector_y);
 
+    //  std::cout << DMI << ", " << ex_vec_x << ", " << ex_vec_y << ", " << (DMI_sub_vector_x*ex_vec_y - ex_vec_x*DMI_sub_vector_y) << std::endl;
    //   std::cout << 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2/J_constant << " + " << Dx_substrate*exchange[0]/J_constant << " = " << exchange[1]/J_constant << std::endl;
    } else if(central_atom.S == 2) {
       exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
@@ -1358,27 +1531,18 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
       exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
    } else if(central_atom.S == 4) {
-      
       exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;
 
       double DMI = Dx_substrate*exchange[0];
-      double D_vec_x = 1.0;
-      double D_vec_y = 0.0;
-      double D_vec_z = 0.0;
-      double ex_vec_x = cos(angle_i);
-      double ex_vec_y = sin(angle_i);
-      double ex_vec_z = 0.0;
-      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(DMI_sub_vector_y*ex_vec_z - ex_vec_y*DMI_sub_vector_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(DMI_sub_vector_z*ex_vec_x - ex_vec_z*DMI_sub_vector_x);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(DMI_sub_vector_x*ex_vec_y - ex_vec_x*DMI_sub_vector_y);
 
       exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
-      //exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 3]);
+    
    }
-   //exchange[0] *= J_intra_reduction;
-   // all_m_atoms[central_atom.id].intra1++;
-   // if(central_atom.S == 2) std::cout << i_x_shift << ", " << i_y_shift << ", " << j_x_shift << ", " << j_y_shift << ", " << exchange[0] << std::endl;
+
    return exchange;
 }
 
@@ -1408,19 +1572,21 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
    //    exit(1);
    //    return exchange;
    // }
+      // double DMI_sub_vector_x = 0.0;
+      // double DMI_sub_vector_y = 0.0;
+      // double DMI_sub_vector_z = 1.0;
+      double ex_vec_x = cos(angle_i);
+      double ex_vec_y = sin(angle_i);
+      double ex_vec_z = 0.0;
+
    if(central_atom.S == 1) {
       exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
 
       double DMI = Dx_substrate*exchange[0];
-      double D_vec_x = 1.0;
-      double D_vec_y = 0.0;
-      double D_vec_z = 0.0;
-      double ex_vec_x = cos(angle_i);
-      double ex_vec_y = sin(angle_i);
-      double ex_vec_z = 0.0;
-      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(DMI_sub_vector_y*ex_vec_z - ex_vec_y*(-DMI_sub_vector_z));//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*((-DMI_sub_vector_z)*ex_vec_x - ex_vec_z*DMI_sub_vector_x);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(DMI_sub_vector_x*ex_vec_y - ex_vec_x*DMI_sub_vector_y);
    } else if(central_atom.S == 2) {
       exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
       exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
@@ -1437,15 +1603,9 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
       exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;
 
       double DMI = Dx_substrate*exchange[0];
-      double D_vec_x = 1.0;
-      double D_vec_y = 0.0;
-      double D_vec_z = 0.0;
-      double ex_vec_x = cos(angle_i);
-      double ex_vec_y = sin(angle_i);
-      double ex_vec_z = 0.0;
-      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(DMI_sub_vector_y*ex_vec_z - ex_vec_y*DMI_sub_vector_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(DMI_sub_vector_z*ex_vec_x - ex_vec_z*DMI_sub_vector_x);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(DMI_sub_vector_x*ex_vec_y - ex_vec_x*DMI_sub_vector_y);
 
       exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
@@ -1484,19 +1644,19 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
    //    exit(1);
    //    return exchange;
    // }
+      // double DMI_sub_vector_x = 0.0;
+      // double DMI_sub_vector_y = 0.0;
+      // double DMI_sub_vector_z = 1.0;
+      double ex_vec_x = cos(angle_i);
+      double ex_vec_y = sin(angle_i);
+      double ex_vec_z = 0.0;
    if(central_atom.S == 1) {
       exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
 
       double DMI = Dx_substrate*exchange[0];
-      double D_vec_x = 1.0;
-      double D_vec_y = 0.0;
-      double D_vec_z = 0.0;
-      double ex_vec_x = cos(angle_i);
-      double ex_vec_y = sin(angle_i);
-      double ex_vec_z = 0.0;
-      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+      exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(DMI_sub_vector_y*ex_vec_z - ex_vec_y*(-DMI_sub_vector_z));//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      exchange[2] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*((-DMI_sub_vector_z)*ex_vec_x - ex_vec_z*DMI_sub_vector_x);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(DMI_sub_vector_x*ex_vec_y - ex_vec_x*DMI_sub_vector_y);
    } else if(central_atom.S == 2) {
       exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;//+Eij.at(j_x_shift*100 + j_y_shift).at(theta_j*4 + 0));
       exchange[1] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2;//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
@@ -1513,15 +1673,9 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
       exchange[0] = J_intra_reduction*0.5*(Eij.at(i_x_shift*100 +i_y_shift).at(theta_i*4 +0))*2;
 
       double DMI = Dx_substrate*exchange[0];
-      double D_vec_x = 1.0;
-      double D_vec_y = 0.0;
-      double D_vec_z = 0.0;
-      double ex_vec_x = cos(angle_i);
-      double ex_vec_y = sin(angle_i);
-      double ex_vec_z = 0.0;
-      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(D_vec_y*ex_vec_z - ex_vec_y*D_vec_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
-      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(D_vec_z*ex_vec_x - ex_vec_z*D_vec_x);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
-      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(D_vec_x*ex_vec_y - ex_vec_y*D_vec_x);
+      double Dx = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +1])*2 + DMI*(DMI_sub_vector_y*ex_vec_z - ex_vec_y*DMI_sub_vector_z);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 1]);
+      double Dy = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +2])*2 + DMI*(DMI_sub_vector_z*ex_vec_x - ex_vec_z*DMI_sub_vector_x);//+Eij[j_x_shift*100 + j_y_shift][theta_j*4 + 2]);
+      exchange[3] = 0.5*(Eij[i_x_shift*100 +i_y_shift][theta_i*4 +3])*2 + DMI*(DMI_sub_vector_x*ex_vec_y - ex_vec_x*DMI_sub_vector_y);
 
       exchange[1] = Dx*cos(twist_angle) - Dy*sin(twist_angle);
       exchange[2] = Dx*sin(twist_angle) + Dy*cos(twist_angle);
