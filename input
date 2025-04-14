@@ -7,56 +7,50 @@
 #------------------------------------------
 # Creation attributes:
 #------------------------------------------
-dimensions:unit-cell-size-x = 7.972  !A
-dimensions:unit-cell-size-y =  6.904 !A
-dimensions:unit-cell-size-z = 16.229 !A
 
-dimensions:system-size-x = 0.7972 !nm
-dimensions:system-size-y = 0.6904 !nm
-dimensions:system-size-z = 1.6229 !nm
+dimensions:system-size-x = 10 !nm
+dimensions:system-size-y = 10 !nm
+dimensions:system-size-z = 0.9 !nm
 
 #create:periodic-boundaries-x
-#create:periodic-boundaries-y
+create:periodic-boundaries-y
 #create:periodic-boundaries-z
-
-#dipole:solver=tensor
-#dipole:field-update-rate=1
-#cells:macro-cell-size-x = 100
-#cells:macro-cell-size-y = 100
-#cells:macro-cell-size-z = 30
-
+create:local-alloy-radius = 7.5 #A
+create:local-alloy-x-position = 0.75
+create:local-alloy-y-position = 0.5
 #------------------------------------------
 # Material Files:
 #------------------------------------------
-#material:unit-cell-file = FGaT.ucf
-material:file = Fe3GaTe2.mat
-#create:crystal-sublattice-materials=true
-create:crystal-structure = fe3gate2
+material:unit-cell-file = fe3gate2-lda-Li-tetragonal.ucf
+material:file = fe3gate2-Li.mat
 
-exchange:interaction-range = 1.0
-exchange:function = shell
+#create:crystal-sublattice-materials=true
+#create:crystal-structure = fe3gate2
+
+#exchange:interaction-range = 2.85
+#exchange:function = shell
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
 
-sim:loop-time-steps=1
+sim:total-time-steps=1
 sim:equilibration-temperature=10
 sim:temperature=10
 sim:equilibration-time-steps = 1
 sim:time-steps-increment = 1
 
-sim:temperature-increment = 25
+#sim:preconditioning-steps = 5000
+sim:temperature-increment = 30
 sim:minimum-temperature= 10
-sim:maximum-temperature=11
-
+sim:maximum-temperature= 600
 
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:program =curie-temperature #time variable magnetic field; SOT; STT
-sim:integrator = monte-carlo
+sim:program = domain-wall #time variable magnetic field; SOT; STT
+sim:integrator = llg-heun
 
-sim:save-checkpoint = end 
+#sim:save-checkpoint = end 
 #------------------------------------------
 # data output
 #------------------------------------------
@@ -64,11 +58,11 @@ config:atoms
 config:atoms-output-rate=1
 
 output:output-rate=1
-output:time-steps
+#output:time-steps
 output:temperature
 output:mean-magnetisation-length
 output:material-mean-magnetisation
 output:mean-susceptibility
-output:mean-total-torque
-output:total-energy 
+output:mean-material-spin-temperature
+output:material-mean-total-energy 
 

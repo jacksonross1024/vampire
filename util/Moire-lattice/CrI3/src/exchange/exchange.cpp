@@ -1488,14 +1488,10 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
       i_x_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][1]);
       i_y_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][2]);
 
-      j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
-      j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
-   } else  {
-      i_x_shift = 67;
-      i_y_shift = 0;
-      j_x_shift = 67;
-      j_y_shift = 0;
+      // j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
+      // j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
    }
+   
 
    double theta =  std::abs(angle_i)*180.0/M_PI;
    int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : ( round(theta/30.0) == 3.0 ? (0):-1) );
@@ -1554,14 +1550,10 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
       i_x_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][1]);
       i_y_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][2]);
 
-      j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
-      j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
-   } else  {
-      i_x_shift = 67;
-      i_y_shift = 0;
-      j_x_shift = 67;
-      j_y_shift = 0;
-   }
+      // j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
+      // j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
+   } 
+   
    // double theta =  std::abs(angle)*180.0/M_PI;
    int theta_i = int(round(((angle_i < 0.0) ? (angle_i+=2*M_PI) : (angle_i)) *179.0/M_PI/60.0));
    // theta =  std::abs(angle-180.0)*180.0/M_PI;
@@ -1626,14 +1618,10 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
       i_x_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][1]);
       i_y_shift = (unit_cell_shifts[central_atom.unit_x][central_atom.unit_y][2]);
 
-      j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
-      j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
-   } else {
-      i_x_shift = 67;
-      i_y_shift = 0;
-      j_x_shift = 67;
-      j_y_shift = 0;
-   }
+      // j_x_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][1]);
+      // j_y_shift = (unit_cell_shifts[j_atom.unit_x][j_atom.unit_y][2]);
+   } 
+   
 
    double theta =  std::abs(angle_i)*180.0/M_PI;
    int theta_i = (round(theta/30.0) == 5.0) ? (2) : ((round(theta/30.0)== 1.0) ? (1) : ( round(theta/30.0) == 3.0 ? (0):-1) );

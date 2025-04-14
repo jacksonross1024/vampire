@@ -139,6 +139,7 @@
    extern std::vector < std::vector < std::vector <int> > > unit_cell_shifts;
    extern std::vector < std::vector < std::vector <double> > > config_energy;
    extern std::vector<std::vector<std::vector<double> > > global_config_energy;
+   
    bool inside_system(double sx, double sy, double x, double y, double offset);
    bool inside_system(double x, double y, double offset);
    void read_in_atoms(std::string filename, int n_atoms, std::vector <spin > &atom2);

@@ -108,10 +108,10 @@ void unitcell::exchange_template_t::find_shells(){
    zlog << zTs() << "Number of calculated interaction shells: " << shell_count.size() << std::endl;
    zlog << zTs() << "   Shell \tNumber \tRange \t Cumulative" << std::endl;
    int cumulative = 0;
-   const int num_atoms = num_unit_cell_atoms-2;
+   const int num_atoms = num_unit_cell_atoms;
    for(size_t i=0; i < shell_count.size(); i++){
       cumulative += shell_count[i];
-      zlog << zTs() << "     " << i+1 << "   \t" << shell_count[i]/num_atoms << "\t" << shell_range[i] << " \t" << cumulative/num_atoms << std::endl;
+      zlog << zTs() << "     " << i+1 << "   \t" << shell_count[i] << "\t" << shell_range[i] << " \t" << cumulative/num_atoms << std::endl;
    }
 
    return;

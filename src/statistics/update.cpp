@@ -94,7 +94,7 @@ namespace stats{
                                                              //  atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array);
                                                               
                                                             
-         if(stats::calculate_material_spin_temperature)     stats::material_spin_temperature.calculate(sx,sy,sz,mm,bxs,bys,bzs,bxe,bye,bze);
+            if(stats::calculate_material_spin_temperature)     stats::material_spin_temperature.calculate(sx,sy,sz,mm,bxs,bys,bzs,bxe,bye,bze);
                                                               // atoms::x_total_spin_field_array, atoms::y_total_spin_field_array, atoms::z_total_spin_field_array,
                                                              //  atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array);
          

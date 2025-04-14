@@ -24,7 +24,7 @@ set style line 100 pt 1 ps 1.2 lt 0 lc rgb "gray30" lw 2
 set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
 
-set term pngcairo size 1600,1600
+set term pngcairo size 1600,2000
 
 
 set ylabel "y position (nm)"
@@ -46,7 +46,7 @@ normalise = 2.98*2.98
 set xrange [5:95]
 set yrange [5:95]
 
-set palette defined (-0.15 '#81B1CB', 0.0 '#f5f0f7', 0.1 '#7A5FA9',  0.6'#614199')
+set palette defined (-1.5 '#81B1CB', 0.0 '#f5f0f7', 0.5 '#7A5FA9',  1.5 '#614199')
 
 do for [angle in "0.6"] {
 do for [J_index in "0.5"] {
@@ -57,73 +57,161 @@ do for [J_intra in "1.0"] {
 file = sprintf("config_energy_atomic") #, angle, J_index, DMI_index, J_twist, J_prist, J_intra) 
 print(file.".txt")
 
+
+
+#set cbrange [0.6:-0.15]
+set output sprintf("%s-J-net-twist-dmi-DMIsub.png", file)
+set multiplot layout 4,4
+
+layer = 0
+species = 1
+set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($8+$13+$18+$38+$43+$48)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($9+$14+$19+$39+$44+$49)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($10+$15+$20+$40+$45+$50)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9+$14+$19+$39+$44+$49,$8+$13+$18+$38+$43+$48)) w boxxy palette notitle
+
+
+species = 2
+set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($8+$13+$18+$38+$43+$48)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($9+$14+$19+$39+$44+$49)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($10+$15+$20+$40+$45+$50)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9+$14+$19+$39+$44+$49,$8+$13+$18+$38+$43+$48)) w boxxy palette notitle
+
+
+#set cbrange [-0.15:0.6]
+species = 3
+set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($8+$13+$18+$38+$43+$48)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($9+$14+$19+$39+$44+$49)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($10+$15+$20+$40+$45+$50)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9+$14+$19+$39+$44+$49,$8+$13+$18+$38+$43+$48)) w boxxy palette notitle
+
+
+species = 4
+set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($8+$13+$18+$38+$43+$48)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($9+$14+$19+$39+$44+$49)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($10+$15+$20+$40+$45+$50)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( ($8+$13+$18+$38+$43+$48) > 0.0 ? (0.3185*atan2( ($9+$14+$19+$39+$44+$49) ,($8+$13+$18+$38+$43+$48))) : (($9+$14+$19+$39+$44+$49) >= 0.0 ? (1+0.3185*atan2( ($9+$14+$19+$39+$44+$49) ,($8+$13+$18+$38+$43+$48))) : (-1+0.3185*atan2( ($9+$14+$19+$39+$44+$49) ,($8+$13+$18+$38+$43+$48)))  )) w boxxy palette notitle
+
+
+unset multiplot 
+
 #set cbrange [-0.08:-0.3]
-# set output sprintf("%s-J-intra-pristine-1nn.png", file)
-# set multiplot layout 4,4
+set output sprintf("%s-J-intra-pristine-1nn-DMIsub.png", file)
+set multiplot layout 4,5
 
-# layer = 0
-# species = 1
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($7/normalise) w boxxy palette notitle 
+layer = 0
+species = 1
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($7/normalise) w boxxy palette notitle 
 
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($8/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($8/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($9/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($9/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
 
-# layer = 0
-# species = 2
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($7/normalise) w boxxy palette notitle 
-
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($8/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($9/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9,$8)) w boxxy palette notitle
 
 
-# layer = 0
-# species = 3
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($7/normalise) w boxxy palette notitle 
+layer = 0
+species = 2
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($7/normalise) w boxxy palette notitle 
 
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($8/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($8/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($9/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($9/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
 
-# layer = 0
-# species = 4
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($7/normalise) w boxxy palette notitle 
-
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($8/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($9/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9,$8)) w boxxy palette notitle
 
 
-# unset multiplot 
+layer = 0
+species = 3
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($7/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($8/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($9/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9,$8)) w boxxy palette notitle
 
 
-set output sprintf("%s-J-intra-twist-1nn.png", file)
-set multiplot layout 4,4
+layer = 0
+species = 4
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($7/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($8/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($9/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9,$8)) w boxxy palette notitle
+
+
+unset multiplot 
+
+
+set output sprintf("%s-J-intra-twist-1nn-DMIsub.png", file)
+set multiplot layout 4,5
 
 layer = 1
 species = 1
@@ -139,6 +227,10 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9,$8)) w boxxy palette notitle
+
+
 layer = 1
 species = 2
 set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
@@ -152,6 +244,10 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9,$8)) w boxxy palette notitle
+
 
 
 layer = 1
@@ -168,6 +264,10 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9,$8)) w boxxy palette notitle
+
+
 layer = 1
 species = 4
 set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
@@ -182,76 +282,93 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($10/normalise) w boxxy palette notitle
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($9,$8)) w boxxy palette notitle
+
 
 unset multiplot 
 
 
-# set output sprintf("%s-J-intra-pristine-2nn.png", file)
-# set multiplot layout 4,4
+set output sprintf("%s-J-intra-pristine-2nn-DMIsub.png", file)
+set multiplot layout 4,5
 
-# layer = 0
-# species = 1
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($12/normalise) w boxxy palette notitle 
+layer = 0
+species = 1
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($12/normalise) w boxxy palette notitle 
 
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($13/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($13/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($14/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($14/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
 
-# layer = 0
-# species = 2
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($12/normalise) w boxxy palette notitle 
-
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($13/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($14/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($14,$13)) w boxxy palette notitle
 
 
-# layer = 0
-# species = 3
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($12/normalise) w boxxy palette notitle 
+layer = 0
+species = 2
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($12/normalise) w boxxy palette notitle 
 
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($13/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($13/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($14/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($14/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
 
-# layer = 0
-# species = 4
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($12/normalise) w boxxy palette notitle 
-
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($13/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($14/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($14,$13)) w boxxy palette notitle
 
 
-# unset multiplot 
+layer = 0
+species = 3
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($12/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($13/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($14/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($14,$13)) w boxxy palette notitle
 
 
-set output sprintf("%s-J-intra-twist-2nn.png", file)
-set multiplot layout 4,4
+layer = 0
+species = 4
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($12/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($13/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($14/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($14,$13)) w boxxy palette notitle
+
+
+unset multiplot 
+
+
+set output sprintf("%s-J-intra-twist-2nn-DMIsub.png", file)
+set multiplot layout 4,5
 
 layer = 1
 species = 1
@@ -267,6 +384,9 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($14,$13)) w boxxy palette notitle
+
 layer = 1
 species = 2
 set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
@@ -280,6 +400,9 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($14,$13)) w boxxy palette notitle
 
 
 layer = 1
@@ -296,6 +419,10 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($14,$13)) w boxxy palette notitle
+
+
 layer = 1
 species = 4
 set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
@@ -310,76 +437,93 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($15/normalise) w boxxy palette notitle
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($14,$13)) w boxxy palette notitle
+
 
 unset multiplot 
 
 
-# set output sprintf("%s-J-intra-pristine-3nn.png", file)
-# set multiplot layout 4,4
+set output sprintf("%s-J-intra-pristine-3nn-DMIsub.png", file)
+set multiplot layout 4,5
 
-# layer = 0
-# species = 1
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($17/normalise) w boxxy palette notitle 
+layer = 0
+species = 1
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($17/normalise) w boxxy palette notitle 
 
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($18/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($18/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($19/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($19/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($20/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($20/normalise) w boxxy palette notitle
 
-# layer = 0
-# species = 2
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($17/normalise) w boxxy palette notitle 
-
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($18/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($19/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($20/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($19,$18)) w boxxy palette notitle
 
 
-# layer = 0
-# species = 3
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($17/normalise) w boxxy palette notitle 
+layer = 0
+species = 2
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($17/normalise) w boxxy palette notitle 
 
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($18/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($18/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($19/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($19/normalise) w boxxy palette notitle
 
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($20/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($20/normalise) w boxxy palette notitle
 
-# layer = 0
-# species = 4
-# set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($17/normalise) w boxxy palette notitle 
-
-# set title sprintf("layer %.f, D_x", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($18/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_y", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($19/normalise) w boxxy palette notitle
-
-# set title sprintf("layer %.f, D_z", layer)
-# plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($20/normalise) w boxxy palette notitle
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($19,$18)) w boxxy palette notitle
 
 
-# unset multiplot 
+layer = 0
+species = 3
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($17/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($18/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($19/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($20/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($19,$18)) w boxxy palette notitle
 
 
-set output sprintf("%s-J-intra-twist-3NN.png", file)
-set multiplot layout 4,4
+layer = 0
+species = 4
+set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($17/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, D_x", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($18/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_y", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($19/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, D_z", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):($20/normalise) w boxxy palette notitle
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($19,$18)) w boxxy palette notitle
+
+
+unset multiplot 
+
+
+set output sprintf("%s-J-intra-twist-3NN-DMIsub.png", file)
+set multiplot layout 4,5
 
 layer = 1
 species = 1
@@ -395,6 +539,10 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($20)/normalise) w boxxy palette notitle 
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($19,$18)) w boxxy palette notitle
+
+
 layer = 1
 species = 2
 set title sprintf("species %.f, layer %.f, J_{intra}", species, layer)
@@ -408,6 +556,9 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($20)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($19,$18)) w boxxy palette notitle
 
 
 layer = 1
@@ -424,6 +575,9 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($20)/normalise) w boxxy palette notitle 
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($19,$18)) w boxxy palette notitle
+
 
 layer = 1
 species = 4
@@ -439,12 +593,14 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($20)/normalise) w boxxy palette notitle 
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($19,$18)) w boxxy palette notitle
 
 unset multiplot 
 
 
 
-set output sprintf("%s-J-inter-pristine.png", file)
+set output sprintf("%s-J-inter-pristine-DMIsub.png", file)
 set multiplot layout 4,1
 
 layer = 0
@@ -509,7 +665,7 @@ set title sprintf("layer %.f, D_x", layer)
 unset multiplot 
 
 
-# set output sprintf("%s-J-inter-twist.png", file)
+# set output sprintf("%s-J-inter-twist-DMIsub.png", file)
 # set multiplot layout 4,4
 
 # layer = 1
@@ -572,8 +728,8 @@ unset multiplot
 # unset multiplot 
 
 #set cbrange [0.6:-0.15]
-set output sprintf("%s-J-inter-twist-2.png", file)
-set multiplot layout 4,4
+set output sprintf("%s-J-inter-twist-2-DMIsub.png", file)
+set multiplot layout 4,5
 
 layer = 1
 species = 1
@@ -589,6 +745,9 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($40+$45+$50)/normalise) w boxxy palette notitle 
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($39+$44+$49,$38+$43+$48)) w boxxy palette notitle
+
 
 species = 2
 set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
@@ -602,6 +761,10 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($40+$45+$50)/normalise) w boxxy palette notitle 
+
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($39+$44+$49,$38+$43+$48)) w boxxy palette notitle
+
 
 #set cbrange [-0.15:0.6]
 species = 3
@@ -617,6 +780,9 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($40+$45+$50)/normalise) w boxxy palette notitle 
 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($39+$44+$49,$38+$43+$48)) w boxxy palette notitle
+
 
 species = 4
 set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
@@ -631,68 +797,13 @@ plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0
 set title sprintf("layer %.f, D_z", layer)
 plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($40+$45+$50)/normalise) w boxxy palette notitle 
 
-
-unset multiplot 
-
-
-#set cbrange [0.6:-0.15]
-set output sprintf("%s-J-net-twist-dmi.png", file)
-set multiplot layout 4,3
-
-layer = 1
-species = 1
-set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
-
-set title sprintf("layer %.f, D_x", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($8+$13+$18+$38+$43+$48)/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_y", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($9+$14+$19+$39+$44+$49)/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_z", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($10+$15+$20+$40+$45+$50)/normalise) w boxxy palette notitle 
-
-
-species = 2
-set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
-
-set title sprintf("layer %.f, D_x", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($8+$13+$18+$38+$43+$48)/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_y", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($9+$14+$19+$39+$44+$49)/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_z", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($10+$15+$20+$40+$45+$50)/normalise) w boxxy palette notitle 
-
-#set cbrange [-0.15:0.6]
-species = 3
-set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
-
-set title sprintf("layer %.f, D_x", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($8+$13+$18+$38+$43+$48)/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_y", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($9+$14+$19+$39+$44+$49)/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_z", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($10+$15+$20+$40+$45+$50)/normalise) w boxxy palette notitle 
-
-
-species = 4
-set title sprintf("species %.f, layer %.f, J_{inter}", species, layer)
-
-set title sprintf("layer %.f, D_x", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($8+$13+$18+$38+$43+$48)/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_y", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($9+$14+$19+$39+$44+$49)/normalise) w boxxy palette notitle 
-
-set title sprintf("layer %.f, D_z", layer)
-plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):(($10+$15+$20+$40+$45+$50)/normalise) w boxxy palette notitle 
+set title sprintf("layer %.f, theta_{Dxy}", layer)
+plot file.".txt" u (chck($2,species, $3, layer, $4*0.1)):($5*0.1):(0.693/2.0):(0.6002/2.0):( 0.3185*atan2($39+$44+$49,$38+$43+$48)) w boxxy palette notitle
 
 
 unset multiplot 
+
+
 
 }
 }
