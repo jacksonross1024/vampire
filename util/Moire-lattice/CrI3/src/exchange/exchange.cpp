@@ -1034,7 +1034,7 @@ void calc_interactions() {
         
          int i_shift = unit_cell_shifts[i][j][1];
          int j_shift = unit_cell_shifts[i][j][2];
-         if(i_shift > 99 || j_shift >> 99) std::cout << "problems " << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << std::endl;
+         if(i_shift > 99 || j_shift > 99) std::cout << "problems " << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << std::endl;
          shift_file << i << ", " << j << ", " << occupancy << ", " << i_shift << ", " << j_shift << "\n";// << 
                         // Einter_Cr1.at(i_shift).at(j_shift)[2]  << ", " <<\
                         // Einter_Cr1.at(i_shift).at(j_shift) << ", " << \
