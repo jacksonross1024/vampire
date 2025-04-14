@@ -284,7 +284,7 @@ namespace stats
          void calculate(const std::vector<double>& sx, const std::vector<double>& sy, const std::vector<double>& sz, const std::vector<double>& sm,
          const std::vector<double>& Hx_int, const std::vector<double>& Hy_int,const std::vector<double>& Hz_int,
          const std::vector<double>& Hx_ext, const std::vector<double>& Hy_ext, const std::vector<double>& Hz_ext);
-         void set_mask(const int in_mask_size, const std::vector<int>& in_mask,const std::vector<double>& mm);
+         void set_mask(const int in_mask_size, const std::vector<int> in_mask,const std::vector<double>& mm);
          std::string output_spin_temperature(bool header);
          std::string output_mean_spin_temperature(bool header);
          void reset();

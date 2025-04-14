@@ -63,7 +63,7 @@ namespace create{
          // constructor
          slave_material_t ():
          	fraction(0.0),
-            variance(0.1),
+            variance(0.0),
             slave_alloy_distribution(native)
             {};
       };
@@ -144,6 +144,10 @@ namespace create{
       extern bool select_material_by_geometry;	// Toggle override of input material type by geometry
       extern bool select_material_by_z_height;
 
+      extern bool local_alloy;
+      extern double local_alloy_x;
+      extern double local_alloy_y;
+      extern double local_alloy_radius;
       //-----------------------------------------------------------------------------
       // Internal functions for create module
       //-----------------------------------------------------------------------------

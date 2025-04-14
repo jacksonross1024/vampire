@@ -54,80 +54,331 @@ public:
   int dx;
   int dy;
   int dz;
-  double Jij;
+  double Jij = 0.0;
+  double rij;
 };
 
 int main(){
 
   // system constants
   //unit cell sizes
-  double unit_cell_size[3]={3.54,3.54,3.54};
+  double unit_cell_size[3]={16.229, 16.229, 16.229};
 
-  const int num_materials=2;
+  const int num_materials=6;
   // exchange constants
   std::vector<std::vector<double> > exchange_constants;
   exchange_constants.resize(num_materials);
-  for(int m=0;m<num_materials;m++) exchange_constants.at(m).resize(num_materials);
+  for(int m=0;m<num_materials;m++) exchange_constants.at(m).resize(num_materials, 0.0);
+  std::vector<std::vector<double> > exchange_constants_nnn;
+  exchange_constants_nnn.resize(num_materials);
+  for(int m=0;m<num_materials;m++) exchange_constants_nnn.at(m).resize(num_materials, 0.0);
 
   // material parameters
-  std::vector<material_t> materials(num_materials);
-  
-  materials.at(0).mu_s=7.63; // mu_B's
+  std::vector<material_t> materials(2);
+
+    
+  materials.at(0).mu_s=2.05; // mu_B's
   materials.at(0).alpha=0.1;
-  materials.at(0).Ku=-8.07246e-24; // J/atom
-  materials.at(0).name="RE";
-  materials.at(0).element="Ag";
+  materials.at(0).name="Fe1,2";
+  materials.at(0).element="AFeg";
   materials.at(0).Sx=0.0;
   materials.at(0).Sy=0.0;
-  materials.at(0).Sz=-1.0;
+  materials.at(0).Sz=1.0;
 
-  materials.at(1).mu_s=1.92;
+  materials.at(1).mu_s=1.35;
   materials.at(1).alpha=0.1;
-  materials.at(1).Ku=-8.07246e-24;
-  materials.at(1).name="TM";
+  materials.at(1).name="Fe3";
   materials.at(1).element="Fe";
   materials.at(1).Sx=0.0;
   materials.at(1).Sy=0.0;
   materials.at(1).Sz=1.0;
-
-  exchange_constants.at(0).at(0)=1.26e-21; // Gd-Gd
-  exchange_constants.at(0).at(1)=-1.09e-21; // Gd-Fe
-  exchange_constants.at(1).at(0)=-1.09e-21; // Fe-Gd
-  exchange_constants.at(1).at(1)=2.835e-21; // Fe-Fe
-  
   // create atoms in unit cell
-  std::vector<uc_atom_t> unit_cell(0);
+  std::vector<uc_atom_t> unit_cell(24);
 
-  unit_cell.resize(4);
+   double x1 = 0.125;
+   double x2 = 0.375;
+   double x3 = 0.625;
+   double x4 = 0.875;
 
-  unit_cell.at(0).cx=0.0;
-  unit_cell.at(0).cy=0.0;
-  unit_cell.at(0).cz=0.0;
-  unit_cell.at(0).material=0;
-  unit_cell.at(0).hc=0;
-  unit_cell.at(0).lc=1;
+   double y1 = 0.0833574739281576;
+   double y2 = 0.250072421784473;
+   double y3 = 0.416642526071842;
+   double y4 = 0.583357473928158;
+   double y5 = 0.750072421784473;
+   double y6 = 0.916642526071842;
+
+   double z1 = 0.176967157557459;
+   double z2 = 0.249984595477232;
+   double z3 = 0.323063651488077;
+   double z4 = 0.676936348511923;
+   double z5 = 0.750015404522768;
+   double z6 = 0.823032842442541;
+
+  unit_cell.at(0).cx=x1;
+  unit_cell.at(0).cy=y2;
+  unit_cell.at(0).cz=z5;
+  unit_cell.at(0).material=1;
+  unit_cell.at(0).hc=4;
+  unit_cell.at(0).lc=6;
   
-  unit_cell.at(1).cx=0.5;
-  unit_cell.at(1).cy=0.5;
-  unit_cell.at(1).cz=0.0;
-  unit_cell.at(1).material=1;
-  unit_cell.at(1).hc=0;
-  unit_cell.at(1).lc=0;
+  unit_cell.at(1).cx=x2;
+  unit_cell.at(1).cy=y1;
+  unit_cell.at(1).cz=z1;
+  unit_cell.at(1).material=0;
+  unit_cell.at(1).hc=1;
+  unit_cell.at(1).lc=1;
   
-  unit_cell.at(2).cx=0.5;
-  unit_cell.at(2).cy=0.0;
-  unit_cell.at(2).cz=0.5;
+  unit_cell.at(2).cx=x2;
+  unit_cell.at(2).cy=y3;
+  unit_cell.at(2).cz=y2;
   unit_cell.at(2).material=1;
   unit_cell.at(2).hc=1;
-  unit_cell.at(2).lc=0;
+  unit_cell.at(2).lc=3;
   
-  unit_cell.at(3).cx=0.0;
-  unit_cell.at(3).cy=0.5;
-  unit_cell.at(3).cz=0.5;
-  unit_cell.at(3).material=1;
+  unit_cell.at(3).cx=x2;
+  unit_cell.at(3).cy=y1;
+  unit_cell.at(3).cz=z3;
+  unit_cell.at(3).material=0;
   unit_cell.at(3).hc=1;
-  unit_cell.at(3).lc=0;
+  unit_cell.at(3).lc=2;
   
+  unit_cell.at(4).cx=x2;
+  unit_cell.at(4).cy=y1;
+  unit_cell.at(4).cz=z4;
+  unit_cell.at(4).material=0;
+  unit_cell.at(4).hc=1;
+  unit_cell.at(4).lc=4;
+
+  unit_cell.at(5).cx=x3;
+  unit_cell.at(5).cy=y2;
+  unit_cell.at(5).cz=z5;
+  unit_cell.at(5).material=1;
+  unit_cell.at(5).hc=4;
+  unit_cell.at(5).lc=6;
+
+  unit_cell.at(6).cx=x2;
+  unit_cell.at(6).cy=y1;
+  unit_cell.at(6).cz=z6;
+  unit_cell.at(6).material=0;
+  unit_cell.at(6).hc=1;
+  unit_cell.at(6).lc=5;
+
+  unit_cell.at(7).cx=x1;
+  unit_cell.at(7).cy=y4;
+  unit_cell.at(7).cz=z1;
+  unit_cell.at(7).material=0;
+  unit_cell.at(7).hc=1;
+  unit_cell.at(7).lc=1;
+
+  unit_cell.at(8).cx=x1;
+  unit_cell.at(8).cy=y6;
+  unit_cell.at(8).cz=y2;
+  unit_cell.at(8).material=1;
+  unit_cell.at(8).hc=1;
+  unit_cell.at(8).lc=3;
+
+  unit_cell.at(9).cx=x1;
+  unit_cell.at(9).cy=y4;
+  unit_cell.at(9).cz=z3;
+  unit_cell.at(9).material=0;
+  unit_cell.at(9).hc=1;
+  unit_cell.at(9).lc=2;
+
+  unit_cell.at(10).cx=x1;
+  unit_cell.at(10).cy=y4;
+  unit_cell.at(10).cz=z4;
+  unit_cell.at(10).material=0;
+  unit_cell.at(10).hc=1;
+  unit_cell.at(10).lc=4;
+
+  unit_cell.at(11).cx=x2;
+  unit_cell.at(11).cy=z5;
+  unit_cell.at(11).cz=z5;
+  unit_cell.at(11).material=1;
+  unit_cell.at(11).hc=1;
+  unit_cell.at(11).lc=6;
+
+  unit_cell.at(12).cx=x1;
+  unit_cell.at(12).cy=y4;
+  unit_cell.at(12).cz=z6;
+  unit_cell.at(12).material=0;
+  unit_cell.at(12).hc=1;
+  unit_cell.at(12).lc=5;
+
+  unit_cell.at(13).cx=x4;
+  unit_cell.at(13).cy=y1;
+  unit_cell.at(13).cz=z1;
+  unit_cell.at(13).material=0;
+  unit_cell.at(13).hc=1;
+  unit_cell.at(13).lc=1;
+
+  unit_cell.at(14).cx=x4;
+  unit_cell.at(14).cy=y3;
+  unit_cell.at(14).cz=y2;
+  unit_cell.at(14).material=1;
+  unit_cell.at(14).hc=1;
+  unit_cell.at(14).lc=3;
+
+  unit_cell.at(15).cx=x4;
+  unit_cell.at(15).cy=y1;
+  unit_cell.at(15).cz=z3;
+  unit_cell.at(15).material=0;
+  unit_cell.at(15).hc=1;
+  unit_cell.at(15).lc=2;
+
+  unit_cell.at(16).cx=x4;
+  unit_cell.at(16).cy=y1;
+  unit_cell.at(16).cz=z4;
+  unit_cell.at(16).material=0;
+  unit_cell.at(16).hc=1;
+  unit_cell.at(16).lc=4;
+
+  unit_cell.at(17).cx=x4;
+  unit_cell.at(17).cy=y1;
+  unit_cell.at(17).cz=z6;
+  unit_cell.at(17).material=0;
+  unit_cell.at(17).hc=1;
+  unit_cell.at(17).lc=5;
+
+  unit_cell.at(18).cx=x3;
+  unit_cell.at(18).cy=y4;
+  unit_cell.at(18).cz=z1;
+  unit_cell.at(18).material=0;
+  unit_cell.at(18).hc=1;
+  unit_cell.at(18).lc=1;
+
+  unit_cell.at(19).cx=x3;
+  unit_cell.at(19).cy=y6;
+  unit_cell.at(19).cz=y2;
+  unit_cell.at(19).material=1;
+  unit_cell.at(19).hc=1;
+  unit_cell.at(19).lc=3;
+
+  unit_cell.at(20).cx=x3;
+  unit_cell.at(20).cy=y4;
+  unit_cell.at(20).cz=z3;
+  unit_cell.at(20).material=0;
+  unit_cell.at(20).hc=1;
+  unit_cell.at(20).lc=2;
+
+  unit_cell.at(21).cx=x3;
+  unit_cell.at(21).cy=y4;
+  unit_cell.at(21).cz=z4;
+  unit_cell.at(21).material=0;
+  unit_cell.at(21).hc=1;
+  unit_cell.at(21).lc=4;
+  
+  unit_cell.at(22).cx=x4;
+  unit_cell.at(22).cy=z5;
+  unit_cell.at(22).cz=z5;
+  unit_cell.at(22).material=1;
+  unit_cell.at(22).hc=1;
+  unit_cell.at(22).lc=6;
+
+  unit_cell.at(23).cx=x3;
+  unit_cell.at(23).cy=y4;
+  unit_cell.at(23).cz=z6;
+  unit_cell.at(23).material=0;
+  unit_cell.at(23).hc=1;
+  unit_cell.at(23).lc=5;
+
+   //unit_cell.cutoff_radius = 0.15;
+  double cell_x_norm = 0.49121942;
+  double cell_y_norm = 0.4254113;
+  double cell_z_norm = 1.0;
+   //normalise distance to tetragonal cell
+
+    //GGA constants, DFT (e.g., needs 2x factor)
+  // double J12 = 35.52;
+  // double J13 = 10.42;
+  // double J11 = 3.25;
+  // double J33 = 0.64;
+  // double J12_nnn = 2.18;
+  // double J13_nnn = 0.77;
+  // double J24_nnn = 0.29;
+
+  // double J12 = 30.72;
+  // double J13 = 12.19;
+  // double J11 = 4.68;
+  // double J33 = -0.04;
+  // double J12_nnn = 1.53;
+  // double J13_nnn = 1.30;
+  // double J24_nnn = 0.68;
+
+  //LDA interlayer (meV/mu_s^2)
+  double J12 = 6.96;
+  double J13 = 4.23;
+  double J11 = 1.06;
+  double J33 = -0.02;
+
+  double J12_nnn = 0.0;
+  double J13_nnn = 0.0;
+  double J15_nnn = 0.154;
+  double J16_nnn = 0.072;
+  double J14_nnn = -0.001;
+  double J36_nnn = -0.092;
+
+  exchange_constants[0][0] = J11;
+  exchange_constants[0][1] = J12;
+  exchange_constants[0][2] = J13;
+
+  exchange_constants[1][0] = J12;
+  exchange_constants[1][1] = J11;
+  exchange_constants[1][2] = J13;
+
+  exchange_constants[2][0] = J13;
+  exchange_constants[2][1] = J13;
+  exchange_constants[2][2] = J33;
+
+  exchange_constants[3][3] = J11;
+  exchange_constants[3][4] = J12;
+  exchange_constants[3][5] = J13;
+
+  exchange_constants[4][3] = J12;
+  exchange_constants[4][4] = J11;
+  exchange_constants[4][5] = J13;
+
+  exchange_constants[4][3] = J12;
+  exchange_constants[4][4] = J11;
+  exchange_constants[4][5] = J13;
+
+  exchange_constants[5][3] = J13;
+  exchange_constants[5][4] = J13;
+  exchange_constants[5][5] = J33;
+  
+
+  exchange_constants_nnn[0][3] = J14_nnn; //J14
+  exchange_constants_nnn[0][4] = J15_nnn; //J15 <-> J24
+  exchange_constants_nnn[0][5] = J16_nnn; ////J16 <-> J26 <-> J34 <-> J35
+
+  exchange_constants_nnn[1][3] = J15_nnn;
+  exchange_constants_nnn[1][4] = J14_nnn;
+  exchange_constants_nnn[1][5] = J16_nnn;
+
+  exchange_constants_nnn[2][3] = J16_nnn;
+  exchange_constants_nnn[2][4] = J16_nnn;
+  exchange_constants_nnn[2][5] = J36_nnn;
+
+  exchange_constants_nnn[3][1] = J15_nnn;
+  exchange_constants_nnn[3][2] = J16_nnn;
+  exchange_constants_nnn[3][0] = J14_nnn;
+
+  exchange_constants_nnn[4][0] = J15_nnn;
+  exchange_constants_nnn[4][1] = J14_nnn;
+  exchange_constants_nnn[4][2] = J16_nnn;
+
+
+  exchange_constants_nnn[5][1] = J16_nnn;
+  exchange_constants_nnn[5][0] = J16_nnn;
+  exchange_constants_nnn[5][2] = J36_nnn;
+
+
+  for(int i = 0; i < unit_cell.size(); i++) {
+    unit_cell.at(i).cx *= cell_x_norm*unit_cell_size[0];
+    unit_cell.at(i).cy *= cell_y_norm*unit_cell_size[1];
+    unit_cell.at(i).cz *= cell_z_norm*unit_cell_size[2];
+    unit_cell.at(i).lc--;
+  }
   // store vector of unit cells
   std::vector< std::vector < std::vector < std::vector<uc_atom_t > > > >crystal;
   
@@ -137,7 +388,7 @@ int main(){
     for(int j=0;j<3;j++){
       crystal.at(i).at(j).resize(3);
       for(int k=0;k<3;k++){
-	crystal.at(i).at(j).at(k).resize(unit_cell.size());
+	    crystal.at(i).at(j).at(k).resize(unit_cell.size());
       }
     }
   }
@@ -147,19 +398,21 @@ int main(){
     for(int j=0;j<3;j++){
       for(int k=0;k<3;k++){
 	for(int a=0;a<unit_cell.size();a++){
-	  crystal.at(i).at(j).at(k).at(a).cx=unit_cell.at(a).cx+double(i);
-          crystal.at(i).at(j).at(k).at(a).cy=unit_cell.at(a).cy+double(j);
-	  crystal.at(i).at(j).at(k).at(a).cz=unit_cell.at(a).cz+double(k);
-	  crystal.at(i).at(j).at(k).at(a).material=unit_cell.at(a).material;
+	  crystal.at(i).at(j).at(k).at(a).cx=unit_cell.at(a).cx + unit_cell_size[0]*cell_x_norm*double(i);
+    crystal.at(i).at(j).at(k).at(a).cy=unit_cell.at(a).cy + unit_cell_size[1]*cell_y_norm*double(j);
+	  crystal.at(i).at(j).at(k).at(a).cz=unit_cell.at(a).cz + unit_cell_size[2]*cell_z_norm*double(k);
+	  
+    crystal.at(i).at(j).at(k).at(a).material=unit_cell.at(a).material;
 	  crystal.at(i).at(j).at(k).at(a).hc=unit_cell.at(a).hc+2*k-2;
-          crystal.at(i).at(j).at(k).at(a).lc=unit_cell.at(a).lc;	  
-	}
+    crystal.at(i).at(j).at(k).at(a).lc=unit_cell.at(a).lc;	  
+	  }
       }
     }
   }
 
   // create neighbour list
-  double nn_range=0.5*0.5+0.5*0.5;
+  double nn_range= 8.436;
+  nn_range *= nn_range;
   std::vector<nn_t> nn_list;
 
   // loop over all atoms in unit cell
@@ -191,7 +444,13 @@ int main(){
 	      temp.dx=i-1;
 	      temp.dy=j-1;
 	      temp.dz=k-1;
-	      temp.Jij=exchange_constants.at(imat).at(jmat);
+	      if(range_sq <= (3.99*3.99)) temp.Jij=exchange_constants.at(ilc).at(jlc);
+        else if (range_sq <= (8.2*8.2)) temp.Jij=exchange_constants_nnn.at(ilc).at(jlc);
+        else if ( (ilc == 2 || ilc == 5) && (jlc == 2 || jlc == 5))  temp.Jij=exchange_constants_nnn.at(ilc).at(jlc);
+
+        if(temp.Jij == 0.0) continue;
+        temp.Jij = 2*temp.Jij*materials[imat].mu_s*materials[jmat].mu_s;
+        temp.rij = sqrt(range_sq);
 	      nn_list.push_back(temp);
 	      //std::cout << ai << "\t" << aj << "\t" << i-1 << "\t" << j-1 << "\t" << k-1 << "\t" << sqrt(range_sq) << std::endl;
 	    } 
@@ -220,30 +479,33 @@ int main(){
   // loop over all atoms
   for(int atom=0; atom<unit_cell.size(); atom++){
     ucf_file << atom << "\t";
-    ucf_file << unit_cell.at(atom).cx << "\t";
-    ucf_file << unit_cell.at(atom).cy << "\t";
-    ucf_file << unit_cell.at(atom).cz << "\t";
+    ucf_file << unit_cell.at(atom).cx/unit_cell_size[0]/cell_x_norm << "\t";
+    ucf_file << unit_cell.at(atom).cy/unit_cell_size[1]/cell_y_norm << "\t";
+    ucf_file << unit_cell.at(atom).cz/unit_cell_size[2]/cell_z_norm << "\t";
     ucf_file << unit_cell.at(atom).material << "\t";
     ucf_file << unit_cell.at(atom).lc << "\t";
     ucf_file << unit_cell.at(atom).hc << std::endl;
   }
   ucf_file << "#Interactions n exctype, id i j dx dy   dz        Jij"<< std::endl;
-  ucf_file << nn_list.size() << "\t" << 0 << std::endl;
+  ucf_file << nn_list.size() << "\t" << "normalised-isotropic" << std::endl;
   // loop over all interactions
+
   for(unsigned int nn=0; nn < nn_list.size(); nn++){
+
     ucf_file << nn << "\t";
     ucf_file << nn_list[nn].i << "\t";
     ucf_file << nn_list[nn].j << "\t"; 
     ucf_file << nn_list[nn].dx << "\t";
     ucf_file << nn_list[nn].dy << "\t"; 
     ucf_file << nn_list[nn].dz << "\t"; 
-    ucf_file << nn_list[nn].Jij << std::endl;
+    ucf_file << nn_list[nn].Jij << "  #" << nn_list[nn].rij << std::endl;
+
   }
   
   // material file
   std::ofstream mat_file;
   // open it (file_name)
-  mat_file.open ("MAT.mat");
+  mat_file.open ("MAT.material");
   mat_file << "#================================================" << std::endl;
   mat_file << "# Generated material file for input into vampire" << std::endl;
   mat_file << "#================================================" << std::endl;

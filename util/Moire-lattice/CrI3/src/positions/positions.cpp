@@ -199,8 +199,8 @@ void create_magnetic_atom_list(std::string filename){
                         if (z_j <= a0z*2){
                          //  std::cout << changex << ", " << changey << ", " << x_eff << ", " << y_eff << ", " << x_ref << ", " << y_ref << std::endl;
                            new_atom.S = 3;
-                           new_atom.dx = dx;
-                           new_atom.dy = dy;
+                           new_atom.dx = 33;//dx;
+                           new_atom.dy = 66;//dy;
                           // if(dy != 0) std::cout << atom[atom_i].y << ", " << int(floor(y_new/ a1y))*a1y << ", " << y_ref << ", " << changey << ", " << dy << std::endl;
                            // unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
                            // unit_cell_shifts[dx_cell][dy_cell][1] += dx;

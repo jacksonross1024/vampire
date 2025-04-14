@@ -25,8 +25,8 @@ namespace internal{
 void build_fe3gate2(unitcell::unit_cell_t& unit_cell){
 
    // Set basic unit cell properties
-   unit_cell.dimensions[0] = 1.0;//0.4254113;//0.49121942;
-   unit_cell.dimensions[1] = 1.0;//0.4254113;
+   unit_cell.dimensions[0] = 0.49121942;
+   unit_cell.dimensions[1] = 0.4254113;
    unit_cell.dimensions[2] = 1.0;
 
    unit_cell.shape[0][0]=1.0;
@@ -234,7 +234,7 @@ void build_fe3gate2(unitcell::unit_cell_t& unit_cell){
   unit_cell.atom.at(23).hc=1;
   unit_cell.atom.at(23).lc=5;
 
-   unit_cell.cutoff_radius = 0.25; // normalised to unit cell size
+   unit_cell.cutoff_radius = 0.15; // normalised to unit cell size
 
    uc::internal::calculate_interactions(unit_cell);
 

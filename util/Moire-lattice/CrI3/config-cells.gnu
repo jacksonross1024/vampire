@@ -61,74 +61,13 @@ cell_y = 0.6002*2.0
 
 set view 75,45,1,1.
 set pm3d at s interpolate 2,2
-set output sprintf("%s-per-atom-12123434-lifted-Jinter.png", file)
+set output sprintf("%s-lifted.png", file)
 
-set multiplot 
-set xyplane 0
-set zrange [0:14]
-set format z ""
-
-set xrange [5:195]
-set yrange [5:195]
-
-set format x "" 
-set format y ""
-
-set ylabel ""
-set xlabel ""
+set xrange [5:95]
+set yrange [5:95]
 
 
-unset colorbox 
-set cbrange [0.4:-1]
-set xyplane at 0
-splot file.".txt" u ($1*cell_x):($2*cell_y):(0):(($13+$20)/($10+$17)) w pm3d at s notitle
-
-set xyplane at 5
-set cbrange [0.15:-0.15]
-splot file.".txt" u ($1*cell_x):($2*cell_y):(5):(($14+$21)/($10+$17)) w pm3d at s notitle
-
-set xyplane at 10
-set cbrange [0.15:-0.15]
-splot file.".txt"  u ($1*cell_x):($2*cell_y):(10):(($15+$22)/($10+$17)) w pm3d at s notitle
-
-
-set xyplane at 14
-splot file.".txt"  u ($1*cell_x):($2*cell_y):(14):(($16+$23)/($10+$17)) w pm3d at s notitle
-
-
-unset multiplot
-
-
-set output sprintf("%s-per-atom-12123434-lifted-Jintra-Jinter.png", file)
-
-set multiplot 
-set xyplane 0
-set zrange [0:14]
-set format z ""
-
-set xrange [5:195]
-set yrange [5:195]
-
-set format x "" 
-set format y ""
-
-set ylabel ""
-set xlabel ""
-
-
-unset colorbox 
-set cbrange [0.4:-1]
-set xyplane at 0
-splot file.".txt" u ($1*cell_x):($2*cell_y):(0):(($13+$20)/($10+$17)) w pm3d at s notitle
-
-set xyplane at 5
-set cbrange [18.3:17.4]
-splot file.".txt" u ($1*cell_x):($2*cell_y):(5):(($12+$19)/($10+$17)) w pm3d at s notitle
-
-
-unset multiplot
-
-set output sprintf("%s-per-atom-2.png", file)
+set output sprintf("%s.png", file)
 set multiplot layout 6,5
 
 

@@ -170,6 +170,7 @@ namespace dipole{
       timer.stop();
 
       zlog << zTs() << "Time required for dipole update: " << timer.elapsed_time() << " s." << std::endl;
+      std::cout << "Time required for dipole update: " << timer.elapsed_time() << " s." << std::endl;
 
       //--------------------------------------------------------------------------------------------------
       // Calculate gloabl demagnetizing factor from dipole tensors

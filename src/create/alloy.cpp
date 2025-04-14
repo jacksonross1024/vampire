@@ -51,7 +51,11 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 
 	// Constants for distribution calculation
 	const int num_alloy_materials = mp::num_materials; // local constant for number of materials
-	const double resolution = 50.0; // spatial reolution of concentration map (Angstroms)
+	double resolution = 50.0; // spatial reolution of concentration map (Angstroms)
+	if(local_alloy) {
+		resolution = local_alloy_radius;
+		std::cout << resolution << ", " << int(cs::system_dimensions[0]/resolution)+1 << ", "<< int(cs::system_dimensions[1]/resolution)+1 << std::endl;
+	}
 	const double sizex = cs::system_dimensions[0];
 	const double sizey = cs::system_dimensions[1];
 	const int xcells = int(sizex/resolution)+1;
@@ -74,6 +78,7 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 		}
 	}
 
+	
 	// save distributions to file if required
 	if(vmpi::my_rank == 0){
 		for(int hm=0; hm<num_alloy_materials; ++hm){
@@ -126,7 +131,7 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 
          //loop over all potential alloy materials for host
          for(int sm=0;sm<num_alloy_materials; sm++){
-				if(create::internal::mp[host_material].slave_material[sm].fraction > 0.0){
+				if(create::internal::mp[host_material].slave_material[sm].fraction > 0.0 || local_alloy) {
 	            int slave_material = sm;
 	            const double fraction = create::internal::mp[host_material].slave_material[slave_material].fraction;
 
@@ -140,9 +145,9 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 						const int i = catom_array[atom].x/resolution;
 						const int j = catom_array[atom].y/resolution;
 						const double variance = create::internal::mp[host_material].slave_material[slave_material].variance;
-
+						//std::cout << i << ", " << j << ", " << distributions[host_material][i][j] << std::endl;
 						switch(create::internal::mp[host_material].slave_material[slave_material].slave_alloy_distribution){
-
+							
 							case native:
 								probability = fraction + variance * distributions[host_material][i][j];
 								break;
@@ -156,7 +161,8 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 								probability = fraction + variance * distributions[host_material][i][j];
 						      break;
 						}
-
+							//if(probability > 0.0) std::cout << host_material << ", " << catom_array[atom].x << ", " << catom_array[atom].y << ", " << catom_array[atom].z << ", " << distributions[host_material][i][j] << \
+															", " << probability << ", " << i << ", " << j << std::endl;
 						// check if atom is to be replaced
 						if(create::internal::grnd() < probability) catom_array[atom].material=slave_material;
 
@@ -194,8 +200,11 @@ std::vector < seed_point_t > generate_random_seed_points(double size_x, double s
 	std::vector< seed_point_t > seeds(0);
 
 	// determine number of trial points
-	const int num_points = int(25.0*size_x*size_y/(scale*scale));
-
+	int num_points = int(25.0*size_x*size_y/(scale*scale));
+	if(local_alloy) {
+		num_points = 1;
+		std::cout << "local alloy trials " << std::endl;
+	}
 	// re-seed generator on all processors
 	create::internal::grnd.seed(create::internal::grain_seed);
 
@@ -205,8 +214,13 @@ std::vector < seed_point_t > generate_random_seed_points(double size_x, double s
 		seed_point_t grain;
 	   grain.x = (create::internal::grnd()*1.4-0.2)*size_x;
 	   grain.y = (create::internal::grnd()*1.4-0.2)*size_y;
-	   grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*scale;
-
+	   grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*local_alloy_radius;
+		if(local_alloy) {
+			grain.x = local_alloy_x*size_x;
+			grain.y = local_alloy_y*size_y;
+			//grain.r = local_alloy_radius;
+			std::cout << "local alloy: " << grain.x << ", " << grain.y << ", " << grain.r << std::endl;
+		}
 		// flag to see if grains are touching
 		bool touching=false;
 
