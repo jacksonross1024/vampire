@@ -155,34 +155,34 @@ void create_magnetic_atom_list(std::string filename){
                         // double x_eff = x_j*cos(twist_angle) - y_j*sin(twist_angle);
                         // double y_eff = y_j*cos(twist_angle) + x_j*sin(twist_angle);
                        // double x_ref = int(floor(x_new/ a0x))*a0x; 
-                        double x_ref = (j % 2 != 0) ? int(floor((x_new-a1x)/ (2*a0x)))*2*a0x-a1x : int(floor(x_new/ (2*a0x)))*2*a0x;
-                        double y_ref = (new_atom.l_id == 3) ? int(floor( (y_new-4.001)/ (2*a1y)))*2*a1y + 4.001 : int(floor(y_new/ (2*a1y)))*2*a1y; 
+                        // double x_ref = (j % 2 != 0) ? int(floor((x_new-a1x)/ (2*a0x)))*2*a0x-a1x : int(floor(x_new/ (2*a0x)))*2*a0x;
+                        // double y_ref = (new_atom.l_id == 3) ? int(floor( (y_new-4.001)/ (2*a1y)))*2*a1y + 4.001 : int(floor(y_new/ (2*a1y)))*2*a1y; 
                         
-                        double changey = (y_new - y_ref)/(a1y);
-                         if(changey < 0.0) changey *= -1.0;
-                        else if (changey > 1.0) changey = 2 - changey;
+                        // double changey = (y_new - y_ref)/(a1y);
+                        //  if(changey < 0.0) changey *= -1.0;
+                        // else if (changey > 1.0) changey = 2 - changey;
                        
-                        double changex = (x_new - (x_ref + changey*a1x))/(a0x);
-                        //  if(changey < 0.0) changey += 1.0;
-                        // else if (changey >= 1.0) changey -= 1.0;
-                        if(changex < 0.0) changex += 1.0;
-                        else if (changex >= 1.0) changex -= 1.0;
+                        // double changex = (x_new - (x_ref + changey*a1x))/(a0x);
+                        // //  if(changey < 0.0) changey += 1.0;
+                        // // else if (changey >= 1.0) changey -= 1.0;
+                        // if(changex < 0.0) changex += 1.0;
+                        // else if (changex >= 1.0) changex -= 1.0;
                         
                         
-                        // if(changex < 0.0) changex *= -1.0;
-                        // else if (changex > 1.0) changex = 2 - changex;
+                        // // if(changex < 0.0) changex *= -1.0;
+                        // // else if (changex > 1.0) changex = 2 - changex;
 
-                        // double changex = (x_new - (x_ref))/a0x;
+                        // // double changex = (x_new - (x_ref))/a0x;
                         
                         
                          
-                        // changey = fabs(changey);
-                        // changex = fabs(changex);
-                        int dx = int(round(changex*99.0));
-                        int dy = int(round(changey*99.0));
+                        // // changey = fabs(changey);
+                        // // changex = fabs(changex);
+                        // int dx = int(round(changex*99.0));
+                        // int dy = int(round(changey*99.0));
 
-                        // if(dx > 99 || dx < 0 || dy > 99 || dy < 0) {
-                        //    std::cerr << "shift problem: (" << x_new << ", " << y_new << ") in cell: [" << x_ref << ", " << y_ref << "] indexing " << dx << ", " << dy  << ", " << changex << ", " << changey << ", " << ((x_new - x_ref- ((y_new - y_ref)/a1y)*a1x))/a0x << ", " << ((y_new - y_ref))/a1y << std::endl;
+                        // // if(dx > 99 || dx < 0 || dy > 99 || dy < 0) {
+                        // //    std::cerr << "shift problem: (" << x_new << ", " << y_new << ") in cell: [" << x_ref << ", " << y_ref << "] indexing " << dx << ", " << dy  << ", " << changex << ", " << changey << ", " << ((x_new - x_ref- ((y_new - y_ref)/a1y)*a1x))/a0x << ", " << ((y_new - y_ref))/a1y << std::endl;
                         //     exit(1);
                         // }
                        
@@ -199,8 +199,8 @@ void create_magnetic_atom_list(std::string filename){
                         if (z_j <= a0z*2){
                          //  std::cout << changex << ", " << changey << ", " << x_eff << ", " << y_eff << ", " << x_ref << ", " << y_ref << std::endl;
                            new_atom.S = 3;
-                           new_atom.dx = 33;//dx;
-                           new_atom.dy = 66;//dy;
+                           new_atom.dx = 66;//dx;
+                           new_atom.dy = 0;//dy;
                           // if(dy != 0) std::cout << atom[atom_i].y << ", " << int(floor(y_new/ a1y))*a1y << ", " << y_ref << ", " << changey << ", " << dy << std::endl;
                            // unit_cell_shifts.at(dx_cell).at(dy_cell)[0] += 1;
                            // unit_cell_shifts[dx_cell][dy_cell][1] += dx;
@@ -373,8 +373,8 @@ void create_magnetic_atom_list_moire_unit(std::string filename, \
                      new_atom.Gy = j;
                      // new_atom.id = new_lattice_atoms;
 
-                     int dy_cell = floor((y_j +0.0000001)/ a1y);
-                     int dx_cell = floor((x_j +0.0000001)/ a0x);
+                     int dy_cell = floor((y_j +0.000000)/ a1y);
+                     int dx_cell = floor((x_j +0.000000)/ a0x);
                      new_atom.unit_x = dx_cell;
                      new_atom.unit_y = dy_cell;
 
