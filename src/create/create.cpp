@@ -146,26 +146,26 @@ int create(){
    neighbours::list_t bilinear; // bilinear exchange list
    neighbours::list_t biquadratic; // biquadratic exchange list
 
-   	if(vmpi::my_rank % 3 == 0) {
-		std::cout << "generating exchange list for rank " << vmpi::my_rank << std::endl;
+   	// if(vmpi::my_rank % 2 == 0) {
+	// 	std::cout << "generating exchange list for rank " << vmpi::my_rank << std::endl;
 
 		bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
-	}
-	   vmpi::barrier();
+// 	}
+// 	   vmpi::barrier();
 
-	if(vmpi::my_rank % 3 == 1) {
-		std::cout << "generating exchange list for rank " << vmpi::my_rank << std::endl;
-		bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
-   // generate bilinear exchange list
-	}
-	vmpi::barrier();
+// 	if(vmpi::my_rank % 2 == 1) {
+// 		std::cout << "generating exchange list for rank " << vmpi::my_rank << std::endl;
+// 		bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
+//    // generate bilinear exchange list
+// 	}
+// 	vmpi::barrier();
 
-	if(vmpi::my_rank % 3 == 2) {
-		std::cout << "generating exchange list for rank " << vmpi::my_rank << std::endl;
-		bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
-   // generate bilinear exchange list
-	}
-	vmpi::barrier();
+// 	if(vmpi::my_rank % 3 == 2) {
+// 		std::cout << "generating exchange list for rank " << vmpi::my_rank << std::endl;
+// 		bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
+//    // generate bilinear exchange list
+// 	}
+// 	vmpi::barrier();
 
    // optionally create a biquadratic neighbour list
    if(exchange::biquadratic){

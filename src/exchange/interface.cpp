@@ -49,11 +49,17 @@ namespace exchange{
             exchange_matrix.set_exchange_values(material_i, material_j, neighbour, Jij);
             internal::minimum_needed_exchange_type = exchange::vectorial;
          }
+         else if(Jij.size() == 9){
+            vin::check_for_valid_vector(Jij, word, line, prefix, unit, "energy", -1e-18, 1e-18,"material"," < +/- 1.0e18");
+            // set exchange constants
+            exchange_matrix.set_exchange_values(material_i, material_j, neighbour, Jij);
+            internal::minimum_needed_exchange_type = exchange::tensorial;
+         }
          else{
             terminaltextcolor(RED);
-            std::cerr << "Error in input file - material[" << material_i << "]:exchange_matrix[" << material_j << "] must have one or three values." << std::endl;
+            std::cerr << "Error in input file - material[" << material_i << "]:exchange_matrix[" << material_j << "] must have one, three, or nine values." << std::endl;
             terminaltextcolor(WHITE);
-            zlog << zTs() << "Error in input file - material[" << material_i << "]:exchange_matrix[" << material_j << "] must have one or three values." << std::endl;
+            zlog << zTs() << "Error in input file - material[" << material_i << "]:exchange_matrix[" << material_j << "] must have one, three, or nine values." << std::endl;
             err::vexit();
          }
 

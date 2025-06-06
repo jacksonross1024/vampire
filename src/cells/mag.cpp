@@ -61,7 +61,7 @@ namespace cells{
             // Consider only magnetic elements
             if(mp::material[type].non_magnetic==0){
                double mm = atoms::m_spin_array[i];
-               cells::mag_array_x[cell] += atoms::x_spin_array[i]*mm;//*mus;
+               cells::mag_array_x[cell] += atoms::x_spin_array[i]*mm;
                cells::mag_array_y[cell] += atoms::y_spin_array[i]*mm;//*mus;
                cells::mag_array_z[cell] += atoms::z_spin_array[i]*mm;//*mus;
                cells::mag_array_m[cell] += mm;//*mus;
@@ -79,23 +79,24 @@ namespace cells{
       
 
       // Calculate magnetisation length and normalize
-      for(int cell =0; cell < cells::mag_array_m.size(); ++cell){
-         if(cells::num_atoms_in_cell_global[cell] == 0 ) continue;
-         double msat = cells::mag_array_m[cell];
-         double magm = sqrt(cells::mag_array_x[cell]*cells::mag_array_x[cell] +
-                            cells::mag_array_y[cell]*cells::mag_array_y[cell] +
-                            cells::mag_array_z[cell]*cells::mag_array_z[cell]);
+      // for(int cell =0; cell < cells::mag_array_m.size(); ++cell){
+      //    if(cells::num_atoms_in_cell_global[cell] == 0 ) continue;
+      //    double msat = cells::mag_array_m[cell];
+      //    double magm = sqrt(cells::mag_array_x[cell]*cells::mag_array_x[cell] +
+      //                       cells::mag_array_y[cell]*cells::mag_array_y[cell] +
+      //                       cells::mag_array_z[cell]*cells::mag_array_z[cell]);
 
-         cells::mag_array_x[cell] = cells::mag_array_x[cell]/magm; 
-         cells::mag_array_y[cell] = cells::mag_array_y[cell]/magm;             
-         cells::mag_array_z[cell] = cells::mag_array_z[cell]/magm;               
-         cells::mag_array_m[cell] = magm/msat;                     
-      }
+      //    cells::mag_array_x[cell] = cells::mag_array_x[cell]/magm; 
+      //    cells::mag_array_y[cell] = cells::mag_array_y[cell]/magm;             
+      //    cells::mag_array_z[cell] = cells::mag_array_z[cell]/magm;               
+      //    cells::mag_array_m[cell] = magm/msat;                     
+      // }
 
       if(output_microcells && sim::time%vout::output_rate==0) {
          cells::output_data();
       }
+   }
       return EXIT_SUCCESS;
-      }
+   
    }
 } // end of cells namespace
