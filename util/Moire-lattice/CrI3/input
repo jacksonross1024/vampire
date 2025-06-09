@@ -9,8 +9,8 @@
 #------------------------------------------
 #dimensions:unit-cell-size = 2.507 !A
 
-dimensions:system-size-x = 100.0 !nm
-dimensions:system-size-y = 100.0 !nm
+dimensions:system-size-x = 150.0 !nm
+dimensions:system-size-y = 150.0 !nm
 dimensions:system-size-z = 2.5 !nm
 
 #create:periodic-boundaries-x
@@ -23,17 +23,17 @@ dimensions:system-size-z = 2.5 !nm
 #------------------------------------------
 material:unit-cell-file = CrI3.ucf
 material:file = CrI3.mat
-create:crystal-sublattice-materials=true
+#create:crystal-sublattice-materials=true
 
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
 
-sim:loop-time-steps=200000
+sim:loop-time-steps= 100000
 sim:equilibration-temperature=4.2
 sim:temperature = 4.2
 sim:equilibration-time-steps = 0
-sim:time-steps-increment = 20000
+sim:time-steps-increment = 10000
 sim:time-step= 0.1 !fs
 
 sim:temperature-increment = 4.2
@@ -52,7 +52,7 @@ sim:applied-field-strength=0.51 !T
 sim:program = curie-temperature #time variable magnetic field; SOT; STT
 sim:integrator = monte-carlo
 
-sim:save-checkpoint = end 
+#sim:save-checkpoint = continuous 
 #------------------------------------------
 # data output
 #------------------------------------------
