@@ -191,7 +191,7 @@ namespace exchange{
       //------------------------------------------------------------------------
       test = "exchange-matrix-8th-nn";
       if( word == test ){
-         read_exchange_values(super_index, sub_index, 6, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         read_exchange_values(super_index, sub_index, 7, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
          return true;
       }
       //------------------------------------------------------------------------
@@ -265,7 +265,7 @@ namespace exchange{
       //------------------------------------------------------------------------
       test = "biquadratic-exchange-matrix-8th-nn";
       if( word == test ){
-         read_exchange_values(super_index, sub_index, 6, word, prefix, value, unit, line, internal::biquadratic_exchange_constants);
+         read_exchange_values(super_index, sub_index, 7, word, prefix, value, unit, line, internal::biquadratic_exchange_constants);
          exchange::biquadratic = true; // Switch on biquadratic exchange
          return true;
       }
