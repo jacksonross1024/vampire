@@ -209,7 +209,7 @@ namespace internal{
             //         tmp_tensor [6] << "\t" << tmp_tensor [7] << "\t" << tmp_tensor [8] << "\t" << std::endl;
 
             // net DMI vectors for each atom pair
-            ofile << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t' << sqrt(cneighbourlist[i][j].vx*cneighbourlist[i][j].vx + cneighbourlist[i][j].vy*cneighbourlist[i][j].vy + cneighbourlist[i][j].vz*cneighbourlist[i][j].vz) << "\t" << tmp_tensor [5] << "\t" << tmp_tensor [6] << "\t" << tmp_tensor [1] << std::endl;
+            // ofile << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t' << sqrt(cneighbourlist[i][j].vx*cneighbourlist[i][j].vx + cneighbourlist[i][j].vy*cneighbourlist[i][j].vy + cneighbourlist[i][j].vz*cneighbourlist[i][j].vz) << "\t" << tmp_tensor [5] << "\t" << tmp_tensor [6] << "\t" << tmp_tensor [1] << std::endl;
 
             // save tensor for interaction i-j
             atoms::t_exchange_list[counter].Jij[0] += tmp_tensor [0];
