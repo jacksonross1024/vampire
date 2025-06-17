@@ -118,17 +118,17 @@ namespace dipole{
          MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_field_array_x[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_field_array_y[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_field_array_z[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
-         MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_x[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
-         MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_y[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
-         MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_z[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
+         // MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_x[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
+         // MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_y[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
+         // MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_z[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
       #endif
        for (int i = 0 ; i < dipole::internal::cells_num_cells; i ++){
          if (dipole::cells_field_array_x[i] < -1000) dipole::cells_field_array_x[i] = 0.0;
          if (dipole::cells_field_array_y[i] < -1000) dipole::cells_field_array_y[i] = 0.0;
          if (dipole::cells_field_array_z[i] < -1000) dipole::cells_field_array_z[i] = 0.0;
-         if (dipole::cells_mu0Hd_field_array_x[i] < -1000) dipole::cells_mu0Hd_field_array_x[i] = 0.0;
-         if (dipole::cells_mu0Hd_field_array_y[i] < -1000) dipole::cells_mu0Hd_field_array_y[i] = 0.0;
-         if (dipole::cells_mu0Hd_field_array_z[i] < -1000) dipole::cells_mu0Hd_field_array_z[i] = 0.0;
+         // if (dipole::cells_mu0Hd_field_array_x[i] < -1000) dipole::cells_mu0Hd_field_array_x[i] = 0.0;
+         // if (dipole::cells_mu0Hd_field_array_y[i] < -1000) dipole::cells_mu0Hd_field_array_y[i] = 0.0;
+         // if (dipole::cells_mu0Hd_field_array_z[i] < -1000) dipole::cells_mu0Hd_field_array_z[i] = 0.0;
        //  std::cout << i << '\t' << dipole::cells_field_array_x[i] << '\t' << dipole::cells_field_array_y[i] << '\t' << dipole::cells_field_array_z[i] <<std::endl;
 
        }
