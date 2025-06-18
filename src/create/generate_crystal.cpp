@@ -87,7 +87,7 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 	int num_atoms_local = int(1.1*(max_fractional_bounds[2]-min_fracitonal_bounds[2])*(max_fractional_bounds[1]-min_fracitonal_bounds[1])*(max_fractional_bounds[0]-min_fracitonal_bounds[0])*unit_cell.atom.size());
 	// set catom_array size
 	catom_array.reserve(num_atoms_local);
-	std::cout << "using partial uc for catom reservation: " << num_atoms_local*sizeof(cs::catom_t)/1e6 << " MB vs " << uc_num_atoms*sizeof(cs::catom_t)/1e6 << " MB " << std::endl;
+	std::cout << "using partial uc for catom reservation: " << num_atoms_local*sizeof(cs::catom_t)/1e6 << " MB vs " << uc_num_atoms*sizeof(cs::catom_t)/1e6 << " MB vs actual: " << std::flush;
 	// Initialise atoms number
 	int atom=0;
 
@@ -175,7 +175,7 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		}
 		tmp_catom_array.resize(0);
 	}
-
+	std::cout << atom*sizeof(cs::catom_t) << " MB " << std::endl;
 	// Check to see if any atoms have been generated
 	if(atom==0){
 		terminaltextcolor(RED);
