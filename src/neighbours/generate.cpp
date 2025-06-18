@@ -121,10 +121,10 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
       uint64_t total_neighbours = 0.0;
    //   MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
-         zlog << zTs() << "Memory required for neighbourlist calculation (each cpu):" <<
-         sizeof(uint64_t)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
-         zlog << zTs() << "Memory required for neighbourlist calculation (all cpus):" <<
-         sizeof(uint64_t)*total_neighbours/1.0e6 << " MB" << std::endl;
+         zlog << zTs() << "Memory estimated for neighbourlist calculation (each cpu):" <<
+         sizeof(uint64_t)*num_neighbours/(  1.0e6) << " MB" << std::endl;
+         zlog << zTs() << "Memory estimated for neighbourlist calculation (all cpus):" <<
+         sizeof(uint64_t)*total_neighbours*vmpi::num_processors/1.0e6 << " MB" << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbourlist calculation:" <<
@@ -242,10 +242,10 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
       total_neighbours = 0.0;
       // MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
-         zlog << zTs() << "Memory required for neighbour list (each cpu):" <<
-         sizeof(neighbour_t)*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
-         zlog << zTs() << "Memory required for neighbour list (all cpus):" <<
-         sizeof(neighbour_t)*total_neighbours/1.0e6 << " MB" << std::endl;
+         zlog << zTs() << "Memory estinated for neighbour list (each cpu):" <<
+         sizeof(neighbour_t)*num_neighbours/( 1.0e6) << " MB" << std::endl;
+         zlog << zTs() << "Memory estimated for neighbour list (all cpus):" <<
+         sizeof(neighbour_t)*vmpi::num_processors*num_neighbours/1.0e6 << " MB" << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbour list:" <<

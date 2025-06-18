@@ -175,7 +175,7 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		}
 		tmp_catom_array.resize(0);
 	}
-	std::cout << atom*sizeof(cs::catom_t) << " MB " << std::endl;
+	std::cout << atom*sizeof(cs::catom_t)/1e6 << " MB " << std::endl;
 	// Check to see if any atoms have been generated
 	if(atom==0){
 		terminaltextcolor(RED);
