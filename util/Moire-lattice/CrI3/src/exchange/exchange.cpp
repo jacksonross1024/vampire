@@ -490,7 +490,7 @@ std::vector <double > crossProduct(std::vector <double >A, std::vector <double >
 void print_interaction_header(){
    std::ofstream outfile3 ("header_interactions.ucf");
    std::string interaction_type;
-   if(DMI) interaction_type = "tensorial";
+   if(DMI) interaction_type = "normalised-tensorial";
    else interaction_type = "normalised-isotropic";
    outfile3 << number_of_interactions <<  "\t" << interaction_type << std::endl;//<<" 0 0 0 "<<J3S2_x << " 0 0 0 " << J3S2_z << std::endl;
    
