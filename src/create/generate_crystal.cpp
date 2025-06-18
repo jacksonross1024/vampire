@@ -58,6 +58,8 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		max_fractional_bounds[0] = (vmpi::max_dimensions[0]/unit_cell.dimensions[0]);
 		max_fractional_bounds[1] = (vmpi::max_dimensions[1]/unit_cell.dimensions[1]);
 		max_fractional_bounds[2] = (vmpi::max_dimensions[2]/unit_cell.dimensions[2]);
+
+		//std::cout << min_bounds[0] << ", " << max_bounds[0] << ", " << 
 	}
 	else{
 		min_bounds[0]=0;
@@ -82,7 +84,7 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 
 	
 	int uc_num_atoms= cs::local_num_unit_cells[0]*cs::local_num_unit_cells[1]*cs::local_num_unit_cells[2]*unit_cell.atom.size();
-	int num_atoms_local = int(1.1*(max_bounds[2]-min_bounds[2])*(max_bounds[1]-min_bounds[1])*(max_bounds[0]-min_bounds[0])*unit_cell.atom.size());
+	int num_atoms_local = int(1.1*(max_fractional_bounds[2]-min_fracitonal_bounds[2])*(max_fractional_bounds[1]-min_fracitonal_bounds[1])*(max_fractional_bounds[0]-min_fracitonal_bounds[0])*unit_cell.atom.size());
 	// set catom_array size
 	catom_array.reserve(num_atoms_local);
 	std::cout << "using partial uc for catom reservation: " << num_atoms_local*sizeof(cs::catom_t)/1e6 << " MB vs " << uc_num_atoms*sizeof(cs::catom_t)/1e6 << " MB " << std::endl;
