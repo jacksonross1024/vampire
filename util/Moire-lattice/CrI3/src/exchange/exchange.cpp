@@ -1179,7 +1179,7 @@ void calc_interactions() {
                                  // std::cout << dL2 << ", " << r2 << ", " << x_i << ", " << y_i << ", " << z_i << ", " << x_j << ", " << y_j << ", " << z_j << std::endl;
                                  double angle_i = atan2(ady,adx);// - twist_angle;// - M_PI*0.5;
                                  double angle_j = atan2(-ady,-adx);// - twist_angle;
-                                 std::array<double, 4> exchange({0.0,0.0,0.0,0.0});
+                                 std::array<float, 4> exchange({0.0,0.0,0.0,0.0});
                                  if(atom_i.S == atom_j.S) {
                                  
                                     if(atom_i.l_id == 1) {
@@ -1485,8 +1485,8 @@ void calc_interactions() {
       return;
 }
 
-std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< double > > &Eij){
-   std::array<double,4> exchange({0.0});
+std::array<float,4> match_intra1_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< double > > &Eij){
+   std::array<float,4> exchange({0.0});
 
    int i_x_shift = 66;
    int i_y_shift = 0;
@@ -1554,8 +1554,8 @@ std::array<double,4> match_intra1_exchange(double angle_i, double angle_j, spin 
    return exchange;
 }
 
-std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<  double > > &Eij){
-   std::array<double,4> exchange({0.0});
+std::array<float,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<  double > > &Eij){
+   std::array<float,4> exchange({0.0});
 
       int i_x_shift = 66;
    int i_y_shift = 0;
@@ -1623,8 +1623,8 @@ std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin 
    return exchange;
 }
 
-std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< double > > &Eij){
-   std::array<double,4> exchange({0.0});
+std::array<float,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector< double > > &Eij){
+   std::array<float,4> exchange({0.0});
 
       int i_x_shift = 66;
    int i_y_shift = 0;
@@ -1690,8 +1690,8 @@ std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin 
    return exchange;
 }
 
-std::array<double,4> match_inter_exchange(int atom_id, int nn_id, double dx, double dy, double dr, std::vector<std::vector<double> > &Eij){
-   std::array<double,4> exchange({0.0});
+std::array<float,4> match_inter_exchange(int atom_id, int nn_id, double dx, double dy, double dr, std::vector<std::vector<double> > &Eij){
+   std::array<float,4> exchange({0.0});
    double new_shift_error = 10000.0;
    double old_shift_error = 10000.0;
    int min_index = -1;
@@ -1713,7 +1713,7 @@ std::array<double,4> match_inter_exchange(int atom_id, int nn_id, double dx, dou
    return exchange;
 }
 
-void spin_config_energy(spin & atom_i, double dr2, spin & atom_j, std::array<double, 4> &exchange, std::vector<std::vector<std::vector<double> > > & local_config_energy) {
+void spin_config_energy(spin & atom_i, double dr2, spin & atom_j, std::array<float, 4> &exchange, std::vector<std::vector<std::vector<double> > > & local_config_energy) {
 
    double parity = 1.0;
    //if(atom_i.l_id == 1 || atom_i.l_id == 3) parity = -1.0;
