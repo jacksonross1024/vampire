@@ -410,7 +410,7 @@ double nn_dist_3;
 double max_range = 9.99;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
-double J_constant = eVtoJ/1000.0; //1 meV
+double J_constant = 1.0; // eVtoJ/1000.0; //1 meV
 double J_intra_1=2.5*J_constant;
 double J_intra_2=0.75*J_constant;
 double J_intra_3=-0.01*J_constant;
@@ -1742,6 +1742,8 @@ void spin_config_energy(spin & atom_i, double dr2, spin & atom_j, std::array<dou
       local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 5] += fabs(exchange[1]);
       local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 6] += fabs(exchange[2]);
       local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 7] += fabs(exchange[3]);
+      if(exchange[0] < 0.0) local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 14] -= exchange[0];
+      else local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 15] += exchange[0];
    } else {
       if(atom_i.h_id == atom_j.h_id) {
          if(dr2 <= inter_nn_dist_1) {
@@ -1768,6 +1770,8 @@ void spin_config_energy(spin & atom_i, double dr2, spin & atom_j, std::array<dou
          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 9] += fabs(exchange[1]);
          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 10] += fabs(exchange[2]);
          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 11] += fabs(exchange[3]);
+         if(exchange[0] < 0.0) local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 12] -= exchange[0];
+         else local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 13] += exchange[0];
       } else {
          if(dr2 <= inter_AB_dist_1) {
             all_m_atoms[atom_i.id].inter1_count++;
@@ -1789,10 +1793,10 @@ void spin_config_energy(spin & atom_i, double dr2, spin & atom_j, std::array<dou
             all_m_atoms[atom_i.id].Dz_inter3 += exchange[3];
          }
          local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 3]++;
-         local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 12] += exchange[0];
-         local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 13] += fabs(exchange[1]);
-         local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 14] += fabs(exchange[2]);
-         local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 15] += fabs(exchange[3]);
-      }    
+         // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 12] += exchange[0];
+      }      
    }
+   
+         // local_config_energy[atom_i.unit_x_lr][atom_i.unit_y_lr][(atom_i.S-1)*16 + 15] += fabs(exchange[3]);
 }
+
