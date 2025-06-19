@@ -410,7 +410,7 @@ double nn_dist_3;
 double max_range = 9.99;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
-double J_constant = 1.0; // eVtoJ/1000.0; //1 meV
+double J_constant = eVtoJ/1000.0; //1 meV
 double J_intra_1=2.5*J_constant;
 double J_intra_2=0.75*J_constant;
 double J_intra_3=-0.01*J_constant;
@@ -490,7 +490,7 @@ std::vector <double > crossProduct(std::vector <double >A, std::vector <double >
 void print_interaction_header(){
    std::ofstream outfile3 ("header_interactions.ucf");
    std::string interaction_type;
-   if(DMI) interaction_type = "normalised-tensorial";
+   if(DMI) interaction_type = "tensorial";
    else interaction_type = "normalised-isotropic";
    outfile3 << number_of_interactions <<  "\t" << interaction_type << std::endl;//<<" 0 0 0 "<<J3S2_x << " 0 0 0 " << J3S2_z << std::endl;
    
