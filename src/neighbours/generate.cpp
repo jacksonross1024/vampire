@@ -55,7 +55,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
              ){
 
 	// put number of atoms into temporary variable
-	uint64_t num_atoms = atom_array.size();
+	int64_t num_atoms = atom_array.size();
 
 	// Reserve space for num_atoms
 	list.reserve(num_atoms);
@@ -64,7 +64,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	const int64_t max_nn = int64_t( 1.1*( double(exchange.interaction.size()) / double(num_atoms_in_unit_cell) ) );
 
 	// Reserve space for each atom in neighbour list according to material type
-	for(uint64_t atom=0; atom < num_atoms; atom++){
+	for(int64_t atom=0; atom < num_atoms; atom++){
 		list.push_back(std::vector<neighbour_t>());
 		//list[atom].reserve(max_nn);
 	}
@@ -75,7 +75,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    int64_t max[3] = {0,0,0}; // highest cell id
 
    // find supercell range of atoms on this CPU
-	for(uint64_t atom = 0; atom < num_atoms; atom++){
+	for(int64_t atom = 0; atom < num_atoms; atom++){
 
 		int64_t c[3] = { atom_array[atom].scx,
                        atom_array[atom].scy,
@@ -112,10 +112,10 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                           ( max_cell[2] - offset[2] + 1 )};
 
 	// Declare temporary array for 3D supercell array
-	std::vector<std::vector<std::vector<std::vector<uint64_t> > > > supercell_array;
+	std::vector<std::vector<std::vector<std::vector<int64_t> > > > supercell_array;
 
    // calculate total number of neighbours and inform user of memory needed
-   uint64_t num_neighbours = d[0] * (d[1]) * (d[2]) * num_atoms_in_unit_cell;
+   int64_t num_neighbours = d[0] * (d[1]) * (d[2]) * num_atoms_in_unit_cell;
    #ifdef MPICF
       // calculate total interactions for entire system
       uint64_t total_neighbours = 0.0;
@@ -174,7 +174,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    zlog << zTs() << "Populating supercell array for neighbourlist calculation..."<< std::endl;
 
 	// Populate supercell array with atom numbers
-	for(uint64_t atom=0; atom < num_atoms; atom++){
+	for(int64_t atom=0; atom < num_atoms; atom++){
 
       // get supercell coordinates
       int64_t scc[3]={ atom_array[atom].scx - offset[0],
@@ -332,11 +332,11 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
              (ny >= 0 && static_cast<int64_t>(ny) < d[1] ) &&
              (nz >= 0 && static_cast<int64_t>(nz) < d[2] ) ){
             // check for missing atoms
-            if((supercell_array[scc[0]][scc[1]][scc[2]][atom]!=-1) && (supercell_array[nx][ny][nz][natom]!=-1)){
+            if((supercell_array[scc[0]][scc[1]][scc[2]][atom]!= -1) && (supercell_array[nx][ny][nz][natom]!=-1)) {
 
                // need actual atom numbers...
-               uint64_t atomi = supercell_array[scc[0]][scc[1]][scc[2]][atom];
-               uint64_t atomj = supercell_array[nx][ny][nz][natom];
+               int64_t atomi = supercell_array[scc[0]][scc[1]][scc[2]][atom];
+               int64_t atomj = supercell_array[nx][ny][nz][natom];
 
                //std::cout << "int_id: " << i << "\tatom i: " << atomi << "\tatom j: " << atomj << "\tuc_i: " << atom << "\tuc_j: " << natom << std::endl;
 
