@@ -1,68 +1,58 @@
-#------------------------------------------
-# Sample vampire input file to perform
-# benchmark calculation for v4.0
-#
-#------------------------------------------
 
 #------------------------------------------
+# System Dimensions:
+#------------------------------------------
+#dimensions:unit-cell-size = 3.54 !A
+dimensions:system-size-x = 15 !nm
+dimensions:system-size-y = 15 !nm
+dimensions:system-size-z = 15 !nm
+
+#------------------------------------------
+material:file=FGaT-mara.mat
+material:unit-cell-file=fe3gate2-mara-dmi.ucf
+
 # Creation attributes:
 #------------------------------------------
-
-dimensions:system-size-x = 10 !nm
-dimensions:system-size-y = 10 !nm
-dimensions:system-size-z = 0.9 !nm
-
-#create:periodic-boundaries-x
+#create:crystal-structure=hcp
+create:periodic-boundaries-x
 create:periodic-boundaries-y
-#create:periodic-boundaries-z
-create:local-alloy-radius = 7.5 #A
-create:local-alloy-x-position = 0.75
-create:local-alloy-y-position = 0.5
-#------------------------------------------
-# Material Files:
-#------------------------------------------
-material:unit-cell-file = fe3gate2-lda-Li-tetragonal.ucf
-material:file = fe3gate2-Li.mat
-
+create:periodic-boundaries-z
 #create:crystal-sublattice-materials=true
-#create:crystal-structure = fe3gate2
 
-#exchange:interaction-range = 2.85
-#exchange:function = shell
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
+sim:minimum-temperature=5 
+sim:maximum-temperature= 500
+sim:temperature-increment=20
+sim:equilibration-temperature=5
+sim:temperature=5
 
-sim:total-time-steps=1
-sim:equilibration-temperature=10
-sim:temperature=10
-sim:equilibration-time-steps = 1
-sim:time-steps-increment = 1
-
-#sim:preconditioning-steps = 5000
-sim:temperature-increment = 30
-sim:minimum-temperature= 10
-sim:maximum-temperature= 600
-
+sim:time-steps-increment=1
+sim:time-step=1 !fs
+sim:equilibration-time-steps=5000
+sim:loop-time-steps=5000
 #------------------------------------------
 # Program and integrator details
 #------------------------------------------
-sim:program = domain-wall #time variable magnetic field; SOT; STT
-sim:integrator = llg-heun
+sim:program=curie-temperature
+#sim:program=time-series
+#sim:program=field-cool
+sim:integrator=monte-carlo
+#montecarlo:algorithm = angle
+#sim:integrator=llg-midpoint
 
-#sim:save-checkpoint = end 
+
+#config:atoms=end
 #------------------------------------------
 # data output
 #------------------------------------------
-config:atoms
-config:atoms-output-rate=1
+output:output-rate = 1
 
-output:output-rate=1
-#output:time-steps
 output:temperature
-output:mean-magnetisation-length
+#output:material-mean-magnetisation-length
 output:material-mean-magnetisation
-output:mean-susceptibility
-output:mean-material-spin-temperature
-output:material-mean-total-energy 
-
+output:material-mean-susceptibility
+output:mean-material-spin-temperature 
+#screen:material-magnetisation
+#screen:mean-specific-heat
