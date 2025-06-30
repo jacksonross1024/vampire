@@ -30,7 +30,7 @@ struct seed_point_t{
 };
 
 // Function forward declaration
-std::vector < seed_point_t > generate_random_seed_points(double sizex, double sizey, double scale, double randomness);
+std::vector < seed_point_t > generate_random_seed_points(double sizex, double sizey, double scale, double randomness, double radius);
 std::vector < std::vector <float> > generate_host_alloy_distribution(std::vector < seed_point_t >& seeds, const int x_cells, const int y_cells, const double smoothness, const double resolution);
 
 //-----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 
 	// Constants for distribution calculation
 	const int num_alloy_materials = mp::num_materials; // local constant for number of materials
-	double resolution = 50.0; // spatial reolution of concentration map (Angstroms)
+	double resolution = 5.0; // spatial reolution of concentration map (Angstroms)
 	if(local_alloy) {
 		resolution = local_alloy_radius;
 		std::cout << resolution << ", " << int(cs::system_dimensions[0]/resolution)+1 << ", "<< int(cs::system_dimensions[1]/resolution)+1 << std::endl;
@@ -71,8 +71,10 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 			const double smoothness = create::internal::mp[hm].host_alloy_smoothness;
 			const double scale = create::internal::mp[hm].host_alloy_scale;
 			const double randomness = 0.1; // size distribution of seed points
+			double radius = create::internal::mp[hm].alloy_radius;
+			if(local_alloy) radius = create::internal::local_alloy_radius;
 			// get seed points
-			std::vector < seed_point_t > seed_points = generate_random_seed_points(sizex, sizey, scale, randomness);
+			std::vector < seed_point_t > seed_points = generate_random_seed_points(sizex, sizey, scale, randomness, radius);
 			// calculate interpolated probability distribution
 			distributions[hm] = generate_host_alloy_distribution(seed_points, xcells, ycells, smoothness, resolution);
 		}
@@ -194,7 +196,7 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 //	Note for MPI: custom generator is seeded identically on each processor, generating the same points
 //
 //--------------------------------------------------------------------------------------------------------
-std::vector < seed_point_t > generate_random_seed_points(double size_x, double size_y, double scale, double randomness){
+std::vector < seed_point_t > generate_random_seed_points(double size_x, double size_y, double scale, double randomness, double radius){
 
 	// empty vector to store non-touching seed points
 	std::vector< seed_point_t > seeds(0);
@@ -214,7 +216,7 @@ std::vector < seed_point_t > generate_random_seed_points(double size_x, double s
 		seed_point_t grain;
 	   grain.x = (create::internal::grnd()*1.4-0.2)*size_x;
 	   grain.y = (create::internal::grnd()*1.4-0.2)*size_y;
-	   grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*local_alloy_radius;
+	   grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
 		if(local_alloy) {
 			grain.x = local_alloy_x*size_x;
 			grain.y = local_alloy_y*size_y;

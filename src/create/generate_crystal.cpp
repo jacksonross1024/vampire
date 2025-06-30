@@ -76,6 +76,12 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		max_bounds[0]=cs::total_num_unit_cells[0];
 		max_bounds[1]=cs::total_num_unit_cells[1];
 		max_bounds[2]=cs::total_num_unit_cells[2];
+		min_fracitonal_bounds[0] = 0;
+		min_fracitonal_bounds[1] = 0;
+		min_fracitonal_bounds[2] = 0;
+		max_fractional_bounds[0] = cs::total_num_unit_cells[0];
+		max_fractional_bounds[1] = cs::total_num_unit_cells[1];
+		max_fractional_bounds[2] = cs::total_num_unit_cells[2];
 	#endif
 
 	cs::local_num_unit_cells[0]=max_bounds[0]-min_bounds[0];
