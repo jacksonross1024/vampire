@@ -39,7 +39,7 @@ namespace exchange{
          for(auto& J : Jij) J *= ef;
 
          if(Jij.size() == 1){
-            vin::check_for_valid_value(Jij[0], word, line, prefix, unit, "energy", -1e-18, 1e-18,"material"," < +/- 1.0e18");
+            vin::check_for_valid_value(Jij[0], word, line, prefix, unit, "energy", -1e18, 1e18,"material"," < +/- 1.0e18");
             // set exchange constants
             exchange_matrix.set_exchange_values(material_i, material_j, neighbour, Jij);
          }
