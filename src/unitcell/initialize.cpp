@@ -43,7 +43,7 @@ namespace unitcell{
       else if(uc::internal::crystal_structure == "bcc-110"        ) uc::internal::build_body_centred_cubic_110( unit_cell );
       else if(uc::internal::crystal_structure == "fcc"            ) uc::internal::build_face_centred_cubic(     unit_cell );
       else if(uc::internal::crystal_structure == "fcc-111"        ) uc::internal::build_face_centred_cubic_111( unit_cell );
-      else if(uc::internal::crystal_structure == "fe3gate2"       ) uc::internal::build_fe3gate2(               unit_cell );
+      else if(uc::internal::crystal_structure == "fe5gete2"       ) uc::internal::build_fe5gete2(               unit_cell );
       else if(uc::internal::crystal_structure == "hcp"            ) uc::internal::build_hexagonal_close_packed( unit_cell );
       else if(uc::internal::crystal_structure == "heusler"        ) uc::internal::build_heusler(                unit_cell );
       else if(uc::internal::crystal_structure == "honeycomb"      ) uc::internal::build_honeycomb(              unit_cell );
@@ -58,6 +58,7 @@ namespace unitcell{
       else if(uc::internal::crystal_structure == "spinel"         ) uc::internal::build_spinel(                 unit_cell );
       else if(uc::internal::crystal_structure == "spinel-layered" ) uc::internal::build_spinel_layered(         unit_cell );
       else if(uc::internal::crystal_structure == "SmFeN"          ) uc::internal::build_SmFeN(                  unit_cell );
+      else if(uc::internal::crystal_structure == "trigonal"       ) uc::internal::build_trigonal(               unit_cell );
       // Otherwise print an error to user
       else{
          terminaltextcolor(RED);

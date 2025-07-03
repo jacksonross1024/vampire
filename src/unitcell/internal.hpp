@@ -69,7 +69,7 @@ namespace unitcell{
       void build_cccro(unitcell::unit_cell_t& unit_cell);
       void build_face_centred_cubic(unitcell::unit_cell_t& unit_cell);
       void build_face_centred_cubic_111(unitcell::unit_cell_t& unit_cell);
-      void build_fe3gate2(unitcell::unit_cell_t& unit_cell);
+      void build_fe5gete2(unitcell::unit_cell_t& unit_cell);
       void build_hexagonal_close_packed(unitcell::unit_cell_t& unit_cell);
       void build_honeycomb(unitcell::unit_cell_t& unit_cell);
       void build_honeycomb_alpha(unitcell::unit_cell_t& unit_cell);
@@ -84,6 +84,7 @@ namespace unitcell{
       void build_SmFeN(unitcell::unit_cell_t& unit_cell);
       void build_spinel(unitcell::unit_cell_t& unit_cell);
       void build_spinel_layered(unitcell::unit_cell_t& unit_cell);
+      void build_trigonal(unitcell::unit_cell_t& unit_cell);
 
       void calculate_interactions(unit_cell_t& unit_cell);
       void read_unit_cell(unit_cell_t & unit_cell, std::string filename);

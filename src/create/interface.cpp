@@ -766,6 +766,14 @@ namespace create{
          create::internal::mp[super_index].sub_fill = sanitised_bool;
          return true;
       }
+      test="alloy-radius"; // determines range of alloy fraction in host
+      if(word==test){
+         // check for type of host alloy
+         double v=atof(value.c_str());
+         vin::check_for_valid_value(v, word, line, prefix, unit, "angstrom", 1.0, 500.0,"angstrom"," 0.0 - 500.0");
+         create::internal::mp[super_index].alloy_radius = v;
+         return true;
+      }
       /*
          Float to set the reduced starting height (as a fraction of the total system height) for
          the voronoi grain substructure. At this height the voronoi grain size is the standard size.

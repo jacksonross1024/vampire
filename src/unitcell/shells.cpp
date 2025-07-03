@@ -65,7 +65,7 @@ void unitcell::exchange_template_t::find_shells(){
    // determine sets of shells within tolerance
    //-------------------------------------------
    unsigned int shell = 0; // initial shell
-   const double tolerance = 0.001; // fractions of unit cell
+   const double tolerance = 0.01; // fractions of unit cell
    double current_range = 0.0;
    if(interaction_list.size() > 0) current_range = interaction_list[0].range; // updating value of shell range
    else{
