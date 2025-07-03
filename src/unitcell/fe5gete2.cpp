@@ -218,7 +218,8 @@ void build_fe5gete2(unitcell::unit_cell_t& unit_cell){
   unit_cell.atom.at(15).mat=5;
   unit_cell.atom.at(15).hc=1;
   unit_cell.atom.at(15).lc=2;
-
+  unit_cell.atom[15].nm    = true;
+  
    unit_cell.cutoff_radius = 0.5; // normalised to unit cell size
 
    uc::internal::calculate_interactions(unit_cell);

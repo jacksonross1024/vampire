@@ -12,7 +12,7 @@ material:file= F5GeT.mat
 #material:unit-cell-file=fe3gate2-mara-dmi.ucf
 
 exchange:function = shell
-exchange:interaction-range = 1.33
+exchange:interaction-range = 3.17
 # Creation attributes:
 #------------------------------------------
 create:crystal-structure= fe5gete2
