@@ -169,6 +169,7 @@ namespace unitcell{
          // loop over all exchange interations
          int count = 0;
          for(auto uci : uc.bilinear.interaction){
+            if(uci.shell < 37) continue;
             ofile << fw5(count) << "\t" << fw5(uci.i) << "\t" << fw5(uci.j) << "\t"
                   << fw5(uci.dx) << "\t" << fw5(uci.dy) << "\t" << fw5(uci.dz) << "\t" ;
             switch(uc.bilinear.exchange_type){

@@ -3,8 +3,8 @@
 # System Dimensions:
 #------------------------------------------
 dimensions:unit-cell-size = 4.01 !A
-dimensions:system-size-x = 4 !nm
-dimensions:system-size-y = 4 !nm
+dimensions:system-size-x = 50 !nm
+dimensions:system-size-y = 50 !nm
 dimensions:system-size-z = 2 !nm
 
 #------------------------------------------
@@ -12,7 +12,8 @@ material:file= F5GeT.mat
 #material:unit-cell-file=fe3gate2-mara-dmi.ucf
 
 exchange:function = shell
-exchange:interaction-range = 3.17
+exchange:interaction-range = 5.5
+#exchange:ab-initio-factor = 0.5
 # Creation attributes:
 #------------------------------------------
 create:crystal-structure= fe5gete2
@@ -31,16 +32,16 @@ create:periodic-boundaries-y
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
-sim:minimum-temperature=0 
-sim:maximum-temperature= 165
-sim:temperature-increment=  5
-sim:equilibration-temperature=5
-sim:temperature= 5
+sim:minimum-temperature=20 
+sim:maximum-temperature= 600
+sim:temperature-increment=  20
+sim:equilibration-temperature=20
+sim:temperature= 20
 
 #sim:preconditioning-steps = 5000
 sim:time-steps-increment= 1
 sim:time-step= 1 !fs
-sim:equilibration-time-steps= 0
+sim:equilibration-time-steps= 1
 sim:total-time-steps= 1
 
 #sim:cooling-function = exponential
@@ -50,7 +51,7 @@ sim:total-time-steps= 1
 sim:program= time-series
 #sim:program=time-series
 #sim:program=field-cool
-sim:integrator= llg-midpoint
+sim:integrator= monte-carlo
 #montecarlo:algorithm = angle
 #sim:integrator=llg-midpoint
 
@@ -58,8 +59,8 @@ sim:integrator= llg-midpoint
 #sim:applied-field-strength = 0.5 #T
 #sim:save-checkpoint = continuous
 
-config:atoms = continuous
-config:atoms-output-rate = 1
+#config:atoms = continuous
+#config:atoms-output-rate = 1
 #config:output-format = binary
 #------------------------------------------
 # data output
@@ -69,8 +70,11 @@ output:output-rate = 1
 output:time-steps
 output:temperature
 #output:material-mean-magnetisation-length
-output:material-magnetisation
-#output:material-mean-susceptibility
-#output:mean-material-spin-temperature 
+output:material-mean-magnetisation
+output:material-mean-susceptibility
+output:mean-material-spin-temperature 
+output:mean-specific-heat
+output:binder-cumulant 
+
 #screen:material-magnetisation
 #screen:mean-specific-heat
