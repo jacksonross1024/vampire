@@ -97,10 +97,12 @@ namespace exchange{
           return true;
       }
       //--------------------------------------------------------------------
-      if( word == "ab-initio" ){
-         bool set_exchange = vin::check_for_valid_bool(value, word, line, prefix,"input");
-         if(set_exchange) internal::exchange_factor = 2.0;
-         else internal::exchange_factor = 1.0;
+      if( word == "ab-initio-factor" ){
+         double ab = atof(value.c_str());
+         vin::check_for_valid_value(ab, word, line, prefix, unit, "scaling", -10.0, 10.0,"input","-10.0 - 10");
+         internal::exchange_factor = ab;
+         std::cout << "Note: exchange factor set to " << ab << " only for normalised-isotropic exchange " << std::endl;
+         
          return true;
       }
 
@@ -204,6 +206,89 @@ namespace exchange{
       test = "exchange-matrix-10th-nn";
       if( word == test ){
          read_exchange_values(super_index, sub_index, 9, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      test = "exchange-matrix-11th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 10, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-12th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 11, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-13th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 12, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-14th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 13, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-15th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 14, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-16th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 15, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-17th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 16, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-18th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 17, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-19th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 18, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-20th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 19, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-21st-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 20, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-22nd-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 21, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-23rd-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 22, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-24th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 23, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
          return true;
       }
       //------------------------------------------------------------------------
