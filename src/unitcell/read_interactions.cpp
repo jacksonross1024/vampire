@@ -136,9 +136,16 @@ namespace unitcell{
                int_iss >> interaction[i].Jij[0][0] >> interaction[i].Jij[1][1] >> interaction[i].Jij[2][2];
                break;
             case 9:
-               int_iss >> interaction[i].Jij[0][0] >> interaction[i].Jij[0][1] >> interaction[i].Jij[0][2];
-               int_iss >> interaction[i].Jij[1][0] >> interaction[i].Jij[1][1] >> interaction[i].Jij[1][2];
-               int_iss >> interaction[i].Jij[2][0] >> interaction[i].Jij[2][1] >> interaction[i].Jij[2][2];
+            float Dx = 0.0;
+            float Dy = 0.0;
+            float Dz = 0.0;
+            float J = 0.0;
+               int_iss >> J >> Dx >> Dy >> Dz;
+               interaction[i].Jij[0][0] = J; interaction[i].Jij[0][1] = Dz; interaction[i].Jij[0][2] = -Dy;
+               interaction[i].Jij[1][0] = -Dz; interaction[i].Jij[1][1] = J; interaction[i].Jij[1][2] = Dx;
+               interaction[i].Jij[2][0] = Dy; interaction[i].Jij[2][1] = -Dx; interaction[i].Jij[1][2] = J;
+               // int_iss >> interaction[i].Jij[1][0] >> interaction[i].Jij[1][1] >> interaction[i].Jij[1][2];
+               // int_iss >> interaction[i].Jij[2][0] >> interaction[i].Jij[2][1] >> interaction[i].Jij[2][2];
  
                break;
             default:
