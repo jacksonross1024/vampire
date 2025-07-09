@@ -410,7 +410,7 @@ double nn_dist_3;
 double max_range = 9.99;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
-double J_constant = 1.0;//eVtoJ/1000.0; //1 meV
+double J_constant = eVtoJ/1000.0; //1 meV
 double J_intra_1=2.5*J_constant;
 double J_intra_2=0.75*J_constant;
 double J_intra_3=-0.01*J_constant;
@@ -1361,18 +1361,18 @@ void calc_interactions() {
                                  // {
                                  spin_config_energy(atom_i, dL2, atom_j, exchange, local_config_energy);
 
-                                 //   if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
-                                 //                //xx                     xy-> Dz                 xz -> -Dy
-                                 //                  exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
-                                 //                //yx -> -Dz              yy                      yz -> Dx
-                                 //                 -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
-                                 //                //zx -> Dy               yz -> -Dx               zz
-                                 //                  exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0]*1.0 << "\n"; }
-                                    if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
-                                    //xx                     xy-> Dz                 xz -> -Dy
-                                       exchange[0] << "\t" << exchange[1] << "\t" << exchange[2] << "\t" << \
-                                    //yx -> -Dz              yy                      yz -> Dx
-                                       exchange[3] << "\n"; }
+                                   if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
+                                                //xx                     xy-> Dz                 xz -> -Dy
+                                                  exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
+                                                //yx -> -Dz              yy                      yz -> Dx
+                                                 -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
+                                                //zx -> Dy               yz -> -Dx               zz
+                                                  exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0]*1.0 << "\n"; }
+                                    // if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
+                                    // //xx                     xy-> Dz                 xz -> -Dy
+                                    //    exchange[0] << "\t" << exchange[1] << "\t" << exchange[2] << "\t" << \
+                                    // //yx -> -Dz              yy                      yz -> Dx
+                                    //    exchange[3] <<  "\n"; }
                                  else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                               //xx                     xy-> Dz                 xz -> -Dy
                                  exchange[0] << "\n";// << 0.0 << "\t" << 0.0 << "\t" << \
