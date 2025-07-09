@@ -1368,6 +1368,11 @@ void calc_interactions() {
                                                  -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
                                                 //zx -> Dy               yz -> -Dx               zz
                                                   exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0]*1.0 << "\n"; }
+                                    // if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
+                                    // //xx                     xy-> Dz                 xz -> -Dy
+                                    //    exchange[0] << "\t" << exchange[1] << "\t" << exchange[2] << "\t" << \
+                                    // //yx -> -Dz              yy                      yz -> Dx
+                                    //    exchange[3] <<  "\n"; }
                                  else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                               //xx                     xy-> Dz                 xz -> -Dy
                                  exchange[0] << "\n";// << 0.0 << "\t" << 0.0 << "\t" << \

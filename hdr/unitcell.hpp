@@ -69,7 +69,7 @@ namespace unitcell{
       int dy; /// delta y in unit cells
       int dz; /// delta z in unit cells
       double rij; // interaction range (unit cells)
-      double Jij[3][3]; /// Exchange tensor
+      float Jij[3][3]; /// Exchange tensor
 	};
 
    //------------------------------------------------------------------------

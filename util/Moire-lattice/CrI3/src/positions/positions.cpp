@@ -56,7 +56,7 @@ void print_header(){
    outfile1 << " 0     1	   0" << std::endl;
    outfile1 << " 0     0	   1" << std::endl;
    outfile1 << " #Atoms" << std::endl;
-   outfile1 << total_atoms << '\t'	<< 5 << std::endl;
+   outfile1 << total_atoms << '\t'	<< 4 << std::endl;
 
 }
 
