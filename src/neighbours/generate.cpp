@@ -365,9 +365,9 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                // set neighbour data
                tmp_nt.nn = atomj;// supercell_array[nx][ny][nz][natom]; // atom ID of neighbour
                tmp_nt.i = i;                                   // interaction type
-               tmp_nt.vx = vx;                                 // position vector i->j
-               tmp_nt.vy = vy;
-               tmp_nt.vz = vz;
+               // tmp_nt.vx = vx;                                 // position vector i->j
+               // tmp_nt.vy = vy;
+               // tmp_nt.vz = vz;
 
                // push back array of class
                list[supercell_array[scc[0]][scc[1]][scc[2]][atom]].push_back(tmp_nt);
