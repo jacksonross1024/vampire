@@ -483,7 +483,13 @@ int run(){
 	  		}
 	  		program::electrical_pulse();
 	  		break;
-
+		case 18:
+			if(vmpi::my_rank==0){
+				std::cout << "timestep scaling..." << std::endl;
+				zlog << "timestep scaling..." << std::endl;
+			}
+			program::timestep_scaling();
+			break;
 		case 50:
 			if(vmpi::my_rank==0){
 				std::cout << "Diagnostic-Boltzmann..." << std::endl;

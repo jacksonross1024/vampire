@@ -67,10 +67,10 @@ namespace program{
       if(err::check==true){std::cout << "program::timestep_scaling has been called" << std::endl;}
 
       std::cout << " Diagnostic - Timestep Scaling " << std::endl;
-
+      vout::data();
       // loop over timesteps
-      for(int powerv=18; powerv > 13; powerv--){
-         for(int value=1;value<10;value++){
+      for(int powerv=16; powerv > 13; powerv--){
+         for(int value=1;value<10;value *= 2){
             mp::dt_SI=double(value)*pow(10.0,-1.0*powerv);
 
             uint64_t timesteps = 5.0e-12/mp::dt_SI;
@@ -101,7 +101,7 @@ namespace program{
             uint64_t start_time = sim::time;
             // Simulate system
             while( sim::time < timesteps+start_time ){
-               sim::integrate(1);
+               sim::integrate(sim::partial_time);
 
                // Calculate mag_m, mag after sim::partial_time steps
                stats::update();

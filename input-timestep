@@ -1,0 +1,75 @@
+
+#------------------------------------------
+# System Dimensions:
+#------------------------------------------
+#dimensions:unit-cell-size = 3.54 !A
+dimensions:system-size-x = 25 !nm
+dimensions:system-size-y = 25 !nm
+dimensions:system-size-z = 2 !nm
+
+#------------------------------------------
+material:file=FGaT-mara-dampvar.mat
+material:unit-cell-file=fe3gate2-mara-dmi.ucf
+
+# Creation attributes:
+#------------------------------------------
+#create:crystal-structure=hcp
+create:periodic-boundaries-x
+create:periodic-boundaries-y
+#create:periodic-boundaries-z
+#create:crystal-sublattice-materials=true
+
+#dipole:solver = tensor 
+#cells:macro-cell-size-x = 15
+#cells:macro-cell-size-y = 15
+#cells:macro-cell-size-z = 2
+#dipole:cutoff-radius = 3
+#dipole:field-update-rate = 1
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+sim:minimum-temperature=0 
+sim:maximum-temperature= 165
+sim:temperature-increment=  5
+#sim:equilibration-temperature= 40
+#sim:temperature= 40
+
+#sim:preconditioning-steps = 0
+sim:time-steps-increment= 1
+sim:time-step= 1 !fs
+sim:equilibration-time-steps= 20000
+sim:total-time-steps= 50000
+
+#sim:cooling-function = exponential
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+#sim:program= diagnostic
+#sim:program=time-series
+#sim:program=field-cool
+#sim:integrator= llg-heun
+#montecarlo:algorithm = angle
+#sim:integrator=llg-midpoint
+
+#sim:equilibration-field-strength = 0.5
+#sim:applied-field-strength = 0.5 #T
+#sim:save-checkpoint = continuous
+
+#config:atoms = continuous
+#config:atoms-output-rate = 1
+#config:output-format = binary
+#------------------------------------------
+# data output
+#------------------------------------------
+output:output-rate = 1
+
+output:time-steps
+output:temperature
+#output:material-mean-magnetisation-length
+output:material-mean-magnetisation
+#output:material-mean-susceptibility
+#output:mean-material-spin-temperature 
+#screen:material-magnetisation
+#screen:mean-specific-heat
+
