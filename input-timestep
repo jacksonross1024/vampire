@@ -8,8 +8,8 @@ dimensions:system-size-y = 25 !nm
 dimensions:system-size-z = 2 !nm
 
 #------------------------------------------
-material:file=FGaT-mara-dampvar.mat
-material:unit-cell-file=fe3gate2-mara-dmi.ucf
+material:file=fe3gate2-Li-dampvar.mat
+material:unit-cell-file=fe3gate2-lda-Li.ucf
 
 # Creation attributes:
 #------------------------------------------
@@ -35,7 +35,7 @@ sim:temperature-increment=  5
 #sim:equilibration-temperature= 40
 #sim:temperature= 40
 
-#sim:preconditioning-steps = 0
+sim:preconditioning-steps = 10000
 sim:time-steps-increment= 1
 sim:time-step= 1 !fs
 sim:equilibration-time-steps= 20000

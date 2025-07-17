@@ -345,14 +345,14 @@ int calculate_thermal_fields(const int start_index,const int end_index){
 
       const int imaterial=atoms::type_array[atom];
       const double H_th_sigma = sigma_prefactor[imaterial];
-	  const double damping = mp::material[imaterial].alpha;
+	  //const double damping = mp::material[imaterial].alpha;
 
-	const double S[3] = {atoms::x_spin_array[atom], atoms::y_spin_array[atom], atoms:: z_spin_array[atom]};
+	//const double S[3] = {atoms::x_spin_array[atom], atoms::y_spin_array[atom], atoms:: z_spin_array[atom]};
 	const double T[3] = {atoms::thermal_x_field[atom], atoms::thermal_y_field[atom], atoms::thermal_z_field[atom]};
 
-        atoms::thermal_x_field[atom] = H_th_sigma*(T[0] + damping*(S[1]*T[2]-S[2]*T[1]));
-		atoms::thermal_y_field[atom] = H_th_sigma*(T[1] + damping*(S[2]*T[0]-S[0]*T[2]));
-		atoms::thermal_z_field[atom] = H_th_sigma*(T[2] + damping*(S[0]*T[1]-S[1]*T[0]));
+        atoms::thermal_x_field[atom] = H_th_sigma*(T[0]);// + damping*(S[1]*T[2]-S[2]*T[1]));
+		atoms::thermal_y_field[atom] = H_th_sigma*(T[1]);// + damping*(S[2]*T[0]-S[0]*T[2]));
+		atoms::thermal_z_field[atom] = H_th_sigma*(T[2]);// + damping*(S[0]*T[1]-S[1]*T[0]));
 	}
 
    return EXIT_SUCCESS;

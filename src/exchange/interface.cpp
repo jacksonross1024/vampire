@@ -291,6 +291,184 @@ namespace exchange{
          read_exchange_values(super_index, sub_index, 23, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
          return true;
       }
+      test = "exchange-matrix-25th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 24, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-26th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 25, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-27th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 26, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-28th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 27, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-29th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 28, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-30th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 29, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      test = "exchange-matrix-31st-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 30, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-32nd-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 31, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-33rd-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 32, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-34th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 33, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-35th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 34, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-36th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 35, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-37th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 36, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-38th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 37, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-39th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 38, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-40th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 39, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-41st-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 40, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-42nd-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 41, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-43rd-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 42, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-44th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 43, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-45th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 44, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-46th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 45, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-47th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 46, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-48th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 47, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-49th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 48, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-50th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 49, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-51st-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 50, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-52nd-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 51, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-53rd-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 52, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
+      //------------------------------------------------------------------------
+      test = "exchange-matrix-44th-nn";
+      if( word == test ){
+         read_exchange_values(super_index, sub_index, 43, word, prefix, value, unit, line, internal::bilinear_exchange_constants);
+         return true;
+      }
       //------------------------------------------------------------------------
       test = "biquadratic-exchange-matrix";
       if( word == test ){
