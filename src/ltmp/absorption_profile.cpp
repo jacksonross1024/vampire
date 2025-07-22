@@ -112,7 +112,7 @@ void ltmp::abs_t::set_interpolation_table(){
 double ltmp::abs_t::get_absorption_constant(double height){
 
    // check for value larger than Tmax
-   if(height>=z_max) return A_max;
+   if(height>=z_max) return 0.0;
 
    // loop over all values
    for(unsigned int i=1; i<z.size(); i++){
@@ -121,7 +121,7 @@ double ltmp::abs_t::get_absorption_constant(double height){
       // check if within range
       if(height >= zmin && height <= zmax){
          // calculate interpolated value
-         return height*m[i]+c[i];
+         return 1.0 ;//height*m[i]+c[i];
       }
    }
 

@@ -36,20 +36,26 @@ namespace ltmp{
       bool gradient=false; /// enable temperature gradient
       bool gradient_only = false;
       
-
+      std::vector<ltmp::internal::mp_t> mp;
       std::vector<double> micro_cell_size(3,10.0); /// lateral size of local temperature microcells (A)
-      double laser_spot_size = 350.0; /// laser spot size for lateral profile (A)
+      double laser_spot_size = 35.0; /// laser spot size for lateral profile (A)
       double penetration_depth = 200.0; /// vertical laser penetration depth
-      double thermal_conductivity = 11.0; //J/s/m/K
+       std::vector<double> phonon_thermal_conductivity; //J/s/m/K
+       std::vector<double> electron_thermal_conductivity; //J/s/m/K
+       std::vector<double> electron_phonon_coupling_constant; //J/s/m^3/K
+       std::vector<double> phonon_heat_capacity; //J/m^3/K
+       std::vector<double> electron_heat_capacity; //J/m^3/K
+       std::vector<double> Einstein_temperature;
 
+       std::vector< double> Debeye_phonon_constant;
       double pump_power; // laser pump power
       double pump_time; // laser pump time (s)
-      double TTG;  // electron-lattice coupling constant
-      double TTCe; // electron heat capacity (T=0)
-      double TTCl; // lattice heat capcity
+      // double TTG;  // electron-lattice coupling constant
+      // double TTCe; // electron heat capacity (T=0)
+      // double TTCl; // lattice heat capcity
       double dt; // time step
       // double TTTeq;
-      double Tcool = 0.05e12;
+      double Tcool = 0.0;//0.05e12;
 
       double minimum_temperature = 0.0; // Minimum temperature in temperature gradient
       double maximum_temperature = 0.0; // Maximum temperature in temperature gradient
