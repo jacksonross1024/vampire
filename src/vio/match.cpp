@@ -489,7 +489,7 @@ namespace vin{
         if(word==test){
             double hscc=atof(value.c_str());
             check_for_valid_value(hscc, word, line, prefix, unit, "none", 0.0, 1.0e40,"input","0.0 - 1.0E40");
-            sim::HeatSinkCouplingConstant=hscc;
+            sim::HeatSinkCouplingConstant=hscc;         
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
@@ -1808,7 +1808,7 @@ namespace vin{
             test="atomic-spin-moment";
             if(word==test){
                 double mu_s=atof(value.c_str());
-                check_for_valid_positive_value(mu_s, word, line, prefix, unit, "moment", 0.1*9.24e-24, 1e8*9.24e-24,"material","0.1 - 1e8 mu_B");
+                check_for_valid_positive_value(mu_s, word, line, prefix, unit, "moment", 0.0*9.24e-24, 1e8*9.24e-24,"material","0.0 - 1e8 mu_B");
                 read_material[super_index].moment_flag=true;
                 read_material[super_index].mu_s_SI=mu_s;
                 return EXIT_SUCCESS;
@@ -2359,7 +2359,7 @@ namespace vin{
             else if(unitcell::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(micromagnetic::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(environment::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
-
+            else if(ltmp::match_material_parameter(word, value, unit, line, super_index)) return EXIT_SUCCESS;
             //--------------------------------------------------------------------
             // keyword not found
             //--------------------------------------------------------------------
