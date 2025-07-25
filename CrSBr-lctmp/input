@@ -1,0 +1,81 @@
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+##note:mpi discretisation forced to be in-plane for local temp. 
+dimensions:system-size-x = 100 !nm
+dimensions:system-size-y = 100 !nm
+dimensions:system-size-z = 60 !nm ##if change z height need to adjust material limits in .mat
+
+create:periodic-boundaries-x
+create:periodic-boundaries-y
+
+local-temperature-pulse:cell-size = 1010,1010,7.0 #A ##need to adjust z cell size to get correct boxes for constants
+local-temperature-pulse:output-microcell-data
+local-temperature-pulse:temperature-profile = vertical
+local-temperature-pulse:absorption-profile-file = abs.txt  #use ltmp_cell_coords to confirm correct layers gets laser heat 
+##abs.txt: 
+#294  1.0
+#308  1.0
+#
+local-temperature-pulse:penetration-depth = 200.0 #A, default is 20 !nm. material dependent. will affect the temperature rise even using abs.txt
+
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:unit-cell-file = CrSBr-Multilayer-Scaled-DMI.ucf
+material:file = CrSBr-Multilayer-Scaled-Anisotropy.mat
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+dipole:solver = tensor 
+dipole:cutoff-radius= 10 ##only for the tensor initialisation. need long range to get correct shape
+dipole:field-update-rate = 100 
+cells:macro-cell-size-x = 15 ##cell size controls magnetisation. should be at least smaller than spin texture
+cells:macro-cell-size-y = 15
+cells:macro-cell-size-z = 300 ##this hurts with non-magetic = keep. demag field removed; does not affect torque, only energy. no MC
+                              ##large cell size is okay since it will normalise to the centre of mass
+
+sim:minimum-temperature = 5.0 
+sim:maximum-temperature = 250.0
+sim:cooling-time = 0.25 !ns
+sim:cooling-function = gaussian
+
+sim:equilibration-temperature= 250.0
+sim:temperature = 250.0
+
+sim:time-step = 1 !fs ##fine with midpoint and most field cooling
+sim:equilibration-time-steps = 0 ##starting with random spins and above T_c is enough
+sim:total-time-steps= 2000000 #2ns
+sim:time-steps-increment = 10000 #10 !ps
+
+sim:applied-field-strength = 0.0 #Tesla
+
+#sim:program= field-cool
+sim:program = localised-temperature-pulse 
+sim:integrator = llg-midpoint #we have been using midpoint for stability. must use Heun if damping > 0.2
+
+sim:two-temperature-heat-sink-coupling = 0.1e12 #can set to zero if want
+
+sim:laser-pulse-power= 0.04 # J/m^2 -> 0.004 mJ/cm^2 in correct notation. 0.4 mJ/cm^2 in old notation
+sim:laser-pulse-time = 85 !fs #
+
+#sim:load-checkpoint = restart
+#sim:save-checkpoint = continuous 
+#------------------------------------------
+# data output
+#------------------------------------------
+
+config:atoms = end
+#config:output-format = binary ##waaaaaaaaay faster, but have to run util/vdc/vdc on same system
+#config:atoms-output-rate= 10
+
+output:output-rate=1
+output:time-steps
+output:temperature
+output:material-magnetisation
+#output:mean-susceptibility
+#output:total-energy

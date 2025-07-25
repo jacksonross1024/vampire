@@ -1,0 +1,76 @@
+#--------------------------------------------------------------------------------------------------
+# CrSBr (multilayer)
+#--------------------------------------------------------------------------------------------------
+# Number of Materials: 2 (two Cr-based sublattices, four heights)
+#--------------------------------------------------------------------------------------------------
+material:num-materials = 4
+#--------------------------------------------------------------------------------------------------
+# Material 1 Cr in a rectangular lattice 
+#--------------------------------------------------------------------------------------------------
+material[1]:material-name = Cr1
+material[1]:initial-spin-direction = 0.01,1,0
+material[1]:atomic-spin-moment = 2.88 !muB
+material[1]:damping-constant = 0.01
+material[1]:second-order-triaxial-anisotropy-vector = 2.174361542279708e-24,8.505908117627691e-24,0
+material[1]:unit-cell-category = 1
+material[1]:minimum-height = 0.49 ##gets 2 layers of the CrSBr unit monolayer
+material[1]:maximum-height = 0.51
+material[1]:use-phonon-temperature ##couples to phonon temp not electron
+#--------------------------------------------------------------------------------------------------
+# Material 2 Cr in a rectangular lattice 
+#--------------------------------------------------------------------------------------------------
+material[2]:material-name = Cr2
+material[2]:initial-spin-direction = -0.01,-1,0
+material[2]:atomic-spin-moment = 2.88 !muB
+material[2]:damping-constant = 0.01
+material[2]:second-order-triaxial-anisotropy-vector = 2.174361542279708e-24,8.505908117627691e-24,0
+material[2]:unit-cell-category = 2
+material[2]:minimum-height = 0.49
+material[2]:maximum-height = 0.51
+material[2]:use-phonon-temperature ##couples to phonon temp not electron
+
+##CrSBr
+material[1]:electron-heat-capacity        = 5.5e2 ##still CrI3 constants
+material[1]:phonon-heat-capacity          = 1.8e6 #C_p_inf
+material[1]:electron-phonon-coupling      = 4.05e16
+material[1]:electron-thermal-conductivity = 0.0 #maybe not technically true, especially with semi-conductor laser excitation
+material[1]:phonon-thermal-conductivity   = 1.1
+material[1]:einstein-temp                 = 100.5 #converts to T_D by T_D = 1.25 T_E
+##CrSBr
+material[2]:electron-heat-capacity        = 5.5e2
+material[2]:phonon-heat-capacity          = 1.8e6
+material[2]:electron-phonon-coupling      = 4.05e16
+material[2]:electron-thermal-conductivity = 0.0
+material[2]:phonon-thermal-conductivity   = 1.1
+material[2]:einstein-temp                 = 100.5
+
+#only need starting cells at interface for substrate. Any number of substrates in any order. 
+material[3]:non-magnetic = keep
+material[3]:unit-cell-category = 1
+material[3]:minimum-height = 0.0
+material[3]:maximum-height = 0.01
+material[3]:atomic-spin-moment = 0.000001 !muB #precvents problems with dipole
+
+material[4]:non-magnetic = keep
+material[4]:unit-cell-category = 1
+material[4]:minimum-height = 0.52
+material[4]:maximum-height = 0.53
+material[4]:atomic-spin-moment = 0.000001 !muB #precvents problems with dipole
+
+
+##hBN
+material[3]:electron-heat-capacity        = 2.64e6
+material[3]:phonon-heat-capacity          = 2.64e6
+material[3]:electron-phonon-coupling      = 0.0
+material[3]:electron-thermal-conductivity = 0.0
+material[3]:phonon-thermal-conductivity    = 5.0
+material[3]:einstein-temp                 = 300.0
+
+
+##hBN
+material[4]:electron-heat-capacity        = 2.64e6
+material[4]:phonon-heat-capacity          = 2.64e6
+material[4]:electron-phonon-coupling      = 0.0
+material[4]:electron-thermal-conductivity = 0.0
+material[4]:phonon-thermal-conductivity    = 5.0
+material[4]:einstein-temp                 = 300.0

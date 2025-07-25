@@ -58,7 +58,7 @@ namespace dipole{
     	for(int lc=0;lc<dipole::internal::cells_num_local_cells;lc++){
 
          int i = cells::cell_id_array[lc];
-         int atom_num_cutoff = 20;
+         int atom_num_cutoff = 0;
          if(dipole::internal::stray_field) atom_num_cutoff = 0;
         	if(dipole::internal::cells_num_atoms_in_cell[i] > atom_num_cutoff) {
 
