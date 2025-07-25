@@ -58,7 +58,9 @@ namespace dipole{
     	for(int lc=0;lc<dipole::internal::cells_num_local_cells;lc++){
 
          int i = cells::cell_id_array[lc];
-        	if(dipole::internal::cells_num_atoms_in_cell[i]>0){
+         int atom_num_cutoff = 20;
+         if(dipole::internal::stray_field) atom_num_cutoff = 0;
+        	if(dipole::internal::cells_num_atoms_in_cell[i] > atom_num_cutoff) {
 
             // Self demagnetisation factor multiplying m(i)
             const double eightPI_three_cell_volume = 8.0*M_PI/(3.0*dipole::internal::cells_volume_array[i]);
@@ -71,9 +73,9 @@ namespace dipole{
 
             // std::cout << mx_i << ", " << my_i << ", " << mz_i << std::endl;
             // Add self-demagnetisation as mu_0/4_PI * 8PI*m_cell/3V
-            dipole::cells_field_array_x[i] = self_demag * mx_i;//*0.0; //*0.0
-            dipole::cells_field_array_y[i] = self_demag * my_i;//*0.0; //*0.0
-            dipole::cells_field_array_z[i] = self_demag * mz_i;//*0.0; //*0.0
+            dipole::cells_field_array_x[i] = 0.0; //*0.0
+            dipole::cells_field_array_y[i] = 0.0; //*0.0
+            dipole::cells_field_array_z[i] = 0.0; //*0.0
             // Add self demag to Hdemag --> To get only dipole-dipole contribution comment this and initialise to zero
             dipole::cells_mu0Hd_field_array_x[i] = -0.5*self_demag * mx_i;
             dipole::cells_mu0Hd_field_array_y[i] = -0.5*self_demag * my_i;
