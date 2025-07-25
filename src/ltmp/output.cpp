@@ -46,7 +46,7 @@ namespace ltmp{
          if(vmpi::my_rank==0){
             std::ofstream ofile;
             ofile.open("ltmp_cell_coords.cfg");
-
+            ofile << "c_x" << "\t" << "c_y" << "\t"  << "c_z" << "\t"  << "a[z]" << "\t"  << "C_e" << "\t"  << "C_p" << "\t"  << "G_ep" << "\t"  << "k_e" << "\t"  << "k_p" << "\n";
             for(unsigned int cell=0; cell < num_cells; ++cell){
                ofile << cell_position_array[3*cell+0] << "\t" << cell_position_array[3*cell+1] << "\t" << cell_position_array[3*cell+2] << "\t";
                ofile << attenuation_array[cell] << "\t" <<
