@@ -105,11 +105,12 @@ void field_cool(){
 
 		uint64_t start_time = sim::time;
 
-		// Perform Field Cooling
+
       sim::actual_H_field = sim::applied_H_field;
       sim::actual_H_vector[0] = sim::applied_H_vector[0];
       sim::actual_H_vector[1] = sim::applied_H_vector[1];
       sim::actual_H_vector[2] = sim::applied_H_vector[2];
+		// Perform Field Cooling
 		while(sim::time<sim::total_time+start_time){
 
          // loop over partial time

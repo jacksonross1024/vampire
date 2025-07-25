@@ -47,9 +47,14 @@ namespace ltmp{
             std::ofstream ofile;
             ofile.open("ltmp_cell_coords.cfg");
 
-            for(unsigned int cell=0; cell<cell_position_array.size()/3; ++cell){
+            for(unsigned int cell=0; cell < num_cells; ++cell){
                ofile << cell_position_array[3*cell+0] << "\t" << cell_position_array[3*cell+1] << "\t" << cell_position_array[3*cell+2] << "\t";
-               ofile << attenuation_array[cell] << std::endl;
+               ofile << attenuation_array[cell] << "\t" <<
+                        electron_heat_capacity[cell] << "\t" << 
+                        phonon_heat_capacity[cell] << "\t" << 
+                        electron_phonon_coupling_constant[cell] << "\t" << 
+                        electron_thermal_conductivity[cell] << "\t" <<
+                        phonon_thermal_conductivity[cell] << "\n";
             }
 
             ofile.close();

@@ -225,7 +225,7 @@ namespace vmpi{
             for (int k=0;k<counter_factor;k++){
                int n1=factor_array[i];
                int n2=factor_array[j];
-               int n3=factor_array[k];
+               int n3=1;//actor_array[k];
                // check for valid solution for x blocks
                if (n1*n2*n3==x){
                   // calculate surface/volume ratio

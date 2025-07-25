@@ -168,8 +168,9 @@ namespace unitcell{
          ofile << fw5(uc.bilinear.interaction.size()) << "\t" << fw(extype) << std::endl;
          // loop over all exchange interations
          int count = 0;
+         int shell = 52;
          for(auto uci : uc.bilinear.interaction){
-            if(uci.shell < 37) continue;
+            //if(uci.shell != shell) continue;
             ofile << fw5(count) << "\t" << fw5(uci.i) << "\t" << fw5(uci.j) << "\t"
                   << fw5(uci.dx) << "\t" << fw5(uci.dy) << "\t" << fw5(uci.dz) << "\t" ;
             switch(uc.bilinear.exchange_type){
