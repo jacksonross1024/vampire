@@ -70,7 +70,7 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 
 			const double smoothness = create::internal::mp[hm].host_alloy_smoothness;
 			const double scale = create::internal::mp[hm].host_alloy_scale;
-			const double randomness = 0.1; // size distribution of seed points
+			const double randomness = 0.2; // size distribution of seed points
 			double radius = create::internal::mp[hm].alloy_radius;
 			if(local_alloy) radius = create::internal::local_alloy_radius;
 			// get seed points
@@ -198,6 +198,53 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 //--------------------------------------------------------------------------------------------------------
 std::vector < seed_point_t > generate_random_seed_points(double size_x, double size_y, double scale, double randomness, double radius){
 
+	if(scale == 0) {
+		// empty vector to store non-touching seed points
+		std::vector< seed_point_t > seeds(0);
+		// determine number of trial points
+		double resolution = 2.5;
+		const int xcells = int(size_x/resolution)+1;
+		const int ycells = int(size_y/resolution)+1;
+		int num_points = xcells*ycells;
+		double grain_randomness = 0.75;
+		// re-seed generator on all processors
+		create::internal::grnd.seed(create::internal::grain_seed);
+		// generate random x,y,r trial point
+		seed_point_t grain;
+		grain.x = radius*4;
+		grain.y = radius*4;
+		grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
+		seeds.push_back(grain);
+		for(int i=1; i<num_points*2; i++){
+
+			// generate random x,y,r trial point
+			seed_point_t grain;
+			grain.x = (2*create::internal::grnd()-1.0)*resolution*grain_randomness*10.0 + (floor(i / xcells))*resolution;
+			grain.y = (2*create::internal::grnd()-1.0)*resolution*grain_randomness*10.0 + (i % ycells)*resolution;
+			grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
+
+			// flag to see if grains are touching
+			bool touching=false;
+			double minr = radius*4.5+radius*4.5*(1.0+grain_randomness*(2.0*create::internal::grnd()-1.0));
+			// loop over all previous grains and check if point is not touching other grains
+			for(unsigned int g=0;g<seeds.size(); g++){
+				double dx = grain.x-seeds[g].x;
+				double dy = grain.y-seeds[g].y;
+				double rij = sqrt(dx*dx + dy*dy);
+				// double minr = grain.r+seeds[g].r;
+				if(rij<minr){
+					touching = true;
+					break;
+				}
+			}
+
+			// save non-touching grains
+			if(touching == false) seeds.push_back(grain);
+			
+		}
+		return seeds;		
+	}
+
 	// empty vector to store non-touching seed points
 	std::vector< seed_point_t > seeds(0);
 
@@ -225,7 +272,7 @@ std::vector < seed_point_t > generate_random_seed_points(double size_x, double s
 		}
 		// flag to see if grains are touching
 		bool touching=false;
-
+		// double minr = 400.0;//radius*4.0;
 		// loop over all previous grains and check if point is not touching other grains
 		for(unsigned int g=0;g<seeds.size(); g++){
 			double dx = grain.x-seeds[g].x;
@@ -282,6 +329,7 @@ std::vector < std::vector <float> > generate_host_alloy_distribution(std::vector
             double rij2 = dx*dx + dy*dy;
             double factor = exp(-rij2/(smoothness*gr*gr));
 			if(rij2 > gr*gr) factor = 0.0;
+			else factor = 1.0;
             density +=factor;
          }
 
