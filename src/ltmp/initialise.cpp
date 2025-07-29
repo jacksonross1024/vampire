@@ -264,8 +264,8 @@ void initialise(const double system_dimensions_x,
          if(num_atoms_in_cell.at(cell) > 0){
             ltmp::internal::electron_heat_capacity[cell] /= num_atoms_in_cell.at(cell);
             ltmp::internal::phonon_heat_capacity[cell] /= num_atoms_in_cell.at(cell);
-            ltmp::internal::electron_thermal_conductivity[cell] /= nat;
-            ltmp::internal::phonon_thermal_conductivity[cell] /= nat;
+            ltmp::internal::electron_thermal_conductivity[cell] /= num_atoms_in_cell.at(cell);
+            ltmp::internal::phonon_thermal_conductivity[cell] /= num_atoms_in_cell.at(cell);
             ltmp::internal::electron_phonon_coupling_constant[cell] /= num_atoms_in_cell.at(cell);
             ltmp::internal::Einstein_temperature[cell] /= num_atoms_in_cell.at(cell);
            
