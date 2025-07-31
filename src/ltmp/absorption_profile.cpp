@@ -121,7 +121,7 @@ double ltmp::abs_t::get_absorption_constant(double height){
       // check if within range
       if(height >= zmin && height <= zmax){
          // calculate interpolated value
-         return 1.0 ;//height*m[i]+c[i];
+         return height*m[i]+c[i];
       }
    }
 

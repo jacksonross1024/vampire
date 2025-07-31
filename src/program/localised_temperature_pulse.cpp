@@ -38,8 +38,13 @@ namespace program{
    sim::TTTp=sim::temperature;
 
    // Equilibrate system
+    sim::actual_H_field = sim::equilibrium_H_field;
+		sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+		sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+		sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
    while(sim::time<sim::equilibration_time){
 
+     
       // loop over partial_time to update temperature every time
       for(uint64_t tt=0; tt < sim::partial_time; tt++){
 
@@ -60,6 +65,10 @@ namespace program{
    // record starting time after equilibration
    uint64_t start_time = sim::time;
 
+   sim::actual_H_field = sim::applied_H_field;
+   sim::actual_H_vector[0] = sim::applied_H_vector[0];
+   sim::actual_H_vector[1] = sim::applied_H_vector[1];
+   sim::actual_H_vector[2] = sim::applied_H_vector[2];
    // Simulate temperature pulse
    while(sim::time < sim::total_time+start_time){
 
