@@ -69,7 +69,7 @@ namespace ltmp{
       void calculate_local_temperature_pulse(const double time_from_start) {
 
          const double i_pump_time = 1.0/ltmp::internal::pump_time;
-         const double reduced_time = (time_from_start - 2.0*ltmp::internal::pump_time)*i_pump_time;
+         const double reduced_time = (time_from_start - 3.0*ltmp::internal::pump_time)*i_pump_time;
          const double four_ln_2 = 2.77258872224; // 4 ln 2
          // 2/(delta sqrt(pi/ln 2))*0.1, delta = 10 nm, J/m^2 -> mJ/cm^2 (factor 0.1)
          const double two_delta_sqrt_pi_ln_2 = 0.9394372787;
@@ -191,7 +191,7 @@ namespace ltmp{
 
             const double Te = root_temperature_array[2*cell+0]*root_temperature_array[2*cell+0] + delta_temperature_array[2*cell+0];
             const double Tp = root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1] + delta_temperature_array[2*cell+1];
-            // if(cell == ltmp::internal::attenuation_array.size()-1) std::cout << root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1] << ", " << delta_temperature_array[2*cell+1] << std::endl;
+            if(Te > 41.0) std::cout << root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1] << ", " << delta_temperature_array[2*cell+1] << std::endl;
             root_temperature_array[2*cell+0] = sqrt(Te);
             root_temperature_array[2*cell+1] = sqrt(Tp);
          }

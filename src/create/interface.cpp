@@ -695,7 +695,7 @@ namespace create{
       test="host-alloy-scale"; // determines host material
       if(word==test){
          double s=atof(value.c_str());
-         vin::check_for_valid_value(s, word, line, prefix, unit, "length", 1, 10000.0,"material"," 0.1 - 1000 A");
+         vin::check_for_valid_value(s, word, line, prefix, unit, "length", 0, 10000.0,"material"," 0.1 - 1000 A");
          create::internal::mp[super_index].host_alloy_scale = s;
          return true;
       }

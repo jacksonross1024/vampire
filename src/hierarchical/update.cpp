@@ -78,9 +78,9 @@ void update(std::vector <double>& x_spin_array, // atomic spin directions
       //std::cout << self_demag << std::endl;
 
       // Normalise cell magnetisation by the Bohr magneton
-      const double mx_i = cells::mag_array_x[cell_i]*imuB;
-      const double my_i = cells::mag_array_y[cell_i]*imuB;
-      const double mz_i = cells::mag_array_z[cell_i]*imuB;
+      const double mx_i = cells::mag_array_x[cell_i];//*imuB;
+      const double my_i = cells::mag_array_y[cell_i];//*imuB;
+      const double mz_i = cells::mag_array_z[cell_i];//*imuB;
       // std::cout << cell_i << '\t' << mx_i << '\t' << my_i << '\t' << mz_i << std::endl;
 
       // Add self-demagnetisation as mu_0/4_PI * 8PI*m_cell/3V

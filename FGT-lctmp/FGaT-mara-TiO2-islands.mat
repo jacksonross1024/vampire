@@ -2,7 +2,7 @@
 #---------------------------------------------------
 # Number of Materials
 #---------------------------------------------------
-material:num-materials=4
+material:num-materials=5
 #---------------------------------------------------
 # Material 1
 #---------------------------------------------------
@@ -46,8 +46,8 @@ material[2]:alloy-fraction[4] = 0.0
 #material[1]:host-alloy-smoothness = 10
 #material[2]:host-alloy-smoothness = 10
 
-material[1]:host-alloy-scale = 0
-material[2]:host-alloy-scale = 0
+material[1]:host-alloy-scale = 100
+material[2]:host-alloy-scale = 100
 
 material[1]:alloy-variance[3] = 1.0
 material[2]:alloy-variance[4] = 1.0
@@ -55,15 +55,54 @@ material[2]:alloy-variance[4] = 1.0
 material[1]:save-host-alloy-distribution
 material[2]:save-host-alloy-distribution
 
-material[1]:alloy-radius = 75
-material[2]:alloy-radius = 75
+material[1]:alloy-radius = 7.5
+material[2]:alloy-radius = 7.5
 
 material[3]:material-name = "Fe1-hole"
 material[3]:non-magnetic = remove
+material[3]:minimum-height = 0.0
+material[3]:maximum-height = 0.0
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Material 1: Fe3
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 material[4]:material-name = "Fe2-hole"
 material[4]:non-magnetic = remove
+material[4]:minimum-height = 0.0
+material[4]:maximum-height = 0.0
 
+
+## FGT
+material[1]:electron-heat-capacity        = 1.561e3
+material[1]:phonon-heat-capacity          = 2.0e6
+material[1]:electron-phonon-coupling      = 6.5e17
+material[1]:electron-thermal-conductivity = 0.25
+material[1]:phonon-thermal-conductivity    = 0.5
+material[1]:einstein-temp                 = 142.5
+material[1]:minimum-height = 0.0
+material[1]:maximum-height = 0.1666667
+
+## FGT
+material[2]:electron-heat-capacity        = 1.561e3
+material[2]:phonon-heat-capacity          = 2.0e6
+material[2]:electron-phonon-coupling      = 6.5e17
+material[2]:electron-thermal-conductivity = 0.25
+material[2]:phonon-thermal-conductivity    = 0.5
+material[2]:einstein-temp                 = 142.5
+material[2]:minimum-height = 0.0
+material[2]:maximum-height = 0.1666667
+
+
+#TiO2
+material[5]:material-name=TiO2
+material[5]:material-element=TiO
+material[5]:non-magnetic = keep 
+material[5]:minimum-height = 0.1666667
+material[5]:maximum-height = 0.2
+
+material[5]:electron-heat-capacity        = 3.5e6 #same as ITO
+material[5]:phonon-heat-capacity          = 3.5e6
+material[5]:electron-phonon-coupling      = 0.0
+material[5]:electron-thermal-conductivity = 0.0
+material[5]:phonon-thermal-conductivity    = 5.0
+material[5]:einstein-temp                 = 750.0

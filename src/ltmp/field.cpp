@@ -10,7 +10,7 @@
 // C++ standard library headers
 #include <cmath>
 #include <algorithm>
-
+#include <iostream>
 // Vampire headers
 #include "ltmp.hpp"
 #include "random.hpp"
@@ -29,18 +29,33 @@ namespace ltmp{
       if(ltmp::internal::gradient == false) ltmp::internal::calculate_local_temperature_pulse(time_from_start);
       else ltmp::internal::calculate_local_temperature_gradient(time_from_start);
 
-      // store number of local atoms as local constant for compiler
-      const int num_local_atoms = ltmp::internal::num_local_atoms;
+      // // store number of local atoms as local constant for compiler
+      // const int num_local_atoms = ltmp::internal::num_local_atoms;
 
+      
+
+      return;
+   }
+
+   //-----------------------------------------------------------------------------
+   // Function for adding local thermal fields to external field array
+   //-----------------------------------------------------------------------------
+   void get_localised_thermal_fields(std::vector<double>& x_total_external_field_array,
+                               std::vector<double>& y_total_external_field_array,
+                               std::vector<double>& z_total_external_field_array,
+                               const int start_index,
+                               const int end_index){
+      // if(ltmp::internal::gradient_only) update_localised_temperature(0.0);
+      
       // Initialise thermal field random numbers
-      generate (ltmp::internal::x_field_array.begin(),ltmp::internal::x_field_array.begin()+num_local_atoms, mtrandom::gaussian);
-      generate (ltmp::internal::y_field_array.begin(),ltmp::internal::y_field_array.begin()+num_local_atoms, mtrandom::gaussian);
-      generate (ltmp::internal::z_field_array.begin(),ltmp::internal::z_field_array.begin()+num_local_atoms, mtrandom::gaussian);
+      generate (ltmp::internal::x_field_array.begin()+start_index,ltmp::internal::x_field_array.begin()+end_index, mtrandom::gaussian);
+      generate (ltmp::internal::y_field_array.begin()+start_index,ltmp::internal::y_field_array.begin()+end_index, mtrandom::gaussian);
+      generate (ltmp::internal::z_field_array.begin()+start_index,ltmp::internal::z_field_array.begin()+end_index, mtrandom::gaussian);
 
       // check for temperature rescaling
       if(ltmp::internal::temperature_rescaling){
          // calculate local thermal field for all atoms with rescaled temperature
-         for(int atom=0; atom<ltmp::internal::num_local_atoms; ++atom) {
+         for(int atom= start_index; atom < end_index; ++atom) {
             const int cell = ltmp::internal::atom_temperature_index[atom]; /// get cell index for atom temperature (Te or Tp)
             const double rootT = ltmp::internal::root_temperature_array[cell]; /// get sqrt(T) for atom
             const double sigma = ltmp::internal::atom_sigma[atom]; /// unrolled list of thermal prefactor
@@ -59,34 +74,24 @@ namespace ltmp{
       // otherwise use faster version without rescaling
       else{
          // calculate local thermal field for all atoms
-         for(int atom=0; atom<ltmp::internal::num_local_atoms; ++atom) {
+         for(int atom=start_index; atom<end_index; ++atom) {
             const int cell = ltmp::internal::atom_temperature_index[atom]; /// get cell index for atom temperature (Te or Tp)
             const double rootT = ltmp::internal::root_temperature_array[cell]; /// get sqrt(T) for atom
             const double sigma = ltmp::internal::atom_sigma[atom]; /// unrolled list of thermal prefactor
 
+            
             ltmp::internal::x_field_array[atom]*= sigma*rootT;
             ltmp::internal::y_field_array[atom]*= sigma*rootT;
             ltmp::internal::z_field_array[atom]*= sigma*rootT;
+
+            // if(rootT*rootT > 41.0) std::cout <<  rootT*rootT << ", " << ltmp::internal::x_field_array[atom] << ", " << ltmp::internal::y_field_array[atom] << ", " << ltmp::internal::z_field_array[atom] << std::endl;
          }
       }
 
-      return;
-   }
-
-   //-----------------------------------------------------------------------------
-   // Function for adding local thermal fields to external field array
-   //-----------------------------------------------------------------------------
-   void get_localised_thermal_fields(std::vector<double>& x_total_external_field_array,
-                               std::vector<double>& y_total_external_field_array,
-                               std::vector<double>& z_total_external_field_array,
-                               const int start_index,
-                               const int end_index){
-      if(ltmp::internal::gradient_only) update_localised_temperature(0.0);
-
       // Add spin torque fields
-      for(int i=start_index; i<end_index; ++i) x_total_external_field_array[i] += ltmp::internal::x_field_array[i];
-      for(int i=start_index; i<end_index; ++i) y_total_external_field_array[i] += ltmp::internal::y_field_array[i];
-      for(int i=start_index; i<end_index; ++i) z_total_external_field_array[i] += ltmp::internal::z_field_array[i];
+      for(int i=start_index; i<end_index; ++i) x_total_external_field_array[i] = ltmp::internal::x_field_array[i];
+      for(int i=start_index; i<end_index; ++i) y_total_external_field_array[i] = ltmp::internal::y_field_array[i];
+      for(int i=start_index; i<end_index; ++i) z_total_external_field_array[i] = ltmp::internal::z_field_array[i];
 
       return;
    }
