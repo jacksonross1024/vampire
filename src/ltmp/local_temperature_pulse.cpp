@@ -191,7 +191,7 @@ namespace ltmp{
 
             const double Te = root_temperature_array[2*cell+0]*root_temperature_array[2*cell+0] + delta_temperature_array[2*cell+0];
             const double Tp = root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1] + delta_temperature_array[2*cell+1];
-            if(Te > 41.0) std::cout << root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1] << ", " << delta_temperature_array[2*cell+1] << std::endl;
+            // if(Te > 41.0) std::cout << root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1] << ", " << delta_temperature_array[2*cell+1] << std::endl;
             root_temperature_array[2*cell+0] = sqrt(Te);
             root_temperature_array[2*cell+1] = sqrt(Tp);
          }

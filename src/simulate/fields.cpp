@@ -168,7 +168,7 @@ void calculate_external_fields(const int start_index,const int end_index){
 					atoms::z_total_external_field_array);
 	}
    else if(program::program==13 || program::program == 55){
-
+	
       // Local thermal Fields
       ltmp::get_localised_thermal_fields(atoms::thermal_x_field,atoms::thermal_y_field,
             atoms::thermal_z_field, start_index, end_index);
