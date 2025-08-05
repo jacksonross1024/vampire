@@ -121,13 +121,15 @@ namespace st{
          const double microcell_volume = (st::internal::micro_cell_size[st::internal::stx] *
                                           st::internal::micro_cell_size[st::internal::sty] *
                                           st::internal::micro_cell_thickness)*1.e-30; // m^3
+         const double atomic_volume = (1.61*3.99*6.91)*1.e-30/6.0; // m^3
 
          // loop over all 1D stacks (in parallel)
          int int_stacks;
          // std::vector<int> stacks_list;
-         #ifdef MPICH 
+         #ifdef MPICF
          int_stacks = st::internal::mpi_stack_list.size();
          // stacks_list = st::internal::mpi_stack_list[s];
+         // std::cout << "ranK: " << vmpi::my_rank << ", " << int_stacks << std::endl;
          #else 
          int_stacks = st::internal::num_stacks;
         
@@ -135,8 +137,10 @@ namespace st{
          
          int stack;
          for(int s=0; s < int_stacks; ++s) {
-            #ifdef MPICH
-            stack = mpi_stack_list[s] + 1;
+
+            #ifdef MPICF
+            stack = mpi_stack_list[s];
+            // std::cout << "my rank: " << vmpi::my_rank << ", " << stack_index[stack] << ", " << stack << ", " << mpi_stack_list[s] << ", " << int_stacks << std::endl;
             #else 
             stack = s;
             #endif
@@ -350,9 +354,9 @@ namespace st{
                   //    st::internal::spin_torque[celly] = 0.0;
                   //    st::internal::spin_torque[cellz] = 0.0;//
                   // }  else {// Calculate spin torque energy for cell (Joules)
-                  st::internal::spin_torque[cellx] = microcell_volume * st::internal::sd_exchange[cell] * (sax+sax_sot) * i_e * i_muB;
-                  st::internal::spin_torque[celly] = microcell_volume * st::internal::sd_exchange[cell] * (say+say_sot) * i_e * i_muB;
-                  st::internal::spin_torque[cellz] = microcell_volume * st::internal::sd_exchange[cell] * (saz+saz_sot) * i_e * i_muB; 
+                  st::internal::spin_torque[cellx] = atomic_volume * st::internal::sd_exchange[cell] * (sax+sax_sot) * i_e * i_muB;
+                  st::internal::spin_torque[celly] = atomic_volume * st::internal::sd_exchange[cell] * (say+say_sot) * i_e * i_muB;
+                  st::internal::spin_torque[cellz] = atomic_volume * st::internal::sd_exchange[cell] * (saz+saz_sot) * i_e * i_muB; 
                   // }
                }
                else{
@@ -450,10 +454,10 @@ namespace st{
          } // end of stack loop
 
          // Reduce all microcell spin torques on all nodes
-         #ifdef MPICF
-            MPI_Allreduce(MPI_IN_PLACE, &st::internal::spin_torque[0],st::internal::spin_torque.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-            // MPI_Allreduce(MPI_IN_PLACE, &st::internal::total_ST[0],st::internal::total_ST.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-         #endif
+         // #ifdef MPICF
+         //    MPI_Allreduce(MPI_IN_PLACE, &st::internal::spin_torque[0],st::internal::spin_torque.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+         //    // MPI_Allreduce(MPI_IN_PLACE, &st::internal::total_ST[0],st::internal::total_ST.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+         // #endif
          st::internal::output_microcell_data();
 
          return;

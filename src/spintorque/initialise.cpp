@@ -75,6 +75,7 @@ void initialise(const double system_dimensions_x,
    // Make a small array for system dimensions
    double system_dimensions[3]={system_dimensions_x,system_dimensions_y,system_dimensions_z};
    std::cout << "system dimensions " << system_dimensions[0] << ", " << system_dimensions[1] << ", " << system_dimensions[2] << std::endl;
+   std::cout << "in stack basis:" << system_dimensions[st::internal::stx] << ", " << system_dimensions[st::internal::sty] << ", " << system_dimensions[st::internal::stz] << std::endl;
    // determine number of cells in each stack  (global)
    st::internal::num_microcells_per_stack = 1+ceil((system_dimensions[st::internal::stz]+0.01)/st::internal::micro_cell_thickness);
    std::cout << "microcells per stack " << st::internal::num_microcells_per_stack << ", microcell volume (A^3): " <<  st::internal::micro_cell_size[st::internal::stx]*st::internal::micro_cell_size[st::internal::sty]*st::internal::micro_cell_thickness << std::endl;
@@ -105,6 +106,7 @@ void initialise(const double system_dimensions_x,
    st::internal::coeff_ast.resize(array_size);
    st::internal::coeff_nast.resize(array_size);
    st::internal::cell_natom.resize(array_size);
+   st::internal::cell_stack_index.resize(array_size);
 
 
    const int three_vec_array_size = 3*array_size;
@@ -261,8 +263,8 @@ void initialise(const double system_dimensions_x,
    for(int s = 0; s < int(floor(st::internal::num_stacks/vmpi::num_processors)); s++) {
       st::internal::mpi_stack_list.push_back(s*vmpi::num_processors + vmpi::my_rank);
    } 
-   if(residual > 0 && vmpi::my_rank <= residual){
-      st::internal::mpi_stack_list.push_back(st::internal::num_stacks - vmpi::my_rank);
+   if(residual > 0 && vmpi::my_rank < residual){
+      st::internal::mpi_stack_list.push_back(st::internal::num_stacks-1 - vmpi::my_rank);
    }
 
 
@@ -274,8 +276,8 @@ void initialise(const double system_dimensions_x,
       int size = st::internal::mpi_stack_list.size();
       MPI_Reduce(&size,&stack_sum, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
       bool error = false;
-      if(vmpi::my_rank == 0 && (stack_sum-1) != st::internal::num_stacks) {
-         std::cout << stack_sum-1 << " != " << st::internal::num_stacks << std::endl;
+      if(vmpi::my_rank == 0 && (stack_sum) != st::internal::num_stacks) {
+         std::cout << stack_sum << " != " << st::internal::num_stacks << std::endl;
          error = true;
       }
       MPI_Bcast(&error,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -298,7 +300,8 @@ namespace internal{
    // Function to determine spin torque properties from atomic material properties
    //--------------------------------------------------------------------------------
    void set_microcell_properties(const std::vector<int>& atom_type_array, const int num_local_atoms){
-      //-------------------------------------------------------
+     
+     std::cout << "averaging microcell properties..." << std::endl; //-------------------------------------------------------
       // Determine microcell properties from atomic properties
       //-------------------------------------------------------
       st::internal::default_properties.beta_cond =  0.23;

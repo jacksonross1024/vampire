@@ -49,7 +49,7 @@ namespace st{
                for(int cell=0; cell < num_cells; ++cell){
                   //   if( (st::internal::cell_stack_index[cell]-1)%3 == 0) continue;
 	               ofile << cell_stack_index[cell] << "\t" << "\t" << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2];
-	               ofile << "\t" << beta_cond[cell] << "\t" << beta_diff[cell] << "\t" << sa_infinity[cell] << "\t" << lambda_sdl[cell] << std::endl;
+	               ofile << "\t" << beta_cond[cell] << "\t" << beta_diff[cell] << "\t" << sa_infinity[cell] << "\t" << lambda_sdl[cell] << "\t" << st::internal::cell_natom [cell] << std::endl;
                }
 
 		         ofile.close();
@@ -87,9 +87,11 @@ namespace st{
          
 
                // determine file name
-               std::stringstream filename;
-               filename << "spin-acc/" << config_file_counter;
+               std::stringstream filename_bottom;
+               filename_bottom << "spin-acc/" << config_file_counter;
           
+               std::stringstream filename_top;
+               filename_top << "spin-acc/" << config_file_counter;
                // #ifdef MPICF 
                  MPI_Reduce(&sa[0], &sa_sum[0], size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
                   MPI_Reduce(&sa_sot[0], &sa_sot_sum[0], size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -100,32 +102,62 @@ namespace st{
                   MPI_Reduce(&ast[0], &ast_sum[0], size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
                   MPI_Reduce(&nast[0], &nast_sum[0], size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
                   MPI_Reduce(&total_ST[0], &total_ST_sum[0], size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-                  MPI_Reduce(&cell_natom[0], &cell_natom_sum[0], num_cells, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+                  //MPI_Reduce(&cell_natom[0], &cell_natom_sum[0], num_cells, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
                 
                // #endif 
                // zlog << zTs() << "Outputting ST microcell data " << filename.str() << std::endl;
 
               
             if(vmpi::my_rank == 0) {
-                     std::ofstream ofile;
-               ofile.open(std::string(filename.str()).c_str());
-	          //  ofile<<"Time:"<< "\t" << sim::time*mp::dt_SI<< std::endl;
-             ofile << "pos_x \t pos_y \t pos_z \t m_x \t m_y \t m_z \t spin_acc_x \t spin_acc_y \t spin_acc_z \t " << \
-             "j_x \t j_y \t j_z \t ast_x \t ast_y \t ast_z \t nast_x \t nast_y \t nast_z \t torque_x \t torque_y \t torque_z \t num_atom" << std::endl;
+                     std::ofstream ofile_bottom;
+                     std::ofstream ofile_top;
+               ofile_bottom.open(std::string(filename_bottom.str() + "-b").c_str());
+               ofile_top.open(std::string(filename_top.str()+"-t").c_str());
+	          
+               ofile_bottom << "#pos_x \t pos_y \t pos_z \t m_x \t m_y \t m_z \t spin_acc_x \t spin_acc_y \t spin_acc_z \t " << \
+               "j_x \t j_y \t j_z \t ast_x \t ast_y \t ast_z \t nast_x \t nast_y \t nast_z \t torque_x \t torque_y \t torque_z \t num_atom" << std::endl;
+               ofile_top << "#pos_x \t pos_y \t pos_z \t m_x \t m_y \t m_z \t spin_acc_x \t spin_acc_y \t spin_acc_z \t " << \
+               "j_x \t j_y \t j_z \t ast_x \t ast_y \t ast_z \t nast_x \t nast_y \t nast_z \t torque_x \t torque_y \t torque_z \t num_atom" << std::endl;
                for(int cell=0; cell<num_cells; ++cell){
                   //   if( (st::internal::cell_stack_index[cell]-1)%3 == 0) continue;
-                  if(cell_natom[cell] == 0) continue;
-                  ofile << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2] << "\t";
-                  ofile << m[3*cell+0] << "\t" << m[3*cell+1] << "\t" << m[3*cell+2] << "\t";
-                  ofile << sa_sum[3*cell+0] << "\t" << sa_sum[3*cell+1] << "\t" << sa_sum[3*cell+2] << "\t";
-                  ofile << sa_sot_sum[3*cell+0] << "\t" << sa_sot_sum[3*cell+1] << "\t" << sa_sot_sum[3*cell+2] << "\t";
-                  ofile << j_sum[3*cell+0] << "\t" << j_sum[3*cell+1] << "\t" << j_sum[3*cell+2] << "\t";
-                  ofile << coeff_ast_sum[cell] << "\t";
-                  ofile << coeff_nast_sum[cell] << "\t";
-                  ofile << ast_sum[3*cell+0] << "\t" << ast_sum[3*cell+1] << "\t" << ast_sum[3*cell+2] << "\t";
-                  ofile << nast_sum[3*cell+0] << "\t" << nast_sum[3*cell+1] << "\t" << nast_sum[3*cell+2] << "\t";
-                  ofile << total_ST_sum[3*cell+0] << "\t" << total_ST_sum[3*cell+1] << "\t" << total_ST_sum[3*cell+2];
-                  ofile << "\t" << cell_natom_sum[cell] << "\n";
+                  if(pos[3*cell+0] == 0) {
+                     if(cell_natom[cell] == 0) {
+                        if(cell % st::internal::num_microcells_per_stack == 0) ofile_bottom << "\n";
+                        continue;
+                     }
+                     ofile_bottom << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2] << "\t";
+                     ofile_bottom << m[3*cell+0] << "\t" << m[3*cell+1] << "\t" << m[3*cell+2] << "\t";
+                     ofile_bottom << sa_sum[3*cell+0] << "\t" << sa_sum[3*cell+1] << "\t" << sa_sum[3*cell+2] << "\t";
+                     ofile_bottom << sa_sot_sum[3*cell+0] << "\t" << sa_sot_sum[3*cell+1] << "\t" << sa_sot_sum[3*cell+2] << "\t";
+                     ofile_bottom << j_sum[3*cell+0] << "\t" << j_sum[3*cell+1] << "\t" << j_sum[3*cell+2] << "\t";
+                     ofile_bottom << coeff_ast_sum[cell] << "\t";
+                     ofile_bottom << coeff_nast_sum[cell] << "\t";
+                     ofile_bottom << ast_sum[3*cell+0] << "\t" << ast_sum[3*cell+1] << "\t" << ast_sum[3*cell+2] << "\t";
+                     ofile_bottom << nast_sum[3*cell+0] << "\t" << nast_sum[3*cell+1] << "\t" << nast_sum[3*cell+2] << "\t";
+                     ofile_bottom << total_ST_sum[3*cell+0] << "\t" << total_ST_sum[3*cell+1] << "\t" << total_ST_sum[3*cell+2] << "\n";
+                     // ofile << "\t" << cell_natom_sum[cell] << "\n";
+
+                     if(cell % st::internal::num_microcells_per_stack == 0) ofile_bottom << "\n";
+                  }
+                  else if(pos[3*cell+0] == 1) {
+                     if(cell_natom[cell] == 0) {
+                        if(cell % st::internal::num_microcells_per_stack == 0) ofile_top << "\n";
+                        continue;
+                     }
+                     ofile_top << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2] << "\t";
+                     ofile_top << m[3*cell+0] << "\t" << m[3*cell+1] << "\t" << m[3*cell+2] << "\t";
+                     ofile_top << sa_sum[3*cell+0] << "\t" << sa_sum[3*cell+1] << "\t" << sa_sum[3*cell+2] << "\t";
+                     ofile_top << sa_sot_sum[3*cell+0] << "\t" << sa_sot_sum[3*cell+1] << "\t" << sa_sot_sum[3*cell+2] << "\t";
+                     ofile_top << j_sum[3*cell+0] << "\t" << j_sum[3*cell+1] << "\t" << j_sum[3*cell+2] << "\t";
+                     ofile_top << coeff_ast_sum[cell] << "\t";
+                     ofile_top << coeff_nast_sum[cell] << "\t";
+                     ofile_top << ast_sum[3*cell+0] << "\t" << ast_sum[3*cell+1] << "\t" << ast_sum[3*cell+2] << "\t";
+                     ofile_top << nast_sum[3*cell+0] << "\t" << nast_sum[3*cell+1] << "\t" << nast_sum[3*cell+2] << "\t";
+                     ofile_top << total_ST_sum[3*cell+0] << "\t" << total_ST_sum[3*cell+1] << "\t" << total_ST_sum[3*cell+2] << "\n";
+                     // ofile << "\t" << cell_natom_sum[cell] << "\n";
+
+                     if(cell % st::internal::num_microcells_per_stack == 0) ofile_top << "\n";
+                  }
 
                   sa_sum[3*cell+0] = sa_sum[3*cell+1] = sa_sum[3*cell+2] = 0.0;
                   sa_sot_sum[3*cell+0] = sa_sot_sum[3*cell+1] = sa_sot_sum[3*cell+2] = 0.0;
@@ -140,7 +172,8 @@ namespace st{
                   // ofile << spin_torque[3*cell+0] << "\t" << spin_torque[3*cell+1] << "\t" << spin_torque[3*cell+2] << std::endl;
                }
 
-            ofile.close();
+            ofile_top.close();
+            ofile_bottom.close();
        
             // update config_file_counter
           
