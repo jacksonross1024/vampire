@@ -163,10 +163,11 @@ namespace st{
             // st::internal::m [3*idx+1]  = st::internal::stack_init_mag[stack*3 +1]*2*3.74;
             // st::internal::m [3*idx+2]  = st::internal::stack_init_mag[stack*3 +2]*2*3.74;
 
-            st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::m [3*idx+0];
-            st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::m [3*idx+1];
-            st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::m [3*idx+2];
+            st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::initial_m[0];
+            st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::initial_m[1];
+            st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::initial_m[2];
 
+            std::cout << st::internal::j [3*idx+2] << ", " << st::internal::initial_beta << ", " << je << ", " << st::internal::initial_m[2] << std::endl;
           //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << st::internal::default_properties.sa_infinity << "\t" << st::internal::init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << st::internal::init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << st::internal::m[3*idx+0] << " \t" <<  st::internal::m[3*idx+1] << "\t" << st::internal::sa[3*idx+0] << "\t" << st::internal::sa[3*idx+1] << std::endl;
 
             // loop over all cells in stack after first (idx+1)
@@ -357,7 +358,7 @@ namespace st{
                   st::internal::spin_torque[cellx] = atomic_volume * st::internal::sd_exchange[cell] * (sax+sax_sot) * i_e * i_muB;
                   st::internal::spin_torque[celly] = atomic_volume * st::internal::sd_exchange[cell] * (say+say_sot) * i_e * i_muB;
                   st::internal::spin_torque[cellz] = atomic_volume * st::internal::sd_exchange[cell] * (saz+saz_sot) * i_e * i_muB; 
-                  // }
+                  // std::cout << st::internal::spin_torque[cellz] << " = " << atomic_volume* i_e * i_muB << " * " << st::internal::sd_exchange[cell]  << " * " << saz << ", mu_s: " << mp::mu_s_array[5000] <<  std::endl;
                }
                else{
                   // Save values for the spin accumulation
