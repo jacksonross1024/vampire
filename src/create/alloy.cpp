@@ -53,7 +53,7 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 	const int num_alloy_materials = mp::num_materials; // local constant for number of materials
 	double resolution = 2.5; // spatial reolution of concentration map (Angstroms)
 	if(local_alloy) {
-		resolution = local_alloy_radius;
+		// resolution = local_alloy_radius;
 		std::cout << resolution << ", " << int(cs::system_dimensions[0]/resolution)+1 << ", "<< int(cs::system_dimensions[1]/resolution)+1 << std::endl;
 	}
 	const double sizex = cs::system_dimensions[0];
@@ -328,7 +328,7 @@ std::vector < std::vector <float> > generate_host_alloy_distribution(std::vector
             double dy = y-gy;
             double rij2 = dx*dx + dy*dy;
             double factor = exp(-rij2/(smoothness*gr*gr));
-			if(rij2 > gr*gr) factor = 0.0;
+			if(rij2 >= gr*gr) factor = 0.0;
 			else factor = 1.0;
             density +=factor;
          }
