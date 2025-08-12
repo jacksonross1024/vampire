@@ -168,17 +168,19 @@ namespace unitcell{
          ofile << fw5(uc.bilinear.num_interactions) << "\t" << fw(extype) << std::endl;
          // loop over all exchange interations
          int count = 0;
-         for(auto itr = uc.bilinear.interaction_stack.begin(); itr != uc.bilinear.interaction_stack.end(); ++itr){
-         unitcell::interaction_t uci = *itr;
+         int shell = 52;
+         for(auto uci : uc.bilinear.interaction){
+            //if(uci.shell != shell) continue;
             ofile << fw5(count) << "\t" << fw5(uci.i) << "\t" << fw5(uci.j) << "\t"
-                  << fw5(uci.dx) << "\t" << fw5(uci.dy) << "\t" << fw5(uci.dz) << "\t";
+                  << fw5(uci.dx) << "\t" << fw5(uci.dy) << "\t" << fw5(uci.dz) << "\t" ;
             switch(uc.bilinear.exchange_type){
-               case(exchange::isotropic) : ofile << fw(uci.Jij[0][0]) << std::endl; break;
-               case(exchange::vectorial) : ofile << fw(uci.Jij[0][0]) << "\t" << fw(uci.Jij[1][1]) << "\t" << fw(uci.Jij[2][2]) << std::endl; break;
+               case(exchange::isotropic) : ofile << fw(uci.Jij[0][0]); break;
+               case(exchange::vectorial) : ofile << fw(uci.Jij[0][0]) << "\t" << fw(uci.Jij[1][1]) << "\t" << fw(uci.Jij[2][2]); break;
                case(exchange::tensorial) : ofile << fw(uci.Jij[0][0]) << "\t" << fw(uci.Jij[0][1]) << "\t" << fw(uci.Jij[0][2]) << "\t"
                                                  << fw(uci.Jij[1][0]) << "\t" << fw(uci.Jij[1][1]) << "\t" << fw(uci.Jij[1][2]) << "\t"
-                                                 << fw(uci.Jij[2][0]) << "\t" << fw(uci.Jij[2][1]) << "\t" << fw(uci.Jij[2][2]) << std::endl; break;
+                                                 << fw(uci.Jij[2][0]) << "\t" << fw(uci.Jij[2][1]) << "\t" << fw(uci.Jij[2][2]); break;
             }
+            ofile << "\t #" << fw5(uci.rij) << ", shell: " << fw5(uci.shell) << std::endl;
             count++;
          }
 

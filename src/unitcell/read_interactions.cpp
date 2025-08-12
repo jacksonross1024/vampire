@@ -35,12 +35,13 @@ namespace unitcell{
 
 		uint64_t num_interactions = 0; // assume no interactions
       std::string exchange_type_string; // string defining exchange type
-
+     
       // get number of exchange types
       ucf_ss >> num_interactions >> exchange_type_string;
 
       // process exchange string to set exchange type and normalisation
       const int num_exchange_values = unitcell::exchange_template_t::set_exchange_type(exchange_type_string);
+      // if(interaction_unit == "meV") exchange::internal::meV_interactions = true;
       // std::cout << exchange_type_string << " exchange type detected." << std::endl;
       if(num_interactions>=0) interaction.resize(num_interactions);
       else {
@@ -78,7 +79,7 @@ namespace unitcell{
          // jatom--;
          line_counter++;
          // check for sane input
-         if(iatom>=0 && iatom < num_atoms && id < num_interactions) interaction[id].i=iatom;
+         if(iatom>=0 && iatom < num_atoms && i < num_interactions) interaction[i].i=iatom;
          else if(iatom>=0 && iatom >= num_atoms){
             terminaltextcolor(RED);
             std::cerr << std::endl << "Error! iatom number "<< iatom <<" for interaction id " << id << " on line " << line_counter
@@ -99,7 +100,7 @@ namespace unitcell{
                 << " of unit cell input file " << filename.c_str() << ". Possibly too many interactions defined. Exiting" << std::endl;
            err::vexit();
          }
-         if(iatom>=0 && jatom < num_atoms) interaction[id].j=jatom;
+         if(iatom>=0 && jatom < num_atoms) interaction[i].j=jatom;
          
          else{
             terminaltextcolor(RED);
@@ -112,9 +113,9 @@ namespace unitcell{
                  << num_atoms-1 << ". Exiting" << std::endl;
             err::vexit();
          }
-         interaction[id].dx=dx;
-         interaction[id].dy=dy;
-         interaction[id].dz=dz;
+         interaction[i].dx=dx;
+         interaction[i].dy=dy;
+         interaction[i].dz=dz;
 
 
          // check for long range interactions
@@ -122,6 +123,10 @@ namespace unitcell{
          if(static_cast<unsigned int>(abs(dy))>interaction_range) interaction_range=abs(dy);
          if(static_cast<unsigned int>(abs(dz))>interaction_range) interaction_range=abs(dz);
 
+         // float DMx = 0.0;
+         // float DMy = 0.0;
+         // float DMz = 0.0;
+         // float J = 0.0;
          //int iatom_mat = unit_cell.atom[iatom].mat;
          //int jatom_mat = unit_cell.atom[jatom].mat;
          switch(num_exchange_values){
@@ -135,9 +140,14 @@ namespace unitcell{
                int_iss >> interaction[i].Jij[0][0] >> interaction[i].Jij[1][1] >> interaction[i].Jij[2][2];
                break;
             case 9:
-               int_iss >> interaction[id].Jij[0][0] >> interaction[id].Jij[0][1] >> interaction[id].Jij[0][2];
-               int_iss >> interaction[id].Jij[1][0] >> interaction[id].Jij[1][1] >> interaction[id].Jij[1][2];
-               int_iss >> interaction[id].Jij[2][0] >> interaction[id].Jij[2][1] >> interaction[id].Jij[2][2];
+            
+               // int_iss >> J >> DMx >> DMy >> DMz;
+               // interaction[i].Jij[0][0] = J; interaction[i].Jij[0][1] = Dz; interaction[i].Jij[0][2] = -Dy;
+               // interaction[i].Jij[1][0] = -Dz; interaction[i].Jij[1][1] = J; interaction[i].Jij[1][2] = Dx;
+               // interaction[i].Jij[2][0] = Dy; interaction[i].Jij[2][1] = -Dx; interaction[i].Jij[2][2] = J;
+               int_iss >> interaction[i].Jij[0][0] >> interaction[i].Jij[0][1] >> interaction[i].Jij[0][2];
+               int_iss >> interaction[i].Jij[1][0] >> interaction[i].Jij[1][1] >> interaction[i].Jij[1][2];
+               int_iss >> interaction[i].Jij[2][0] >> interaction[i].Jij[2][1] >> interaction[i].Jij[2][2];
  
                break;
             default:

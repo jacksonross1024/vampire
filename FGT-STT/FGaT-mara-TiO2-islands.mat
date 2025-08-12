@@ -1,0 +1,159 @@
+
+#---------------------------------------------------
+# Number of Materials
+#---------------------------------------------------
+material:num-materials=4
+#---------------------------------------------------
+# Material 1
+#---------------------------------------------------
+material[1]:material-name=Fe1
+material[1]:damping-constant=0.1
+material[1]:atomic-spin-moment=1.95!muB  #1.4!muB
+material[1]:material-element=Fe
+material[1]:uniaxial-anisotropy-direction=0,0,1
+material[1]:uniaxial-anisotropy-constant=2.67e-23 # -> 0.1666483 meV vs  0.61 !meV 
+material[1]:initial-spin-direction=  0,0,1
+material[1]:unit-cell-category = 1
+
+material[1]:exchange-matrix[1] = 1 
+material[1]:exchange-matrix[2] = 1 
+
+
+material[2]:material-name=Fe2
+material[2]:damping-constant=0.1
+material[2]:atomic-spin-moment=1.56!muB #1.4!muB
+material[2]:material-element=Fe
+material[2]:uniaxial-anisotropy-direction=0,0,1
+material[2]:uniaxial-anisotropy-constant=2.67e-23
+material[2]:initial-spin-direction= 0,0,1
+material[2]:unit-cell-category = 2
+
+material[2]:exchange-matrix[1] = 1 
+material[2]:exchange-matrix[2] = 1 
+
+#material[1]:temperature-rescaling-exponent = 1.72
+#material[1]:temperature-rescaling-curie-temperature = 165
+#material[2]:temperature-rescaling-exponent = 1.72
+#material[2]:temperature-rescaling-curie-temperature = 165
+
+
+material[1]:host-alloy = random
+material[2]:host-alloy = random
+
+material[1]:alloy-fraction[3] = 0.0
+material[2]:alloy-fraction[4] = 0.0
+
+#material[1]:host-alloy-smoothness = 10
+#material[2]:host-alloy-smoothness = 10
+
+material[1]:host-alloy-scale = 0
+material[2]:host-alloy-scale = 0
+
+material[1]:alloy-variance[3] = 1.0
+material[2]:alloy-variance[4] = 1.0
+
+material[1]:save-host-alloy-distribution
+material[2]:save-host-alloy-distribution
+
+material[1]:alloy-radius = 75
+material[2]:alloy-radius = 75
+
+material[3]:material-name = "Fe1-hole"
+material[3]:non-magnetic = keep
+material[3]:minimum-height = 0.0
+material[3]:maximum-height = 0.0
+material[3]:atomic-spin-moment = 0.000001 !muB
+material[3]:initial-spin-direction = random
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Material 1: Fe3
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+material[4]:material-name = "Fe2-hole"
+material[4]:non-magnetic = keep
+material[4]:minimum-height = 0.0
+material[4]:maximum-height = 0.0
+material[4]:atomic-spin-moment = 0.000001 !muB
+material[4]:initial-spin-direction = random
+
+## FGT
+material[1]:electron-heat-capacity        = 1.561e3
+material[1]:phonon-heat-capacity          = 2.0e6
+material[1]:electron-phonon-coupling      = 6.5e17
+material[1]:electron-thermal-conductivity = 0.25
+material[1]:phonon-thermal-conductivity    = 0.5
+material[1]:einstein-temp                 = 142.5
+#material[1]:minimum-height = 0.0
+#material[1]:maximum-height = 0.1666667
+
+## FGT
+material[2]:electron-heat-capacity        = 1.561e3
+material[2]:phonon-heat-capacity          = 2.0e6
+material[2]:electron-phonon-coupling      = 6.5e17
+material[2]:electron-thermal-conductivity = 0.25
+material[2]:phonon-thermal-conductivity    = 0.5
+material[2]:einstein-temp                 = 142.5
+#material[2]:minimum-height = 0.0
+#material[2]:maximum-height = 0.1666667
+
+
+#TiO2
+material[5]:material-name=TiO2
+material[5]:material-element=TiO
+material[5]:non-magnetic = keep 
+material[5]:minimum-height = 0.1666667
+material[5]:maximum-height = 0.2
+
+material[5]:electron-heat-capacity        = 3.5e6 #same as ITO
+material[5]:phonon-heat-capacity          = 3.5e6
+material[5]:electron-phonon-coupling      = 0.0
+material[5]:electron-thermal-conductivity = 0.0
+material[5]:phonon-thermal-conductivity    = 5.0
+material[5]:einstein-temp                 = 750.0
+
+#D_0 (m^2/s) = 1/(R_0 e^2 N(E_f)) = 1/(4 uOhm.cm (1.602e-19 C/e-)^2 5.781 e-/eV/uc)
+# 1/ (1.75e-9 e18 eVs/C^2 m e-38 C^2/e-^2 e-/eV/A^3)
+#1/ (1.75e1 s/m^2) = 0.05714
+
+#m_inf =  1.667 = 2.0572916666666643 - 3.723958333333332 (e-/eV/uc) 3.99*3.99*23.0A^3/uc 1.602e-19 C/e- 10meV
+# 1.667 e-/eV/uc 1e-2 eV 1.602e-19 C/e- uc/3.66e2A^3 = 0.7293 e7 C/m^3
+
+#beta  = 0.288
+#beta' = 0.65
+
+#lambda_sdl = sqrt(2*D_0*t_sf)*sqrt(1-beta.beta') 
+# =sqrt(2*0.05714 m^2/s  0.2e-12s)*0.90155
+# = sqrt(2.2856e-14 m^2)*0.90155
+# = 1.512e3
+#or v = 2e5 m/s * 0.2e-12 -> 4e2 m 1e10A/1m
+
+#lambda_J = sqrt(2hbarD_0/J)=sqrt(2D_0 t_J)
+# hbar/J =  t_J
+# hbar t_j Js.s-1 = J 
+# 1.054572e-34 0.25e12 s^-1 = 2.636e-23 J
+
+material[1]:spin-diffusion-length = 360.62 # sdl = phonon relaxation time = 5 ps^-1
+material[1]:spin-polarisation-conductivity = 0.23 #
+material[1]:spin-polarisation-diffusion = 0.56 # 
+material[1]:spin-accumulation = 0.7293e7 #
+material[1]:diffusion-constant = 0.05714 # m^2/s
+material[1]:sd-exchange-constant = 2.636e-23 # magnon relaxation time = 0.25 ps^-1
+
+material[2]:spin-diffusion-length = 360.62 # sdl = phonon relaxation time = 5 ps^-1
+material[2]:spin-polarisation-conductivity = 0.23 #
+material[2]:spin-polarisation-diffusion = 0.56 # 
+material[2]:spin-accumulation = 0.7293e7 #
+material[2]:diffusion-constant = 0.05714 # m^2/s
+material[2]:sd-exchange-constant = 2.636e-23
+
+material[3]:spin-diffusion-length = 3.662 # sdl = phonon relaxation time = 5 ps^-1
+material[3]:spin-polarisation-conductivity = 0.023 #
+material[3]:spin-polarisation-diffusion = 0.056 # 
+material[3]:spin-accumulation = 1.0e-6 #
+material[3]:diffusion-constant = 0.0005714 # m^2/s
+material[3]:sd-exchange-constant = 2.636e-25 # magnon relaxation time = 0.25 ps^-1
+
+material[4]:spin-diffusion-length = 3.662 # sdl = phonon relaxation time = 5 ps^-1
+material[4]:spin-polarisation-conductivity = 0.023 #
+material[4]:spin-polarisation-diffusion = 0.056 # 
+material[4]:spin-accumulation = 1.0e-6 #
+material[4]:diffusion-constant = 0.0005714 # m^2/s
+material[4]:sd-exchange-constant = 2.636e-25

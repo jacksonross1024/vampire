@@ -41,6 +41,8 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 	int min_bounds[3];
 	int max_bounds[3];
 
+	double min_fracitonal_bounds[3];
+	double max_fractional_bounds[3];
 	#ifdef MPICF
 	if(vmpi::mpi_mode==0){
 		min_bounds[0] = int(vmpi::min_dimensions[0]/unit_cell.dimensions[0]);
@@ -49,6 +51,15 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		max_bounds[0] = vmath::iceil(vmpi::max_dimensions[0]/unit_cell.dimensions[0]);
 		max_bounds[1] = vmath::iceil(vmpi::max_dimensions[1]/unit_cell.dimensions[1]);
 		max_bounds[2] = vmath::iceil(vmpi::max_dimensions[2]/unit_cell.dimensions[2]);
+
+		min_fracitonal_bounds[0] = (vmpi::min_dimensions[0]/unit_cell.dimensions[0]);
+		min_fracitonal_bounds[1] = (vmpi::min_dimensions[1]/unit_cell.dimensions[1]);
+		min_fracitonal_bounds[2] = (vmpi::min_dimensions[2]/unit_cell.dimensions[2]);
+		max_fractional_bounds[0] = (vmpi::max_dimensions[0]/unit_cell.dimensions[0]);
+		max_fractional_bounds[1] = (vmpi::max_dimensions[1]/unit_cell.dimensions[1]);
+		max_fractional_bounds[2] = (vmpi::max_dimensions[2]/unit_cell.dimensions[2]);
+
+		//std::cout << min_bounds[0] << ", " << max_bounds[0] << ", " << 
 	}
 	else{
 		min_bounds[0]=0;
@@ -65,17 +76,24 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		max_bounds[0]=cs::total_num_unit_cells[0];
 		max_bounds[1]=cs::total_num_unit_cells[1];
 		max_bounds[2]=cs::total_num_unit_cells[2];
+		min_fracitonal_bounds[0] = 0;
+		min_fracitonal_bounds[1] = 0;
+		min_fracitonal_bounds[2] = 0;
+		max_fractional_bounds[0] = cs::total_num_unit_cells[0];
+		max_fractional_bounds[1] = cs::total_num_unit_cells[1];
+		max_fractional_bounds[2] = cs::total_num_unit_cells[2];
 	#endif
 
 	cs::local_num_unit_cells[0]=max_bounds[0]-min_bounds[0];
 	cs::local_num_unit_cells[1]=max_bounds[1]-min_bounds[1];
 	cs::local_num_unit_cells[2]=max_bounds[2]-min_bounds[2];
 
-	int num_atoms=cs::local_num_unit_cells[0]*cs::local_num_unit_cells[1]*cs::local_num_unit_cells[2]*unit_cell.atom.size();
 	
+	int uc_num_atoms= cs::local_num_unit_cells[0]*cs::local_num_unit_cells[1]*cs::local_num_unit_cells[2]*unit_cell.atom.size();
+	int num_atoms_local = int(1.1*(max_fractional_bounds[2]-min_fracitonal_bounds[2])*(max_fractional_bounds[1]-min_fracitonal_bounds[1])*(max_fractional_bounds[0]-min_fracitonal_bounds[0])*unit_cell.atom.size());
 	// set catom_array size
-	catom_array.reserve(num_atoms);
-
+	catom_array.reserve(num_atoms_local);
+	std::cout << "using partial uc for catom reservation: " << num_atoms_local*sizeof(cs::catom_t)/1e6 << " MB vs " << uc_num_atoms*sizeof(cs::catom_t)/1e6 << " MB vs actual: " << std::flush;
 	// Initialise atoms number
 	int atom=0;
 
@@ -154,8 +172,8 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		}
 
 	// Check to see if actual and expected number of atoms agree, if not trim the excess
-	if(atom!=num_atoms){
-		std::vector<cs::catom_t> tmp_catom_array(num_atoms);
+	if(atom!=num_atoms_local){
+		std::vector<cs::catom_t> tmp_catom_array(num_atoms_local);
 		tmp_catom_array=catom_array;
 		catom_array.resize(atom);
 		for(int a=0;a<atom;a++){
@@ -163,7 +181,7 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		}
 		tmp_catom_array.resize(0);
 	}
-
+	std::cout << atom*sizeof(cs::catom_t)/1e6 << " MB " << std::endl;
 	// Check to see if any atoms have been generated
 	if(atom==0){
 		terminaltextcolor(RED);

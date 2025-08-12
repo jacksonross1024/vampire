@@ -80,6 +80,7 @@ void field_cool(){
 	// check calling of routine if error checking is activated
 	if(err::check==true){std::cout << "program::field_cool has been called" << std::endl;}
 
+
 	// Perform several runs if desired
 	for(int run=0;run<sim::runs; run++){
 
@@ -87,6 +88,10 @@ void field_cool(){
 		sim::temperature=sim::Teq;
 
 		// Equilibrate system
+      sim::actual_H_field = sim::equilibrium_H_field;
+		sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+		sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+		sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 		while(sim::time<sim::equilibration_time){
 
 			sim::integrate(sim::partial_time);
@@ -100,6 +105,11 @@ void field_cool(){
 
 		uint64_t start_time = sim::time;
 
+
+      sim::actual_H_field = sim::applied_H_field;
+      sim::actual_H_vector[0] = sim::applied_H_vector[0];
+      sim::actual_H_vector[1] = sim::applied_H_vector[1];
+      sim::actual_H_vector[2] = sim::applied_H_vector[2];
 		// Perform Field Cooling
 		while(sim::time<sim::total_time+start_time){
 

@@ -47,22 +47,22 @@ class zvec_t{
 
 class zten_t{
 	public:
-	float Jij[3][3];
+	double Jij[9];
 
 	// constructor
 	zten_t()
 	{
-		Jij[0][0] = 0.0;
-		Jij[0][1] = 0.0;
-		Jij[0][2] = 0.0;
+		Jij[0] = 0.0;
+		Jij[1] = 0.0;
+		Jij[2] = 0.0;
 
-		Jij[1][0] = 0.0;
-		Jij[1][1] = 0.0;
-		Jij[1][2] = 0.0;
+		Jij[3] = 0.0;
+		Jij[4] = 0.0;
+		Jij[5] = 0.0;
 
-		Jij[2][0] = 0.0;
-		Jij[2][1] = 0.0;
-		Jij[2][2] = 0.0;
+		Jij[6] = 0.0;
+		Jij[7] = 0.0;
+		Jij[8] = 0.0;
 	};
 };
 

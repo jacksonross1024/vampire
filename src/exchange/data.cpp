@@ -37,7 +37,7 @@ namespace exchange{
 
       bool enable_dmi = false; // flag to enable dmi calculation
       bool enable_kitaev = false; // flag to enable Kitaev calculation
-
+      bool meV_interactions = false;
       double dmi_cutoff_range = 2.6; // cutoff range for DMI calculation (Ångstroms)
       double kitaev_cutoff_range = 2.6; // cutoff range for Kitaev calculation (Ångstroms)
       double exchange_factor = 1.0; // scaling factor for exchange constants (usually to correct for ab-initio)

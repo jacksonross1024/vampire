@@ -137,17 +137,17 @@ namespace internal{
                   const int natom = neighbour_list_array[nn]; // get neighbouring atom number
                   const int iid = neighbour_interaction_type_array[nn]; // interaction id
 
-   					const double Jij[3][3]={ {t_exchange_list[iid].Jij[0][0],
-   													  t_exchange_list[iid].Jij[0][1],
-   												     t_exchange_list[iid].Jij[0][2]},
+   					const double Jij[3][3]={ {t_exchange_list[iid].Jij[0],
+   													  t_exchange_list[iid].Jij[1],
+   												     t_exchange_list[iid].Jij[2]},
 
-   													 {t_exchange_list[iid].Jij[1][0],
-   													  t_exchange_list[iid].Jij[1][1],
-   													  t_exchange_list[iid].Jij[1][2]},
+   													 {t_exchange_list[iid].Jij[3],
+   													  t_exchange_list[iid].Jij[4],
+   													  t_exchange_list[iid].Jij[5]},
 
-   													 {t_exchange_list[iid].Jij[2][0],
-   													  t_exchange_list[iid].Jij[2][1],
-   													  t_exchange_list[iid].Jij[2][2]} };
+   													 {t_exchange_list[iid].Jij[6],
+   													  t_exchange_list[iid].Jij[7],
+   													  t_exchange_list[iid].Jij[8]} };
 
    					const double S[3]={spin_array_x[natom], spin_array_y[natom], spin_array_z[natom]};
 

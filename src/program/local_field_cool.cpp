@@ -39,6 +39,11 @@ void local_field_cool(){
 		// Set equilibration temperature and field
 		sim::temperature=sim::Teq;
 
+      // Equilibrate system
+      sim::actual_H_field = sim::equilibrium_H_field;
+		sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+		sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+		sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 		// Equilibrate system
 		while(sim::time<sim::equilibration_time){
 
@@ -53,6 +58,10 @@ void local_field_cool(){
 
 		uint64_t start_time = sim::time;
 
+      sim::actual_H_field = sim::applied_H_field;
+      sim::actual_H_vector[0] = sim::applied_H_vector[0];
+      sim::actual_H_vector[1] = sim::applied_H_vector[1];
+      sim::actual_H_vector[2] = sim::applied_H_vector[2];
 		// Perform Field Cooling
 		while(sim::time<sim::total_time+start_time){
 

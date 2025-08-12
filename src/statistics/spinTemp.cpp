@@ -36,7 +36,7 @@ namespace stats{
 //--------------------------------------------
 
 
-void spin_temperature_statistic_t::set_mask(const int in_mask_size, const std::vector<int>& in_mask,const std::vector<double>& mm) {
+void spin_temperature_statistic_t::set_mask(const int in_mask_size, const std::vector<int> in_mask, const std::vector<double>& mm) {
 
     if (err::check) std::cout << "Initializing spin temperature...";
 
@@ -49,7 +49,8 @@ void spin_temperature_statistic_t::set_mask(const int in_mask_size, const std::v
 
      // Check that mask values never exceed mask_size
    for(unsigned int atom=0; atom < num_atoms; ++atom){
-      if(mask[atom] > mask_size-1) {
+    // if(vmpi::my_rank) std::cout << mask[atom] << std::endl;
+      if(mask[atom] > mask_size) {
          terminaltextcolor(RED);
          std::cerr << "Programmer Error - mask id " << mask[atom] << " is greater than number of elements for mask "<< mask_size << std::endl;
          terminaltextcolor(WHITE);
@@ -60,20 +61,21 @@ void spin_temperature_statistic_t::set_mask(const int in_mask_size, const std::v
 
 
     //resize mask arrays
-    total_spin_temperature.resize(mask_size, 0.0);
-    spin_temperature_bottom.resize(mask_size, 0.0);
-    spin_temperature_top.resize(mask_size, 0.0);
-    mean_spin_temperature.resize(mask_size, 0.0);
-    mean_spin_counter.resize(mask_size, 0.0);
+    total_spin_temperature.resize(in_mask_size, 0.0);
+    spin_temperature_bottom.resize(in_mask_size, 0.0);
+    spin_temperature_top.resize(in_mask_size, 0.0);
+    mean_spin_temperature.resize(in_mask_size, 0.0);
+    mean_spin_counter.resize(in_mask_size, 0.0);
 
        // determine mask id's with no atoms
-   std::vector<int> num_atoms_in_mask(mask_size,0);
+   std::vector<int> num_atoms_in_mask(in_mask_size,0);
    for(unsigned int atom=0; atom<num_atoms; ++atom){
       int mask_id = mask[atom];
       // add atoms to mask
       num_atoms_in_mask[mask_id]++;
    }
 
+    
    // Reduce on all CPUs
    #ifdef MPICF
       MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_mask[0], mask_size, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
@@ -82,6 +84,7 @@ void spin_temperature_statistic_t::set_mask(const int in_mask_size, const std::v
    // Check for no atoms in mask on any CPU
    for(int mask_id=0; mask_id<mask_size; ++mask_id){
       // if no atoms exist then add to zero list
+      //std//::cout << num_atoms_in_mask[mask_id] << std::endl;
       if(num_atoms_in_mask[mask_id]==0){
          zero_list.push_back(mask_id);
       }
@@ -92,7 +95,7 @@ void spin_temperature_statistic_t::set_mask(const int in_mask_size, const std::v
     }
     initialized = true;
    
-   
+    
     if(!initialized) {
         terminaltextcolor(RED);
         std::cerr << "Programmer Error - Uninitilized spin-temp masks" << std::endl;
@@ -102,6 +105,7 @@ void spin_temperature_statistic_t::set_mask(const int in_mask_size, const std::v
     }
 
     if (err::check) std::cout << "initialized." << std::endl;
+    // std::cout << "initialized. " << vmpi::my_rank << std::endl;
    return;
 
 }
@@ -124,17 +128,18 @@ void spin_temperature_statistic_t::calculate(const std::vector<double>& sx, cons
     const std::vector<double>& Hx_ext, const std::vector<double>& Hy_ext, const std::vector<double>& Hz_ext) {
  
     //zero spin_temperature array
-  
+    
      if(sim::integrator == sim::monte_carlo || sim::integrator == sim::cmc || sim::integrator == sim::hybrid_cmc || sim::integrator == sim::suzuki_trotter_spin){
-      const int64_t num_atoms = sx.size();
+        const size_t num_atoms = sx.size();
       sim::calculate_spin_fields(0, num_atoms);
       sim::calculate_external_fields(0, num_atoms);
    } 
-  
+//    std::cout << "calculating. " <<  vmpi::my_rank << " size " << num_atoms << std::endl;
    //create local variables
-        int mask_num = 0;
-        for(int atom = 0; atom < num_atoms; ++atom) {
-            mask_num = mask[atom];
+        
+        for(size_t atom = 0; atom < num_atoms; ++atom) {
+          // if(atom >= mask.size()) std::cout << atom << ", " << mask.size() << ", " << mask[atom] << ", " << vmpi::my_rank << std::endl;
+            int mask_num = mask.at(atom);
             
                 //get spin vector and moment per atom
             const double mu = sm[atom];
@@ -160,6 +165,7 @@ void spin_temperature_statistic_t::calculate(const std::vector<double>& sx, cons
             
         } 
        //reduction
+    //    std::cout << "reduction. " << vmpi::my_rank << std::endl;
         #ifdef MPICF
          //   MPI_Allreduce(MPI_IN_PLACE, &total_spin_temperature[0], mask_size,  MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(MPI_IN_PLACE, &spin_temperature_top[0], mask_size,  MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);

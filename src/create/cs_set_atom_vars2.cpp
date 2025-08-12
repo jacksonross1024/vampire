@@ -91,7 +91,7 @@ void set_atom_vars(std::vector<cs::catom_t> & catom_array,
    MTRand random_spin_rng;
    random_spin_rng.seed(vmpi::parallel_rng_seed(create::internal::spin_init_seed));
 
-	for(int atom=0;atom<atoms::num_atoms;atom++) {
+	for(uint64_t atom=0;atom<atoms::num_atoms;atom++) {
 
 		atoms::x_coord_array[atom] = catom_array[atom].x;
 		atoms::y_coord_array[atom] = catom_array[atom].y;

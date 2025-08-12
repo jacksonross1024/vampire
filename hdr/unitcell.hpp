@@ -67,6 +67,8 @@ namespace unitcell{
 	public:
       uint64_t i; /// atom unit cell id
       uint64_t j; /// neighbour atom unit cell id
+      uint64_t i; /// atom unit cell id
+      uint64_t j; /// neighbour atom unit cell id
       unsigned int mat_i; /// atom material category
       unsigned int mat_j; /// neighbour material category
       unsigned int shell; // shell number of interaction
@@ -103,8 +105,8 @@ namespace unitcell{
 
       exchange::exchange_t exchange_type; // exchange type to use in simulation
       bool use_material_exchange_constants; // flag to enable material exchange parameters
-      int num_unit_cell_atoms; // number of atoms in unit cell
-      uint64_t num_interactions;
+      uint64_t num_unit_cell_atoms; // number of atoms in unit cell
+            uint64_t num_interactions;
       // list of interactions in each unit cell
       std::vector <unitcell::interaction_t> interaction;
       std::list <unitcell::interaction_t> interaction_stack;

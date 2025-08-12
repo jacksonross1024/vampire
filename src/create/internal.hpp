@@ -63,7 +63,7 @@ namespace create{
          // constructor
          slave_material_t ():
          	fraction(0.0),
-            variance(0.1),
+            variance(0.0),
             slave_alloy_distribution(native)
             {};
       };
@@ -90,6 +90,7 @@ namespace create{
          double min; // minimum material height
          double max; // maximum material height
 
+         double alloy_radius;
          bool geometry = false; // define geometry for material
    		std::vector<points_t> geometry_points; // array of geometry coordinates
 
@@ -98,6 +99,7 @@ namespace create{
          	alloy_master(false),
             host_alloy_smoothness(2.0),
             host_alloy_scale (50.0),
+            alloy_radius(50.0),
             save_host_alloy_profile(false),
             save_file_name(""),
             host_alloy_distribution(internal::homogeneous),
@@ -144,6 +146,11 @@ namespace create{
       extern bool select_material_by_geometry;	// Toggle override of input material type by geometry
       extern bool select_material_by_z_height;
 
+      
+      extern bool local_alloy;
+      extern double local_alloy_x;
+      extern double local_alloy_y;
+      extern double local_alloy_radius;
       //-----------------------------------------------------------------------------
       // Internal functions for create module
       //-----------------------------------------------------------------------------

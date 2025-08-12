@@ -276,9 +276,10 @@ namespace vdc{
             vdc::cell_magnetization[cell][m][2] = mz*im;
 
             // set magnetization of final cell to actual magnetization in mu_B
-            if(m == (tmid-1)) vdc::cell_magnetization[cell][m][3] = mm; // mu_B
+            // if(m == (tmid-1)) vdc::cell_magnetization[cell][m][3] = mm; // mu_B
             // Otherwise normalise for material magnetization
-            else mm < 1.0e-9 ? 0.0 : vdc::cell_magnetization[cell][m][3] = norm/mm; // m/m_s
+            // else
+             mm < 1.0e-9 ? 0.0 : vdc::cell_magnetization[cell][m][3] = norm/mm; // m/m_s
 
          }
       }

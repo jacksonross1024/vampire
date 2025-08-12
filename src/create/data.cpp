@@ -55,6 +55,12 @@ namespace create{
          bool select_material_by_geometry = false;	// Toggle override of input material type by geometry
          bool select_material_by_z_height = false;	// Toggle overwriting of material id by z-height
 
+         double alloy_radius = 50.0; //5nm
+         bool local_alloy = false;
+         double local_alloy_x = 0.5;
+         double local_alloy_y = 0.5;
+         double local_alloy_radius = 50.0; //5 nm
+
       } // end of internal namespace
 
 } // end of create namespace

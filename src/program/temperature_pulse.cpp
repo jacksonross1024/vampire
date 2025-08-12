@@ -309,6 +309,10 @@ void temperature_pulse(){
 	// sim::H_actual = sim::Heq;
 	// std::cout << sim::H_actual << std::endl;
    // Equilibrate system
+    sim::actual_H_field = sim::equilibrium_H_field;
+	sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+	sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+	sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 	while(sim::time<sim::equilibration_time){
 
 		sim::integrate(sim::partial_time);
@@ -323,6 +327,10 @@ void temperature_pulse(){
 	// sim::H_actual = sim::H_applied;
 	// std::cout << sim::H_actual << std::endl;
 	//loop sim::runs times
+	sim::actual_H_field = sim::applied_H_field;
+	sim::actual_H_vector[0] = sim::applied_H_vector[0];
+	sim::actual_H_vector[1] = sim::applied_H_vector[1];
+	sim::actual_H_vector[2] = sim::applied_H_vector[2];
 	for(int r=0; r<sim::runs;r++){
 
 	// record starting time after equiibration/last pulse

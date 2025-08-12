@@ -74,6 +74,7 @@ namespace sim{
    double domain_wall_centre = 0;
    double domain_wall_width = 10.0;
    int domain_wall_angle = -1;
+   bool domain_wall_random_start = false;
    double unit_cell_x;
    double unit_cell_y;
    double unit_cell_z;

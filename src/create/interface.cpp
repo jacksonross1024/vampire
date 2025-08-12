@@ -536,6 +536,37 @@ namespace create{
          create::internal::spin_init_seed = sirs;
          return true;
       }
+      test="local-alloy";
+      if(word==test){
+         create::internal::local_alloy = true;
+         return true;
+      }
+      test="local-alloy-x-position";
+      if(word==test){
+         create::internal::local_alloy = true;
+         double nh=atof(value.c_str());
+         vin::check_for_valid_value(nh, word, line, prefix, unit, "none", 0.0,1.0 ,"input","0.0 - 1.0");
+         create::internal::local_alloy_x = nh;
+         return true;
+      }
+      test="local-alloy-y-position";
+      if(word==test){
+         create::internal::local_alloy = true;
+         double nh=atof(value.c_str());
+         vin::check_for_valid_value(nh, word, line, prefix, unit, "none", 0.0,1.0 ,"input","0.0 - 1.0");
+         create::internal::local_alloy_y = nh;
+         return true;
+      }
+      test="local-alloy-radius";
+      if(word==test){
+         create::internal::local_alloy = true;
+         double nh=atof(value.c_str());
+         vin::check_for_valid_value(nh, word, line, prefix, unit, "A", 0.0,500.0 ,"input","0.0 - 500.0 A");
+         create::internal::local_alloy_radius = nh;
+         return true;
+      }
+
+
       /*std::string test="slonczewski-spin-polarization-unit-vector";
       if(word==test){
          std::vector<double> u(3);
@@ -664,7 +695,7 @@ namespace create{
       test="host-alloy-scale"; // determines host material
       if(word==test){
          double s=atof(value.c_str());
-         vin::check_for_valid_value(s, word, line, prefix, unit, "length", 1, 10000.0,"material"," 0.1 - 1000 nm");
+         vin::check_for_valid_value(s, word, line, prefix, unit, "length", 0, 10000.0,"material"," 0.1 - 1000 A");
          create::internal::mp[super_index].host_alloy_scale = s;
          return true;
       }
@@ -733,6 +764,14 @@ namespace create{
          bool sanitised_bool = vin::check_for_valid_bool(value, word, line, prefix,"material");
          // set flag
          create::internal::mp[super_index].sub_fill = sanitised_bool;
+         return true;
+      }
+      test="alloy-radius"; // determines range of alloy fraction in host
+      if(word==test){
+         // check for type of host alloy
+         double v=atof(value.c_str());
+         vin::check_for_valid_value(v, word, line, prefix, unit, "angstrom", 1.0, 500.0,"angstrom"," 0.0 - 500.0");
+         create::internal::mp[super_index].alloy_radius = v;
          return true;
       }
       /*
@@ -847,7 +886,6 @@ namespace create{
       // keyword not found
       //--------------------------------------------------------------------
       return false;
-
    }
-
 } // end of namespace create
+

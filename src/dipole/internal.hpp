@@ -60,10 +60,11 @@ namespace dipole{
 
       extern solver_t solver;
 
+      extern bool stray_field;
       extern int update_time; /// last update time
 
       extern const double prefactor; // 1e-7/1e30
-
+      
       extern std::vector <std::vector < double > > rij_tensor_xx;
       extern std::vector <std::vector < double > > rij_tensor_xy;
       extern std::vector <std::vector < double > > rij_tensor_xz;

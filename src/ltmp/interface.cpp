@@ -64,14 +64,14 @@ namespace ltmp{
          return true;
       }
       //--------------------------------------------------------------------
-      test="thermal-conductivity";
-      if(word==test){
-         double tdc=atof(value.c_str());
-         // Test for valid range
-         vin::check_for_valid_value(tdc, word, line, prefix, unit, "none", 0.0, 100,"input","0.0 - 100.0 J/m/s/K");
-         ltmp::internal::thermal_conductivity = tdc;
-         return true;
-      }
+      // test="thermal-conductivity";
+      // if(word==test){
+      //    double tdc=atof(value.c_str());
+      //    // Test for valid range
+      //    vin::check_for_valid_value(tdc, word, line, prefix, unit, "none", 0.0, 100,"input","0.0 - 100.0 J/m/s/K");
+      //    ltmp::internal::thermal_conductivity = tdc;
+      //    return true;
+      // }
       //--------------------------------------------------------------------
       test="output-microcell-data";
       if(word==test){
@@ -176,6 +176,71 @@ namespace ltmp{
       // keyword not found
       //--------------------------------------------------------------------
       return false;
+   }
+
+   //----------------------------------------------------------------------------------
+   // material parameter match function
+   //----------------------------------------------------------------------------------
+   bool match_material_parameter(std::string const word, std::string const value, std::string const unit, int const line, int const super_index){
+
+      // add prefix string
+      std::string prefix="material:";
+
+      // Check for material id > current array size and if so dynamically expand mp array
+      if((unsigned int) super_index + 1 > ltmp::internal::mp.size() && super_index + 1 < 101) ltmp::internal::mp.resize(super_index + 1);
+
+      std::string test="electron-heat-capacity"; 
+      if(word==test){
+         double num=atof(value.c_str());
+         vin::check_for_valid_value(num, word, line, prefix, unit, "J/K^2/m^3", 1.0e-3, 1.0e10,"material"," 0.001 - 1e10");
+         ltmp::internal::mp[super_index].electron_heat_capacity = num;
+         return true;
+      }
+
+      test="phonon-heat-capacity"; 
+      if(word==test){
+         double num=atof(value.c_str());
+         vin::check_for_valid_value(num, word, line, prefix, unit, "J/K/m^3", 1.0e-3, 1.0e10,"material"," 0.001 - 1e10");
+         ltmp::internal::mp[super_index].phonon_heat_capacity = num;
+         return true;
+      }
+
+      test="electron-phonon-coupling"; 
+      if(word==test){
+         double num=atof(value.c_str());
+         vin::check_for_valid_value(num, word, line, prefix, unit, "J/K/s/m^3", 0.0, 1.0e20,"material"," 0.0 - 1000");
+         ltmp::internal::mp[super_index].electron_phonon_coupling_constant = num;
+         return true;
+      }
+
+      test="electron-thermal-conductivity"; 
+      if(word==test){
+         double num=atof(value.c_str());
+         vin::check_for_valid_value(num, word, line, prefix, unit, "J/K/s/m^3", 0.0, 1.0e3,"material"," 0.0 - 1000");
+         ltmp::internal::mp[super_index].electron_thermal_conductivity = num;
+         return true;
+      }
+
+      test="phonon-thermal-conductivity"; 
+      if(word==test){
+         double num=atof(value.c_str());
+         vin::check_for_valid_value(num, word, line, prefix, unit, "J/K/s/m^3", 1.0e-3, 1.0e3,"material"," 0.001 - 1000");
+         ltmp::internal::mp[super_index].phonon_thermal_conductivity = num;
+         return true;
+      }
+
+      test="einstein-temp"; 
+      if(word==test){
+         double num=atof(value.c_str());
+         vin::check_for_valid_value(num, word, line, prefix, unit, "K", 0, 1e4,"material"," 0 - 10,000");
+         ltmp::internal::mp[super_index].einstein_temp = num*1.25;
+         return true;
+      }
+      //--------------------------------------------------------------------
+      // keyword not found
+      //--------------------------------------------------------------------
+      return false;
+
    }
 } // end of namespace ltmp
 

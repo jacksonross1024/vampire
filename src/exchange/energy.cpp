@@ -85,25 +85,25 @@ namespace exchange{
    	for(int nn = atoms::neighbour_list_start_index[atom]; nn <= atoms::neighbour_list_end_index[atom]; ++nn){
 
    		const int natom = atoms::neighbour_list_array[nn];
-   		const double Jij[3][3]={{atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[0][0],
-   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[0][1],
-   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[0][2]},
+   		const double Jij[9]={atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[0],
+   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[1],
+   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[2],
 
-   										{atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[1][0],
-   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[1][1],
-   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[1][2]},
+   										atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[3],
+   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[4],
+   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[5],
 
-   										{atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[2][0],
-   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[2][1],
-   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[2][2]}};
+   										atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[6],
+   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[7],
+   										 atoms::t_exchange_list[atoms::neighbour_interaction_type_array[nn]].Jij[8]};
 
    		const double S[3]={atoms::x_spin_array[natom],atoms::y_spin_array[natom],atoms::z_spin_array[natom]};
 
          // note: sum over j only (not sum over i for j) leads to a silent factor 1/2 in exchange energy value
          //       - must be normalised in statistics to account for double sum
-   		energy -= (Jij[0][0] * S[0] * sx + Jij[0][1] * S[1] * sx + Jij[0][2] * S[2] * sx +
-   					  Jij[1][0] * S[0] * sy + Jij[1][1] * S[1] * sy + Jij[1][2] * S[2] * sy +
-   					  Jij[2][0] * S[0] * sz + Jij[2][1] * S[1] * sz + Jij[2][2] * S[2] * sz)*1.602176634e-22/(2.98*9.274e-24);
+   		energy -= (Jij[0] * S[0] * sx + Jij[1] * S[1] * sx + Jij[2] * S[2] * sx +
+   					  Jij[3] * S[0] * sy + Jij[4] * S[1] * sy + Jij[5] * S[2] * sy +
+   					  Jij[6] * S[0] * sz + Jij[7] * S[1] * sz + Jij[8] * S[2] * sz);
 
    	}
 

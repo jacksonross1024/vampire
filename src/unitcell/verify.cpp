@@ -52,8 +52,8 @@ void unitcell::exchange_template_t::verify(std::string filename){
       if( (i % (my_num_interactions/10 + 1)) == 0 && interaction.size() > 10000) std::cout << "." << std::flush;
 
       // calculate reciprocal interaction
-      unsigned int ia = interaction[i].j;
-      unsigned int ja = interaction[i].i;
+      uint64_t ia = interaction[i].j;
+      uint64_t ja = interaction[i].i;
       int dx = -interaction[i].dx;
       int dy = -interaction[i].dy;
       int dz = -interaction[i].dz;

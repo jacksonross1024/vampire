@@ -23,7 +23,8 @@ dimensions:system-size-z = 26.15 !A
 #------------------------------------------
 material:unit-cell-file = CrI3.ucf
 material:file = CrI3.mat
-create:crystal-sublattice-materials=true
+#create:crystal-sublattice-materials=true
+
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
@@ -48,7 +49,7 @@ sim:applied-field-unit-vector= 0.82,0.0,0.574 #,.82,0,0.574
 sim:program =curie-temperature #time variable magnetic field; SOT; STT
 sim:integrator = monte-carlo
 
-sim:save-checkpoint = end 
+#sim:save-checkpoint = continuous 
 #------------------------------------------
 # data output
 #------------------------------------------

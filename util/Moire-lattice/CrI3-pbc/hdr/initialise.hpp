@@ -7,6 +7,7 @@
 #include <fstream>
 #include <cmath>
 
+#include <unistd.h>
 extern double angle;
 extern double twist_loction;
 

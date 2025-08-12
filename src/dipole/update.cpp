@@ -58,34 +58,37 @@ namespace dipole{
     	for(int lc=0;lc<dipole::internal::cells_num_local_cells;lc++){
 
          int i = cells::cell_id_array[lc];
-        	if(dipole::internal::cells_num_atoms_in_cell[i]>0){
+         int atom_num_cutoff = 20;
+         if(dipole::internal::stray_field) atom_num_cutoff = 0;
+        	if(dipole::internal::cells_num_atoms_in_cell[i] > atom_num_cutoff) {
 
             // Self demagnetisation factor multiplying m(i)
             const double eightPI_three_cell_volume = 8.0*M_PI/(3.0*dipole::internal::cells_volume_array[i]);
             double self_demag = eightPI_three_cell_volume;
 
             // Normalise cell magnetisation by the Bohr magneton
-            const double mx_i = cells::mag_array_x[i]*imuB;
-            const double my_i = cells::mag_array_y[i]*imuB;
-            const double mz_i = cells::mag_array_z[i]*imuB;
+            const double mx_i = cells::mag_array_x[i];//*imuB;
+            const double my_i = cells::mag_array_y[i];//*imuB;
+            const double mz_i = cells::mag_array_z[i];//*imuB;
 
+            // std::cout << mx_i << ", " << my_i << ", " << mz_i << std::endl;
             // Add self-demagnetisation as mu_0/4_PI * 8PI*m_cell/3V
-            dipole::cells_field_array_x[i] = self_demag * mx_i;//*0.0; //*0.0
-            dipole::cells_field_array_y[i] = self_demag * my_i;//*0.0; //*0.0
-            dipole::cells_field_array_z[i] = self_demag * mz_i;//*0.0; //*0.0
+            dipole::cells_field_array_x[i] = 0.0; //*0.0
+            dipole::cells_field_array_y[i] = 0.0; //*0.0
+            dipole::cells_field_array_z[i] = 0.0; //*0.0
             // Add self demag to Hdemag --> To get only dipole-dipole contribution comment this and initialise to zero
             dipole::cells_mu0Hd_field_array_x[i] = -0.5*self_demag * mx_i;
             dipole::cells_mu0Hd_field_array_y[i] = -0.5*self_demag * my_i;
             dipole::cells_mu0Hd_field_array_z[i] = -0.5*self_demag * mz_i;
-
+            // std::cout << self_demag << ", " << mz_i << std::endl;
             // Loop over all other cells to calculate contribution to local cell
             for(int j=0;j<dipole::internal::cells_num_cells;j++){
          	   if(dipole::internal::cells_num_atoms_in_cell[j]>0){
 
                   // Normalise the cell magnetisation by the Bohr magneton
-         		   const double mx = cells::mag_array_x[j]*imuB;
-         		   const double my = cells::mag_array_y[j]*imuB;
-         		   const double mz = cells::mag_array_z[j]*imuB;
+         		   const double mx = cells::mag_array_x[j];//*imuB;
+         		   const double my = cells::mag_array_y[j];//*imuB;
+         		   const double mz = cells::mag_array_z[j];//*imuB;
 					//	if (i == 0)std::cout<< i << '\t' << mx_i << '\t' << my_i << '\t' << mz_i << "\t" <<  j << '\t' << mx << '\t' << my << '\t' << mz <<std::endl;
 
              		dipole::cells_field_array_x[i]+=(mx*internal::rij_tensor_xx[lc][j] + my*internal::rij_tensor_xy[lc][j] + mz*internal::rij_tensor_xz[lc][j]);
@@ -117,11 +120,17 @@ namespace dipole{
          MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_field_array_x[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_field_array_y[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_field_array_z[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_x[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_y[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_z[0],     dipole::internal::cells_num_cells,    MPI_DOUBLE,    MPI_MAX, MPI_COMM_WORLD);
       #endif
        for (int i = 0 ; i < dipole::internal::cells_num_cells; i ++){
          if (dipole::cells_field_array_x[i] < -1000) dipole::cells_field_array_x[i] = 0.0;
          if (dipole::cells_field_array_y[i] < -1000) dipole::cells_field_array_y[i] = 0.0;
          if (dipole::cells_field_array_z[i] < -1000) dipole::cells_field_array_z[i] = 0.0;
+         if (dipole::cells_mu0Hd_field_array_x[i] < -1000) dipole::cells_mu0Hd_field_array_x[i] = 0.0;
+         if (dipole::cells_mu0Hd_field_array_y[i] < -1000) dipole::cells_mu0Hd_field_array_y[i] = 0.0;
+         if (dipole::cells_mu0Hd_field_array_z[i] < -1000) dipole::cells_mu0Hd_field_array_z[i] = 0.0;
        //  std::cout << i << '\t' << dipole::cells_field_array_x[i] << '\t' << dipole::cells_field_array_y[i] << '\t' << dipole::cells_field_array_z[i] <<std::endl;
 
        }

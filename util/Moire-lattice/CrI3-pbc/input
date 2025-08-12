@@ -12,6 +12,9 @@
 dimensions:system-size-x = 200.0 !nm
 dimensions:system-size-y = 200.0 !nm
 dimensions:system-size-z = 26.16 !A
+dimensions:system-size-x = 500.0 !nm
+dimensions:system-size-y = 440.0 !nm
+dimensions:system-size-z = 2.5 !nm
 
 create:periodic-boundaries-x
 create:periodic-boundaries-y
@@ -24,6 +27,7 @@ create:periodic-boundaries-y
 material:unit-cell-file = CrI3.ucf
 material:file = CrI3.mat
 create:crystal-sublattice-materials=true
+
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
@@ -44,10 +48,11 @@ sim:maximum-temperature=65.0
 #sim:cooling-time=500!ps
 #sim:cooling-function = linear 
 
-#cells:macro-cell-size-x = 2 !nm
-#cells:macro-cell-size-y = 2 !nm
-#cells:macro-cell-size-z = 3 !nm
-#cells:output-cells
+sim:applied-field-strength=0.51 !T
+
+#sim:applied-field-unit-vector=0,0,1
+#sim:cooling-time=100!ps
+#sim:cooling-function = gaussian 
 
 #------------------------------------------
 # Program and integrator details
@@ -70,6 +75,6 @@ output:temperature
 output:mean-magnetisation-length
 output:material-mean-magnetisation
 output:mean-susceptibility
-output:total-torque
+output:mean-total-torque
 output:total-energy 
 

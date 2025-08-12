@@ -8,6 +8,8 @@
 #include <cmath>
 // #include <array>
 
+#include <unistd.h>
+
    extern double twist_angle;
 
    extern int number_of_unit_cells_x;
@@ -23,7 +25,7 @@
    extern int num_atoms;
    extern int num_nm_atoms;
    extern double twist_loction;
-   extern int total_atoms;
+   extern uint64_t total_atoms;
    extern int total_nm_atoms;
    extern int num_above_atoms;
    extern int num_below_atoms;
@@ -43,19 +45,68 @@
          int Gy = 0;
          int Gz = 0;
          double S;
-         int id = 0;
+         uint64_t id = 0;
          int l_id;
          int h_id;
          int unit_x;
          int unit_y;
+         int unit_x_lr;
+         int unit_y_lr;
          int dx = 0;
          int dy = 0;
-         int inter1 = 0;
-         int inter2 = 0;
-         int inter3 = 0;
-         int intra1 = 0;
-         int intra2 = 0;
-         int intra3 = 0;
+         
+         int inter_twist1_count = 0;
+         int inter_twist2_count = 0;
+         int inter_twist3_count = 0;
+
+         double J_inter_twist1 = 0;
+         double J_inter_twist2 = 0;
+         double J_inter_twist3 = 0;
+         double Dx_inter_twist1 = 0;
+         double Dx_inter_twist2 = 0;
+         double Dx_inter_twist3 = 0;
+         double Dy_inter_twist1 = 0;
+         double Dy_inter_twist2 = 0;
+         double Dy_inter_twist3 = 0;
+         double Dz_inter_twist1 = 0;
+         double Dz_inter_twist2 = 0;
+         double Dz_inter_twist3 = 0;
+
+
+         int inter1_count = 0;
+         int inter2_count = 0;
+         int inter3_count = 0;
+
+         double J_inter1 = 0;
+         double J_inter2 = 0;
+         double J_inter3 = 0;
+         double Dx_inter1 = 0;
+         double Dx_inter2 = 0;
+         double Dx_inter3 = 0;
+         double Dy_inter1 = 0;
+         double Dy_inter2 = 0;
+         double Dy_inter3 = 0;
+         double Dz_inter1 = 0;
+         double Dz_inter2 = 0;
+         double Dz_inter3 = 0;
+
+
+         int intra1_count = 0;
+         int intra2_count = 0;
+         int intra3_count = 0;
+         
+         double J_intra1 = 0;
+         double J_intra2 = 0;
+         double J_intra3 = 0;
+         double Dx_intra1 = 0;
+         double Dx_intra2 = 0;
+         double Dx_intra3 = 0;
+         double Dy_intra1 = 0;
+         double Dy_intra2 = 0;
+         double Dy_intra3 = 0;
+         double Dz_intra1 = 0;
+         double Dz_intra2 = 0;
+         double Dz_intra3 = 0;
    };
 
    class interaction {
@@ -82,22 +133,24 @@
    extern std::vector < spin > all_m_atoms_offset;
    extern std::vector < spin > new_moire_lattice;
    extern std::vector < std::vector < std::vector <int> > > unit_cell_shifts;
-
+   extern std::vector < std::vector < std::vector <double> > > config_energy;
+   extern std::vector<std::vector<std::vector<double> > > global_config_energy;
+   
    bool inside_system(double sx, double sy, double x, double y, double offset);
    bool inside_system(double x, double y, double offset);
    void read_in_atoms(std::string filename, int n_atoms, std::vector <spin > &atom2);
    void read_in_exchange(std::string filename, std::vector<std::vector<double> > &Jij);
    void read_in_inter_exchanges(std::string J, std::string Dx, std::string Dy, std::string Dz, std::vector<std::vector<double> > &Eij);
-   void read_in_intra_exchanges(std::string filename, std::vector<std::vector<std::vector<std::vector<double> > > > &Eij_1NN, \
-                                                   std::vector<std::vector< std::vector< std::vector<double> > > > &Eij_2NN, \
-                                                   std::vector<std::vector< std::vector< std::vector<double> > > > &Eij_3NN );
+   void read_in_intra_exchanges(std::string filename, std::vector<std::vector<double > > &Eij_1NN, \
+                                                   std::vector<std::vector<double > > &Eij_2NN, \
+                                                   std::vector<std::vector<double > > &Eij_3NN );
    void read_in_dmi(std::string filename, std::vector < std::vector < double > > &Dx, std::vector < std::vector < double > > &Dy, std::vector < std::vector < double > > &Dz, bool reflect);
    void read_in_ucf(std::ifstream &ucf_file);
    void print_header();
    void create_magnetic_atom_list(std::string filename);
    void create_magnetic_atom_list_moire_unit(std::string filename, \
                   double Moire_a0x, double Moire_a0y, double Moire_a1x, double Moire_a1y, \
-                  double Moire_abs_x, double Moire_abs_y, int Moire_atom_size);
+                  double Moire_abs_x, double Moire_abs_y, uint64_t Moire_atom_size);
 
    void create_magnetic_atom_list_moire_unit(std::string filename);
    void create_nm_atom_list();

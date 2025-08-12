@@ -111,7 +111,7 @@ int curie_temperature(){
 		// Equilibrate system
 		sim::integrate(sim::equilibration_time);
 		stats::update();
-		vout::data();
+		//vout::data();
 		// Reset mean magnetisation counters
 		stats::reset();
 
@@ -130,7 +130,8 @@ int curie_temperature(){
 
 			// Calculate magnetisation statistics
 			stats::update();
-			vout::data();
+
+			// vout::data();
 		}
 
 		// Output data

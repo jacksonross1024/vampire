@@ -20,6 +20,7 @@ bcc110.o \
 cccro.o \
 fcc.o \
 fcc111.o \
+fe5gete2.o \
 file.o \
 hcp.o \
 heusler.o \
@@ -35,6 +36,7 @@ rutile.o \
 smfe12n.o\
 spinel.o \
 spinel-layered.o \
+trigonal.o \
 verify.o
 
 # Append module objects to global tree

@@ -274,6 +274,11 @@ namespace sim{
          if(sim::domain_wall_angle < 0) return false;
          else return true;
       }
+      test="domain-wall-random-start";
+      if(word==test){
+         sim::domain_wall_random_start = true;
+         return true;
+      }
       //--------------------------------------------------------------------
       // input parameter not found here
       return false;

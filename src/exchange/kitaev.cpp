@@ -45,10 +45,9 @@ namespace internal{
       if(!internal::enable_kitaev) return;
 
       // Print informative message to log file
-      zlog << zTs() << "No Kitaev interactions in Moire yet" << std::endl;
-
-
-      // // temporary tensor for calculating sum
+      zlog << zTs() << "no Calculating Kitaev interactions" << std::endl;
+      exit(1);
+      // temporary tensor for calculating sum
       // std::vector<double> tmp_tensor(9,0.0);
 
       // // get cutoff range
@@ -160,7 +159,7 @@ namespace internal{
 
       // } // end of atom loop
 
-      //ofile.close();
+      // //ofile.close();
 
       return;
 

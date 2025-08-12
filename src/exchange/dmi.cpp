@@ -48,10 +48,10 @@ namespace internal{
       // if dmi is not needed then do nothing
       if(!internal::enable_dmi) return;
 
-      // Print informative message to log file
-      zlog << zTs() << "No DMI for Moire yet" << std::endl;
-
-      // // temporary tensor for calculating sum
+      // // Print informative message to log file
+      zlog << zTs() << " no Calculating Dzyaloshinskii-Moriya interactions" << std::endl;
+      exit(1);
+      // // // // temporary tensor for calculating sum
       // std::vector<double> tmp_tensor(9,0.0);
 
       // // get cutoff range
@@ -63,7 +63,7 @@ namespace internal{
       // // counter for total number of interactions
       // unsigned int total_counter = 0;
 
-      // //std::ofstream ofile("dmi.txt");
+      //std::ofstream ofile("dmi.txt");
 
       // //	Loop over all atoms i
       // for(unsigned int i=0; i < static_cast<unsigned int>(atoms::num_atoms); i++){
@@ -208,21 +208,21 @@ namespace internal{
       //       //         tmp_tensor [3] << "\t" << tmp_tensor [4] << "\t" << tmp_tensor [5] << "\t" <<
       //       //         tmp_tensor [6] << "\t" << tmp_tensor [7] << "\t" << tmp_tensor [8] << "\t" << std::endl;
 
-      //       // net DMI vectors for each atom pair
-      //       //ofile << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t'<< tmp_tensor [5] << "\t" << tmp_tensor [6] << "\t" << tmp_tensor [1] << std::endl;
+            // net DMI vectors for each atom pair
+            //ofile << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t'<< tmp_tensor [5] << "\t" << tmp_tensor [6] << "\t" << tmp_tensor [1] << std::endl;
 
-      //       // save tensor for interaction i-j
-      //       atoms::t_exchange_list[counter].Jij[0][0] += tmp_tensor [0];
-      //       atoms::t_exchange_list[counter].Jij[0][1] += tmp_tensor [1];
-      //       atoms::t_exchange_list[counter].Jij[0][2] += tmp_tensor [2];
+            // save tensor for interaction i-j
+            atoms::t_exchange_list[counter].Jij[0][0] += tmp_tensor [0];
+            atoms::t_exchange_list[counter].Jij[0][1] += tmp_tensor [1];
+            atoms::t_exchange_list[counter].Jij[0][2] += tmp_tensor [2];
 
-      //       atoms::t_exchange_list[counter].Jij[1][0] += tmp_tensor [3];
-      //       atoms::t_exchange_list[counter].Jij[1][1] += tmp_tensor [4];
-      //       atoms::t_exchange_list[counter].Jij[1][2] += tmp_tensor [5];
+            atoms::t_exchange_list[counter].Jij[1][0] += tmp_tensor [3];
+            atoms::t_exchange_list[counter].Jij[1][1] += tmp_tensor [4];
+            atoms::t_exchange_list[counter].Jij[1][2] += tmp_tensor [5];
 
-      //       atoms::t_exchange_list[counter].Jij[2][0] += tmp_tensor [6];
-      //       atoms::t_exchange_list[counter].Jij[2][1] += tmp_tensor [7];
-      //       atoms::t_exchange_list[counter].Jij[2][2] += tmp_tensor [8];
+      //       atoms::t_exchange_list[counter].Jij[6] += tmp_tensor [6];
+      //       atoms::t_exchange_list[counter].Jij[7] += tmp_tensor [7];
+      //       atoms::t_exchange_list[counter].Jij[8] += tmp_tensor [8];
 
       //       counter++; // increment interaction counter
 
@@ -230,7 +230,7 @@ namespace internal{
 
       // } // end of atom loop
 
-      // //ofile.close();
+      //ofile.close();
 
       // zlog << zTs() << "Generated " << total_counter << " dmi interactions with an average of " << double(total_counter) / double(atoms::num_atoms) << " interactions per atom" << std::endl;
 

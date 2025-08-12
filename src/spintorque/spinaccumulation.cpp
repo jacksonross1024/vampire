@@ -121,13 +121,15 @@ namespace st{
          const double microcell_volume = (st::internal::micro_cell_size[st::internal::stx] *
                                           st::internal::micro_cell_size[st::internal::sty] *
                                           st::internal::micro_cell_thickness)*1.e-30; // m^3
+         const double atomic_volume = (1.61*3.99*6.91)*1.e-30/6.0; // m^3
 
          // loop over all 1D stacks (in parallel)
          int int_stacks;
          // std::vector<int> stacks_list;
-         #ifdef MPICH 
+         #ifdef MPICF
          int_stacks = st::internal::mpi_stack_list.size();
          // stacks_list = st::internal::mpi_stack_list[s];
+         // std::cout << "ranK: " << vmpi::my_rank << ", " << int_stacks << std::endl;
          #else 
          int_stacks = st::internal::num_stacks;
         
@@ -135,8 +137,10 @@ namespace st{
          
          int stack;
          for(int s=0; s < int_stacks; ++s) {
-            #ifdef MPICH
-            stack = mpi_stack_list[s] + 1;
+
+            #ifdef MPICF
+            stack = mpi_stack_list[s];
+            // std::cout << "my rank: " << vmpi::my_rank << ", " << stack_index[stack] << ", " << stack << ", " << mpi_stack_list[s] << ", " << int_stacks << std::endl;
             #else 
             stack = s;
             #endif
@@ -159,10 +163,11 @@ namespace st{
             // st::internal::m [3*idx+1]  = st::internal::stack_init_mag[stack*3 +1]*2*3.74;
             // st::internal::m [3*idx+2]  = st::internal::stack_init_mag[stack*3 +2]*2*3.74;
 
-            st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::m [3*idx+0];
-            st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::m [3*idx+1];
-            st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::m [3*idx+2];
+            st::internal::j [3*idx+0] = st::internal::initial_beta*je*st::internal::initial_m[0];
+            st::internal::j [3*idx+1] = st::internal::initial_beta*je*st::internal::initial_m[1];
+            st::internal::j [3*idx+2] = st::internal::initial_beta*je*st::internal::initial_m[2];
 
+            std::cout << st::internal::j [3*idx+2] << ", " << st::internal::initial_beta << ", " << je << ", " << st::internal::initial_m[2] << std::endl;
           //  if(sim::time%(ST_output_rate) ==0) std::cout<< stack << "\t" << st::internal::default_properties.sa_infinity << "\t" << st::internal::init_stack_mag[((stack)%6)*3 + 0]/sqrt(2.0) << "\t" << st::internal::init_stack_mag[((stack)%6)*3 + 1]/sqrt(2.0) << "\t" << st::internal::m[3*idx+0] << " \t" <<  st::internal::m[3*idx+1] << "\t" << st::internal::sa[3*idx+0] << "\t" << st::internal::sa[3*idx+1] << std::endl;
 
             // loop over all cells in stack after first (idx+1)
@@ -350,10 +355,10 @@ namespace st{
                   //    st::internal::spin_torque[celly] = 0.0;
                   //    st::internal::spin_torque[cellz] = 0.0;//
                   // }  else {// Calculate spin torque energy for cell (Joules)
-                  st::internal::spin_torque[cellx] = microcell_volume * st::internal::sd_exchange[cell] * (sax+sax_sot) * i_e * i_muB;
-                  st::internal::spin_torque[celly] = microcell_volume * st::internal::sd_exchange[cell] * (say+say_sot) * i_e * i_muB;
-                  st::internal::spin_torque[cellz] = microcell_volume * st::internal::sd_exchange[cell] * (saz+saz_sot) * i_e * i_muB; 
-                  // }
+                  st::internal::spin_torque[cellx] = atomic_volume * st::internal::sd_exchange[cell] * (sax+sax_sot) * i_e * i_muB;
+                  st::internal::spin_torque[celly] = atomic_volume * st::internal::sd_exchange[cell] * (say+say_sot) * i_e * i_muB;
+                  st::internal::spin_torque[cellz] = atomic_volume * st::internal::sd_exchange[cell] * (saz+saz_sot) * i_e * i_muB; 
+                  // std::cout << st::internal::spin_torque[cellz] << " = " << atomic_volume* i_e * i_muB << " * " << st::internal::sd_exchange[cell]  << " * " << saz << ", mu_s: " << mp::mu_s_array[5000] <<  std::endl;
                }
                else{
                   // Save values for the spin accumulation
