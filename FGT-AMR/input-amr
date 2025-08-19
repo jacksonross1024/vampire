@@ -42,7 +42,7 @@ sim:temperature= 80
 sim:cooling-time = 0.1 !ns #10 ps -> 10,000
 #sim:preconditioning-steps = 0
 sim:time-steps-increment= 1 #10ps
-sim:time-step= 0.1 !fs 
+sim:time-step= 0.01 !fs 
 sim:equilibration-time-steps= 0
 sim:total-time-steps= 1 #1 ns
 
