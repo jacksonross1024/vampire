@@ -32,6 +32,16 @@ cells:macro-cell-size-z = 11.5
 dipole:cutoff-radius = 10
 dipole:field-update-rate = 1000
 
+spin-transport:cell-size-x = 5
+spin-transport:cell-size-y = 5
+spin-transport:cell-size-z = 10
+
+spin-transport:current-direction = +z
+spin-transport:applied-voltage = 1.0 #V
+spin-transport:environment-resistivity = 1e12 #empty cell insulator
+spin-transport:update-rate = 500000 #50 ps
+
+
 #------------------------------------------
 # Simulation attributes:
 #------------------------------------------
@@ -80,7 +90,8 @@ sim:load-checkpoint = restart
 config:atoms = continuous
 config:atoms-output-rate = 3
 config:output-format = binary
-#config:output-nodes = 16
+config:output-nodes = 2 ##same number of archer/cirrus nodes
+
 #------------------------------------------
 # data output
 #------------------------------------------

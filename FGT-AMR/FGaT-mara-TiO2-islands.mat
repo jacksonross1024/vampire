@@ -31,8 +31,10 @@ material[2]:unit-cell-category = 2
 material[2]:exchange-matrix[1] = 1 
 material[2]:exchange-matrix[2] = 1 
 
-material[1]:spin-orbit-relaxation-torque = 0.25
-material[1]:spin-orbit-precession-torque = 0.025
+
+##SOT constants. ~1e11 A/m^2/Pt
+material[1]:spin-orbit-relaxation-torque = 0.25 ##damping-like
+material[1]:spin-orbit-precession-torque = 0.025 ##field, 
 
 material[2]:spin-orbit-relaxation-torque = 0.25
 material[2]:spin-orbit-precession-torque = 0.025
@@ -56,8 +58,10 @@ material[2]:alloy-variance[4] = 1.0
 material[1]:save-host-alloy-distribution
 material[2]:save-host-alloy-distribution
 
-material[1]:alloy-radius = 75
-material[2]:alloy-radius = 75
+##radius of voids
+material[1]:alloy-radius = 75 #A
+material[2]:alloy-radius = 75 #A
+
 
 material[3]:material-name = "Fe1-hole"
 material[3]:non-magnetic = keep
