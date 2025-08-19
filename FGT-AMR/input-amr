@@ -3,8 +3,8 @@
 # System Dimensions:
 #------------------------------------------
 #dimensions:unit-cell-size = 3.54 !A
-dimensions:system-size-x = 300 !nm
-dimensions:system-size-y = 50 !nm
+dimensions:system-size-x = 150 !nm
+dimensions:system-size-y = 150 !nm
 dimensions:system-size-z = 2.0 !nm
 
 #------------------------------------------
@@ -20,8 +20,8 @@ material:unit-cell-file= fe3gate2-mara-dmi.ucf
 # Creation attributes:
 #------------------------------------------
 
-create:periodic-boundaries-x
-create:periodic-boundaries-y
+#create:periodic-boundaries-x
+#create:periodic-boundaries-y
 
 #------------------------------------------
 # Simulation attributes:

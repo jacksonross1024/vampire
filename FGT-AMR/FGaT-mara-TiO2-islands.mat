@@ -31,6 +31,12 @@ material[2]:unit-cell-category = 2
 material[2]:exchange-matrix[1] = 1 
 material[2]:exchange-matrix[2] = 1 
 
+material[1]:spin-orbit-relaxation-torque = 0.25
+material[1]:spin-orbit-precession-torque = 0.025
+
+material[2]:spin-orbit-relaxation-torque = 0.25
+material[2]:spin-orbit-precession-torque = 0.025
+
 
 material[1]:host-alloy = random
 material[2]:host-alloy = random
