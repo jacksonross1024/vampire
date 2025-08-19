@@ -533,7 +533,7 @@ namespace spin_transport{
       st::internal::cell_spin_torque_fields.resize(3*st::internal::total_num_cells, 0.0);
 
       if( vmpi::my_rank == 0 ){
-         std::ofstream ofile("data.txt");
+         std::ofstream ofile("resistance-data.txt");
          for(uint64_t i =0; i< st::internal::total_num_cells; i++){
             ofile << st::internal::cell_position[3*i+0] << "\t" <<
                      st::internal::cell_position[3*i+1] << "\t" <<

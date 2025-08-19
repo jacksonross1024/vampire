@@ -92,6 +92,7 @@ namespace spin_transport{
 
       extern unsigned int update_rate;  // number of timesteps between updates
       extern unsigned int time_counter; // number of timesteps since last update
+      extern unsigned int output_rate;  // number of updates between outputs 
 
       extern std::vector<internal::mp_t> mp; // array of material properties
 

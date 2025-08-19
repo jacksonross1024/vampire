@@ -35,7 +35,7 @@ namespace spin_transport{
 
       unsigned int update_rate  = 100;  // number of timesteps between updates
       unsigned int time_counter = 100;  // number of timesteps since last update (initially set to same as update rate to ensure calculation at start)
-
+      unsigned int output_rate  =  1;
       std::vector<internal::mp_t> mp; // array of material properties
 
       // enumerated list of different current directions

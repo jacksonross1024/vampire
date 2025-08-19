@@ -65,7 +65,7 @@ void calculate_magnetoresistance(){
       //------------------------------------------------------------------------------------------------------
       // loop over all other cells in stack starting at cell start+1
       //------------------------------------------------------------------------------------------------------
-      for(unsigned int cell = start+1 ; cell < end ; cell++){
+      for(unsigned int cell = start; cell < end ; cell++){
 
          if(st::internal::magnetic[cell]){
             // calculate next cell reduced magnetization
@@ -148,7 +148,8 @@ void calculate_magnetoresistance(){
    //------------------------------------------------------------------------------------------
    #ifdef MPICF
       MPI_Allreduce(MPI_IN_PLACE, &st::internal::cell_spin_torque_fields[0], 3*st::internal::total_num_cells, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-      //MPI_Allreduce(MPI_IN_PLACE, &st::internal::stack_resistance[0],        st::internal::num_stacks,        MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &st::internal::stack_resistance[0],        st::internal::num_stacks,        MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &st::internal::stack_current[0],        st::internal::num_stacks,        MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &sum_inv_resistance,                       1,                               MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
    #endif
 
