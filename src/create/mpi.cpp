@@ -38,7 +38,7 @@ namespace create{
       // Structure to store key information about virtual atoms in halo region
       struct virtual_particle_t{
 
-         int atom; // real atom number
+         uint64_t atom; // real atom number
          double x,y,z; // atomic positions
          int scx, scy, scz; // super cell coordinates
          int material; // material id
@@ -55,7 +55,7 @@ namespace create{
       ///   (c) R F L Evans 26/04/2013
       //
       //-----------------------------------------------------------------
-      void atom_needed_by_remote_cpu(int atom, // atom number
+      void atom_needed_by_remote_cpu(uint64_t atom, // atom number
          int cpu_rank,
          double x,
          double y,
@@ -139,7 +139,7 @@ namespace create{
          zlog << zTs() << "   Determining CPU ranges in x,y,z" << std::endl;
 
          // Populate atoms with correct cpuid
-         for(unsigned int atom=0; atom < catom_array.size(); atom++){
+         for(uint64_t atom=0; atom < catom_array.size(); atom++){
             catom_array[atom].mpi_cpuid = vmpi::my_rank;
          }
 

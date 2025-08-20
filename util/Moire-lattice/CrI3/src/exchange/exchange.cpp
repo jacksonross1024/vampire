@@ -410,7 +410,7 @@ double nn_dist_3;
 double max_range = 9.99;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
-double J_constant = eVtoJ/1000.0; //1 meV
+double J_constant = 1.0;// eVtoJ/1000.0; //1 meV
 double J_intra_1=2.5*J_constant;
 double J_intra_2=0.75*J_constant;
 double J_intra_3=-0.01*J_constant;
@@ -490,7 +490,7 @@ std::vector <double > crossProduct(std::vector <double >A, std::vector <double >
 void print_interaction_header(){
    std::ofstream outfile3 ("header_interactions.ucf");
    std::string interaction_type;
-   if(DMI) interaction_type = "tensorial";
+   if(DMI) interaction_type = "normalised-tensorial";
    else interaction_type = "normalised-isotropic";
    outfile3 << number_of_interactions <<  "\t" << interaction_type << std::endl;//<<" 0 0 0 "<<J3S2_x << " 0 0 0 " << J3S2_z << std::endl;
    
@@ -836,7 +836,7 @@ void calc_interactions() {
    double min[3] = {1.0e8, 1.0e8, 1.0e8};
    double max[3] = {-1.0e8, -1.0e8, -1.0e8};
    for(int i=0; i < all_m_atoms.size(); i++){
-      if(all_m_atoms[i].S == 1 || all_m_atoms[i].S == 4 ) continue;
+      if(all_m_atoms[i].S == 1 || all_m_atoms[i].S == 4 || all_m_atoms[i].S == 5 ) continue;
       double x_i = all_m_atoms[i].x;
       double y_i = all_m_atoms[i].y;
       double z_i = all_m_atoms[i].z;
@@ -865,7 +865,7 @@ void calc_interactions() {
 
    // determine boxid of each atom and save atoms in boxes
    for(int i=0; i < all_m_atoms.size(); i++){
-      if(all_m_atoms[i].S == 1 || all_m_atoms[i].S == 4) continue;
+      if(all_m_atoms[i].S == 1 || all_m_atoms[i].S == 4 || all_m_atoms[i].S == 5) continue;
       double x_i = all_m_atoms[i].x - min[0];
       double y_i = all_m_atoms[i].y - min[1];
       double z_i = all_m_atoms[i].z - min[2];
@@ -1059,7 +1059,8 @@ void calc_interactions() {
    }
    // determine boxid of each atom and save atoms in boxes
    for(int i=0; i < all_m_atoms.size(); i++){
-      
+      if(all_m_atoms[i].S == 5) continue;
+
       double x_i = all_m_atoms[i].x;// - min[0];
       double y_i = all_m_atoms[i].y;// - min[1];
       double z_i = all_m_atoms[i].z;// - min[2];
@@ -1361,18 +1362,18 @@ void calc_interactions() {
                                  // {
                                  spin_config_energy(atom_i, dL2, atom_j, exchange, local_config_energy);
 
-                                   if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
-                                                //xx                     xy-> Dz                 xz -> -Dy
-                                                  exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
-                                                //yx -> -Dz              yy                      yz -> Dx
-                                                 -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
-                                                //zx -> Dy               yz -> -Dx               zz
-                                                  exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0]*1.0 << "\n"; }
-                                    // if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
-                                    // //xx                     xy-> Dz                 xz -> -Dy
-                                    //    exchange[0] << "\t" << exchange[1] << "\t" << exchange[2] << "\t" << \
-                                    // //yx -> -Dz              yy                      yz -> Dx
-                                    //    exchange[3] <<  "\n"; }
+                                 //   if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
+                                 //                //xx                     xy-> Dz                 xz -> -Dy
+                                 //                  exchange[0] << "\t" << exchange[3] << "\t" << -exchange[2] << "\t" << \
+                                 //                //yx -> -Dz              yy                      yz -> Dx
+                                 //                 -exchange[3] << "\t" << exchange[0] << "\t" <<  exchange[1] << "\t" << \
+                                 //                //zx -> Dy               yz -> -Dx               zz
+                                 //                  exchange[2] << "\t" <<-exchange[1] << "\t" <<  exchange[0]*1.0 << "\n"; }
+                                    if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
+                                    //xx                     xy-> Dz                 xz -> -Dy
+                                       exchange[0] << "\t" << exchange[1] << "\t" << exchange[2] << "\t" << \
+                                    //yx -> -Dz              yy                      yz -> Dx
+                                       exchange[3] <<  "\n"; }
                                  else {   otext << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id << '\t' << 0 << '\t' << 0 << '\t' << 0 << '\t' <<\
                               //xx                     xy-> Dz                 xz -> -Dy
                                  exchange[0] << "\n";// << 0.0 << "\t" << 0.0 << "\t" << \

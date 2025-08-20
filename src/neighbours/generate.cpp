@@ -61,10 +61,10 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	list.reserve(num_atoms);
 
 	// estimate number of interactions per atom
-	const int64_t max_nn = int64_t( 1.1*( double(exchange.num_interactions) / double(num_atoms_in_unit_cell) ) );
+	const int64_t max_nn = int64_t( 1.01*( double(exchange.num_interactions) / double(num_atoms_in_unit_cell) ) );
 
 	// Reserve space for each atom in neighbour list according to material type
-	for(int64_t atom=0; atom < num_atoms; atom++){
+	for(uint64_t atom=0; atom < num_atoms; atom++){
 		list.push_back(std::vector<neighbour_t>());
 		list[atom].reserve(max_nn);
 	}
@@ -75,7 +75,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    int64_t max[3] = {0,0,0}; // highest cell id
 
    // find supercell range of atoms on this CPU
-	for(int64_t atom = 0; atom < num_atoms; atom++){
+	for(uint64_t atom = 0; atom < num_atoms; atom++){
 
 		int64_t c[3] = { atom_array[atom].scx,
                        atom_array[atom].scy,
@@ -112,7 +112,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                           ( max_cell[2] - offset[2] + 1 )};
 
 	// Declare temporary array for 3D supercell array
-	std::vector<std::vector<std::vector<std::vector<uint64_t> > > > supercell_array;
+	std::vector<std::vector<std::vector<std::vector<int64_t> > > > supercell_array;
 
    // calculate total number of neighbours and inform user of memory needed
    int64_t num_neighbours = d[0] * (d[1]) * (d[2]) * num_atoms_in_unit_cell;
@@ -174,7 +174,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    zlog << zTs() << "Populating supercell array for neighbourlist calculation..."<< std::endl;
 
 	// Populate supercell array with atom numbers
-	for(int64_t atom=0; atom < num_atoms; atom++){
+	for(uint64_t atom=0; atom < num_atoms; atom++){
 
       // get supercell coordinates
       int64_t scc[3]={ atom_array[atom].scx - offset[0],
@@ -264,7 +264,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    const uint64_t num_interactions = exchange.num_interactions;
 
 	// Loop over all cells
-   // total_interactions = 0;
+   total_interactions = 0;
 	for(uint64_t cell = 0; cell < num_cells; cell++){
 
       // Print out progress indicator to user
@@ -273,20 +273,21 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 		}
 
       // get supercell coordinates of cell
-		int scc[3]={ cell_coord_array[cell][0],
+		int scc[3]={ cell_coord_array.at(cell)[0],
                    cell_coord_array[cell][1],
                    cell_coord_array[cell][2]};
 
-      int interaction_count = 0;
+      uint64_t interaction_count = 0;
+      std::cout << "interations for cell: " << cell << std::endl;
 		// Loop over all interactions in exchange template
 		for(uint64_t i = 0; i < num_interactions; i++){
 
-			const uint64_t atom = exchange.interaction[i].i;
+			const uint64_t atom = exchange.interaction.at(i).i;
 			const uint64_t natom = exchange.interaction[i].j;
 
-			int nx = tmp.dx + scc[0];
-			int ny = tmp.dy + scc[1];
-			int nz = tmp.dz + scc[2];
+			int nx = exchange.interaction[i].dx + scc[0];
+			int ny = exchange.interaction[i].dy + scc[1];
+			int nz = exchange.interaction[i].dz + scc[2];
 
          // vector from i->j
          double vx=0.0;
@@ -335,7 +336,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
              (ny >= 0 && static_cast<int64_t>(ny) < d[1] ) &&
              (nz >= 0 && static_cast<int64_t>(nz) < d[2] ) ){
             // check for missing atoms
-            if((supercell_array[scc[0]][scc[1]][scc[2]][atom]!= -1) && (supercell_array[nx][ny][nz][natom]!=-1)) {
+            if((supercell_array[scc[0]][scc[1]][scc[2]].at(atom)!= -1) && (supercell_array[nx][ny][nz].at(natom)!=-1)) {
 
                // need actual atom numbers...
                uint64_t atomi = supercell_array[scc[0]][scc[1]][scc[2]][atom];
@@ -343,21 +344,21 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 
                //std::cout << "int_id: " << i << "\tatom i: " << atomi << "\tatom j: " << atomj << "\tuc_i: " << atom << "\tuc_j: " << natom << std::endl;
 
-               // Load atom positions
-               double ix = atom_array[atomi].x; // Already in A
-               double iy = atom_array[atomi].y;
-               double iz = atom_array[atomi].z;
-               double jx = atom_array[atomj].x;
-               double jy = atom_array[atomj].y;
-               double jz = atom_array[atomj].z;
+               // // Load atom positions
+               // double ix = atom_array[atomi].x; // Already in A
+               // double iy = atom_array[atomi].y;
+               // double iz = atom_array[atomi].z;
+               // double jx = atom_array[atomj].x;
+               // double jy = atom_array[atomj].y;
+               // double jz = atom_array[atomj].z;
 
-               //std::cout << "\tpi:    " << ix << "\t" << iy << "\t" << iz << std::endl;
-               //std::cout << "\tpj:    " << jx << "\t" << jy << "\t" << jz << std::endl;
-               //std::cout << "\tv_uc:  " << vx << "\t" << vy << "\t" << vz << std::endl;
+               // //std::cout << "\tpi:    " << ix << "\t" << iy << "\t" << iz << std::endl;
+               // //std::cout << "\tpj:    " << jx << "\t" << jy << "\t" << jz << std::endl;
+               // //std::cout << "\tv_uc:  " << vx << "\t" << vy << "\t" << vz << std::endl;
 
-               vx += jx-ix;
-               vy += jy-iy;
-               vz += jz-iz;
+               // vx += jx-ix;
+               // vy += jy-iy;
+               // vz += jz-iz;
 
                //std::cout << "\tv:     " << jx-ix << "\t" << jy-iy << "\t" << jz-iz << std::endl;
                //std::cout << "\tv_eff: " << vx << "\t" << vy << "\t" << vz << std::endl;

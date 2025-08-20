@@ -131,7 +131,7 @@ int curie_temperature(){
 			// Calculate magnetisation statistics
 			stats::update();
 
-			// vout::data();
+			vout::data();
 		}
 
 		// Output data

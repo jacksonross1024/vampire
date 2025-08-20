@@ -212,13 +212,13 @@ namespace internal{
             //ofile << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t'<< tmp_tensor [5] << "\t" << tmp_tensor [6] << "\t" << tmp_tensor [1] << std::endl;
 
             // save tensor for interaction i-j
-            atoms::t_exchange_list[counter].Jij[0][0] += tmp_tensor [0];
-            atoms::t_exchange_list[counter].Jij[0][1] += tmp_tensor [1];
-            atoms::t_exchange_list[counter].Jij[0][2] += tmp_tensor [2];
+            // atoms::t_exchange_list[counter].Jij[0][0] += tmp_tensor [0];
+            // atoms::t_exchange_list[counter].Jij[0][1] += tmp_tensor [1];
+            // atoms::t_exchange_list[counter].Jij[0][2] += tmp_tensor [2];
 
-            atoms::t_exchange_list[counter].Jij[1][0] += tmp_tensor [3];
-            atoms::t_exchange_list[counter].Jij[1][1] += tmp_tensor [4];
-            atoms::t_exchange_list[counter].Jij[1][2] += tmp_tensor [5];
+            // atoms::t_exchange_list[counter].Jij[1][0] += tmp_tensor [3];
+            // atoms::t_exchange_list[counter].Jij[1][1] += tmp_tensor [4];
+            // atoms::t_exchange_list[counter].Jij[1][2] += tmp_tensor [5];
 
       //       atoms::t_exchange_list[counter].Jij[6] += tmp_tensor [6];
       //       atoms::t_exchange_list[counter].Jij[7] += tmp_tensor [7];

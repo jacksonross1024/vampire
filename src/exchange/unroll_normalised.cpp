@@ -160,6 +160,7 @@ namespace exchange{
                      atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[2] * imus;
                   }
                   else if( Jij.size() == 1 ){
+                     // std::cout << "better be this one " << std::endl;
                      atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
                      atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[0][1] * Jij[0] * imus;
                      atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[0][2] * Jij[0] * imus;

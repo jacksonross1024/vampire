@@ -23,7 +23,7 @@
 
 namespace unitcell{
 
-   void unitcell::exchange_template_t::read_interactions(
+   uint64_t unitcell::exchange_template_t::read_interactions(
       //unit_cell_t& unit_cell,
       const uint64_t num_atoms, // num atoms in unit cell
       std::stringstream& ucf_file,
@@ -35,7 +35,7 @@ namespace unitcell{
 
 		uint64_t num_interactions = 0; // assume no interactions
       std::string exchange_type_string; // string defining exchange type
-     
+      
       // get number of exchange types
       ucf_ss >> num_interactions >> exchange_type_string;
 
@@ -100,7 +100,7 @@ namespace unitcell{
                 << " of unit cell input file " << filename.c_str() << ". Possibly too many interactions defined. Exiting" << std::endl;
            err::vexit();
          }
-         if(iatom>=0 && jatom < num_atoms) interaction[i].j=jatom;
+         if(jatom>=0 && jatom < num_atoms) interaction[i].j=jatom;
          
          else{
             terminaltextcolor(RED);
@@ -123,10 +123,10 @@ namespace unitcell{
          if(static_cast<unsigned int>(abs(dy))>interaction_range) interaction_range=abs(dy);
          if(static_cast<unsigned int>(abs(dz))>interaction_range) interaction_range=abs(dz);
 
-         // float DMx = 0.0;
-         // float DMy = 0.0;
-         // float DMz = 0.0;
-         // float J = 0.0;
+         float DMx = 0.0;
+         float DMy = 0.0;
+         float DMz = 0.0;
+         float J = 0.0;
          //int iatom_mat = unit_cell.atom[iatom].mat;
          //int jatom_mat = unit_cell.atom[jatom].mat;
          switch(num_exchange_values){
@@ -141,13 +141,13 @@ namespace unitcell{
                break;
             case 9:
             
-               // int_iss >> J >> DMx >> DMy >> DMz;
-               // interaction[i].Jij[0][0] = J; interaction[i].Jij[0][1] = Dz; interaction[i].Jij[0][2] = -Dy;
-               // interaction[i].Jij[1][0] = -Dz; interaction[i].Jij[1][1] = J; interaction[i].Jij[1][2] = Dx;
-               // interaction[i].Jij[2][0] = Dy; interaction[i].Jij[2][1] = -Dx; interaction[i].Jij[2][2] = J;
-               int_iss >> interaction[i].Jij[0][0] >> interaction[i].Jij[0][1] >> interaction[i].Jij[0][2];
-               int_iss >> interaction[i].Jij[1][0] >> interaction[i].Jij[1][1] >> interaction[i].Jij[1][2];
-               int_iss >> interaction[i].Jij[2][0] >> interaction[i].Jij[2][1] >> interaction[i].Jij[2][2];
+               int_iss >> J >> DMx >> DMy >> DMz;
+               interaction[i].Jij[0][0] = J; interaction[i].Jij[0][1] = DMz; interaction[i].Jij[0][2] = -DMy;
+               interaction[i].Jij[1][0] = -DMz; interaction[i].Jij[1][1] = J; interaction[i].Jij[1][2] = DMx;
+               interaction[i].Jij[2][0] = DMy; interaction[i].Jij[2][1] = -DMx; interaction[i].Jij[2][2] = J;
+               // int_iss >> interaction[i].Jij[0][0] >> interaction[i].Jij[0][1] >> interaction[i].Jij[0][2];
+               // int_iss >> interaction[i].Jij[1][0] >> interaction[i].Jij[1][1] >> interaction[i].Jij[1][2];
+               // int_iss >> interaction[i].Jij[2][0] >> interaction[i].Jij[2][1] >> interaction[i].Jij[2][2];
  
                break;
             default:
@@ -163,7 +163,7 @@ namespace unitcell{
 
       }
       
-      return;
+      return num_interactions;
 
    }
 

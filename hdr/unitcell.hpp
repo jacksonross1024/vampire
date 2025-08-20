@@ -67,8 +67,7 @@ namespace unitcell{
 	public:
       uint64_t i; /// atom unit cell id
       uint64_t j; /// neighbour atom unit cell id
-      uint64_t i; /// atom unit cell id
-      uint64_t j; /// neighbour atom unit cell id
+      
       unsigned int mat_i; /// atom material category
       unsigned int mat_j; /// neighbour material category
       unsigned int shell; // shell number of interaction
@@ -122,7 +121,7 @@ namespace unitcell{
          return;
       };
 
-      void read_interactions(
+      uint64_t read_interactions(
          const uint64_t num_atoms, // num atoms in unit cell
          std::stringstream& ucf_file,
          std::istringstream& ucf_ss,

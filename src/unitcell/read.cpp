@@ -177,7 +177,7 @@ void read_unit_cell(unit_cell_t & unit_cell, std::string filename){
 			case 5:{
 
             	// read (bilinear) exchange interactions
-            	unit_cell.bilinear.num_interactions = unit_cell.bilinear.read_interactions_stack(num_uc_atoms, inputfile, iss, filename, line_counter, interaction_range);
+            	unit_cell.bilinear.num_interactions = unit_cell.bilinear.read_interactions(num_uc_atoms, inputfile, iss, filename, line_counter, interaction_range);
 				break;
 
          }
