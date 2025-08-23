@@ -291,6 +291,37 @@ namespace vout{
 		case 78:
 			vout::mean_material_spin_temperature(stream, header);
 			break;
+		// case 79:
+      	// 	vout::material_total_energy(stream,header);
+      	// 	break;
+      	// case 80:
+      	// 	vout::mean_material_total_energy(stream,header);
+      	// 	break;
+      	case 83:
+      		vout::material_total_anisotropy_energy(stream,header);
+      		break;
+      	case 84:
+      		vout::mean_material_total_anisotropy_energy(stream,header);
+      		break;
+    
+      	case 81:
+      		vout::material_total_exchange_energy(stream,header);
+      		break;
+      	case 82:
+      		vout::mean_material_total_exchange_energy(stream,header);
+      		break;
+      	case 85:
+      		vout::material_total_applied_field_energy(stream,header);
+      		break;
+      	case 86:
+      		vout::mean_material_total_applied_field_energy(stream,header);
+      		break;
+      	case 87:
+      		vout::material_total_magnetostatic_energy(stream,header);
+      		break;
+      	case 88:
+      		vout::mean_material_total_magnetostatic_energy(stream,header);
+      		break;
          case 997: //MP
 				vout::material_binder_cumulant(stream,header);
 				break;

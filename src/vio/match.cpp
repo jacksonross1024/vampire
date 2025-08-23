@@ -1519,6 +1519,76 @@ namespace vin{
             output_list.push_back(78);
             return EXIT_SUCCESS;
         }
+        // //--------------------------------------------------------------------
+        // test="material-total-energy";
+        // if(word==test){
+        //    stats::calculate_material_energy = true;
+        //    output_list.push_back(79);
+        //    return EXIT_SUCCESS;
+        // }
+        // //--------------------------------------------------------------------
+        // test="mean-material-total-energy";
+        // if(word==test){
+        //    stats::calculate_material_energy = true;
+        //    output_list.push_back(80);
+        //    return EXIT_SUCCESS;
+        // }
+        //--------------------------------------------------------------------
+        test="material-exchange-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(81);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-mean-exchange-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(82);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-anisotropy-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(83);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-mean-anisotropy-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(84);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-magnetostatic-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(87);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-mean-magnetostatic-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(88);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-applied-field-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(85);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-mean-applied-field-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(86);
+           return EXIT_SUCCESS;
+        }
         //--------------------------------------------------------------------
         test="output-rate";
         if(word==test){
