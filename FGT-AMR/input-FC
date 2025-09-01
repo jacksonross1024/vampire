@@ -5,7 +5,7 @@
 #dimensions:unit-cell-size = 3.54 !A
 dimensions:system-size-x = 150 !nm
 dimensions:system-size-y = 150 !nm
-dimensions:system-size-z = 2.0 !nm
+dimensions:system-size-z = 50.0 !nm #5nm FGT
 
 #------------------------------------------
 material:file=FGaT-mara-TiO2-islands.mat
@@ -19,10 +19,10 @@ material:unit-cell-file=fe3gate2-mara-dmi.ucf
 #create:periodic-boundaries-z
 #create:crystal-sublattice-materials=true
 
-dipole:solver = tensor 
+dipole:solver = hierarchical 
 cells:macro-cell-size-x = 20
 cells:macro-cell-size-y = 20
-cells:macro-cell-size-z = 11.5
+cells:macro-cell-size-z = 11.5 
 dipole:cutoff-radius = 10
 dipole:field-update-rate = 1000
 
@@ -41,7 +41,7 @@ sim:cooling-time = 0.2 !ns #10 ps -> 10,000
 sim:time-steps-increment= 100000 #10ps
 sim:time-step= 0.1 !fs
 sim:equilibration-time-steps= 0
-sim:total-time-steps= 4000000
+sim:total-time-steps= 4000000 #
 
 sim:cooling-function = linear
 
@@ -56,10 +56,10 @@ sim:applied-field-strength = 0.4 #T
 
 sim:save-checkpoint = continuous
 
-config:atoms = end
-#config:atoms-output-rate = 5
-config:output-format = binary
 
+config:macro-cells = continuous
+config:output-mode = legacy
+config:macro-cells-output-rate = 1
 #------------------------------------------
 # data output
 #------------------------------------------
