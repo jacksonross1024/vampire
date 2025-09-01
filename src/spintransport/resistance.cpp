@@ -37,8 +37,8 @@ void calculate_magnetoresistance(){
    //---------------------------------------------------------------------------------------------------------
    #ifdef MPICF
       std::fill(st::internal::cell_spin_torque_fields.begin(), st::internal::cell_spin_torque_fields.end(), 0.0);
-      //std::fill(st::internal::stack_resistance.begin(), st::internal::stack_resistance.end(), 0.0); // needed for data output only
-      //std::fill(st::internal::stack_current.begin(),    st::internal::stack_current.end(),    0.0);
+      std::fill(st::internal::stack_resistance.begin(), st::internal::stack_resistance.end(), 0.0); // needed for data output only
+      std::fill(st::internal::stack_current.begin(),    st::internal::stack_current.end(),    0.0);
    #endif
 
    // TODO need to parallelise stack loop
