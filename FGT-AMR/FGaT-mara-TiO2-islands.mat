@@ -49,7 +49,7 @@ material[2]:alloy-fraction[4] = 0.0
 #material[1]:host-alloy-smoothness = 10
 #material[2]:host-alloy-smoothness = 10
 
-material[1]:host-alloy-scale = 0 ##regular lattice of voids
+material[1]:host-alloy-scale = 0 ##regular lattice of voids 
 material[2]:host-alloy-scale = 0
 
 material[1]:alloy-variance[3] = 1.0
@@ -61,6 +61,8 @@ material[2]:save-host-alloy-distribution
 ##radius of voids
 material[1]:alloy-radius = 75 #A
 material[2]:alloy-radius = 75 #A
+material[1]:void-distance = 750 #A, approx 4x radius (2 diameters)
+material[2]:void-distance = 750 #A 
 
 
 material[3]:material-name = "Fe1-hole"

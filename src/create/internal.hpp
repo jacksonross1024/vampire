@@ -91,6 +91,7 @@ namespace create{
          double max; // maximum material height
 
          double alloy_radius;
+         double void_distance;
          bool geometry = false; // define geometry for material
    		std::vector<points_t> geometry_points; // array of geometry coordinates
 
@@ -100,6 +101,7 @@ namespace create{
             host_alloy_smoothness(2.0),
             host_alloy_scale (50.0),
             alloy_radius(50.0),
+            void_distance(50.0),
             save_host_alloy_profile(false),
             save_file_name(""),
             host_alloy_distribution(internal::homogeneous),

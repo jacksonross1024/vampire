@@ -30,7 +30,7 @@ struct seed_point_t{
 };
 
 // Function forward declaration
-std::vector < seed_point_t > generate_random_seed_points(double sizex, double sizey, double scale, double randomness, double radius);
+std::vector < seed_point_t > generate_random_seed_points(double sizex, double sizey, double scale, double randomness, double radius, double distance);
 std::vector < std::vector <float> > generate_host_alloy_distribution(std::vector < seed_point_t >& seeds, const int x_cells, const int y_cells, const double smoothness, const double resolution);
 
 //-----------------------------------------------------------------------------
@@ -72,9 +72,10 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 			const double scale = create::internal::mp[hm].host_alloy_scale;
 			const double randomness = 0.2; // size distribution of seed points
 			double radius = create::internal::mp[hm].alloy_radius;
+			double distance = create::internal::mp[hm].void_distance;
 			if(local_alloy) radius = create::internal::local_alloy_radius;
 			// get seed points
-			std::vector < seed_point_t > seed_points = generate_random_seed_points(sizex, sizey, scale, randomness, radius);
+			std::vector < seed_point_t > seed_points = generate_random_seed_points(sizex, sizey, scale, randomness, radius, distance);
 			// calculate interpolated probability distribution
 			distributions[hm] = generate_host_alloy_distribution(seed_points, xcells, ycells, smoothness, resolution);
 		}
@@ -196,7 +197,7 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 //	Note for MPI: custom generator is seeded identically on each processor, generating the same points
 //
 //--------------------------------------------------------------------------------------------------------
-std::vector < seed_point_t > generate_random_seed_points(double size_x, double size_y, double scale, double randomness, double radius){
+std::vector < seed_point_t > generate_random_seed_points(double size_x, double size_y, double scale, double randomness, double radius, double distance){
 
 	if(scale == 0) {
 		// empty vector to store non-touching seed points
@@ -206,33 +207,42 @@ std::vector < seed_point_t > generate_random_seed_points(double size_x, double s
 		const int xcells = int(size_x/resolution)+1;
 		const int ycells = int(size_y/resolution)+1;
 		int num_points = xcells*ycells;
-		double grain_randomness = 0.75;
+		double grain_randomness = 0.05;
 		// re-seed generator on all processors
 		create::internal::grnd.seed(create::internal::grain_seed);
 		// generate random x,y,r trial point
 		seed_point_t grain;
-		grain.x = radius*4;
-		grain.y = radius*4;
+		grain.x = distance*0.5;
+		grain.y = distance*0.5;
 		grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
 		seeds.push_back(grain);
-		for(int i=1; i<num_points*2; i++){
-
+		for(int i = 1; i < num_points*2; i++){
+			
 			// generate random x,y,r trial point
 			seed_point_t grain;
-			grain.x = (2*create::internal::grnd()-1.0)*resolution*grain_randomness*10.0 + (floor(i / xcells))*resolution;
-			grain.y = (2*create::internal::grnd()-1.0)*resolution*grain_randomness*10.0 + (i % ycells)*resolution;
+			grain.x = (floor(i / xcells))*resolution; //(2*create::internal::grnd()-1.0)*resolution*grain_randomness*10.0 + 
+			grain.y = (i % ycells)*resolution;//(2*create::internal::grnd()-1.0)*resolution*grain_randomness*10.0 + 
 			grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
 
+			if(grain.x < grain.r*1.2 || grain.y < grain.r*1.2) continue;
+			if(grain.x > (size_x - grain.r*1.2) || grain.y > (size_y - grain.r*1.2)) continue;
 			// flag to see if grains are touching
 			bool touching=false;
-			double minr = radius*4.5+radius*4.5*(1.0+grain_randomness*(2.0*create::internal::grnd()-1.0));
+			double minr = distance*(1.0+grain_randomness*(2.0*create::internal::grnd()-1.0));
 			// loop over all previous grains and check if point is not touching other grains
-			for(unsigned int g=0;g<seeds.size(); g++){
+			for(unsigned int g = 0; g < seeds.size(); g++) {
 				double dx = grain.x-seeds[g].x;
 				double dy = grain.y-seeds[g].y;
+
+				if(dx > size_x*0.5) dx -= size_x;
+				else if(dx < -size_x*0.5) dx += size_x;
+
+				if(dy > size_y*0.5) dy -= size_y;
+				else if(dy < -size_y*0.5) dy += size_y;
+
 				double rij = sqrt(dx*dx + dy*dy);
 				// double minr = grain.r+seeds[g].r;
-				if(rij<minr){
+				if(rij < minr){
 					touching = true;
 					break;
 				}
