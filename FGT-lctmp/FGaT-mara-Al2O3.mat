@@ -1,0 +1,108 @@
+
+#---------------------------------------------------
+# Number of Materials
+#---------------------------------------------------
+material:num-materials=3
+#---------------------------------------------------
+# Material 1
+#---------------------------------------------------
+material[1]:material-name=Fe1
+material[1]:damping-constant=0.1
+material[1]:atomic-spin-moment=1.95!muB  #1.4!muB
+material[1]:material-element=Fe
+material[1]:uniaxial-anisotropy-direction=0,0,1
+material[1]:uniaxial-anisotropy-constant=2.67e-23 # -> 0.1666483 meV vs  0.61 !meV 
+material[1]:initial-spin-direction= random # 0,0,1
+material[1]:unit-cell-category = 1
+
+#material[1]:exchange-matrix[1] = 1 
+#material[1]:exchange-matrix[2] = 1 
+
+
+material[2]:material-name=Fe2
+material[2]:damping-constant=0.1
+material[2]:atomic-spin-moment=1.56!muB #1.4!muB
+material[2]:material-element=Fe
+material[2]:uniaxial-anisotropy-direction=0,0,1
+material[2]:uniaxial-anisotropy-constant=2.67e-23
+material[2]:initial-spin-direction= random # 0,0,1
+material[2]:unit-cell-category = 2
+
+#material[2]:exchange-matrix[1] = 1 
+#material[2]:exchange-matrix[2] = 1 
+
+#material[1]:temperature-rescaling-exponent = 1.72
+#material[1]:temperature-rescaling-curie-temperature = 165
+#material[2]:temperature-rescaling-exponent = 1.72
+#material[2]:temperature-rescaling-curie-temperature = 165
+
+
+#material[1]:host-alloy = random
+#material[2]:host-alloy = random
+
+#material[1]:alloy-fraction[3] = 0.0
+#material[2]:alloy-fraction[4] = 0.0
+
+#material[1]:host-alloy-smoothness = 10
+#material[2]:host-alloy-smoothness = 10
+
+#material[1]:host-alloy-scale = 100
+#material[2]:host-alloy-scale = 100
+
+#material[1]:alloy-variance[3] = 1.0
+#material[2]:alloy-variance[4] = 1.0
+
+#material[1]:save-host-alloy-distribution
+#material[2]:save-host-alloy-distribution
+
+#material[1]:alloy-radius = 7.5
+#material[2]:alloy-radius = 7.5
+
+material[4]:material-name = "Fe1-hole"
+material[4]:non-magnetic = remove
+material[4]:minimum-height = 0.0
+material[4]:maximum-height = 0.0
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Material 1: Fe3
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+material[5]:material-name = "Fe2-hole"
+material[5]:non-magnetic = remove
+material[5]:minimum-height = 0.0
+material[5]:maximum-height = 0.0
+
+
+## FGT
+material[1]:electron-heat-capacity        = 1.561e3
+material[1]:phonon-heat-capacity          = 2.0e6
+material[1]:electron-phonon-coupling      = 6.5e17
+material[1]:electron-thermal-conductivity = 0.25
+material[1]:phonon-thermal-conductivity    = 0.5
+material[1]:einstein-temp                 = 142.5
+material[1]:minimum-height = 0.0
+material[1]:maximum-height = 0.1666667
+
+## FGT
+material[2]:electron-heat-capacity        = 1.561e3
+material[2]:phonon-heat-capacity          = 2.0e6
+material[2]:electron-phonon-coupling      = 6.5e17
+material[2]:electron-thermal-conductivity = 0.25
+material[2]:phonon-thermal-conductivity    = 0.5
+material[2]:einstein-temp                 = 142.5
+material[2]:minimum-height = 0.0
+material[2]:maximum-height = 0.1666667
+
+
+#Al2O3
+material[3]:material-name= Al2O3
+material[3]:material-element= AlO
+material[3]:non-magnetic = keep 
+material[3]:minimum-height = 0.1666667
+material[3]:maximum-height = 0.2
+
+material[3]:electron-heat-capacity        = 3.55e6
+material[3]:phonon-heat-capacity          = 3554e6
+material[3]:electron-phonon-coupling      = 0.0
+material[3]:electron-thermal-conductivity = 0.0
+material[3]:phonon-thermal-conductivity    = 1.0
+material[3]:einstein-temp                 = 980.0
