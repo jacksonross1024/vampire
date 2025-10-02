@@ -69,6 +69,7 @@ namespace unitcell{
       void build_cccro(unitcell::unit_cell_t& unit_cell);
       void build_face_centred_cubic(unitcell::unit_cell_t& unit_cell);
       void build_face_centred_cubic_111(unitcell::unit_cell_t& unit_cell);
+      void build_fe3gete2(unitcell::unit_cell_t& unit_cell);
       void build_fe5gete2(unitcell::unit_cell_t& unit_cell);
       void build_hexagonal_close_packed(unitcell::unit_cell_t& unit_cell);
       void build_honeycomb(unitcell::unit_cell_t& unit_cell);
