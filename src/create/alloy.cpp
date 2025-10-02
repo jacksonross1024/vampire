@@ -70,7 +70,8 @@ void alloy(std::vector<cs::catom_t> & catom_array){
 
 			const double smoothness = create::internal::mp[hm].host_alloy_smoothness;
 			const double scale = create::internal::mp[hm].host_alloy_scale;
-			const double randomness = 0.1; // size distribution of seed points
+			// const double randomness = 0.1; // size distribution of seed points
+			double randomness = create::internal::mp[hm].randomness;
 			double radius = create::internal::mp[hm].alloy_radius;
 			double distance = create::internal::mp[hm].void_distance;
 			if(local_alloy) radius = create::internal::local_alloy_radius;

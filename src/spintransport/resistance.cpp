@@ -54,9 +54,9 @@ void calculate_magnetoresistance(){
       double total_stack_resistance = 0.0;
 
       // load first cell reduced magnetization
-      double mix = st::internal::cell_magnetization[3*start+0] * isat;
-      double miy = st::internal::cell_magnetization[3*start+1] * isat;
-      double miz = st::internal::cell_magnetization[3*start+2] * isat;
+      double mix = st::internal::initial_spin_direction[0];// st::internal::cell_magnetization[3*start+0] * isat;
+      double miy = st::internal::initial_spin_direction[1];//st::internal::cell_magnetization[3*start+1] * isat;
+      double miz = st::internal::initial_spin_direction[2];//st::internal::cell_magnetization[3*start+2] * isat;
 
       // load first cell resistances for P and AP states
       double Rep = st::internal::cell_resistance[start];      // electron-phonon scattering resistance
