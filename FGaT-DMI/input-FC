@@ -1,0 +1,74 @@
+
+#------------------------------------------
+# System Dimensions:
+#------------------------------------------
+#dimensions:unit-cell-size = 3.54 !A
+dimensions:system-size-x = 50.1 !nm
+dimensions:system-size-y = 50.1 !nm
+dimensions:system-size-z = 4.0 !nm #5nm FGT
+
+#------------------------------------------
+material:file= fe3gate2-Li.mat
+material:unit-cell-file= fe3gate2-lda-Li-tetragonal-DMI-10percent.ucf
+
+# Creation attributes:
+#------------------------------------------
+#create:crystal-structure=hcp
+create:periodic-boundaries-x
+create:periodic-boundaries-y
+#create:periodic-boundaries-z
+#create:crystal-sublattice-materials=true
+
+#dipole:solver = tensor 
+cells:macro-cell-size-x = 20
+cells:macro-cell-size-y = 20
+cells:macro-cell-size-z = 11.5 
+dipole:cutoff-radius = 10
+dipole:field-update-rate = 1000
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+
+sim:minimum-temperature=273
+sim:maximum-temperature=400
+
+sim:equilibration-temperature= 400
+sim:temperature= 400
+
+sim:cooling-time = 0.02 !ns #10 ps -> 10,000
+#sim:preconditioning-steps = 0
+sim:time-steps-increment= 10000 #10ps
+sim:time-step= 1 !fs
+sim:equilibration-time-steps= 0
+sim:total-time-steps= 80000 #
+
+sim:cooling-function = linear
+
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program= field-cool
+sim:integrator= monte-carlo
+
+#sim:equilibration-field-strength = 0.4
+#sim:applied-field-strength = 0.4 #T
+
+sim:save-checkpoint = continuous
+
+config:atoms = end
+config:atoms-output-rate = 1
+#------------------------------------------
+# data output
+#------------------------------------------
+output:output-rate = 1
+
+output:time-steps
+output:temperature
+#output:material-magnetisation-length
+output:material-magnetisation
+#output:material-mean-susceptibility
+#output:spin-temperature 
+output:total-energy
+#screen:material-magnetisation
+#screen:mean-specific-heat
