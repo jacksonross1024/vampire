@@ -1,0 +1,124 @@
+
+#------------------------------------------
+# System Dimensions:
+#------------------------------------------
+#dimensions:unit-cell-size = 3.54 !A
+dimensions:system-size-x = 50 !nm
+dimensions:system-size-y = 50 !nm
+dimensions:system-size-z = 3.2 !nm
+
+#------------------------------------------
+material:file= fe3gate2-Li.mat
+material:unit-cell-file= fe3gate2-lda-Li-tetragonal-ncsDMI-10percent.ucf
+
+#local-temperature-pulse:cell-size = 101,101,11.5 #A
+#local-temperature-pulse:penetration-depth = 100
+#local-temperature-pulse:output-microcell-data
+#local-temperature-pulse:temperature-profile = vertical
+#local-temperature-pulse:absorption-profile-file = abs.txt 
+
+# Creation attributes:
+#------------------------------------------
+
+create:periodic-boundaries-x
+create:periodic-boundaries-y
+
+#dipole:solver = tensor-stray
+cells:macro-cell-size-x = 10
+cells:macro-cell-size-y = 10
+cells:macro-cell-size-z = 8.0
+dipole:cutoff-radius = 10
+dipole:field-update-rate = 1000
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+#spin-transport:cell-size-x = 7
+##spin-transport:cell-size-y = 12
+#spin-transport:cell-size-z = 11.5
+
+#spin-transport:current-direction = +z
+#spin-transport:applied-voltage = 1.0 #V
+#spin-transport:environment-resistivity = 1e12 #empty cell insulator
+#spin-transport:update-rate = 10000
+#spin-transport:output-rate = 1
+
+
+sim:minimum-temperature=10
+sim:maximum-temperature=600
+sim:temperature-increment = 40 
+
+sim:equilibration-temperature= 10
+sim:temperature= 10
+
+sim:time-steps-increment= 1 #10ps
+sim:time-step= 0.01 !fs 
+sim:equilibration-time-steps= 4000
+sim:loop-time-steps= 4000 #1 ns
+
+#sim:cooling-function = linear
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+
+#sim:program= field-cool
+sim:program= curie-temperature
+sim:integrator= monte-carlo
+#montecarlo:algorithm = angle
+#sim:integrator=llg-midpoint
+
+#sim:electrical-pulse-rise-time = 0.0 !ns
+#sim:electrical-pulse-fall-time = 0.0 !ns
+#sim:electrical-pulse-time = 1 !ns
+
+#sim:equilibration-field-strength = 0.4
+#sim:applied-field-strength = 0.4 #T
+
+#sim:save-checkpoint = continuous
+#sim:load-checkpoint = restart 
+
+#sim:two-temperature-electron-heat-capacity= 5.5e2
+#sim:two-temperature-phonon-heat-capacity= 1.8e6
+#sim:two-temperature-electron-phonon-coupling= 4.05e16
+#sim:two-temperature-heat-sink-coupling = 0.1e12 #0.1e12 
+
+#sim:laser-pulse-power= 0.3 # 0.4 J/m^2 -> 4 mJ/cm^2 
+#sim:laser-pulse-time = 85 !fs # 5e-3 J/cm^2 / 5e-13 s -> 10 gw/cm^2
+#sim:second-laser-pulse-delay-time = 0 !ps
+
+#spin-torque:enable-ST-fields
+#spin-torque:current-density = 1e11 #A/m^2 -> 1e5 A/cm^2
+
+#spin-torque:current-direction= x
+#spin-torque:micro-cell-size= 1550,5.0, 20.0  #10000,6.656, 1.42316667 #A; depth? size
+#spin-torque:micro-cell-thickness= 3.99 #A height?
+#spin-torque:initial-spin-polarisation= 0.23
+#spin-torque:initial-mag-direction= 0,0,1
+#spin-torque:ST-output-rate=3000
+
+#config:macro-cells = end
+#config:output-mode = legacy
+
+
+#config:atoms = continuous
+#config:atoms-output-rate = 1
+#config:output-format = binary
+#config:output-nodes = 1 ##same number of archer/cirrus nodes
+
+#------------------------------------------
+# data output
+#------------------------------------------
+output:output-rate = 1
+
+output:time-steps
+output:temperature
+#output:material-magnetisation-length
+output:material-mean-magnetisation
+output:material-mean-susceptibility
+#output:spin-temperature 
+output:total-energy
+#screen:material-magnetisation
+#screen:mean-specific-heat
+
+#create:spin-initialisation-random-seed = 421563240
+#sim:integrator-random-seed = 421563240

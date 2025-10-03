@@ -454,9 +454,9 @@ int main(){
         double r_inv = 1.0/sqrt(range_sq);
         
         double unit_ij[3] = {(icx-jcx)*r_inv, (icy-jcy)*r_inv, (icz-jcz)*r_inv };
-        double uij_cross_z[3] = {unit_ij[1]*dmi_ref_vector[2]-unit_ij[2]*dmi_ref_vector[1], \
-                                 unit_ij[2]*dmi_ref_vector[0]-unit_ij[0]*dmi_ref_vector[2], \
-                                 unit_ij[0]*dmi_ref_vector[1]-unit_ij[1]*dmi_ref_vector[0]};
+        double uij_cross_z[3] = {unit_ij[2]*dmi_ref_vector[1]-unit_ij[1]*dmi_ref_vector[2], \
+                                 unit_ij[0]*dmi_ref_vector[2]-unit_ij[2]*dmi_ref_vector[0], \
+                                 unit_ij[1]*dmi_ref_vector[0]-unit_ij[0]*dmi_ref_vector[1]};
 	      if(range_sq <= (3.99*3.99)) {
           temp.Jij=exchange_constants.at(ilc).at(jlc);
           temp.Dx = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc)*uij_cross_z[0];
