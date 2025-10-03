@@ -54,10 +54,10 @@ public:
   int dx;
   int dy;
   int dz;
-  double Jij;
-  double Dx;
-  double Dy;
-  double Dz;
+  double Jij = 0.0;
+  double Dx = 0.0;
+  double Dy = 0.0;
+  double Dz = 0.0;
   double rij;
 };
 
@@ -65,7 +65,7 @@ int main(){
 
   // system constants
   //unit cell sizes
-  double unit_cell_size[3]={16.229, 16.229, 16.229};
+  double unit_cell_size[3]={7.972, 6.904, 16.229};
 
   const int num_materials=6;
   // exchange constants
@@ -110,12 +110,12 @@ int main(){
    double y5 = 0.750072421784473;
    double y6 = 0.916642526071842;
 
-   double z1 = 0.176967157557459;
-   double z2 = 0.249984595477232;
-   double z3 = 0.323063651488077;
-   double z4 = 0.676936348511923;
-   double z5 = 0.750015404522768;
-   double z6 = 0.823032842442541;
+   double z1 = 0.176967157557459; //type 0
+   double z2 = 0.249984595477232 + 0.00544375; //type 2 //noncentroshift 0.0871 A / 16.0 A -> 0.00544375
+   double z3 = 0.323063651488077; //type 1
+   double z4 = 0.676936348511923; //type 3
+   double z5 = 0.750015404522768 + 0.00544375; //type 5 //noncentroshift 0.0871 A / 16.0 A -> 0.00544375
+   double z6 = 0.823032842442541; //type 4
 
   unit_cell.at(0).cx=x1;
   unit_cell.at(0).cy=y2;
@@ -286,8 +286,8 @@ int main(){
   unit_cell.at(23).lc=5;
 
    //unit_cell.cutoff_radius = 0.15;
-  double cell_x_norm = 0.49121942;
-  double cell_y_norm = 0.4254113;
+  double cell_x_norm = 1.0 ;//0.49121942;
+  double cell_y_norm = 1.0 ;//0.4254113;
   double cell_z_norm = 1.0;
    //normalise distance to tetragonal cell
 
@@ -310,23 +310,23 @@ int main(){
   // double J24_nnn = 0.68;
 
   //   //Li et al., (LDA)
-  double J12 = 57.18;
-  double J13 = 17.02;
+  // double J12 = 57.18; 
+  // double J13 = 17.02;
+  // double J11 = -0.92;
+  // double J33 = 2.66; //the Te mediated DMI one. DMI: 1 meV (10.1038/s41467-024-48799-9)
+  // double J12_nnn = -1.55;
+  // double J13_nnn = -1.29;
+  // double J24_nnn = 3.43;
+
+  double DMI_exchange_ratio = 0.00;
+    //Shreyas 
+  double J12 = 85.3134; //<-0.000,  0.000,  2.405> ( 0.0046  0.0011 -0.0000)
+  double J13 = 14.7714; // ( 2.044,  1.177, -1.201) (-0.1940  0.3483 -0.0805)
   double J11 = -0.92;
   double J33 = 2.66;
   double J12_nnn = -1.55;
   double J13_nnn = -1.29;
   double J24_nnn = 3.43;
-
-  double DMI_exchange_ratio = 0.1;
-    //Shreyas 
-  // double J12 = 85.3134; //<-0.000,  0.000,  2.405> ( 0.0046  0.0011 -0.0000)
-  // double J13 = 14.7714; // ( 2.044,  1.177, -1.201) (-0.1940  0.3483 -0.0805)
-  // double J11 = -0.92;
-  // double J33 = 2.66;
-  // double J12_nnn = -1.55;
-  // double J13_nnn = -1.29;
-  // double J24_nnn = 3.43;
 
   exchange_constants[0][0] = J11;
   exchange_constants[0][1] = J12;
@@ -343,10 +343,6 @@ int main(){
   exchange_constants[3][3] = J11;
   exchange_constants[3][4] = J12;
   exchange_constants[3][5] = J13;
-
-  exchange_constants[4][3] = J12;
-  exchange_constants[4][4] = J11;
-  exchange_constants[4][5] = J13;
 
   exchange_constants[4][3] = J12;
   exchange_constants[4][4] = J11;
@@ -383,7 +379,7 @@ int main(){
     unit_cell.at(i).cx *= cell_x_norm*unit_cell_size[0];
     unit_cell.at(i).cy *= cell_y_norm*unit_cell_size[1];
     unit_cell.at(i).cz *= cell_z_norm*unit_cell_size[2];
-    unit_cell.at(i).lc--;
+    unit_cell.at(i).lc--; //reduce by 1 for array math
   }
   // store vector of unit cells
   std::vector< std::vector < std::vector < std::vector<uc_atom_t > > > >crystal;
@@ -458,16 +454,22 @@ int main(){
                                  unit_ij[0]*dmi_ref_vector[2]-unit_ij[2]*dmi_ref_vector[0], \
                                  unit_ij[1]*dmi_ref_vector[0]-unit_ij[0]*dmi_ref_vector[1]};
 	      if(range_sq <= (3.99*3.99)) {
-          temp.Jij=exchange_constants.at(ilc).at(jlc);
-          temp.Dx = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc)*uij_cross_z[0];
-          temp.Dy = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc)*uij_cross_z[1];
-          temp.Dz = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc)*uij_cross_z[2];
+          temp.Jij = exchange_constants.at(ilc).at(jlc);
+          if(imat != jmat) {
+            temp.Dx = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc)*uij_cross_z[0];
+            temp.Dy = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc)*uij_cross_z[1];
+            temp.Dz = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc)*uij_cross_z[2];
+          } else if (2 == ilc == jlc || 5 == ilc == jlc) {
+            // temp.Dx = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc)*uij_cross_z[0];
+            // temp.Dy = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc)*uij_cross_z[1];
+            temp.Dz = DMI_exchange_ratio* exchange_constants.at(ilc).at(jlc);
+          }
         }
         else {
           temp.Jij=exchange_constants_nnn.at(ilc).at(jlc);
-          temp.Dx = DMI_exchange_ratio* exchange_constants_nnn.at(ilc).at(jlc)*uij_cross_z[0];
-          temp.Dy = DMI_exchange_ratio* exchange_constants_nnn.at(ilc).at(jlc)*uij_cross_z[1];
-          temp.Dz = DMI_exchange_ratio* exchange_constants_nnn.at(ilc).at(jlc)*uij_cross_z[2];
+          // temp.Dx = DMI_exchange_ratio* exchange_constants_nnn.at(ilc).at(jlc)*uij_cross_z[0];
+          // temp.Dy = DMI_exchange_ratio* exchange_constants_nnn.at(ilc).at(jlc)*uij_cross_z[1];
+          // temp.Dz = DMI_exchange_ratio* exchange_constants_nnn.at(ilc).at(jlc)*uij_cross_z[2];
         }
         if(temp.Jij == 0.0) continue;
         temp.Jij *= 2.0;///materials[imat].mu_s/materials[jmat].mu_s;
@@ -491,7 +493,7 @@ int main(){
   // declare outfile file stream
   std::ofstream ucf_file;
   // open it (file_name)
-  ucf_file.open ("fe3gate2-lda-Li-tetragonal-DMI-10percent.ucf");
+  ucf_file.open ("fe3gate2-lda-Li-tetragonal-ncsDMI-10percent.ucf");
 
   ucf_file << "# Unit cell size:" << std::endl;
   ucf_file << unit_cell_size[0]*cell_x_norm << "\t" << unit_cell_size[1]*cell_y_norm << "\t" << unit_cell_size[2] << std::endl;
@@ -524,8 +526,8 @@ int main(){
     ucf_file << nn_list[nn].dy << "\t"; 
     ucf_file << nn_list[nn].dz << "\t"; 
     ucf_file <<  nn_list[nn].Jij << "\t" << nn_list[nn].Dz  << "\t" << -nn_list[nn].Dy << "\t" \
-             << -nn_list[nn].Dz  << "\t" << nn_list[nn].Jij << "\t" << -nn_list[nn].Dx << "\t" \
-             << -nn_list[nn].Dy  << "\t" <<-nn_list[nn].Dx  << "\t" << -nn_list[nn].Jij << "\t" << \
+             << -nn_list[nn].Dz  << "\t" << nn_list[nn].Jij << "\t" <<  nn_list[nn].Dx << "\t" \
+             << -nn_list[nn].Dy  << "\t" <<-nn_list[nn].Dx  << "\t" <<  nn_list[nn].Jij << "\t" << \
     " #" << nn_list[nn].rij << std::endl;
 
   }
