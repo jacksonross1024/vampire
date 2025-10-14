@@ -78,6 +78,12 @@ namespace ltmp{
          ltmp::internal::output_microcell_data = true;
          return true;
       }
+      test="heat-sink-top";
+      if(word==test){
+         ltmp::internal::substrate_cool_bottom = false;
+         return true;
+      }
+
       //--------------------------------------------------------------------
       test="temperature-profile";
       if(word==test){

@@ -80,6 +80,9 @@ namespace ltmp{
 
          const double dt = ltmp::internal::dt;
 
+         const double heat_sink_bottom = substrate_cool_bottom ? 1.0 : 0.0;
+         const double heat_sink_top = substrate_cool_bottom ? 0.0 : 1.0;
+         
          for(unsigned int cell=0; cell < ltmp::internal::attenuation_array.size(); ++cell) {
 
             const double Te = root_temperature_array[2*cell+0]*root_temperature_array[2*cell+0];// + delta_temperature_array[2*cell+0];
@@ -115,10 +118,10 @@ namespace ltmp{
             // dTp_diff_prefactor += 0.5*(Tp*ltmp::internal::phonon_thermal_conductivity[0] + ltmp::internal::phonon_thermal_conductivity[ncell]);
          }
          double delta_Jp = dTp_diff*dt;
-         double phonon_temp_dep = phonon_temperature_projector_step(Tp, delta_Jp, 0 );
-
+         double phonon_temp_dep = phonon_temperature_projector_step(Tp, delta_Jp, 0, heat_sink_bottom*(Tp-equilibration_temperature)*Tcool*dt );
+         
          delta_temperature_array[2*0+0] = ( 1*dTe_diff)*dt/(ltmp::internal::electron_heat_capacity[0]*Te);
-         delta_temperature_array[2*0+1] = delta_Jp/phonon_temp_dep;
+         delta_temperature_array[2*0+1] = delta_Jp/phonon_temp_dep - heat_sink_bottom*(Tp-equilibration_temperature)*Tcool*dt;
          // std::cout << delta_temperature_array[2*0+1] << ", " << dTp_diff*dt/ltmp::internal::phonon_heat_capacity[0] << ", " << dTp_diff << std::endl;
          for(unsigned int cell=1; cell < ltmp::internal::attenuation_array.size()-1; ++cell) {
 
@@ -181,10 +184,10 @@ namespace ltmp{
             // std::cout << "cell: " << cell << ", my Tp: " << Tp << ", ncell Tp: " << nTp << ", ncell: " <<  ncell << ", dTp: " << 2.0*dTp_diff*dt/ltmp::internal::phonon_heat_capacity[cell] << std::endl;
          }
          delta_Jp = (1*dTp_diff)*dt;
-         phonon_temp_dep = phonon_temperature_projector_step(Tp, delta_Jp, cell, (Tp-equilibration_temperature)*Tcool*dt );
+         phonon_temp_dep = phonon_temperature_projector_step(Tp, delta_Jp, cell, heat_sink_top*(Tp-equilibration_temperature)*Tcool*dt );
          //if(phonon_temp_dep <= 0.0) {std::cout << phonon_temp_dep << std::endl; exit(1);}
          delta_temperature_array[2*cell+0] = (1*dTe_diff)*dt/(ltmp::internal::electron_heat_capacity[cell]*Te);
-         delta_temperature_array[2*cell+1] = delta_Jp/phonon_temp_dep - (Tp-equilibration_temperature)*Tcool*dt;
+         delta_temperature_array[2*cell+1] = delta_Jp/phonon_temp_dep - heat_sink_top*(Tp-equilibration_temperature)*Tcool*dt;
         // std::cout << " substrate cooling: " << - (Tp-equilibration_temperature)*Tcool*dt << ", deltaTp: " << - (Tp-equilibration_temperature) << ", " << Tcool << std::endl;
          // Calculate new electron and lattice temperatures
          for(unsigned int cell=0; cell < ltmp::internal::attenuation_array.size(); ++cell) {
