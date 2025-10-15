@@ -100,7 +100,7 @@ int curie_temperature(){
       sim::temperature+=sim::delta_temperature;
    }
    else sim::temperature=sim::Teq;
-
+//    program::fractional_electric_field_strength = 1.0;
 	// Perform Temperature Loop
 	while(sim::temperature<=sim::Tmax && sim::temperature>=sim::Tmin){
 
