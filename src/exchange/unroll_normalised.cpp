@@ -136,6 +136,7 @@ namespace exchange{
                   // get exchange value from 4D exchange matrix
                   std::vector<double> Jij = internal::bilinear_exchange_constants.get_exchange_values(imaterial, jmaterial, shell);
                   // set exchange field, normalising to mu_s^i
+                  
                   // future development may allow for generic inclusion of DMI parameter from exchange tensor, but not currently enabled
                   if( Jij.size() == 9 ){
                      atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
@@ -160,7 +161,7 @@ namespace exchange{
                      atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[2] * imus;
                   }
                   else if( Jij.size() == 1 ){
-                     // std::cout << "better be this one " << std::endl;
+                     // std::cout << cs::unit_cell.bilinear.interaction[i].Jij[0][0] << ", " << cs::unit_cell.bilinear.interaction[i].Jij[1][2] << ", " << cs::unit_cell.bilinear.interaction[i].Jij[2][0] << " , " << cs::unit_cell.bilinear.interaction[i].Jij[0][1] << std::endl;
                      atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
                      atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[0][1] * Jij[0] * imus;
                      atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[0][2] * Jij[0] * imus;
