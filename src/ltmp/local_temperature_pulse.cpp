@@ -70,6 +70,7 @@ namespace ltmp{
 
          const double i_pump_time = 1.0/ltmp::internal::pump_time;
          const double reduced_time = (time_from_start - 3.0*ltmp::internal::pump_time)*i_pump_time;
+         
          const double four_ln_2 = 2.77258872224; // 4 ln 2
          // 2/(delta sqrt(pi/ln 2))*0.1, delta = 10 nm, J/m^2 -> mJ/cm^2 (factor 0.1)
          const double two_delta_sqrt_pi_ln_2 = 0.9394372787;
@@ -120,42 +121,37 @@ namespace ltmp{
          delta_temperature_array[2*0+0] = ( 1*dTe_diff)*dt/(ltmp::internal::electron_heat_capacity[0]*Te);
          delta_temperature_array[2*0+1] = delta_Jp/phonon_temp_dep;
          // std::cout << delta_temperature_array[2*0+1] << ", " << dTp_diff*dt/ltmp::internal::phonon_heat_capacity[0] << ", " << dTp_diff << std::endl;
+         
+         
+         
          for(unsigned int cell=1; cell < ltmp::internal::attenuation_array.size()-1; ++cell) {
-
+            //my temperature
             Te = root_temperature_array[2*cell+0]*root_temperature_array[2*cell+0];
             Tp = root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1];
-
-            // calculate heat transfer from neighbouring cells
             dTe_diff = 0.0;
             dTp_diff = 0.0;
-            // double ddTe1 = 0.0;
-            
             int id = ltmp::internal::cell_neighbour_start_index[cell];
             int ncell;
-            double ddTe1 = root_temperature_array[2*ltmp::internal::cell_neighbour_list[id]+0]*root_temperature_array[2*ltmp::internal::cell_neighbour_list[id]+0];
-            double ddTp1 = root_temperature_array[2*ltmp::internal::cell_neighbour_list[id]+1]*root_temperature_array[2*ltmp::internal::cell_neighbour_list[id]+1];
             for( id; id < ltmp::internal::cell_neighbour_end_index[cell]; ++id) {
                ncell = ltmp::internal::cell_neighbour_list[id]; // neighbour cell id
+               //gradient of cell temperature
                double nTe = root_temperature_array[2*ncell+0]*root_temperature_array[2*ncell+0];
                double nTp = root_temperature_array[2*ncell+1]*root_temperature_array[2*ncell+1];
-
                double dx = ltmp::internal::cell_position_array[3*ncell+0] - ltmp::internal::cell_position_array[3*cell+0];
                double dy = ltmp::internal::cell_position_array[3*ncell+1] - ltmp::internal::cell_position_array[3*cell+1];
                double dz = ltmp::internal::cell_position_array[3*ncell+2] - ltmp::internal::cell_position_array[3*cell+2];
                double dr = dx*dx + dy*dy + dz*dz;
-
-               dTe_diff += (nTe - Te)*(ltmp::internal::electron_thermal_conductivity[ncell]+ltmp::internal::electron_thermal_conductivity[cell])*0.5/(dr*1e-20);
-               dTp_diff += (nTp - Tp)*(ltmp::internal::phonon_thermal_conductivity[ncell]+ltmp::internal::phonon_thermal_conductivity[cell])*0.5/(dr*1e-20);
-               
-            }
-            double ddTe2 = root_temperature_array[2*ncell+0]*root_temperature_array[2*ncell+0];
-            double ddTp2 = root_temperature_array[2*ncell+1]*root_temperature_array[2*ncell+1];
-
-            // delta_Jp = (0.5*dTp_diff+0.25*(ddTp2+ddTp1-2.0*Tp)*(ltmp::internal::phonon_thermal_conductivity[  ltmp::internal::cell_neighbour_list[ltmp::internal::cell_neighbour_start_index[cell]]]+ltmp::internal::phonon_thermal_conductivity[  ncell]+2.0*ltmp::internal::phonon_thermal_conductivity[cell]))*dt;
+               //avg. thermal gradient
+               dTe_diff += (nTe - Te)*(ltmp::internal::electron_thermal_conductivity[ncell]\
+                                      +ltmp::internal::electron_thermal_conductivity[cell])*0.5/(dr*1e-20);
+               dTp_diff += (nTp - Tp)*(ltmp::internal::phonon_thermal_conductivity[ncell]\
+                                      +ltmp::internal::phonon_thermal_conductivity[cell])*0.5/(dr*1e-20); //50 J/K/m
+            }         
+            //phonon temp projection/correction step
             delta_Jp = 0.5*dTp_diff*dt;
             phonon_temp_dep = phonon_temperature_projector_step(Tp, delta_Jp, cell );
-            // std::cout << phonon_temp_dep << ", " << (ltmp::internal::electron_phonon_coupling_constant[cell]*(Te-Tp))*dt/ phonon_temp_dep <<  std::endl; 
-            
+
+            //change in temp FOR NEXT TIMESTEP
             delta_temperature_array[2*cell+0] = ((0.5*dTe_diff))*dt/(ltmp::internal::electron_heat_capacity[cell]*Te);
             delta_temperature_array[2*cell+1] = delta_Jp/phonon_temp_dep;
             

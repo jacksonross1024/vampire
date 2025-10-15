@@ -1,0 +1,113 @@
+
+#------------------------------------------
+# System Dimensions:
+#------------------------------------------
+#dimensions:unit-cell-size = 3.54 !A
+dimensions:system-size-x = 150 !nm
+dimensions:system-size-y = 150 !nm
+dimensions:system-size-z = 2.0 !nm
+
+#------------------------------------------
+material:file= FGaT-mara-TiO2-islands.mat
+material:unit-cell-file= fe3gate2-mara-dmi.ucf
+
+#local-temperature-pulse:cell-size = 101,101,11.5 #A
+#local-temperature-pulse:penetration-depth = 100
+#local-temperature-pulse:output-microcell-data
+#local-temperature-pulse:temperature-profile = vertical
+#local-temperature-pulse:absorption-profile-file = abs.txt 
+
+# Creation attributes:
+#------------------------------------------
+#create:crystal-structure=hcp
+#create:periodic-boundaries-x
+#create:periodic-boundaries-y
+#create:periodic-boundaries-z
+#create:crystal-sublattice-materials=true
+
+dipole:solver = tensor 
+cells:macro-cell-size-x = 20
+cells:macro-cell-size-y = 20
+cells:macro-cell-size-z = 11.5
+dipole:cutoff-radius = 10
+dipole:field-update-rate = 1000
+
+spin-transport:cell-size-x = 5
+spin-transport:cell-size-y = 5
+spin-transport:cell-size-z = 10
+
+spin-transport:current-direction = +z
+spin-transport:applied-voltage = 1.0 #V
+spin-transport:environment-resistivity = 1e12 #empty cell insulator
+spin-transport:update-rate = 500000 #50 ps
+
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+
+sim:equilibration-temperature= 80
+sim:temperature= 80
+
+sim:cooling-time = 0.1 !ns #10 ps -> 10,000
+#sim:preconditioning-steps = 0
+sim:time-steps-increment= 1000 #10ps
+sim:time-step= 0.1 !fs 
+sim:equilibration-time-steps= 200000
+sim:total-time-steps= 15000000 #2 ns
+
+#sim:cooling-function = linear
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+
+#sim:program= field-cool
+sim:program= electrical-pulse
+sim:integrator= llg-midpoint
+#montecarlo:algorithm = angle
+#sim:integrator=llg-midpoint
+
+sim:electrical-pulse-rise-time = 0.1 !ns
+sim:electrical-pulse-fall-time = 0.1 !ns
+sim:electrical-pulse-time = 1 !ns
+sim:equilibration-field-strength = 0.4
+sim:applied-field-strength = 0.4 #T
+sim:spin-orbit-torque-polarization-unit-vector = 1,0,0
+
+sim:save-checkpoint = continuous
+sim:load-checkpoint = restart 
+
+#sim:two-temperature-electron-heat-capacity= 5.5e2
+#sim:two-temperature-phonon-heat-capacity= 1.8e6
+#sim:two-temperature-electron-phonon-coupling= 4.05e16
+#sim:two-temperature-heat-sink-coupling = 0.1e12 #0.1e12 
+
+#sim:laser-pulse-power= 0.3 # 0.4 J/m^2 -> 4 mJ/cm^2 
+#sim:laser-pulse-time = 85 !fs # 5e-3 J/cm^2 / 5e-13 s -> 10 gw/cm^2
+#sim:second-laser-pulse-delay-time = 0 !ps
+
+
+config:atoms = continuous
+config:atoms-output-rate = 3
+config:output-format = binary
+config:output-nodes = 2 ##same number of archer/cirrus nodes
+
+#------------------------------------------
+# data output
+#------------------------------------------
+output:output-rate = 1
+
+output:time-steps
+output:temperature
+output:fractional-electric-field-strength
+#output:material-magnetisation-length
+output:material-magnetisation
+#output:material-mean-susceptibility
+#output:spin-temperature 
+output:total-energy
+#screen:material-magnetisation
+#screen:mean-specific-heat
+
+create:spin-initialisation-random-seed = 421563240
+sim:integrator-random-seed = 421563240
+

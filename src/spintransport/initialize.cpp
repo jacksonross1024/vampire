@@ -250,7 +250,7 @@ namespace spin_transport{
 
       // Temporary arrays to accumulate intermediate values
       std::vector<uint64_t> total_num_atoms_in_cell(    st::internal::total_num_cells, 0  ); // array to store total number of magnetic and non-magnetic atoms in cell
-      std::vector<double>   total_num_magnetic_atoms(   st::internal::total_num_cells, 0  ); // array to store total number of actually magnetic atoms (ignoring nm = keep atoms) [double format for easy normalisation]
+      std::vector<uint64_t> total_num_magnetic_atoms(   st::internal::total_num_cells, 0  ); // array to store total number of actually magnetic atoms (ignoring nm = keep atoms) [double format for easy normalisation]
       std::vector<double>   total_resistivity_sq(       st::internal::total_num_cells, 0.0); // array to store total resistivity^2 calculated from constituent atoms
       std::vector<double>   total_spin_resistivity_sq(  st::internal::total_num_cells, 0.0); // array to store total spin resistivity^2 calculated from constituent atoms
 
@@ -361,7 +361,7 @@ namespace spin_transport{
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::cell_precession_torque_pj[0],   bufsize, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::cell_isaturation[0],            bufsize, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::cell_alpha[0],                  bufsize, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
-         MPI_Allreduce(MPI_IN_PLACE, &total_num_magnetic_atoms[0],                  bufsize, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &total_num_magnetic_atoms[0],                  bufsize, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &total_num_atoms_in_cell[0],                   bufsize, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &total_resistivity_sq[0],                      bufsize, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &total_spin_resistivity_sq[0],                 bufsize, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
@@ -533,7 +533,7 @@ namespace spin_transport{
       st::internal::cell_spin_torque_fields.resize(3*st::internal::total_num_cells, 0.0);
 
       if( vmpi::my_rank == 0 ){
-         std::ofstream ofile("data.txt");
+         std::ofstream ofile("resistance-data.txt");
          for(uint64_t i =0; i< st::internal::total_num_cells; i++){
             ofile << st::internal::cell_position[3*i+0] << "\t" <<
                      st::internal::cell_position[3*i+1] << "\t" <<

@@ -52,13 +52,17 @@ namespace dipole{
          dipole::cells_field_array_x[i] = -100000.0;
          dipole::cells_field_array_y[i] = -100000.0;
          dipole::cells_field_array_z[i] = -100000.0;
+
+         dipole::cells_mu0Hd_field_array_x[i] = -100000.0;//-0.5*self_demag * mx_i;
+         dipole::cells_mu0Hd_field_array_y[i] = -100000.0;//-0.5*self_demag * my_i;
+         dipole::cells_mu0Hd_field_array_z[i] = -100000.0;//-0.5*self_demag * mz_i;
        }
 
 		// loop over local cells
     	for(int lc=0;lc<dipole::internal::cells_num_local_cells;lc++){
 
          int i = cells::cell_id_array[lc];
-         int atom_num_cutoff = 5;
+         int atom_num_cutoff = 0;
          if(dipole::internal::stray_field) atom_num_cutoff = 0;
         	if(dipole::internal::cells_num_atoms_in_cell[i] > atom_num_cutoff) {
 
@@ -78,7 +82,7 @@ namespace dipole{
             dipole::cells_field_array_z[i] = 0.0; //*0.0
             // Add self demag to Hdemag --> To get only dipole-dipole contribution comment this and initialise to zero
             dipole::cells_mu0Hd_field_array_x[i] = 0.0;//-0.5*self_demag * mx_i;
-            dipole::cells_mu0Hd_field_array_y[i] =  0.0;//-0.5*self_demag * my_i;
+            dipole::cells_mu0Hd_field_array_y[i] = 0.0;//-0.5*self_demag * my_i;
             dipole::cells_mu0Hd_field_array_z[i] = 0.0;//-0.5*self_demag * mz_i;
             // std::cout << self_demag << ", " << mz_i << std::endl;
             // Loop over all other cells to calculate contribution to local cell

@@ -163,6 +163,19 @@ namespace spin_transport{
           internal::environment_resistivity = rho;
           return true;
       }
+      test="initial-spin-direction";
+        if(word==test){
+            std::vector<double> u(3);
+            u=vin::doubles_from_string(value);
+            double u_old[3] = {u[0],u[1],u[2]};
+            vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
+            if(u_old[0] != u[0] || u_old[1] != u[1] || u_old[2] != u[2]) std::cout << "unit vector normalised from <" << u_old[0] << ", " << u_old[1] << ", " << u_old[2] << "> to <" << u[0] << ", " << u[1] << ", " << u[2] << ">" << std::endl;
+            st::internal::initial_spin_direction[0]=u.at(0);
+            st::internal::initial_spin_direction[1]=u.at(1);
+            st::internal::initial_spin_direction[2]=u.at(2);
+            
+            return EXIT_SUCCESS;
+        }
       //------------------------------------------------------------------------
       test = "update-rate";
       if( word == test ){
@@ -174,6 +187,17 @@ namespace spin_transport{
           st::internal::time_counter = ur;
           return true;
       }
+      test = "output-rate";
+      if( word == test ){
+          // Set resistivity for environment (cells with no atoms)
+          uint64_t ur = vin::str_to_uint64(value);
+          vin::check_for_valid_int(ur, word, line, prefix, 1,10000000,"input","1 - 1E7 time steps");
+          st::internal::output_rate = ur;
+          // set time counter to ensure initial calculation at start
+         //  st::internal::time_counter = ur;
+          return true;
+      }
+
       // channel length
       //--------------------------------------------------------------------
       // Keyword not found

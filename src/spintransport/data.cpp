@@ -35,7 +35,7 @@ namespace spin_transport{
 
       unsigned int update_rate  = 100;  // number of timesteps between updates
       unsigned int time_counter = 100;  // number of timesteps since last update (initially set to same as update rate to ensure calculation at start)
-
+      unsigned int output_rate  =  1;
       std::vector<internal::mp_t> mp; // array of material properties
 
       // enumerated list of different current directions
@@ -45,6 +45,8 @@ namespace spin_transport{
       double cell_size_y = 10.0; // cell size along y-direction (1 nm default size)
       double cell_size_z = 10.0; // cell size along z-direction (1 nm default size)
 
+      double initial_spin_direction[3] = {0,0,1};
+      
       unsigned int num_stacks = 0; // number of stacks perpendicular to current direction
       unsigned int total_num_cells  = 0; // number of cells
 

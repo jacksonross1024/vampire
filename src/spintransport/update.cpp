@@ -63,9 +63,9 @@ void update(const unsigned int num_local_atoms,            // number of local at
    // test output of cell-level spin transport data
    //---------------------------------------------------------------------------------------------------------
  if(vmpi::my_rank == 0) {
-    if(sim::time % 500 == 0) {
-      std::ofstream ofile("spin-transfer/stdata-" + std::to_string(sim::time) + ".txt");
-   ofile << "x_i  y_i   z_i   mx_i  my_i  mz_i  Tx_i  Ty_i  Tz_i  A  R_i   R_s_i" << std::endl;
+    if(st::internal::time_counter % st::internal::output_rate == 0) {
+      std::ofstream ofile("spin-resistance/cell-data-" + std::to_string(sim::time) + ".txt");
+   ofile << "#x_i  y_i   z_i   mx_i  my_i  mz_i  Tx_i  Ty_i  Tz_i  A  R_i   R_s_i    R_T" << std::endl;
    for(int i =0; i< st::internal::total_num_cells; i++){
       const double isat = st::internal::cell_isaturation[i];
       ofile << 
@@ -85,6 +85,18 @@ void update(const unsigned int num_local_atoms,            // number of local at
                 std::endl;
    }
    ofile.close();
+
+   std::ofstream ofile1("spin-resistance/stack-data-" + std::to_string(sim::time) + ".txt");
+   ofile << "x_i  y_i  A  R_i  " << std::endl;
+   for(int i =0; i< st::internal::num_stacks; i++){
+      ofile1 << 
+               st::internal::cell_position[3*st::internal::stack_start_index[i]+0] << "\t" <<
+               st::internal::cell_position[3*st::internal::stack_start_index[i]+1] << "\t" <<
+               st::internal::stack_resistance[i] << "\t" <<
+               st::internal::stack_current[i] << "\t" <<
+                std::endl;
+   }
+   ofile1.close();
    }
  }
    return;

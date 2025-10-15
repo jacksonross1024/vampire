@@ -84,14 +84,14 @@ void update(std::vector <double>& x_spin_array, // atomic spin directions
       // std::cout << cell_i << '\t' << mx_i << '\t' << my_i << '\t' << mz_i << std::endl;
 
       // Add self-demagnetisation as mu_0/4_PI * 8PI*m_cell/3V
-      dipole::cells_field_array_x[cell_i] = self_demag * mx_i; //*0.0
-      dipole::cells_field_array_y[cell_i] = self_demag * my_i; //*0.0
-      dipole::cells_field_array_z[cell_i] = self_demag * mz_i; //*0.0
+      dipole::cells_field_array_x[cell_i] = self_demag * mx_i*0.0;
+      dipole::cells_field_array_y[cell_i] = self_demag * my_i*0.0;
+      dipole::cells_field_array_z[cell_i] = self_demag * mz_i*0.0;
 
       // Add self demag to Hdemag --> To get only dipole-dipole contribution comment this and initialise to zero
-      dipole::cells_mu0Hd_field_array_x[cell_i] = -0.5*self_demag * mx_i;
-      dipole::cells_mu0Hd_field_array_y[cell_i] = -0.5*self_demag * my_i;
-      dipole::cells_mu0Hd_field_array_z[cell_i] = -0.5*self_demag * mz_i;
+      dipole::cells_mu0Hd_field_array_x[cell_i] = -0.0;//*self_demag * mx_i;
+      dipole::cells_mu0Hd_field_array_y[cell_i] = -0.0;//*self_demag * my_i;
+      dipole::cells_mu0Hd_field_array_z[cell_i] = -0.0;//*self_demag * mz_i;
 
       // Loop over all cells
       for(int j = start; j<end;j++){
@@ -140,6 +140,9 @@ void update(std::vector <double>& x_spin_array, // atomic spin directions
       MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_field_array_x[0], dipole::internal::cells_num_cells, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_field_array_y[0], dipole::internal::cells_num_cells, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_field_array_z[0], dipole::internal::cells_num_cells, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_x[0], dipole::internal::cells_num_cells, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_y[0], dipole::internal::cells_num_cells, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &dipole::cells_mu0Hd_field_array_z[0], dipole::internal::cells_num_cells, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
    #endif
 
    // Check for cells with unrealistic fields from initialisation and zero

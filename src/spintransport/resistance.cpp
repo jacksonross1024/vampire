@@ -37,8 +37,8 @@ void calculate_magnetoresistance(){
    //---------------------------------------------------------------------------------------------------------
    #ifdef MPICF
       std::fill(st::internal::cell_spin_torque_fields.begin(), st::internal::cell_spin_torque_fields.end(), 0.0);
-      //std::fill(st::internal::stack_resistance.begin(), st::internal::stack_resistance.end(), 0.0); // needed for data output only
-      //std::fill(st::internal::stack_current.begin(),    st::internal::stack_current.end(),    0.0);
+      std::fill(st::internal::stack_resistance.begin(), st::internal::stack_resistance.end(), 0.0); // needed for data output only
+      std::fill(st::internal::stack_current.begin(),    st::internal::stack_current.end(),    0.0);
    #endif
 
    // TODO need to parallelise stack loop
@@ -54,9 +54,9 @@ void calculate_magnetoresistance(){
       double total_stack_resistance = 0.0;
 
       // load first cell reduced magnetization
-      double mix = st::internal::cell_magnetization[3*start+0] * isat;
-      double miy = st::internal::cell_magnetization[3*start+1] * isat;
-      double miz = st::internal::cell_magnetization[3*start+2] * isat;
+      double mix = st::internal::initial_spin_direction[0];// st::internal::cell_magnetization[3*start+0] * isat;
+      double miy = st::internal::initial_spin_direction[1];//st::internal::cell_magnetization[3*start+1] * isat;
+      double miz = st::internal::initial_spin_direction[2];//st::internal::cell_magnetization[3*start+2] * isat;
 
       // load first cell resistances for P and AP states
       double Rep = st::internal::cell_resistance[start];      // electron-phonon scattering resistance
@@ -65,7 +65,7 @@ void calculate_magnetoresistance(){
       //------------------------------------------------------------------------------------------------------
       // loop over all other cells in stack starting at cell start+1
       //------------------------------------------------------------------------------------------------------
-      for(unsigned int cell = start+1 ; cell < end ; cell++){
+      for(unsigned int cell = start; cell < end ; cell++){
 
          if(st::internal::magnetic[cell]){
             // calculate next cell reduced magnetization
@@ -148,7 +148,8 @@ void calculate_magnetoresistance(){
    //------------------------------------------------------------------------------------------
    #ifdef MPICF
       MPI_Allreduce(MPI_IN_PLACE, &st::internal::cell_spin_torque_fields[0], 3*st::internal::total_num_cells, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-      //MPI_Allreduce(MPI_IN_PLACE, &st::internal::stack_resistance[0],        st::internal::num_stacks,        MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &st::internal::stack_resistance[0],        st::internal::num_stacks,        MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &st::internal::stack_current[0],        st::internal::num_stacks,        MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &sum_inv_resistance,                       1,                               MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
    #endif
 
