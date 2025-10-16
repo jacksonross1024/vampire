@@ -1086,7 +1086,7 @@ void calc_interactions() {
    // exit(1);
 
       std::ofstream lattice_file(std::string(directory) + "/moire_lattice_vectors.txt");
-   #pragma omp parallel num_threads(16) reduction(+:number_of_interactions) 
+   #pragma omp parallel num_threads(4) reduction(+:number_of_interactions) 
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
