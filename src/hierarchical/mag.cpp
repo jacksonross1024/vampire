@@ -51,12 +51,13 @@ void calculate_hierarchical_magnetisation(std::vector <double>& x_spin_array, //
       ha::mag_array_z[cell_index] = 0.0;
 
    }
-
+   // std::cout << "Calculating hierarchical magnetisation..." << std::endl;
    // If discretisation is not micromagnetic then compute cell magnetizations from atoms
    if( micromagnetic::discretisation_type != 1 ){
-
+      // std::cout << "\tCalculating atomistic contributions to cell magnetisations..." << std::endl;
       //calculate total moment in each local cell looping over local atoms
-      for(int atom = 0; atom < vmpi::num_local_atoms; ++atom){
+      // std::cout << "\tNumber of local atoms: " << vmpi::num_local_atoms << std::endl;
+      for(int atom = 0; atom < (vmpi::num_core_atoms+vmpi::num_bdry_atoms); ++atom){
 
          // get cell_ID for atom
          const int cell = cells::atom_cell_id_array[atom];
@@ -70,13 +71,13 @@ void calculate_hierarchical_magnetisation(std::vector <double>& x_spin_array, //
             ha::mag_array_y[cell] += y_spin_array[atom] * mus;
             ha::mag_array_z[cell] += z_spin_array[atom] * mus;
          }
-
+         //  std::cout << ha::mag_array_z[cell] <<std::endl;
       } // End of atom loop
-
+     
    }
    // Otherwise for micromagnetic simulations use cell arrays
    else {
-
+      // std::cout << "\tUsing micromagnetic cell magnetisations..." << std::endl;
       // inverse Bohr magneton
       const double imuB = 1.0/9.27400915e-24;
 

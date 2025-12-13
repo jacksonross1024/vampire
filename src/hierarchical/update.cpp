@@ -42,12 +42,13 @@ void update(std::vector <double>& x_spin_array, // atomic spin directions
             std::vector <double>& m_spin_array, // atomic spin moment
             std::vector < bool >& magnetic){ // is magnetic
 
+                  std::cout << "\tUpdating hierarchical dipole fields..." << std::endl;
    // inverse Bohr magneton
    const double imuB = 1.0/9.27400915e-24;
 
    // update hierarchical magnetization in cells
    hierarchical::internal::calculate_hierarchical_magnetisation(x_spin_array, y_spin_array, z_spin_array, m_spin_array, magnetic);
-
+   cells::mag();
    // instantiate timer
    vutil::vtimer_t timer;
 
@@ -59,6 +60,9 @@ void update(std::vector <double>& x_spin_array, // atomic spin directions
       dipole::cells_field_array_x[i] = -100000.0;
       dipole::cells_field_array_y[i] = -100000.0;
       dipole::cells_field_array_z[i] = -100000.0;
+      dipole::cells_mu0Hd_field_array_z[i] = -100000.0;
+      dipole::cells_mu0Hd_field_array_y[i] = -100000.0;
+      dipole::cells_mu0Hd_field_array_x[i] = -100000.0;
    }
 
    // Compute dipole fields for all cells with atoms (local cells)
@@ -103,8 +107,8 @@ void update(std::vector <double>& x_spin_array, // atomic spin directions
          const double my = ha::mag_array_y[cell_j];//*imuB;
          const double mz = ha::mag_array_z[cell_j];//*imuB;
 
-         //    if (cell_i == 389)  std::cout << cell_j << '\t' << mx << '\t' << my << '\t' << mz<< "\t" << cell_i << '\t' << std::endl;
-         //if (cell_i == 0)std::cout<< cell_i << '\t' << mx_i << '\t' << my_i << '\t' << mz_i << "\t" <<  cell_j << '\t' << mx << '\t' << my << '\t' << mz <<std::endl;
+         // if (cell_i == 389)   std::cout << cell_i << '\t' << mx_i << '\t' << my_i << '\t' << mz_i << "\t" <<  cell_j << '\t' << mx << '\t' << my << '\t' << mz <<std::endl;
+         // if (cell_i == 0)     std::cout << cell_i << '\t' << mx_i << '\t' << my_i << '\t' << mz_i << "\t" <<  cell_j << '\t' << mx << '\t' << my << '\t' << mz <<std::endl;
 
          // Compute dipole field contribution using dipole tensor
          dipole::cells_field_array_x[cell_i]      +=(mx*ha::rij_tensor_xx[j] + my*ha::rij_tensor_xy[j] + mz*ha::rij_tensor_xz[j]);
@@ -115,8 +119,16 @@ void update(std::vector <double>& x_spin_array, // atomic spin directions
          dipole::cells_mu0Hd_field_array_x[cell_i] +=(mx*ha::rij_tensor_xx[j] + my*ha::rij_tensor_xy[j] + mz*ha::rij_tensor_xz[j]);
          dipole::cells_mu0Hd_field_array_y[cell_i] +=(mx*ha::rij_tensor_xy[j] + my*ha::rij_tensor_yy[j] + mz*ha::rij_tensor_yz[j]);
          dipole::cells_mu0Hd_field_array_z[cell_i] +=(mx*ha::rij_tensor_xz[j] + my*ha::rij_tensor_yz[j] + mz*ha::rij_tensor_zz[j]);
-         // std::cout << rij_tensor_xx[j] << '\t' << rij_tensor_xy[j] << '\t' << rij_tensor_xz[j] << '\t' << rij_tensor_yy[j] << '\t' << rij_tensor_yz[j] << '\t' << rij_tensor_zz[j] << '\t' <<std::endl;
 
+            // if( ha::rij_tensor_xx[j] != 0.0 || ha::rij_tensor_xy[j] != 0.0 || ha::rij_tensor_xz[j] != 0.0 ||\
+            //    ha::rij_tensor_yy[j] != 0.0 || ha::rij_tensor_yz[j] != 0.0 || ha::rij_tensor_zz[j] != 0.0 ){
+            //    std::cout << ha::rij_tensor_xx[j] << '\t' << ha::rij_tensor_xy[j] << '\t' << ha::rij_tensor_xz[j] << '\t' << ha::rij_tensor_yy[j] << '\t' << ha::rij_tensor_yz[j] << '\t' << ha::rij_tensor_zz[j] << '\t' <<std::endl;
+            // }
+
+            // if( fabs(ha::rij_tensor_xx[j]) > 1.0 || ha::rij_tensor_xy[j] != 0.0 || ha::rij_tensor_xz[j] != 0.0 ||\
+            //    ha::rij_tensor_yy[j] != 0.0 || ha::rij_tensor_yz[j] != 0.0 || ha::rij_tensor_zz[j] != 0.0 ){
+            //    std::cout << ha::rij_tensor_xx[j] << '\t' << ha::rij_tensor_xy[j] << '\t' << ha::rij_tensor_xz[j] << '\t' << ha::rij_tensor_yy[j] << '\t' << ha::rij_tensor_yz[j] << '\t' << ha::rij_tensor_zz[j] << '\t' <<std::endl;
+            // }
       }
       //   std::cout <<"D\t" << cell_i << '\t' << dipole::cells_field_array_x[cell_i] <<'\t' << dipole::cells_field_array_y[cell_i] <<'\t' << dipole::cells_field_array_z[cell_i] <<std::endl;
 
@@ -150,8 +162,16 @@ void update(std::vector <double>& x_spin_array, // atomic spin directions
       if (dipole::cells_field_array_x[i] < -1000) dipole::cells_field_array_x[i] = 0.0;
       if (dipole::cells_field_array_y[i] < -1000) dipole::cells_field_array_y[i] = 0.0;
       if (dipole::cells_field_array_z[i] < -1000) dipole::cells_field_array_z[i] = 0.0;
-      //  std::cout << i << '\t' << dipole::cells_field_array_x[i] << '\t' << dipole::cells_field_array_y[i] << '\t' << dipole::cells_field_array_z[i] <<std::endl;
-   }
+      if (dipole::cells_mu0Hd_field_array_x[i] < -1000) dipole::cells_mu0Hd_field_array_x[i] = 0.0;
+      if (dipole::cells_mu0Hd_field_array_y[i] < -1000) dipole::cells_mu0Hd_field_array_y[i] = 0.0;
+      if (dipole::cells_mu0Hd_field_array_z[i] < -1000) dipole::cells_mu0Hd_field_array_z[i] = 0.0;
+
+         // if(dipole::cells_field_array_x[i] != 0.0 ||
+         //    dipole::cells_field_array_y[i] != 0.0 ||
+         //    dipole::cells_field_array_z[i] != 0.0 ){
+         //       std::cout << i << '\t' << dipole::cells_field_array_x[i] << '\t' << dipole::cells_field_array_y[i] << '\t' << dipole::cells_field_array_z[i] <<std::endl;
+         //    }
+      }
 
    // For MPI version, only add local atoms
          #ifdef MPICF
