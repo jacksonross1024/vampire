@@ -770,7 +770,7 @@ namespace create{
       if(word==test){
          // check for type of host alloy
          double v=atof(value.c_str());
-         vin::check_for_valid_value(v, word, line, prefix, unit, "angstrom", 1.0, 500.0,"angstrom"," 0.0 - 500.0");
+         vin::check_for_valid_value(v, word, line, prefix, unit, "angstrom", 1.0, 5000.0,"angstrom"," 0.0 - 500.0");
          create::internal::mp[super_index].alloy_radius = v;
          return true;
       }

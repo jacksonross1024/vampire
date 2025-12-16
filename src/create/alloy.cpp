@@ -213,11 +213,31 @@ std::vector < seed_point_t > generate_random_seed_points(double size_x, double s
 		create::internal::grnd.seed(create::internal::grain_seed);
 		// generate random x,y,r trial point
 		seed_point_t grain;
-		grain.x = distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
-		grain.y = distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.x = 0.0; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.y = 0.0; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
 		grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
 		seeds.push_back(grain);
-		for(int i = 1; i < num_points*2; i++){
+
+		grain.x = 1.0*size_x; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.y = 0.0; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
+		seeds.push_back(grain);
+
+		grain.x = 1.0*size_x; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.y = 1.0*size_y; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
+		seeds.push_back(grain);
+
+		grain.x = 0.0; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.y = 1.0*size_y; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
+		seeds.push_back(grain);
+
+		grain.x = 0.5*size_x; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.y = 0.5*size_y; //distance*0.5*(1.0+randomness*(2.0*create::internal::grnd()-1.0));
+		grain.r = (1.0+randomness*(2.0*create::internal::grnd()-1.0))*radius;
+		seeds.push_back(grain);
+		/*for(int i = 1; i < num_points*2; i++){
 			
 			// generate random x,y,r trial point
 			seed_point_t grain;
@@ -252,7 +272,7 @@ std::vector < seed_point_t > generate_random_seed_points(double size_x, double s
 			// save non-touching grains
 			if(touching == false) seeds.push_back(grain);
 			
-		}
+		} */
 		return seeds;		
 	}
 
