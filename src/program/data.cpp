@@ -48,6 +48,11 @@ namespace program{
       bool enabled = true; // bool to enable module
 
       //------------------------------------------------------------------------
+      // Field pulse program
+      //------------------------------------------------------------------------
+      double field_pulse_time = 1.0e-12; // time constant for field pulse program (default 1 ps)
+
+      //------------------------------------------------------------------------
       // Electrial pulse program
       //------------------------------------------------------------------------
       double electrical_pulse_time      = 0.0;//1.0e-9; // length of electrical pulses (1 ns default)

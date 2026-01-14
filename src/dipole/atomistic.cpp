@@ -280,7 +280,7 @@ namespace dipole{
             bz += (3.0*ez*rdotm - mzj) * rij3;
 
          }
-
+         std::cout << "here" << std::endl;
          // save total dipole field to atomic field array
          dipole::atom_dipolar_field_array_x[atom_i] = prefactor * bx;
          dipole::atom_dipolar_field_array_y[atom_i] = prefactor * by;

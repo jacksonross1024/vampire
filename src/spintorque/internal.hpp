@@ -9,6 +9,9 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <string>
+#include <vector>
+
 //---------------------------------------------------------------------
 // Defines shared internal data structures and functions for the
 // spin-torque implementation. These functions should not be accessed
@@ -75,6 +78,8 @@ namespace st{
       extern std::vector<double> lambda_sdl; /// spin diffusion length
       extern std::vector<double> diffusion; /// spin diffusion length
       extern std::vector<double> sd_exchange; /// spin diffusion length
+      extern std::vector<double> lambda_phi; /// transverse spin dephasing length (m)
+      extern std::vector<double> chi_demag;  /// demag-driven accumulation coupling (model parameter)
       extern std::vector<double> a; /// spin diffusion length
       extern std::vector<double> b; /// spin diffusion length
 
@@ -92,6 +97,44 @@ namespace st{
       extern std::vector<bool> sot_sa_source;
       extern bool sot_check;
 
+      // 1D spin accumulation solver (with optional demag-driven source)
+      extern bool sc1d_enable;
+      extern double sc1d_fine_dz;      // fine grid spacing in Angstroms (along st::internal::stz)
+      extern int sc1d_spin_stride;     // update stride for spin accumulation (in LLG steps)
+      extern int sc1d_charge_stride;   // update stride for charge/spin current fields (in LLG steps)
+      extern double sc1d_temperature;  // user-defined temperature (K) placeholder for future thermal coupling
+
+// Laser-driven charge transient parameters (Eqs. 1–4)
+extern bool sc1d_laser_enable;
+extern double sc1d_laser_Q0;                   // absorbed laser power density at z=0 (W/m^3), before time envelope
+extern double sc1d_optical_absorption_length;  // optical absorption length d (m)
+extern double sc1d_laser_wavelength;           // laser wavelength lambda (m)
+extern double sc1d_laser_eta;                  // effective electrons excited per photon (dimensionless)
+extern double sc1d_laser_t0;                   // pulse center time (s), relative to solver step counter
+extern double sc1d_laser_fwhm;                 // pulse width (FWHM, s)
+extern double sc1d_tau_s;                      // non-equilibrium electron lifetime tau_s (s)
+
+// Persistent coarse-grid charge transient state per local stack
+extern std::vector<double> sc1d_ns_coarse;     // non-equilibrium charge density ns (C/m^3), size: local_stacks*ncz
+extern std::vector<double> sc1d_ne_coarse;     // excess charge density ne (C/m^3), size: local_stacks*ncz
+extern std::vector<double> sc1d_Jc_edge_coarse;// charge current edges Jc (A/m^2), size: local_stacks*(ncz+1)
+
+// Internal step counter for the 1D solvers (increments every LLG step when called)
+extern unsigned long sc1d_step_counter;
+
+
+      // State for demag-driven accumulation and stable-axis handling
+      extern std::vector<double> sc1d_m_prev_mag; // |m|(t-dt) per coarse microcell
+      extern std::vector<double> sc1d_m0_mag;     // initial |m| per coarse microcell
+      extern std::vector<double> sc1d_mhat_ref;   // reference axis per coarse microcell (3*ncells)
+
+      // Fine-grid state per *local* stack (rank-owned stacks only)
+      extern int sc1d_nsub;  // fine subdivisions per coarse microcell along z
+      extern int sc1d_nf;    // fine nodes per stack == nsub*num_microcells_per_stack
+      extern std::vector<int> sc1d_local_stacks;       // list of global stack IDs owned by this rank
+      extern std::vector<int> sc1d_stack_local_index;  // size num_stacks_y, maps global stack -> local index or -1
+      extern std::vector<double> sc1d_Sfine;           // 3*sc1d_nf per local stack
+
       extern std::vector<double> coeff_ast;
       extern std::vector<double> coeff_nast;     
       extern std::vector<double> cell_natom;
@@ -107,6 +150,10 @@ namespace st{
       extern std::vector<double> j_init_up_y; // spin current
       extern std::vector<double> j_init_down_y;
       extern std::vector<double> sa_final; // spin accumulation
+      extern std::vector<double> ns_final; // non-equilibrium charge density
+      extern std::vector<double> ne_final; // excess charge density
+      extern std::vector<double> jc_final; // charge current density
+      extern std::vector<double> js_final; // spin current density
       // extern std::vector<double> sa_sot_final;
       extern std::vector<double> sa_int;
       // extern std::vector<double> sa_sot_init;
@@ -123,6 +170,10 @@ namespace st{
 
       //mpi sum variables
       extern std::vector<double> sa_sum;
+      extern std::vector<double> ns_sum;
+      extern std::vector<double> ne_sum;
+      extern std::vector<double> jc_sum;
+      extern std::vector<double> js_sum;
       extern std::vector<double> j_final_up_x_sum;
       extern std::vector<double> j_final_up_y_sum;
       extern std::vector<double> j_final_down_y_sum;
@@ -143,6 +194,10 @@ namespace st{
          double lambda_sdl;   /// spin diffusion length
          double diffusion;    /// diffusion constant
          double sd_exchange;  /// sd_exchange constant
+
+         // Extensions for 1D transient spin accumulation
+         double lambda_phi;   /// transverse spin dephasing length (m)
+         double chi_demag;    /// demag->spin accumulation coupling (model parameter)
 
          //SOT
          double sot_beta_cond;    /// spin polarisation (conductivity)
@@ -188,14 +243,39 @@ namespace st{
       // default material properties
       extern st::internal::mp_t default_properties;
 
+      // -----------------------------------------------------------------------------
+      // Optional interfacial spin conductance (Robin-type coupling) support.
+      //
+      // Users may specify a *pair-wise* interface conductance G_int between material
+      // types. Units: m/s. Internally we store the corresponding resistance
+      // R_int = 1/G_int with units s/m.
+      //
+      // - r_int_pair is a dense matrix stored row-major with shape (nmat, nmat)
+      //   where nmat == st::internal::mp.size().
+      // - r_int_edge is a per-microcell z-edge resistance (coarse grid), stored for
+      //   the edge between cell and cell+1 when advancing along z within a stack.
+      //   r_int_edge[cell] is valid only when cell is not the last z-layer of a stack.
+      //
+      // Unspecified pairs default to R_int=0 (i.e. G_int = infinity -> no interface
+      // resistance / continuity).
+      extern bool interface_coupling_enabled;
+      extern std::vector<double> r_int_pair; // size nmat*nmat, units s/m
+      extern std::vector<double> r_int_edge; // size ncells, units s/m
+
+      // Ensure r_int_pair has size nmat*nmat (preserving existing values)
+      void ensure_interface_matrix_size(const std::size_t nmat);
+
       //-----------------------------------------------------------------------------
       // Shared functions used for the spin torque calculation
       //-----------------------------------------------------------------------------
       void output_microcell_data();
       void output_microcell_sa_data();
       void output_base_microcell_data();
+      void output_sc1d_data();
       void calculate_spin_accumulation();
       void calculate_sot_accumulation();
+      void initialise_spincurrents_1d();
+      void calculate_spin_accumulation_1d();
       void update_cell_magnetisation(const std::vector<double>& x_spin_array,
                                      const std::vector<double>& y_spin_array,
                                      const std::vector<double>& z_spin_array,

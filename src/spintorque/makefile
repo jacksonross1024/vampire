@@ -12,6 +12,7 @@ magnetization.o \
 matrix.o \
 output.o \
 spinaccumulation.o \
+spincurrents.o \
 
 
 # Append module objects to global tree

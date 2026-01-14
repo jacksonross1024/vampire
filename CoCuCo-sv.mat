@@ -1,0 +1,38 @@
+
+#------------------------------------------
+# Material 0: Cobalt (ferromagnet)
+#------------------------------------------
+material[0]:material-name = Co
+material[0]:damping-constant = 0.01
+material[0]:exchange-matrix[0] = 1.0e-21
+material[0]:atomic-spin-moment = 1.72 !muB
+material[0]:uniaxial-anisotropy-constant = 5.0e-24
+
+# Spin transport parameters (1D solver)
+material[0]:spin-diffusion-length = 60.0      ! Angstroms (6 nm)
+material[0]:spin-polarisation-conduction = 0.4
+material[0]:spin-polarisation-diffusion = 0.4
+material[0]:diffusion-constant = 0.001        ! m^2/s
+material[0]:sd-exchange-constant = 4.0e-20    ! J (~0.25 eV)
+material[0]:spin-dephasing-length = 10.0      ! Angstroms (1 nm)
+material[0]:demag-spin-coupling = 1.0e25      ! enable for AOS (tune to match experiment)
+
+#------------------------------------------
+# Material 1: Copper (non-magnet spacer)
+#------------------------------------------
+material[1]:material-name = Cu
+material[1]:damping-constant = 0.0
+material[1]:exchange-matrix[1] = 0.0
+material[1]:atomic-spin-moment = 0.0 !muB
+material[1]:non-magnetic
+
+# Spin transport (long diffusion length, no polarization)
+material[1]:spin-diffusion-length = 3500.0    ! Angstroms (350 nm)
+material[1]:spin-polarisation-conduction = 0.0
+material[1]:spin-polarisation-diffusion = 0.0
+material[1]:diffusion-constant = 0.01         ! m^2/s (Cu is fast diffuser)
+material[1]:sd-exchange-constant = 0.0
+material[1]:spin-dephasing-length = 3500.0    ! ~lambda_sf for NM
+
+# Interface conductance between Co and Cu
+material[0]:spin-interface-conductance[1] = 1.0e14  ! m/s (high conductance = low resistance)

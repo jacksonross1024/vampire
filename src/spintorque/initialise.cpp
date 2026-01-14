@@ -123,6 +123,8 @@ void initialise(const double system_dimensions_x,
    st::internal::lambda_sdl.resize(array_size, 0.0); /// spin diffusion length
    st::internal::diffusion.resize(array_size, 0.0); /// diffusion constant Do
    st::internal::sd_exchange.resize(array_size, 0.0); /// diffusion constant Do
+   st::internal::lambda_phi.resize(array_size, 0.0); /// transverse spin dephasing length
+   st::internal::chi_demag.resize(array_size, 0.0); /// demag-driven accumulation coupling
    st::internal::a.resize(array_size, 0.0); // a parameter for spin accumulation
    st::internal::b.resize(array_size, 0.0); // b parameter for spin accumulation
 
@@ -153,6 +155,10 @@ void initialise(const double system_dimensions_x,
    st::internal::j_init_down_y.resize(three_vec_array_size,0.0); // spin current
    st::internal::j_final_up_x.resize(three_vec_array_size,0.0); // spin current
    st::internal::sa_final.resize(three_vec_array_size, 0.0); // spin accumulation
+   st::internal::ns_final.resize(array_size, 0.0);
+   st::internal::ne_final.resize(array_size, 0.0);
+   st::internal::jc_final.resize(array_size, 0.0);
+   st::internal::js_final.resize(three_vec_array_size, 0.0);
    st::internal::sa_int.resize(three_vec_array_size,0.0); // sot sa up stack
    st::internal::spin_torque.resize(three_vec_array_size,0.0); // spin torque
    st::internal::ast.resize(three_vec_array_size,0.0); // adiabatic spin torque
@@ -160,6 +166,10 @@ void initialise(const double system_dimensions_x,
    st::internal::total_ST.resize(three_vec_array_size,0.0); // non-adiabatic spin torque
 
    st::internal::sa_sum.resize(three_vec_array_size, 0.0);
+   st::internal::ns_sum.resize(array_size, 0.0);
+   st::internal::ne_sum.resize(array_size, 0.0);
+   st::internal::jc_sum.resize(array_size, 0.0);
+   st::internal::js_sum.resize(three_vec_array_size, 0.0);
    st::internal::j_final_up_x_sum.resize(three_vec_array_size, 0.0);
    st::internal::j_final_up_y_sum.resize(three_vec_array_size, 0.0);
    st::internal::j_final_down_y_sum.resize(three_vec_array_size, 0.0);
@@ -188,7 +198,7 @@ void initialise(const double system_dimensions_x,
    //---------------------------------------------------
    // Determine which atoms belong to which stacks
    //---------------------------------------------------
-   {
+   
    int ncx = st::internal::num_x_stacks; // temporary variables for readability
    int ncy = st::internal::num_y_stacks;
    int ncz = st::internal::num_microcells_per_stack;
@@ -253,7 +263,7 @@ void initialise(const double system_dimensions_x,
       for(int i=0;i<3;i++){
          // Determine supercell coordinates for atom (rounding down)
          scc[i]=int(floor(c[i]/cs[i]));
-       //  std::cout << i << ", " << scc[i] << ", " << c[i] << ", " << cs[i] << std::endl;
+      //   std::cout << i <.< ", " << scc[i] << ", " << c[i] << ", " << cs[i] << ", " << supercell_array[scc[0]][scc[1]][scc[2]] << std::endl;
          // Always check cell in range
          if(scc[i]<0 || scc[i]>= d[i]){
             terminaltextcolor(RED);
@@ -276,14 +286,17 @@ void initialise(const double system_dimensions_x,
       }
       // If no error for range then assign atom to cell.
       st::internal::atom_st_index[atom]= supercell_array[scc[0]][scc[1]][scc[2]]; 
-      
+      // std::cout << st::internal::atom_st_index[atom] << std::endl;
    }
-   } // end of supercell assignment of atoms
+    // end of supercell assignment of atoms
 
    //-------------------------------------------------------
    // Determine microcell properties from atomic properties
    //-------------------------------------------------------
    st::internal::set_microcell_properties(atom_type_array, num_local_atoms);
+
+   // NOTE: initialise_spincurrents_1d() is called AFTER MPI stack decomposition below
+   // because it needs mpi_stack_list_y to be populated first.
 
    //-------------------------------------------------------
    // Save value of local num atoms and resize field arrays
@@ -400,6 +413,10 @@ void initialise(const double system_dimensions_x,
          
       }
    #endif 
+
+   // initialise optional 1D spin currents solver state (allocates fine-grid arrays per local stack)
+   // This MUST be called after MPI stack decomposition so mpi_stack_list_y is populated.
+   st::internal::initialise_spincurrents_1d();
    
    return;
 }
@@ -413,22 +430,36 @@ namespace internal{
       //-------------------------------------------------------
       // Determine microcell properties from atomic properties
       //-------------------------------------------------------
-      st::internal::default_properties.beta_cond =  0.99;
-      st::internal::default_properties.beta_diff = 0.99;
-      st::internal::default_properties.sa_infinity =  1.48e7;
-      st::internal::default_properties.lambda_sdl = 2000.0e-10; // m
-      st::internal::default_properties.diffusion =  0.001; //m^2/s ? 
-      st::internal::default_properties.sd_exchange = 8.010883e-25; //Joule
+      // Default material properties for 1D spin currents solver
+      // Values based on typical ferromagnetic metals (Co, Ni) from Lepadatu et al.
+      // Note: These should be overridden per-material in the .mat file!
+      st::internal::default_properties.beta_cond =  0.4;           // spin polarization (conductivity), Co~0.35-0.46
+      st::internal::default_properties.beta_diff = 0.4;            // spin polarization (diffusion), similar to beta_c
+      st::internal::default_properties.sa_infinity =  1.48e7;      // intrinsic spin accumulation
+      st::internal::default_properties.lambda_sdl = 60.0e-10;      // spin diffusion length: Co~6nm, Ni~5nm, Cu~350nm
+      st::internal::default_properties.diffusion =  0.001;         // diffusion constant D ~ 1e-3 m^2/s (typical)
+      st::internal::default_properties.sd_exchange = 4.0e-20;      // s-d exchange ~ 0.25 eV for 3d FM
+      st::internal::default_properties.lambda_phi = 10.0e-10;      // dephasing length ~ 1-5 nm in FM (transverse relaxation)
+      st::internal::default_properties.chi_demag = 0.0;            // demag coupling: disabled by default, enable for AOS studies
       
-      st::internal::default_properties.sot_beta_cond =  0.99;
-      st::internal::default_properties.sot_beta_diff = 0.99;
+      // SOT defaults (similar to STT but for SOT geometry)
+      st::internal::default_properties.sot_beta_cond =  0.4;
+      st::internal::default_properties.sot_beta_diff = 0.4;
       st::internal::default_properties.sot_sa_infinity =  1.48e7;
-      st::internal::default_properties.sot_lambda_sdl = 2000.0e-10; // m
-      st::internal::default_properties.sot_diffusion =  0.001; //m^2/s ? 
-      st::internal::default_properties.sot_sd_exchange = 8.010883e-25; //Joule
+      st::internal::default_properties.sot_lambda_sdl = 60.0e-10;    // m
+      st::internal::default_properties.sot_diffusion =  0.001;       // m^2/s
+      st::internal::default_properties.sot_sd_exchange = 4.0e-20;    // J (~0.25 eV)
      
       // Temporary array to hold number of atoms in each cell for averaging
       std::vector<double> count(st::internal::beta_cond.size(),0.0);
+
+      // Optional: per-material atom counts per microcell for pair-wise interface coupling
+      const std::size_t ncells = st::internal::beta_cond.size();
+      const std::size_t nmat   = st::internal::mp.size();
+      std::vector<double> mat_count;
+      if(st::internal::interface_coupling_enabled && nmat > 0){
+         mat_count.assign(nmat*ncells, 0.0);
+      }
 
       // loop over all atoms
       for(int atom=0;atom<num_local_atoms;atom++) {
@@ -446,6 +477,8 @@ namespace internal{
          double lambda_sdl = st::internal::mp.at(mat).lambda_sdl;
          double diffusion = st::internal::mp.at(mat).diffusion;
          double sd_exchange = st::internal::mp.at(mat).sd_exchange;
+         double lambda_phi = st::internal::mp.at(mat).lambda_phi;
+         double chi_demag  = st::internal::mp.at(mat).chi_demag;
 
          //add atomic properties to microcells
          st::internal::beta_cond.at(id) += beta_cond;
@@ -454,6 +487,8 @@ namespace internal{
          st::internal::lambda_sdl.at(id) += lambda_sdl;
          st::internal::diffusion.at(id) += diffusion;
          st::internal::sd_exchange.at(id) += sd_exchange;
+         st::internal::lambda_phi.at(id) += lambda_phi;
+         st::internal::chi_demag.at(id)  += chi_demag;
 
          //SOT
          if(st::internal::sot_sa) {
@@ -475,7 +510,15 @@ namespace internal{
             st::internal::spin_acc_sign.at(id) += (mat == 0) ? 0:((mat == 1) ? 1.0:-1.0); 
          }
 
-         count.at(id) += (mat == 0) ? 1:1;
+         count.at(id) += 1.0;
+
+         // store composition if interface coupling is enabled
+         if(!mat_count.empty()){
+            const std::size_t midx = static_cast<std::size_t>(mat);
+            if(midx < nmat){
+               mat_count[midx*ncells + static_cast<std::size_t>(id)] += 1.0;
+            }
+         }
       }
 
       // reduce microcell properties on all CPUs
@@ -487,6 +530,10 @@ namespace internal{
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::diffusion[0],   st::internal::diffusion.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::sd_exchange[0], st::internal::sd_exchange.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
           MPI_Allreduce(MPI_IN_PLACE, &count[0],                     count.size(),                     MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+
+          if(!mat_count.empty()){
+             MPI_Allreduce(MPI_IN_PLACE, &mat_count[0], mat_count.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+          }
       #endif
 
       if(st::internal::sot_sa) {
@@ -515,6 +562,8 @@ namespace internal{
             st::internal::lambda_sdl.at(cell)  /= nat;
             st::internal::diffusion.at(cell)   /= nat;
             st::internal::sd_exchange.at(cell) /= nat;
+            st::internal::lambda_phi.at(cell)  /= nat;
+            st::internal::chi_demag.at(cell)   /= nat;
             st::internal::default_properties.sa_infinity =  st::internal::sa_infinity.at(cell);
             // if(st::internal::spin_acc_sign.at(cell) != 1.0 && st::internal::spin_acc_sign.at(cell) != -1.0) std::cout << st::internal::spin_acc_sign.at(cell) << std::endl;
          } else{
@@ -524,6 +573,8 @@ namespace internal{
             st::internal::lambda_sdl.at(cell)  = st::internal::default_properties.lambda_sdl;
             st::internal::diffusion.at(cell)   = st::internal::default_properties.diffusion;
             st::internal::sd_exchange.at(cell) = st::internal::default_properties.sd_exchange;
+            st::internal::lambda_phi.at(cell)  = st::internal::default_properties.lambda_phi;
+            st::internal::chi_demag.at(cell)   = st::internal::default_properties.chi_demag;
          }
          if(st::internal::sot_sa) {
             if(nat>0.0001){
@@ -548,6 +599,36 @@ namespace internal{
             if(st::internal::spin_acc_sign.at(cell) == 0) st::internal::sot_sa_source.at(cell) = true;
          }
       }
+
+      // Precompute per-microcell z-edge interface resistances (s/m) for Robin coupling.
+      // r_int_edge[cell] corresponds to the interface between cell (z=k) and cell+1 (z=k+1)
+      // within the same (x,y) stack. For the top cell (k==ncz-1) r_int_edge is 0.
+      st::internal::r_int_edge.assign(ncells, 0.0);
+      if(st::internal::interface_coupling_enabled && !mat_count.empty() && !st::internal::r_int_pair.empty()){
+         // compute fractions on the fly and build R_int at each coarse z-edge
+         const int ncz = st::internal::num_microcells_per_stack;
+         for(std::size_t cell=0; cell<ncells; ++cell){
+            const int kz = static_cast<int>(st::internal::pos[3*cell + 2]);
+            if(kz >= ncz-1) continue; // last z-layer has no +z neighbor
+            const std::size_t cell2 = cell + 1;
+            const double n1 = count[cell];
+            const double n2 = count[cell2];
+            if(n1 < 0.5 || n2 < 0.5) continue; // skip empty cells
+
+            double r_edge = 0.0;
+            for(std::size_t a=0; a<nmat; ++a){
+               const double fa = mat_count[a*ncells + cell] / n1;
+               if(fa <= 0.0) continue;
+               for(std::size_t b=0; b<nmat; ++b){
+                  const double fb = mat_count[b*ncells + cell2] / n2;
+                  if(fb <= 0.0) continue;
+                  r_edge += fa * fb * st::internal::r_int_pair[a*nmat + b];
+               }
+            }
+            st::internal::r_int_edge[cell] = r_edge;
+         }
+      }
+
 
       // Determine a and b parameters
       const double hbar = 1.05457162e-34;

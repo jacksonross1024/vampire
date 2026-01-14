@@ -9,6 +9,8 @@
 
 // C++ standard library headers
 
+#include <cmath>
+
 // Vampire headers
 #include "spintorque.hpp"
 
@@ -108,6 +110,10 @@ namespace st{
       std::vector<double> j_init_down_y;
       std::vector<double> j_final_up_x;
       std::vector<double> sa_final; // spin accumulation
+      std::vector<double> ns_final; // non-equilibrium charge density
+      std::vector<double> ne_final; // excess charge density
+      std::vector<double> jc_final; // charge current density
+      std::vector<double> js_final; // spin current density
       // std::vector<double> sa_sot_final; // spin accumulation
       std::vector<double> sa_int; // spin accumulation
       // std::vector<double> sa_sot_init;
@@ -120,10 +126,56 @@ namespace st{
       std::vector<double> magz_mat;
       
       std::vector<double> sa_sum;
+      std::vector<double> ns_sum;
+      std::vector<double> ne_sum;
+      std::vector<double> jc_sum;
+      std::vector<double> js_sum;
       std::vector<double> j_final_up_y_sum;
       std::vector<double> j_final_down_y_sum;
       std::vector<double> j_final_up_x_sum;
       bool sot_check = false;
+
+      // 1D spin accumulation solver controls
+      bool sc1d_enable = false;
+      double sc1d_fine_dz = 1.0; // Angstroms
+      int sc1d_spin_stride = 1;
+      int sc1d_charge_stride = 1;
+      double sc1d_temperature = 300.0; // K
+
+      // Laser-driven charge transient parameters
+      bool sc1d_laser_enable = false;
+      double sc1d_laser_Q0 = 0.0;                      // W/m^3
+      double sc1d_optical_absorption_length = 15.0e-9; // m
+      double sc1d_laser_wavelength = 630.0e-9;         // m
+      double sc1d_laser_eta = 1.0;                     // dimensionless
+      double sc1d_laser_t0 = 0.5e-12;                  // s
+      double sc1d_laser_fwhm = 0.1e-12;                // s
+      double sc1d_tau_s = 200.0e-15;                   // s
+
+      // Coarse-grid charge transient state per local stack
+      std::vector<double> sc1d_ns_coarse;
+      std::vector<double> sc1d_ne_coarse;
+      std::vector<double> sc1d_Jc_edge_coarse;
+
+      unsigned long sc1d_step_counter = 0;
+
+
+      // Additional per-microcell material parameters
+      std::vector<double> lambda_phi; // m
+      std::vector<double> chi_demag;  // model parameter
+
+      // State for demag-driven accumulation and stable-axis handling
+      std::vector<double> sc1d_m_prev_mag;
+      std::vector<double> sc1d_m0_mag;
+      std::vector<double> sc1d_mhat_ref;
+
+      // Fine-grid state per local stack
+      int sc1d_nsub = 1;
+      int sc1d_nf = 0;
+      std::vector<int> sc1d_local_stacks;
+      std::vector<int> sc1d_stack_local_index;
+      std::vector<double> sc1d_Sfine;
+
       
       std::vector<double> coeff_ast_sum;
       std::vector<double> coeff_nast_sum;
@@ -139,6 +191,26 @@ namespace st{
 
       // default material properties
       st::internal::mp_t default_properties;
+
+      // interfacial (Robin) coupling
+      bool interface_coupling_enabled = false;
+      std::vector<double> r_int_pair; // size nmat*nmat, units s/m
+      std::vector<double> r_int_edge; // size ncells, units s/m
+
+      void ensure_interface_matrix_size(const std::size_t nmat){
+         const std::size_t new_sz = nmat*nmat;
+         if(r_int_pair.size() == new_sz) return;
+         // preserve existing values (row-major)
+         std::vector<double> old = r_int_pair;
+         const std::size_t old_n = (old.empty()) ? 0 : static_cast<std::size_t>(std::sqrt(static_cast<double>(old.size())));
+         r_int_pair.assign(new_sz, 0.0);
+         const std::size_t ncopy = std::min(old_n, nmat);
+         for(std::size_t i=0;i<ncopy;i++){
+            for(std::size_t j=0;j<ncopy;j++){
+               r_int_pair[i*nmat + j] = old[i*old_n + j];
+            }
+         }
+      }
 
          // stopwatch.start();
    } // end of internal namespace

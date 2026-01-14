@@ -30,23 +30,23 @@ set style line 101 pt 9 ps 1.4 lt 2 lc rgb "black" lw 2
 
 
 set terminal pngcairo font "helvetica, 14"
-chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 250 ) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
-chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 250 ) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
+chck_up(sl_x, sl_y, x,sl_z) = (sl_x != 0 ) ? (1/0) : ((x <= 0) ? (1/0):sl_z)
+chck_dw(sl_x, sl_y, x,sl_z) = (sl_x != 0 ) ? (1/0) : ((x >= 0) ? (1/0):sl_z)
 
 delta_SS(t,b,m_t,m_b, sa) = (abs(t-sa*m_t)/abs(b-sa*m_b))
 
-delta_S(m,M,sa) = (m-M*sa)/sa
+delta_S(m,M,sa) = 1e7*(m-M*sa)/sa
 
 set ytics 0,1 out nomirror
 set mytics 2
 SA = 1.48e7
-cz = 0.142
-dS = 0.75e-2
+cz = 0.2690333333
+dS = 5
 set xrange [-dS:dS]
 
 set title "<110>"
 set yrange [0:3]
-file= "spin-acc/4"
+file= "spin-acc/0"
 set output "sa-110.png"
 set ylabel "Height (nm)"
 set multiplot layout 2,1
@@ -59,7 +59,10 @@ plot file u (delta_S($7, $4, SA)):(chck_up($1,$2,$4,$3)*cz) w p ls 2 title "𝜹
 "" u (delta_S($9,$6,SA)):(chck_up($1,$2,$4,$3)*cz) w p ls 4 title "𝜹m_{z1}",\
 "" u (delta_S($7, $4, SA)):(chck_dw($1,$2,$4,$3)*cz) w p ls 5 title "𝜹m_{x2}",\
 "" u (delta_S($8,$5,SA)):(chck_dw($1,$2,$4,$3)*cz) w p ls 6 title "𝜹m_{y2}",\
-"" u (delta_S($9,$6,SA)):(chck_dw($1,$2,$4,$3)*cz) w p ls 7 title "𝜹m_{z2}"
+"" u (delta_S($9,$6,SA)):(chck_dw($1,$2,$4,$3)*cz) w p ls 7 title "𝜹m_{z2}",\
+"" u (-0.075):0 w l ls 1 dt "." notitle '𝜹m_y',\
+"" u (0.5):0 w l ls 1 dt " - " notitle "ab initio: 𝜹m_x",\
+"" u (1.75):0 w l ls 1 notitle '𝜹m_y',\
 
 unset title 
 set size 1,0.45

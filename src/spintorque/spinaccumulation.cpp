@@ -128,7 +128,7 @@ namespace st{
          const double microcell_volume = (micro_cell_size[stx] *
                                           micro_cell_size[sty] *
                                           micro_cell_thickness)*1.e-30; // m^3
-         const double atomcell_volume = 67.8e-30;
+         const double atomcell_volume = 7.666015625e-30;//1.25*M_PI*(2.507*0.5)*(2.507*0.5)*(2.507*0.5)*1e-30;//  67.8e-30; 7.687e-30 
          // loop over all 1D stacks (in parallel)
          int int_stacks;
          // #ifdef MPICH
@@ -155,7 +155,7 @@ namespace st{
             // std::cout << vmpi::my_rank << ", " << stack << std::endl;
             // determine starting cell in stack
             const int idx = stack_index_y[stack];
-           // std::cout << stack << ", " << idx << std::endl;
+         //   std::cout << stack << ", " << idx << std::endl;
             // set initial values
            if(fbc) { 
                sa_final[3*idx+0] = 0.0;
@@ -180,7 +180,7 @@ namespace st{
 
             // loop over all cells in stack after first (idx+1)
             for(int cell=idx+1; cell<idx+num_microcells_per_stack; ++cell) {
-
+               // std::cout << cell << std::endl;
                // calculate cell id's
                const int cellx = 3*cell+0;
                const int celly = 3*cell+1;
@@ -215,7 +215,7 @@ namespace st{
                   m_local.z = m_local.z/modm;
                }
                else{
-                  m_local.x = 0.0;
+                  m_local.x = -1.0;
                   m_local.y = 0.0;
                   m_local.z = 0.0;
                }
@@ -225,7 +225,7 @@ namespace st{
                   pm_local.z = pm_local.z/pmodm;
                }
                else{
-                  pm_local.x = 0.0;
+                  pm_local.x = -1.0;
                   pm_local.y = 0.0;
                   pm_local.z = 0.0;
                }
@@ -507,7 +507,7 @@ namespace st{
          const double microcell_volume = (micro_cell_size[stx] *
                                           micro_cell_size[sty] *
                                           micro_cell_thickness)*1.e-30; // m^3
-         const double atomcell_volume = 67.8e-30;// muffin tin radii 15.7624e-30; //hard code for Mn2Au atom volume for now
+         const double atomcell_volume = 7.666015625e-30;// muffin tin radii 15.7624e-30; //hard code for Mn2Au atom volume for now
 
          // need mpi run for now
          int   int_stacks = mpi_stack_list_x.size();

@@ -104,6 +104,7 @@ obj/spintorque/magnetization.o \
 obj/spintorque/matrix.o \
 obj/spintorque/output.o \
 obj/spintorque/spinaccumulation.o \
+obj/spintorque/spincurrents.o \
 obj/utility/checkpoint.o \
 obj/utility/errors.o \
 obj/utility/statistics.o \

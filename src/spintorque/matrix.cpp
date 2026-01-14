@@ -56,6 +56,7 @@ namespace st{
          const double det2 = tm.yz*tm.zy*tm.xx + tm.xz*tm.zx*tm.yy + tm.xy*tm.yx*tm.zz;
 
          const double det_T = det1-det2;
+         
          const double inv_det = 1.0/det_T;
 
          // Calculate inverse transformation matrix

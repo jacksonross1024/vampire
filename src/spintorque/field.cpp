@@ -37,11 +37,14 @@ namespace st{
 
       // calculate spin_accumulation
       if(st::internal::sot_sa) st::internal::calculate_sot_accumulation();
-      else st::internal::calculate_spin_accumulation();
+      else {
+         if(st::internal::sc1d_enable) st::internal::calculate_spin_accumulation_1d();
+         else st::internal::calculate_spin_accumulation();
+      }
 
       // determine spin torque field and copy to atomic internal field arrays
       for(int atom=0; atom<st::internal::num_local_atoms; ++atom) {
-            if(atom_type_array[atom] == 0) continue;
+            // if(atom_type_array[atom] == 0) continue;
             const int cell3 = 3*st::internal::atom_st_index[atom];
             const double i_mu_s = 1.0/(mu_s_array[atom_type_array[atom]]);
             st::internal::x_field_array[atom] = st::internal::spin_torque[cell3+0]*i_mu_s;

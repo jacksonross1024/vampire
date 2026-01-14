@@ -108,6 +108,7 @@ namespace sim{
       std::vector<double> stt_polarization_unit_vector(3,0.0); // stt spin polarization direction
 
       std::vector<double> sot_asm;
+      std::vector<double> sot_asm_2nd_order;
       std::vector<double> sot_asm2; // array of spin orbit torque asymmetry
       std::vector<double> sot_rj;  // array of adiabatic spin torques
       std::vector<double> sot_pj;  // array of non-adiabatic spin torques

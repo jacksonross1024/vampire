@@ -111,23 +111,22 @@ namespace exchange{
          return true;
       }
       //-------------------------------------------------------------------
-      test="four-spin-cutoff-1";
-      if(word==test){
-         double cr = atof(value.c_str());
-         // Test for valid range
-         vin::check_for_valid_value(cr, word, line, prefix, unit, "length", 0.0, 1e3,"input","0.0 - 1e3");
-         internal::fs_cutoff_1 = cr;
-         return true;
-      }
+      // four-spin exchange disabled - internal data structures not available
+      // test="four-spin-cutoff-1";
+      // if(word==test){
+      //    double cr = atof(value.c_str());
+      //    vin::check_for_valid_value(cr, word, line, prefix, unit, "length", 0.0, 1e3,"input","0.0 - 1e3");
+      //    internal::fs_cutoff_1 = cr;
+      //    return true;
+      // }
       //-------------------------------------------------------------------
-      test="four-spin-cutoff-2";
-      if(word==test){
-         double cr = atof(value.c_str());
-         // Test for valid range
-         vin::check_for_valid_value(cr, word, line, prefix, unit, "length", 0.0, 1e3,"input","0.0 - 1e3");
-         internal::fs_cutoff_2 = cr;
-         return true;
-      }
+      // test="four-spin-cutoff-2";
+      // if(word==test){
+      //    double cr = atof(value.c_str());
+      //    vin::check_for_valid_value(cr, word, line, prefix, unit, "length", 0.0, 1e3,"input","0.0 - 1e3");
+      //    internal::fs_cutoff_2 = cr;
+      //    return true;
+      // }
       //--------------------------------------------------------------------
       // Keyword not found
       //--------------------------------------------------------------------
@@ -574,14 +573,15 @@ namespace exchange{
          return true;
       }
       //----------------------------------------------------------
-      test = "four-spin-constant"; // short form
-      if( word == test ){
-         double fs = atof(value.c_str());
-         vin::check_for_valid_value(fs, word, line, prefix, unit, "energy", -1e-17, 1e-17,"material"," < +/- 1.0e17");
-         internal::mp[super_index].fs[sub_index] = fs;
-         internal::enable_fourspin = true; // Switch on four-spin calc
-         return true;
-      }
+      // four-spin exchange disabled - internal data structures not available
+      // test = "four-spin-constant"; // short form
+      // if( word == test ){
+      //    double fs = atof(value.c_str());
+      //    vin::check_for_valid_value(fs, word, line, prefix, unit, "energy", -1e-17, 1e-17,"material"," < +/- 1.0e17");
+      //    internal::mp[super_index].fs[sub_index] = fs;
+      //    internal::enable_fourspin = true; // Switch on four-spin calc
+      //    return true;
+      // }
 
       //--------------------------------------------------------------------
       // Keyword not found

@@ -1,0 +1,19 @@
+
+
+
+#------------------------------------------
+# 1D Spin Currents Module (input file)
+#------------------------------------------
+spin-torque:spin-currents-1d-enable
+spin-torque:micro-cell-size = 30.0 !A
+spin-torque:micro-cell-thickness = 30.0 !A
+spin-torque:spin-currents-1d-fine-dz = 1.0 !A
+
+# Optional: Laser source for charge transients
+# spin-torque:spin-currents-1d-laser-enable
+# spin-torque:spin-currents-1d-laser-Q0 = 1.0e21       ! W/m^3
+# spin-torque:spin-currents-1d-optical-absorption-length = 15.0e-9  ! m
+# spin-torque:spin-currents-1d-laser-wavelength = 800.0e-9  ! m
+# spin-torque:spin-currents-1d-laser-t0 = 0.5e-12     ! s
+# spin-torque:spin-currents-1d-laser-fwhm = 0.1e-12   ! s
+# spin-torque:spin-currents-1d-tau-s = 200.0e-15      ! s

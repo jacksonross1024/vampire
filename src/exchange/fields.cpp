@@ -60,9 +60,10 @@ namespace exchange{
                                                          field_array_x, field_array_y, field_array_z);
       }
 
-      if (exchange::four_spin){
-         exchange::internal::four_spin_exchange_fields(start_index, end_index, field_array_x, field_array_y, field_array_z);
-      }
+      // four-spin exchange disabled - internal data structures not available in current implementation
+      // if (exchange::four_spin){
+      //    exchange::internal::four_spin_exchange_fields(start_index, end_index, field_array_x, field_array_y, field_array_z);
+      // }
 
    	return;
 

@@ -150,7 +150,7 @@ namespace dipole{
                dipole::atom_dipolar_field_array_x[atom] = dipole::cells_field_array_x[cell];
                dipole::atom_dipolar_field_array_y[atom] = dipole::cells_field_array_y[cell];
                dipole::atom_dipolar_field_array_z[atom] = dipole::cells_field_array_z[cell];
-
+               std::cout << dipole::atom_dipolar_field_array_z[atom] << ",dipole update: " << dipole::cells_field_array_z[cell] << std::endl;
                // Unroll Hdemag field
                dipole::atom_mu0demag_field_array_x[atom] = dipole::cells_mu0Hd_field_array_x[cell];
                dipole::atom_mu0demag_field_array_y[atom] = dipole::cells_mu0Hd_field_array_y[cell];

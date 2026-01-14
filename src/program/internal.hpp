@@ -35,6 +35,8 @@ namespace program{
       //-------------------------------------------------------------------------
       // Internal data type definitions
       //-------------------------------------------------------------------------
+      extern double field_pulse_time; // time constant for field pulse program
+      
       extern int num_mag_cat;
 		extern int num_mag_types;
 		

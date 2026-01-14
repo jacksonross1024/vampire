@@ -28,9 +28,7 @@ std::ofstream dp_fields;
 
 namespace vout{
 
-   std::string output_file_name;
-
-
+   std::string output_file_name = "output"; // default output file name
    std::string zLogProgramName; /// Program Name
    std::string zLogHostName; /// Host Name
    bool        zLogInitialised=false; /// Initialised flag

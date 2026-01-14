@@ -26,6 +26,66 @@
 namespace st{
    namespace internal{
       //-----------------------------------------------------------------------------
+      // Function to output 1D spin currents data
+      //-----------------------------------------------------------------------------
+      void output_sc1d_data(){
+         if(!sc1d_enable) return;
+
+         #ifdef MPICF
+            MPI_Barrier(MPI_COMM_WORLD);
+         #endif
+
+         if(sim::time % ST_output_rate == 0){
+            const int size = ns_final.size(); // number of cells
+            const int size3 = js_final.size();
+
+            // determine file name
+            std::stringstream filename;
+            filename << "spin-acc/sc1d_data_" << config_file_counter;
+
+            #ifdef MPICF
+               MPI_Reduce(&ns_final[0], &ns_sum[0], size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+               MPI_Reduce(&ne_final[0], &ne_sum[0], size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+               MPI_Reduce(&jc_final[0], &jc_sum[0], size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+               MPI_Reduce(&js_final[0], &js_sum[0], size3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            #else
+               // serial copy
+               ns_sum = ns_final;
+               ne_sum = ne_final;
+               jc_sum = jc_final;
+               js_sum = js_final;
+            #endif
+
+            if(vmpi::my_rank == 0) {
+               std::ofstream ofile;
+               ofile.open(std::string(filename.str()).c_str());
+               // Header: positions in Angstroms, densities in SI, currents in A/m^2
+               ofile << "# x(A)\ty(A)\tz(A)\tns(m^-3)\tne(m^-3)\tJc(A/m^2)\tJs_x(A/m^2)\tJs_y(A/m^2)\tJs_z(A/m^2)" << std::endl;
+               
+               // Get cell size for converting indices to physical positions
+               const double cell_size_xy = micro_cell_size[0]; // Angstroms
+               const double cell_size_z  = micro_cell_thickness; // Angstroms
+               
+               for(int cell=0; cell<size; ++cell){
+                  if(cell_natom[cell] == 0) continue;
+                  
+                  // Convert cell indices to physical position (center of cell, in Angstroms)
+                  const double x_A = (pos[3*cell+0] + 0.5) * cell_size_xy;
+                  const double y_A = (pos[3*cell+1] + 0.5) * cell_size_xy;
+                  const double z_A = (pos[3*cell+2] + 0.5) * cell_size_z;
+                  
+                  ofile << std::fixed << std::setprecision(2);
+                  ofile << x_A << "\t" << y_A << "\t" << z_A << "\t";
+                  ofile << std::scientific << std::setprecision(6);
+                  ofile << ns_sum[cell] << "\t" << ne_sum[cell] << "\t" << jc_sum[cell] << "\t";
+                  ofile << js_sum[3*cell+0] << "\t" << js_sum[3*cell+1] << "\t" << js_sum[3*cell+2] << "\n";
+               }
+               ofile.close();
+            }
+         }
+      }
+
+      //-----------------------------------------------------------------------------
       // Function to output base microcell properties
       //-----------------------------------------------------------------------------
       void output_base_microcell_data(){
@@ -57,7 +117,7 @@ namespace st{
                   } else {
                         ofile << cell_stack_index[cell] << "\t" << "\t" << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2] \
                         << "\t" << beta_cond[cell] << "\t" << beta_diff[cell] << "\t" << sa_infinity[cell] << "\t" << lambda_sdl[cell] << "\t" << 
-                        st::internal::a[cell] << "\t" << st::internal::b[cell] << "\t" <<  std::endl;
+                        st::internal::a[cell] << "\t" << st::internal::b[cell] << "\t" << st::internal::cell_natom[cell] << std::endl;
                      }
                }    
 		         ofile.close();
@@ -71,10 +131,12 @@ namespace st{
       // Function to output base microcell properties
       //-----------------------------------------------------------------------------
       void output_microcell_sa_data(){
+         
+         // Output 1D spin currents data if enabled
+         output_sc1d_data();
 
-      
          // only output on root process
-         #ifdef MPICF 
+         #ifdef MPICF
            MPI_Barrier(MPI_COMM_WORLD);
 
             if(sim::time%(ST_output_rate) ==0){
@@ -227,7 +289,7 @@ namespace st{
                   //   if( (st::internal::cell_stack_index[cell]-1)%3 == 0) continue;
                   if(cell_natom[cell] == 0) continue;
                   double mag = sqrt(m[3*cell+0]*m[3*cell+0] + m[3*cell+1]*m[3*cell+1] + m[3*cell+2]*m[3*cell+2]);
-                  mag = (mag == 0.0) ? 0.0: 1/mag;
+                  mag = 1;//(mag == 0.0) ? 0.0: 1/mag;
                   ofile << pos[3*cell+0] << "\t" << pos[3*cell+1] << "\t" << pos[3*cell+2] << "\t";
                   ofile << m[3*cell+0]*mag << "\t" << m[3*cell+1]*mag << "\t" << m[3*cell+2]*mag << "\t";
                  // if(st::internal::sot_check) ofile << (sa_sum[3*cell+0]-sa_infinity[cell]*m[3*cell]*mag)/sa_infinity[cell] << "\t" << (sa_sum[3*cell+1]-sa_infinity[cell]*m[3*cell+1]*mag)/sa_infinity[cell] << "\t" << (sa_sum[3*cell+2]-m[3*cell+2]*mag)/sa_infinity[cell] << "\t";
