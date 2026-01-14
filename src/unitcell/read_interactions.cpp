@@ -25,23 +25,24 @@ namespace unitcell{
 
    void unitcell::exchange_template_t::read_interactions(
       //unit_cell_t& unit_cell,
-      const int num_atoms, // num atoms in unit cell
+      const uint64_t num_atoms, // num atoms in unit cell
       std::stringstream& ucf_file,
       std::istringstream& ucf_ss,
       std::string& filename,
-      unsigned int& line_counter,
+      uint64_t& line_counter,
       unsigned int& interaction_range
    ){
 
-		int num_interactions = 0; // assume no interactions
+		uint64_t num_interactions = 0; // assume no interactions
       std::string exchange_type_string; // string defining exchange type
-
+     
       // get number of exchange types
       ucf_ss >> num_interactions >> exchange_type_string;
 
       // process exchange string to set exchange type and normalisation
       const int num_exchange_values = unitcell::exchange_template_t::set_exchange_type(exchange_type_string);
-
+      // if(interaction_unit == "meV") exchange::internal::meV_interactions = true;
+      // std::cout << exchange_type_string << " exchange type detected." << std::endl;
       if(num_interactions>=0) interaction.resize(num_interactions);
       else {
          terminaltextcolor(RED);
@@ -58,14 +59,14 @@ namespace unitcell{
       ni.resize(num_atoms, 0);
 
       // loop over all interactions and read into class
-      for (int i=0; i<num_interactions; i++){
+      for (uint64_t i=0; i<num_interactions; i++){
 
          // Output progress counter to screen for large interaction counts
          if( (i % (num_interactions/10 + 1)) == 0 && num_interactions > 10000) std::cout << "." << std::flush;
 
          // declare safe temporaries for interaction input
-         int id=i;
-         int iatom=-1,jatom=-1; // atom pairs
+         uint64_t id=i;
+         uint64_t iatom=0,jatom=0; // atom pairs
          int dx=0, dy=0,dz=0; // relative unit cell coordinates
          // get line
          std::string int_line;
@@ -74,9 +75,11 @@ namespace unitcell{
          std::istringstream int_iss(int_line,std::istringstream::in);
          int_iss >> id >> iatom >> jatom >> dx >> dy >> dz;
          //inputfile >> id >> iatom >> jatom >> dx >> dy >> dz;
+         // iatom--;
+         // jatom--;
          line_counter++;
          // check for sane input
-         if(iatom>=0 && iatom < num_atoms) interaction[i].i=iatom;
+         if(iatom>=0 && iatom < num_atoms && i < num_interactions) interaction[i].i=iatom;
          else if(iatom>=0 && iatom >= num_atoms){
             terminaltextcolor(RED);
             std::cerr << std::endl << "Error! iatom number "<< iatom <<" for interaction id " << id << " on line " << line_counter
@@ -98,6 +101,7 @@ namespace unitcell{
            err::vexit();
          }
          if(iatom>=0 && jatom < num_atoms) interaction[i].j=jatom;
+         
          else{
             terminaltextcolor(RED);
             std::cerr << std::endl << "Error! jatom number "<< jatom <<" for interaction id " << id << " on line " << line_counter
@@ -113,11 +117,16 @@ namespace unitcell{
          interaction[i].dy=dy;
          interaction[i].dz=dz;
 
+
          // check for long range interactions
          if(static_cast<unsigned int>(abs(dx))>interaction_range) interaction_range=abs(dx);
          if(static_cast<unsigned int>(abs(dy))>interaction_range) interaction_range=abs(dy);
          if(static_cast<unsigned int>(abs(dz))>interaction_range) interaction_range=abs(dz);
 
+         // float DMx = 0.0;
+         // float DMy = 0.0;
+         // float DMz = 0.0;
+         // float J = 0.0;
          //int iatom_mat = unit_cell.atom[iatom].mat;
          //int jatom_mat = unit_cell.atom[jatom].mat;
          switch(num_exchange_values){
@@ -131,9 +140,15 @@ namespace unitcell{
                int_iss >> interaction[i].Jij[0][0] >> interaction[i].Jij[1][1] >> interaction[i].Jij[2][2];
                break;
             case 9:
+            
+               // int_iss >> J >> DMx >> DMy >> DMz;
+               // interaction[i].Jij[0][0] = J; interaction[i].Jij[0][1] = Dz; interaction[i].Jij[0][2] = -Dy;
+               // interaction[i].Jij[1][0] = -Dz; interaction[i].Jij[1][1] = J; interaction[i].Jij[1][2] = Dx;
+               // interaction[i].Jij[2][0] = Dy; interaction[i].Jij[2][1] = -Dx; interaction[i].Jij[2][2] = J;
                int_iss >> interaction[i].Jij[0][0] >> interaction[i].Jij[0][1] >> interaction[i].Jij[0][2];
                int_iss >> interaction[i].Jij[1][0] >> interaction[i].Jij[1][1] >> interaction[i].Jij[1][2];
                int_iss >> interaction[i].Jij[2][0] >> interaction[i].Jij[2][1] >> interaction[i].Jij[2][2];
+ 
                break;
             default:
                terminaltextcolor(RED);

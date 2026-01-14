@@ -239,11 +239,11 @@ namespace exchange{
 
       	//	Populate 1D neighbourlist and index arrays
       	counter = 0;
-      	for(int atom=0; atom < atoms::num_atoms; atom++){
+      	for(uint64_t atom=0; atom < atoms::num_atoms; atom++){
       		//std::cout << atom << ": ";
       		// Set start index
       		exchange::internal::biquadratic_neighbour_list_start_index[atom]=counter;
-      		for(unsigned int nn=0; nn < biquadratic[atom].size(); nn++){
+      		for(uint64_t nn=0; nn < biquadratic[atom].size(); nn++){
 
                // save atom number to 1D interaction list
       			exchange::internal::biquadratic_neighbour_list_array[counter] = biquadratic[atom][nn].nn;

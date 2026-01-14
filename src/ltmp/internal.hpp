@@ -27,22 +27,46 @@ namespace ltmp{
       extern bool output_microcell_data; /// enable verbose output data for temperature cells
       extern bool temperature_rescaling; /// enable rescaled temperature calculation
       extern bool gradient; /// enable temperature gradient
+      extern bool gradient_only;
+      
+      // array of material properties
+      struct mp_t{
+         double electron_heat_capacity = 0.0;    /// spin polarisation (conductivity)
+         double phonon_heat_capacity = 0.0;    /// spin polarisation (diffusion)
+         double electron_phonon_coupling_constant = 0.0;  /// intrinsic spin accumulation
+         double electron_thermal_conductivity = 0.0;   /// spin diffusion length
+         double phonon_thermal_conductivity = 0.0;    /// diffusion constant
+         double einstein_temp = 0.0;
+      
+      };
 
-      extern double micro_cell_size; /// lateral size of local temperature microcells (A)
+      extern std::vector<ltmp::internal::mp_t> mp;
+
+      
+
+      extern std::vector<double> micro_cell_size; /// lateral size of local temperature microcells (A)
       extern double laser_spot_size; /// laser spot size for lateral profile (A)
       extern double penetration_depth; /// vertical laser penetration depth
-      extern double thermal_conductivity; //J/s/m/K
+      extern std::vector<double> phonon_thermal_conductivity; //J/s/m/K
+      extern std::vector<double> electron_thermal_conductivity; //J/s/m/K
+      extern std::vector<double> electron_phonon_coupling_constant; //J/s/m^3/K
+      extern std::vector<double> phonon_heat_capacity; //J/m^3/K
+      extern std::vector<double> electron_heat_capacity; //J/m^3/K 
+      extern std::vector<double> Einstein_temperature;
 
+      extern std::vector< double> Debeye_phonon_constant;
       extern double pump_power; // laser pump power
       extern double pump_time; // laser pump time (s)
       extern double TTG;  // electron-lattice coupling constant
       extern double TTCe; // electron heat capacity (T=0)
       extern double TTCl; // lattice heat capcity
       extern double dt; // time step
+      // extern double TTTeq;
+      extern double Tcool;
 
       extern double minimum_temperature; // Minimum temperature in temperature gradient
       extern double maximum_temperature; // Maximum temperature in temperature gradient
-
+      extern double equilibration_temperature;
       extern int num_local_atoms; /// number of local atoms (ignores halo atoms in parallel simulation)
       extern int num_cells; /// number of temperature cells
       extern int my_first_cell; /// first cell on my CPU
@@ -73,7 +97,7 @@ namespace ltmp{
       void open_lateral_temperature_profile_file();
       void write_cell_temperature_data();
       void calculate_local_temperature_pulse(const double time_from_start);
-      void calculate_local_temperature_gradient();
+      void calculate_local_temperature_gradient(const double time_from_start);
 
    } // end of iternal namespace
 } // end of st namespace

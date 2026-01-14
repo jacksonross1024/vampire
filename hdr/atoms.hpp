@@ -92,6 +92,7 @@ namespace atoms
 	extern std::vector <int> neighbour_list_end_index;
 	extern std::vector <int> type_array;
 	extern std::vector <int> category_array;
+	extern std::vector <int> sublayer_array;
 	extern std::vector <int> grain_array;
 	extern std::vector <int> cell_array;
 
@@ -106,6 +107,9 @@ namespace atoms
 	extern std::vector <double> x_total_external_field_array;	/// Total external fields
 	extern std::vector <double> y_total_external_field_array;	/// Total external fields
 	extern std::vector <double> z_total_external_field_array;	/// Total external fields
+	extern std::vector <double> thermal_x_field; //thermal field values 
+    extern std::vector <double> thermal_y_field; //thermal field values
+    extern std::vector <double> thermal_z_field; //thermal field values
 
 	extern std::vector <zval_t> i_exchange_list;
 	extern std::vector <zvec_t> v_exchange_list;

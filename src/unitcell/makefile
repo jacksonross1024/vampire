@@ -17,8 +17,11 @@ shells.o \
 sc.o \
 bcc.o \
 bcc110.o \
+cccro.o \
 fcc.o \
 fcc111.o \
+fe3gete2.o \
+fe5gete2.o \
 file.o \
 hcp.o \
 heusler.o \
@@ -27,11 +30,14 @@ honeycomb-a.o \
 honeycomb-b.o \
 kagome.o \
 mn2au.o \
+mn3sn.o \
 nd2fe14b.o\
 rocksalt.o \
+rutile.o \
 smfe12n.o\
 spinel.o \
 spinel-layered.o \
+trigonal.o \
 verify.o
 
 # Append module objects to global tree

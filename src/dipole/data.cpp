@@ -58,6 +58,7 @@ namespace dipole{
    double atomistic_cutoff = 20.0; //distance in A;
    bool atomsitic_tensor_enabled = true;
 
+   
    namespace internal{
 
       std::vector < int > cell_dx;
@@ -78,6 +79,8 @@ namespace dipole{
 
       const double prefactor=1.0e+23; // 1e-7/1e30
 
+      bool stray_field = false;
+      
       std::vector <std::vector < double > > rij_tensor_xx;
       std::vector <std::vector < double > > rij_tensor_xy;
       std::vector <std::vector < double > > rij_tensor_xz;

@@ -62,7 +62,6 @@
 #include "random.hpp"
 #include "sim.hpp"
 #include "spintorque.hpp"
-#include "../spintorque/internal.hpp"
 #include "stats.hpp"
 #include "stopwatch.hpp"
 #include "vio.hpp"
@@ -93,12 +92,21 @@ namespace sim{
 	double Teq=300.0;
 	double temperature=300.0;
 	double delta_temperature=10.0;
-	double H_applied=0.0;
-	double H_vec[3]={0.0,0.0,1.0};
+	double H_applied= 0;
+	double H_vec[3] = {0.0,0.0,1.0};
+	
+	double applied_H_field=0.0;
+	double applied_H_vector[3]={0.0,0.0,1.0};
+	double actual_H_field=0.0;
+	double actual_H_vector[3]={0.0,0.0,1.0};
+	double equilibrium_H_field=0.0;
+	double equilibrium_H_vector[3]={0.0,0.0,1.0};
+
 	double Hmin=-1.0; // T
 	double Hmax=+1.0; // T
 	double Hinc= 0.1; // T
 	double Heq=0.0;
+	double H_actual = 0.0;
 	double applied_field_angle_phi=0.0;
 	double applied_field_angle_theta=0.0;
 	bool applied_field_set_by_angle=false;
@@ -141,12 +149,12 @@ namespace sim{
 	double cooling_time=100.0e-12; ///seconds
 	int cooling_function_flag=0; /// 0 = exp, 1 = gaussian
 	pump_functions_t pump_function=two_temperature;
-	double pump_power=20.0; // mJ/cm^2;
-	double pump_time=50.0e-15;
-	double double_pump_power=20.0; // mJ/cm^2;
-	double double_pump_Tmax=500.0;
-	double double_pump_time=50.0e-15;
-	double double_pump_delay=10.0e-12;
+	double pump_power=0.0; // J/m^2;
+	double pump_time=0.0; //50.0e-15;
+	double double_pump_power=0.0;//20.0; // mJ/cm^2;
+	double double_pump_Tmax=0.0;//500.0;
+	double double_pump_time=0.0;//50.0e-15;
+	double double_pump_delay=0.0;//10.0e-12;
 	double HeatSinkCouplingConstant=0.0; ///1.1e12 ~ sensible value
 	double TTCe = 222.0; ///electron specific heat (gamma)
 	double TTCl = 2.3E06; ///phonon specific heat
@@ -215,6 +223,12 @@ int run(){
    // now seed generator
 	mtrandom::grnd.seed(vmpi::parallel_rng_seed(mtrandom::integration_seed));
 
+   // Check for load spin configurations from checkpoint
+   if(sim::load_checkpoint_flag) load_checkpoint();
+
+	// For continuous checkpoints inform user about I/O
+	if(sim::save_checkpoint_continuous_flag) zlog << zTs() << "Continuously writing checkpoints to disk throughout simulation." << std::endl;
+
    {
       // Set up statistical data sets
       #ifdef MPICF
@@ -230,16 +244,9 @@ int run(){
       stats::initialize(num_atoms_for_statistics, mp::num_materials, grains::num_grains, atoms::m_spin_array, atoms::type_array, atoms::grain_array, atoms::category_array, non_magnetic_materials_array);
    }
 
-	// Check for load spin configurations from checkpoint
-   if(sim::load_checkpoint_flag) load_checkpoint();
-
-   // Precalculate initial statistics and then reset averages if not continuing a previous simulation
-   // RE technically this double counts the last data point in the statistics, need to implement a reset_counter to fix.
+   // Precalculate initial statistics and then reset averages
    stats::update();
-   if(!load_checkpoint_continue_flag) stats::reset();
-
-   // For continuous checkpoints inform user about I/O
-   if(sim::save_checkpoint_continuous_flag) zlog << zTs() << "Continuously writing checkpoints to disk throughout simulation." << std::endl;
+	stats::reset();
 
    // Initialize GPU acceleration if enabled
    if(gpu::acceleration) gpu::initialize();
@@ -293,6 +300,9 @@ int run(){
                      atoms::num_atoms
    );
 
+
+
+
 	if(environment::enabled) environment::initialize(cs::system_dimensions[0],cs::system_dimensions[1],cs::system_dimensions[2]);
 
    // For MPI version, calculate initialisation time
@@ -309,8 +319,11 @@ int run(){
    stopwatch.start();
 
    // Precondition spins at equilibration temperature
-   montecarlo::monte_carlo_preconditioning();
+   if(program::program == 52) {} //delay preconditioning for Domain wall stats
+   else montecarlo::monte_carlo_preconditioning();
 
+	if(stats::calculate_spinwaves) stats::spinwaves.reset();
+	
    // For MPI version, calculate initialisation time
    if(vmpi::my_rank==0){
 		std::cout << "Starting Simulation with Program ";
@@ -471,13 +484,12 @@ int run(){
 	  		program::electrical_pulse();
 	  		break;
 		case 18:
-	  		if(vmpi::my_rank==0){
-	    		std::cout << "field-pulse..." << std::endl;
-	    		zlog << "field-pulse..." << std::endl;
-	  		}
-	  		program::field_pulse();
-	  		break;
-
+			if(vmpi::my_rank==0){
+				std::cout << "timestep scaling..." << std::endl;
+				zlog << "timestep scaling..." << std::endl;
+			}
+			program::timestep_scaling();
+			break;
 		case 50:
 			if(vmpi::my_rank==0){
 				std::cout << "Diagnostic-Boltzmann..." << std::endl;
@@ -517,6 +529,14 @@ int run(){
 			program::mm_A_calculation();
 			break;
 		//------------------------------------------------------------------------
+		case 55:
+		 	if(vmpi::my_rank==0){
+				std::cout << "Domain walls..." << std::endl;
+				zlog << "Domain walls..." << std::endl;
+			}
+			program::domain_wall();
+			break;
+		//------------------------------------------------------------------------
 		case 70:
 			if(vmpi::my_rank==0){
 				std::cout << "field-sweep..." << std::endl;
@@ -548,7 +568,6 @@ int run(){
 	}
 
    std::cout <<     "Simulation run time [s]: " << stopwatch.elapsed_seconds() << std::endl;
-   std::cout << 	"spin acc  component [s]: " << st::spin_acc_time << std::endl;
    zlog << zTs() << "Simulation run time [s]: " << stopwatch.elapsed_seconds() << std::endl;
 
    //------------------------------------------------
@@ -581,6 +600,7 @@ int run(){
 
    // De-initialize GPU
    if(gpu::acceleration) gpu::finalize();
+	if(stats::calculate_spinwaves) stats::spinwaves.finalize();
 
    // optionally save checkpoint file
    if(sim::save_checkpoint_flag && !sim::save_checkpoint_continuous_flag) save_checkpoint();
@@ -661,7 +681,7 @@ void integrate_serial(uint64_t n_steps){
    else{
 
    // Case statement to call integrator
-   switch(sim::integrator){
+   switch(sim::integrator) {
 
       case 0: // LLG Heun
          for(uint64_t ti=0;ti<n_steps;ti++){
@@ -721,7 +741,13 @@ void integrate_serial(uint64_t n_steps){
 				sim::internal::increment_time();
 			}
 			break;
-
+		case 6: //suzuki-trotter-decomposition for spin
+		for(uint64_t ti=0;ti<n_steps;ti++){
+			sim::STDspin();
+			// increment time
+			sim::internal::increment_time();
+		}
+		break;
 		default:{
 			std::cerr << "Unknown integrator type "<< sim::integrator << " requested, exiting" << std::endl;
          err::vexit();
@@ -829,6 +855,22 @@ int integrate_mpi(uint64_t n_steps){
 				std::cerr << "Error - Constrained Monte Carlo Integrator unavailable for parallel execution" << std::endl;
 				terminaltextcolor(WHITE);
 				err::vexit();
+				// increment time
+				sim::internal::increment_time();
+			}
+			break;
+			case 6: // Suzuki Trotter decomposition
+
+			for(uint64_t ti=0;ti<n_steps;ti++){
+				#ifdef MPICF
+               if(sim::STDspin_parallel_initialized == false) {
+                  sim::STDspin_parallel_init(atoms::x_coord_array, atoms::y_coord_array, atoms::z_coord_array,
+                                               vmpi::min_dimensions, vmpi::max_dimensions);
+               }
+               sim::STDspin_step_parallel(atoms::x_spin_array, atoms::y_spin_array, atoms::z_spin_array,
+                                            atoms::type_array);
+            #endif
+
 				// increment time
 				sim::internal::increment_time();
 			}

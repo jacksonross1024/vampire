@@ -120,7 +120,15 @@ namespace anisotropy{
          internal::enable_uniaxial_second_order = true; // Switch on second order tensor calculation for all spins
          return true;
       }
-
+      test  = "second-order-uniaxial-inplane-anisotropy-constant"; // new form (preferred)
+      test2 = "uniaxial-inplane-anisotropy-constant"; // legacy form (deprecated but probably never obsoleted)
+      if( (word == test) || (word == test2) ){
+         double ku2_para = atof(value.c_str());
+         vin::check_for_valid_value(ku2_para, word, line, prefix, unit, "energy", -1e-17, 1e-17,"material"," < +/- 1.0e-17 J/atom");
+         internal::mp[super_index].ku2_para = ku2_para;
+         internal::enable_uniaxial_inplane_second_order = true; // Switch on second order tensor calculation for all spins
+         return true;
+      }
     //  Triaxial anisotropy in second and fourth order
       test="second-order-triaxial-anisotropy-vector";
       if(word == test){
@@ -267,7 +275,7 @@ namespace anisotropy{
       test = "fourth-order-uniaxial-anisotropy-constant";
       if( word == test ){
          double ku4 = atof(value.c_str());
-         vin::check_for_valid_value(ku4, word, line, prefix, unit, "energy", -1e-17, 1e-17,"material"," < +/- 1.0e-17 J/atom");
+         vin::check_for_valid_value(ku4, word, line, prefix, unit, "energy", -1e-10, 1e-10,"material"," < +/- 1.0e-27 J/atom");
          internal::mp[super_index].ku4 = ku4;
          internal::enable_uniaxial_fourth_order = true; // Switch on second order tensor calculation for all spins (from spherical harmonics)
          return true;
@@ -452,7 +460,7 @@ namespace anisotropy{
       if(word == test){
          double k4r = atof(value.c_str());
          // Test for valid range
-         vin::check_for_valid_value(k4r, word, line, prefix, unit, "energy", -1e-17, 1e-17,"material"," < +/- 1.0e-17 J/atom");
+         vin::check_for_valid_value(k4r, word, line, prefix, unit, "energy", -1e-10, 1e-10,"material"," < +/- 1.0e-17 J/atom");
          internal::mp[super_index].k4r = k4r;
          internal::enable_fourth_order_rotational = true;
          return true;

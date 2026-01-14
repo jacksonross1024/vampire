@@ -66,7 +66,7 @@ namespace anisotropy{
          if(!internal::enable_biaxial_fourth_order_simple) return;
 
          // Loop over all atoms between start and end index
-         for(int atom = start_index; atom < end_index; atom++){
+         for(int atom = start_index; atom < end_index; atom++) {
 
             // get atom material
             const int mat = atom_material_array[atom];
@@ -83,6 +83,14 @@ namespace anisotropy{
             const double u2y = internal::mp[mat].u2_vector[1];
             const double u2z = internal::mp[mat].u2_vector[2];
 
+            const double u3x = -1.0*internal::mp[mat].u1_vector[0];
+            const double u3y = -1.0*internal::mp[mat].u1_vector[1];
+            const double u3z = -1.0*internal::mp[mat].u1_vector[2];
+
+            const double u4x = -1.0*internal::mp[mat].u2_vector[0];
+            const double u4y = -1.0*internal::mp[mat].u2_vector[1];
+            const double u4z = -1.0*internal::mp[mat].u2_vector[2];
+
             // get reduced anisotropy constant ku/mu_s
             const double ku4 = internal::ku4[mat];
 
@@ -92,12 +100,21 @@ namespace anisotropy{
             const double sdotu2 = (sx*u2x + sy*u2y + sz*u2z);
             const double sdotu23 = sdotu2*sdotu2*sdotu2;
 
+            const double sdotu3 = (sx*u3x + sy*u3y + sz*u3z);
+            const double sdotu33 = sdotu3*sdotu3*sdotu3;
+
+            const double sdotu4 = (sx*u4x + sy*u4y + sz*u4z);
+            const double sdotu43 = sdotu4*sdotu4*sdotu4;
+
             // calculate field (double negative from scale factor and negative derivative)
 
-            field_array_x[atom] += (2.0*ku4)*(u1x*sdotu13+u2x*sdotu23);
-            field_array_y[atom] += (2.0*ku4)*(u1y*sdotu13+u2y*sdotu23);
-            field_array_z[atom] += (2.0*ku4)*(u1z*sdotu13+u2z*sdotu23);
+            field_array_x[atom] += (ku4)*(u1x*sdotu13+u2x*sdotu23+u3x*sdotu33+u4x*sdotu43);
+            field_array_y[atom] += (ku4)*(u1y*sdotu13+u2y*sdotu23+u3y*sdotu33+u4y*sdotu43);
+            field_array_z[atom] += (ku4)*(u1z*sdotu13+u2z*sdotu23+u3z*sdotu33+u4z*sdotu43);
 
+            // field_array_x[atom] += (ku4)*(sx*sx*sx + 4.0*sy*sy*sx);
+            // field_array_y[atom] += (2*ku4)*(u1y*sdotu13+u2y*sdotu23+u3y*sdotu33+u4y*sdotu43);
+            // field_array_z[atom] += (2*ku4)*(u1z*sdotu13+u2z*sdotu23+u3z*sdotu33+u4z*sdotu43);
          }
 
          return;

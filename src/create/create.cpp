@@ -109,7 +109,7 @@ int create(){
    const double ucx = unit_cell.dimensions[0];
    const double ucy = unit_cell.dimensions[1];
    const double ucz = unit_cell.dimensions[2];
-   const unsigned int na = unit_cell.atom.size();
+   const uint64_t na = unit_cell.atom.size();
 
    // Calculate number of global and local unit cells required (rounding up)
    // Must be set before rounding up system dimensions for periodic boundary conditions
@@ -146,8 +146,28 @@ int create(){
    neighbours::list_t bilinear; // bilinear exchange list
    neighbours::list_t biquadratic; // biquadratic exchange list
 
-   // generate bilinear exchange list
-   bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
+   	// if(vmpi::my_rank % 3 == 0) {
+	// 	std::cout << "generating exchange list for rank " << vmpi::my_rank << std::endl;
+
+		bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
+	// }
+	//    vmpi::barrier();
+
+// 	if(vmpi::my_rank % 3 == 1) {
+// 		std::cout << "generating exchange list for rank " << vmpi::my_rank << std::endl;
+// 		bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
+//    // generate bilinear exchange list
+// 	}
+// 	vmpi::barrier();
+
+// 	if(vmpi::my_rank % 3 == 2) {
+// 		std::cout << "generating exchange list for rank " << vmpi::my_rank << std::endl;
+// 		bilinear.generate(catom_array, cs::unit_cell.bilinear, na, ucx, ucy, ucz);
+//    // generate bilinear exchange list
+// 	}
+#ifdef MPICF
+	vmpi::barrier();
+#endif 
 
    // optionally create a biquadratic neighbour list
    if(exchange::biquadratic){

@@ -114,6 +114,9 @@ void torque_statistic_t::calculate_torque(const std::vector<double>& sx, // spin
                                           const std::vector<double>& bxe, // external fields (tesla)
                                           const std::vector<double>& bye,
                                           const std::vector<double>& bze,
+                                          const std::vector<double>& txe, // thermal fields (tesla)
+                                          const std::vector<double>& tye,
+                                          const std::vector<double>& tze,
                                           const std::vector<double>& mm){
 
    // initialise torques to zero [.end() seems to be optimised away by the compiler...]
@@ -136,7 +139,7 @@ void torque_statistic_t::calculate_torque(const std::vector<double>& sx, // spin
 
 		// Store local spin in Sand local field in H
 		const double S[3] = {sx[atom]*mu,         sy[atom]*mu,         sz[atom]*mu        };
-		const double B[3] = {bxs[atom]+bxe[atom], bys[atom]+bye[atom], bzs[atom]+bze[atom]};
+		const double B[3] = {bxs[atom]+bxe[atom]+txe[atom], bys[atom]+bye[atom]+tye[atom], bzs[atom]+bze[atom]+tze[atom]};
 
 		torque[3*mask_id + 0] += S[1]*B[2]-S[2]*B[1];
 		torque[3*mask_id + 1] += S[2]*B[0]-S[0]*B[2];

@@ -77,9 +77,9 @@ void mm_A_calculation(){
             break;
             case exchange::tensorial:
 
-                  Jx = atoms::t_exchange_list[nn].Jij[0][0]*mp::material[imaterial].mu_s_SI;
-                  Jy = atoms::t_exchange_list[nn].Jij[1][1]*mp::material[imaterial].mu_s_SI;
-                  Jz = atoms::t_exchange_list[nn].Jij[2][2]*mp::material[imaterial].mu_s_SI;
+                  Jx = atoms::t_exchange_list[nn].Jij[0]*mp::material[imaterial].mu_s_SI;
+                  Jy = atoms::t_exchange_list[nn].Jij[4]*mp::material[imaterial].mu_s_SI;
+                  Jz = atoms::t_exchange_list[nn].Jij[8]*mp::material[imaterial].mu_s_SI;
              break;
          }
 

@@ -1,0 +1,70 @@
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+#dimensions:unit-cell-size = 2.507 !A
+
+dimensions:system-size-x = 150.0 !nm
+dimensions:system-size-y = 150.0 !nm
+dimensions:system-size-z = 2.5 !nm
+
+#create:periodic-boundaries-x
+#create:periodic-boundaries-y
+#create:periodic-boundaries-z
+#dipole:solver=tensor
+#dipole:field-update-rate=10
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:unit-cell-file = CrI3.ucf
+material:file = CrI3.mat
+#create:crystal-sublattice-materials=true
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+
+sim:loop-time-steps= 100000
+sim:equilibration-temperature=4.2
+sim:temperature = 4.2
+sim:equilibration-time-steps = 0
+sim:time-steps-increment = 10000
+sim:time-step= 0.1 !fs
+
+sim:temperature-increment = 4.2
+sim:minimum-temperature=4.2
+sim:maximum-temperature=5
+
+sim:applied-field-strength=0.51 !T
+
+#sim:applied-field-unit-vector=0,0,1
+#sim:cooling-time=100!ps
+#sim:cooling-function = gaussian 
+
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program = curie-temperature #time variable magnetic field; SOT; STT
+sim:integrator = monte-carlo
+
+#sim:save-checkpoint = continuous 
+#------------------------------------------
+# data output
+#------------------------------------------
+config:atoms
+config:atoms-output-rate=1
+
+output:output-rate=1
+output:time-steps
+output:temperature
+output:magnetisation-length
+output:material-magnetisation
+output:mean-susceptibility
+output:mean-total-torque
+output:total-energy 
+

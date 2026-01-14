@@ -57,7 +57,7 @@ namespace unitcell{
       extern std::vector <std::vector <exchange_parameters_t> > material_exchange_parameters; // holds exponential exchange parameters for material-wise exchange
       extern std::vector <std::vector <double> > nn_cutoff_range; // holds nearest neighbour cut-off ranges between different unit cell categories.
       extern std::vector <std::vector <double> > interaction_cutoff_range; // holds interaction cut-off ranges.
-
+      extern std::vector <std::vector <double> > RKKYf;
       extern bool sublattice_materials; // flag to enable identification of atoms in simple crystals by material
 
       //-------------------------------------------------------------------------
@@ -66,8 +66,11 @@ namespace unitcell{
       void build_simple_cubic(unitcell::unit_cell_t& unit_cell);
       void build_body_centred_cubic(unitcell::unit_cell_t& unit_cell);
       void build_body_centred_cubic_110(unitcell::unit_cell_t& unit_cell);
+      void build_cccro(unitcell::unit_cell_t& unit_cell);
       void build_face_centred_cubic(unitcell::unit_cell_t& unit_cell);
       void build_face_centred_cubic_111(unitcell::unit_cell_t& unit_cell);
+      void build_fe3gete2(unitcell::unit_cell_t& unit_cell);
+      void build_fe5gete2(unitcell::unit_cell_t& unit_cell);
       void build_hexagonal_close_packed(unitcell::unit_cell_t& unit_cell);
       void build_honeycomb(unitcell::unit_cell_t& unit_cell);
       void build_honeycomb_alpha(unitcell::unit_cell_t& unit_cell);
@@ -75,11 +78,14 @@ namespace unitcell{
       void build_kagome(unitcell::unit_cell_t& unit_cell);
       void build_heusler(unitcell::unit_cell_t& unit_cell);
       void build_mn2au(unitcell::unit_cell_t& unit_cell);
+      void build_mn3sn(unitcell::unit_cell_t& unit_cell);
       void build_NdFeB(unitcell::unit_cell_t& unit_cell);
       void build_rock_salt(unitcell::unit_cell_t& unit_cell);
+      void build_rutile(unitcell::unit_cell_t& unit_cell);
       void build_SmFeN(unitcell::unit_cell_t& unit_cell);
       void build_spinel(unitcell::unit_cell_t& unit_cell);
       void build_spinel_layered(unitcell::unit_cell_t& unit_cell);
+      void build_trigonal(unitcell::unit_cell_t& unit_cell);
 
       void calculate_interactions(unit_cell_t& unit_cell);
       void read_unit_cell(unit_cell_t & unit_cell, std::string filename);

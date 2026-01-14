@@ -92,7 +92,7 @@ namespace ltmp{
    // Function to check local temperature pulse is enabled
    //-----------------------------------------------------------------------------
    bool is_enabled();
-
+   extern bool equilibration_step; 
    //-----------------------------------------------------------------------------
    // Function to initialise localised temperature pulse calculation
    //-----------------------------------------------------------------------------
@@ -132,6 +132,7 @@ namespace ltmp{
    // Function to process input file parameters for ltmp settings
    //-----------------------------------------------------------------------------
    bool match_input_parameter(std::string const key, std::string const word, std::string const value, std::string const unit, int const line);
+   bool match_material_parameter(std::string const word, std::string const value, std::string const unit, int const line, int const super_index);
 
 } // end of ltmp namespace
 

@@ -35,7 +35,7 @@ namespace program{
       //-------------------------------------------------------------------------
       // Internal data type definitions
       //-------------------------------------------------------------------------
-       extern int num_mag_cat;
+      extern int num_mag_cat;
 		extern int num_mag_types;
 		
 		extern int num_dw_cells_x;
@@ -74,6 +74,7 @@ namespace program{
       //-------------------------------------------------------------------------
       // Internal shared variables
       //-------------------------------------------------------------------------
+
       extern bool enabled; // bool to enable module
 
       //------------------------------------------------------------------------
@@ -84,21 +85,11 @@ namespace program{
       extern double electrical_pulse_fall_time; // linear fall time for electrical pulse (0.0 default)
       extern int num_electrical_pulses;
 
-      //------------------------------------------------------------------------
-      // Field pulse program
-      //------------------------------------------------------------------------
-      extern double field_pulse_time; // length of field pulses (1 ns default)
+      extern std::vector<internal::mp_t> mp; // array of material properties
 
-      //------------------------------------------------------------------------
-      // Exchange stiffness program
-      //------------------------------------------------------------------------
+      extern double exchange_stiffness_min_constraint_angle;
       extern double exchange_stiffness_max_constraint_angle; // degrees
       extern double exchange_stiffness_delta_constraint_angle; // degrees
-
-      //------------------------------------------------------------------------
-      // Material level parameters
-      //------------------------------------------------------------------------
-      extern std::vector<internal::mp_t> mp; // array of material properties
 
       //-------------------------------------------------------------------------
       // Internal function declarations

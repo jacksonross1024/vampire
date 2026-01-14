@@ -123,10 +123,11 @@ namespace anisotropy{
          return;
 
       }
+      
 
       //---------------------------------------------------------------------------------
-      // Function to add second order uniaxial anisotropy in x,y and z
-      // E = 2/3 * - ku2 (1/2)  * (3sz^2 - 1) == -ku2 sz^2 + const
+      // Function to add fourth order rotational anisotropy in spherical coord (cartesian has problems still)
+      //   // E_4r = sin^3 theta cos (4 phi)
       //---------------------------------------------------------------------------------
       double rotational_fourth_order_energy_fixed_basis(
          const int atom,
@@ -136,16 +137,39 @@ namespace anisotropy{
          const double sz){
 
          // get reduced anisotropy constant ku/mu_s
-         const double k4r = internal::k4r[mat];
+         // const double k4r = internal::k4r[mat];
 
-         const double sx2 = sx*sx;
-         const double sz2 = sz*sz;
-         const double sx4 = sx2*sx2;
-         const double sz4 = sz2*sz2;
+         // //S already normalised to 1
+         // double theta = atan2(sy,sx);
+         //    if(theta != theta) theta = 0.0;
+         // double phi = acos(sz);
 
-         const double energy = k4r*(1.0 + sz4 - 8.0*sx2 + 8.0*sx2*sz2 + 8.0*sx4-2.0*sz2);
+         // const double energy = k4r*sin(theta)*sin(theta)*sin(theta)*sin(theta)*cos(4*phi);
+         // //dE/dS_x = k4r*(-16 s_x +16 s_x*s_z^2 + 32 s_x^3)
+         // //        =-k4r*8.0*s_x(1-s_z^2 - 2s_x^2)
+         // //
+         // //
+         // return energy;
+          const double k4r4 = internal::k4r[mat];
 
-         return energy;
+            const double fx = sqrt(2.0)*0.5;//internal::kr_vector[mat].x;
+            const double fy = sqrt(2.0)*0.5;//internal::kr_vector[mat].y;
+            const double fz = 0.0;//internal::kr_vector[mat].z;
+
+            const double gx = -sqrt(2.0)*0.5;//internal::kl_vector[mat].x;
+            const double gy = sqrt(2.0)*0.5;// internal::kl_vector[mat].y;
+            const double gz = 0.0;//internal::kl_vector[mat].z;
+
+         // calculate sin^4{theta}cos{4phi} = sin^4{theta} * ( 8 * cos^4{phi} - 8 * cos^2{phi} + 1 )
+         //                                 = 8 * Sx^4 - 8 * sin^2{theta} * Sx^2 + sin^4{theta}
+         //                                 = Sx^4 - 6 Sx^2 * Sy^2 + Sy^4
+         const double Sx = sx * fx + sy * fy + sz * fz;
+         const double Sx2 = Sx * Sx;
+
+         const double Sy = sx * gx + sy * gy + sz * gz;
+         const double Sy2 = Sy * Sy;
+
+         return - k4r4 * (Sx2 * Sx2 - 6.0 * Sx2 * Sy2 + Sy2 * Sy2 );
 
       }
 

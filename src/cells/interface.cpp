@@ -76,7 +76,12 @@ namespace cells{
          return true;
       }
 
-
+      test = "output-cells";
+      if(word == test){
+         cells::output_microcells = true;
+         cells::open_output_data();
+         return true;
+      }
       //--------------------------------------------------------------------
       // Keyword not found
       //--------------------------------------------------------------------

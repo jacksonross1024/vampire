@@ -25,6 +25,7 @@ namespace vdc{
    bool xyz      = false; // flag to specify crystal.xyz file output
    bool grains   = false; // flag to enable grain calculations
    bool povray   = false; // flag to specify povray file output
+   bool track    = false;
    bool povcells = false; // flag to specify povray cells output
    bool povsticks= false; // flag to specify povray sticks output
    bool cells    = false; // flag to specify cells output

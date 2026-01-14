@@ -94,7 +94,7 @@ void magnetization_statistic_t::set_mask(const int in_mask_size, std::vector<int
 
    // calculate contributions of spins to each magetization category
    for(int atom=0; atom<num_atoms; ++atom){
-      const int mask_id = mask[atom]; // get mask id
+      const int mask_id = mask.at(atom); // get mask id
       saturation[mask_id] += mm[atom];
    }
 
@@ -204,6 +204,15 @@ void magnetization_statistic_t::calculate_magnetization(const std::vector<double
 const std::vector<double>& magnetization_statistic_t::get_magnetization(){
 
    return magnetization;
+
+}
+
+std::array<double,4> magnetization_statistic_t::return_magnetization(int mask_id){
+
+      return {magnetization[4*mask_id + 0],\
+              magnetization[4*mask_id + 1],\
+              magnetization[4*mask_id + 2],\
+              magnetization[4*mask_id + 3]};
 
 }
 

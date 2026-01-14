@@ -55,7 +55,13 @@ namespace sim{
          set_double_t sot_asm_2nd_order; // spin orbit torque asymmetry
          set_double_t sot_rj;  // spin orbit relaxation torque
          set_double_t sot_pj;  // spin orbit precession torque
+         set_double_t sot_asm2; // spin orbit torque asymmetry
+         set_double_t sot_rj2;  // spin orbit relaxation torque
+         set_double_t sot_pj2;
          set_double_t vcmak;   // voltage controlled anisotropy coefficient
+         set_double_t lt_x;
+         set_double_t lt_y;
+         set_double_t lt_z;
       };
 
       //-----------------------------------------------------------------------------
@@ -75,8 +81,18 @@ namespace sim{
       extern std::vector<double> sot_asm_2nd_order; // array of spin orbit torque asymmetry
       extern std::vector<double> sot_rj; // array of adiabatic spin torques
       extern std::vector<double> sot_pj; // array of non-adiabatic spin torques
+      extern std::vector<double> sot_asm2; // array of spin orbit torque asymmetry
+      extern std::vector<double> sot_rj2; // array of adiabatic spin torques
+      extern std::vector<double> sot_pj2;
       extern std::vector<double> sot_polarization_unit_vector; // sot spin polarization direction
+      extern std::vector<double> sot_polarization_unit_vector2;
+      extern double electrical_pulse_strength;
 
+      extern std::vector<double> lot_lt_x;
+      extern std::vector<double> lot_lt_y;
+      extern std::vector<double> lot_lt_z;
+
+      extern std::vector<double> lot_unit_vector;
       extern std::vector<double> vcmak;   // voltage controlled anisotropy coefficient
       
       // shared Functions
@@ -88,6 +104,9 @@ namespace sim{
       extern void initialize_modules();
       extern void increment_time();
 
+   //MPI variables
+       extern std::vector<std::vector<int> > c_octants; //Core atoms of each octant
+       extern std::vector<std::vector<int> > b_octants; //Boundary atoms of each octant
    } // end of internal namespace
   
 } // end of sim namespace

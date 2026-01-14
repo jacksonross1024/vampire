@@ -208,6 +208,7 @@ namespace cells{
       cells::mag_array_x.resize(cells::num_cells,0.0);
       cells::mag_array_y.resize(cells::num_cells,0.0);
       cells::mag_array_z.resize(cells::num_cells,0.0);
+      cells::mag_array_m.resize(cells::num_cells,0.0);
 
       cells::field_array_x.resize(cells::num_cells,0.0);
       cells::field_array_y.resize(cells::num_cells,0.0);
@@ -352,7 +353,7 @@ namespace cells{
       cells::internal::initialised=true;
 
       // Precalculate cell magnetisation
-      cells::mag();
+      // cells::mag();
 
 //       for(int lc = 0; lc < cells::num_local_cells; lc++){
 //

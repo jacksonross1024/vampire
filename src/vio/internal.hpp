@@ -115,6 +115,7 @@ namespace vout{
    void real_time(std::ostream& stream,bool header);
    void temperature(std::ostream& stream,bool header);
    void Happ(std::ostream& stream,bool header);
+   void lot_strength(std::ostream& stream,bool header);
    void Hvec(std::ostream& stream,bool header);
    void mvec(std::ostream& stream,bool header);
    void magm(std::ostream& stream,bool header);
@@ -164,6 +165,17 @@ namespace vout{
    void mean_total_magnetostatic_energy(std::ostream& stream,bool header);
    //void total_so_anisotropy_energy(std::ostream& stream,bool header);
    //void mean_total_so_anisotropy_energy(std::ostream& stream,bool header);
+   // void material_total_energy(std::ostream& stream,bool header);
+   // void mean_material_total_energy(std::ostream& stream,bool header);
+   void material_total_anisotropy_energy(std::ostream& stream,bool header);
+   void mean_material_total_anisotropy_energy(std::ostream& stream,bool header);
+   void material_total_exchange_energy(std::ostream& stream,bool header);
+   void mean_material_total_exchange_energy(std::ostream& stream,bool header);
+   void material_total_applied_field_energy(std::ostream& stream,bool header);
+   void mean_material_total_applied_field_energy(std::ostream& stream,bool header);
+   void material_total_magnetostatic_energy(std::ostream& stream,bool header);
+   void mean_material_total_magnetostatic_energy(std::ostream& stream,bool header);
+
    void height_mvec(std::ostream& stream,bool header);
    void material_height_mvec(std::ostream& stream,bool header);
    void height_mvec_actual(std::ostream& stream,bool header);
@@ -184,7 +196,13 @@ namespace vout{
    void resistance(std::ostream& stream, bool header);
    void current(std::ostream& stream, bool header);
    void domain_wall_position(std::ostream& stream,bool header);
+   void domain_wall_velocity(std::ostream& stream,bool header);
    void MRresistance(std::ostream& stream, bool header);
+
+   void system_spin_temperature(std::ostream& stream, bool header);
+   void material_spin_temperature(std::ostream& stream, bool header);
+   void mean_system_spin_temperature(std::ostream& stream, bool header);
+   void mean_material_spin_temperature(std::ostream& stream, bool header);
 
    //-------------------------------------------------------------------------
    // Funciton protypes for functions inside: datalog.cpp

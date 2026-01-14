@@ -62,13 +62,19 @@ namespace sim{
    uint64_t partial_time = 1000; // same as time-step-increment
    uint64_t equilibration_time = 0; // equilibration time steps
 
-   std::vector<double> domain_wall_discretisation(3);// = 10;
-   int domain_wall_discretisation_type = 0;
+   double piezomagnetic_dipole_time = 0;
+   double piezomagnetic_dipole_field_strength = 0.0;
+   bool piezomagnetic_dipole_field = false;
+   
    int domain_wall_axis = 0;
    double domain_wall_position = 0.25;
+   double domain_wall_velocity = 0.0;
+   std::vector<double> domain_wall_discretisation(3);// = 10;
+   int domain_wall_discretisation_type = 0;
    double domain_wall_centre = 0;
    double domain_wall_width = 10.0;
-      int domain_wall_angle = -1;
+   int domain_wall_angle = -1;
+   bool domain_wall_random_start = false;
    double unit_cell_x;
    double unit_cell_y;
    double unit_cell_z;
@@ -76,7 +82,11 @@ namespace sim{
    std::vector < double > domain_wall_second_vector_x(100,0);
    std::vector < double > domain_wall_second_vector_y(100,0);
    std::vector < double > domain_wall_second_vector_z(100,1.0);
-
+   
+   bool enable_laser_torque_fields = false;
+   double laser_torque_strength = 0.0;
+   double lot_theta = M_PI/2.0;
+   
    namespace internal{
 
       //----------------------------------------------------------------------------
@@ -85,6 +95,11 @@ namespace sim{
       bool enable_spin_torque_fields = false; // flag to enable spin torque fields
       bool enable_vcma_fields        = false; // flag to enable voltage-controlled anisotropy fields
 
+      
+      std::vector<double> lot_unit_vector(3, 0.0);
+      std::vector<double>  lot_lt_x;
+      std::vector<double>  lot_lt_y;
+      std::vector<double>  lot_lt_z;
       std::vector<sim::internal::mp_t> mp; // array of material properties
 
       std::vector<double> stt_asm; // array of spin transfer torque asymmetry
@@ -92,12 +107,15 @@ namespace sim{
       std::vector<double> stt_pj; // array of non-adiabatic spin torques
       std::vector<double> stt_polarization_unit_vector(3,0.0); // stt spin polarization direction
 
-      std::vector<double> sot_asm; // array of spin orbit torque asymmetry
-      std::vector<double> sot_asm_2nd_order; // array of spin orbit torque asymmetry
+      std::vector<double> sot_asm;
+      std::vector<double> sot_asm2; // array of spin orbit torque asymmetry
       std::vector<double> sot_rj;  // array of adiabatic spin torques
       std::vector<double> sot_pj;  // array of non-adiabatic spin torques
+      std::vector<double> sot_rj2;  // array of adiabatic spin torques
+      std::vector<double> sot_pj2;
       std::vector<double> sot_polarization_unit_vector(3,0.0); // sot spin polarization direction
-
+      std::vector<double> sot_polarization_unit_vector2(3,0.0);
+      double electrical_pulse_strength = 0;
       std::vector<double> vcmak;   // voltage controlled anisotropy coefficient
 
    } // end of internal namespace
@@ -116,5 +134,10 @@ namespace sim{
    std::vector<double> get_stt_pj(){
       return sim::internal::stt_pj;
    }
+
+    bool STDspin_parallel_initialized = false;
+   //MPI variables
+   std::vector<std::vector<int> > c_octants; //Core atoms of each octant
+   std::vector<std::vector<int> > b_octants; //Boundary atoms of each octant
 
 } // end of sim namespace

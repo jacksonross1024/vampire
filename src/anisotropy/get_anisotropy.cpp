@@ -33,6 +33,9 @@ namespace anisotropy{
    double get_ku2(const int material){
       return internal::mp[material].ku2;
    }
+   double get_ku2_para(const int material){
+      return internal::mp[material].ku2_para;
+   }
 
    //--------------------------------------------------------------------------------
    // Function to get fourth order uniaxial anisotropy constant for a given material
@@ -67,6 +70,9 @@ namespace anisotropy{
    //--------------------------------------------------------------------------------
    std::vector<double> get_ku_vector(const int material){
       return internal::mp[material].ku_vector;
+   }
+   std::vector<double> get_ku_para_vector(const int material){
+      return internal::mp[material].ku_para_vector;
    }
 
 

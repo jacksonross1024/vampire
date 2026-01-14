@@ -48,7 +48,7 @@ void command( int argc, char* argv[] ){
 //    --objects = spins, cones, spheres, cubes
 //    --slice = x,x,y,y,z,z
 //    --multiscale = gradient, material, region
-
+//    --track  -generate povray track vectors
    // temporary string for storing command line argument
    std::string temp_str;
 
@@ -63,13 +63,12 @@ void command( int argc, char* argv[] ){
       //------------------------------------------------------------------------
       // Check for appropriate data outputs
       //------------------------------------------------------------------------
-      if      (sw == "--xyz"          ){ vdc::xyz    = true;    } // xyz coordinate file output
-      else if (sw == "--povray"       ){ vdc::povray = true;    } // pov coordinate file output
-      else if (sw == "--povray-sticks"){ vdc::povsticks = true; } // pov sticks file output
-      else if (sw == "--vtk"          ){ vdc::vtk    = true;    } // vtk coordinate file output
-      else if (sw == "--text"         ){ vdc::txt    = true;    } // plain text file output
-      else if (sw == "--grains"       ){ vdc::grains = true; } // plain text file output
-      else if (sw == "--cells"        ){ // cell raw data
+      if      (sw == "--xyz"   ){ vdc::xyz    = true; } // xyz coordinate file output
+      else if (sw == "--povray"){ vdc::povray = true; } // pov coordinate file output
+      else if (sw == "--track") { vdc::track  = true; }
+      else if (sw == "--vtk"   ){ vdc::vtk    = true; } // vtk coordinate file output
+      else if (sw == "--text"  ){ vdc::txt    = true; } // plain text file output
+      else if (sw == "--cells" ){ // cell raw data
          vdc::cells  = true; // calculate cell data
          vdc::cellsf = true; // output cell data file
       }
@@ -211,12 +210,11 @@ void command( int argc, char* argv[] ){
    //---------------------------------------------------------------------------
 
    // check that some kind of data output is requested
-   if( !vdc::xyz && !vdc::povray && !vdc::vtk && !vdc::txt && !vdc::ssc && !vdc::cells){
+   if( !vdc::xyz && !vdc::povray && !vdc::vtk && !vdc::txt && !vdc::ssc && !vdc::cells && !vdc::track){
       std::cerr << "Error! No output data formats requested. Available options are: " << std::endl;
       std::cerr << "\t\t --xyz    Data output in .xyz format for viewing in rasmol/jmol" << std::endl;
       std::cerr << "\t\t --povray Data output in PoVRAY format for rendering" << std::endl;
-      std::cerr << "\t\t --povray-cells Data output in PoVRAY format for rendering" << std::endl;
-      std::cerr << "\t\t --povray-grains Data output in PoVRAY format for rendering" << std::endl;
+      std::cerr << "\t\t --track  Data output in PoVRAY vector format for tracking rendering" << std::endl;
       std::cerr << "\t\t --vtk    Data output in VTK format for viewing in Paraview" << std::endl;
       std::cerr << "\t\t --text   Data output in plain text format for plotting in gnuplot/excel etc" << std::endl;
       std::cerr << "\t\t --cells  Data output in plain text format in cells" << std::endl;

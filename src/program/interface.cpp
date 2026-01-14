@@ -170,6 +170,11 @@ namespace program{
             program::program=73;
             return true;
          }
+         test="domain-wall-gradient";
+         if(value==test){
+            program::program=55;
+            return true;
+         }
          else{
             terminaltextcolor(RED);
             std::cout << word << '\t' << test << std::endl;
@@ -224,6 +229,29 @@ namespace program{
          vin::check_for_valid_positive_value(ft, word, line, prefix, unit, "time", 0.0, 1.0,"input","0.0 - 1s");
          // save sanitized value
          program::internal::electrical_pulse_fall_time = ft;
+         return true;
+      }
+      test="exchange-stiffness-maximum-angle";
+      if(word==test){
+         double ma = atof(value.c_str()); // convert string to uint64_t
+         vin::check_for_valid_value(ma, word, line, prefix, unit, "", 0.0, 180.1,"input","0 - 180 degrees");
+         program::internal::exchange_stiffness_max_constraint_angle = ma;
+         return true;
+      }
+      //--------------------------------------------------------------------
+      test="exchange-stiffness-minimum-angle";
+      if(word==test){
+         double ma = atof(value.c_str()); // convert string to uint64_t
+         vin::check_for_valid_value(ma, word, line, prefix, unit, "", 0.0, 180.1,"input","0 - 180 degrees");
+         program::internal::exchange_stiffness_min_constraint_angle = ma;
+         return true;
+      }
+      //--------------------------------------------------------------------
+      test="exchange-stiffness-angle-increment";
+      if(word==test){
+         double ai = atof(value.c_str()); // convert string to uint64_t
+         vin::check_for_valid_value(ai, word, line, prefix, unit, "", 1.0, 90.0,"input","1 - 90 degrees");
+         program::internal::exchange_stiffness_delta_constraint_angle = ai;
          return true;
       }
       //--------------------------------------------------------------------

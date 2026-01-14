@@ -67,10 +67,11 @@ int calculate_dipolar_fields(const int,const int);
 void calculate_fmr_fields(const int,const int);
 void calculate_lagrange_fields(const int,const int);
 void calculate_full_spin_fields(const int start_index,const int end_index);
+void calculate_piezomagnetic_dipole(const int start_index,const int end_index);
 
 namespace sim{
 
-void calculate_spin_fields(const int start_index,const int end_index){
+void calculate_spin_fields(const int start_index,const int end_index) {
 
 	///======================================================
 	/// 		Subroutine to calculate spin dependent fields
@@ -118,10 +119,12 @@ void calculate_spin_fields(const int start_index,const int end_index){
 
 	// Add spin torque fields
 	if( sim::internal::enable_spin_torque_fields == true ||
-		 sim::internal::enable_vcma_fields        == true ){
+		 sim::internal::enable_vcma_fields        == true || 
+		 sim::enable_laser_torque_fields  == true){
 		calculate_full_spin_fields(start_index,end_index);
 	}
 
+	if(sim::piezomagnetic_dipole_field) calculate_piezomagnetic_dipole(start_index,end_index);
 	return;
 
 }
@@ -145,6 +148,11 @@ void calculate_external_fields(const int start_index,const int end_index){
 	fill (atoms::y_total_external_field_array.begin()+start_index,atoms::y_total_external_field_array.begin()+end_index,0.0);
 	fill (atoms::z_total_external_field_array.begin()+start_index,atoms::z_total_external_field_array.begin()+end_index,0.0);
 
+	// //reset thermal field arrays
+	// fill (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index,0.0);
+	// fill (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index,0.0);
+	// fill (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index,0.0);
+
 	if(program::program==7){
 
 		// Calculate thermal field and applied field due to HAMR process
@@ -159,11 +167,11 @@ void calculate_external_fields(const int start_index,const int end_index){
 					atoms::y_total_external_field_array,
 					atoms::z_total_external_field_array);
 	}
-   else if(program::program==13){
+   else if(program::program==13 || program::program == 55){
 
       // Local thermal Fields
-      ltmp::get_localised_thermal_fields(atoms::x_total_external_field_array,atoms::y_total_external_field_array,
-            atoms::z_total_external_field_array, start_index, end_index);
+      ltmp::get_localised_thermal_fields(atoms::thermal_x_field,atoms::thermal_y_field,
+            atoms::thermal_z_field, start_index, end_index);
 
       // Applied Fields
       if(sim::hamiltonian_simulation_flags[2]==1) calculate_applied_fields(start_index,end_index);
@@ -206,13 +214,21 @@ int calculate_applied_fields(const int start_index,const int end_index){
 	///==========================================================================
 
 	// check calling of routine if error checking is activated
-	if(err::check==true){std::cout << "calculate_applied_fields has been called" << std::endl;}
+	// if(err::check==true){
+	// if(sim::piezomagnetic_dipole_field_strength <= 0.0) return 0;
 
 	// Declare constant temporaries for global field
-	const double Hx=sim::H_vec[0]*sim::H_applied;
-	const double Hy=sim::H_vec[1]*sim::H_applied;
-	const double Hz=sim::H_vec[2]*sim::H_applied;
+	// double cos_sq = std::cos(2.0*M_PI*sim::time*mp::dt_SI*7.45e12 - M_PI*0.5);// > 0 ? cos(2.0*M_PI*sim::time*7.45e12 - M_PI*0.5) : 0.0;
+	
+	// const double Hx=sim::H_vec[0]*sim::H_applied;
+	// const double Hy=sim::H_vec[1]*sim::H_applied;
+	// const double Hz=sim::H_vec[2]*sim::H_applied;
 
+	const double Hx = sim::actual_H_vector[0]*sim::actual_H_field;
+	const double Hy = sim::actual_H_vector[1]*sim::actual_H_field;
+	const double Hz = sim::actual_H_vector[2]*sim::actual_H_field;
+	
+	// if(start_index == 0) std::std::cout << sim::H_actual << std::endl;cout << "calculate_applied_fields has been called" << Hx << ", " << Hy << ", " << Hz << std::endl;
 	// Declare array for local (material specific) applied field
 	std::vector<double> Hlocal(0);
 
@@ -316,18 +332,27 @@ int calculate_thermal_fields(const int start_index,const int end_index){
       sigma_prefactor.push_back(sqrt_T*mp::material[mat].H_th_sigma);
    }
 
-   generate (atoms::x_total_external_field_array.begin()+start_index,atoms::x_total_external_field_array.begin()+end_index, mtrandom::gaussian);
-   generate (atoms::y_total_external_field_array.begin()+start_index,atoms::y_total_external_field_array.begin()+end_index, mtrandom::gaussian);
-   generate (atoms::z_total_external_field_array.begin()+start_index,atoms::z_total_external_field_array.begin()+end_index, mtrandom::gaussian);
+	//reset thermal field arrays
+	// fill (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index,0.0);
+	// fill (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index,0.0);
+	// fill (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index,0.0);
+
+    generate (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index, mtrandom::gaussian);
+  	generate (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index, mtrandom::gaussian);
+    generate (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index, mtrandom::gaussian);
 
    for(int atom=start_index;atom<end_index;atom++){
 
       const int imaterial=atoms::type_array[atom];
       const double H_th_sigma = sigma_prefactor[imaterial];
+	  //const double damping = mp::material[imaterial].alpha;
 
-      atoms::x_total_external_field_array[atom] *= H_th_sigma;
-		atoms::y_total_external_field_array[atom] *= H_th_sigma;
-		atoms::z_total_external_field_array[atom] *= H_th_sigma;
+	//const double S[3] = {atoms::x_spin_array[atom], atoms::y_spin_array[atom], atoms:: z_spin_array[atom]};
+	const double T[3] = {atoms::thermal_x_field[atom], atoms::thermal_y_field[atom], atoms::thermal_z_field[atom]};
+
+        atoms::thermal_x_field[atom] = H_th_sigma*(T[0]);// + damping*(S[1]*T[2]-S[2]*T[1]));
+		atoms::thermal_y_field[atom] = H_th_sigma*(T[1]);// + damping*(S[2]*T[0]-S[0]*T[2]));
+		atoms::thermal_z_field[atom] = H_th_sigma*(T[2]);// + damping*(S[0]*T[1]-S[1]*T[0]));
 	}
 
    return EXIT_SUCCESS;
@@ -492,10 +517,19 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		//----------------------------------------------------------------------------------
 
 		// save polarization to temporary constant
-		const double stpx = stt_polarization_unit_vector[0];
-		const double stpy = stt_polarization_unit_vector[1];
-		const double stpz = stt_polarization_unit_vector[2];
+		// const double stpx = stt_polarization_unit_vector[0];
+		// const double stpy = stt_polarization_unit_vector[1];
+		// const double stpz = stt_polarization_unit_vector[2];
 
+		int mag_mat = 1;
+		std::array<double, 4> mag_vector = stats::material_magnetization.return_magnetization(mag_mat);
+		// std::cout << mag_vector[0] << ", " << mag_vector[1] << ", " << mag_vector[2] << ", " << mag_vector[3] << std::endl;
+		double mag_y_length = mag_vector[1]*mag_vector[3];
+		//m x B
+		const double stpx = mag_vector[1]*stt_polarization_unit_vector[2]-mag_vector[2]*stt_polarization_unit_vector[1];
+		const double stpy = mag_vector[2]*stt_polarization_unit_vector[0]-mag_vector[0]*stt_polarization_unit_vector[2];
+		const double stpz = mag_vector[0]*stt_polarization_unit_vector[1]-mag_vector[1]*stt_polarization_unit_vector[0];
+	
 		const double strj = stt_rj[material];
 		const double stpj = stt_pj[material];
 
@@ -512,23 +546,67 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		//----------------------------------------------------------------------------------
 
 		// save polarization to temporary constant
-		const double sotpx = sot_polarization_unit_vector[0];
-		const double sotpy = sot_polarization_unit_vector[1];
-		const double sotpz = sot_polarization_unit_vector[2];
+		 double sotpx = sot_polarization_unit_vector[0];
+		 double sotpy = sot_polarization_unit_vector[1];
+		 double sotpz = sot_polarization_unit_vector[2];
 
-		const double sotrj = sot_rj[material];
-		const double sotpj = sot_pj[material];
+		 double sotrj = sot_rj[material];
+		 double sotpj = sot_pj[material];
 
-		const double sot_lambda = sot_asm[material];
+		double sot_lambda = sot_asm[material];
 		double sot_factor = program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
-
-		const double sot_lambda_2ndorder = sot_asm_2nd_order[material];
-		sot_factor *= 1.0 / (1.0 + sot_lambda_2ndorder*(sx*sotpx + sy*sotpy + sz*sotpz)*(sx*sotpx + sy*sotpy + sz*sotpz));
+		// if(sim::time > 30000.0) sot_factor = 0.0;
+		// if(sot_factor != sot_factor) sot_factor = 0.0;
+		//  if(sot_factor < 0) std::cout << hx << ", " << hy << ", " << hz << ", " << sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy ) << std::endl;
 		// calculate field
 		hx += sot_factor * ( (sotrj-alpha*sotpj)*(sy*sotpz - sz*sotpy) + (sotpj+alpha*sotrj)*sotpx );
 		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );
 		hz += sot_factor * ( (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz );
+		
 
+		// sotpx = sot_polarization_unit_vector2[0];
+		// sotpy = sot_polarization_unit_vector2[1];
+		// sotpz = sot_polarization_unit_vector2[2];
+		
+		sotpx = mag_y_length*mag_vector[0];
+		sotpy = mag_y_length*mag_vector[1];
+		sotpz = mag_y_length*mag_vector[2];
+
+		sotrj = sot_rj2[material];
+		sotpj = sot_pj2[material];
+
+		sot_lambda = sot_asm2[material];
+		sot_factor = program::fractional_electric_field_strength / (1.0 + sot_lambda*(sx*sotpx + sy*sotpy + sz*sotpz) );
+		// if(sim::time > 30000.0) sot_factor = 0.0;
+		// if(sot_factor != sot_factor) sot_factor = 0.0;
+		//  if(sot_factor < 0) std::cout << hx << ", " << hy << ", " << hz << ", " << sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy ) << std::endl;
+		// calculate field
+		hx += sot_factor * ( (sotrj-alpha*sotpj)*(sy*sotpz - sz*sotpy) + (sotpj+alpha*sotrj)*sotpx );
+		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );
+		hz += sot_factor * ( (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz );
+		
+		//get spin angle
+		double phi = atan2(sy, sx);
+			if(phi != phi) phi = 0.0;
+
+		//T_z e||xy -> torque asymmetry sin(2(phi-pi/4))
+		// double theta = 0.0;
+		// double lot_str = sin(2.0*theta - 2.0*phi);
+		// double lot_str[3] = { -sin(phi)*sin(phi),sin(2.0*phi), sin(2*phi)*cos(theta)*cos(theta)};
+		double lot_str[3] = {0.0, 0.0, sin(2.0*sim::lot_theta-2.0*phi)};
+		double lotlt_z = sim::laser_torque_strength * (lot_str[2])*sim::internal::lot_lt_z[material]*1e-24 /mp::material[material].mu_s_SI;
+		double lotlt_y = sim::laser_torque_strength * (lot_str[1])*sim::internal::lot_lt_y[material]*1e-24 /mp::material[material].mu_s_SI;
+		double lotlt_x = sim::laser_torque_strength * (lot_str[0])*sim::internal::lot_lt_x[material]*1e-24 /mp::material[material].mu_s_SI;
+		// if(program::fractional_electric_field_strength > 0.0) std::cout << program::fractional_electric_field_strength << std::endl;
+		double lotx = lotlt_x;//*lot_unit_vector[0];
+		double loty = lotlt_y;//*lot_unit_vector[1];
+		double lotz = lotlt_z;//*exp(-(100.0-atoms::z_coord_array[atom])/300.0);//lotlt_z*lot_unit_vector[2];
+
+		hx += (loty*sz - sy*lotz);
+		hy += (lotz*sx - sz*lotx);
+		hz += (lotx*sy - sx*loty);
+
+		//if(hz != 0) std::cout << lotlt_x << ", " << lotlt_y << ", " << lotlt_z << std::endl;
 		//----------------------------------------------------------------------------------
 		// VCMA field
 		//----------------------------------------------------------------------------------
@@ -547,3 +625,31 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 	return;
 
 }
+
+void sim::calculate_piezomagnetic_dipole(const int start_index,const int end_index){
+
+         //const double scale = 2.0; // 2*2/3 = 2 Factor to rescale anisotropies to usual scale
+         const double frequency = cos(2.0*M_PI * sim::piezomagnetic_dipole_time*7.45e12);  // dt per cycle
+		 const double k2 = sim::piezomagnetic_dipole_field_strength;
+		//  std::cout << frequency << ", " << sim::piezomagnetic_dipole_time*7.45e12 << ", " << sim::piezomagnetic_dipole_time << std::endl;
+         // Loop over all atoms between start and end index
+		//  std::cout << sim::piezomagnetic_dipole_time << ", " << frequency << std::endl;
+
+         for(int atom = start_index; atom < end_index; atom++) {
+
+            // get atom material
+           
+            double ex = 0;
+			// if (atoms::type_array[atom] != 1 || atoms::type_array[atom] != 0) std::cout << atoms::type_array[atom] << std::endl;
+			if (atoms::type_array[atom] == 1) ex = -k2* frequency;
+			else ex = k2*frequency;
+            // const double ey = frequency;
+
+            atoms::x_total_spin_field_array[atom] += ex;
+            atoms::y_total_spin_field_array[atom] += k2*frequency;
+
+         }
+
+         return;
+
+      }

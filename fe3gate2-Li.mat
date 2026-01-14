@@ -1,0 +1,76 @@
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Fe3GaTe2 (multilayer)
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# The isotropic exchange values has been taking from Table S7 of the Supplementary Material of Ruiz et al (https://pubs.acs.org/doi/10.1021/acs.nanolett.4c01019), for the Ruiz et al 
+# case, which we have multiplied by a factor 2 to their definition of the exchange energy with the one used in VAMPIRE. Furthermore, the atomic magnetic moment has been retrieved 
+# also from Ruiz et al, Table S5 (LDA). On the other hand, the single-ion uniaxial easy-axis axis anisotropy along the z-th direction is based on the value given by Li et al 
+# (https://pubs.aip.org/aip/apl/article-abstract/122/8/082404/2872863/Tremendous-tunneling-magnetoresistance-effects?redirectedFrom=fulltext), but we have rescaled its value to 
+# keep the same ratio between this value (K=0.55 meV) than the one between the J1 values in Ruiz et al (J1=57.18 meV) and Li et al (J1=74.83 meV, Table S1 (b) of their Supplementary 
+# Material), such that 57.18*0.55/74.83=0.42 meV
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Number of Materials: 2 (two Fe-based ferromagnetic sublattice)
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+material:num-materials = 4
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Material 1: Fe1,2
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+material[1]:material-name = "Fe1"
+material[1]:initial-spin-direction = 0,0,1
+material[1]:atomic-spin-moment = 1.95 !muB
+material[1]:damping-constant = 1.0
+material[1]:exchange-matrix[1] = 1 !meV #
+material[1]:exchange-matrix[2] = 1 !meV
+
+material[1]:second-order-uniaxial-anisotropy-constant = 0.61 !meV
+material[1]:uniaxial-anisotropy-direction = 0,0,1
+material[1]:unit-cell-category = 1
+material[1]:material-element = Fe
+
+material[1]:temperature-rescaling-exponent = 2.16
+material[1]:temperature-rescaling-curie-temperature = 361
+
+material[1]:host-alloy = random
+material[2]:host-alloy = random
+
+material[1]:alloy-fraction[3] = 0.0
+material[2]:alloy-fraction[4] = 0.0
+
+material[1]:host-alloy-smoothness = 1
+material[2]:host-alloy-smoothness = 1
+
+material[1]:alloy-variance[3] = 0.85
+material[2]:alloy-variance[4] = 0.85
+
+material[1]:save-host-alloy-distribution
+material[2]:save-host-alloy-distribution
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Material 1: Fe3
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+material[2]:material-name = "Fe3"
+material[2]:initial-spin-direction = 0,0,1
+material[2]:atomic-spin-moment = 1.25 !muB
+material[2]:damping-constant = 1.0
+material[2]:exchange-matrix[1] = 1 !meV
+material[2]:exchange-matrix[2] = 1 !meV
+
+material[2]:second-order-uniaxial-anisotropy-constant = 0.41 !meV
+material[2]:uniaxial-anisotropy-direction = 0,0,1
+material[2]:unit-cell-category = 2
+material[2]:material-element = Fe
+material[2]:temperature-rescaling-exponent = 2.16
+material[2]:temperature-rescaling-curie-temperature = 361
+
+
+
+material[3]:material-name = "Fe1"
+material[3]:non-magnetic = keep
+
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Material 1: Fe3
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+material[4]:material-name = "Fe3-hole"
+material[4]:non-magnetic = keep
+

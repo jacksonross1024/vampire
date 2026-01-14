@@ -55,6 +55,7 @@ void update_electric_field_strength(const double time_from_start){
       pg::fractional_electric_field_strength = 0.0;
    }
 
+   // sim::H_actual = sim::H_applied*pg::fractional_electric_field_strength;
    return;
 
 }
@@ -72,7 +73,11 @@ void electrical_pulse(){
    const double temp = sim::temperature; // current simulation temperature
    sim::temperature = sim::Teq;
    pg::fractional_electric_field_strength = 0.0;
-
+   
+   sim::actual_H_field = sim::equilibrium_H_field;
+	sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+	sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+	sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
    // Equilibrate system
    while( sim::time < sim::equilibration_time){
 
@@ -90,7 +95,10 @@ void electrical_pulse(){
 
    // Set constant temperature
    sim::temperature = temp;
-
+   sim::actual_H_field = sim::applied_H_field;
+	sim::actual_H_vector[0] = sim::applied_H_vector[0];
+	sim::actual_H_vector[1] = sim::applied_H_vector[1];
+	sim::actual_H_vector[2] = sim::applied_H_vector[2];
    // Simulate electrical pulse
    while(sim::time < sim::total_time+start_time){
 

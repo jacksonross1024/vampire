@@ -48,12 +48,12 @@ namespace internal{
       // if dmi is not needed then do nothing
       if(!internal::enable_dmi) return;
 
-      // Print informative message to log file
-      zlog << zTs() << "Calculating Dzyaloshinskii-Moriya interactions" << std::endl;
-
-      // temporary tensor for calculating sum
+      // // Print informative message to log file
+      zlog << zTs() << " Calculating Dzyaloshinskii-Moriya interactions" << std::endl;
+      // exit(1);
+      // // // temporary tensor for calculating sum
       std::vector<double> tmp_tensor(9,0.0);
-
+      std::vector<double> tmp_net_tensor(4,0.0);
       // get cutoff range
       const double cutoff_sq = internal::dmi_cutoff_range*internal::dmi_cutoff_range;
 
@@ -63,7 +63,7 @@ namespace internal{
       // counter for total number of interactions
       unsigned int total_counter = 0;
 
-      //std::ofstream ofile("dmi.txt");
+      std::ofstream ofile("dmi.txt");
 
       //	Loop over all atoms i
       for(unsigned int i=0; i < static_cast<unsigned int>(atoms::num_atoms); i++){
@@ -73,6 +73,7 @@ namespace internal{
 
          // get inverse moment
          const double i_mu_s = 1.0/mp::material[imat].mu_s_SI;
+         for(int idx = 0; idx < 4; idx++) tmp_net_tensor[idx] = 0.0;
 
          // loop over all neighbours j
          for(unsigned int j = 0; j < cneighbourlist[i].size(); j++){
@@ -135,11 +136,11 @@ namespace internal{
                         const double Dy = eik[2]*ejk[0] - eik[0]*ejk[2];
                         const double Dz = eik[0]*ejk[1] - eik[1]*ejk[0];
 
-                        //ofile << i << "\t" << nj << "\t" << nk << "\t" << sqrt(mod_eik_sq) << "\t" << sqrt(mod_ejk_sq) << std::endl <<
+                        // ofile << i << "\t" << nj << "\t" << nk << "\t" << sqrt(mod_eik_sq) << "\t" << sqrt(mod_ejk_sq) << std::endl <<
                         //           "\t\teik: " << eik[0] << "\t" << eik[1] << "\t" << eik[2] << std::endl <<
                         //           "\t\teij: " << eij[0] << "\t" << eij[1] << "\t" << eij[2] << std::endl <<
                         //           "\t\tejk: " << ejk[0] << "\t" << ejk[1] << "\t" << ejk[2] << std::endl;
-                        //ofile << i << "\t" << nj << "\t" << nk << "\t" << sqrt(mod_eik_sq) << "\t" << sqrt(mod_ejk_sq) << "\t" << Dx << "\t" << Dy << "\t" << Dz << std::endl;
+                        // ofile << i << "\t" << nj << "\t" << nk << "\t" << sqrt(mod_eik_sq) << "\t" << sqrt(mod_ejk_sq) << "\t" << Dij << "\t"  << Dx << "\t" << Dy << "\t" << Dz << std::endl;
 
                         // increment total interaction counter
                         total_counter++;
@@ -182,7 +183,7 @@ namespace internal{
                         tmp_tensor[6] -= Dij * +Dy; // Jzx
                         tmp_tensor[7] -= Dij * -Dx; // Jzy
 
-                        //std::cout << i << "\t" << nj << "\t" << nk << "\t|\t" << Dx << "\t" << Dy << "\t" << Dz << "\t" << Dij << "\t|\t" <<
+                        // std::cout << i << "\t" << nj << "\t" << nk << "\t|\t" << Dx << "\t" << Dy << "\t" << Dz << "\t" << Dij << "\t|\t" <<
                         //   " eik: " << eik[0] << "\t" << eik[1] << "\t" << eik[2] << "\t|\t" <<
                         //   " ejk: " << ejk[0] << "\t" << ejk[1] << "\t" << ejk[2] << "\t|\t" <<
                         //   tmp_tensor [0] << "\t" << Dij * +Dz      << "\t" << Dij * -Dy << "\t" <<
@@ -203,34 +204,43 @@ namespace internal{
             }
 
             // dmi exchange tensor for each atom pair
-            //ofile << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t'<<
+            // ofile << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t' << Dij << '\t' << 
             //         tmp_tensor [0] << "\t" << tmp_tensor [1] << "\t" << tmp_tensor [2] << "\t" <<
             //         tmp_tensor [3] << "\t" << tmp_tensor [4] << "\t" << tmp_tensor [5] << "\t" <<
             //         tmp_tensor [6] << "\t" << tmp_tensor [7] << "\t" << tmp_tensor [8] << "\t" << std::endl;
 
             // net DMI vectors for each atom pair
-            //ofile << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t'<< tmp_tensor [5] << "\t" << tmp_tensor [6] << "\t" << tmp_tensor [1] << std::endl;
+            // ofile << i << "\t" << nj << "\t" << imat << '\t' << jmat << '\t' << sqrt(cneighbourlist[i][j].vx*cneighbourlist[i][j].vx + cneighbourlist[i][j].vy*cneighbourlist[i][j].vy + cneighbourlist[i][j].vz*cneighbourlist[i][j].vz) << "\t" << tmp_tensor [5]*mp::material[imat].mu_s_SI/1.602e-22 << "\t" << tmp_tensor [6]*(mp::material[imat].mu_s_SI)/1.602e-22 << "\t" << tmp_tensor [1]*mp::material[imat].mu_s_SI/1.602e-22 << std::endl;
 
             // save tensor for interaction i-j
-            atoms::t_exchange_list[counter].Jij[0][0] += tmp_tensor [0];
-            atoms::t_exchange_list[counter].Jij[0][1] += tmp_tensor [1];
-            atoms::t_exchange_list[counter].Jij[0][2] += tmp_tensor [2];
+            atoms::t_exchange_list[counter].Jij[0] += tmp_tensor [0];
+            atoms::t_exchange_list[counter].Jij[1] += tmp_tensor [1];
+            atoms::t_exchange_list[counter].Jij[2] += tmp_tensor [2];
 
-            atoms::t_exchange_list[counter].Jij[1][0] += tmp_tensor [3];
-            atoms::t_exchange_list[counter].Jij[1][1] += tmp_tensor [4];
-            atoms::t_exchange_list[counter].Jij[1][2] += tmp_tensor [5];
+            atoms::t_exchange_list[counter].Jij[3] += tmp_tensor [3];
+            atoms::t_exchange_list[counter].Jij[4] += tmp_tensor [4];
+            atoms::t_exchange_list[counter].Jij[5] += tmp_tensor [5];
 
-            atoms::t_exchange_list[counter].Jij[2][0] += tmp_tensor [6];
-            atoms::t_exchange_list[counter].Jij[2][1] += tmp_tensor [7];
-            atoms::t_exchange_list[counter].Jij[2][2] += tmp_tensor [8];
+            atoms::t_exchange_list[counter].Jij[6] += tmp_tensor [6];
+            atoms::t_exchange_list[counter].Jij[7] += tmp_tensor [7];
+            atoms::t_exchange_list[counter].Jij[8] += tmp_tensor [8];
 
+            tmp_net_tensor[0] += atoms::t_exchange_list[counter].Jij[0];
+            tmp_net_tensor[1] += atoms::t_exchange_list[counter].Jij[5];
+            tmp_net_tensor[2] += atoms::t_exchange_list[counter].Jij[6];
+            tmp_net_tensor[3] += atoms::t_exchange_list[counter].Jij[1];
+           
             counter++; // increment interaction counter
 
          }
+          // net DMI vectors for each atom 
+            ofile << i << "\t" <<  imat << '\t' << atoms::x_coord_array[i] << '\t' << atoms::y_coord_array[i] << '\t' << atoms::z_coord_array[i] << '\t' << tmp_net_tensor[0]*mp::material[imat].mu_s_SI/1.602e-22 << "\t" << tmp_net_tensor[1]*(mp::material[imat].mu_s_SI)/1.602e-22 << "\t" << tmp_net_tensor[2]*mp::material[imat].mu_s_SI/1.602e-22 << '\t' << tmp_net_tensor[3]*mp::material[imat].mu_s_SI/1.602e-22 <<  std::endl;
+
+            
 
       } // end of atom loop
 
-      //ofile.close();
+      ofile.close();
 
       zlog << zTs() << "Generated " << total_counter << " dmi interactions with an average of " << double(total_counter) / double(atoms::num_atoms) << " interactions per atom" << std::endl;
 

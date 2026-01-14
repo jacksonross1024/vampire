@@ -39,6 +39,7 @@ namespace anisotropy{
       bool enable_random_anisotropy   = false; // Flag to enable random anisitropy initialisation
 
       bool enable_uniaxial_second_order = false; // Flag to enable calculation of second order anisotropy
+      bool enable_uniaxial_inplane_second_order = false;
       bool enable_uniaxial_fourth_order = false; // Flag to enable calculation of fourth order anisotropy
       bool enable_biaxial_fourth_order_simple = false; // Flag to enable calculation of the simple version of the fourth order anisotropy
       bool enable_uniaxial_sixth_order  = false; // Flag to enable calculation of sixth order anisotropy
@@ -59,6 +60,7 @@ namespace anisotropy{
 
       // arrays for storing unrolled anisotropy constants in Tesla
       std::vector<double> ku2(0);
+      std::vector<double> ku2_para(0);
       std::vector<double> ku4(0);
       std::vector<double> ku6(0);
       std::vector<double> kc4(0);
@@ -67,7 +69,7 @@ namespace anisotropy{
 
       // unrolled arrays for storing easy axes for each material
       std::vector<evec_t> ku_vector(0); // 001 easy axis direction
-
+      std::vector<evec_t> ku_para_vector(0); // 010 easy axis direction
       std::vector<evec_t> u1_vector(0); // Unit vector along [110]
       std::vector<evec_t> u2_vector(0); // Unit vector along [1-10]
 

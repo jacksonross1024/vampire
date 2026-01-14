@@ -47,6 +47,14 @@ namespace dipole{
             dipole::activated=true;
             return true;
          }
+         test="tensor-stray";
+         if(value == test){
+            dipole::internal::solver = dipole::internal::tensor;
+            // enable dipole calculation
+            dipole::activated=true;
+            dipole::internal::stray_field=true;
+            return true;
+         }
          test="atomistic";
          if(value == test){
             dipole::internal::solver = dipole::internal::atomistic;

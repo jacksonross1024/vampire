@@ -127,7 +127,7 @@ namespace anisotropy{
          const double sdote  = (sx*ex + sy*ey + sz*ez);
          const double sdote2 = sdote*sdote;
 
-         return ku4*(sdote2*sdote2 - thirtyothirtyfive*sdote2 - fiveothirtyfive);
+          return - ku4 * ( sdote2 * sdote2 - 6.0 * sdote2/7.0 );
 
       }
 

@@ -60,6 +60,7 @@ void set_atom_vars(std::vector<cs::catom_t> & catom_array,
 
    atoms::type_array.resize(     atoms::num_atoms,0);
    atoms::category_array.resize( atoms::num_atoms,0);
+   atoms::sublayer_array.resize( atoms::num_atoms,0);
    atoms::grain_array.resize(    atoms::num_atoms,0);
    atoms::cell_array.resize(     atoms::num_atoms,0);
 
@@ -71,6 +72,9 @@ void set_atom_vars(std::vector<cs::catom_t> & catom_array,
 	atoms::x_total_external_field_array.resize(atoms::num_atoms,0.0);
 	atoms::y_total_external_field_array.resize(atoms::num_atoms,0.0);
 	atoms::z_total_external_field_array.resize(atoms::num_atoms,0.0);
+	atoms::thermal_x_field.resize(atoms::num_atoms, 0.0);
+	atoms::thermal_y_field.resize(atoms::num_atoms, 0.0);
+	atoms::thermal_z_field.resize(atoms::num_atoms, 0.0);
 //	atoms::x_dipolar_field_array.resize(atoms::num_atoms,0.0);
 //	atoms::y_dipolar_field_array.resize(atoms::num_atoms,0.0);
 //	atoms::z_dipolar_field_array.resize(atoms::num_atoms,0.0);
@@ -87,7 +91,7 @@ void set_atom_vars(std::vector<cs::catom_t> & catom_array,
    MTRand random_spin_rng;
    random_spin_rng.seed(vmpi::parallel_rng_seed(create::internal::spin_init_seed));
 
-	for(int atom=0;atom<atoms::num_atoms;atom++){
+	for(uint64_t atom=0;atom<atoms::num_atoms;atom++) {
 
 		atoms::x_coord_array[atom] = catom_array[atom].x;
 		atoms::y_coord_array[atom] = catom_array[atom].y;
@@ -95,6 +99,7 @@ void set_atom_vars(std::vector<cs::catom_t> & catom_array,
 
 		atoms::type_array[atom] = catom_array[atom].material;
 		atoms::category_array[atom] = catom_array[atom].lh_category;
+		atoms::sublayer_array[atom] = catom_array[atom].sl_category;
 		//std::cout << atom << " grain: " << catom_array[atom].grain << std::endl;
 		atoms::grain_array[atom] = catom_array[atom].grain;
 

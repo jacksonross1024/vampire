@@ -37,6 +37,7 @@ namespace vdc{
    extern bool xyz;
    extern bool grains; // flag to enable grain calculations
    extern bool povray;
+   extern bool track;
    extern bool povcells;
    extern bool povsticks;
    extern bool cells;
@@ -205,6 +206,7 @@ namespace vdc{
    void initialise_povray();
    void output_inc_file(unsigned int spin_file_id);
    void output_povray_file();
+   void output_track_file(unsigned int spin_file_id);
    void output_cells_inc_file(unsigned int spin_file_id);
    void output_povray_cells_file();
    void output_sticks_file();

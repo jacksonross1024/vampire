@@ -60,6 +60,11 @@ void calculate_interactions(unit_cell_t& unit_cell){
    }
    else material_exchange_parameters.clear();
 
+   if(exchange_function == RKKY) {
+      for(int i = 0; i < num_uc_materials-1; i++) {
+         for(int j = 0; j < num_uc_materials-1; j++) std::cout << "RKKYf constant for " << i << " <-> " << j << ": " << uc::internal::RKKYf[i][j] << std::endl;
+      }
+   }
    // Set nn and interaction ranges using cutoff factors
    double max_rcut = 0; // Max rcut used to find number of unit cells to get all interactions/nearest neighbours
    for (unsigned int i = 0; i < num_uc_materials; ++i){

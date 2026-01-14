@@ -179,6 +179,7 @@ namespace dipole{
 
          std::cout << "done! [ " << timer.elapsed_time() << " s ]" << std::endl;
          zlog << zTs() << "Precalculation of rij matrix for dipole calculation complete. Time taken: " << timer.elapsed_time() << " s"<< std::endl;
+         //zlog << zTs() << "Precalculation of rij matrix for dipole calculation complete. Time taken: " << timer.elapsed_time() << " s"<< std::endl;
 
          return;
 

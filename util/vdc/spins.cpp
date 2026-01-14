@@ -66,6 +66,7 @@ void process_spins(){
 
       // output povray files
       if(vdc::povray) output_inc_file(file_id);
+      if(vdc::track) output_track_file(file_id);
       if(vdc::povcells) output_cells_inc_file(file_id);
 
       // output vtk file

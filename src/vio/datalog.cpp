@@ -273,19 +273,56 @@ namespace vout{
 			case 72:
 			   vout::fractional_electric_field_strength(stream, header);
 				break;
+			case 73:
+				vout::lot_strength(stream, header);
+				break;
 			case 74:
-				vout::sysspintemp(stream, header);
+				vout::domain_wall_velocity(stream, header);
 				break;
 			case 75:
-				vout::mean_sysspintemp(stream, header);
-				break;
-			case 76:
-				vout::material_mean_sysspintemp(stream, header);
-				break;
-			case 77:
-				vout::material_spin_temp(stream, header);
-				break;
-			case 997: //MP
+			vout::system_spin_temperature(stream, header);
+			break;
+		case 76:
+			vout::material_spin_temperature(stream, header);
+			break;
+       case 77:
+			vout::mean_system_spin_temperature(stream, header);
+			break;
+		case 78:
+			vout::mean_material_spin_temperature(stream, header);
+			break;
+		// case 79:
+      	// 	vout::material_total_energy(stream,header);
+      	// 	break;
+      	// case 80:
+      	// 	vout::mean_material_total_energy(stream,header);
+      	// 	break;
+      	case 83:
+      		vout::material_total_anisotropy_energy(stream,header);
+      		break;
+      	case 84:
+      		vout::mean_material_total_anisotropy_energy(stream,header);
+      		break;
+    
+      	case 81:
+      		vout::material_total_exchange_energy(stream,header);
+      		break;
+      	case 82:
+      		vout::mean_material_total_exchange_energy(stream,header);
+      		break;
+      	case 85:
+      		vout::material_total_applied_field_energy(stream,header);
+      		break;
+      	case 86:
+      		vout::mean_material_total_applied_field_energy(stream,header);
+      		break;
+      	case 87:
+      		vout::material_total_magnetostatic_energy(stream,header);
+      		break;
+      	case 88:
+      		vout::mean_material_total_magnetostatic_energy(stream,header);
+      		break;
+         case 997: //MP
 				vout::material_binder_cumulant(stream,header);
 				break;
    		case 998:
@@ -361,10 +398,10 @@ namespace vout{
       if(vmpi::my_rank == 0){
          if(!zmag.is_open()){
             // check for checkpoint continue and append data
-            if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag) zmag.open(vout::output_file_name,std::ofstream::app);
+            if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag) zmag.open("output",std::ofstream::app);
             // otherwise overwrite file
             else{
-               zmag.open(vout::output_file_name,std::ofstream::trunc);
+               zmag.open("output",std::ofstream::trunc);
                // write file header information
                write_output_file_header(zmag, file_output_list);
             }

@@ -11,8 +11,8 @@ GCC=g++
 LIBS=-lstdc++
 
 # Flags
-GCC_CFLAGS=-O3 -std=c++0x
-#GCC_CFLAGS=-O3 -std=c++0x -fopenmp -funroll-loops -mavx2
+#GCC_CFLAGS=-O3 -std=c++0x
+GCC_CFLAGS=-O3 -std=c++0x -fopenmp -funroll-loops #-mavx2
 
 # Objects
 OBJECTS= \

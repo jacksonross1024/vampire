@@ -51,6 +51,7 @@ namespace atoms{
 	std::vector <int> neighbour_list_end_index(0);
 	std::vector <int> type_array(0);
 	std::vector <int> category_array(0);
+	std::vector <int> sublayer_array(0);
 	std::vector <int> grain_array(0);
 	std::vector <int> cell_array(0);
 
@@ -65,7 +66,10 @@ namespace atoms{
 	std::vector <double> x_total_external_field_array(0);	/// Total external fields
 	std::vector <double> y_total_external_field_array(0);	/// Total external fields
 	std::vector <double> z_total_external_field_array(0);	/// Total external fields
-
+	std::vector <double> thermal_x_field(0);
+	std::vector <double> thermal_y_field(0);
+	std::vector <double> thermal_z_field(0);
+	
 	std::vector <zval_t> i_exchange_list(0);
 	std::vector <zvec_t> v_exchange_list(0);
 	std::vector <zten_t> t_exchange_list(0);

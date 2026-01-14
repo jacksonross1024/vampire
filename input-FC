@@ -1,0 +1,84 @@
+
+#------------------------------------------
+# System Dimensions:
+#------------------------------------------
+#dimensions:unit-cell-size = 3.54 !A
+dimensions:system-size-x = 300 !nm
+dimensions:system-size-y = 200 !nm
+dimensions:system-size-z = 10.0 !nm
+
+#------------------------------------------
+material:file=FGaT-mara.mat
+material:unit-cell-file=fe3gate2-mara-dmi.ucf
+
+# Creation attributes:
+#------------------------------------------
+#create:crystal-structure=hcp
+#create:periodic-boundaries-x
+#create:periodic-boundaries-y
+#create:periodic-boundaries-z
+#create:crystal-sublattice-materials=true
+
+dipole:solver = tensor 
+cells:macro-cell-size-x = 20
+cells:macro-cell-size-y = 20
+cells:macro-cell-size-z = 51
+dipole:cutoff-radius = 10
+dipole:field-update-rate = 100
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+
+sim:minimum-temperature=20
+sim:maximum-temperature= 250
+
+sim:equilibration-temperature= 250
+sim:temperature= 250
+
+sim:cooling-time = 0.2 !ns #10 ps -> 10,000
+#sim:preconditioning-steps = 0
+sim:time-steps-increment= 10000 #10ps
+sim:time-step= 1 !fs
+sim:equilibration-time-steps= 0
+sim:total-time-steps= 1000000
+
+sim:cooling-function = linear
+
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+
+#sim:program= time-series
+sim:program= field-cool
+sim:integrator= llg-midpoint
+#montecarlo:algorithm = angle
+#sim:integrator=llg-midpoint
+
+sim:equilibration-field-strength = 0.5
+sim:applied-field-strength = 0.5 #T
+
+sim:save-checkpoint = continuous
+#sim:load-checkpoint = restart 
+
+#config:macro-cells = continuous
+#config:output-mode = legacy
+
+config:atoms = continuous
+config:atoms-output-rate = 5
+config:output-format = binary
+
+#------------------------------------------
+# data output
+#------------------------------------------
+output:output-rate = 1
+
+output:time-steps
+output:temperature
+#output:material-magnetisation-length
+output:material-magnetisation
+#output:material-mean-susceptibility
+#output:spin-temperature 
+output:total-energy
+#screen:material-magnetisation
+#screen:mean-specific-heat

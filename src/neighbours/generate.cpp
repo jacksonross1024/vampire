@@ -48,14 +48,14 @@ namespace neighbours{
 //----------------------------------------------------------------------------------
 void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atoms (as reference for speed)
                unitcell::exchange_template_t& exchange, // exchange template to calculate neighbour list
-               const unsigned int num_atoms_in_unit_cell,        // number of atoms in each cell to estimate interaction numbers
+               const uint64_t num_atoms_in_unit_cell,        // number of atoms in each cell to estimate interaction numbers
                const double ucdx,                       // unit cell size
                const double ucdy,
                const double ucdz
              ){
 
 	// put number of atoms into temporary variable
-	const int num_atoms = atom_array.size();
+	int64_t num_atoms = atom_array.size();
 
 	// Reserve space for num_atoms
 	list.reserve(num_atoms);
@@ -64,9 +64,9 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	const int64_t max_nn = int64_t( 1.1*( double(exchange.interaction.size()) / double(num_atoms_in_unit_cell) ) );
 
 	// Reserve space for each atom in neighbour list according to material type
-	for(int atom=0; atom < num_atoms; atom++){
+	for(int64_t atom=0; atom < num_atoms; atom++){
 		list.push_back(std::vector<neighbour_t>());
-		list[atom].reserve(max_nn);
+		//list[atom].reserve(max_nn);
 	}
 
    // Calculate system dimensions and number of supercells
@@ -75,7 +75,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    int64_t max[3] = {0,0,0}; // highest cell id
 
    // find supercell range of atoms on this CPU
-	for(int atom = 0; atom < num_atoms; atom++){
+	for(int64_t atom = 0; atom < num_atoms; atom++){
 
 		int64_t c[3] = { atom_array[atom].scx,
                        atom_array[atom].scy,
@@ -112,19 +112,19 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                           ( max_cell[2] - offset[2] + 1 )};
 
 	// Declare temporary array for 3D supercell array
-	std::vector<std::vector<std::vector<std::vector<int> > > > supercell_array;
+	std::vector<std::vector<std::vector<std::vector<int64_t> > > > supercell_array;
 
    // calculate total number of neighbours and inform user of memory needed
-   double num_neighbours = double(d[0]) * double(d[1]) * double(d[2]) * double(num_atoms_in_unit_cell);
+   int64_t num_neighbours = d[0] * (d[1]) * (d[2]) * num_atoms_in_unit_cell;
    #ifdef MPICF
       // calculate total interactions for entire system
-      double total_neighbours = 0.0;
-      MPI_Allreduce(&total_neighbours, &num_neighbours, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      uint64_t total_neighbours = 0.0;
+   //   MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
-         zlog << zTs() << "Memory required for neighbourlist calculation (each cpu):" <<
-         8.0*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
-         zlog << zTs() << "Memory required for neighbourlist calculation (all cpus):" <<
-         8.0*total_neighbours/1.0e6 << " MB" << std::endl;
+         zlog << zTs() << "Memory estimated for neighbourlist calculation (each cpu):" <<
+         sizeof(uint64_t)*num_neighbours/(  1.0e6) << " MB" << std::endl;
+         zlog << zTs() << "Memory estimated for neighbourlist calculation (all cpus):" <<
+         sizeof(uint64_t)*total_neighbours*vmpi::num_processors/1.0e6 << " MB" << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbourlist calculation:" <<
@@ -174,7 +174,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    zlog << zTs() << "Populating supercell array for neighbourlist calculation..."<< std::endl;
 
 	// Populate supercell array with atom numbers
-	for(int atom=0; atom < num_atoms; atom++){
+	for(int64_t atom=0; atom < num_atoms; atom++){
 
       // get supercell coordinates
       int64_t scc[3]={ atom_array[atom].scx - offset[0],
@@ -236,16 +236,16 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    zlog << zTs() << "\tPopulating supercell array completed"<< std::endl;
 
    // calculate total number of neighbours and inform user of memory needed
-   num_neighbours = double(num_cells)*double(exchange.interaction.size());
+   num_neighbours = (num_cells)*(exchange.interaction.size());
    #ifdef MPICF
       // calculate total interactions for entire system
       total_neighbours = 0.0;
-      MPI_Allreduce(&total_neighbours, &num_neighbours, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      // MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
-         zlog << zTs() << "Memory required for neighbour list (each cpu):" <<
-         8.0*total_neighbours/(vmpi::num_processors * 1.0e6) << " MB" << std::endl;
-         zlog << zTs() << "Memory required for neighbour list (all cpus):" <<
-         8.0*total_neighbours/1.0e6 << " MB" << std::endl;
+         zlog << zTs() << "Memory estinated for neighbour list (each cpu):" <<
+         sizeof(neighbour_t)*num_neighbours/( 1.0e6) << " MB" << std::endl;
+         zlog << zTs() << "Memory estimated for neighbour list (all cpus):" <<
+         sizeof(neighbour_t)*vmpi::num_processors*num_neighbours/1.0e6 << " MB" << std::endl;
       }
    #else
       zlog << zTs() << "Memory required for neighbour list:" <<
@@ -260,7 +260,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	neighbour_t tmp_nt;
 
    // copy number of interactions to temporary constant
-   const unsigned int num_interactions = exchange.interaction.size();
+   const uint64_t num_interactions = exchange.interaction.size();
 
 	// Loop over all cells
 	for(uint64_t cell = 0; cell < num_cells; cell++){
@@ -276,10 +276,10 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                    cell_coord_array[cell][2]};
 
 		// Loop over all interactions in exchange template
-		for(unsigned int i = 0; i < num_interactions; i++){
+		for(uint64_t i = 0; i < num_interactions; i++){
 
-			const int atom  = exchange.interaction[i].i;
-			const int natom = exchange.interaction[i].j;
+			const uint64_t atom = exchange.interaction[i].i;
+			const uint64_t natom = exchange.interaction[i].j;
 
 			int nx = exchange.interaction[i].dx + scc[0];
 			int ny = exchange.interaction[i].dy + scc[1];
@@ -332,11 +332,11 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
              (ny >= 0 && static_cast<int64_t>(ny) < d[1] ) &&
              (nz >= 0 && static_cast<int64_t>(nz) < d[2] ) ){
             // check for missing atoms
-            if((supercell_array[scc[0]][scc[1]][scc[2]][atom]!=-1) && (supercell_array[nx][ny][nz][natom]!=-1)){
+            if((supercell_array[scc[0]][scc[1]][scc[2]][atom]!= -1) && (supercell_array[nx][ny][nz][natom]!=-1)) {
 
                // need actual atom numbers...
-               int atomi = supercell_array[scc[0]][scc[1]][scc[2]][atom];
-               int atomj = supercell_array[nx][ny][nz][natom];
+               int64_t atomi = supercell_array[scc[0]][scc[1]][scc[2]][atom];
+               int64_t atomj = supercell_array[nx][ny][nz][natom];
 
                //std::cout << "int_id: " << i << "\tatom i: " << atomi << "\tatom j: " << atomj << "\tuc_i: " << atom << "\tuc_j: " << natom << std::endl;
 
@@ -363,7 +363,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                // int index = list[supercell_array[scc[0]][scc[1]][scc[2]][atom]].size(); // unused variable
 
                // set neighbour data
-               tmp_nt.nn = supercell_array[nx][ny][nz][natom]; // atom ID of neighbour
+               tmp_nt.nn = atomj;// supercell_array[nx][ny][nz][natom]; // atom ID of neighbour
                tmp_nt.i = i;                                   // interaction type
                tmp_nt.vx = vx;                                 // position vector i->j
                tmp_nt.vy = vy;

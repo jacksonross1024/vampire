@@ -26,16 +26,11 @@
 #define SIM_H_
 
 //Headers
-#include <cstdint>
 #include <fstream>
 #include <stdint.h>
 #include <string>
 #include <valarray>
 #include <vector>
-
-// Load standard forms of fixed-width types (needed for some compilers)
-using std::uint64_t;
-using std::int64_t;
 
 /// Enumerated lists for code readability
 enum pump_functions_t {square=0, two_temperature, double_pump_two_temperature, double_pump_square};
@@ -76,8 +71,9 @@ namespace sim{
 
 	// enumerated list for integrators
 	enum integrator_t{ llg_heun = 0, monte_carlo = 1, llg_midpoint = 2,
-							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5};
+							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5, suzuki_trotter_spin=6};
 
+	
 	extern std::ofstream mag_file;
 	extern uint64_t time;
 	extern uint64_t total_time;
@@ -97,12 +93,21 @@ namespace sim{
 	extern double Teq;
 	extern double temperature;
 	extern double delta_temperature;
+
 	extern double H_applied;
 	extern double H_vec[3];
+	
+	extern double actual_H_field;
+	extern double actual_H_vector[3];
+	extern double applied_H_field;
+	extern double applied_H_vector[3];
+	extern double equilibrium_H_field;
+	extern double equilibrium_H_vector[3];
 	extern double Hmin; // T
 	extern double Hmax; // T
 	extern double Hinc; // T
 	extern double Heq; // T
+	extern double H_actual;
 	extern double applied_field_angle_phi;
 	extern double applied_field_angle_theta;
 	extern bool applied_field_set_by_angle;
@@ -139,7 +144,8 @@ namespace sim{
 	// extern double head_position[2];
 	// extern double head_speed;
 	// extern bool   head_laser_on;
-
+	extern bool enable_laser_torque_fields;
+	extern double laser_torque_strength; //0-1 
 	extern double cooling_time;
 	extern int cooling_function_flag;
 	extern pump_functions_t pump_function;
@@ -156,6 +162,12 @@ namespace sim{
 	extern double TTTe; /// electron temperature
 	extern double TTTp; /// phonon temperature
 
+	extern double piezomagnetic_dipole_time;
+	extern bool piezomagnetic_dipole_field;
+	extern double piezomagnetic_dipole_field_strength;
+	
+	extern double lot_theta;
+	
 	extern int system_simulation_flags;
 	extern int hamiltonian_simulation_flags[10];
 
@@ -200,32 +212,50 @@ namespace sim{
 	extern int LLG_Midpoint_mpi();
 	extern int LLG_Midpoint_cuda();
 
+	//Suzuki-Trotter decomposition for spin
+    extern int STDspin();
+    void STDspin_parallel_init(std::vector<double> &x, std::vector<double> &y, std::vector<double> &z,
+                             double min_dim[3], double max_dim[3]);
+    extern bool STDspin_parallel_initialized;
+    void STDspin_step_parallel(std::vector<double> &x_spin_array, std::vector<double> &y_spin_array, std::vector<double> &z_spin_array, std::vector<int> &type_array); 
+	    extern std::vector<std::vector<int> > c_octants; //Core atoms of each octant
+    extern std::vector<std::vector<int> > b_octants; //Boundary atoms of each octant
+	//functions for Suzuki-Trotter decomposition
+  
+      void cayley_update(const int start_index,
+                  const int end_index,
+                  double dt,
+                  std::vector<double>& x_spin_array, // coord vectors for atoms
+                  std::vector<double>& y_spin_array,
+                  std::vector<double>& z_spin_array,
+                  std::vector<double>& fields_array_x, //  vectors for fields
+                  std::vector<double>& fields_array_y,
+                  std::vector<double>& fields_array_z);
 
+      void add_spin_noise(const int start_index,
+                  const int end_index,
+                  double dt,
+                  const std::vector<int>& type_array, // type for atom
+                  std::vector<double>& x_spin_array, // coord vectors for atoms
+                  std::vector<double>& y_spin_array,
+                  std::vector<double>& z_spin_array,
+                  std::vector<double>& fields_array_x, //  vectors for fields
+                  std::vector<double>& fields_array_y,
+                  std::vector<double>& fields_array_z,
+                  std::vector<double>& Hx_th, //  vectors for fields
+                  std::vector<double>& Hy_th,
+                  std::vector<double>& Hz_th);
 	// Integrator initialisers
 	extern int LLGinit();
 
 	// Field and energy functions
-   extern double calculate_spin_energy(const int atom);
+	extern double calculate_spin_energy(const int atom);
    extern double spin_applied_field_energy(const double, const double, const double);
    extern double spin_magnetostatic_energy(const int, const double, const double, const double);
 
 	void calculate_spin_fields(const int start_index,const int end_index);
 	void calculate_external_fields(const int start_index,const int end_index);
-
-	//spin temperature
-	extern double compute_spin_temperature(const int start_index, // first atom for exchange interactions to be calculated
-														const int end_index,
-														const std::vector<int>& type_array, // type for atom
-														std::vector<double>& x_spin_array, // coord vectors for atoms
-														std::vector<double>& y_spin_array,
-														std::vector<double>& z_spin_array,
-														std::vector<double>& fields_array_x, //  vectors for fields
-														std::vector<double>& fields_array_y,
-														std::vector<double>& fields_array_z,
-														std::vector<double>& mu_s_array);
-
-	extern double spin_temperature;
-
+	void calculate_piezomagnetic_dipole(const int start_index,const int end_index);
    // LaGrange multiplier variables
    extern double lagrange_lambda_x;
    extern double lagrange_lambda_y;
@@ -239,17 +269,19 @@ namespace sim{
    extern double mc_statistics_moves;
    extern double mc_statistics_reject;
 
-	extern int domain_wall_discretisation_type;
-	extern std::vector<double> domain_wall_discretisation;
 	extern int domain_wall_axis;
 	extern double domain_wall_position;
+	extern double domain_wall_velocity;
+	extern std::vector<double> domain_wall_discretisation;
 	extern double domain_wall_centre;
 	extern double domain_wall_width;
-	extern std::vector < bool > anti_PBC;
-		extern int domain_wall_angle;
+	extern int domain_wall_discretisation_type;
+	extern int domain_wall_angle;
+	extern bool domain_wall_random_start;
 	extern double unit_cell_x;
     extern double unit_cell_y;
     extern double unit_cell_z;
+	extern std::vector < bool > anti_PBC;
 
 	extern std::vector < double > domain_wall_second_vector_x;
 	extern std::vector < double > domain_wall_second_vector_y;

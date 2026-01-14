@@ -1,0 +1,65 @@
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+dimensions:unit-cell-size-x = 4.69 !A
+dimensions:unit-cell-size-y = 4.69 !A
+dimensions:unit-cell-size-z = 3.18 !A
+dimensions:system-size-x = 8 !nm
+dimensions:system-size-y = 8 !nm
+dimensions:system-size-z = 8 !nm
+
+create:crystal-sublattice-materials=true
+create:crystal-structure=rutile
+
+create:periodic-boundaries-x
+create:periodic-boundaries-y
+create:periodic-boundaries-z
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:file = CoF2.mat
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+sim:minimum-temperature = 34.0
+sim:maximum-temperature = 50.0
+sim:temperature-increment = 1
+#sim:time-steps-increment = 1000
+sim:equilibration-time-steps = 20000 #MC
+sim:loop-time-steps = 20000 #averaging steps
+#sim:time-step = 1 !fs
+
+
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program = curie-temperature
+sim:integrator = monte-carlo #llg
+
+
+dipole:field-update-rate = 1000
+dipole:solver=atomistic
+#------------------------------------------
+# data output
+#------------------------------------------
+output:column-headers=false
+
+output:temperature
+output:mean-magnetisation-length
+output:material-mean-magnetisation-length
+output:mean-magnetisation
+output:material-mean-magnetisation
+output:total-energy
+output:mean-susceptibility
+output:material-mean-susceptibility
+
+config:atoms
+screen:temperature
+screen:mean-magnetisation-length

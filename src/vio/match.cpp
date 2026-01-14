@@ -445,6 +445,13 @@ namespace vin{
             sim::pump_power=pp;
             return EXIT_SUCCESS;
         }
+        test="piezomagnetic-dipole-pulse";
+        if(word==test){
+            //double pp=atof(value.c_str());
+           // check_for_valid_value(pp, word, line, prefix, unit, "none", 0.0, 1.0e40,"input","0.0 - 1.0E40");
+            sim::piezomagnetic_dipole_field = true;
+            return EXIT_SUCCESS;
+        }
         //--------------------------------------------------------------------
         test="second-laser-pulse-time";
         if(word==test){
@@ -482,7 +489,7 @@ namespace vin{
         if(word==test){
             double hscc=atof(value.c_str());
             check_for_valid_value(hscc, word, line, prefix, unit, "none", 0.0, 1.0e40,"input","0.0 - 1.0E40");
-            sim::HeatSinkCouplingConstant=hscc;
+            sim::HeatSinkCouplingConstant=hscc;         
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
@@ -548,7 +555,7 @@ namespace vin{
         if(word==test){
             double H=atof(value.c_str());
             check_for_valid_value(H, word, line, prefix, unit, "field", -1.e4, 1.0e4,"input","+/- 10,000 T");
-            sim::H_applied=H;
+            sim::applied_H_field=H;
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
@@ -568,11 +575,11 @@ namespace vin{
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
-        test="equilibration-applied-field-strength";
+        test="equilibration-field-strength";
         if(word==test){
             double H=atof(value.c_str());
             check_for_valid_value(H, word, line, prefix, unit, "field", 0.0, 1.0e3,"input","0 - 1,000 T");
-            sim::Heq=H;
+            sim::equilibrium_H_field=H;
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
@@ -606,10 +613,25 @@ namespace vin{
         if(word==test){
             std::vector<double> u(3);
             u=doubles_from_string(value);
+            double u_old[3] = {u[0],u[1],u[2]};
             check_for_valid_unit_vector(u, word, line, prefix, "input");
-            sim::H_vec[0]=u.at(0);
-            sim::H_vec[1]=u.at(1);
-            sim::H_vec[2]=u.at(2);
+            if(u_old[0] != u[0] || u_old[1] != u[1] || u_old[2] != u[2]) std::cout << "unit vector normalised from <" << u_old[0] << ", " << u_old[1] << ", " << u_old[2] << "> to <" << u[0] << ", " << u[1] << ", " << u[2] << ">" << std::endl;
+            sim::applied_H_vector[0]=u.at(0);
+            sim::applied_H_vector[1]=u.at(1);
+            sim::applied_H_vector[2]=u.at(2);
+            sim::applied_field_set_by_angle=false;
+            return EXIT_SUCCESS;
+        }
+        test="equilibration-field-unit-vector";
+        if(word==test){
+            std::vector<double> u(3);
+            u=doubles_from_string(value);
+            double u_old[3] = {u[0],u[1],u[2]};
+            check_for_valid_unit_vector(u, word, line, prefix, "input");
+            if(u_old[0] != u[0] || u_old[1] != u[1] || u_old[2] != u[2]) std::cout << "unit vector normalised from <" << u_old[0] << ", " << u_old[1] << ", " << u_old[2] << "> to <" << u[0] << ", " << u[1] << ", " << u[2] << ">" << std::endl;
+            sim::equilibrium_H_vector[0]=u.at(0);
+            sim::equilibrium_H_vector[1]=u.at(1);
+            sim::equilibrium_H_vector[2]=u.at(2);
             sim::applied_field_set_by_angle=false;
             return EXIT_SUCCESS;
         }
@@ -1455,6 +1477,16 @@ namespace vin{
            output_list.push_back(72);
            return EXIT_SUCCESS;
         }
+        test="lot-strength";
+        if(word==test){
+           output_list.push_back(73);
+           return EXIT_SUCCESS;
+        }
+        test="domain-wall-velocity";
+        if(word==test){
+           output_list.push_back(74);
+           return EXIT_SUCCESS;
+        }
         //--------------------------------------------------------------------
         test="spin-temperature";
         if(word==test){
@@ -1490,6 +1522,104 @@ namespace vin{
             vout::gnuplot_array_format=true;
             return EXIT_SUCCESS;
         }
+        test = "spin-temperature";
+        if (word == test) {
+            stats::calculate_system_spin_temperature = true;
+            stats::calculate_system_magnetization = true; //override magnetisation flag
+            output_list.push_back(75);
+            return EXIT_SUCCESS;
+        }
+        test = "material-spin-temperature";
+        if (word == test) {
+            stats::calculate_material_spin_temperature = true;
+            stats::calculate_material_magnetization = true; //override magnetisation flad
+            output_list.push_back(76);
+            return EXIT_SUCCESS;
+        }
+        test = "mean-spin-temperature";
+        if (word == test) {
+            stats::calculate_system_spin_temperature = true;
+            stats::calculate_system_magnetization = true;
+            output_list.push_back(77);
+            return EXIT_SUCCESS;
+        }
+        test = "mean-material-spin-temperature";
+        if (word == test) {
+            stats::calculate_material_spin_temperature = true;
+            stats::calculate_material_magnetization = true;
+            output_list.push_back(78);
+            return EXIT_SUCCESS;
+        }
+        // //--------------------------------------------------------------------
+        // test="material-total-energy";
+        // if(word==test){
+        //    stats::calculate_material_energy = true;
+        //    output_list.push_back(79);
+        //    return EXIT_SUCCESS;
+        // }
+        // //--------------------------------------------------------------------
+        // test="mean-material-total-energy";
+        // if(word==test){
+        //    stats::calculate_material_energy = true;
+        //    output_list.push_back(80);
+        //    return EXIT_SUCCESS;
+        // }
+        //--------------------------------------------------------------------
+        test="material-exchange-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(81);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-mean-exchange-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(82);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-anisotropy-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(83);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-mean-anisotropy-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(84);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-magnetostatic-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(87);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-mean-magnetostatic-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(88);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-applied-field-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(85);
+           return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
+        test="material-mean-applied-field-energy";
+        if(word==test){
+           stats::calculate_material_energy = true;
+           output_list.push_back(86);
+           return EXIT_SUCCESS;
+        }
         //--------------------------------------------------------------------
         test="output-rate";
         if(word==test){
@@ -1498,6 +1628,16 @@ namespace vin{
             vout::output_rate=r;
             return EXIT_SUCCESS;
         }
+
+        test="spinwaves";
+        if(word==test){
+            int r=atoi(value.c_str());
+            check_for_valid_int(r, word, line, prefix, 1, 1000000,"input","1 - 1,000,000");
+            stats::calculate_spinwaves = true;
+            stats::spinwaves.frequency_step = r;
+            return EXIT_SUCCESS;
+        }
+
 
         //--------------------------------------------------------------------
         // keyword not found
@@ -1769,7 +1909,7 @@ namespace vin{
             test="atomic-spin-moment";
             if(word==test){
                 double mu_s=atof(value.c_str());
-                check_for_valid_positive_value(mu_s, word, line, prefix, unit, "moment", 0.1*9.24e-24, 1e8*9.24e-24,"material","0.1 - 1e8 mu_B");
+                check_for_valid_positive_value(mu_s, word, line, prefix, unit, "moment", 0.0*9.24e-24, 1e8*9.24e-24,"material","0.0 - 1e8 mu_B");
                 read_material[super_index].moment_flag=true;
                 read_material[super_index].mu_s_SI=mu_s;
                 return EXIT_SUCCESS;
@@ -2320,7 +2460,7 @@ namespace vin{
             else if(unitcell::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(micromagnetic::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(environment::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
-
+            else if(ltmp::match_material_parameter(word, value, unit, line, super_index)) return EXIT_SUCCESS;
             //--------------------------------------------------------------------
             // keyword not found
             //--------------------------------------------------------------------

@@ -92,6 +92,7 @@ namespace spin_transport{
 
       extern unsigned int update_rate;  // number of timesteps between updates
       extern unsigned int time_counter; // number of timesteps since last update
+      extern unsigned int output_rate;  // number of updates between outputs 
 
       extern std::vector<internal::mp_t> mp; // array of material properties
 
@@ -99,6 +100,7 @@ namespace spin_transport{
       enum current_direction_t {px,py,pz,mx,my,mz}; // +x,+y,+z,-x,-y,-z
       extern current_direction_t current_direction; // current direction
 
+      extern double initial_spin_direction[3];
       extern double cell_size_x; // cell size along x-direction
       extern double cell_size_y; // cell size along y-direction
       extern double cell_size_z; // cell size along z-direction

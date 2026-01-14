@@ -7,6 +7,7 @@ cells_objects =\
 data.o \
 initialize.o \
 interface.o \
+output.o \
 mag.o
 
 # Append module objects to global tree

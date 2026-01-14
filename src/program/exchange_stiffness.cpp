@@ -166,16 +166,23 @@ void exchange_stiffness(){
 	//---------------------------------------------------------------------------
 	// Main exchange calculation program
 	//---------------------------------------------------------------------------
-	const double mt = program::internal::exchange_stiffness_max_constraint_angle;
+	 double mt = program::internal::exchange_stiffness_max_constraint_angle;
 	const double dt = program::internal::exchange_stiffness_delta_constraint_angle;
-
+	 double t_o = program::internal::exchange_stiffness_min_constraint_angle;
+	if(t_o > mt ) {
+		std::cerr     << "Minimum angle larger than maximum angle for cmc program. Switching values." << std::endl;
+		zlog << zTs() << "Minimum angle larger than maximum angle for cmc program. Switching values." << std::endl;
+		t_o = program::internal::exchange_stiffness_max_constraint_angle;
+		mt = program::internal::exchange_stiffness_min_constraint_angle;
+	}
+	
 	// set constraint phi component
 	const double constraint_phi = 90.0;
-	//const double cosphi = cos(constraint_phi*pi180);
-	//const double sinphi = sin(constraint_phi*pi180);
+	const double cosphi = cos(constraint_phi*pi180);
+	const double sinphi = sin(constraint_phi*pi180);
 
 	// loop over constraint angles ct (constraint_theta)
-	for(double constraint_theta = 0.0; constraint_theta < mt; constraint_theta += dt){
+	for(double constraint_theta = t_o; constraint_theta < mt; constraint_theta += dt) {
 
 		// push back data to store calculated torques and angles
 		angles.push_back(constraint_theta*pi180); // radians
@@ -268,7 +275,7 @@ void exchange_stiffness(){
 		sim::temperature=sim::Tmin;
 
 		// equilibrate ground state structure at zero kelvin
-		for(int ztime = 0; ztime < 500; ztime++) sim::integrate(1);
+		// for(int ztime = 0; ztime < 500; ztime++) sim::integrate(1);
 
 		// reset temperature array
 		temperatures.resize(0);
@@ -538,9 +545,9 @@ void calculate_torque(const std::vector<int>& mask,
 										 atoms::y_spin_array[atom],
 										 atoms::z_spin_array[atom]};
 
-			const double H[3] = { atoms::x_total_spin_field_array[atom] + atoms::x_total_external_field_array[atom],
-										 atoms::y_total_spin_field_array[atom] + atoms::y_total_external_field_array[atom],
-										 atoms::z_total_spin_field_array[atom] + atoms::z_total_external_field_array[atom] };
+			const double H[3] = { atoms::x_total_spin_field_array[atom] + atoms::x_total_external_field_array[atom] +atoms::thermal_x_field[atom],
+										 atoms::y_total_spin_field_array[atom] + atoms::y_total_external_field_array[atom] + atoms::thermal_y_field[atom],
+										 atoms::z_total_spin_field_array[atom] + atoms::z_total_external_field_array[atom] + atoms::thermal_z_field[atom]};
 
 			// compute torques
 			const double ttx = mu*(S[1]*H[2] - S[2]*H[1]);

@@ -1,0 +1,75 @@
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+dimensions:unit-cell-size-x = 2.87 !A #4.69 !A
+dimensions:unit-cell-size-y = 2.87 !A  #4.69 !A
+dimensions:unit-cell-size-z = 2.87 !A #3.18 !A
+dimensions:system-size-x = 5 !nm
+dimensions:system-size-y = 5 !nm
+dimensions:system-size-z = 5 !nm
+
+create:crystal-sublattice-materials=false #true
+create:crystal-structure=bcc #rutile
+
+create:periodic-boundaries-x
+create:periodic-boundaries-y
+create:periodic-boundaries-z
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:file = Fe.mat #CoF2.mat
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+
+sim:equilibration-temperature= 500
+sim:time-steps-increment = 1
+sim:preconditioning-steps = 2000
+
+#sim:load-checkpoint = restart
+sim:equilibration-time-steps =  200
+sim:total-time-steps = 30000 #averaging steps
+sim:time-step = 0.1 !fs
+sim:laser-pulse-temporal-profile = two-temperature #double-pulse-
+sim:laser-pulse-time= 100 !fs
+sim:laser-pulse-power= 0.0 # J/m^2
+#sim:piezomagnetic-dipole-pulse
+
+output:spinwaves = 50
+sim:two-temperature-phonon-heat-capacity = 6.934e5 #J/K/mol -> 1mol/(96.9 g) -> 4.48e6 g/m^3
+sim:two-temperature-electron-heat-capacity = 6.934e2 #J/K/mol
+sim:two-temperature-electron-phonon-coupling = 1e16
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program = laser-pulse
+sim:integrator = llg-heun 
+
+#dipole:field-update-rate = 1
+#dipole:solver=atomistic
+#------------------------------------------
+# data output
+#------------------------------------------
+
+output:output-rate = 100
+output:real-time
+output:temperature
+output:phonon-temperature
+output:magnetisation-length
+output:material-mean-magnetisation-length
+output:magnetisation
+output:material-magnetisation
+output:total-energy
+output:mean-susceptibility
+output:material-mean-susceptibility
+
+
+screen:real-time
+screen:mean-magnetisation-length

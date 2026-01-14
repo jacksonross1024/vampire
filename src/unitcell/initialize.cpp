@@ -39,9 +39,12 @@ namespace unitcell{
       //------------------------------------------------------------------------
       if(uc::internal::crystal_structure      == "sc"             ) uc::internal::build_simple_cubic(           unit_cell );
       else if(uc::internal::crystal_structure == "bcc"            ) uc::internal::build_body_centred_cubic(     unit_cell );
+      else if(uc::internal::crystal_structure == "cccro"          ) uc::internal::build_cccro(                  unit_cell );
       else if(uc::internal::crystal_structure == "bcc-110"        ) uc::internal::build_body_centred_cubic_110( unit_cell );
       else if(uc::internal::crystal_structure == "fcc"            ) uc::internal::build_face_centred_cubic(     unit_cell );
       else if(uc::internal::crystal_structure == "fcc-111"        ) uc::internal::build_face_centred_cubic_111( unit_cell );
+      else if(uc::internal::crystal_structure == "fe3gete2"       ) uc::internal::build_fe3gete2(               unit_cell );
+      else if(uc::internal::crystal_structure == "fe5gete2"       ) uc::internal::build_fe5gete2(               unit_cell );
       else if(uc::internal::crystal_structure == "hcp"            ) uc::internal::build_hexagonal_close_packed( unit_cell );
       else if(uc::internal::crystal_structure == "heusler"        ) uc::internal::build_heusler(                unit_cell );
       else if(uc::internal::crystal_structure == "honeycomb"      ) uc::internal::build_honeycomb(              unit_cell );
@@ -49,11 +52,14 @@ namespace unitcell{
       else if(uc::internal::crystal_structure == "beta-honeycomb")  uc::internal::build_honeycomb_beta(         unit_cell );
       else if(uc::internal::crystal_structure == "kagome"         ) uc::internal::build_kagome(                 unit_cell );
       else if(uc::internal::crystal_structure == "mn2au"          ) uc::internal::build_mn2au(                  unit_cell );
+      else if(uc::internal::crystal_structure == "mn3sn"          ) uc::internal::build_mn3sn(                  unit_cell );
       else if(uc::internal::crystal_structure == "NdFeB"          ) uc::internal::build_NdFeB(                  unit_cell );
       else if(uc::internal::crystal_structure == "rocksalt"       ) uc::internal::build_rock_salt(              unit_cell );
+      else if(uc::internal::crystal_structure == "rutile"         ) uc::internal::build_rutile(                 unit_cell );
       else if(uc::internal::crystal_structure == "spinel"         ) uc::internal::build_spinel(                 unit_cell );
       else if(uc::internal::crystal_structure == "spinel-layered" ) uc::internal::build_spinel_layered(         unit_cell );
       else if(uc::internal::crystal_structure == "SmFeN"          ) uc::internal::build_SmFeN(                  unit_cell );
+      else if(uc::internal::crystal_structure == "trigonal"       ) uc::internal::build_trigonal(               unit_cell );
       // Otherwise print an error to user
       else{
          terminaltextcolor(RED);
@@ -64,7 +70,7 @@ namespace unitcell{
       }
 
       // optionally write generated unit cell file to disk
-      //internal::write_unit_cell_file(unit_cell);
+      internal::write_unit_cell_file(unit_cell);
 
       return;
 

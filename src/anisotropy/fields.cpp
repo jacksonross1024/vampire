@@ -41,7 +41,7 @@ namespace anisotropy{
 
       // second order uniaxial anisotropy
       internal::uniaxial_second_order_fields(spin_array_x, spin_array_y, spin_array_z, type_array, field_array_x, field_array_y, field_array_z, start_index, end_index);
-
+      internal::uniaxial_inplane_second_order_fields(spin_array_x, spin_array_y, spin_array_z, type_array, field_array_x, field_array_y, field_array_z, start_index, end_index);
       // fourth order uniaxial anisotropy
       internal::uniaxial_fourth_order_fields(spin_array_x, spin_array_y, spin_array_z, type_array, field_array_x, field_array_y, field_array_z, start_index, end_index);
 
