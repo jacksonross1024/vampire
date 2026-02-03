@@ -5,7 +5,7 @@
 #===================================================================
 
 # Specify compiler for MPI compilation with openmpi
-export OMPI_CXX=g++ -std=c++0x
+export OMPI_CXX=g++ -std=c++11
 
 #export OMPI_CXX=icc
 #export OMPI_CXX=pathCC
@@ -19,7 +19,7 @@ export OMPI_CXX=g++ -std=c++0x
 
 # Compilers
 ICC=icc -std=c++11 -DCOMP='"Intel C++ Compiler"'
-GCC=g++ -std=c++0x -DCOMP='"GNU C++ Compiler"' -fopenmp
+GCC=g++ -std=c++11 -DCOMP='"GNU C++ Compiler"' -fopenmp
 LLVM=g++ -std=c++11 -DCOMP='"LLVM C++ Compiler"'
 PCC=pathCC -DCOMP='"Pathscale C++ Compiler"'
 IBM=bgxlc++ -DCOMP='"IBM XLC++ Compiler"'
@@ -42,8 +42,8 @@ CUDALIBS=-L/usr/local/cuda/lib64/ -lcuda -lcudart
 ICC_DBCFLAGS= -O0 -C -I./hdr -I./src/qvoronoi
 ICC_DBLFLAGS= -C -I./hdr -I./src/qvoronoi
 
-GCC_DBCFLAGS= -g -pg -fprofile-arcs -ftest-coverage -Wall -Wextra -O0 -fbounds-check -pedantic -std=c++0x -Wno-long-long -I./hdr -I./src/qvoronoi -Wsign-compare
-GCC_DBLFLAGS= -g -pg -fprofile-arcs -ftest-coverage -lstdc++ -std=c++0x -fbounds-check -I./hdr -I./src/qvoronoi -Wsign-compare
+GCC_DBCFLAGS= -g -pg -fprofile-arcs -ftest-coverage -Wall -Wextra -O0 -fbounds-check -pedantic -std=c++11 -Wno-long-long -I./hdr -I./src/qvoronoi -Wsign-compare
+GCC_DBLFLAGS= -g -pg -fprofile-arcs -ftest-coverage -lstdc++ -std=c++11 -fbounds-check -I./hdr -I./src/qvoronoi -Wsign-compare
 
 PCC_DBCFLAGS= -O0 -I./hdr -I./src/qvoronoi
 PCC_DBLFLAGS= -O0 -I./hdr -I./src/qvoronoi
@@ -62,7 +62,7 @@ ICC_LDFLAGS= -I./hdr -I./src/qvoronoi -axCORE-AVX2
 LLVM_CFLAGS= -Wall -pedantic -O3 -mtune=native -funroll-loops -I./hdr -I./src/qvoronoi
 LLVM_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi
 
-GCC_CFLAGS= -O3 -mtune=native -funroll-all-loops -fexpensive-optimizations -funroll-loops -I./hdr -I./src/qvoronoi -std=c++0x -Wsign-compare -I/opt/local/include/
+GCC_CFLAGS= -O3 -mtune=native -funroll-all-loops -fexpensive-optimizations -funroll-loops -I./hdr -I./src/qvoronoi -std=c++11 -Wsign-compare -I/opt/local/include/
 GCC_LDFLAGS= -lstdc++ -I./hdr -I./src/qvoronoi -Wsign-compare -I/opt/local/include/
 
 PCC_CFLAGS=-O2 -march=barcelona -ipa -I./hdr -I./src/qvoronoi
