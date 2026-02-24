@@ -45,7 +45,7 @@ bool ltmp::abs_t::is_set(){
 void ltmp::abs_t::add_point(double height, double absorption){
 
    // check for valid height value
-   if( height < 0.0 || height > 10000.0 ){
+   if( height < 0.0 || height > 10000000.0 ){
       std::cerr << "Error: height value " << height << " in absorption profile file is invalid. height values must be in the range 0.0 - 10000.0 A. Exiting." << std::endl;
       zlog << zTs() << "Error: height value " << height << " in absorption profile file is invalid. height values must be in the range 0.0 - 10000.0 A. Exiting." << std::endl;
       err::vexit();
@@ -78,7 +78,7 @@ void ltmp::abs_t::set_interpolation_table(){
 
    // Check for undefined absorption profile
    if(z.size()==0){
-      z_max=10000.0;
+      z_max=1000000.0;
       A_max=1.0;
       return;
    }

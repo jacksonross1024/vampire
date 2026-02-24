@@ -159,7 +159,7 @@ namespace ltmp{
             std::stringstream line_stream(linestr);
             line_stream >> z >> ab;
             // check for valid ranges
-            if(z < 0.0 || z > 10000.0){
+            if(z < 0.0 || z > 10000000.0){
               terminaltextcolor(RED);
               std::cerr << "Error on line " << line << " of absorption profile file. Height value " << z << " is outside of valid range (0.0-10000.0 A). Exiting." << std::endl;
               zlog << zTs() << "Error on line " << line << " of absorption profile file. Height value " << z << " is outside of valid range (0.0-10000.0 A). Exiting." << std::endl;

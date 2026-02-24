@@ -210,6 +210,7 @@ int create(){
 		//std::cout << "Outputting coordinate data" << std::endl;
 		//vmpi::crystal_xyz(catom_array);
 	int my_num_atoms=vmpi::num_core_atoms+vmpi::num_bdry_atoms;
+	vmpi::num_local_atoms = atoms::num_atoms;
    //std::cout << "my_num_atoms == " << my_num_atoms << std::endl;
 	int total_num_atoms=0;
 	MPI_Reduce(&my_num_atoms,&total_num_atoms, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
