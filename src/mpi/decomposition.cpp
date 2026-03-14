@@ -66,8 +66,12 @@ namespace vmpi{
          // temporary for storing node dimensions
          dim_t node_dimensions;
 
-         // determine number of nodes [ == roundup(vmpi::num_processors/vmpi::ppn) ]
+         // determine number of nodes [ == ceil(num_processors/ppn) ]
          const unsigned int num_nodes = (vmpi::num_processors - 1)/vmpi::ppn + 1;
+         if(vmpi::my_rank == 0){
+            zlog << zTs() << "Node count: num_processors = " << vmpi::num_processors
+                 << ", ppn = " << vmpi::ppn << " -> " << num_nodes << " nodes" << std::endl;
+         }
 
          // determine node id
          const unsigned int my_node_id = vmpi::my_rank/vmpi::ppn;

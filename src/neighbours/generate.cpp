@@ -13,6 +13,7 @@
 // C++ standard library headers
 #include <cmath>
 #include <iostream>
+#include <unordered_map>
 
 // Vampire headers
 #include "create_atoms_class.hpp" // class definition for atoms in create module
@@ -111,44 +112,25 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                           ( max_cell[1] - offset[1] + 1 ),
                           ( max_cell[2] - offset[2] + 1 )};
 
-	// Declare temporary array for 3D supercell array
-	std::vector<std::vector<std::vector<std::vector<int64_t> > > > supercell_array;
+	// Sparse supercell: one map per cell (uc_id -> atom index). Memory O(local atoms)
+	// instead of O(local_cells * num_atoms_in_unit_cell), which caused OOM for large UCFs.
+	const uint64_t num_cells = d[0]*d[1]*d[2];
+	std::vector<std::unordered_map<uint64_t, int64_t> > supercell_map(num_cells);
+	int64_t num_neighbours = 0;
+	uint64_t total_neighbours = 0;
 
-   // calculate total number of neighbours and inform user of memory needed
-   int64_t num_neighbours = d[0] * (d[1]) * (d[2]) * num_atoms_in_unit_cell;
    #ifdef MPICF
-      // calculate total interactions for entire system
-      uint64_t total_neighbours = 0.0;
-   //   MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
       if(vmpi::master){
-         zlog << zTs() << "Memory estimated for neighbourlist calculation (each cpu):" <<
-         sizeof(uint64_t)*num_neighbours/(  1.0e6) << " MB" << std::endl;
-         zlog << zTs() << "Memory estimated for neighbourlist calculation (all cpus):" <<
-         sizeof(uint64_t)*total_neighbours*vmpi::num_processors/1.0e6 << " MB" << std::endl;
+         zlog << zTs() << "Neighbourlist supercell uses sparse storage (O(local atoms) per rank)" << std::endl;
       }
    #else
-      zlog << zTs() << "Memory required for neighbourlist calculation:" <<
-      8.0*num_neighbours/1.0e6 << " MB" << std::endl;
+      zlog << zTs() << "Neighbourlist supercell uses sparse storage" << std::endl;
    #endif
 
-   // Inform user that neighbour list calculation is beginning
-   zlog << zTs() << "Allocating memory for supercell array in neighbourlist calculation" << std::endl;
-
-   // Allocate supercell array to list all atoms
-	supercell_array.resize(d[0]);
-	for(unsigned int i=0; i < d[0] ; i++){
-		supercell_array[i].resize(d[1]);
-		for(unsigned int j=0; j<d[1] ; j++){
-			supercell_array[i][j].resize(d[2]);
-			for(unsigned int k=0; k<d[2] ; k++){
-				supercell_array[i][j][k].resize(num_atoms_in_unit_cell,-1);
-			}
-		}
-	}
+   zlog << zTs() << "Allocating memory for supercell (sparse) in neighbourlist calculation" << std::endl;
    zlog << zTs() << "\tAllocating memory done"<< std::endl;
 
 	// declare 1D cell array to loop over
-	const uint64_t num_cells = d[0]*d[1]*d[2];
 	std::vector< std::vector <int> > cell_coord_array;
 	cell_coord_array.reserve(num_cells);
 	for(uint64_t i=0; i < num_cells; i++){
@@ -209,29 +191,13 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 				err::vexit();
 			}
 		}
-		// Check for atoms greater than max_atoms_per_supercell
-		if(atom_array[atom].uc_id < num_atoms_in_unit_cell){
-			// Add atom to supercell
-			supercell_array[scc[0]][scc[1]][scc[2]][atom_array[atom].uc_id]=atom;
-		}
-		else{
-			terminaltextcolor(RED);
-			std::cerr << "Error, number of atoms per supercell exceeded" << std::endl;
-			std::cerr << "\tAtom number:      " << atom << std::endl;
-			std::cerr << "\tAtom coordinates: " << c[0] << "\t" << c[1] << "\t" << c[2] << "\t" << std::endl;
-			std::cerr << "\tCell coordinates: " << scc[0] << "\t" << scc[1] << "\t" << scc[2] << "\t" << std::endl;
-			std::cerr << "\tCell maxima:      " << d[0] << "\t" << d[1] << "\t" << d[2] << std::endl;
-			std::cerr << "\tCell offset:      " << offset[0] << "\t" << offset[1] << "\t" << offset[2] << std::endl;
-			std::cerr << "\tAtoms in Current Cell:" << std::endl;
-			for(unsigned int ix=0;ix<supercell_array[scc[0]][scc[1]][scc[2]].size();ix++){
-				const int ixatom=supercell_array[scc[0]][scc[1]][scc[2]][ix];
-				std::cerr << "\t\t [id x y z] "<< ix << "\t" << ixatom << "\t" << atom_array[ixatom].x << "\t" << atom_array[ixatom].y << "\t" << atom_array[ixatom].z << std::endl;
-			}
-			terminaltextcolor(WHITE);
-			err::vexit();
-		}
+		// Add atom to sparse supercell map (uc_id -> atom index)
+		const uint64_t uc_id = atom_array[atom].uc_id;
+		const uint64_t cell_linear = static_cast<uint64_t>(scc[0]) * static_cast<uint64_t>(d[1]) * static_cast<uint64_t>(d[2])
+		                          + static_cast<uint64_t>(scc[1]) * static_cast<uint64_t>(d[2])
+		                          + static_cast<uint64_t>(scc[2]);
+		supercell_map[cell_linear][uc_id] = atom;
 	}
-
    // Inform user of progress
    zlog << zTs() << "\tPopulating supercell array completed"<< std::endl;
 
@@ -331,12 +297,19 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
          if( (nx >= 0 && static_cast<int64_t>(nx) < d[0] ) &&
              (ny >= 0 && static_cast<int64_t>(ny) < d[1] ) &&
              (nz >= 0 && static_cast<int64_t>(nz) < d[2] ) ){
-            // check for missing atoms
-            if((supercell_array[scc[0]][scc[1]][scc[2]][atom]!= -1) && (supercell_array[nx][ny][nz][natom]!=-1)) {
+            // lookup actual atom indices from sparse supercell map
+            const uint64_t cell_i = static_cast<uint64_t>(scc[0])*static_cast<uint64_t>(d[1])*static_cast<uint64_t>(d[2])
+                                  + static_cast<uint64_t>(scc[1])*static_cast<uint64_t>(d[2])
+                                  + static_cast<uint64_t>(scc[2]);
+            const uint64_t cell_j = static_cast<uint64_t>(nx)*static_cast<uint64_t>(d[1])*static_cast<uint64_t>(d[2])
+                                  + static_cast<uint64_t>(ny)*static_cast<uint64_t>(d[2])
+                                  + static_cast<uint64_t>(nz);
+            auto it_i = supercell_map[cell_i].find(atom);
+            auto it_j = supercell_map[cell_j].find(natom);
+            if(it_i != supercell_map[cell_i].end() && it_j != supercell_map[cell_j].end()) {
 
-               // need actual atom numbers...
-               int64_t atomi = supercell_array[scc[0]][scc[1]][scc[2]][atom];
-               int64_t atomj = supercell_array[nx][ny][nz][natom];
+               int64_t atomi = it_i->second;
+               int64_t atomj = it_j->second;
 
                //std::cout << "int_id: " << i << "\tatom i: " << atomi << "\tatom j: " << atomj << "\tuc_i: " << atom << "\tuc_j: " << natom << std::endl;
 
@@ -359,18 +332,14 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
                //std::cout << "\tv:     " << jx-ix << "\t" << jy-iy << "\t" << jz-iz << std::endl;
                //std::cout << "\tv_eff: " << vx << "\t" << vy << "\t" << vz << std::endl;
 
-               // get current index
-               // int index = list[supercell_array[scc[0]][scc[1]][scc[2]][atom]].size(); // unused variable
-
                // set neighbour data
-               tmp_nt.nn = atomj;// supercell_array[nx][ny][nz][natom]; // atom ID of neighbour
-               tmp_nt.i = i;                                   // interaction type
-               tmp_nt.vx = vx;                                 // position vector i->j
+               tmp_nt.nn = atomj;
+               tmp_nt.i = i;
+               tmp_nt.vx = vx;
                tmp_nt.vy = vy;
                tmp_nt.vz = vz;
 
-               // push back array of class
-               list[supercell_array[scc[0]][scc[1]][scc[2]][atom]].push_back(tmp_nt);
+               list[atomi].push_back(tmp_nt);
 
             }
 			}
@@ -385,20 +354,13 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	}
    zlog << zTs() << "\tNeighbour list calculation complete"<< std::endl;
 
-	// Deallocate supercell array
-   zlog << zTs() << "Deallocating supercell array for neighbour list calculation" << std::endl;
-	for(unsigned int i=0; i<d[0] ; i++){
-		for(unsigned int j=0; j<d[1] ;j++){
-			for(unsigned int k=0; k<d[2] ;k++){
-				supercell_array[i][j][k].resize(0);
-				}
-				supercell_array[i][j].resize(0);
-			}
-			supercell_array[i].resize(0);
-		}
-	supercell_array.resize(0);
-
-   zlog << zTs() << "\tSupercell array deallocated" << std::endl;
+	// Deallocate sparse supercell map
+   zlog << zTs() << "Deallocating supercell map for neighbour list calculation" << std::endl;
+	for(uint64_t c = 0; c < num_cells; c++){
+		supercell_map[c].clear();
+	}
+	supercell_map.clear();
+   zlog << zTs() << "\tSupercell map deallocated" << std::endl;
 
 	return;
 }

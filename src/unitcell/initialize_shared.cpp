@@ -328,15 +328,16 @@ void initialise_shared(unit_cell_t& unit_cell){
    //----------------------------------------------------------------------
    // Log node leader determination
    //----------------------------------------------------------------------
+   const int num_nodes_log = (vmpi::num_processors - 1) / vmpi::ppn + 1;
    zlog << zTs() << "Node communicator: ppn = " << vmpi::ppn
         << ", node_rank = " << vmpi::node_rank
         << ", node_size = " << vmpi::node_size
         << ", node_leader = " << (vmpi::node_leader ? "true" : "false")
-        << " (global rank " << vmpi::my_rank << ")" << std::endl;
+        << " (global rank " << vmpi::my_rank << "); num_processors = " << vmpi::num_processors
+        << " -> " << num_nodes_log << " nodes" << std::endl;
    if(vmpi::node_leader){
       zlog << zTs() << "   Rank " << vmpi::my_rank << " is node leader (node "
-           << vmpi::my_rank / vmpi::ppn << " of "
-           << (vmpi::num_processors - 1) / vmpi::ppn + 1 << ")" << std::endl;
+           << vmpi::my_rank / vmpi::ppn << " of " << num_nodes_log << ")" << std::endl;
    }
 
    //----------------------------------------------------------------------
