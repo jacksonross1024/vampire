@@ -16,7 +16,8 @@
 #include <unordered_map>
 
 // Vampire headers
-#include "create_atoms_class.hpp" // class definition for atoms in create module
+#include "create.hpp"              // cs::pbc, cs::local_num_unit_cells, cs::total_num_unit_cells
+#include "create_atoms_class.hpp"   // class definition for atoms in create module
 #include "errors.hpp"
 #include "neighbours.hpp"
 #include "vio.hpp"
@@ -74,43 +75,48 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    const int64_t max_val=1000000000000;
    int64_t min[3] = {max_val,max_val,max_val}; // lowest cell id
    int64_t max[3] = {0,0,0}; // highest cell id
+   int64_t offset[3];
+   int64_t d[3];
 
-   // find supercell range of atoms on this CPU
-	for(int64_t atom = 0; atom < num_atoms; atom++){
-
-		int64_t c[3] = { atom_array[atom].scx,
-                       atom_array[atom].scy,
-                       atom_array[atom].scz};
-
-      // loop over i,j,k
-		for(int i = 0; i < 3; i++){
-			if( c[i] < min[i] ){
-				min[i] = c[i];
-			}
-			if( c[i] > max[i] ){
-				max[i] = c[i];
-			}
-		}
-
-	}
-
-   // check for out of range value
-   // loop over i,j,k
-   for(int i = 0; i < 3; i++){
-      if(min[i] > max_val){
-         std::cerr << "Programmer error! too many supercells in atom list" << std::endl;
-      }
+   #ifdef MPICF
+   // Use decomposition local cell range + halo. With PBC, halo atoms have
+   // scx/scy/scz with offsets ±total_num_unit_cells, so min/max over atoms
+   // would span the global grid and num_cells would explode (OOM).
+   if(vmpi::mpi_mode==0){
+      const int halo = 2; // cells of halo for neighbour lookups
+      const int64_t min_cell[3] = {
+         static_cast<int64_t>(vmpi::min_dimensions[0] / ucdx),
+         static_cast<int64_t>(vmpi::min_dimensions[1] / ucdy),
+         static_cast<int64_t>(vmpi::min_dimensions[2] / ucdz)
+      };
+      offset[0] = min_cell[0] - halo;
+      offset[1] = min_cell[1] - halo;
+      offset[2] = min_cell[2] - halo;
+      d[0] = static_cast<int64_t>(cs::local_num_unit_cells[0]) + 2*halo;
+      d[1] = static_cast<int64_t>(cs::local_num_unit_cells[1]) + 2*halo;
+      d[2] = static_cast<int64_t>(cs::local_num_unit_cells[2]) + 2*halo;
    }
-
-	// calculate offset and cell maximum in whole unit cells
-	const int64_t offset[3]   = {min[0], min[1], min[2]};
-	const int64_t max_cell[3] = {max[0], max[1], max[2]};
-
-	// calculate number of cells needed = max-min+1
-   // ( if max_cell = 25, then 0 to 25 = 26 cells)
-	const int64_t d[3] = { ( max_cell[0] - offset[0] + 1 ),
-                          ( max_cell[1] - offset[1] + 1 ),
-                          ( max_cell[2] - offset[2] + 1 )};
+   else
+   #endif
+   {
+      // find supercell range of atoms on this CPU (serial or replicated MPI)
+      for(int64_t atom = 0; atom < num_atoms; atom++){
+         int64_t c[3] = { atom_array[atom].scx, atom_array[atom].scy, atom_array[atom].scz };
+         for(int i = 0; i < 3; i++){
+            if( c[i] < min[i] ) min[i] = c[i];
+            if( c[i] > max[i] ) max[i] = c[i];
+         }
+      }
+      for(int i = 0; i < 3; i++){
+         if(min[i] > max_val){
+            std::cerr << "Programmer error! too many supercells in atom list" << std::endl;
+         }
+      }
+      offset[0] = min[0]; offset[1] = min[1]; offset[2] = min[2];
+      d[0] = max[0] - offset[0] + 1;
+      d[1] = max[1] - offset[1] + 1;
+      d[2] = max[2] - offset[2] + 1;
+   }
 
 	// Sparse supercell: one map per cell (uc_id -> atom index). Memory O(local atoms)
 	// instead of O(local_cells * num_atoms_in_unit_cell), which caused OOM for large UCFs.
@@ -157,19 +163,23 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 
 	// Populate supercell array with atom numbers
 	for(int64_t atom=0; atom < num_atoms; atom++){
+		int64_t sc[3] = { atom_array[atom].scx, atom_array[atom].scy, atom_array[atom].scz };
+		int64_t scc[3];
+		#ifdef MPICF
+		if(vmpi::mpi_mode==0){
+			// With PBC, halo atoms have scx/scy/scz with ±total_num_unit_cells offset. Wrap into local grid.
+			for(int i=0;i<3;i++) scc[i] = ((sc[i] - offset[i]) % d[i] + d[i]) % d[i];
+		}
+		else
+		#endif
+		{
+			scc[0] = sc[0] - offset[0]; scc[1] = sc[1] - offset[1]; scc[2] = sc[2] - offset[2];
+		}
 
-      // get supercell coordinates
-      int64_t scc[3]={ atom_array[atom].scx - offset[0],
-                       atom_array[atom].scy - offset[1],
-                       atom_array[atom].scz - offset[2] };
-
-      // get atom real position coordinates
 		double c[3]={atom_array[atom].x, atom_array[atom].y, atom_array[atom].z};
 
-      // check that atom is within valid range of supercell coordinates
 		for(int i=0;i<3;i++){
-			// Always check cell in range
-         if( scc[i] >= d[i] ){
+			if( scc[i] < 0 || scc[i] >= d[i] ){
             terminaltextcolor(RED);
 				std::cerr << "Error - atom out of supercell range in neighbourlist calculation!" << std::endl;
             terminaltextcolor(WHITE);
@@ -201,21 +211,19 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    // Inform user of progress
    zlog << zTs() << "\tPopulating supercell array completed"<< std::endl;
 
-   // calculate total number of neighbours and inform user of memory needed
-   num_neighbours = (num_cells)*(exchange.interaction_count);
+   // Estimate neighbour list memory from this rank's atoms (list is filled by push_back below)
+   const uint64_t est_neighbours_per_atom = (num_atoms_in_unit_cell > 0)
+      ? (exchange.interaction_count / num_atoms_in_unit_cell) : 0;
+   num_neighbours = static_cast<int64_t>(num_atoms) * static_cast<int64_t>(est_neighbours_per_atom);
    #ifdef MPICF
-      // calculate total interactions for entire system
-      total_neighbours = 0.0;
-      // MPI_Allreduce(&num_neighbours, &total_neighbours, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      total_neighbours = 0;
       if(vmpi::master){
-         zlog << zTs() << "Memory estinated for neighbour list (each cpu):" <<
-         sizeof(neighbour_t)*num_neighbours/( 1.0e6) << " MB" << std::endl;
-         zlog << zTs() << "Memory estimated for neighbour list (all cpus):" <<
-         sizeof(neighbour_t)*vmpi::num_processors*num_neighbours/1.0e6 << " MB" << std::endl;
+         zlog << zTs() << "Memory estimate for neighbour list (per rank, from local atoms): " <<
+         sizeof(neighbour_t)*num_neighbours/(1.0e6) << " MB (this rank: " << num_atoms << " atoms)" << std::endl;
       }
    #else
-      zlog << zTs() << "Memory required for neighbour list:" <<
-      8.0*num_neighbours/1.0e6 << " MB" << std::endl;
+      zlog << zTs() << "Memory estimate for neighbour list: " <<
+      sizeof(neighbour_t)*num_neighbours/1.0e6 << " MB" << std::endl;
    #endif
 
 	// Generate neighbour list and inform user
@@ -293,11 +301,18 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
             }
          }
          #endif
+         #ifdef MPICF
+         // With local grid + PBC, wrap neighbour cell into [0, d[]) for lookup
+         if(vmpi::mpi_mode==0){
+            nx = (nx % static_cast<int>(d[0]) + d[0]) % static_cast<int>(d[0]);
+            ny = (ny % static_cast<int>(d[1]) + d[1]) % static_cast<int>(d[1]);
+            nz = (nz % static_cast<int>(d[2]) + d[2]) % static_cast<int>(d[2]);
+         }
+         #endif
          // check for out-of-bounds access
          if( (nx >= 0 && static_cast<int64_t>(nx) < d[0] ) &&
              (ny >= 0 && static_cast<int64_t>(ny) < d[1] ) &&
              (nz >= 0 && static_cast<int64_t>(nz) < d[2] ) ){
-            // lookup actual atom indices from sparse supercell map
             const uint64_t cell_i = static_cast<uint64_t>(scc[0])*static_cast<uint64_t>(d[1])*static_cast<uint64_t>(d[2])
                                   + static_cast<uint64_t>(scc[1])*static_cast<uint64_t>(d[2])
                                   + static_cast<uint64_t>(scc[2]);
