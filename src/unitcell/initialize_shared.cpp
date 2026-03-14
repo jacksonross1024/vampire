@@ -498,46 +498,50 @@ void initialise_shared(unit_cell_t& unit_cell){
    }
 
    //----------------------------------------------------------------------
-   // 6. Leader fills the shared window, then barrier
+   // 6. Leader fills the shared window under lock, then barrier
    //----------------------------------------------------------------------
-   if(vmpi::node_leader && meta.num_bilinear > 0){
-      if(vmpi::my_rank == 0){
-         std::memcpy(bilinear_shared,
-                     unit_cell.bilinear.interaction.data(),
-                     bilinear_bytes);
-      }
-      else{
-         std::memcpy(bilinear_shared,
-                     recv_bilinear.data(),
-                     bilinear_bytes);
-         std::vector<interaction_t>().swap(recv_bilinear);
-      }
-   }
-
-   if(vmpi::node_leader && meta.num_biquadratic > 0){
-      if(vmpi::my_rank == 0){
-         std::memcpy(biquadratic_shared,
-                     unit_cell.biquadratic.interaction.data(),
-                     biquadratic_bytes);
-      }
-      else{
-         std::memcpy(biquadratic_shared,
-                     recv_biquadratic.data(),
-                     biquadratic_bytes);
-         std::vector<interaction_t>().swap(recv_biquadratic);
+   // Cray MPICH (and some other implementations) require lock/unlock for
+   // shared-memory window synchronization; MPI_Win_sync alone can trigger
+   // "Wrong synchronization of RMA calls" when no RMA ops are used.
+   // Leader holds exclusive lock on rank 0 (self) while writing; barrier
+   // ensures all ranks see the data before non-leaders read.
+   if(meta.num_bilinear > 0){
+      if(vmpi::node_leader){
+         MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, vmpi::bilinear_win);
+         if(vmpi::my_rank == 0){
+            std::memcpy(bilinear_shared,
+                        unit_cell.bilinear.interaction.data(),
+                        bilinear_bytes);
+         }
+         else{
+            std::memcpy(bilinear_shared,
+                        recv_bilinear.data(),
+                        bilinear_bytes);
+            std::vector<interaction_t>().swap(recv_bilinear);
+         }
+         MPI_Win_unlock(0, vmpi::bilinear_win);
       }
    }
 
-   // MPI-3 shared memory consistency: MPI_Win_sync flushes local stores
-   // (leader) / invalidates caches (non-leaders) so that the memcpy'd
-   // data is visible to all ranks on the node.  The MPI_Barrier between
-   // the two syncs ensures ordering: leaders finish writing before
-   // non-leaders start reading.  (MPI-3.1 Section 11.5)
-   if(meta.num_bilinear > 0)   MPI_Win_sync(vmpi::bilinear_win);
-   if(meta.num_biquadratic > 0) MPI_Win_sync(vmpi::biquadratic_win);
+   if(meta.num_biquadratic > 0){
+      if(vmpi::node_leader){
+         MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, vmpi::biquadratic_win);
+         if(vmpi::my_rank == 0){
+            std::memcpy(biquadratic_shared,
+                        unit_cell.biquadratic.interaction.data(),
+                        biquadratic_bytes);
+         }
+         else{
+            std::memcpy(biquadratic_shared,
+                        recv_biquadratic.data(),
+                        biquadratic_bytes);
+            std::vector<interaction_t>().swap(recv_biquadratic);
+         }
+         MPI_Win_unlock(0, vmpi::biquadratic_win);
+      }
+   }
+
    MPI_Barrier(vmpi::node_comm);
-   if(meta.num_bilinear > 0)   MPI_Win_sync(vmpi::bilinear_win);
-   if(meta.num_biquadratic > 0) MPI_Win_sync(vmpi::biquadratic_win);
 
    //----------------------------------------------------------------------
    // 7. Set interaction_ptr on all ranks to point into the shared window.
