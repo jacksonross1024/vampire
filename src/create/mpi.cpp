@@ -116,7 +116,10 @@ namespace create{
       }
 
       //-------------------------------------------------------------------------------------------------------
-      // Generalized routine to copy atoms needed by other processors including periodic boundary conditions
+      // Copy atoms needed by other processors (halo). Expects catom_array = this rank's geometric slice
+      // only (from create_crystal_structure with num_processors > 1). Uses vmpi::min/max_dimensions
+      // extended by interaction_range to determine which atoms to send to each rank. Periodic images
+      // included when cs::pbc[] is true.
       //-------------------------------------------------------------------------------------------------------
       void copy_halo_atoms(std::vector<cs::catom_t> & catom_array){
 
@@ -129,33 +132,47 @@ namespace create{
          vutil::vtimer_t timer;
          vutil::vtimer_t mtimer;
 
-         // Record initial number of atoms
-         //const int num_local_atoms=catom_array.size();
-
-         // start timers
          mtimer.start();
          timer.start();
 
          zlog << zTs() << "   Determining CPU ranges in x,y,z" << std::endl;
 
-         // Populate atoms with correct cpuid
-         for(unsigned int atom=0; atom < catom_array.size(); atom++){
+         // Mark all current atoms as belonging to this rank and as core (boundary/halo set later)
+         const unsigned int num_local_atoms = catom_array.size();
+         for(unsigned int atom=0; atom < num_local_atoms; atom++){
             catom_array[atom].mpi_cpuid = vmpi::my_rank;
+            catom_array[atom].mpi_type = 0; // core; identify_mpi_boundary_atoms will set boundary=1
          }
 
          // Array to store all interaction ranges
          std::vector<double> cpu_range_array(6*vmpi::num_processors,0.0); // Linear Memory for MPI comms
 
-         // Determine range+interaction range of all CPU's
-         double max_interaction_range=double(cs::unit_cell.interaction_range);
+         // Each rank's "need" box = geometric slice [min_dimensions, max_dimensions] extended so we
+         // receive halo atoms for exchange. When shared_memory_ucf: use cutoff in Angstroms (e.g. 15 Å)
+         // to avoid millions of unnecessary spins; otherwise use unit_cell.interaction_range in unit-cell dimensions.
+         double halo_margin_0 = 0.01;
+         double halo_margin_1 = 0.01;
+         double halo_margin_2 = 0.01;
+         if(vmpi::shared_memory_ucf){
+            const double cut = vmpi::shared_memory_halo_cutoff_angstrom;
+            halo_margin_0 = cut + 0.01;
+            halo_margin_1 = cut + 0.01;
+            halo_margin_2 = cut + 0.01;
+         }
+         else{
+            const double max_interaction_range = double(cs::unit_cell.interaction_range);
+            halo_margin_0 = max_interaction_range*cs::unit_cell.dimensions[0] + 0.01;
+            halo_margin_1 = max_interaction_range*cs::unit_cell.dimensions[1] + 0.01;
+            halo_margin_2 = max_interaction_range*cs::unit_cell.dimensions[2] + 0.01;
+         }
 
-         // Populate local ranges
-         cpu_range_array[6*vmpi::my_rank+0]=vmpi::min_dimensions[0] - max_interaction_range*cs::unit_cell.dimensions[0]-0.01;
-         cpu_range_array[6*vmpi::my_rank+1]=vmpi::min_dimensions[1] - max_interaction_range*cs::unit_cell.dimensions[1]-0.01;
-         cpu_range_array[6*vmpi::my_rank+2]=vmpi::min_dimensions[2] - max_interaction_range*cs::unit_cell.dimensions[2]-0.01;
-         cpu_range_array[6*vmpi::my_rank+3]=vmpi::max_dimensions[0] + max_interaction_range*cs::unit_cell.dimensions[0]+0.01;
-         cpu_range_array[6*vmpi::my_rank+4]=vmpi::max_dimensions[1] + max_interaction_range*cs::unit_cell.dimensions[1]+0.01;
-         cpu_range_array[6*vmpi::my_rank+5]=vmpi::max_dimensions[2] + max_interaction_range*cs::unit_cell.dimensions[2]+0.01;
+         // Populate this rank's range (others' ranges filled via Allreduce below)
+         cpu_range_array[6*vmpi::my_rank+0]=vmpi::min_dimensions[0] - halo_margin_0;
+         cpu_range_array[6*vmpi::my_rank+1]=vmpi::min_dimensions[1] - halo_margin_1;
+         cpu_range_array[6*vmpi::my_rank+2]=vmpi::min_dimensions[2] - halo_margin_2;
+         cpu_range_array[6*vmpi::my_rank+3]=vmpi::max_dimensions[0] + halo_margin_0;
+         cpu_range_array[6*vmpi::my_rank+4]=vmpi::max_dimensions[1] + halo_margin_1;
+         cpu_range_array[6*vmpi::my_rank+5]=vmpi::max_dimensions[2] + halo_margin_2;
 
          // Reduce data on all CPUs
          MPI_Allreduce(MPI_IN_PLACE, &cpu_range_array[0],6*vmpi::num_processors, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);

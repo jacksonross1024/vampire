@@ -29,6 +29,7 @@ namespace vmpi{
    int num_local_atoms; // number of local atoms on processor
 
    bool shared_memory_ucf=false;
+   double shared_memory_halo_cutoff_angstrom=15.0; ///< Halo extent in Å when shared_memory_ucf; avoids 100s nm when UCF is huge
 
    #ifdef MPICF
    MPI_Comm node_comm = MPI_COMM_NULL;

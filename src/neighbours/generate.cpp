@@ -82,19 +82,30 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    // Use decomposition local cell range + halo. With PBC, halo atoms have
    // scx/scy/scz with offsets ±total_num_unit_cells, so min/max over atoms
    // would span the global grid and num_cells would explode (OOM).
+   // Halo extent: when shared_memory_ucf use spatial cutoff (Å); otherwise use template interaction_range (cells).
    if(vmpi::mpi_mode==0){
-      const int halo = 2; // cells of halo for neighbour lookups
+      int64_t halo_cells[3];
+      if(vmpi::shared_memory_ucf){
+         const double cut = vmpi::shared_memory_halo_cutoff_angstrom;
+         halo_cells[0] = static_cast<int64_t>(std::ceil(cut / ucdx));
+         halo_cells[1] = static_cast<int64_t>(std::ceil(cut / ucdy));
+         halo_cells[2] = static_cast<int64_t>(std::ceil(cut / ucdz));
+      }
+      else{
+         const int64_t hr = static_cast<int64_t>(cs::unit_cell.interaction_range);
+         halo_cells[0] = halo_cells[1] = halo_cells[2] = hr;
+      }
       const int64_t min_cell[3] = {
          static_cast<int64_t>(vmpi::min_dimensions[0] / ucdx),
          static_cast<int64_t>(vmpi::min_dimensions[1] / ucdy),
          static_cast<int64_t>(vmpi::min_dimensions[2] / ucdz)
       };
-      offset[0] = min_cell[0] - halo;
-      offset[1] = min_cell[1] - halo;
-      offset[2] = min_cell[2] - halo;
-      d[0] = static_cast<int64_t>(cs::local_num_unit_cells[0]) + 2*halo;
-      d[1] = static_cast<int64_t>(cs::local_num_unit_cells[1]) + 2*halo;
-      d[2] = static_cast<int64_t>(cs::local_num_unit_cells[2]) + 2*halo;
+      offset[0] = min_cell[0] - halo_cells[0];
+      offset[1] = min_cell[1] - halo_cells[1];
+      offset[2] = min_cell[2] - halo_cells[2];
+      d[0] = static_cast<int64_t>(cs::local_num_unit_cells[0]) + 2*halo_cells[0];
+      d[1] = static_cast<int64_t>(cs::local_num_unit_cells[1]) + 2*halo_cells[1];
+      d[2] = static_cast<int64_t>(cs::local_num_unit_cells[2]) + 2*halo_cells[2];
    }
    else
    #endif

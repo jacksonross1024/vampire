@@ -140,9 +140,10 @@ int create(){
 	if(cs::pbc[1]==true) cs::system_dimensions[1]=unit_cell.dimensions[1]*(int(vmath::iceil(cs::system_dimensions[1]/unit_cell.dimensions[1])));
 	if(cs::pbc[2]==true) cs::system_dimensions[2]=unit_cell.dimensions[2]*(int(vmath::iceil(cs::system_dimensions[2]/unit_cell.dimensions[2])));
 
-	// Set up Parallel Decomposition if required
+	// Set up Parallel Decomposition when using multiple ranks so each rank only creates its
+	// spatial slice in create_crystal_structure (avoids 8M atoms per rank for 4 UCF cells).
 	#ifdef MPICF
-		if(vmpi::mpi_mode==0) vmpi::geometric_decomposition(vmpi::num_processors,cs::system_dimensions);
+		if(vmpi::num_processors > 1) vmpi::geometric_decomposition(vmpi::num_processors,cs::system_dimensions);
 	#endif
 
 	// Create block of crystal of desired size
@@ -151,11 +152,11 @@ int create(){
 	// Cut system to the correct type, species etc
 	create::create_system_type(catom_array);
 
-	// Copy atoms for interprocessor communications
+	// Copy atoms for interprocessor communications (needed whenever we created only our slice)
 	#ifdef MPICF
-	if(vmpi::mpi_mode==0){
+	if(vmpi::num_processors > 1){
 		create::internal::copy_halo_atoms(catom_array);
-   }
+	}
 	#endif
 
    //---------------------------------------------

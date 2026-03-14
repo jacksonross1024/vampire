@@ -703,6 +703,14 @@ namespace vin{
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
+        test="shared-memory-halo-cutoff";
+        if(word==test){
+            double cut=atof(value.c_str());
+            check_for_valid_value(cut, word, line, prefix, unit, "length", 0.1, 1e6,"input","0.1 - 1e6 Angstroms");
+            vmpi::shared_memory_halo_cutoff_angstrom=cut;
+            return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
         test="integrator-random-seed";
         if(word==test){
             int is=atoi(value.c_str());

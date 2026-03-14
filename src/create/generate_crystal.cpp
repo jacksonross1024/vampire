@@ -43,8 +43,11 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 
 	double min_fracitonal_bounds[3];
 	double max_fractional_bounds[3];
+	// With multiple ranks we must only create this rank's spatial slice (geometric decomposition).
+	// Otherwise we create the full system (e.g. 4 UCF cells = 8M atoms) on every rank and blow memory.
 	#ifdef MPICF
-	if(vmpi::mpi_mode==0){
+	const bool use_geometric_slice = (vmpi::mpi_mode==0 || vmpi::num_processors > 1);
+	if(use_geometric_slice){
 		min_bounds[0] = int(vmpi::min_dimensions[0]/unit_cell.dimensions[0]);
 		min_bounds[1] = int(vmpi::min_dimensions[1]/unit_cell.dimensions[1]);
 		min_bounds[2] = int(vmpi::min_dimensions[2]/unit_cell.dimensions[2]);
@@ -58,8 +61,6 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		max_fractional_bounds[0] = (vmpi::max_dimensions[0]/unit_cell.dimensions[0]);
 		max_fractional_bounds[1] = (vmpi::max_dimensions[1]/unit_cell.dimensions[1]);
 		max_fractional_bounds[2] = (vmpi::max_dimensions[2]/unit_cell.dimensions[2]);
-
-		//std::cout << min_bounds[0] << ", " << max_bounds[0] << ", " << 
 	}
 	else{
 		min_bounds[0]=0;
@@ -68,6 +69,12 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 		max_bounds[0]=cs::total_num_unit_cells[0];
 		max_bounds[1]=cs::total_num_unit_cells[1];
 		max_bounds[2]=cs::total_num_unit_cells[2];
+		min_fracitonal_bounds[0] = 0;
+		min_fracitonal_bounds[1] = 0;
+		min_fracitonal_bounds[2] = 0;
+		max_fractional_bounds[0] = cs::total_num_unit_cells[0];
+		max_fractional_bounds[1] = cs::total_num_unit_cells[1];
+		max_fractional_bounds[2] = cs::total_num_unit_cells[2];
 	}
 	#else
 		min_bounds[0]=0;
@@ -89,9 +96,9 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 	cs::local_num_unit_cells[2]=max_bounds[2]-min_bounds[2];
 
 	
-	int uc_num_atoms= cs::local_num_unit_cells[0]*cs::local_num_unit_cells[1]*cs::local_num_unit_cells[2]*unit_cell.atom.size();
-	int num_atoms_local = int(1.1*(max_fractional_bounds[2]-min_fracitonal_bounds[2])*(max_fractional_bounds[1]-min_fracitonal_bounds[1])*(max_fractional_bounds[0]-min_fracitonal_bounds[0])*unit_cell.atom.size());
-	// set catom_array size
+	// Reserve from fractional cell volume for this rank's region. Actual count from loop below.
+	const int uc_num_atoms = cs::local_num_unit_cells[0]*cs::local_num_unit_cells[1]*cs::local_num_unit_cells[2]*static_cast<int>(unit_cell.atom.size());
+	const int num_atoms_local = static_cast<int>(1.1*(max_fractional_bounds[2]-min_fracitonal_bounds[2])*(max_fractional_bounds[1]-min_fracitonal_bounds[1])*(max_fractional_bounds[0]-min_fracitonal_bounds[0])*unit_cell.atom.size());
 	catom_array.reserve(num_atoms_local);
 	std::cout << "using partial uc for catom reservation: " << num_atoms_local*sizeof(cs::catom_t)/1e6 << " MB vs " << uc_num_atoms*sizeof(cs::catom_t)/1e6 << " MB vs actual: " << std::flush;
 	// Initialise atoms number
@@ -118,54 +125,56 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 					double cy = (double(y)*unit_cell.shape[1][0] + double(y)*unit_cell.shape[1][1] + double(z)*unit_cell.shape[1][2] + unit_cell.atom[uca].y)*unit_cell.dimensions[1];
 					double cz = (double(x)*unit_cell.shape[2][0] + double(y)*unit_cell.shape[2][1] + double(z)*unit_cell.shape[2][2] + unit_cell.atom[uca].z)*unit_cell.dimensions[2];
 					#ifdef MPICF
-						if(vmpi::mpi_mode==0){
-							// only generate atoms within allowed dimensions
-                     if(   (cx>=vmpi::min_dimensions[0] && cx<vmpi::max_dimensions[0]) &&
-                           (cy>=vmpi::min_dimensions[1] && cy<vmpi::max_dimensions[1]) &&
-                           (cz>=vmpi::min_dimensions[2] && cz<vmpi::max_dimensions[2])){
+						// Only add atoms in this rank's spatial slice when using geometric decomposition or multi-rank
+						if(use_geometric_slice){
+							if(   (cx>=vmpi::min_dimensions[0] && cx<vmpi::max_dimensions[0]) &&
+							      (cy>=vmpi::min_dimensions[1] && cy<vmpi::max_dimensions[1]) &&
+							      (cz>=vmpi::min_dimensions[2] && cz<vmpi::max_dimensions[2])){
+						#else
+						{
 						#endif
 							if(inc_uc_atom[unit_cell.atom[uca].mat] &&
 								cx < cs::system_dimensions[0] &&
 								cy < cs::system_dimensions[1] &&
 								cz < cs::system_dimensions[2]
 							){
-							catom_array.push_back(cs::catom_t());
-							catom_array[atom].x=cx;
-							catom_array[atom].y=cy;
-							catom_array[atom].z=cz;
-							//std::cout << atom << "\t" << cx << "\t" << cy <<"\t" << cz << std::endl;
-							catom_array[atom].material=unit_cell.atom[uca].mat;
-							catom_array[atom].uc_id=uca;
-							catom_array[atom].lh_category=unit_cell.atom[uca].hc+z*maxlh;
-							catom_array[atom].sl_category=unit_cell.atom[uca].hc;
-							catom_array[atom].uc_category=unit_cell.atom[uca].mat; // determine initial material (uc_category) for unit cell
-							catom_array[atom].scx=x;
-							catom_array[atom].scy=y;
-							catom_array[atom].scz=z;
-							atom++;
+								catom_array.push_back(cs::catom_t());
+								catom_array[atom].x=cx;
+								catom_array[atom].y=cy;
+								catom_array[atom].z=cz;
+								catom_array[atom].material=unit_cell.atom[uca].mat;
+								catom_array[atom].uc_id=uca;
+								catom_array[atom].lh_category=unit_cell.atom[uca].hc+z*maxlh;
+								catom_array[atom].sl_category=unit_cell.atom[uca].hc;
+								catom_array[atom].uc_category=unit_cell.atom[uca].mat;
+								catom_array[atom].scx=x;
+								catom_array[atom].scy=y;
+								catom_array[atom].scz=z;
+								catom_array[atom].include=false;
+								atom++;
 							}
-						#ifdef MPICF
-							}
+						}
+					#ifdef MPICF
 						}
 						else{
 							if((cx<cs::system_dimensions[0]) && (cy<cs::system_dimensions[1]) && (cz<cs::system_dimensions[2])){
-							catom_array.push_back(cs::catom_t());
-							catom_array[atom].x=cx;
-							catom_array[atom].y=cy;
-							catom_array[atom].z=cz;
-							catom_array[atom].material=unit_cell.atom[uca].mat;
-							catom_array[atom].uc_id=uca;
-							catom_array[atom].lh_category=unit_cell.atom[uca].hc+z*maxlh;
-							catom_array[atom].sl_category=unit_cell.atom[uca].hc;
-							catom_array[atom].uc_category=unit_cell.atom[uca].mat; // determine initial material (uc_category) for unit cell
-							catom_array[atom].scx=x;
-							catom_array[atom].scy=y;
-							catom_array[atom].scz=z;
-							catom_array[atom].include=false; // assume no atoms until classification complete
-							atom++;
+								catom_array.push_back(cs::catom_t());
+								catom_array[atom].x=cx;
+								catom_array[atom].y=cy;
+								catom_array[atom].z=cz;
+								catom_array[atom].material=unit_cell.atom[uca].mat;
+								catom_array[atom].uc_id=uca;
+								catom_array[atom].lh_category=unit_cell.atom[uca].hc+z*maxlh;
+								catom_array[atom].sl_category=unit_cell.atom[uca].hc;
+								catom_array[atom].uc_category=unit_cell.atom[uca].mat;
+								catom_array[atom].scx=x;
+								catom_array[atom].scy=y;
+								catom_array[atom].scz=z;
+								catom_array[atom].include=false;
+								atom++;
 							}
 						}
-						#endif
+					#endif
 					}
 				}
 			}
