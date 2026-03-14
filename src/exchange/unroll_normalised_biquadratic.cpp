@@ -47,7 +47,7 @@ namespace exchange{
    	switch(exchange::internal::biquadratic_exchange_type){
    		case exchange::isotropic:
    			// unroll material calculations
-   			std::cout << "Using generic/normalised form of exchange interaction with " << cs::unit_cell.biquadratic.interaction.size() << " total interactions." << std::endl;
+   			std::cout << "Using generic/normalised form of exchange interaction with " << cs::unit_cell.biquadratic.interaction_count << " total interactions." << std::endl;
    			zlog << zTs() << "Unrolled exchange template requires " << 1.0*double(exchange::internal::biquadratic_neighbour_list_array.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
    			exchange::internal::bq_i_exchange_list.reserve(exchange::internal::biquadratic_neighbour_list_array.size());
    			// loop over all interactions
@@ -61,11 +61,11 @@ namespace exchange{
                   // get unit cell interaction id
                   int i = exchange::internal::biquadratic_neighbour_interaction_type_array[nn];
                   // get shell ID for interaction
-                  const int shell = cs::unit_cell.bilinear.interaction[i].shell;
+                  const int shell = cs::unit_cell.bilinear.interaction_ptr[i].shell;
                   // get exchange value from 4D exchange matrix
                   std::vector<double> Jij = internal::biquadratic_exchange_constants.get_exchange_values(imaterial, jmaterial, shell);
                   // set exchange field, normalising to mu_s^i
-                  exchange::internal::bq_i_exchange_list[nn].Jij = cs::unit_cell.biquadratic.interaction[i].Jij[0][0] * Jij[0] * imus;
+                  exchange::internal::bq_i_exchange_list[nn].Jij = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
    					// reset interation id to neighbour number - causes segfault if nn out of range
    					exchange::internal::biquadratic_neighbour_interaction_type_array[nn] = nn;
    				}
@@ -74,7 +74,7 @@ namespace exchange{
 
          case exchange::vectorial: // normalised vectorial exchange
       			// unroll material calculations
-      			std::cout << "Using normalised vectorial form of exchange interaction with " << cs::unit_cell.biquadratic.interaction.size() << " total interactions." << std::endl;
+      			std::cout << "Using normalised vectorial form of exchange interaction with " << cs::unit_cell.biquadratic.interaction_count << " total interactions." << std::endl;
       			zlog << zTs() << "Unrolled exchange template requires " << 3.0*double(exchange::internal::biquadratic_neighbour_list_array.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
       			exchange::internal::bq_v_exchange_list.reserve(exchange::internal::biquadratic_neighbour_list_array.size());
       			// loop over all interactions
@@ -88,19 +88,19 @@ namespace exchange{
                      // get unit cell interaction id
                      int i = exchange::internal::biquadratic_neighbour_interaction_type_array[nn];
                      // get shell ID for interaction
-                     const int shell = cs::unit_cell.bilinear.interaction[i].shell;
+                     const int shell = cs::unit_cell.bilinear.interaction_ptr[i].shell;
                      // get exchange value from 4D exchange matrix
                      std::vector<double> Jij = internal::biquadratic_exchange_constants.get_exchange_values(imaterial, jmaterial, shell);
                      // set exchange field, normalising to mu_s^i
                      if( Jij.size() == 3 ){
-                        exchange::internal::bq_v_exchange_list[nn].Jij[0] = cs::unit_cell.biquadratic.interaction[i].Jij[0][0] * Jij[0] * imus;
-                        exchange::internal::bq_v_exchange_list[nn].Jij[1] = cs::unit_cell.biquadratic.interaction[i].Jij[1][1] * Jij[1] * imus;
-                        exchange::internal::bq_v_exchange_list[nn].Jij[2] = cs::unit_cell.biquadratic.interaction[i].Jij[2][2] * Jij[2] * imus;
+                        exchange::internal::bq_v_exchange_list[nn].Jij[0] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
+                        exchange::internal::bq_v_exchange_list[nn].Jij[1] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[1][1] * Jij[1] * imus;
+                        exchange::internal::bq_v_exchange_list[nn].Jij[2] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[2][2] * Jij[2] * imus;
                      }
                      else if( Jij.size() == 1 ){
-                        exchange::internal::bq_v_exchange_list[nn].Jij[0] = cs::unit_cell.biquadratic.interaction[i].Jij[0][0] * Jij[0] * imus;
-                        exchange::internal::bq_v_exchange_list[nn].Jij[1] = cs::unit_cell.biquadratic.interaction[i].Jij[1][1] * Jij[0] * imus;
-                        exchange::internal::bq_v_exchange_list[nn].Jij[2] = cs::unit_cell.biquadratic.interaction[i].Jij[2][2] * Jij[0] * imus;
+                        exchange::internal::bq_v_exchange_list[nn].Jij[0] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
+                        exchange::internal::bq_v_exchange_list[nn].Jij[1] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[1][1] * Jij[0] * imus;
+                        exchange::internal::bq_v_exchange_list[nn].Jij[2] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[2][2] * Jij[0] * imus;
                      }
                      else{
                         std::cerr     << "Programmer error! Biquadratic exchange values size of " << Jij.size() << " must be 1 or 3 values. Exiting" << std::endl;
@@ -115,7 +115,7 @@ namespace exchange{
 
          case exchange::tensorial: // normalised tensorial exchange
          {
-   			std::cout << "Using normalised tensorial form of exchange interaction with " << cs::unit_cell.biquadratic.interaction.size() << " total interactions." << std::endl;
+   			std::cout << "Using normalised tensorial form of exchange interaction with " << cs::unit_cell.biquadratic.interaction_count << " total interactions." << std::endl;
    			zlog << zTs() << "Unrolled exchange template requires " << 9.0*double(exchange::internal::biquadratic_neighbour_list_array.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
    			// unroll isotopic interactions
    			exchange::internal::bq_t_exchange_list.reserve(exchange::internal::biquadratic_neighbour_list_array.size());
@@ -131,36 +131,36 @@ namespace exchange{
                   // get unit cell interaction id
                   int i = exchange::internal::biquadratic_neighbour_interaction_type_array[nn];
                   // get shell ID for interaction
-                  const int shell = cs::unit_cell.bilinear.interaction[i].shell;
+                  const int shell = cs::unit_cell.bilinear.interaction_ptr[i].shell;
                   // get exchange value from 4D exchange matrix
                   std::vector<double> Jij = internal::bilinear_exchange_constants.get_exchange_values(imaterial, jmaterial, shell);
                   // set exchange field, normalising to mu_s^i
                   // future development may allow for generic inclusion of DMI parameter from exchange tensor, but not currently enabled
                   if( Jij.size() == 3 ){
-                     exchange::internal::bq_t_exchange_list[nn].Jij[0][0] = cs::unit_cell.biquadratic.interaction[i].Jij[0][0] * Jij[0] * imus;
-                     exchange::internal::bq_t_exchange_list[nn].Jij[0][1] = cs::unit_cell.biquadratic.interaction[i].Jij[0][1] * 0.0; //mp::material[imaterial].Dij[jmaterial];
-                     exchange::internal::bq_t_exchange_list[nn].Jij[0][2] = cs::unit_cell.biquadratic.interaction[i].Jij[0][2] * 0.0; //mp::material[imaterial].Dij[jmaterial];
+                     exchange::internal::bq_t_exchange_list[nn].Jij[0][0] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[0][1] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[0][1] * 0.0;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[0][2] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[0][2] * 0.0;
 
-                     exchange::internal::bq_t_exchange_list[nn].Jij[1][0] = cs::unit_cell.biquadratic.interaction[i].Jij[1][0] * 0.0; //mp::material[imaterial].Dij[jmaterial];
-                     exchange::internal::bq_t_exchange_list[nn].Jij[1][1] = cs::unit_cell.biquadratic.interaction[i].Jij[1][1] * Jij[1] * imus;
-                     exchange::internal::bq_t_exchange_list[nn].Jij[1][2] = cs::unit_cell.biquadratic.interaction[i].Jij[1][2] * 0.0; //mp::material[imaterial].Dij[jmaterial];
+                     exchange::internal::bq_t_exchange_list[nn].Jij[1][0] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[1][0] * 0.0;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[1][1] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[1][1] * Jij[1] * imus;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[1][2] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[1][2] * 0.0;
 
-                     exchange::internal::bq_t_exchange_list[nn].Jij[2][0] = cs::unit_cell.biquadratic.interaction[i].Jij[2][0] * 0.0; //mp::material[imaterial].Dij[jmaterial];
-                     exchange::internal::bq_t_exchange_list[nn].Jij[2][1] = cs::unit_cell.biquadratic.interaction[i].Jij[2][1] * 0.0; //mp::material[imaterial].Dij[jmaterial];
-                     exchange::internal::bq_t_exchange_list[nn].Jij[2][2] = cs::unit_cell.biquadratic.interaction[i].Jij[2][2] * Jij[2] * imus;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[2][0] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[2][0] * 0.0;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[2][1] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[2][1] * 0.0;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[2][2] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[2][2] * Jij[2] * imus;
                   }
                   else if( Jij.size() == 1 ){
-                     exchange::internal::bq_t_exchange_list[nn].Jij[0][0] = cs::unit_cell.biquadratic.interaction[i].Jij[0][0] * Jij[0] * imus;
-                     exchange::internal::bq_t_exchange_list[nn].Jij[0][1] = cs::unit_cell.biquadratic.interaction[i].Jij[0][1] * 0.0; //mp::material[imaterial].Dij[jmaterial];
-                     exchange::internal::bq_t_exchange_list[nn].Jij[0][2] = cs::unit_cell.biquadratic.interaction[i].Jij[0][2] * 0.0; //mp::material[imaterial].Dij[jmaterial];
+                     exchange::internal::bq_t_exchange_list[nn].Jij[0][0] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[0][1] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[0][1] * 0.0;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[0][2] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[0][2] * 0.0;
 
-                     exchange::internal::bq_t_exchange_list[nn].Jij[1][0] = cs::unit_cell.biquadratic.interaction[i].Jij[1][0] * 0.0; //mp::material[imaterial].Dij[jmaterial];
-                     exchange::internal::bq_t_exchange_list[nn].Jij[1][1] = cs::unit_cell.biquadratic.interaction[i].Jij[1][1] * Jij[0] * imus;
-                     exchange::internal::bq_t_exchange_list[nn].Jij[1][2] = cs::unit_cell.biquadratic.interaction[i].Jij[1][2] * 0.0; //mp::material[imaterial].Dij[jmaterial];
+                     exchange::internal::bq_t_exchange_list[nn].Jij[1][0] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[1][0] * 0.0;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[1][1] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[1][1] * Jij[0] * imus;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[1][2] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[1][2] * 0.0;
 
-                     exchange::internal::bq_t_exchange_list[nn].Jij[2][0] = cs::unit_cell.biquadratic.interaction[i].Jij[2][0] * 0.0; //mp::material[imaterial].Dij[jmaterial];
-                     exchange::internal::bq_t_exchange_list[nn].Jij[2][1] = cs::unit_cell.biquadratic.interaction[i].Jij[2][1] * 0.0; //mp::material[imaterial].Dij[jmaterial];
-                     exchange::internal::bq_t_exchange_list[nn].Jij[2][2] = cs::unit_cell.biquadratic.interaction[i].Jij[2][2] * Jij[0] * imus;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[2][0] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[2][0] * 0.0;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[2][1] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[2][1] * 0.0;
+                     exchange::internal::bq_t_exchange_list[nn].Jij[2][2] = cs::unit_cell.biquadratic.interaction_ptr[i].Jij[2][2] * Jij[0] * imus;
                   }
                   else{
                      std::cerr     << "Programmer error! Exchange values size of " << Jij.size() << " must be 1 or 3 values. Exiting" << std::endl;

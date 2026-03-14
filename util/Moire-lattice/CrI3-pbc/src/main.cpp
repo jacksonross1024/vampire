@@ -46,8 +46,8 @@ int main(int argc, char* argv[]){
         }
     }
 
-   system_size_x = 9000; //A 
-   system_size_y = 9000; //A
+   system_size_x = 100; //A 
+   system_size_y = 100; //A
    number_of_unit_cells_z = 1; //unit cells
 
     // (deprecated)

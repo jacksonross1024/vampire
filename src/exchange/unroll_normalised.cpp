@@ -44,7 +44,7 @@ namespace exchange{
    	switch(exchange::internal::exchange_type){
    		case exchange::isotropic:
    			// unroll material calculations
-   			std::cout << "Using generic/normalised form of exchange interaction with " << cs::unit_cell.bilinear.interaction.size() << " total interactions." << std::endl;
+   			std::cout << "Using generic/normalised form of exchange interaction with " << cs::unit_cell.bilinear.interaction_count << " total interactions." << std::endl;
    			zlog << zTs() << "Unrolled exchange template requires " << 1.0*double(atoms::neighbour_list_array.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
    			atoms::i_exchange_list.reserve(atoms::neighbour_list_array.size());
    			// loop over all interactions
@@ -58,11 +58,11 @@ namespace exchange{
                   // get unit cell interaction id
                   int i = atoms::neighbour_interaction_type_array[nn];
                   // get shell ID for interaction
-                  const int shell = cs::unit_cell.bilinear.interaction[i].shell;
+                  const int shell = cs::unit_cell.bilinear.interaction_ptr[i].shell;
                   // get exchange value from 4D exchange matrix
                   std::vector<double> Jij = internal::bilinear_exchange_constants.get_exchange_values(imaterial, jmaterial, shell);
                   // set exchange field, normalising to mu_s^i
-                  atoms::i_exchange_list[nn].Jij = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus * internal::exchange_factor;
+                  atoms::i_exchange_list[nn].Jij = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][0] * Jij[0] * imus * internal::exchange_factor;
    					// reset interation id to neighbour number - causes segfault if nn out of range
    					atoms::neighbour_interaction_type_array[nn] = nn;
    				}
@@ -71,7 +71,7 @@ namespace exchange{
 
          case exchange::vectorial: // normalised vectorial exchange
       			// unroll material calculations
-      			std::cout << "Using normalised vectorial form of exchange interaction with " << cs::unit_cell.bilinear.interaction.size() << " total interactions." << std::endl;
+      			std::cout << "Using normalised vectorial form of exchange interaction with " << cs::unit_cell.bilinear.interaction_count << " total interactions." << std::endl;
       			zlog << zTs() << "Unrolled exchange template requires " << 3.0*double(atoms::neighbour_list_array.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
       			atoms::v_exchange_list.reserve(atoms::neighbour_list_array.size());
       			// loop over all interactions
@@ -85,19 +85,19 @@ namespace exchange{
                      // get unit cell interaction id
                      int i = atoms::neighbour_interaction_type_array[nn];
                      // get shell ID for interaction
-                     const int shell = cs::unit_cell.bilinear.interaction[i].shell;
+                     const int shell = cs::unit_cell.bilinear.interaction_ptr[i].shell;
                      // get exchange value from 4D exchange matrix
                      std::vector<double> Jij = internal::bilinear_exchange_constants.get_exchange_values(imaterial, jmaterial, shell);
                      // set exchange field, normalising to mu_s^i
                      if( Jij.size() == 3 ){
-                        atoms::v_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
-                        atoms::v_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[1][1] * Jij[1] * imus;
-                        atoms::v_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[2] * imus;
+                        atoms::v_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
+                        atoms::v_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][1] * Jij[1] * imus;
+                        atoms::v_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][2] * Jij[2] * imus;
                      }
                      else if( Jij.size() == 1 ){
-                        atoms::v_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
-                        atoms::v_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[1][1] * Jij[0] * imus;
-                        atoms::v_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[0] * imus;
+                        atoms::v_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
+                        atoms::v_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][1] * Jij[0] * imus;
+                        atoms::v_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][2] * Jij[0] * imus;
                      }
                      else{
                         std::cerr     << "Programmer error! Exchange values size of " << Jij.size() << " must be 1 or 3 values. Exiting" << std::endl;
@@ -113,7 +113,7 @@ namespace exchange{
 
          case exchange::tensorial: // normalised tensorial exchange
          {
-   			std::cout << "Using normalised tensorial form of exchange interaction with " << cs::unit_cell.bilinear.interaction.size() << " total interactions." << std::endl;
+   			std::cout << "Using normalised tensorial form of exchange interaction with " << cs::unit_cell.bilinear.interaction_count << " total interactions." << std::endl;
    			zlog << zTs() << "Unrolled exchange template requires " << 9.0*double(atoms::neighbour_list_array.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
    			// unroll isotopic interactions
    			atoms::t_exchange_list.reserve(atoms::neighbour_list_array.size());
@@ -132,43 +132,43 @@ namespace exchange{
                   // get unit cell interaction id
                   int i = atoms::neighbour_interaction_type_array[nn];
                   // get shell ID for interaction
-                  const int shell = cs::unit_cell.bilinear.interaction[i].shell;
+                  const int shell = cs::unit_cell.bilinear.interaction_ptr[i].shell;
                   // get exchange value from 4D exchange matrix
                   std::vector<double> Jij = internal::bilinear_exchange_constants.get_exchange_values(imaterial, jmaterial, shell);
                   // set exchange field, normalising to mu_s^i
                   // future development may allow for generic inclusion of DMI parameter from exchange tensor, but not currently enabled
                   if( Jij.size() == 9 ){
-                     atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[0][1] * Jij[1] * imus;
-                     atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[0][2] * Jij[2] * imus;
-                     atoms::t_exchange_list[nn].Jij[3] = cs::unit_cell.bilinear.interaction[i].Jij[1][0] * Jij[3] * imus;
-                     atoms::t_exchange_list[nn].Jij[4] = cs::unit_cell.bilinear.interaction[i].Jij[1][1] * Jij[4] * imus;
-                     atoms::t_exchange_list[nn].Jij[5] = cs::unit_cell.bilinear.interaction[i].Jij[1][2] * Jij[5] * imus;
-                     atoms::t_exchange_list[nn].Jij[6] = cs::unit_cell.bilinear.interaction[i].Jij[2][0] * Jij[6] * imus;
-                     atoms::t_exchange_list[nn].Jij[7] = cs::unit_cell.bilinear.interaction[i].Jij[2][1] * Jij[7] * imus;
-                     atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[8] * imus;
+                     atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][1] * Jij[1] * imus;
+                     atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][2] * Jij[2] * imus;
+                     atoms::t_exchange_list[nn].Jij[3] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][0] * Jij[3] * imus;
+                     atoms::t_exchange_list[nn].Jij[4] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][1] * Jij[4] * imus;
+                     atoms::t_exchange_list[nn].Jij[5] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][2] * Jij[5] * imus;
+                     atoms::t_exchange_list[nn].Jij[6] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][0] * Jij[6] * imus;
+                     atoms::t_exchange_list[nn].Jij[7] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][1] * Jij[7] * imus;
+                     atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][2] * Jij[8] * imus;
                   }
                   else if( Jij.size() == 3 ){
-                     atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[0][1] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[0][2] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[3] = cs::unit_cell.bilinear.interaction[i].Jij[1][0] * Jij[1] * imus;
-                     atoms::t_exchange_list[nn].Jij[4] = cs::unit_cell.bilinear.interaction[i].Jij[1][1] * Jij[1] * imus;
-                     atoms::t_exchange_list[nn].Jij[5] = cs::unit_cell.bilinear.interaction[i].Jij[1][2] * Jij[1] * imus;
-                     atoms::t_exchange_list[nn].Jij[6] = cs::unit_cell.bilinear.interaction[i].Jij[2][0] * Jij[2] * imus;
-                     atoms::t_exchange_list[nn].Jij[7] = cs::unit_cell.bilinear.interaction[i].Jij[2][1] * Jij[2] * imus;
-                     atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[2] * imus;
+                     atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][1] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][2] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[3] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][0] * Jij[1] * imus;
+                     atoms::t_exchange_list[nn].Jij[4] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][1] * Jij[1] * imus;
+                     atoms::t_exchange_list[nn].Jij[5] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][2] * Jij[1] * imus;
+                     atoms::t_exchange_list[nn].Jij[6] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][0] * Jij[2] * imus;
+                     atoms::t_exchange_list[nn].Jij[7] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][1] * Jij[2] * imus;
+                     atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][2] * Jij[2] * imus;
                   }
                   else if( Jij.size() == 1 ){
-                     atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[0][1] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[0][2] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[3] = cs::unit_cell.bilinear.interaction[i].Jij[1][0] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[4] = cs::unit_cell.bilinear.interaction[i].Jij[1][1] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[5] = cs::unit_cell.bilinear.interaction[i].Jij[1][2] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[6] = cs::unit_cell.bilinear.interaction[i].Jij[2][0] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[7] = cs::unit_cell.bilinear.interaction[i].Jij[2][1] * Jij[0] * imus;
-                     atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction[i].Jij[2][2] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[0] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][0] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[1] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][1] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[2] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][2] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[3] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][0] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[4] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][1] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[5] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][2] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[6] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][0] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[7] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][1] * Jij[0] * imus;
+                     atoms::t_exchange_list[nn].Jij[8] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][2] * Jij[0] * imus;
                   }
                   else{
                      std::cerr     << "Programmer error! Exchange values size of " << Jij.size() << " must be 1, 3, or 9 values. Exiting" << std::endl;

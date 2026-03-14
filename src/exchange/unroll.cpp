@@ -57,56 +57,53 @@ namespace exchange{
 
    	switch(internal::exchange_type){
 
-   		case exchange::isotropic:
-   			std::cout << "Using isotropic form of exchange interaction with " << cs::unit_cell.bilinear.interaction.size() << " total interactions." << std::endl;
-   			zlog << zTs() << "Unrolled exchange template requires " << 1.0*double(cs::unit_cell.bilinear.interaction.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
-   			// unroll isotopic interactions
-   			atoms::i_exchange_list.reserve(cs::unit_cell.bilinear.interaction.size());
-   			for(unsigned int i=0;i<cs::unit_cell.bilinear.interaction.size();i++){
-   				int iatom = cs::unit_cell.bilinear.interaction[i].i;
+  		case exchange::isotropic:
+   			std::cout << "Using isotropic form of exchange interaction with " << cs::unit_cell.bilinear.interaction_count << " total interactions." << std::endl;
+   			zlog << zTs() << "Unrolled exchange template requires " << 1.0*double(cs::unit_cell.bilinear.interaction_count)*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
+   			atoms::i_exchange_list.reserve(cs::unit_cell.bilinear.interaction_count);
+   			for(uint64_t i=0;i<cs::unit_cell.bilinear.interaction_count;i++){
+   				int iatom = cs::unit_cell.bilinear.interaction_ptr[i].i;
    				int imat = cs::unit_cell.atom[iatom].mat;
    				atoms::i_exchange_list.push_back(tmp_zval);
-   				atoms::i_exchange_list[i].Jij = cs::unit_cell.bilinear.interaction[i].Jij[0][0]/mp::material[imat].mu_s_SI;
+   				atoms::i_exchange_list[i].Jij = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][0]/mp::material[imat].mu_s_SI;
    			}
    			break;
 
    		case exchange::vectorial:
-   			std::cout << "Using vectorial form of exchange interaction with " << cs::unit_cell.bilinear.interaction.size() << " total interactions." << std::endl;
-   			zlog << zTs() << "Unrolled exchange template requires " << 3.0*double(cs::unit_cell.bilinear.interaction.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
-   			// unroll isotopic interactions
-   			atoms::v_exchange_list.reserve(cs::unit_cell.bilinear.interaction.size());
-   			for(unsigned int i=0;i<cs::unit_cell.bilinear.interaction.size();i++){
-   				int iatom = cs::unit_cell.bilinear.interaction[i].i;
+   			std::cout << "Using vectorial form of exchange interaction with " << cs::unit_cell.bilinear.interaction_count << " total interactions." << std::endl;
+   			zlog << zTs() << "Unrolled exchange template requires " << 3.0*double(cs::unit_cell.bilinear.interaction_count)*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
+   			atoms::v_exchange_list.reserve(cs::unit_cell.bilinear.interaction_count);
+   			for(uint64_t i=0;i<cs::unit_cell.bilinear.interaction_count;i++){
+   				int iatom = cs::unit_cell.bilinear.interaction_ptr[i].i;
    				int imat = cs::unit_cell.atom[iatom].mat;
    				atoms::v_exchange_list.push_back(tmp_zvec);
-   				atoms::v_exchange_list[i].Jij[0] = cs::unit_cell.bilinear.interaction[i].Jij[0][0]/mp::material[imat].mu_s_SI;
-   				atoms::v_exchange_list[i].Jij[1] = cs::unit_cell.bilinear.interaction[i].Jij[1][1]/mp::material[imat].mu_s_SI;
-   				atoms::v_exchange_list[i].Jij[2] = cs::unit_cell.bilinear.interaction[i].Jij[2][2]/mp::material[imat].mu_s_SI;
+   				atoms::v_exchange_list[i].Jij[0] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][0]/mp::material[imat].mu_s_SI;
+   				atoms::v_exchange_list[i].Jij[1] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][1]/mp::material[imat].mu_s_SI;
+   				atoms::v_exchange_list[i].Jij[2] = cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][2]/mp::material[imat].mu_s_SI;
    			}
    			break;
 
    		case exchange::tensorial:
-   			std::cout << "Using tensorial form of exchange interaction with " << cs::unit_cell.bilinear.interaction.size() << " total interactions." << std::endl;
-   			zlog << zTs() << "Unrolled exchange template requires " << 9.0*double(cs::unit_cell.bilinear.interaction.size())*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
-   			// unroll isotopic interactions
-			
-   			atoms::t_exchange_list.reserve(cs::unit_cell.bilinear.interaction.size());
-   			for(uint64_t i=0;i<cs::unit_cell.bilinear.interaction.size();i++){
-   				uint64_t iatom = cs::unit_cell.bilinear.interaction[i].i;
+   			std::cout << "Using tensorial form of exchange interaction with " << cs::unit_cell.bilinear.interaction_count << " total interactions." << std::endl;
+   			zlog << zTs() << "Unrolled exchange template requires " << 9.0*double(cs::unit_cell.bilinear.interaction_count)*double(sizeof(double))*1.0e-6 << "MB RAM" << std::endl;
+		
+   			atoms::t_exchange_list.reserve(cs::unit_cell.bilinear.interaction_count);
+   			for(uint64_t i=0;i<cs::unit_cell.bilinear.interaction_count;i++){
+   				uint64_t iatom = cs::unit_cell.bilinear.interaction_ptr[i].i;
    				uint64_t imat = cs::unit_cell.atom[iatom].mat;
    				atoms::t_exchange_list.push_back(tmp_zten);
 
-   				atoms::t_exchange_list[i].Jij[0] = unit_convert*cs::unit_cell.bilinear.interaction[i].Jij[0][0]/mp::material[imat].mu_s_SI;
-   				atoms::t_exchange_list[i].Jij[1] = unit_convert*cs::unit_cell.bilinear.interaction[i].Jij[0][1]/mp::material[imat].mu_s_SI;
-   				atoms::t_exchange_list[i].Jij[2] = unit_convert*cs::unit_cell.bilinear.interaction[i].Jij[0][2]/mp::material[imat].mu_s_SI;
+   				atoms::t_exchange_list[i].Jij[0] = unit_convert*cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][0]/mp::material[imat].mu_s_SI;
+   				atoms::t_exchange_list[i].Jij[1] = unit_convert*cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][1]/mp::material[imat].mu_s_SI;
+   				atoms::t_exchange_list[i].Jij[2] = unit_convert*cs::unit_cell.bilinear.interaction_ptr[i].Jij[0][2]/mp::material[imat].mu_s_SI;
 
-   				atoms::t_exchange_list[i].Jij[3] = unit_convert*cs::unit_cell.bilinear.interaction[i].Jij[1][0]/mp::material[imat].mu_s_SI;
-   				atoms::t_exchange_list[i].Jij[4] = unit_convert*cs::unit_cell.bilinear.interaction[i].Jij[1][1]/mp::material[imat].mu_s_SI;
-   				atoms::t_exchange_list[i].Jij[5] = unit_convert*cs::unit_cell.bilinear.interaction[i].Jij[1][2]/mp::material[imat].mu_s_SI;
+   				atoms::t_exchange_list[i].Jij[3] = unit_convert*cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][0]/mp::material[imat].mu_s_SI;
+   				atoms::t_exchange_list[i].Jij[4] = unit_convert*cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][1]/mp::material[imat].mu_s_SI;
+   				atoms::t_exchange_list[i].Jij[5] = unit_convert*cs::unit_cell.bilinear.interaction_ptr[i].Jij[1][2]/mp::material[imat].mu_s_SI;
 
-   				atoms::t_exchange_list[i].Jij[6] = unit_convert*cs::unit_cell.bilinear.interaction[i].Jij[2][0]/mp::material[imat].mu_s_SI;
-   				atoms::t_exchange_list[i].Jij[7] = unit_convert*cs::unit_cell.bilinear.interaction[i].Jij[2][1]/mp::material[imat].mu_s_SI;
-   				atoms::t_exchange_list[i].Jij[8] = unit_convert*cs::unit_cell.bilinear.interaction[i].Jij[2][2]/mp::material[imat].mu_s_SI;
+   				atoms::t_exchange_list[i].Jij[6] = unit_convert*cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][0]/mp::material[imat].mu_s_SI;
+   				atoms::t_exchange_list[i].Jij[7] = unit_convert*cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][1]/mp::material[imat].mu_s_SI;
+   				atoms::t_exchange_list[i].Jij[8] = unit_convert*cs::unit_cell.bilinear.interaction_ptr[i].Jij[2][2]/mp::material[imat].mu_s_SI;
    			}
    			break;
 

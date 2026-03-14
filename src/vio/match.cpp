@@ -697,6 +697,12 @@ namespace vin{
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
+        test="shared-memory-ucf";
+        if(word==test){
+            vmpi::shared_memory_ucf=true;
+            return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
         test="integrator-random-seed";
         if(word==test){
             int is=atoi(value.c_str());

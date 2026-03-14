@@ -398,7 +398,7 @@ double intra_nn_dist_3 = 8.01; //A
 //twisted interface distances
 double inter_nn_dist_1 = 7.0;
 double inter_nn_dist_2 = 7.77;
-double inter_nn_dist_3 = 9.9;
+double inter_nn_dist_3 = 9.99;
 
 // pristine distances
 double inter_AB_dist_1 = 7.0;
@@ -410,7 +410,7 @@ double nn_dist_1;
 double nn_dist_2;
 double nn_dist_3;
 
-double max_range = 9.9;
+double max_range = 9.99;
 //Set exchange interaction values and associated constants
 double eVtoJ = 1.602176634e-19;
 double J_constant = eVtoJ/1000.0; //1 meV
@@ -438,6 +438,7 @@ double D_intra3_y_constant =  0.0176*J_constant;
 double D_intra3_z_constant = 0.0659*J_constant;
 //set the initial jumber of interactions to zero for counter
 
+double Dx_substrate = 0.025;
 uint64_t number_of_interactions = 0;
 
 //initialise arrays to store exchage interactions
@@ -832,6 +833,8 @@ void calc_interactions() {
    Jinter2_AB = -0.10125*J_constant;
    Jinter3_AB = -0.035*J_constant;
 
+   Dx_substrate = 0.01819374 * DMI_sub_scaling; // 0.00606458;//  0.009; // 0.01819374; 
+   
    std::cout << "Generating Moire unit cell..." << std::flush;
    // determine number of blocks in x,y,z
     int xb = ceil(system_size_x/bsize)+1;
@@ -940,211 +943,6 @@ void calc_interactions() {
          }
       }
    }
-  //code for using existing ucf file as starting point. depreciated
- /*     
-   if(ucf_file.is_open()) {
-      std::cout << "ucf file add on has been selected. reading secondary file..." << std::endl;
-      std::cout << "Warning. DMI rotation has not been designed yet." << std::endl;
-      std::cout << "Warning. Lattice basis unity has not been ensured yet." << std::endl;
-      std::string line;
-      // keep record of current line
-      unsigned int line_counter=0;
-      unsigned int line_id=0;
-
-      std::string exchange_type_string; // string defining exchange type
-
-      // defaults for interaction list
-      unsigned int interaction_range = 1; // assume +-1 unit cell as default
-
-      // Loop over all lines
-      while (! ucf_file.eof() ){
-         line_counter++;
-         // read in whole line
-         std::string line;
-         getline(ucf_file,line);
-         //std::cout << line.c_str() << std::endl;
-
-         // ignore blank lines
-         std::string empty="";
-         if(line==empty) continue;
-
-         // set character triggers
-         const char* hash="#";	// Comment identifier
-
-         bool has_hash=false;
-         // Determine if line is a comment line
-         for(unsigned int i=0;i<line.length();i++){
-            char c=line.at(i);
-
-            if(c== *hash){
-                  has_hash=true;
-                  break;
-            }
-         }
-         // if hash character found then read next line
-         if(has_hash==true) continue;
-
-         // convert line to string stream
-         std::istringstream iss(line,std::istringstream::in);
-
-         // non-comment line found - check for line number
-         switch(line_id){
-            case 0:
-               // iss >> unit_cell.dimensions[0] >> unit_cell.dimensions[1] >> unit_cell.dimensions[2];
-               break;
-            case 1:
-               // iss >> unit_cell.shape[0][0] >> unit_cell.shape[0][1] >> unit_cell.shape[0][2];
-               break;
-            case 2:
-               // iss >> unit_cell.shape[1][0] >> unit_cell.shape[1][1] >> unit_cell.shape[1][2];
-               break;
-            case 3:
-               // iss >> unit_cell.shape[2][0] >> unit_cell.shape[2][1] >> unit_cell.shape[2][2];
-               break;
-            case 4:
-               int num_uc_atoms;
-               iss >> num_uc_atoms;
-               //std::cout << "Reading in " << num_uc_atoms << " atoms" << std::endl;
-               // resize unit_cell.atom array if within allowable bounds
-               if( (num_uc_atoms >0) && (num_uc_atoms <= 1000000)) all_m_atoms.reserve(num_uc_atoms + all_m_atoms.size());
-               else {
-                  // terminaltextcolor(RED);
-                  std::cerr << "Error! Requested number of atoms " << num_uc_atoms << " on line " << line_counter
-                  << " of unit cell input file is outside of valid range 1-1,000,000. Exiting" << std::endl; exit(1);
-                  // terminaltextcolor(WHITE);
-               }
-
-               std::cout << "\nProcessing data for " << all_m_atoms.size() << " atoms..." << std::flush;
-               // zlog << zTs() << "\t" << "Processing data for " << unit_cell.atom.size() << " unit cell atoms..." << std::endl;
-
-            // loop over all atoms and read into class
-            for(unsigned int i = 0; i < all_m_atoms.size(); i++){
-
-                line_counter++;
-
-                // declare safe temporaries for atom input
-                int id=i;
-                double cx=2.0, cy=2.0,cz=2.0; // coordinates - default will give an error
-                int mat_id=0, lcat_id=0, hcat_id=0; // sensible defaults if omitted
-                // get line
-                std::string atom_line;
-                getline(ucf_file,atom_line);
-                std::istringstream atom_iss(atom_line,std::istringstream::in);
-                atom_iss >> id >> cx >> cy >> cz >> mat_id >> lcat_id >> hcat_id;
-                
-                spin new_atom;
-                id += all_m_atoms.size();
-                if(cx>=0.0 && cx <=1.0) new_atom.x=cx;
-                else{
-                    // terminaltextcolor(RED);
-                    std::cerr << "Error! atom x-coordinate for atom " << id << " on line " << line_counter
-                                    << " of unit cell input file is outside of valid range 0.0-1.0. Exiting" << std::endl;
-                    // terminaltextcolor(WHITE);
-                    // zlog << zTs() << "Error! atom x-coordinate for atom " << id << " on line " << line_counter
-                                //  << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
-                    exit(1);
-                }
-                if(cy>=0.0 && cy <=1.0) new_atom.y=cy;
-                else{
-                    // terminaltextcolor(RED);
-                    std::cerr << "Error! atom y-coordinate for atom " << id << " on line " << line_counter
-                                    << " of unit cell input file is outside of valid range 0.0-1.0. Exiting" << std::endl;
-                    // terminaltextcolor(WHITE);
-                    // zlog << zTs() << "Error! atom y-coordinate for atom " << id << " on line " << line_counter
-                    // 			     << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
-                    exit(1);
-                }
-                if(cz>=0.0 && cz <=1.0) new_atom.z=cz;
-                else{
-                    // terminaltextcolor(RED);
-                    std::cerr << "Error! atom z-coordinate for atom " << id << " on line " << line_counter
-                    << " of unit cell input file is outside of valid range 0.0-1.0. Exiting" << std::endl;
-                    // terminaltextcolor(WHITE);
-                    // zlog << zTs() << "Error! atom z-coordinate for atom " << id << " on line " << line_counter
-                    // 				  << " of unit cell input file " << filename.c_str() << " is outside of valid range 0.0-1.0. Exiting" << std::endl;
-                    exit(1);
-                }
-                new_atom.unit_x = floor((cx +0.0000001)/ a1y);
-                // changex += dy_cell*std::abs(a1x);
-                new_atom.unit_y = floor((cy +0.0000001)/ a0x);
-                new_atom.S = 5;
-                new_atom.id = id;
-                new_atom.l_id =lcat_id;
-                new_atom.h_id = hcat_id;
-                all_m_atoms.push_back(new_atom);
-                //std::cout << i << "\t" << id << "\t" << cx << "\t" << cy << "\t" << cz << "\t" << mat_id << "\t" << lcat_id << "\t" << hcat_id << std::endl;
-            }
-            break;
-			case 5:{
-
-            int num_interactions = 0; // assume no interactions
-            std::string exchange_type_string; // string defining exchange type
-
-            // get number of exchange types
-            iss >> num_interactions >> exchange_type_string;
-
-            // loop over all interactions and read into class
-            for (int i=0; i<num_interactions; i++){
-
-                // Output progress counter to screen for large interaction counts
-                if( (i % (num_interactions/10 + 1)) == 0 && num_interactions > 10000) std::cout << "." << std::flush;
-
-                // declare safe temporaries for interaction input
-                int id=i;
-                int iatom=-1,jatom=-1; // atom pairs
-                int dx=0, dy=0,dz=0; // relative unit cell coordinates
-                // get line
-                std::string int_line;
-                getline(ucf_file,int_line);
-                //std::cout << int_line.c_str() << std::endl;
-                std::istringstream int_iss(int_line,std::istringstream::in);
-                int_iss >> id >> iatom >> jatom >> dx >> dy >> dz;
-                //inputfile >> id >> iatom >> jatom >> dx >> dy >> dz;
-                line_counter++;
-                // check for sane input
-                id += num_interactions;
-                iatom += all_m_atoms.size();
-                jatom += all_m_atoms.size();
-                // check for long range interactions
-                if(dx*dx+dy*dy+dz*dz > r2) continue;
-                interaction ucf_interaction;
-                            //xx                     xy-> Dz             xz -> -Dy
-                int_iss >> ucf_interaction.xx >> ucf_interaction.xy >> ucf_interaction.xz;
-                            //yx -> -Dz              yy                  yz -> Dx
-                int_iss >> ucf_interaction.yx >> ucf_interaction.yy >> ucf_interaction.yz;
-                            //zx -> Dy               yz -> -Dx           zz
-                int_iss >> ucf_interaction.zx >> ucf_interaction.zy >> ucf_interaction.zz;
-        
-                spin atom_i = all_m_atoms[id];
-                spin atom_j = all_m_atoms[id];
-                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+0] += 1.0;
-                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+1] += ucf_interaction.xx/J_constant;
-                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+2] += 0.5*(ucf_interaction.yz-ucf_interaction.zy)/J_constant;
-                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+3] += 0.5*(ucf_interaction.zx-ucf_interaction.xz)/J_constant;
-                config_energy[atom_i.unit_x][atom_i.unit_y][(atom_i.S-1)*5+4] += 0.5*(ucf_interaction.xy-ucf_interaction.yx)/J_constant;
-            
-                if(DMI) {  outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
-                    //xx                     xy-> Dz                 xz -> -Dy
-                        ucf_interaction.xx << "\t" << ucf_interaction.xy << "\t" << ucf_interaction.xz << "\t" << \
-                    //yx -> -Dz              yy                      yz -> Dx
-                        ucf_interaction.yx << "\t" << ucf_interaction.yy << "\t" <<  ucf_interaction.yz << "\t" << \
-                    //zx -> Dy               yz -> -Dx               zz
-                        ucf_interaction.zx << "\t" << ucf_interaction.yz << "\t" <<  ucf_interaction.zz << "\n"; }
-                else {   outfile4 << number_of_interactions <<  "\t" << atom_i.id << '\t' << atom_j.id <<" 0 0 0 "<<\
-                    //xx                     xy-> Dz                 xz -> -Dy
-                        ucf_interaction.xx << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
-                    //yx -> -Dz              yy                      yz -> Dx
-                        0.0 << "\t" << ucf_interaction.yy << "\t" <<  0.0 << "\t" << \
-                    //zx -> Dy               yz -> -Dx               zz
-                        0.0 << "\t" << 0.0 << "\t" <<  ucf_interaction.zz << "\n"; }
-
-                    number_of_interactions++;
-                }
-            }
-	    }
-	    line_id++;
-    }
-    */
       
    if(twist_angle != 0.0) {
    //code for lattice unit cell basis vectors

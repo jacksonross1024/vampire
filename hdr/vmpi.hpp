@@ -63,8 +63,16 @@ namespace vmpi{
 	extern int io_processor;			///< The group rank of processor who performs IO
 #ifdef MPICF
 	extern MPI_Comm io_comm;			///< MPI Communicator for IO
+
+	extern MPI_Comm node_comm;			///< Communicator for ranks on same node
+	extern int node_rank;				///< Rank within node (0 = leader)
+	extern int node_size;				///< Number of ranks on this node
+	extern bool node_leader;			///< True if node_rank == 0
+	extern MPI_Win bilinear_win;		///< Shared memory window for bilinear interactions
+	extern MPI_Win biquadratic_win;		///< Shared memory window for biquadratic interactions
 #endif
 
+	extern bool shared_memory_ucf;		///< Flag to enable shared-memory UCF mode
 
 	extern bool replicated_data_staged; ///< Flag for staged system generation
 

@@ -28,6 +28,17 @@ namespace vmpi{
    int num_halo_atoms;
    int num_local_atoms; // number of local atoms on processor
 
+   bool shared_memory_ucf=false;
+
+   #ifdef MPICF
+   MPI_Comm node_comm = MPI_COMM_NULL;
+   int node_rank = 0;
+   int node_size = 1;
+   bool node_leader = true;
+   MPI_Win bilinear_win = MPI_WIN_NULL;
+   MPI_Win biquadratic_win = MPI_WIN_NULL;
+   #endif
+
    bool replicated_data_staged=false;
 
    std::string hostname;

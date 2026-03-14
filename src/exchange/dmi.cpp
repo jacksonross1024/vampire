@@ -129,7 +129,7 @@ namespace internal{
 
                         // Set pair dmi constant average between i=->k and j->k normalised to mu_s_i
                         const double Dij = 0.5*( exchange::internal::mp[imat].dmi[kmat] +
-                                                 exchange::internal::mp[jmat].dmi[kmat]) * i_mu_s;
+                                                 exchange::internal::mp[jmat].dmi[kmat]) * i_mu_s; //J / J/T
 
                         // compute direction of Dij
                         const double Dx = eik[1]*ejk[2] - eik[2]*ejk[1];

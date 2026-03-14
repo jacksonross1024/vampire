@@ -31,6 +31,8 @@ namespace unitcell{
    	std::string blank="";
    	if(uc::internal::unit_cell_filename.c_str()!=blank){
    		uc::internal::read_unit_cell(unit_cell, uc::internal::unit_cell_filename);
+   		unit_cell.bilinear.finalize();
+   		unit_cell.biquadratic.finalize();
    		return;
    	}
 
@@ -70,7 +72,10 @@ namespace unitcell{
       }
 
       // optionally write generated unit cell file to disk
-      internal::write_unit_cell_file(unit_cell);
+      // internal::write_unit_cell_file(unit_cell);
+
+      unit_cell.bilinear.finalize();
+      unit_cell.biquadratic.finalize();
 
       return;
 

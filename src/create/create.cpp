@@ -103,7 +103,25 @@ int create(){
 	std::vector<cs::catom_t> catom_array;
 
 	// initialise unit cell for system
-	uc::initialise(cs::unit_cell);
+	#ifdef MPICF
+	if(vmpi::shared_memory_ucf && vmpi::ppn > 1){
+		// Create node-local communicator from ppn
+		MPI_Comm_split(MPI_COMM_WORLD,
+		               vmpi::my_rank / vmpi::ppn,
+		               vmpi::my_rank % vmpi::ppn,
+		               &vmpi::node_comm);
+		MPI_Comm_rank(vmpi::node_comm, &vmpi::node_rank);
+		MPI_Comm_size(vmpi::node_comm, &vmpi::node_size);
+		vmpi::node_leader = (vmpi::node_rank == 0);
+
+		// Shared-memory UCF path: rank 0 reads, distributes via MPI windows
+		uc::initialise_shared(cs::unit_cell);
+	}
+	else
+	#endif
+	{
+		uc::initialise(cs::unit_cell);
+	}
 
    // Instantiate some constants for improved readability
    const double ucx = unit_cell.dimensions[0];
@@ -193,6 +211,30 @@ int create(){
 	zlog << zTs() << "Copying system data to optimised data structures." << std::endl;
 
 	create::internal::set_atom_vars(catom_array, bilinear, biquadratic);
+
+	// Free shared-memory windows and node communicator now that exchange
+	// unrolling is complete -- interaction_ptr is no longer needed.
+	#ifdef MPICF
+	if(vmpi::shared_memory_ucf && vmpi::ppn > 1){
+		cs::unit_cell.bilinear.interaction_ptr = nullptr;
+		cs::unit_cell.bilinear.interaction_count = 0;
+		cs::unit_cell.biquadratic.interaction_ptr = nullptr;
+		cs::unit_cell.biquadratic.interaction_count = 0;
+		if(vmpi::bilinear_win != MPI_WIN_NULL){
+			MPI_Win_free(&vmpi::bilinear_win);
+		}
+		if(vmpi::biquadratic_win != MPI_WIN_NULL){
+			MPI_Win_free(&vmpi::biquadratic_win);
+		}
+		if(vmpi::node_comm != MPI_COMM_NULL){
+			MPI_Comm_free(&vmpi::node_comm);
+		}
+		if(vmpi::my_rank == 0){
+			std::cout << "Shared-memory UCF windows released" << std::endl;
+		}
+		zlog << zTs() << "Shared-memory UCF windows and node communicator released" << std::endl;
+	}
+	#endif
 
    // Determine number of local atoms
    #ifdef MPICF

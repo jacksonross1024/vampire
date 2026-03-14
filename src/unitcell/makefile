@@ -7,6 +7,7 @@ unitcell_objects =\
 data.o \
 exchange.o \
 initialize.o \
+initialize_shared.o \
 interactions.o \
 interface.o \
 normalise.o \

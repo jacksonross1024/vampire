@@ -46,9 +46,10 @@ void monte_carlo_preconditioning(){
    // start timer
    timer.start();
 
+   const double run_temp = sim::temperature;
    // set preconditioning temperature to equilibration temperature
    sim::temperature = sim::Teq;
-
+   
    // print informative messages to screen and log
    std::cout << "Preconditioning spin configuration at T = " << sim::temperature << " K" << std::flush;
    zlog << zTs() << "Preconditioning spin configuration at T = " << sim::temperature << " K ..." << std::endl;
@@ -152,7 +153,7 @@ void monte_carlo_preconditioning(){
    std::cout << "Done!" << std::endl;
    std::cout << "Preconditioning time for " << sim::num_monte_carlo_preconditioning_steps << " steps: " << timer.elapsed_time() << " s" << std::endl;
    zlog << zTs() << "Preconditioning completed in " << timer.elapsed_time() << " s" << std::endl;
-
+   sim::temperature = run_temp;
    return;
 
 }

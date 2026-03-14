@@ -105,6 +105,12 @@ namespace unitcell{
       // list of number of interactions from template for each atom in unit cell
       std::vector <int> ni;
 
+      // Pointer-based access for shared-memory UCF mode.
+      // In normal mode, finalize() sets these to point at the local vector.
+      // In shared mode, set_shared() points into the MPI window.
+      const interaction_t* interaction_ptr = nullptr;
+      uint64_t interaction_count = 0;
+
       // Class constructor with rational defaults
       exchange_template_t():
          exchange_type(exchange::isotropic),
@@ -113,6 +119,16 @@ namespace unitcell{
          // Do nothing
          return;
       };
+
+      void finalize() {
+         interaction_ptr = interaction.data();
+         interaction_count = interaction.size();
+      }
+
+      void set_shared(const interaction_t* ptr, uint64_t count) {
+         interaction_ptr = ptr;
+         interaction_count = count;
+      }
 
       void read_interactions(
          const uint64_t num_atoms, // num atoms in unit cell
@@ -165,6 +181,12 @@ namespace unitcell{
    // Function to initialise unitcell module
    //-----------------------------------------------------------------------------
    void initialise(unit_cell_t& unit_cell);
+
+   //-----------------------------------------------------------------------------
+   // Shared-memory UCF initialisation: rank 0 reads/parses, distributes via
+   // MPI shared windows so only one copy per node.
+   //-----------------------------------------------------------------------------
+   void initialise_shared(unit_cell_t& unit_cell);
 
    //---------------------------------------------------------------------------
    // Function to process input file parameters for unitcell module

@@ -61,7 +61,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	list.reserve(num_atoms);
 
 	// estimate number of interactions per atom
-	const int64_t max_nn = int64_t( 1.1*( double(exchange.interaction.size()) / double(num_atoms_in_unit_cell) ) );
+	const int64_t max_nn = int64_t( 1.1*( double(exchange.interaction_count) / double(num_atoms_in_unit_cell) ) );
 
 	// Reserve space for each atom in neighbour list according to material type
 	for(int64_t atom=0; atom < num_atoms; atom++){
@@ -236,7 +236,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    zlog << zTs() << "\tPopulating supercell array completed"<< std::endl;
 
    // calculate total number of neighbours and inform user of memory needed
-   num_neighbours = (num_cells)*(exchange.interaction.size());
+   num_neighbours = (num_cells)*(exchange.interaction_count);
    #ifdef MPICF
       // calculate total interactions for entire system
       total_neighbours = 0.0;
@@ -260,7 +260,7 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 	neighbour_t tmp_nt;
 
    // copy number of interactions to temporary constant
-   const uint64_t num_interactions = exchange.interaction.size();
+   const uint64_t num_interactions = exchange.interaction_count;
 
 	// Loop over all cells
 	for(uint64_t cell = 0; cell < num_cells; cell++){
@@ -278,12 +278,12 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
 		// Loop over all interactions in exchange template
 		for(uint64_t i = 0; i < num_interactions; i++){
 
-			const uint64_t atom = exchange.interaction[i].i;
-			const uint64_t natom = exchange.interaction[i].j;
+			const uint64_t atom = exchange.interaction_ptr[i].i;
+			const uint64_t natom = exchange.interaction_ptr[i].j;
 
-			int nx = exchange.interaction[i].dx + scc[0];
-			int ny = exchange.interaction[i].dy + scc[1];
-			int nz = exchange.interaction[i].dz + scc[2];
+			int nx = exchange.interaction_ptr[i].dx + scc[0];
+			int ny = exchange.interaction_ptr[i].dy + scc[1];
+			int nz = exchange.interaction_ptr[i].dz + scc[2];
 
          // vector from i->j
          double vx=0.0;

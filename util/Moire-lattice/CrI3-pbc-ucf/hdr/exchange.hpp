@@ -9,7 +9,6 @@
 #include <cmath>
 #include "positions.hpp"
 
-
 #include <unistd.h>
 #include <omp.h>
 
@@ -67,7 +66,7 @@
 
    // extern std::vector < std::vector < std::vector<double> > > D_intra;
    // extern std::vector < std::vector < std::vector<double> > > D_inter;
-   //extern std::vector<std::vector<std::vector<double> > > config_energy;
+   
 
    extern std::ofstream outfile4;
    // extern std::ifstream ucf_file;
@@ -79,11 +78,18 @@
 
    std::array<float,4> match_inter_exchange(int atomi_id, int nn_id, double dx, double dy, double dr, std::vector<std::vector<double> > &Eij);
    std::array<float,4> match_intra1_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
-   std::array<double,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
-   std::array<double,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
+   std::array<float,4> match_intra2_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
+   std::array<float,4> match_intra3_exchange(double angle_i, double angle_j, spin &central_atom, spin &j_atom, std::vector<std::vector<double > > &Eij);
+   void spin_config_energy(spin & atom_i, double dr2, spin & atom_j, std::array<float, 4> &exchange, std::vector<std::vector<std::vector<double> > > & local_config_energy);
+
    std::array<double,4> calculate_intra_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
    std::array<double,4> calculate_inter_Jani(spin &atom_i, spin &atom_j, double distance, double angle);
    void calc_interactions();
+
+   // Compute unit_cell_shifts from an atom list (same algorithm as calc_interactions lines 180-375).
+   // Output is written to out_shifts; caller must ensure it has correct dimensions (microcell_Nx+1 x microcell_Ny+1 x 3).
+   void compute_unit_cell_shifts_from_atoms(const std::vector<spin>& atoms,
+      std::vector<std::vector<std::vector<int>>>& out_shifts);
 
    void calc_out_of_plane_exchange(std::vector < spin > atom_list_1,std::vector < spin > atom_list_2);
    void print_interaction_header();
