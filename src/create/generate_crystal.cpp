@@ -45,8 +45,9 @@ int create_crystal_structure(std::vector<cs::catom_t> & catom_array){
 	double max_fractional_bounds[3];
 	// With multiple ranks we must only create this rank's spatial slice (geometric decomposition).
 	// Otherwise we create the full system (e.g. 4 UCF cells = 8M atoms) on every rank and blow memory.
+	// For a single MPI rank, geometric_decomposition() is not called, so generate the full system.
 	#ifdef MPICF
-	const bool use_geometric_slice = (vmpi::mpi_mode==0 || vmpi::num_processors > 1);
+	const bool use_geometric_slice = (vmpi::num_processors > 1 && vmpi::mpi_mode==0);
 	if(use_geometric_slice){
 		min_bounds[0] = int(vmpi::min_dimensions[0]/unit_cell.dimensions[0]);
 		min_bounds[1] = int(vmpi::min_dimensions[1]/unit_cell.dimensions[1]);

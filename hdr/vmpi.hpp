@@ -73,7 +73,7 @@ namespace vmpi{
 #endif
 
 	extern bool shared_memory_ucf;		///< Flag to enable shared-memory UCF mode
-	/// When shared_memory_ucf is true: halo extent in Angstroms (default 15.0). Otherwise use unit_cell.interaction_range in unit-cell dimensions.
+	/// Minimum halo extent in Angstroms when shared_memory_ucf (default 15.0). The effective halo also respects the physical reach of the exchange template.
 	extern double shared_memory_halo_cutoff_angstrom;
 
 	extern bool replicated_data_staged; ///< Flag for staged system generation

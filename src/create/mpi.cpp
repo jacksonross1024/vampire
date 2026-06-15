@@ -11,6 +11,8 @@
 //
 
 // C++ standard library headers
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <list>
 #include <vector>
@@ -46,6 +48,47 @@ namespace create{
          int ucid; // unit cell id of atom
 
       };
+
+      double exchange_template_axis_range(
+         const unitcell::exchange_template_t& exchange,
+         const int axis
+      ){
+
+         if(exchange.interaction_ptr == nullptr) return 0.0;
+
+         double max_range = 0.0;
+
+         for(uint64_t i = 0; i < exchange.interaction_count; i++){
+            const uint64_t iatom = exchange.interaction_ptr[i].i;
+            const uint64_t jatom = exchange.interaction_ptr[i].j;
+            if(iatom >= cs::unit_cell.atom.size() || jatom >= cs::unit_cell.atom.size()) continue;
+
+            const double cell_shift =
+               double(exchange.interaction_ptr[i].dx)*cs::unit_cell.shape[axis][0] +
+               double(exchange.interaction_ptr[i].dy)*cs::unit_cell.shape[axis][1] +
+               double(exchange.interaction_ptr[i].dz)*cs::unit_cell.shape[axis][2];
+
+            double basis_shift = 0.0;
+            if(axis == 0) basis_shift = cs::unit_cell.atom[jatom].x - cs::unit_cell.atom[iatom].x;
+            else if(axis == 1) basis_shift = cs::unit_cell.atom[jatom].y - cs::unit_cell.atom[iatom].y;
+            else basis_shift = cs::unit_cell.atom[jatom].z - cs::unit_cell.atom[iatom].z;
+
+            const double range = std::fabs((cell_shift + basis_shift)*cs::unit_cell.dimensions[axis]);
+            max_range = std::max(max_range, range);
+         }
+
+         return max_range;
+      }
+
+      double shared_memory_ucf_halo_margin(const int axis){
+
+         const double template_range = std::max(
+            exchange_template_axis_range(cs::unit_cell.bilinear, axis),
+            exchange_template_axis_range(cs::unit_cell.biquadratic, axis)
+         );
+
+         return std::max(vmpi::shared_memory_halo_cutoff_angstrom, template_range) + 0.01;
+      }
 
       //-----------------------------------------------------------------
       //
@@ -148,16 +191,16 @@ namespace create{
          std::vector<double> cpu_range_array(6*vmpi::num_processors,0.0); // Linear Memory for MPI comms
 
          // Each rank's "need" box = geometric slice [min_dimensions, max_dimensions] extended so we
-         // receive halo atoms for exchange. When shared_memory_ucf: use cutoff in Angstroms (e.g. 15 Å)
-         // to avoid millions of unnecessary spins; otherwise use unit_cell.interaction_range in unit-cell dimensions.
+         // receive halo atoms for exchange. When shared_memory_ucf: use the larger of the requested
+         // spatial cutoff and the actual physical reach of the exchange template. Otherwise use the
+         // historical interaction_range * dimension per axis.
          double halo_margin_0 = 0.01;
          double halo_margin_1 = 0.01;
          double halo_margin_2 = 0.01;
          if(vmpi::shared_memory_ucf){
-            const double cut = vmpi::shared_memory_halo_cutoff_angstrom;
-            halo_margin_0 = cut + 0.01;
-            halo_margin_1 = cut + 0.01;
-            halo_margin_2 = cut + 0.01;
+            halo_margin_0 = shared_memory_ucf_halo_margin(0);
+            halo_margin_1 = shared_memory_ucf_halo_margin(1);
+            halo_margin_2 = shared_memory_ucf_halo_margin(2);
          }
          else{
             const double max_interaction_range = double(cs::unit_cell.interaction_range);

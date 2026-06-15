@@ -11,6 +11,7 @@
 //
 
 // C++ standard library headers
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <unordered_map>
@@ -34,6 +35,25 @@
 #endif*/
 
 namespace neighbours{
+
+int64_t exchange_template_axis_cell_range(
+   const unitcell::exchange_template_t& exchange,
+   const int axis
+){
+
+   int64_t max_range = 0;
+
+   for(uint64_t i = 0; i < exchange.interaction_count; i++){
+      int delta = 0;
+      if(axis == 0) delta = exchange.interaction_ptr[i].dx;
+      else if(axis == 1) delta = exchange.interaction_ptr[i].dy;
+      else delta = exchange.interaction_ptr[i].dz;
+
+      max_range = std::max(max_range, int64_t(std::abs(delta)));
+   }
+
+   return max_range;
+}
 
 //----------------------------------------------------------------------------------
 // @brief Generate atomic neighbourlist for a generalised exchange template
@@ -82,18 +102,22 @@ void list_t::generate( std::vector<cs::catom_t>& atom_array,    // array of atom
    // Use decomposition local cell range + halo. With PBC, halo atoms have
    // scx/scy/scz with offsets ±total_num_unit_cells, so min/max over atoms
    // would span the global grid and num_cells would explode (OOM).
-   // Halo extent: when shared_memory_ucf use spatial cutoff (Å); otherwise use template interaction_range (cells).
+   // Halo extent: when shared_memory_ucf use enough cells for both the requested spatial cutoff
+   // and the exchange-template cell offsets. Otherwise use the historical interaction_range.
    if(vmpi::mpi_mode==0){
       int64_t halo_cells[3];
       if(vmpi::shared_memory_ucf){
          const double cut = vmpi::shared_memory_halo_cutoff_angstrom;
-         halo_cells[0] = static_cast<int64_t>(std::ceil(cut / ucdx));
-         halo_cells[1] = static_cast<int64_t>(std::ceil(cut / ucdy));
-         halo_cells[2] = static_cast<int64_t>(std::ceil(cut / ucdz));
+         const double ucd[3] = { ucdx, ucdy, ucdz };
+         for(int i = 0; i < 3; i++){
+            const int64_t spatial = std::max(int64_t(1), static_cast<int64_t>(std::ceil(cut / ucd[i])));
+            const int64_t template_cells = std::max(int64_t(1), exchange_template_axis_cell_range(exchange, i));
+            halo_cells[i] = std::max(spatial, template_cells);
+         }
       }
       else{
          const int64_t hr = static_cast<int64_t>(cs::unit_cell.interaction_range);
-         halo_cells[0] = halo_cells[1] = halo_cells[2] = hr;
+         halo_cells[0] = halo_cells[1] = halo_cells[2] = std::max(int64_t(1), hr);
       }
       const int64_t min_cell[3] = {
          static_cast<int64_t>(vmpi::min_dimensions[0] / ucdx),
