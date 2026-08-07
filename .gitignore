@@ -61,6 +61,16 @@ vampire_manual.synctex.gz
 *.meta
 *.vtu
 *.txt
+# Moire-lattice UCF generator sliding maps (override *.txt above)
+!util/Moire-lattice/**/bilayer_sliding/Cr*_intra_data.txt
+!util/Moire-lattice/**/bilayer_sliding/Cr*_inter_map_2.txt
+!util/Moire-lattice/**/bilayer_sliding/Cr*_Dx_inter_map_2_avg.txt
+!util/Moire-lattice/**/bilayer_sliding/Cr*_Dy_inter_map_2_avg.txt
+!util/Moire-lattice/**/bilayer_sliding/Cr*_Dz_inter_map_2_avg.txt
+!util/Moire-lattice/**/bilayer_sliding/Kim_*_inter_map.txt
+!util/Moire-lattice/**/bilayer_sliding/ratio_*.txt
+!util/Moire-lattice/**/bilayer_sliding/kim_fig6/fit_Cl_to_I3_constant_amp.txt
+!util/Moire-lattice/**/bilayer_sliding_fullrange/Cr*.txt
 crystal.xyz
 log
 grain
