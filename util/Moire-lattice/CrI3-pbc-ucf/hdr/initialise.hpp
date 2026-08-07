@@ -23,6 +23,18 @@ extern int microcell_scale_y;
 extern int microcell_Nx;  // number_of_unit_cells_x / microcell_scale_x
 extern int microcell_Ny;  // number_of_unit_cells_y / microcell_scale_y
 
+/// Dimensionless factor for moiré micromagnetic coarse grain: nn_tol (Å) =
+/// moire_coarse_nn_tol_scale * min(cell_wx, cell_wy). If this exceeds ~9.9 Å
+/// relative to in-plane bond extent, interlayer terms fall in the intracell bin.
+/// Optional CLI argv[11]; default matches former hard-coded 0.51.
+extern double moire_coarse_nn_tol_scale;
+
+/// Which moiré coarse-grain binaries ``moire_spin_interactions_finalize_and_write`` emits.
+/// Defaults: twisted-double-bilayer only (MOTD). Pass optional argv[12] ``both`` to also
+/// write legacy twisted-bilayer ``moire_coarse_v2.bin``; ``bilayer_only`` for legacy only.
+extern bool moire_coarse_write_twisted_bilayer;
+extern bool moire_coarse_write_twisted_double_bilayer;
+
 extern double dmi12;
 extern double dmi23;
 extern double dmi34;

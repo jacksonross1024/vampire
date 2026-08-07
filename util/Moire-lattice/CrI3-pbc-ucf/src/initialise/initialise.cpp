@@ -14,10 +14,15 @@ double system_size_y;
 double system_size_z;
 int number_of_unit_cells_z;
 
-int microcell_scale_x = 2;
-int microcell_scale_y = 2;
+int microcell_scale_x = 1;
+int microcell_scale_y = 1;
 int microcell_Nx = 0;
 int microcell_Ny = 0;
+
+double moire_coarse_nn_tol_scale = 0.51;
+
+bool moire_coarse_write_twisted_bilayer = false;
+bool moire_coarse_write_twisted_double_bilayer = true;
 
 double twist_angle;
 double twist_loction;

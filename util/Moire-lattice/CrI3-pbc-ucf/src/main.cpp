@@ -70,12 +70,41 @@ int main(int argc, char* argv[]){
             }
             std::cout << " DMI_sub_vector: < " << DMI_sub_vector_x << ", " << DMI_sub_vector_y << ", " << DMI_sub_vector_z << "> " << std::endl;
         }
+        if (a == 11) {
+            moire_coarse_nn_tol_scale = atof(argv[a]);
+            std::cout << " moire coarse nn_tol scale (x min cell width): "
+                      << moire_coarse_nn_tol_scale << std::endl;
+        }
+        if (a == 12) {
+            std::string opt(argv[a]);
+            if (opt == "both" || opt == "all") {
+                moire_coarse_write_twisted_bilayer = true;
+                moire_coarse_write_twisted_double_bilayer = true;
+                std::cout << " moire coarse export: twisted-bilayer + twisted-double-bilayer"
+                          << std::endl;
+            } else if (opt == "bilayer_only") {
+                moire_coarse_write_twisted_bilayer = true;
+                moire_coarse_write_twisted_double_bilayer = false;
+                std::cout << " moire coarse export: twisted-bilayer only (legacy)"
+                          << std::endl;
+            } else if (opt == "double_only" || opt == "default") {
+                moire_coarse_write_twisted_bilayer = false;
+                moire_coarse_write_twisted_double_bilayer = true;
+                std::cout << " moire coarse export: twisted-double-bilayer only (default)"
+                          << std::endl;
+            } else {
+                std::cerr << " moire coarse export argv[12]: expected both | bilayer_only | "
+                             "double_only | default, got: "
+                          << opt << std::endl;
+                exit(1);
+            }
+        }
 
     }
 
 
-   system_size_x = 6500;//  25.00
-   system_size_y = 4500; //4000
+   system_size_x = 8000;//  25.00
+   system_size_y = 8000; //4000
    number_of_unit_cells_z = 1; //2
 
    // set up new material constants

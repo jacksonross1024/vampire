@@ -5,6 +5,8 @@
 #include <cmath>
 #include "initialise.hpp"
 #include "exchange.hpp"
+#include "moire_bond_record.hpp"
+#include "moire_wire.hpp"
 #include <list>
 
 // System headers
@@ -128,7 +130,7 @@ std::vector < std::vector < double > > Dz_intra2;
 
 std::vector < std::vector < std::vector< double> > > D_intra;
 std::vector < std::vector < std::vector< double> > > D_inter;
-// Config/microcell grid size (from initialise: microcell_Nx + 1, microcell_Ny + 1)
+// Config grid uses microcell_Nx, microcell_Ny (separate from moiré micromagnetic bins in moire_wire).
 
 std::vector <double > crossProduct(std::vector <double >A, std::vector <double > B){
    std::vector <double > P(3,0.0);
@@ -141,7 +143,7 @@ std::vector <double > crossProduct(std::vector <double >A, std::vector <double >
 void print_interaction_header(){
    std::ofstream outfile3 ("header_interactions.ucf");
    std::string interaction_type;
-   if(DMI) interaction_type = "tensorial";
+   if(DMI) interaction_type = "normalised-tensorial";
    else interaction_type = "normalised-isotropic";
    outfile3 << number_of_interactions <<  "\t" << interaction_type << std::endl;//<<" 0 0 0 "<<J3S2_x << " 0 0 0 " << J3S2_z << std::endl;
    
@@ -306,6 +308,8 @@ void compute_unit_cell_shifts_from_atoms(const std::vector<spin>& atoms,
 
  
 void calc_interactions() {
+
+   moire_spin_interactions_clear();
 
    std::stringstream ss;
              
@@ -534,7 +538,7 @@ void calc_interactions() {
 
    // Period determination and crop to primary spin-moiré cell (uses occupancy + unit_cell_shifts).
    // Exchange constants are then computed on the resulting PBC-applied atom list.
-   double moire_area [4] = {687.98, 667.91, 4376.5, 2526.96}; //x0, y0, Lx, Ly //Px = 631, Py = 421
+   double moire_area [4] = {687.98, 667.91, 4376.5, 2526.96}; //0.5{6063.39,4123.04,1375.62,2382.82}; //1.1 degree{687.98, 667.91, 4376.5, 2526.96}; //x0, y0, Lx, Ly //Px = 631, Py = 421
    build_spin_moire_cell(moire_area);
 
       std::vector< std::vector < std::vector < std::vector < spin > > > > boxes;
@@ -577,22 +581,24 @@ void calc_interactions() {
    const double sin_half_ex = sin(0.5 * twist_angle);
 
       std::ofstream lattice_file(std::string(directory) + "/moire_lattice_vectors.txt");
-   #pragma omp parallel num_threads(8) reduction(+:number_of_interactions) 
+   #pragma omp parallel num_threads(4) reduction(+:number_of_interactions) 
    {
       #pragma omp single 
       std::cout << "preparing Moire exchange with " << omp_get_num_threads() << " omp threads" << std::endl;
 
-      std::vector<std::vector<std::vector<double> > > local_config_energy;
-      local_config_energy.resize(microcell_Nx + 1);
-      for(int i = 0; i <= microcell_Nx; i++) {
-         local_config_energy[i].resize(microcell_Ny + 1);
-         for(int j = 0; j <= microcell_Ny; j++) {
-            local_config_energy[i][j].resize(4*16,0.0);
-         }
-      }
+      // std::vector<std::vector<std::vector<double> > > local_config_energy;
+      // local_config_energy.resize(microcell_Nx + 1);
+      // for(int i = 0; i <= microcell_Nx; i++) {
+      //    local_config_energy[i].resize(microcell_Ny + 1);
+      //    for(int j = 0; j <= microcell_Ny; j++) {
+      //       local_config_energy[i][j].resize(4*16,0.0);
+      //    }
+      // }
    std::stringstream otext;
    otext.precision(6);
 
+   std::vector<spin_interaction> local_moire_bonds;
+      local_moire_bonds.reserve(all_m_atoms.size()*20/8);
    std::stringstream lattice_text;
    for(int i=0; i<xb; i++){
 
@@ -744,7 +750,7 @@ void calc_interactions() {
                                  }
                                                               
                                
-                                 spin_config_energy(atom_i, dL2, atom_j, exchange, local_config_energy);
+                                 // spin_config_energy(atom_i, dL2, atom_j, exchange, local_config_energy);
 
                                    if(DMI) {  otext << number_of_interactions <<  "\t" << atom_i.original_id << '\t' << atom_j.original_id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << 0 << '\t' <<\
                                                 //xx                     xy-> Dz                 xz -> -Dy
@@ -758,16 +764,18 @@ void calc_interactions() {
                                     //    exchange[0] << "\t" << exchange[1] << "\t" << exchange[2] << "\t" << \
                                     // //yx -> -Dz              yy                      yz -> Dx
                                     //    exchange[3] <<  "\n"; }
-                                    else {   otext << number_of_interactions <<  "\t" << atom_i.original_id << '\t' << atom_j.original_id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << 0 << '\t' <<\
-                              //xx                     xy-> Dz                 xz -> -Dy
-                                 exchange[0] << "\n";// << 0.0 << "\t" << 0.0 << "\t" << \
-                              //yx -> -Dz              yy                      yz -> Dx
-                             //    0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
-                              //zx -> Dy               yz -> -Dx               zz
-                              //   0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; 
-                                 }
+                                    else {otext << number_of_interactions <<  "\t" << atom_i.original_id << '\t' << atom_j.original_id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << 0 << '\t' <<\
+                                       //xx                     xy-> Dz                 xz -> -Dy
+                                         exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
+                                       //yx -> -Dz              yy                      yz -> Dx
+                                       0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
+                                       //zx -> Dy               yz -> -Dx               zz
+                                       0.0 << "\t" << 0.0 << "\t" <<  exchange[0]*1.0 << "\n"; }
                                    
                                     number_of_interactions++;
+                                    local_moire_bonds.push_back(
+                                        make_spin_interaction_from_exchange(
+                                            atom_i, atom_j, exchange, DMI));
                                  // }                           
                               }
                            } // end of j atom loop
@@ -785,20 +793,21 @@ void calc_interactions() {
       {
          lattice_file << lattice_text.str();
          outfile4 << otext.str();
+         moire_spin_interactions_merge(local_moire_bonds);
          std::cout << omp_get_thread_num() << " calculated " << number_of_interactions << " of interactions" << std::endl;
 
          //double J_const_inv = 1.0/J_constant;
          
-         for(int i = 0; i < global_config_energy.size(); i++) {
-            for(int j = 0; j < global_config_energy[i].size(); j++) {
-               for(int k =0; k < global_config_energy[i][j].size(); k++){
+         // for(int i = 0; i < global_config_energy.size(); i++) {
+         //    for(int j = 0; j < global_config_energy[i].size(); j++) {
+         //       for(int k =0; k < global_config_energy[i][j].size(); k++){
                      
-                  global_config_energy[i][j].at(k) += local_config_energy[i][j].at(k); 
-                  //else global_config_energy[i][j].at(k) += local_config_energy[i][j].at(k)*J_const_inv;
+         //          global_config_energy[i][j].at(k) += local_config_energy[i][j].at(k); 
+         //          //else global_config_energy[i][j].at(k) += local_config_energy[i][j].at(k)*J_const_inv;
                   
-               }
-            }
-         }
+         //       }
+         //    }
+         // }
       }
       
    }
@@ -812,50 +821,50 @@ void calc_interactions() {
    std::cout << "outputting extra file info:" << std::endl;
    
 
-   std::cout << "config atoms started..." << std::flush;
-      std::ofstream config_output(std::string(directory) + "/config_energy_atomic.txt");
+   // std::cout << "config atoms started..." << std::flush;
+   //    std::ofstream config_output(std::string(directory) + "/config_energy_atomic.txt");
 
-      if(!config_output.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
-      for(int i = 0; i < all_m_atoms.size(); i++) {
-         spin atom = all_m_atoms[i];
-         // for(int j = 0; j < number_of_unit_cells_y; j++){
-            // double bottom_occ = config_energy[i][j][(2-1)*5+0];
-            // double top_occ = config_energy[i][j][(3-1)*5+0];
-            // if(bottom_occ == 0 && top_occ == 0) continue;
-            // if(2000 < atom.x && atom.x < 3400 && 4750 < atom.y  && atom.y < 5900) {
-               config_output << atom.S << ", " << atom.l_id << ", " <<  atom.h_id << ", " \
-               << atom.x << ", " << atom.y << ", " \
-               << atom.intra1_count << ", " << atom.J_intra1 << ", " << atom.Dx_intra1 << ", " << atom.Dy_intra1 << ", " << atom.Dz_intra1 << ", " \
-               << atom.intra2_count << ", " << atom.J_intra2 << ", " << atom.Dx_intra2 << ", " << atom.Dy_intra2 << ", " << atom.Dz_intra2 << ", " \
-               << atom.intra3_count << ", " << atom.J_intra3 << ", " << atom.Dx_intra3 << ", " << atom.Dy_intra3 << ", " << atom.Dz_intra3 << ", " \
-               << atom.inter1_count << ", " << atom.J_inter1 << ", " << atom.Dx_inter1 << ", " << atom.Dy_inter1 << ", " << atom.Dz_inter1 << ", " \
-               << atom.inter2_count << ", " << atom.J_inter2 << ", " << atom.Dx_inter2 << ", " << atom.Dy_inter2 << ", " << atom.Dz_inter2 << ", " \
-               << atom.inter3_count << ", " << atom.J_inter3 << ", " << atom.Dx_inter3 << ", " << atom.Dy_inter3 << ", " << atom.Dz_inter3 << ", " \
-               << atom.inter_twist1_count << ", " << atom.J_inter_twist1 << ", " << atom.Dx_inter_twist1 << ", " << atom.Dy_inter_twist1 << ", " << atom.Dz_inter_twist1 << ", " \
-               << atom.inter_twist2_count << ", " << atom.J_inter_twist2 << ", " << atom.Dx_inter_twist2 << ", " << atom.Dy_inter_twist2 << ", " << atom.Dz_inter_twist2 << ", " \
-               << atom.inter_twist3_count << ", " << atom.J_inter_twist3 << ", " << atom.Dx_inter_twist3 << ", " << atom.Dy_inter_twist3 << ", " << atom.Dz_inter_twist3 << std::endl;
-               // for(int k = 0; k < config_energy[i][j].size(); k++) config_output << ", " << config_energy[i][j][k]; 
-               // config_output << "\n";
-            // }
-      }
-      config_output.close();
-      std::cout << "config atoms done." << std::endl;
-      std::cout << "config cells started..." << std::flush;
+   //    if(!config_output.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
+   //    for(int i = 0; i < all_m_atoms.size(); i++) {
+   //       spin atom = all_m_atoms[i];
+   //       // for(int j = 0; j < number_of_unit_cells_y; j++){
+   //          // double bottom_occ = config_energy[i][j][(2-1)*5+0];
+   //          // double top_occ = config_energy[i][j][(3-1)*5+0];
+   //          // if(bottom_occ == 0 && top_occ == 0) continue;
+   //          // if(2000 < atom.x && atom.x < 3400 && 4750 < atom.y  && atom.y < 5900) {
+   //             config_output << atom.S << ", " << atom.l_id << ", " <<  atom.h_id << ", " \
+   //             << atom.x << ", " << atom.y << ", " \
+   //             << atom.intra1_count << ", " << atom.J_intra1 << ", " << atom.Dx_intra1 << ", " << atom.Dy_intra1 << ", " << atom.Dz_intra1 << ", " \
+   //             << atom.intra2_count << ", " << atom.J_intra2 << ", " << atom.Dx_intra2 << ", " << atom.Dy_intra2 << ", " << atom.Dz_intra2 << ", " \
+   //             << atom.intra3_count << ", " << atom.J_intra3 << ", " << atom.Dx_intra3 << ", " << atom.Dy_intra3 << ", " << atom.Dz_intra3 << ", " \
+   //             << atom.inter1_count << ", " << atom.J_inter1 << ", " << atom.Dx_inter1 << ", " << atom.Dy_inter1 << ", " << atom.Dz_inter1 << ", " \
+   //             << atom.inter2_count << ", " << atom.J_inter2 << ", " << atom.Dx_inter2 << ", " << atom.Dy_inter2 << ", " << atom.Dz_inter2 << ", " \
+   //             << atom.inter3_count << ", " << atom.J_inter3 << ", " << atom.Dx_inter3 << ", " << atom.Dy_inter3 << ", " << atom.Dz_inter3 << ", " \
+   //             << atom.inter_twist1_count << ", " << atom.J_inter_twist1 << ", " << atom.Dx_inter_twist1 << ", " << atom.Dy_inter_twist1 << ", " << atom.Dz_inter_twist1 << ", " \
+   //             << atom.inter_twist2_count << ", " << atom.J_inter_twist2 << ", " << atom.Dx_inter_twist2 << ", " << atom.Dy_inter_twist2 << ", " << atom.Dz_inter_twist2 << ", " \
+   //             << atom.inter_twist3_count << ", " << atom.J_inter_twist3 << ", " << atom.Dx_inter_twist3 << ", " << atom.Dy_inter_twist3 << ", " << atom.Dz_inter_twist3 << std::endl;
+   //             // for(int k = 0; k < config_energy[i][j].size(); k++) config_output << ", " << config_energy[i][j][k]; 
+   //             // config_output << "\n";
+   //          // }
+   //    }
+   //    config_output.close();
+   //    std::cout << "config atoms done." << std::endl;
+   //    std::cout << "config cells started..." << std::flush;
 
-      std::ofstream config_output1(std::string(directory) + "/config_energy_cells.txt");
-      if(!config_output1.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
-      for(int i = 0; i < global_config_energy.size(); i++) {
-         for(int j = 0; j < global_config_energy[i].size(); j++){
-               config_output1 << i << ", " << j << ", ";
-               // config_output << all_m_atoms[i].S << ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y << ", " << all_m_atoms[i].J_inter << ", " << all_m_atoms[i].Dx_inter << ", " <<  all_m_atoms[i].Dy_inter << ", " << all_m_atoms[i].Dz_inter << ", " << all_m_atoms[i].inter_count  << '\n';// << bottom_occ<< ", " << top_occ;
-               for(int k = 0; k < global_config_energy[i][j].size(); k++) config_output1 << global_config_energy[i][j][k] << ", "; 
-               config_output1 << "\n";
-            // config_output1 << "\n";
-         }
-         config_output1 << "\n";
-      }
-      config_output1.close();
-      std::cout << "config cells done." << std::endl;
+   //    std::ofstream config_output1(std::string(directory) + "/config_energy_cells.txt");
+   //    if(!config_output1.is_open()) {std::cout << "config energy did not open" << std::endl; exit(1);}
+   //    for(int i = 0; i < global_config_energy.size(); i++) {
+   //       for(int j = 0; j < global_config_energy[i].size(); j++){
+   //             config_output1 << i << ", " << j << ", ";
+   //             // config_output << all_m_atoms[i].S << ", " << all_m_atoms[i].l_id << ", " <<  all_m_atoms[i].h_id << ", " << all_m_atoms[i].x << ", " << all_m_atoms[i].y << ", " << all_m_atoms[i].J_inter << ", " << all_m_atoms[i].Dx_inter << ", " <<  all_m_atoms[i].Dy_inter << ", " << all_m_atoms[i].Dz_inter << ", " << all_m_atoms[i].inter_count  << '\n';// << bottom_occ<< ", " << top_occ;
+   //             for(int k = 0; k < global_config_energy[i][j].size(); k++) config_output1 << global_config_energy[i][j][k] << ", "; 
+   //             config_output1 << "\n";
+   //          // config_output1 << "\n";
+   //       }
+   //       config_output1 << "\n";
+   //    }
+   //    config_output1.close();
+   //    std::cout << "config cells done." << std::endl;
       // // std::cout << "interaction counts started..." << std::flush;
       // std::ofstream interaction_counts(std::string(directory) + "/interaction_counts.txt");
       // if(!interaction_counts.is_open()) {std::cout << "interaction counts did not open" << std::endl; exit(1);}
@@ -866,6 +875,7 @@ void calc_interactions() {
       // interaction_counts.close();
       // outfile4 << ss.str();
       // std::cout << "interaction counts done." << std::endl;
+      moire_spin_interactions_finalize_and_write(directory, moire_area);
       return;
 }
 
