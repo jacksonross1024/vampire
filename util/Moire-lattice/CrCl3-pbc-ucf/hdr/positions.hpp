@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <cmath>
+#include <cstdint>
 
 #include <unistd.h>
 // #include <array>

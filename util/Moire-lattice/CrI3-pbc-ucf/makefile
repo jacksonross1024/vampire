@@ -22,6 +22,8 @@ obj/main.o \
 obj/exchange/exchange.o \
 obj/initialise/initialise.o \
 obj/positions/positions.o \
+obj/moire_coarse.o \
+obj/moire_wire.o \
 obj/read_in_files.o \
 
 

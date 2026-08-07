@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <cmath>
+#include <cstdint>
 
 #include <unistd.h>
 // #include <array>
@@ -160,6 +161,26 @@
          int pbc_x = 0;
          int pbc_y = 0;
          int pbc_z = 0;
+   };
+
+   /// Per-bond record for coarse-graining only: fields referenced by
+   /// coarseGrainMoireBonds() (moire_coarse.cpp)—positions, material sheet index
+   /// (S as int, same as si/sj), interfacial flags h_id (0=bulk, 1=interfacial),
+   /// and full 3×3 exchange tensor for J_iso and DM extraction. l_id is not
+   /// stored here; it is only for matching exchange tables in the untwisted cell.
+   class spin_interaction {
+      public:
+         double xi = 0, yi = 0, zi = 0;
+         double xj = 0, yj = 0, zj = 0;
+         int si = -1;
+         int sj = -1;
+         /// Material-type sheet index from atom S (moire stack layer).
+         int layer_i = 0;
+         int layer_j = 0;
+         /// Copy of h_id: 0 = non-interfacial Cr sheet, 1 = interfacial layer.
+         int h_i = 0;
+         int h_j = 0;
+         double J[3][3] = {{0}};
    };
 
    extern std::vector < spin > atom;

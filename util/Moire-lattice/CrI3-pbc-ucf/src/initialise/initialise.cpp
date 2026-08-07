@@ -22,6 +22,11 @@ int microcell_Ny = 0;
 double microcell_ax_eff = 0.0;
 double microcell_ay_eff = 0.0;
 
+double moire_coarse_nn_tol_scale = 0.51;
+
+bool moire_coarse_write_twisted_bilayer = false;
+bool moire_coarse_write_twisted_double_bilayer = true;
+
 double twist_angle;
 double twist_loction;
 
