@@ -14,14 +14,14 @@ set xlabel "Position (nm)"
 set colorbox 
 set cblabel "m_z (u_B/nm^2)"
 
-cell_x = 1
-cell_y = 1
+cell_x = 2
+cell_y = 2
 cx = 0.1
-cy = 0.1
+cy = 0.05
 
-set yrange [0:150]
-set xrange [0:150]
-file_index = 10
+set yrange [0:50]
+set xrange [0:60]
+file_index = 7
 folder = "xcross-2-AFM"
 file = sprintf("cells-%08.f.txt", file_index)
 
