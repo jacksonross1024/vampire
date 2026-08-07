@@ -18,6 +18,8 @@ CoF2/*
 Mn2Au/*
 Mn3Sn/*
 ex-stiff/*
+CrI3-lctmp/
+FGT-timestep/
 #----------------------------------------------
 # Povray files
 #----------------------------------------------
@@ -60,7 +62,11 @@ vampire_manual.synctex.gz
 *.data
 *.meta
 *.vtu
-*.txt
+cell*
+cells*
+*.ucf
+output-*
+stack-*
 crystal.xyz
 log
 grain
