@@ -167,10 +167,11 @@ public:
 
 
 //set nearest neighbour  distances (in plane nn 1,2,3)
-// CrI3 honeycomb shells (a≈6.93 Å): 1NN≈4.00, 2NN≈6.93, 3NN≈8.00.
-double intra_nn_dist_1 = 5.465; //A  midpoint 1NN(~4.00)–2NN(~6.93)
-double intra_nn_dist_2 = 7.465; //A  midpoint 2NN(~6.93)–3NN(~8.00)
-double intra_nn_dist_3 = 8.50;  //A  above 3NN
+// CrCl3 honeycomb shells (a=5.94 Å): 1NN=a/√3≈3.43, 2NN=a≈5.94, 3NN=2a/√3≈6.86.
+// Cutoffs are midpoints between shells (NOT CrI3 map lengths — atom positions are physical).
+double intra_nn_dist_1 = 4.68; //A  (between 3.43 and 5.94)
+double intra_nn_dist_2 = 6.40; //A  (between 5.94 and 6.86)
+double intra_nn_dist_3 = 7.50; //A  (above 6.86)
 
 double inter_nn_dist_1 = 7.0;
 double inter_nn_dist_2 = 7.77;

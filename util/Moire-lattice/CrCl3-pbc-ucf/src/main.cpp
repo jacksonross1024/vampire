@@ -14,11 +14,7 @@
 int main(int argc, char* argv[]){
 
     // Defaults; flags scanned by name so order after twist/range is flexible:
-    //   ./main <twist_deg> <max_range> [--dmi|--nodmi] [--bq] [--bake-only] [--config-atoms]
-    //          [--candidate N] [J_inter DMI_inter J_twist J_prist J_intra [DMI_sub basis]]
-    // Legacy: `--dmi` is a no-op placeholder (DMI on by default) so
-    //   ./main 0.3 9.9 --dmi 0.085 1 1 5.5 1.45
-    // still maps 0.085→J_inter … 1.45→J_intra (old fixed-index CLI).
+    //   ./main <twist_deg> <max_range> [--dmi|--nodmi] [--bq] [--bake-only] [--config-atoms] [--candidate N] [J_inter ...]
     DMI = true;
     BQ = false;
     std::cout << " with DMI " << std::endl;
@@ -178,8 +174,10 @@ int main(int argc, char* argv[]){
    twist_loction = 2*system_size_z/5 -0.01;
     std::cout << "twisting at: " << twist_loction << std::endl;
     read_in_atoms("files/atom_list_abprimebprimea_rhombic", num_atoms, atom);
-    // CrI3 bilayer_sliding maps:
-    //   Cr{1-4}_inter_map_2.txt + Dx/Dy/Dz_inter_map_2_avg.txt, Cr{1-4}_intra_data.txt
+    // CrCl3 bilayer_sliding maps (Cl3 physical Å; normalised-u from I3):
+    //   Cr{1-4}_inter_map_2.txt              inter J  (Kim |u|≤5.2/a_Cl; k_amp·I3 beyond)
+    //   Cr{1-4}_Dx/Dy/Dz_inter_map_2_avg.txt inter DMI (k_amp · I3(u), long-range kept)
+    //   Cr{1-4}_intra_data.txt               intra J+DMI (k_amp · I3; axes × a_Cl/a_I)
 
 if(!bake_only) {
 #pragma omp parallel sections num_threads(4)

@@ -1,0 +1,84 @@
+#------------------------------------------
+# Sample vampire input file to perform
+# benchmark calculation for v4.0
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+#dimensions:unit-cell-size = 2.507 !A
+
+dimensions:system-size-x = 50.0 !nm
+dimensions:system-size-y = 60.0 !nm
+dimensions:system-size-z = 22 !A
+
+#create:periodic-boundaries-x
+#create:periodic-boundaries-y
+
+dipole:solver=tensor
+dipole:field-update-rate=1000
+cells:macro-cell-size-x = 20
+cells:macro-cell-size-y = 20
+cells:macro-cell-size-z = 5.6
+dipole:cutoff-radius = 10
+
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:unit-cell-file = CrCl3_0.3_3NN_DMI_BQ_v2.ucf
+material:file = CrCl3.mat
+create:crystal-sublattice-materials=true
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+sim:shared-memory-ucf
+sim:mpi-ppn = 4
+
+#sim:preconditioning-steps = 2000
+sim:total-time-steps=2000000
+sim:equilibration-temperature= 0
+sim:temperature= 0.25
+sim:equilibration-time-steps = 0
+sim:time-steps-increment = 10000
+sim:time-step = 1 !fs
+
+sim:cooling-function = linear
+sim:cooling-time = 0.05 !ns
+
+sim:minimum-temperature= 0.0
+sim:maximum-temperature= 20.0
+sim:temperature-increment = 1
+
+sim:equilibration-field-strength=0.0 !T
+sim:equilibration-field-unit-vector=0,0,1 #0.82,0.0,0.574#0,0,1
+
+sim:applied-field-strength=0.1 !T
+sim:applied-field-unit-vector= 0,0,1 #0.82,0,0.574
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program = time-series #time variable magnetic field; SOT; STT
+sim:integrator = llg-midpoint
+
+#sim:load-checkpoint = restart
+sim:save-checkpoint = continuous 
+#------------------------------------------
+# data output
+#------------------------------------------
+config:atoms
+config:output-format = binary
+config:atoms-output-rate= 10
+config:output-nodes = 1
+
+
+output:output-rate=1
+
+output:time-steps
+output:temperature
+output:material-magnetisation
+output:material-total-energy 
+output:material-exchange-energy 
+output:material-anisotropy-energy 
+output:material-applied-field-energy 
+output:material-magnetostatic-energy 
