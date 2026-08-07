@@ -14,13 +14,7 @@
 int main(int argc, char* argv[]){
 
     // Defaults; flags scanned by name so order after twist/range is flexible:
-    //   ./main <twist_deg> <max_range> [--dmi|--nodmi] [--bq] [--bake-only] [--config-atoms]
-    //          [--candidate N] [--moire-nn-scale S] [--moire-export MODE]
-    //          [J_inter DMI_inter J_twist J_prist J_intra [DMI_sub basis]
-    //           [moire_nn_scale] [moire_export]]
-    // Legacy: `--dmi` is a no-op placeholder (DMI on by default) so
-    //   ./main 0.3 9.9 --dmi 0.085 1 1 5.5 1.45
-    // still maps 0.085→J_inter … 1.45→J_intra (old fixed-index CLI).
+    //   ./main <twist_deg> <max_range> [--dmi|--nodmi] [--bq] [--bake-only] [--config-atoms] [--candidate N] [J_inter ...]
     DMI = true;
     BQ = false;
     std::cout << " with DMI " << std::endl;
@@ -67,50 +61,6 @@ int main(int argc, char* argv[]){
             std::cout << " force AA candidate index: " << moire_force_candidate << std::endl;
             continue;
         }
-        if(arg == "--moire-nn-scale" || arg.rfind("--moire-nn-scale=", 0) == 0) {
-            std::string val;
-            if(arg == "--moire-nn-scale") {
-                if(a + 1 >= argc) { std::cerr << "--moire-nn-scale needs a value\n"; exit(1); }
-                val = argv[++a];
-            } else {
-                val = arg.substr(std::string("--moire-nn-scale=").size());
-            }
-            moire_coarse_nn_tol_scale = atof(val.c_str());
-            std::cout << " moire coarse nn_tol scale (x min cell width): "
-                      << moire_coarse_nn_tol_scale << std::endl;
-            continue;
-        }
-        if(arg == "--moire-export" || arg.rfind("--moire-export=", 0) == 0) {
-            std::string opt;
-            if(arg == "--moire-export") {
-                if(a + 1 >= argc) { std::cerr << "--moire-export needs a mode\n"; exit(1); }
-                opt = argv[++a];
-            } else {
-                opt = arg.substr(std::string("--moire-export=").size());
-            }
-            if (opt == "both" || opt == "all") {
-                moire_coarse_write_twisted_bilayer = true;
-                moire_coarse_write_twisted_double_bilayer = true;
-                std::cout << " moire coarse export: twisted-bilayer + twisted-double-bilayer"
-                          << std::endl;
-            } else if (opt == "bilayer_only") {
-                moire_coarse_write_twisted_bilayer = true;
-                moire_coarse_write_twisted_double_bilayer = false;
-                std::cout << " moire coarse export: twisted-bilayer only (legacy)"
-                          << std::endl;
-            } else if (opt == "double_only" || opt == "default") {
-                moire_coarse_write_twisted_bilayer = false;
-                moire_coarse_write_twisted_double_bilayer = true;
-                std::cout << " moire coarse export: twisted-double-bilayer only (default)"
-                          << std::endl;
-            } else {
-                std::cerr << " --moire-export: expected both | bilayer_only | "
-                             "double_only | default, got: "
-                          << opt << std::endl;
-                exit(1);
-            }
-            continue;
-        }
 
         if(npos == 0) {
             twist_angle = atof(argv[a]);
@@ -155,33 +105,6 @@ int main(int argc, char* argv[]){
                 exit(1);
             }
             std::cout << " DMI_sub_vector: < " << DMI_sub_vector_x << ", " << DMI_sub_vector_y << ", " << DMI_sub_vector_z << "> " << std::endl;
-        } else if(npos == 9) {
-            moire_coarse_nn_tol_scale = atof(argv[a]);
-            std::cout << " moire coarse nn_tol scale (x min cell width): "
-                      << moire_coarse_nn_tol_scale << std::endl;
-        } else if(npos == 10) {
-            std::string opt(argv[a]);
-            if (opt == "both" || opt == "all") {
-                moire_coarse_write_twisted_bilayer = true;
-                moire_coarse_write_twisted_double_bilayer = true;
-                std::cout << " moire coarse export: twisted-bilayer + twisted-double-bilayer"
-                          << std::endl;
-            } else if (opt == "bilayer_only") {
-                moire_coarse_write_twisted_bilayer = true;
-                moire_coarse_write_twisted_double_bilayer = false;
-                std::cout << " moire coarse export: twisted-bilayer only (legacy)"
-                          << std::endl;
-            } else if (opt == "double_only" || opt == "default") {
-                moire_coarse_write_twisted_bilayer = false;
-                moire_coarse_write_twisted_double_bilayer = true;
-                std::cout << " moire coarse export: twisted-double-bilayer only (default)"
-                          << std::endl;
-            } else {
-                std::cerr << " moire coarse export: expected both | bilayer_only | "
-                             "double_only | default, got: "
-                          << opt << std::endl;
-                exit(1);
-            }
         }
         npos++;
     }
@@ -251,8 +174,10 @@ int main(int argc, char* argv[]){
    twist_loction = 2*system_size_z/5 -0.01;
     std::cout << "twisting at: " << twist_loction << std::endl;
     read_in_atoms("files/atom_list_abprimebprimea_rhombic", num_atoms, atom);
-    // CrI3 bilayer_sliding maps:
-    //   Cr{1-4}_inter_map_2.txt + Dx/Dy/Dz_inter_map_2_avg.txt, Cr{1-4}_intra_data.txt
+    // CrCl3 bilayer_sliding maps (Cl3 physical Å; normalised-u from I3):
+    //   Cr{1-4}_inter_map_2.txt              inter J  (Kim |u|≤5.2/a_Cl; k_amp·I3 beyond)
+    //   Cr{1-4}_Dx/Dy/Dz_inter_map_2_avg.txt inter DMI (k_amp · I3(u), long-range kept)
+    //   Cr{1-4}_intra_data.txt               intra J+DMI (k_amp · I3; axes × a_Cl/a_I)
 
 if(!bake_only) {
 #pragma omp parallel sections num_threads(4)

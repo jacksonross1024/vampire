@@ -11,14 +11,16 @@
 #include "exchange.hpp"
 
 
-// CrI3 hexagonal lattice (a≈6.93 Å).
-double a0x = 6.93;
+// CrCl3 hexagonal lattice (a≈5.94 Å): McGuire et al., Phys. Rev. Materials 1, 014001 (2017)
+// / Morosin & Narath, R-3 at 225 K a=5.942 Å, c=17.333 Å. In-plane Cr at 2/3 cell sites.
+double a0x = 5.94;
 double a0y= 0.0;
-double a1x = -3.465;
-double a1y = 6.002;
+double a1x = -2.97;
+double a1y = 5.144191;
 
-// Four Cr planes
-double c0 = 26.16;
+// Four Cr planes; interlayer ≈ R-3 c/3 = 17.333/3 Å (Morosin & Narath).
+// c0 = 4·interlayer ≈ 23.11 Å = UCF Lz (AFM-style 4L); fz = 0, 1/4, 1/2, 3/4.
+double c0 = 23.110667;
 double a0z = c0/4.0;
 
 int num_atoms = 8;
@@ -1133,8 +1135,8 @@ void write_vampire_ucf_rotated(){
       return;
    }
 
-   // Four Cr planes at z = 0, a0z, 2·a0z, 3·a0z (a0z = interlayer).
-   // UCF height = 4·interlayer = c0 (AFM-style 4L), so fz = 0, 1/4, 1/2, 3/4.
+   // Four Cr planes at z = 0, a0z, 2·a0z, 3·a0z (a0z = interlayer ≈ 5.778 Å).
+   // UCF height = 4·interlayer = c0 ≈ 23.11 Å (AFM-style 4L), so fz = 0, 1/4, 1/2, 3/4.
    const double Lz = c0;
 
    std::ofstream outfile1(std::string(directory) + "/header.ucf");
@@ -1149,11 +1151,13 @@ void write_vampire_ucf_rotated(){
 
    std::ofstream out(std::string(directory) + "/atom_positions.xyz");
    // After R(-φ), half-open parallelogram maps into [0,Lx)×[0,Ly) up to
-   // barycentric edge_eps → O(0.01–0.1) Å overshoot. Clamp that; larger = Fatal.
-   const double fold_eps = 0.50; // Å (Tx/Ty shear can leave ~0.25–0.4 Å edge overshoot)
+   // barycentric edge_eps (~1e-4) → O(0.01–0.1) Å overshoot. Clamp that;
+   // larger excursions still Fatal (would fmod-wrap into duplicates).
+   const double fold_eps = 0.50; // Å (Tx/Ty shear edge overshoot)
    auto clamp01 = [](double v, double L, double eps)->int {
-      if(v >= -eps && v < 0.0) return 1;
-      if(v >= L && v < L + eps) return 1;
+      // returns 0 ok, 1 clamped, 2 fatal outside
+      if(v >= -eps && v < 0.0) { return 1; } // caller sets v=0
+      if(v >= L && v < L + eps) { return 1; } // caller sets nextafter
       if(v < -eps || v >= L + eps) return 2;
       return 0;
    };

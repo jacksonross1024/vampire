@@ -13,15 +13,15 @@ set xlabel "Position (nm)"
 
 set colorbox 
 set cblabel "m_z (u_B/nm^2)"
-
+set cbrange [-1:1]
 cell_x = 2
 cell_y = 2
 cx = 0.1
-cy = 0.05
+cy = 0.1
 
-set yrange [0:50]
-set xrange [0:60]
-file_index = 7
+set yrange [0:60]
+set xrange [0:50]
+file_index = 20
 folder = "xcross-2-AFM"
 file = sprintf("cells-%08.f.txt", file_index)
 
@@ -36,9 +36,9 @@ plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($12*$9) w boxxy palette n
 plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($12*$10) w boxxy palette notitle 
 plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($12*$11) w boxxy palette notitle 
 
-plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($27*$24/(cell_x*cell_y)) w boxxy palette notitle 
-plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($27*$25/(cell_x*cell_y)) w boxxy palette notitle 
-plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($27*$26/(cell_x*cell_y)) w boxxy palette notitle 
+plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($27*$24*$28*3.1/(cell_x*cell_y)) w boxxy palette notitle 
+plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($27*$25*$28*3.1/(cell_x*cell_y)) w boxxy palette notitle 
+plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($27*$26*$28*3.1/(cell_x*cell_y)) w boxxy palette notitle 
 
 plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($14*$17) w boxxy palette notitle 
 plot file u ($1*cx):(cy*$2):(cell_x/2.0):(cell_y/2.0):($15*$17) w boxxy palette notitle 

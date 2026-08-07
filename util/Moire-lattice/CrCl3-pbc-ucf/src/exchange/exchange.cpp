@@ -8,8 +8,6 @@
 #include <climits>
 #include "initialise.hpp"
 #include "exchange.hpp"
-#include "moire_bond_record.hpp"
-#include "moire_wire.hpp"
 #include <list>
 
 // System headers
@@ -169,10 +167,11 @@ public:
 
 
 //set nearest neighbour  distances (in plane nn 1,2,3)
-// CrI3 honeycomb shells (a≈6.93 Å): 1NN≈4.00, 2NN≈6.93, 3NN≈8.00.
-double intra_nn_dist_1 = 5.465; //A  midpoint 1NN(~4.00)–2NN(~6.93)
-double intra_nn_dist_2 = 7.465; //A  midpoint 2NN(~6.93)–3NN(~8.00)
-double intra_nn_dist_3 = 8.50;  //A  above 3NN
+// CrCl3 honeycomb shells (a=5.94 Å): 1NN=a/√3≈3.43, 2NN=a≈5.94, 3NN=2a/√3≈6.86.
+// Cutoffs are midpoints between shells (NOT CrI3 map lengths — atom positions are physical).
+double intra_nn_dist_1 = 4.68; //A  (between 3.43 and 5.94)
+double intra_nn_dist_2 = 6.40; //A  (between 5.94 and 6.86)
+double intra_nn_dist_3 = 7.50; //A  (above 6.86)
 
 double inter_nn_dist_1 = 7.0;
 double inter_nn_dist_2 = 7.77;
@@ -558,8 +557,6 @@ static inline EijMap &inter_map(int lid) {
 
 void calc_interactions() {
 
-   moire_spin_interactions_clear();
-
    std::stringstream ss;
              
    // calculate max range squred
@@ -926,8 +923,6 @@ void calc_interactions() {
    std::stringstream bq_text;
    bq_text.precision(6);
 
-   std::vector<spin_interaction> local_moire_bonds;
-      local_moire_bonds.reserve(all_m_atoms.size()*20/8);
    std::stringstream lattice_text;
    auto flush_interaction_buffers = [&](){
       // Snapshot then clear thread-local buffers; write under critical (no torn lines).
@@ -1057,18 +1052,16 @@ void calc_interactions() {
                                     //    exchange[0] << "\t" << exchange[1] << "\t" << exchange[2] << "\t" << \
                                     // //yx -> -Dz              yy                      yz -> Dx
                                     //    exchange[3] <<  "\n"; }
-                                    else {otext << number_of_interactions <<  "\t" << atom_i.original_id << '\t' << atom_j.original_id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << 0 << '\t' <<\
-                                       //xx                     xy-> Dz                 xz -> -Dy
-                                         exchange[0] << "\t" << 0.0 << "\t" << 0.0 << "\t" << \
-                                       //yx -> -Dz              yy                      yz -> Dx
-                                       0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
-                                       //zx -> Dy               yz -> -Dx               zz
-                                       0.0 << "\t" << 0.0 << "\t" <<  exchange[0]*1.0 << "\n"; }
+                                    else {   otext << number_of_interactions <<  "\t" << atom_i.original_id << '\t' << atom_j.original_id << '\t' << atom_j.Gx << '\t' << atom_j.Gy << '\t' << 0 << '\t' <<\
+                              //xx                     xy-> Dz                 xz -> -Dy
+                                 exchange[0] << "\n";// << 0.0 << "\t" << 0.0 << "\t" << \
+                              //yx -> -Dz              yy                      yz -> Dx
+                             //    0.0 << "\t" << exchange[0] << "\t" <<  0.0 << "\t" << \
+                              //zx -> Dy               yz -> -Dx               zz
+                              //   0.0 << "\t" << 0.0 << "\t" <<  exchange[0] << "\n"; 
+                                 }
                                    
                                     number_of_interactions++;
-                                    local_moire_bonds.push_back(
-                                        make_spin_interaction_from_exchange(
-                                            atom_i, atom_j, exchange, DMI));
                                     if(otext.tellp() >= flush_bytes) flush_interaction_buffers();
 
                                     // Biquadratic (--bq): constant J_bq, 1NN intralayer only
@@ -1091,7 +1084,6 @@ void calc_interactions() {
       flush_interaction_buffers();
       #pragma omp critical
       {
-         moire_spin_interactions_merge(local_moire_bonds);
          std::cout << omp_get_thread_num() << " calculated " << number_of_interactions << " of interactions" << std::endl;
 
          if(write_config_output){
@@ -1121,8 +1113,6 @@ void calc_interactions() {
 
    // Vampire UCF: rotate G=0 positions into pure (Lx,0)/(0,Ly); DMI already rotated at write.
    write_vampire_ucf_rotated();
-
-   moire_spin_interactions_finalize_and_write(directory, moire_area);
 
    if(!write_config_output){
       std::cout << "skipping config_energy dumps (pass --config-atoms to enable)" << std::endl;
