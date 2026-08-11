@@ -102,7 +102,7 @@ int hysteresis(){
 		while(Hfield<=iHmax){
 
 			// Set applied field (Tesla)
-			sim::H_applied=double(Hfield)*double(iparity)*1.0e-6;
+			sim::actual_H_field=double(Hfield)*double(iparity)*1.0e-6;
 
 			// Reset start time
 			start_time=sim::time;
