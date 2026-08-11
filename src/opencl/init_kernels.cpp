@@ -62,9 +62,9 @@ static void init_external_fields(void)
                            vcl::dipolar_field_array.buffer(),
                            vcl::total_external_field_array.buffer(),
                            vcl::rng::grands,
-                           vcl::real_t(sim::H_vec[0] * sim::H_applied),
-                           vcl::real_t(sim::H_vec[1] * sim::H_applied),
-                           vcl::real_t(sim::H_vec[2] * sim::H_applied),
+                           vcl::real_t(sim::actual_H_vector[0] * sim::actual_H_field),
+                           vcl::real_t(sim::actual_H_vector[1] * sim::actual_H_field),
+                           vcl::real_t(sim::actual_H_vector[2] * sim::actual_H_field),
                            vcl::real_t(sim::temperature));
    }
    else
@@ -75,9 +75,9 @@ static void init_external_fields(void)
                            vcl::dipolar_field_array.buffer(),
                            vcl::total_external_field_array.buffer(),
                            vcl::rng::grands_copy,
-                           vcl::real_t(sim::H_vec[0] * sim::H_applied),
-                           vcl::real_t(sim::H_vec[1] * sim::H_applied),
-                           vcl::real_t(sim::H_vec[2] * sim::H_applied),
+                           vcl::real_t(sim::actual_H_vector[0] * sim::actual_H_field),
+                           vcl::real_t(sim::actual_H_vector[1] * sim::actual_H_field),
+                           vcl::real_t(sim::actual_H_vector[2] * sim::actual_H_field),
                            vcl::real_t(sim::temperature));
    }
 #else
@@ -87,9 +87,9 @@ static void init_external_fields(void)
                         vcl::dipolar_field_array.buffer(),
                         vcl::total_external_field_array.buffer(),
                         vcl::rng::grands,
-                        vcl::real_t(sim::H_vec[0] * sim::H_applied),
-                        vcl::real_t(sim::H_vec[1] * sim::H_applied),
-                        vcl::real_t(sim::H_vec[2] * sim::H_applied),
+                        vcl::real_t(sim::actual_H_vector[0] * sim::actual_H_field),
+                        vcl::real_t(sim::actual_H_vector[1] * sim::actual_H_field),
+                        vcl::real_t(sim::actual_H_vector[2] * sim::actual_H_field),
                         vcl::real_t(sim::temperature));
 #endif // ENABLE_MULTIPLE_DEVICES
 }

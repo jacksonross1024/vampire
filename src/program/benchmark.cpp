@@ -66,6 +66,11 @@ int bmark(){
 	// Output data
 	vout::data();
 
+	sim::actual_H_field = sim::applied_H_field;
+	sim::actual_H_vector[0] = sim::applied_H_vector[0];
+	sim::actual_H_vector[1] = sim::applied_H_vector[1];
+	sim::actual_H_vector[2] = sim::applied_H_vector[2];
+
 	// Simulate system
 	while(sim::time<sim::total_time){
 		sim::integrate(sim::partial_time);

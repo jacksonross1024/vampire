@@ -62,8 +62,9 @@ namespace hamr{
 		hamr::internal::head_position_x = head_position_initial;
 		hamr::internal::head_position_y = 0.5*hamr::internal::system_dimensions_y;
 		// Initialise field magnitude to min value at beginning of simulation
-		sim::H_applied = hamr::internal::Hmin;
-		std::cout << " Setting initial field magnitude to: " << sim::H_applied << " T" << std::endl;
+		sim::applied_H_field = hamr::internal::Hmin;
+		sim::actual_H_field = sim::applied_H_field;
+		std::cout << " Setting initial field magnitude to: " << sim::actual_H_field << " T" << std::endl;
 
 		std::cout << " Bit sequence to be written: ";
 		for(size_t i=0; i<hamr::internal::bit_sequence.size(); i++){ std::cout << hamr::internal::bit_sequence[i] << " ";}
@@ -112,7 +113,8 @@ namespace hamr{
 			while(tmp_track_time < extra_time){
 
 				// Switch off external field
-				sim::H_applied = 0.0;
+				sim::applied_H_field = 0.0;
+				sim::actual_H_field = 0.0;
 
 				// Update head position in downtrack
 				hamr::internal::head_position_x += Deltax;
@@ -143,9 +145,10 @@ namespace hamr{
 					// Determine field polarisation within bit
 					const double H_app_dir = static_cast<double>(hamr::internal::bit_sequence[bit_tot]);
 					// Update applied field value depending on trapezoidal time profile
-					const double H_app_abs = fabs(sim::H_applied) + hamr::internal::update_field_time_trapz_profile(tmp_bit_time, rise_time, fall_time, bit_time);
+					const double H_app_abs = fabs(sim::applied_H_field) + hamr::internal::update_field_time_trapz_profile(tmp_bit_time, rise_time, fall_time, bit_time);
 					// Determine sign of applied field
-					sim::H_applied = H_app_abs * H_app_dir;
+					sim::applied_H_field = H_app_abs * H_app_dir;
+					sim::actual_H_field = sim::applied_H_field;
 
 					// Integrate system
 					sim::integrate(sim::partial_time);
@@ -174,7 +177,8 @@ namespace hamr{
 			while(tmp_track_time < total_track_time){
 
 				// Switch off external field
-				sim::H_applied = 0.0;
+				sim::applied_H_field = 0.0;
+				sim::actual_H_field = 0.0;
 
 				// Update head position in downtrack
 				hamr::internal::head_position_x += Deltax;
@@ -200,7 +204,8 @@ namespace hamr{
 			// Disable laser
 			hamr::head_laser_on=false;
 			// Switch off external field
-			sim::H_applied = 0.0;
+			sim::applied_H_field = 0.0;
+			sim::actual_H_field = 0.0;
 			// Set system temperature as minimum temperature
 			sim::temperature=sim::Tmin;
 

@@ -111,9 +111,9 @@ namespace vopencl
 
 
             // update system applied field and temperature
-            vcl::update_ext.setArg(5, vcl::real_t(sim::H_vec[0] * sim::H_applied));
-            vcl::update_ext.setArg(6, vcl::real_t(sim::H_vec[1] * sim::H_applied));
-            vcl::update_ext.setArg(7, vcl::real_t(sim::H_vec[2] * sim::H_applied));
+            vcl::update_ext.setArg(5, vcl::real_t(sim::actual_H_vector[0] * sim::actual_H_field));
+            vcl::update_ext.setArg(6, vcl::real_t(sim::actual_H_vector[1] * sim::actual_H_field));
+            vcl::update_ext.setArg(7, vcl::real_t(sim::actual_H_vector[2] * sim::actual_H_field));
             vcl::update_ext.setArg(8, vcl::real_t(sim::temperature));
 
 #ifdef ENABLE_MULTIPLE_DEVICES

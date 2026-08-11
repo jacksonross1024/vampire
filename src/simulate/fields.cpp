@@ -158,11 +158,11 @@ void calculate_external_fields(const int start_index,const int end_index){
 		// Calculate thermal field and applied field due to HAMR process
 		hamr::fields(start_index,
 					end_index,
-					sim::H_applied,
+					sim::actual_H_field,
 					sim::temperature,
-					sim::H_vec[0],
-					sim::H_vec[1],
-					sim::H_vec[2],
+					sim::actual_H_vector[0],
+					sim::actual_H_vector[1],
+					sim::actual_H_vector[2],
 					atoms::x_total_external_field_array,
 					atoms::y_total_external_field_array,
 					atoms::z_total_external_field_array);

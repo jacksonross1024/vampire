@@ -124,7 +124,7 @@ namespace vout{
    // Output Function 12 - with Header
    void mdoth(std::ostream& stream, bool header){
       // initialise vector of H
-      std::vector<double> H(&sim::H_vec[0], &sim::H_vec[0]+3);
+      std::vector<double> H(&sim::actual_H_vector[0], &sim::actual_H_vector[0]+3);
       stream << stats::system_magnetization.output_normalized_magnetization_dot_product(H,header);
    }
 
@@ -258,7 +258,7 @@ namespace vout{
 	// Output Function 26 - with Header
 	void mat_mdoth(std::ostream& stream, bool header){
 		// initialise vector of H
-		std::vector<double> H(&sim::H_vec[0], &sim::H_vec[0]+3);
+		std::vector<double> H(&sim::actual_H_vector[0], &sim::actual_H_vector[0]+3);
 		stream << stats::material_magnetization.output_normalized_magnetization_dot_product(H,header);
 	}
 

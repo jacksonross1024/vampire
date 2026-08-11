@@ -139,7 +139,7 @@ double legacy_atoms(){
       cfg_file_ofstr << "System dimensions:" << cs::system_dimensions[0] << "\t" << cs::system_dimensions[1] << "\t" << cs::system_dimensions[2] << std::endl;
       cfg_file_ofstr << "Coordinates-file: atoms-coord.cfg" << std::endl;
       cfg_file_ofstr << "Time: " << double(sim::time) * mp::dt_SI << std::endl;
-      cfg_file_ofstr << "Field: " << sim::H_applied << std::endl;
+      cfg_file_ofstr << "Field: " << sim::actual_H_field << std::endl;
       cfg_file_ofstr << "Temperature: " << sim::temperature << std::endl;
       cfg_file_ofstr << "Magnetisation: " << stats::system_magnetization.output_normalized_magnetization(false) << std::endl;
       cfg_file_ofstr << "Number of Materials: " << mp::num_materials << std::endl;
@@ -402,7 +402,7 @@ void legacy_cells()
       cfg_file_ofstr << "# System dimensions:" << cs::system_dimensions[0] << "\t" << cs::system_dimensions[1] << "\t" << cs::system_dimensions[2] << std::endl;
       cfg_file_ofstr << "# Coordinates-file: cells-coord.cfg" << std::endl;
       cfg_file_ofstr << "# Time: " << double(sim::time) * mp::dt_SI << std::endl;
-      cfg_file_ofstr << "# Field: " << sim::H_applied << std::endl;
+      cfg_file_ofstr << "# Field: " << sim::actual_H_field << std::endl;
       cfg_file_ofstr << "# Temperature: " << sim::temperature << std::endl;
       cfg_file_ofstr << "# Magnetisation: " << stats::system_magnetization.output_normalized_magnetization(false) << std::endl;
       cfg_file_ofstr << "#------------------------------------------------------" << std::endl;

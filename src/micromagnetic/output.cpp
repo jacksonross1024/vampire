@@ -49,7 +49,7 @@ namespace micromagnetic{
 
       if (internal::output_list[i] == 1){
 
-         str_H = std::to_string(sim::H_applied) + "\t";
+         str_H = std::to_string(sim::actual_H_field) + "\t";
          str.append(str_H);
       }
 

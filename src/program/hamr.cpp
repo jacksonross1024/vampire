@@ -86,6 +86,10 @@ namespace program{
 
 			// Set equilibration temperature and field
 			sim::temperature=sim::Teq;
+			sim::actual_H_field = sim::equilibrium_H_field;
+			sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+			sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+			sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 		
 			// Disable laser
 			hamr::head_laser_on=false;
@@ -112,6 +116,11 @@ namespace program{
 
 			// Reset mean magnetisation counters
 			stats::reset();
+
+			sim::actual_H_field = sim::applied_H_field;
+			sim::actual_H_vector[0] = sim::applied_H_vector[0];
+			sim::actual_H_vector[1] = sim::applied_H_vector[1];
+			sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
 			// Perform harm continuous simulation
 			hamr::hamr_continuous();

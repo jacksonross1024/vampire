@@ -49,6 +49,11 @@ void monte_carlo_preconditioning(){
    const double run_temp = sim::temperature;
    // set preconditioning temperature to equilibration temperature
    sim::temperature = sim::Teq;
+
+   sim::actual_H_field = sim::equilibrium_H_field;
+   sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+   sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+   sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
    
    // print informative messages to screen and log
    std::cout << "Preconditioning spin configuration at T = " << sim::temperature << " K" << std::flush;
@@ -154,6 +159,10 @@ void monte_carlo_preconditioning(){
    std::cout << "Preconditioning time for " << sim::num_monte_carlo_preconditioning_steps << " steps: " << timer.elapsed_time() << " s" << std::endl;
    zlog << zTs() << "Preconditioning completed in " << timer.elapsed_time() << " s" << std::endl;
    sim::temperature = run_temp;
+   sim::actual_H_field = sim::applied_H_field;
+   sim::actual_H_vector[0] = sim::applied_H_vector[0];
+   sim::actual_H_vector[1] = sim::applied_H_vector[1];
+   sim::actual_H_vector[2] = sim::applied_H_vector[2];
    return;
 
 }

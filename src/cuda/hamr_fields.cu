@@ -211,9 +211,9 @@ namespace vcuda{
 		// Host Function to calculate local external field
 		void apply_local_external_field(const int num_atoms)
 		{
-			const cu_real_t Hx_app = sim::H_vec[0]*sim::H_applied;
-			const cu_real_t Hy_app = sim::H_vec[1]*sim::H_applied;
-			const cu_real_t Hz_app = sim::H_vec[2]*sim::H_applied;
+			const cu_real_t Hx_app = sim::actual_H_vector[0]*sim::actual_H_field;
+			const cu_real_t Hy_app = sim::actual_H_vector[1]*sim::actual_H_field;
+			const cu_real_t Hz_app = sim::actual_H_vector[2]*sim::actual_H_field;
 			// Update head position - updated in src/hamr/hamr_continuous.cpp
 			cu::hamr::d_head_position_x = ::hamr::get_head_position_x();
 			cu::hamr::d_head_position_y = ::hamr::get_head_position_y();

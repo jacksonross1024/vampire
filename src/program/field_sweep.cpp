@@ -118,12 +118,15 @@ int field_sweep(){
 
 
 	// Equilibrate system in saturation field, i.e. the largest between equilibration and maximum field set by the user
-   if(sim::Heq >= sim::Hmax){
-	   sim::H_applied=sim::Heq;
+   if(sim::equilibrium_H_field >= sim::Hmax){
+	   sim::actual_H_field = sim::equilibrium_H_field;
    }
    else{
-   	sim::H_applied=sim::Hmax;
+   	sim::actual_H_field = sim::Hmax;
    }
+	sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+	sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+	sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 
 	// Initialise sim::integrate only if it not a checkpoint
 	if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag){}
@@ -137,7 +140,11 @@ int field_sweep(){
 		while (run){
 
 			// Set applied field (Tesla)
-			sim::H_applied=field;
+			sim::applied_H_field = field;
+			sim::actual_H_field = sim::applied_H_field;
+			sim::actual_H_vector[0] = sim::applied_H_vector[0];
+			sim::actual_H_vector[1] = sim::applied_H_vector[1];
+			sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
 			// Reset start time
 			start_time=sim::time;

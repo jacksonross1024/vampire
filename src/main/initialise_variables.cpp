@@ -360,7 +360,16 @@ int set_derived_parameters(){
 		sim::H_vec[0]=sin(sim::applied_field_angle_phi*M_PI/180.0)*cos(sim::applied_field_angle_theta*M_PI/180.0);
 		sim::H_vec[1]=sin(sim::applied_field_angle_phi*M_PI/180.0)*sin(sim::applied_field_angle_theta*M_PI/180.0);
 		sim::H_vec[2]=cos(sim::applied_field_angle_phi*M_PI/180.0);
+		sim::applied_H_vector[0]=sim::H_vec[0];
+		sim::applied_H_vector[1]=sim::H_vec[1];
+		sim::applied_H_vector[2]=sim::H_vec[2];
 	}
+
+	// Default actual field to applied field for programs without explicit equilibration
+	sim::actual_H_field = sim::applied_H_field;
+	sim::actual_H_vector[0] = sim::applied_H_vector[0];
+	sim::actual_H_vector[1] = sim::applied_H_vector[1];
+	sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
 	// Check for valid particle array offsets
 	if(cs::particle_array_offset_x >= cs::system_dimensions[0]){

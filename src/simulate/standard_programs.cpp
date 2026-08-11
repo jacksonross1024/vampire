@@ -120,7 +120,8 @@ int hamr_run(){
 	}
 	
 	// Set up loop variables
-	sim::H_applied=-0.8;
+	sim::applied_H_field=-0.8;
+	sim::actual_H_field=sim::applied_H_field;
 	
 	double cooling_time=0.5e-9; // Seconds
 	double max_dT = sim::delta_temperature; 
@@ -221,7 +222,8 @@ int two_temperature_pulse(){
 	}
 	//vout::pov_file();
 	// Set up loop variables
-	sim::H_applied=0.0;
+	sim::applied_H_field=0.0;
+	sim::actual_H_field=0.0;
 	
 	const double Ce = 7.0E02; //electron specific heat 
 	const double Cl = 3.0E06; //photon specific heat

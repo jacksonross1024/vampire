@@ -58,7 +58,10 @@ void partial_hysteresis_loop(){
    if(err::check==true){std::cout << "program::partial-hysteresis has been called" << std::endl;}
 
    // Equilibrate system in saturation field
-   sim::H_applied=sim::Heq;
+   sim::actual_H_field = sim::equilibrium_H_field;
+   sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+   sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+   sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
    sim::integrate(sim::equilibration_time);
 
    // Setup min and max fields and increment (uT)
@@ -80,7 +83,11 @@ void partial_hysteresis_loop(){
    for(int H=iHmin;H<=iHmax;H+=iHinc){
 
       // Set applied field (Tesla)
-      sim::H_applied=double(H)*parity*1.0e-6;
+      sim::applied_H_field = double(H)*parity*1.0e-6;
+      sim::actual_H_field = sim::applied_H_field;
+      sim::actual_H_vector[0] = sim::applied_H_vector[0];
+      sim::actual_H_vector[1] = sim::applied_H_vector[1];
+      sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
       // Reset start time
       uint64_t start_time=sim::time;

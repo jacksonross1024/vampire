@@ -132,6 +132,10 @@ void hybrid_cmc(){
 			while(sim::temperature<=sim::Tmax){
 
 				// Equilibrate system
+				sim::actual_H_field = sim::equilibrium_H_field;
+				sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+				sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+				sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 				sim::integrate(sim::equilibration_time);
 
 				// Reset mean magnetisation counters
@@ -140,6 +144,10 @@ void hybrid_cmc(){
 				// Reset start time
 				int start_time=sim::time;
 
+				sim::actual_H_field = sim::applied_H_field;
+				sim::actual_H_vector[0] = sim::applied_H_vector[0];
+				sim::actual_H_vector[1] = sim::applied_H_vector[1];
+				sim::actual_H_vector[2] = sim::applied_H_vector[2];
 				// Simulate system
 				while(sim::time<sim::loop_time+start_time){
 
@@ -249,6 +257,10 @@ void reverse_hybrid_cmc(){
          while(sim::temperature<=sim::Tmax){
 
             // Equilibrate system
+            sim::actual_H_field = sim::equilibrium_H_field;
+            sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+            sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+            sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
             sim::integrate(sim::equilibration_time);
 
             // Reset mean magnetisation counters
@@ -257,6 +269,10 @@ void reverse_hybrid_cmc(){
             // Reset start time
             int start_time=sim::time;
 
+            sim::actual_H_field = sim::applied_H_field;
+            sim::actual_H_vector[0] = sim::applied_H_vector[0];
+            sim::actual_H_vector[1] = sim::applied_H_vector[1];
+            sim::actual_H_vector[2] = sim::applied_H_vector[2];
             // Simulate system
             while(sim::time<sim::loop_time+start_time){
 

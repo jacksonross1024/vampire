@@ -96,9 +96,18 @@ namespace program{
                atoms::z_spin_array[atom] = sz;
             }
 
+            sim::actual_H_field = sim::equilibrium_H_field;
+            sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+            sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+            sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
             sim::integrate(timesteps);
             stats::reset();
             uint64_t start_time = sim::time;
+
+            sim::actual_H_field = sim::applied_H_field;
+            sim::actual_H_vector[0] = sim::applied_H_vector[0];
+            sim::actual_H_vector[1] = sim::applied_H_vector[1];
+            sim::actual_H_vector[2] = sim::applied_H_vector[2];
             // Simulate system
             while( sim::time < timesteps+start_time ){
                sim::integrate(sim::partial_time);
@@ -125,7 +134,16 @@ namespace program{
       std::vector<double> bin(181,0.0);
 
       // Equilibrate system
+      sim::actual_H_field = sim::equilibrium_H_field;
+      sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+      sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+      sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
       sim::integrate(sim::equilibration_time);
+
+      sim::actual_H_field = sim::applied_H_field;
+      sim::actual_H_vector[0] = sim::applied_H_vector[0];
+      sim::actual_H_vector[1] = sim::applied_H_vector[1];
+      sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
       // Simulate system
       while(sim::time<sim::total_time+sim::equilibration_time){
@@ -147,7 +165,7 @@ namespace program{
       double maxP  = 0.0;
       for(int b=0;b<181;b++){
          double energyK = anisotropy::get_anisotropy_constant(0)/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
-         double energyH = sim::H_applied*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
+         double energyH = sim::actual_H_field*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
          double PK = sin(double (b)*M_PI/180.0)*exp(energyK*sin(double (b)*M_PI/180.0)*sin(double (b)*M_PI/180.0));
          double PH = sin(double (b)*M_PI/180.0)*exp(energyH*cos(double (b)*M_PI/180.0));
          if((bin[b])>maxP) maxP=bin[b];
@@ -159,11 +177,11 @@ namespace program{
 
       // Output data
       ofile << "# Anisotropy:          " << anisotropy::get_anisotropy_constant(0) << "\t" << anisotropy::get_anisotropy_constant(0)/(sim::temperature*1.3806503e-23) << std::endl;
-      ofile << "# Field:               " << sim::H_applied << "\t" << sim::H_applied*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23) << std::endl;
+      ofile << "# Field:               " << sim::actual_H_field << "\t" << sim::actual_H_field*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23) << std::endl;
       ofile << "# Moment, Temperature: " << mp::material[0].mu_s_SI/9.274e-24 << "\t" << sim::temperature << std::endl;
       for(int b=0;b<181;b++){
          double energyK = anisotropy::get_anisotropy_constant(0)/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
-         double energyH = sim::H_applied*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
+         double energyH = sim::actual_H_field*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
          double PK = sin(double (b)*M_PI/180.0)*exp(energyK*sin(double (b)*M_PI/180.0)*sin(double (b)*M_PI/180.0));
          double PH = sin(double (b)*M_PI/180.0)*exp(energyH*cos(double (b)*M_PI/180.0));
          ofile << b << "\t" << bin[b]/maxP << "\t" << (bin[b]+bin[180-b])/(2.0*maxP) << "\t" << PK/maxPK << "\t" << PH/maxPH << std::endl;
@@ -183,7 +201,16 @@ namespace program{
       std::vector<double> bin(181,0.0);
 
       // Equilibrate system
+      sim::actual_H_field = sim::equilibrium_H_field;
+      sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+      sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+      sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
       sim::integrate(sim::equilibration_time);
+
+      sim::actual_H_field = sim::applied_H_field;
+      sim::actual_H_vector[0] = sim::applied_H_vector[0];
+      sim::actual_H_vector[1] = sim::applied_H_vector[1];
+      sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
       // Simulate system
       while(sim::time<sim::total_time+sim::equilibration_time){
@@ -217,7 +244,7 @@ namespace program{
       double maxP  = 0.0;
       for(int b=0;b<181;b++){
          double energyK = anisotropy::get_anisotropy_constant(0)/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
-         double energyH = sim::H_applied*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
+         double energyH = sim::actual_H_field*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
          double PK = sin(double (b)*M_PI/180.0)*exp(energyK*sin(double (b)*M_PI/180.0)*sin(double (b)*M_PI/180.0));
          double PH = sin(double (b)*M_PI/180.0)*exp(energyH*cos(double (b)*M_PI/180.0));
          if((bin[b])>maxP) maxP=bin[b];
@@ -229,11 +256,11 @@ namespace program{
 
       // Output data
       ofile << "# Anisotropy:          " << anisotropy::get_anisotropy_constant(0) << "\t" << anisotropy::get_anisotropy_constant(0)/(sim::temperature*1.3806503e-23) << std::endl;
-      ofile << "# Field:               " << sim::H_applied << "\t" << sim::H_applied*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23) << std::endl;
+      ofile << "# Field:               " << sim::actual_H_field << "\t" << sim::actual_H_field*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23) << std::endl;
       ofile << "# Moment, Temperature: " << mp::material[0].mu_s_SI/9.274e-24 << "\t" << sim::temperature << std::endl;
       for(int b=0;b<181;b++){
          double energyK = anisotropy::get_anisotropy_constant(0)/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
-         double energyH = sim::H_applied*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
+         double energyH = sim::actual_H_field*mp::material[0].mu_s_SI/(sim::temperature*1.3806503e-23); // get anisotropy constant for material 0
          double PK = sin(double (b)*M_PI/180.0)*exp(energyK*sin(double (b)*M_PI/180.0)*sin(double (b)*M_PI/180.0));
          double PH = sin(double (b)*M_PI/180.0)*exp(energyH*cos(double (b)*M_PI/180.0));
          ofile << b << "\t" << bin[b]/maxP << "\t" << (bin[b]+bin[180-b])/(2.0*maxP) << "\t" << PK/maxPK << "\t" << PH/maxPH << std::endl;

@@ -690,7 +690,7 @@ void integrate_serial(uint64_t n_steps){
             // Otherwise use CPU version
             else sim::LLG_Heun();
 				if (environment::enabled && (sim::time)%environment::num_atomic_steps_env ==0){
-					environment::LLB(sim::temperature, sim::H_applied,sim::H_vec[0],sim::H_vec[1],sim::H_vec[2],mp::dt);
+					environment::LLB(sim::temperature, sim::actual_H_field,sim::actual_H_vector[0],sim::actual_H_vector[1],sim::actual_H_vector[2],mp::dt);
 				}
             // Increment time
             sim::internal::increment_time();
@@ -805,10 +805,10 @@ int integrate_mpi(uint64_t n_steps){
 					//calcualte the field from the environment
 					if (environment::enabled &&  (sim::time)%environment::num_atomic_steps_env ==0)
 						environment::LLB(sim::temperature,
-												sim::H_applied,
-												sim::H_vec[0],
-												sim::H_vec[1],
-												sim::H_vec[2],
+												sim::actual_H_field,
+												sim::actual_H_vector[0],
+												sim::actual_H_vector[1],
+												sim::actual_H_vector[2],
 												mp::dt);
 				#endif
 			#endif
@@ -895,10 +895,10 @@ void multiscale_simulation_steps(int n_steps){
 
 	if (environment::enabled && (sim::time)%environment::num_atomic_steps_env ==0)
 		environment::LLB(sim::temperature,
-						   	sim::H_applied,
-						   	sim::H_vec[0],
-						   	sim::H_vec[1],
-						   	sim::H_vec[2],
+						   	sim::actual_H_field,
+						   	sim::actual_H_vector[0],
+						   	sim::actual_H_vector[1],
+						   	sim::actual_H_vector[2],
 						   	mp::dt);
 
    for(int ti=0;ti<n_steps;ti++){
@@ -924,10 +924,10 @@ void multiscale_simulation_steps(int n_steps){
          cells::mag_array_x,
          cells::mag_array_y,
          cells::mag_array_z,
-         sim::H_vec[0],
-         sim::H_vec[1],
-         sim::H_vec[2],
-         sim::H_applied,
+         sim::actual_H_vector[0],
+         sim::actual_H_vector[1],
+         sim::actual_H_vector[2],
+         sim::actual_H_field,
          mp::dt,
          cells::volume_array);
 
@@ -941,10 +941,10 @@ void multiscale_simulation_steps(int n_steps){
             cells::mag_array_x,
             cells::mag_array_y,
             cells::mag_array_z,
-            sim::H_vec[0],
-            sim::H_vec[1],
-            sim::H_vec[2],
-            sim::H_applied,
+            sim::actual_H_vector[0],
+            sim::actual_H_vector[1],
+            sim::actual_H_vector[2],
+            sim::actual_H_field,
             mp::dt,
             cells::volume_array);
          }

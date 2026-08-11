@@ -341,7 +341,16 @@ void tracks(){
 
   }
 
+   sim::actual_H_field = sim::equilibrium_H_field;
+   sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+   sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+   sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
    sim::integrate(sim::equilibration_time);
+
+   sim::actual_H_field = sim::applied_H_field;
+   sim::actual_H_vector[0] = sim::applied_H_vector[0];
+   sim::actual_H_vector[1] = sim::applied_H_vector[1];
+   sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
    std::ofstream ofile;
    ofile.open ("position.txt");
@@ -414,7 +423,16 @@ else {
    if (ifile2.good()){
      std::cout << "Creating lfa scan from file" << std::endl;
 
+   sim::actual_H_field = sim::equilibrium_H_field;
+   sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+   sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+   sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
    sim::integrate(sim::equilibration_time);
+
+   sim::actual_H_field = sim::applied_H_field;
+   sim::actual_H_vector[0] = sim::applied_H_vector[0];
+   sim::actual_H_vector[1] = sim::applied_H_vector[1];
+   sim::actual_H_vector[2] = sim::applied_H_vector[2];
     // read number of atoms in this file
     std::string line; // declare a string to hold line of text
     while(getline(ifile2,line) ){

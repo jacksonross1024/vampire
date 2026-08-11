@@ -107,6 +107,11 @@ void lagrange_multiplier(){
    sim::temperature=0.0;
    sim::hamiltonian_simulation_flags[3] = 0; // Thermal
 
+   sim::actual_H_field = sim::applied_H_field;
+   sim::actual_H_vector[0] = sim::applied_H_vector[0];
+   sim::actual_H_vector[1] = sim::applied_H_vector[1];
+   sim::actual_H_vector[2] = sim::applied_H_vector[2];
+
    // set minimum rotational angle
    sim::constraint_theta=sim::constraint_theta_min;
 

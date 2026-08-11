@@ -318,6 +318,10 @@ namespace program{
 		for (int cell = 0; cell < 6*program::internal::num_dw_cells; cell++)	program::internal::mag[cell] = 0.0;
 
 		if(program::program == 55) ltmp::equilibration_step = true;
+		sim::actual_H_field = sim::equilibrium_H_field;
+		sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+		sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+		sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 		montecarlo::monte_carlo_preconditioning();
 	
 		program::fractional_electric_field_strength = 0.0;
@@ -352,6 +356,11 @@ namespace program{
 
 		}
 		
+		sim::actual_H_field = sim::applied_H_field;
+		sim::actual_H_vector[0] = sim::applied_H_vector[0];
+		sim::actual_H_vector[1] = sim::applied_H_vector[1];
+		sim::actual_H_vector[2] = sim::applied_H_vector[2];
+
 		// Perform Time Series
 	if(program::program == 55) ltmp::equilibration_step = false;
 	switch(sim::integrator){

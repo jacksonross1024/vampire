@@ -122,7 +122,7 @@ void output(){ // should include variables for data to be outputted, eg spins, c
             // output config only in range [minField_1;maxField_1] for descending branch
             if (sim::parity < 0)
             {
-               if((sim::H_applied >= minField_1) && (sim::H_applied <= maxField_1))
+               if((sim::actual_H_field >= minField_1) && (sim::actual_H_field <= maxField_1))
                {
                   if(config::internal::output_rate_counter_coords == 0)
                   {
@@ -136,7 +136,7 @@ void output(){ // should include variables for data to be outputted, eg spins, c
             // output config only in range [minField_2;maxField_2] for ascending branch
             else if (sim::parity > 0)
             {
-               if((sim::H_applied >= minField_2) && (sim::H_applied <= maxField_2)){
+               if((sim::actual_H_field >= minField_2) && (sim::actual_H_field <= maxField_2)){
                   if (config::internal::output_rate_counter_coords == 0)
                   {
                      config::internal::atoms_coords();
@@ -175,7 +175,7 @@ void output(){ // should include variables for data to be outputted, eg spins, c
             // output config only in range [minField_1;maxField_1] for decreasing field
             if (sim::parity < 0)
             {
-               if((sim::H_applied >= minField_1) && (sim::H_applied <= maxField_1))
+               if((sim::actual_H_field >= minField_1) && (sim::actual_H_field <= maxField_1))
                {
                   if (sim::output_cells_file_counter == 0) config::internal::legacy_cells_coords();
                   config::internal::legacy_cells();
@@ -184,7 +184,7 @@ void output(){ // should include variables for data to be outputted, eg spins, c
             // output config only in range [minField_2;maxField_2] for increasing field
             else if (sim::parity > 0)
             {
-               if((sim::H_applied >= minField_2) && (sim::H_applied <= maxField_2))
+               if((sim::actual_H_field >= minField_2) && (sim::actual_H_field <= maxField_2))
                {
                   if (sim::output_cells_file_counter == 0) config::internal::legacy_cells_coords();
                   config::internal::legacy_cells();

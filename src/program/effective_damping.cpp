@@ -80,6 +80,10 @@ void effective_damping(){
 
    // Set equilibration temperature and field
    sim::temperature=sim::Teq;
+   sim::actual_H_field = sim::equilibrium_H_field;
+   sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+   sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+   sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 
    // Equilibrate system
    while(sim::time<sim::equilibration_time){
@@ -98,6 +102,11 @@ void effective_damping(){
 
    // reset system temperature
    sim::temperature=temp;
+
+   sim::actual_H_field = sim::applied_H_field;
+   sim::actual_H_vector[0] = sim::applied_H_vector[0];
+   sim::actual_H_vector[1] = sim::applied_H_vector[1];
+   sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
    // Perform Time Series with relaxation
    while(sim::time<sim::equilibration_time+sim::total_time){

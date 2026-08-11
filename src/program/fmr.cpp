@@ -72,8 +72,14 @@ void fmr(){
    // Set equilibration temperature only if continue checkpoint not loaded
    if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag){}
    else{
+	   // Set equilibration temperature
 	   sim::temperature=sim::Teq;
    }
+
+	sim::actual_H_field = sim::equilibrium_H_field;
+	sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+	sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+	sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 
 	// Equilibrate system
 	while(sim::time<sim::equilibration_time){
@@ -98,6 +104,11 @@ void fmr(){
       stats::reset();
 
    }
+
+	sim::actual_H_field = sim::applied_H_field;
+	sim::actual_H_vector[0] = sim::applied_H_vector[0];
+	sim::actual_H_vector[1] = sim::applied_H_vector[1];
+	sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
 	// enable fmr fields
 	sim::enable_fmr = true;
