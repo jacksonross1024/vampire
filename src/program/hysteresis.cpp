@@ -12,6 +12,8 @@
 
 // Standard Libraries
 #include <cstdlib>
+#include <iostream>
+#include <string>
 
 // Vampire Header files
 #include "vmath.hpp"
@@ -19,6 +21,33 @@
 #include "sim.hpp"
 #include "stats.hpp"
 #include "vio.hpp"
+#include "vmpi.hpp"
+
+namespace{
+
+void hysteresis_warning(const std::string& msg){
+	if(vmpi::my_rank==0){
+		terminaltextcolor(RED);
+		std::cout << "Warning: " << msg << std::endl;
+		terminaltextcolor(WHITE);
+		zlog << zTs() << "Warning: " << msg << std::endl;
+	}
+}
+
+int64_t hysteresis_leg_increment(int64_t Hstart, int64_t Hend, int64_t base_inc){
+	if(Hstart==Hend) return 0;
+
+	int64_t inc = base_inc;
+	const bool need_increase = (Hend > Hstart);
+	const bool inc_increases = (inc > 0);
+	if(need_increase != inc_increases){
+		hysteresis_warning("applied-field-strength-increment sign reversed to avoid infinite loop on hysteresis leg.");
+		inc = -inc;
+	}
+	return inc;
+}
+
+} // namespace
 
 namespace program{
 
@@ -51,20 +80,24 @@ int hysteresis(){
 	// check calling of routine if error checking is activated
 	if(err::check==true){std::cout << "program::hysteresis has been called" << std::endl;}
 
-	// Setup min and max fields and increment (uT)
-	int64_t iHmax = vmath::iround64(double(sim::Hmax)*1.0E6);
-	int64_t miHmax = -iHmax;
-	int64_t parity_old;
-	int64_t iH_old;
+	// Setup field values and increment (uT)
+	const int64_t iHeq = vmath::iround64(double(sim::equilibrium_H_field)*1.0E6);
+	const int64_t iHmax = vmath::iround64(double(sim::Hmax)*1.0E6);
+	const int64_t iHmin = vmath::iround64(double(sim::Hmin)*1.0E6);
+
+	// Positive increment: Heq -> Hmax -> Hmin -> Heq; negative increment reverses path.
+	const bool reverse_path = (sim::Hinc < 0.0);
+	int64_t iHinc = vmath::iround64(fabs(sim::Hinc)*1.0E6);
+	if(iHinc==0){
+		hysteresis_warning("applied-field-strength-increment is zero; using 1 uT for hysteresis loop.");
+		iHinc = 1;
+	}
+	const int64_t base_inc = reverse_path ? -iHinc : iHinc;
+
 	uint64_t start_time;
 
-	// Equilibrate system in saturation field, i.e. the largest between equilibration and maximum field set by the user
-   if(sim::equilibrium_H_field >= sim::Hmax){
-	   sim::actual_H_field = sim::equilibrium_H_field;
-   }
-   else{
-   	sim::actual_H_field = sim::Hmax;
-   }
+	// Equilibrate system at equilibrium field strength
+	sim::actual_H_field = sim::equilibrium_H_field;
 	sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
 	sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
 	sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
@@ -73,43 +106,44 @@ int hysteresis(){
 	if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag){}
 	else sim::integrate(sim::equilibration_time);
 
-   // Hinc must be positive
-	int64_t iHinc = vmath::iround64(double(fabs(sim::Hinc))*1.0E6);
+	// Field loop legs always use named Hmax/Hmin regardless of min>max ordering.
+	int64_t leg_start[3];
+	int64_t leg_end[3];
+	if(!reverse_path){
+		leg_start[0] = iHeq; leg_end[0] = iHmax;
+		leg_start[1] = iHmax; leg_end[1] = iHmin;
+		leg_start[2] = iHmin; leg_end[2] = iHeq;
+	}
+	else{
+		leg_start[0] = iHeq; leg_end[0] = iHmin;
+		leg_start[1] = iHmin; leg_end[1] = iHmax;
+		leg_start[2] = iHmax; leg_end[2] = iHeq;
+	}
 
-   int64_t Hfield;
-   int64_t iparity=sim::parity;
-	parity_old=iparity;
+	bool resume_checkpoint = sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag;
+	int64_t leg = resume_checkpoint ? sim::parity : 0;
 
-   // Save value of iH from previous simulation
-	if(sim::load_checkpoint_continue_flag) iH_old=static_cast<int64_t>(sim::iH); //  int(sim::iH);
+	// Perform field loop over legs
+	for(; leg < 3; leg++){
 
-	// Perform Field Loop -parity
-	while(iparity<2){
-      // If checkpoint is loaded with continue flag, then set up correctly max,min field values
-		if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag)
-      {
-         //necessary to upload value of iH_old when loading the checkpoint !!!
-		   iH_old=static_cast<int64_t>(sim::iH);
-         //Setup min and max fields and increment (uT)
-			if(parity_old<0){
-				if(iparity<0) miHmax=iH_old;
-				else if(iparity>0 && iH_old<=0) miHmax=iH_old; //miHmax=(iHmax-iHinc);
-				else if(iparity>0 && iH_old>0) miHmax=-(iHmax);
-			}
-			else if(parity_old>0) miHmax=iH_old;
-			Hfield=miHmax;
+		const int64_t Hstart = leg_start[leg];
+		const int64_t Hend = leg_end[leg];
+		const int64_t inc = hysteresis_leg_increment(Hstart, Hend, base_inc);
+
+		int64_t Hfield = Hstart;
+		if(resume_checkpoint){
+			Hfield = static_cast<int64_t>(sim::iH);
+			resume_checkpoint = false;
 		}
-		else	Hfield=miHmax;
+		if(Hstart == Hend) Hfield = Hend;
 
-		// Perform Field Loop -field
-		while(Hfield<=iHmax){
+		sim::parity = leg;
 
-			// Set applied field (Tesla)
-			sim::applied_H_field = double(Hfield)*double(iparity)*1.0e-6;
-			sim::actual_H_field = sim::applied_H_field;
-			sim::actual_H_vector[0] = sim::applied_H_vector[0];
-			sim::actual_H_vector[1] = sim::applied_H_vector[1];
-			sim::actual_H_vector[2] = sim::applied_H_vector[2];
+		// Perform field loop for current leg
+		while(true){
+
+			// Set field strength (Tesla); direction set at equilibration
+			sim::actual_H_field = double(Hfield)*1.0e-6;
 
 			// Reset start time
 			start_time=sim::time;
@@ -128,20 +162,33 @@ int hysteresis(){
 
 			} // End of integration loop
 
-			// Increment of iH
-			Hfield+=iHinc;
-			sim::iH=Hfield; //sim::iH+=iHinc;
+			// Save field for checkpointing (uT)
+			sim::iH=Hfield;
 
 			// Output to screen and file after each field
 			vout::data();
 
+			if(Hfield==Hend) break;
+
+			// Advance toward leg end, clamping to Hend on overshoot or checkpoint resume past end
+			if(Hstart > Hend){
+				if(Hfield <= Hend) Hfield = Hend;
+				else{
+					Hfield += inc;
+					if(Hfield < Hend) Hfield = Hend;
+				}
+			}
+			else if(Hstart < Hend){
+				if(Hfield >= Hend) Hfield = Hend;
+				else{
+					Hfield += inc;
+					if(Hfield > Hend) Hfield = Hend;
+				}
+			}
+
 		} // End of field loop
 
-		// Increment of parity
-      iparity+=2;
-      sim::parity=iparity;
-
-	} // End of parity loop
+	} // End of leg loop
 
 	return EXIT_SUCCESS;
 
