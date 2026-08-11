@@ -10,8 +10,9 @@
 //------------------------------------------------------------------------------
 //
 
-#include <vector>
 #include <cmath>
+#include <cstdint>
+#include <vector>
 
 /// @namespace ns
 /// @brief vmath namespace containing sundry math functions for vampire.

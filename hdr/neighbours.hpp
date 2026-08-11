@@ -14,6 +14,7 @@
 #define NEIGHBOURS_H_
 
 // C++ standard library headers
+#include <cstdint>
 #include <string>
 
 // Vampire headers

@@ -47,9 +47,10 @@
 ///	Revision:	  ---
 ///=====================================================================================
 ///
+#include <cmath>
+#include <cstdint>
 #include <string>
 #include <vector>
-#include <cmath>
 
 // Vampire headers
 #include "create_atoms_class.hpp" // class definition for atoms in create module

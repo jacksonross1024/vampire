@@ -14,6 +14,7 @@
 #define UNITCELL_H_
 
 // C++ standard library headers
+#include <cstdint>
 #include <string>
 #include <vector>
 

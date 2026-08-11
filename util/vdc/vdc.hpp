@@ -14,6 +14,7 @@
 #define VDC_H_
 
 // C++ standard library headers
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <unordered_map>

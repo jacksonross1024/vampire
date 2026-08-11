@@ -25,6 +25,7 @@
 #ifndef ATOMS_H_
 #define ATOMS_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

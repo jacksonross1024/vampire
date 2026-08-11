@@ -28,6 +28,7 @@
 // Includes
 //==========================================================
 #include "create.hpp"
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <vector>
