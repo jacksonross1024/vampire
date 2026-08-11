@@ -146,9 +146,9 @@ namespace vdc{
             exit(1);
          }*/
 
-         // Assign atom to cell
+         // Assign atom to cell (atom_cell_id is indexed by position in sliced_atoms_list, not global atom id)
          int cellid = supercell_array.at(scc[0]).at(scc[1]).at(scc[2]);
-         vdc::atom_cell_id[atom] = cellid;
+         vdc::atom_cell_id[i] = cellid;
 
          // accumulate number of atoms in each cell
          init_num_atoms_in_cell[cellid*tmid + tmid-1]++;
@@ -168,10 +168,10 @@ namespace vdc{
             // save new cell number for this cell
             new_cell_number[cell] = num_cells_with_atoms;
 
-            // save cell coordinates
-            vdc::cell_coords.push_back( init_cell_coords[3*cell + 0] );
-            vdc::cell_coords.push_back( init_cell_coords[3*cell + 1] );
-            vdc::cell_coords.push_back( init_cell_coords[3*cell + 2] );
+            // save cell coordinates (lab frame: grid origin at atoms_min for this slice)
+            vdc::cell_coords.push_back( init_cell_coords[3*cell + 0] + atoms_min[0] );
+            vdc::cell_coords.push_back( init_cell_coords[3*cell + 1] + atoms_min[1] );
+            vdc::cell_coords.push_back( init_cell_coords[3*cell + 2] + atoms_min[2] );
 
             // save number of atoms in final cell array
            
@@ -243,7 +243,7 @@ namespace vdc{
          const double sy = vdc::spins[3*atom+1];
          const double sz = vdc::spins[3*atom+2];
 
-         const unsigned int cell_id = atom_cell_id[atom];
+         const unsigned int cell_id = atom_cell_id[i];
 
          vdc::cell_magnetization[cell_id][mat][0] += sx*mu;
          vdc::cell_magnetization[cell_id][mat][1] += sy*mu;
@@ -312,7 +312,7 @@ namespace vdc{
          ofile << vdc::cell_coords[3*cell + 0] << "\t" << vdc::cell_coords[3*cell + 1] << "\t" << vdc::cell_coords[3*cell + 2] << "\t";
          for( unsigned int m = 0; m < tmid; m++){
             ofile << vdc::cell_magnetization[cell][m][0] << "\t" << vdc::cell_magnetization[cell][m][1] << "\t" << vdc::cell_magnetization[cell][m][2] << "\t" << vdc::cell_magnetization[cell][m][3] << "\t";
-         ofile << num_atoms_in_cell[cell*tmid+m] << "\t";
+            ofile << num_atoms_in_cell[cell*tmid+m] << "\t";
          }
        //  ofile << num_atoms_in_cell[cell*tmid];
          ofile << "\n";

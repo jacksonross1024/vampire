@@ -31,8 +31,10 @@ namespace vdc{
    extern bool povray;
    extern bool track;
    extern bool povcells;
+   extern bool povspincells;
    extern bool cells;
    extern bool cellsf;
+   extern bool spin_cellsf;
    extern bool vtk;
    extern bool ssc; // flag to specify spin-spin correlation
    extern bool txt;
@@ -189,6 +191,9 @@ namespace vdc{
    void output_track_file(unsigned int spin_file_id);
    void output_cells_inc_file(unsigned int spin_file_id);
    void output_povray_cells_file();
+   void output_povray_spin_cells_file();
+   void output_spin_cells_inc_file(unsigned int spin_file_id);
+   void rewrite_spins_ini_spin_cells();
 
    // Colour
    void rgb( const double& sx, const double& sy, const double& sz, double &red, double &green, double &blue);

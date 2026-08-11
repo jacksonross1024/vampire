@@ -12,6 +12,7 @@
 // C++ standard library headers
 #include<cmath>
 #include<algorithm>
+#include<cctype>
 
 // vdc headers
 #include"vdc.hpp"
@@ -357,8 +358,10 @@ void set_colourmap(const input_t &input){
    // check args
    arg_count(input,1,"eq");
 
-   if (std::find(vdc::colourmaps.begin(),vdc::colourmaps.end(),input.value[0]) != vdc::colourmaps.end() ){
-      vdc::colour_keyword = input.value[0];
+   std::string cmap_key = input.value[0];
+   for (char &c : cmap_key){ c = std::tolower(c); }
+   if (std::find(vdc::colourmaps.begin(),vdc::colourmaps.end(), cmap_key) != vdc::colourmaps.end() ){
+      vdc::colour_keyword = cmap_key;
    }
    else { error_message(input,"colourmap keyword does not match,"); }
 }

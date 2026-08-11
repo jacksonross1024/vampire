@@ -26,8 +26,10 @@ namespace vdc{
    bool povray   = false; // flag to specify povray file output
    bool track    = false;
    bool povcells = false; // flag to specify povray cells output
+   bool povspincells = false; // flag to specify povray cells output
    bool cells    = false; // flag to specify cells output
    bool cellsf   = false; // flag to output cell file
+   bool spin_cellsf   = false; // flag to output cell file
    bool vtk      = false; // flag to specify vtk output
    bool ssc      = false; // flag to specify spin-spin correlation
    bool txt      = false; // flag to specify plain text output
@@ -156,6 +158,8 @@ namespace vdc{
       {"x-vector" , set_vector_x},
       {"colourmap", set_colourmap},
       {"colormap" , set_colourmap},
+      {"colours", set_colourmap},
+      {"colors", set_colourmap},
       {"custom-colormap" , set_custom_colourmap},
       {"custom-colourmap", set_custom_colourmap},
       {"3d", set_3D},

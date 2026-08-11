@@ -72,6 +72,12 @@ void command( int argc, char* argv[] ){
          vdc::cells  = true; // calculate cell data
          vdc::cellsf = true; // output cell data file
       }
+      else if (sw == "--spin-cells" ){ // cell raw data
+         vdc::cells  = true; // calculate cell data
+         vdc::cellsf = true; // output cell data file
+         vdc::spin_cellsf = true;
+         vdc::povspincells = true; // enable povray cells output
+      }
       else if (sw == "--povray-cells" ){ // povray cell data
          vdc::cells  = true; // calculate cell data
          vdc::povcells = true; // enable povray cells output
@@ -218,6 +224,7 @@ void command( int argc, char* argv[] ){
       std::cerr << "\t\t --vtk    Data output in VTK format for viewing in Paraview" << std::endl;
       std::cerr << "\t\t --text   Data output in plain text format for plotting in gnuplot/excel etc" << std::endl;
       std::cerr << "\t\t --cells  Data output in plain text format in cells" << std::endl;
+      std::cerr << "\t\t --spin-cells  PoVRAY cell-scale spin arrows (use same --slice, --camera-*, --colourmap, etc. as --povray)" << std::endl;
       std::cerr << "\t\t --ssc    Spin-spin correlation data in text format" << std::endl;
       std::exit(EXIT_FAILURE);
    }
