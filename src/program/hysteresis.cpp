@@ -142,8 +142,11 @@ int hysteresis(){
 		// Perform field loop for current leg
 		while(true){
 
-			// Set field strength (Tesla); direction set at equilibration
+			// Set field strength (Tesla) and applied-field direction
 			sim::actual_H_field = double(Hfield)*1.0e-6;
+			sim::actual_H_vector[0] = sim::applied_H_vector[0];
+			sim::actual_H_vector[1] = sim::applied_H_vector[1];
+			sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
 			// Reset start time
 			start_time=sim::time;

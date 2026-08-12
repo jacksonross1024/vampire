@@ -64,6 +64,9 @@ namespace hamr{
 		// Initialise field magnitude to min value at beginning of simulation
 		sim::applied_H_field = hamr::internal::Hmin;
 		sim::actual_H_field = sim::applied_H_field;
+		sim::actual_H_vector[0] = sim::applied_H_vector[0];
+		sim::actual_H_vector[1] = sim::applied_H_vector[1];
+		sim::actual_H_vector[2] = sim::applied_H_vector[2];
 		std::cout << " Setting initial field magnitude to: " << sim::actual_H_field << " T" << std::endl;
 
 		std::cout << " Bit sequence to be written: ";
@@ -115,6 +118,9 @@ namespace hamr{
 				// Switch off external field
 				sim::applied_H_field = 0.0;
 				sim::actual_H_field = 0.0;
+				sim::actual_H_vector[0] = sim::applied_H_vector[0];
+				sim::actual_H_vector[1] = sim::applied_H_vector[1];
+				sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
 				// Update head position in downtrack
 				hamr::internal::head_position_x += Deltax;
@@ -149,6 +155,9 @@ namespace hamr{
 					// Determine sign of applied field
 					sim::applied_H_field = H_app_abs * H_app_dir;
 					sim::actual_H_field = sim::applied_H_field;
+					sim::actual_H_vector[0] = sim::applied_H_vector[0];
+					sim::actual_H_vector[1] = sim::applied_H_vector[1];
+					sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
 					// Integrate system
 					sim::integrate(sim::partial_time);
@@ -179,6 +188,9 @@ namespace hamr{
 				// Switch off external field
 				sim::applied_H_field = 0.0;
 				sim::actual_H_field = 0.0;
+				sim::actual_H_vector[0] = sim::applied_H_vector[0];
+				sim::actual_H_vector[1] = sim::applied_H_vector[1];
+				sim::actual_H_vector[2] = sim::applied_H_vector[2];
 
 				// Update head position in downtrack
 				hamr::internal::head_position_x += Deltax;
@@ -206,6 +218,9 @@ namespace hamr{
 			// Switch off external field
 			sim::applied_H_field = 0.0;
 			sim::actual_H_field = 0.0;
+			sim::actual_H_vector[0] = sim::applied_H_vector[0];
+			sim::actual_H_vector[1] = sim::applied_H_vector[1];
+			sim::actual_H_vector[2] = sim::applied_H_vector[2];
 			// Set system temperature as minimum temperature
 			sim::temperature=sim::Tmin;
 

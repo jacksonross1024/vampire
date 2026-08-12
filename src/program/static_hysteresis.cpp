@@ -59,13 +59,16 @@ int static_hysteresis(){
 	// Equilibrate system in saturation field, i.e. the largest between equilibration and maximum field set by the user
    if(sim::equilibrium_H_field >= sim::Hmax){
 	   sim::actual_H_field = sim::equilibrium_H_field;
+	   sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+	   sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+	   sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
    }
    else{
    	sim::actual_H_field = sim::Hmax;
+	   sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
+	   sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
+	   sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
    }
-	sim::actual_H_vector[0] = sim::equilibrium_H_vector[0];
-	sim::actual_H_vector[1] = sim::equilibrium_H_vector[1];
-	sim::actual_H_vector[2] = sim::equilibrium_H_vector[2];
 
 	// Initialise sim::integrate only if it not a checkpoint
 	if(sim::load_checkpoint_flag && sim::load_checkpoint_continue_flag){}
