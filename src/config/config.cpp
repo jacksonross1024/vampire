@@ -25,6 +25,32 @@
 namespace config
 {
 
+namespace{
+
+bool hysteresis_loop_leg_descending(){
+   if(sim::Hinc >= 0.0){
+      if(sim::parity == 0) return sim::equilibrium_H_field > sim::Hmax;
+      if(sim::parity == 1) return sim::Hmax > sim::Hmin;
+      if(sim::parity == 2) return sim::Hmin > sim::equilibrium_H_field;
+   }
+   else{
+      if(sim::parity == 0) return sim::equilibrium_H_field > sim::Hmin;
+      if(sim::parity == 1) return sim::Hmin > sim::Hmax;
+      if(sim::parity == 2) return sim::Hmax > sim::equilibrium_H_field;
+   }
+   return false;
+}
+
+bool hysteresis_loop_output_atoms(double minField_1, double maxField_1, double minField_2, double maxField_2){
+   if(sim::parity < 0 || sim::parity > 2) return false;
+   if(hysteresis_loop_leg_descending()){
+      return (sim::actual_H_field >= minField_1) && (sim::actual_H_field <= maxField_1);
+   }
+   return (sim::actual_H_field >= minField_2) && (sim::actual_H_field <= maxField_2);
+}
+
+} // namespace
+
 //------------------------------------------------------------------------------
 // Function to output atomic and cell coordinates to disk
 //------------------------------------------------------------------------------
@@ -116,8 +142,22 @@ void output(){ // should include variables for data to be outputted, eg spins, c
             config::internal::atoms(); // call function to output spins coords
             config::internal::output_rate_counter_coords++; //update the counter
          }
-         // for hysteresis programs
-         else if ((program::program == 2) || (program::program ==3) || (program::program ==12))
+         // hysteresis-loop (parity = leg index 0, 1, 2)
+         else if (program::program == 2)
+         {
+            if(hysteresis_loop_output_atoms(minField_1, maxField_1, minField_2, maxField_2))
+            {
+               if(config::internal::output_rate_counter_coords == 0)
+               {
+                  config::internal::atoms_coords();
+                  if(atoms::num_non_magnetic_atoms > 0) config::internal::atoms_non_magnetic();
+               }
+               config::internal::atoms();
+               config::internal::output_rate_counter_coords++;
+            }
+         }
+         // static-hysteresis and partial-hysteresis (parity = field branch sign)
+         else if ((program::program ==3) || (program::program ==12))
          {
             // output config only in range [minField_1;maxField_1] for descending branch
             if (sim::parity < 0)
@@ -169,8 +209,17 @@ void output(){ // should include variables for data to be outputted, eg spins, c
             if (sim::output_cells_file_counter == 0) config::internal::legacy_cells_coords();
             config::internal::legacy_cells();
          }
-         // for hysteresis programs
-         else if ((program::program == 2) || (program::program ==3) || (program::program ==12))
+         // hysteresis-loop (parity = leg index 0, 1, 2)
+         else if (program::program == 2)
+         {
+            if(hysteresis_loop_output_atoms(minField_1, maxField_1, minField_2, maxField_2))
+            {
+               if (sim::output_cells_file_counter == 0) config::internal::legacy_cells_coords();
+               config::internal::legacy_cells();
+            }
+         }
+         // static-hysteresis and partial-hysteresis (parity = field branch sign)
+         else if ((program::program ==3) || (program::program ==12))
          {
             // output config only in range [minField_1;maxField_1] for decreasing field
             if (sim::parity < 0)
