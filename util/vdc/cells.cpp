@@ -213,6 +213,32 @@ namespace vdc{
 
    }
 
+   //------------------------------------------------------------------------------
+   // Binary row: cellx, celly, cellz, then per material (+ total): mx, my, mz, |m|, natoms
+   //------------------------------------------------------------------------------
+   struct cell_binary_ctx {
+      unsigned int tmid;
+   };
+
+   void fill_cell_binary_row(size_t cell, double* out, void* vctx){
+
+      const unsigned int tmid = static_cast<cell_binary_ctx*>(vctx)->tmid;
+      unsigned int c = 0;
+
+      out[c++] = vdc::cell_coords[3*cell + 0];
+      out[c++] = vdc::cell_coords[3*cell + 1];
+      out[c++] = vdc::cell_coords[3*cell + 2];
+
+      for(unsigned int m = 0; m < tmid; m++){
+         out[c++] = vdc::cell_magnetization[cell][m][0];
+         out[c++] = vdc::cell_magnetization[cell][m][1];
+         out[c++] = vdc::cell_magnetization[cell][m][2];
+         out[c++] = vdc::cell_magnetization[cell][m][3];
+         out[c++] = static_cast<double>(vdc::num_atoms_in_cell[cell*tmid + m]);
+      }
+
+   }
+
    void output_cell_file(unsigned int spin_file_id){
 
       // output informative message to user
@@ -287,15 +313,48 @@ namespace vdc{
       // only output cells file if needed
       if(vdc::cellsf){
 
-      // output cells to disk
-      std::ofstream ofile;
-
       // Determine cell file name
       std::stringstream cell_file_sstr;
       cell_file_sstr << "cells-";
       cell_file_sstr << std::setfill('0') << std::setw(8) << spin_file_id;
       cell_file_sstr << ".txt";
       std::string cell_file_name = cell_file_sstr.str();
+
+      if(vdc::binary_dump){
+
+         const std::string bin_name = vdc::binary_filename(cell_file_name);
+         std::cout << "   Writing cell file " << bin_name << "..." << std::flush;
+
+         cell_binary_ctx ctx;
+         ctx.tmid = tmid;
+
+         binary_dump_spec spec;
+         spec.kind = "cells";
+         spec.notes = "One row per occupied cell. Coordinates are lab-frame cell origins (NOT shifted by system_centre). For each material slot: unit-vector magnetisation mx,my,mz, then mnorm=|M|/sum(mu) (dimensionless m/ms, not mu_B), then natoms. Last slot (tot_*) is the sum over all materials. Empty cells are omitted.";
+         spec.columns.push_back({"cellx", "Angstrom", "lab-frame cell origin x"});
+         spec.columns.push_back({"celly", "Angstrom", "lab-frame cell origin y"});
+         spec.columns.push_back({"cellz", "Angstrom", "lab-frame cell origin z"});
+         for(unsigned int m = 0; m < tmid; m++){
+            const bool is_tot = (m + 1 == tmid);
+            std::string p = is_tot ? "tot" : ("m" + std::to_string(m));
+            std::string who = is_tot ? "total over materials" : ("material index " + std::to_string(m));
+            spec.columns.push_back({p + "_mx", "1", "mx (m/ms) for " + who});
+            spec.columns.push_back({p + "_my", "1", "my (m/ms) for " + who});
+            spec.columns.push_back({p + "_mz", "1", "mz (m/ms) for " + who});
+            spec.columns.push_back({p + "_mnorm", "1", "|m| / sum(mu) for " + who});
+            spec.columns.push_back({p + "_natoms", "1", "atom count for " + who});
+         }
+
+         vdc::output_binary_file(bin_name, vdc::total_cells, 3ull + 5ull * tmid,
+                                 fill_cell_binary_row, &ctx, spec);
+
+         std::cout << "done!" << std::endl;
+
+      }
+      else{
+
+      // output cells to disk
+      std::ofstream ofile;
 
       // output informative message to user
       std::cout << "   Writing cell file " << cell_file_name << "..." << std::flush;
@@ -327,6 +386,8 @@ namespace vdc{
       ofile.close();
 
       std::cout << "done!" << std::endl;
+
+      }
 
       }
 

@@ -25,6 +25,25 @@
 namespace vdc{
 
 //------------------------------------------------------------------------------
+// Binary row: cx, cy, cz, sx, sy, sz, moment, type_id (centred coords)
+//------------------------------------------------------------------------------
+void fill_vtk_binary_row(size_t i, double* out, void* /*ctx*/){
+
+   const unsigned int atom = vdc::sliced_atoms_list[i];
+   const int type_id = vdc::type[atom];
+
+   out[0] = coordinates[3*atom+0] - vdc::system_centre[0];
+   out[1] = coordinates[3*atom+1] - vdc::system_centre[1];
+   out[2] = coordinates[3*atom+2] - vdc::system_centre[2];
+   out[3] = spins[3*atom+0];
+   out[4] = spins[3*atom+1];
+   out[5] = spins[3*atom+2];
+   out[6] = materials[type_id].moment;
+   out[7] = static_cast<double>(type_id);
+
+}
+
+//------------------------------------------------------------------------------
 // Function to output spins-XXXX.vtu files compatible with paraview
 //------------------------------------------------------------------------------
 void output_vtk_file(unsigned int spin_file_id){
@@ -35,6 +54,32 @@ void output_vtk_file(unsigned int spin_file_id){
 	vtk_file_sstr << std::setfill('0') << std::setw(8) << spin_file_id;
 	vtk_file_sstr << ".vtu";
 	std::string vtk_file = vtk_file_sstr.str();
+
+   if(vdc::binary_dump){
+
+      const std::string bin_name = vdc::binary_filename(vtk_file);
+      if(vdc::verbose) std::cout << "   Writing VTK file " << bin_name << "..." << std::flush;
+
+      binary_dump_spec spec;
+      spec.kind = "vtk";
+      spec.notes = "Sliced magnetic atoms only. Coordinates relative to system_centre. Not a VTK/VTU file; numeric dump of the arrays that would have gone into the .vtu.";
+      spec.columns = {
+         {"cx", "Angstrom", "x relative to system_centre"},
+         {"cy", "Angstrom", "y relative to system_centre"},
+         {"cz", "Angstrom", "z relative to system_centre"},
+         {"sx", "1", "spin x"},
+         {"sy", "1", "spin y"},
+         {"sz", "1", "spin z"},
+         {"moment", "muB", "atomic moment from materials[type]"},
+         {"type", "1", "0-based material index"}
+      };
+
+      vdc::output_binary_file(bin_name, static_cast<uint64_t>(vdc::sliced_atoms_list.size()),
+                              8, fill_vtk_binary_row, 0, spec);
+
+      if(vdc::verbose) std::cout << "done!" << std::endl;
+      return;
+   }
 
    // open vtk file
    std::ofstream vtkfile;

@@ -32,6 +32,33 @@
 namespace vdc{
 
 //------------------------------------------------------------------------------
+// Binary row: r, count, sum, corr, <M>, corr-<M>  (all bins, including empty)
+//------------------------------------------------------------------------------
+struct ssc_binary_ctx {
+   const std::vector<double>* counts;
+   const std::vector<double>* correl;
+   double bin_width;
+   double total_s;
+   double count_scale;
+};
+
+void fill_ssc_binary_row(size_t i, double* out, void* vctx){
+
+   const ssc_binary_ctx* ctx = static_cast<ssc_binary_ctx*>(vctx);
+   const double count = (*ctx->counts)[i] * ctx->count_scale;
+   const double sum = (*ctx->correl)[i] * ctx->count_scale;
+   const double corr = count > 0.0 ? sum / count : 0.0;
+
+   out[0] = (0.5 + static_cast<double>(i)) * ctx->bin_width;
+   out[1] = count;
+   out[2] = sum;
+   out[3] = corr;
+   out[4] = ctx->total_s;
+   out[5] = corr - ctx->total_s;
+
+}
+
+//------------------------------------------------------------------------------
 // Function to initialise ssc data for averaging
 //------------------------------------------------------------------------------
 void initialise_ssc(){
@@ -152,6 +179,33 @@ void output_ssc_file(unsigned int spin_file_id){
    // output informative message to user
    if(vdc::verbose) std::cout << "   Writing spin-spin correlation file " << txt_file << "..." << std::flush;
 
+   if(vdc::binary_dump){
+
+      const std::string bin_name = vdc::binary_filename(txt_file);
+      ssc_binary_ctx ctx;
+      ctx.counts = &counts;
+      ctx.correl = &correl;
+      ctx.bin_width = bin_width;
+      ctx.total_s = total_s;
+      ctx.count_scale = 1.0;
+
+      binary_dump_spec spec;
+      spec.kind = "ssc";
+      spec.notes = "One row per radial bin, including empty bins (count=0). Unlike the text writer, empty bins are not omitted. r is the bin centre. corr = sum/count if count>0 else 0. total_s is snapshot <M>^2. delta = corr - total_s.";
+      spec.columns = {
+         {"r", "Angstrom", "bin centre (0.5 + i) * bin_width"},
+         {"count", "1", "pair counts in this bin"},
+         {"sum", "1", "sum of si.sj in this bin"},
+         {"corr", "1", "sum/count, or 0 if empty"},
+         {"total_s", "1", "snapshot magnetisation squared <M.M>"},
+         {"delta", "1", "corr - total_s"}
+      };
+
+      vdc::output_binary_file(bin_name, static_cast<uint64_t>(num_bins), 6, fill_ssc_binary_row, &ctx, spec);
+
+   }
+   else{
+
    // open incfile
    std::ofstream txtfile;
    txtfile.open(txt_file.c_str());
@@ -166,6 +220,8 @@ void output_ssc_file(unsigned int spin_file_id){
    // flush data to include file and close
    txtfile << std::flush;
    txtfile.close();
+
+   }
 
    // output informative message to user
    if(vdc::verbose) std::cout << "done!" << std::endl;
@@ -199,12 +255,39 @@ void output_average_ssc_file(){
    // output informative message to user
    if(vdc::verbose) std::cout << "   Writing average spin-spin correlation file " << txt_file << "..." << std::flush;
 
+   const double inv_snapshots = 1.0 / vdc::ssc_snapshots;
+   const double total_s = vdc::ssc_magnetization * inv_snapshots;
+
+   if(vdc::binary_dump){
+
+      const std::string bin_name = vdc::binary_filename(txt_file);
+      ssc_binary_ctx ctx;
+      ctx.counts = &vdc::ssc_counts;
+      ctx.correl = &vdc::ssc_correl;
+      ctx.bin_width = bin_width;
+      ctx.total_s = total_s;
+      ctx.count_scale = inv_snapshots;
+
+      binary_dump_spec spec;
+      spec.kind = "ssc-average";
+      spec.notes = "Time average over processed snapshots. count and sum are already multiplied by 1/n_snapshots (stored as float64, not truncated to int). Same columns as per-frame ssc. Empty bins included.";
+      spec.columns = {
+         {"r", "Angstrom", "bin centre (0.5 + i) * bin_width"},
+         {"count", "1", "mean pair counts in this bin"},
+         {"sum", "1", "mean sum of si.sj in this bin"},
+         {"corr", "1", "sum/count, or 0 if empty"},
+         {"total_s", "1", "mean snapshot magnetisation squared"},
+         {"delta", "1", "corr - total_s"}
+      };
+
+      vdc::output_binary_file(bin_name, static_cast<uint64_t>(num_bins), 6, fill_ssc_binary_row, &ctx, spec);
+
+   }
+   else{
+
    // open incfile
    std::ofstream txtfile;
    txtfile.open(txt_file.c_str());
-
-   const double inv_snapshots = 1.0 / vdc::ssc_snapshots;
-   const double total_s = vdc::ssc_magnetization * inv_snapshots;
 
    for(int i=0; i<num_bins; i++){
       int count = vdc::ssc_counts[i] * inv_snapshots;
@@ -217,6 +300,8 @@ void output_average_ssc_file(){
    // flush data to include file and close
    txtfile << std::flush;
    txtfile.close();
+
+   }
 
    // output informative message to user
    if(vdc::verbose) std::cout << "done!" << std::endl;

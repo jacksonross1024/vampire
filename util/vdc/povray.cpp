@@ -32,6 +32,65 @@
 
 namespace vdc{
 
+//------------------------------------------------------------------------------
+// Binary row: mat, cx, cy, cz, sx, sy, sz, r, g, b  (centred coords)
+//------------------------------------------------------------------------------
+struct inc_binary_ctx {
+   size_t n_mag;
+};
+
+void fill_inc_binary_row(size_t i, double* out, void* vctx){
+
+   const size_t n_mag = static_cast<inc_binary_ctx*>(vctx)->n_mag;
+
+   if(i < n_mag){
+      const unsigned int atom = vdc::sliced_atoms_list[i];
+      double sx = spins[3*atom+0];
+      double sy = spins[3*atom+1];
+      double sz = spins[3*atom+2];
+      if(std::find(afm_materials.begin(), afm_materials.end(), vdc::type[atom]+1) != afm_materials.end()){
+         sx = -sx;
+         sy = -sy;
+         sz = -sz;
+      }
+      double red = 0.0, green = 0.0, blue = 1.0;
+      vdc::rgb(sx, sy, sz, red, green, blue);
+      out[0] = static_cast<double>(type[atom] + 1);
+      out[1] = coordinates[3*atom+0] - vdc::system_centre[0];
+      out[2] = coordinates[3*atom+1] - vdc::system_centre[1];
+      out[3] = coordinates[3*atom+2] - vdc::system_centre[2];
+      out[4] = spins[3*atom+0];
+      out[5] = spins[3*atom+1];
+      out[6] = spins[3*atom+2];
+      out[7] = red;
+      out[8] = green;
+      out[9] = blue;
+   }
+   else{
+      const unsigned int atom = vdc::sliced_nm_atoms_list[i - n_mag];
+      out[0] = static_cast<double>(nm_type[atom] + 1);
+      out[1] = nm_coordinates[3*atom+0] - vdc::system_centre[0];
+      out[2] = nm_coordinates[3*atom+1] - vdc::system_centre[1];
+      out[3] = nm_coordinates[3*atom+2] - vdc::system_centre[2];
+      out[4] = 0.0;
+      out[5] = 0.0;
+      out[6] = 0.0;
+      out[7] = 0.3;
+      out[8] = 0.3;
+      out[9] = 0.3;
+   }
+
+}
+
+void fill_track_binary_row(size_t i, double* out, void* /*ctx*/){
+
+   const unsigned int atom = vdc::sliced_atoms_list[i];
+   out[0] = spins[3*atom+0];
+   out[1] = spins[3*atom+1];
+   out[2] = spins[3*atom+2];
+
+}
+
 // forward function declarations
 
 
@@ -55,6 +114,37 @@ void output_inc_file(unsigned int spin_file_id){
 	incpov_file_sstr << std::setfill('0') << std::setw(8) << spin_file_id;
 	incpov_file_sstr << ".inc";
 	std::string incpov_file = incpov_file_sstr.str();
+
+   if(vdc::binary_dump){
+
+      const std::string bin_name = vdc::binary_filename(incpov_file);
+      if(vdc::verbose) std::cout << "   Writing povray file " << bin_name << "..." << std::flush;
+
+      inc_binary_ctx ctx;
+      ctx.n_mag = vdc::sliced_atoms_list.size();
+      const uint64_t n_rows = static_cast<uint64_t>(ctx.n_mag + vdc::sliced_nm_atoms_list.size());
+
+      binary_dump_spec spec;
+      spec.kind = "povray-inc";
+      spec.notes = "Numeric dump of spins-*.inc (PoVRAY .pov/.ini are still text and still #include .inc). Magnetic atoms then NM. mat is 1-based. Coordinates relative to system_centre. Stored sx,sy,sz are unflipped; rgb uses AFM-flipped spins for colour. NM spins 0, rgb 0.3,0.3,0.3.";
+      spec.columns = {
+         {"mat", "1", "1-based material id"},
+         {"cx", "Angstrom", "x relative to system_centre"},
+         {"cy", "Angstrom", "y relative to system_centre"},
+         {"cz", "Angstrom", "z relative to system_centre"},
+         {"sx", "1", "spin x (unflipped; NM: 0)"},
+         {"sy", "1", "spin y (unflipped; NM: 0)"},
+         {"sz", "1", "spin z (unflipped; NM: 0)"},
+         {"red", "1", "colour r in [0,1]"},
+         {"green", "1", "colour g in [0,1]"},
+         {"blue", "1", "colour b in [0,1]"}
+      };
+
+      vdc::output_binary_file(bin_name, n_rows, 10, fill_inc_binary_row, &ctx, spec);
+
+      if(vdc::verbose) std::cout << "done!" << std::endl;
+      return;
+   }
 
    // output informative message to user
    if(vdc::verbose) std::cout << "   Writing povray file " << incpov_file << "..." << std::flush;
@@ -163,6 +253,27 @@ void output_track_file(unsigned int spin_file_id){
 	incpov_file_sstr << std::setfill('0') << std::setw(8) << spin_file_id;
 	incpov_file_sstr << ".txt";
 	std::string incpov_file = incpov_file_sstr.str();
+
+   if(vdc::binary_dump){
+
+      const std::string bin_name = vdc::binary_filename(incpov_file);
+      if(vdc::verbose) std::cout << "   Writing povray-track file " << bin_name << "..." << std::flush;
+
+      binary_dump_spec spec;
+      spec.kind = "povray-track";
+      spec.notes = "Magnetic atoms only. Unflipped spin components (same values written in the text track file).";
+      spec.columns = {
+         {"sx", "1", "spin x"},
+         {"sy", "1", "spin y"},
+         {"sz", "1", "spin z"}
+      };
+
+      vdc::output_binary_file(bin_name, static_cast<uint64_t>(vdc::sliced_atoms_list.size()),
+                              3, fill_track_binary_row, 0, spec);
+
+      if(vdc::verbose) std::cout << "done!" << std::endl;
+      return;
+   }
 
    // output informative message to user
    if(vdc::verbose) std::cout << "   Writing povray-track file " << incpov_file << "..." << std::flush;

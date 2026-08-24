@@ -41,6 +41,8 @@ void command( int argc, char* argv[] ){
 //    --vector - generate raw xyz vector data
 //    --vtk - generate vtk files
 //    --cells - collate data into cells
+//    --binary - native-endian binary dump of data files
+//    --omp-threads N - OpenMP threads for --binary write path
 //    --cell-size = x - define cell size
 //    --povray-cells - generate renderable cell positions for povray
 //    --verbose [= true, false] - set verbose output to screen
@@ -67,7 +69,22 @@ void command( int argc, char* argv[] ){
       else if (sw == "--povray"){ vdc::povray = true; } // pov coordinate file output
       else if (sw == "--track") { vdc::track  = true; }
       else if (sw == "--vtk"   ){ vdc::vtk    = true; } // vtk coordinate file output
-      else if (sw == "--text"  ){ vdc::txt    = true; } // plain text file output
+      else if (sw == "--text" || sw == "--spins"){ vdc::txt = true; } // plain text / spin data file output
+      else if (sw == "--binary"){ vdc::binary_dump = true; } // native-endian numeric dump of data files
+      else if (sw == "--omp-threads"){
+         check_arg(arg, argc, argv, temp_str, "Error - number of OpenMP threads required for \'--omp-threads\'." );
+         try {
+            vdc::omp_threads = std::stoi(temp_str);
+         }
+         catch(...){
+            std::cerr << "Error - invalid value \'" << temp_str << "\' for --omp-threads." << std::endl;
+            std::exit(EXIT_FAILURE);
+         }
+         if(vdc::omp_threads < 1){
+            std::cerr << "Error - --omp-threads must be at least 1." << std::endl;
+            std::exit(EXIT_FAILURE);
+         }
+      }
       else if (sw == "--cells" ){ // cell raw data
          vdc::cells  = true; // calculate cell data
          vdc::cellsf = true; // output cell data file
@@ -223,9 +240,12 @@ void command( int argc, char* argv[] ){
       std::cerr << "\t\t --track  Data output in PoVRAY vector format for tracking rendering" << std::endl;
       std::cerr << "\t\t --vtk    Data output in VTK format for viewing in Paraview" << std::endl;
       std::cerr << "\t\t --text   Data output in plain text format for plotting in gnuplot/excel etc" << std::endl;
+      std::cerr << "\t\t --spins  Same as --text" << std::endl;
       std::cerr << "\t\t --cells  Data output in plain text format in cells" << std::endl;
       std::cerr << "\t\t --spin-cells  PoVRAY cell-scale spin arrows (use same --slice, --camera-*, --colourmap, etc. as --povray)" << std::endl;
       std::cerr << "\t\t --ssc    Spin-spin correlation data in text format" << std::endl;
+      std::cerr << "\t\t --binary Native-endian binary dump of data files; also writes vdc-binary.meta" << std::endl;
+      std::cerr << "\t\t --omp-threads N  OpenMP threads for --binary write path (ignored without --binary)" << std::endl;
       std::exit(EXIT_FAILURE);
    }
 }

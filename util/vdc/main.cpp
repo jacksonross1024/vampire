@@ -26,6 +26,9 @@ int main(int argc, char* argv[]){
    // process command line arguments
    vdc::command(argc, argv);
 
+   // --binary uses OpenMP on the write helper; otherwise force 1 thread (old path)
+   vdc::configure_output_threads();
+
    // process input file
    vdc::read_and_set();
 

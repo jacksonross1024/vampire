@@ -15,6 +15,7 @@
 
 // C++ standard library headers
 #include <cstdint>
+#include <cstddef>
 #include <iostream>
 #include <vector>
 #include <unordered_map>
@@ -39,6 +40,8 @@ namespace vdc{
    extern bool vtk;
    extern bool ssc; // flag to specify spin-spin correlation
    extern bool txt;
+   extern bool binary_dump; // --binary: native-endian numeric dump instead of text data files
+   extern int omp_threads;  // --omp-threads N; 0 = OpenMP default. Ignored unless binary_dump.
    extern bool x_vector;
    extern bool z_vector;
 
@@ -78,6 +81,20 @@ namespace vdc{
       enum slice_type type;
       std::vector<double> param;
       std::vector<double> bound;
+   };
+
+   // column heading for a --binary dump (written to vdc-binary.meta)
+   struct binary_column {
+      std::string name;
+      std::string unit;
+      std::string description;
+   };
+
+   // per-output description passed into the binary write helper
+   struct binary_dump_spec {
+      std::string kind;
+      std::string notes;
+      std::vector<binary_column> columns;
    };
 
    // vector of slices
@@ -210,6 +227,16 @@ namespace vdc{
    // CELL
    void initialise_cells();
    void output_cell_file(unsigned int spin_file_id);
+
+   // Binary dump helper (write path only). Payload is native-endian:
+   //   uint64_t n_rows, uint64_t n_cols, double data[n_rows * n_cols]
+   // fill(i, row, ctx) must write n_cols doubles for record i. Called from OpenMP.
+   typedef void (*binary_row_fn)(size_t i, double* row, void* ctx);
+   std::string binary_filename(const std::string& text_filename);
+   void configure_output_threads();
+   void write_binary_metadata();
+   void output_binary_file(const std::string& filename, uint64_t n_rows, uint64_t n_cols,
+                           binary_row_fn fill, void* ctx, const binary_dump_spec& spec);
 
    // setting functions
    void set_frame_start(const input_t &input);

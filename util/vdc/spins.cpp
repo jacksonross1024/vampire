@@ -93,6 +93,11 @@ void process_spins(){
    // output average ssc
    if(vdc::ssc) output_average_ssc_file();
 
+   if(vdc::binary_dump){
+      vdc::write_binary_metadata();
+      if(vdc::verbose) std::cout << "Wrote binary metadata vdc-binary.meta" << std::endl;
+   }
+
    return;
 
 }

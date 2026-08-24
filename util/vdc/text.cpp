@@ -32,6 +32,38 @@
 namespace vdc{
 
 //------------------------------------------------------------------------------
+// Binary row: cx, cy, cz, sx, sy, sz (centred coords; NM spins are zero)
+//------------------------------------------------------------------------------
+struct txt_binary_ctx {
+   size_t n_mag;
+};
+
+void fill_txt_binary_row(size_t i, double* out, void* vctx){
+
+   const size_t n_mag = static_cast<txt_binary_ctx*>(vctx)->n_mag;
+
+   if(i < n_mag){
+      const unsigned int atom = vdc::sliced_atoms_list[i];
+      out[0] = coordinates[3*atom+0] - vdc::system_centre[0];
+      out[1] = coordinates[3*atom+1] - vdc::system_centre[1];
+      out[2] = coordinates[3*atom+2] - vdc::system_centre[2];
+      out[3] = spins[3*atom+0];
+      out[4] = spins[3*atom+1];
+      out[5] = spins[3*atom+2];
+   }
+   else{
+      const unsigned int atom = vdc::sliced_nm_atoms_list[i - n_mag];
+      out[0] = nm_coordinates[3*atom+0] - vdc::system_centre[0];
+      out[1] = nm_coordinates[3*atom+1] - vdc::system_centre[1];
+      out[2] = nm_coordinates[3*atom+2] - vdc::system_centre[2];
+      out[3] = 0.0;
+      out[4] = 0.0;
+      out[5] = 0.0;
+   }
+
+}
+
+//------------------------------------------------------------------------------
 // Function to output spins-xxxxxxxx.txt file in plaintext format
 //------------------------------------------------------------------------------
 //
@@ -47,6 +79,33 @@ void output_txt_file(unsigned int spin_file_id){
 	txt_file_sstr << std::setfill('0') << std::setw(8) << spin_file_id;
 	txt_file_sstr << ".txt";
 	std::string txt_file = txt_file_sstr.str();
+
+   if(vdc::binary_dump){
+
+      const std::string bin_name = vdc::binary_filename(txt_file);
+      if(vdc::verbose) std::cout << "   Writing text file " << bin_name << "..." << std::flush;
+
+      txt_binary_ctx ctx;
+      ctx.n_mag = vdc::sliced_atoms_list.size();
+      const uint64_t n_rows = static_cast<uint64_t>(ctx.n_mag + vdc::sliced_nm_atoms_list.size());
+
+      binary_dump_spec spec;
+      spec.kind = "spins-text";
+      spec.notes = "Rows are sliced magnetic atoms followed by sliced non-magnetic atoms. Coordinates are relative to system_centre. NM spins are (0,0,0). Equivalent to --text/--spins .txt columns cx cy cz sx sy sz.";
+      spec.columns = {
+         {"cx", "Angstrom", "x relative to system_centre"},
+         {"cy", "Angstrom", "y relative to system_centre"},
+         {"cz", "Angstrom", "z relative to system_centre"},
+         {"sx", "1", "spin x (NM: 0)"},
+         {"sy", "1", "spin y (NM: 0)"},
+         {"sz", "1", "spin z (NM: 0)"}
+      };
+
+      vdc::output_binary_file(bin_name, n_rows, 6, fill_txt_binary_row, &ctx, spec);
+
+      if(vdc::verbose) std::cout << "done!" << std::endl;
+      return;
+   }
 
    // output informative message to user
    if(vdc::verbose) std::cout << "   Writing text file " << txt_file << "..." << std::flush;

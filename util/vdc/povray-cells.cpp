@@ -60,6 +60,92 @@ static void sliced_atoms_centroid(double com[3]){
 }
 
 //------------------------------------------------------------------------------
+// Binary row: cx,cy,cz, xmin,ymin,zmin, xmax,ymax,zmax, mx,my,mz, r,g,b
+//------------------------------------------------------------------------------
+struct cells_inc_binary_ctx {
+   unsigned int tmid;
+   double ux, uy, uz;
+};
+
+void fill_cells_inc_binary_row(size_t cell, double* out, void* vctx){
+
+   const cells_inc_binary_ctx* ctx = static_cast<cells_inc_binary_ctx*>(vctx);
+   const unsigned int tmid = ctx->tmid;
+
+   double mm = 1.0;
+   double mx = vdc::cell_magnetization[cell][tmid][0]*mm;
+   double my = vdc::cell_magnetization[cell][tmid][1]*mm;
+   double mz = vdc::cell_magnetization[cell][tmid][2]*mm;
+
+   double red = 0.0, green = 0.0, blue = 1.0;
+   vdc::rgb(mx, my, mz, red, green, blue);
+
+   const double cx = vdc::cell_coords[3*cell + 0] - vdc::system_centre[0];
+   const double cy = vdc::cell_coords[3*cell + 1] - vdc::system_centre[1];
+   const double cz = vdc::cell_coords[3*cell + 2] - vdc::system_centre[2];
+
+   out[0]  = cx;
+   out[1]  = cy;
+   out[2]  = cz;
+   out[3]  = cx - ctx->ux;
+   out[4]  = cy - ctx->uy;
+   out[5]  = cz - ctx->uz;
+   out[6]  = cx + ctx->ux;
+   out[7]  = cy + ctx->uy;
+   out[8]  = cz + ctx->uz;
+   out[9]  = mx;
+   out[10] = my;
+   out[11] = mz;
+   out[12] = red;
+   out[13] = green;
+   out[14] = blue;
+
+}
+
+struct spin_cells_inc_binary_ctx {
+   unsigned int tmid;
+   double ss;
+};
+
+void fill_spin_cells_inc_binary_row(size_t cell, double* out, void* vctx){
+
+   const spin_cells_inc_binary_ctx* ctx = static_cast<spin_cells_inc_binary_ctx*>(vctx);
+   const unsigned int tmid = ctx->tmid;
+
+   double mx = vdc::cell_magnetization[cell][tmid][0];
+   double my = vdc::cell_magnetization[cell][tmid][1];
+   double mz = vdc::cell_magnetization[cell][tmid][2];
+
+   double sx = mx, sy = my, sz = mz;
+   const double nm = std::sqrt(sx*sx + sy*sy + sz*sz);
+   if(nm > 1.0e-12){
+      sx /= nm;
+      sy /= nm;
+      sz /= nm;
+   }
+   else{
+      sx = 0.0;
+      sy = 0.0;
+      sz = 1.0;
+   }
+
+   double red = 0.0, green = 0.0, blue = 1.0;
+   vdc::rgb(sx, sy, sz, red, green, blue);
+
+   out[0] = vdc::cell_coords[3*cell + 0] - vdc::system_centre[0];
+   out[1] = vdc::cell_coords[3*cell + 1] - vdc::system_centre[1];
+   out[2] = vdc::cell_coords[3*cell + 2] - vdc::system_centre[2];
+   out[3] = sx;
+   out[4] = sy;
+   out[5] = sz;
+   out[6] = ctx->ss;
+   out[7] = red;
+   out[8] = green;
+   out[9] = blue;
+
+}
+
+//------------------------------------------------------------------------------
 // Function to output cells.inc file compatible with povray
 //------------------------------------------------------------------------------
 void output_cells_inc_file(unsigned int spin_file_id){
@@ -71,6 +157,49 @@ void output_cells_inc_file(unsigned int spin_file_id){
 	incpov_file_sstr << ".inc";
 	std::string incpov_file = incpov_file_sstr.str();
 
+   const unsigned int tmid = vdc::materials.size();
+   const double ux = vdc::cell_size[0]*0.5;
+   const double uy = vdc::cell_size[1]*0.5;
+   const double uz = vdc::cell_size[2]*0.5;
+
+   if(vdc::binary_dump){
+
+      const std::string bin_name = vdc::binary_filename(incpov_file);
+      if(vdc::verbose) std::cout << "   Writing povray file " << bin_name << "..." << std::flush;
+
+      cells_inc_binary_ctx ctx;
+      ctx.tmid = tmid;
+      ctx.ux = ux;
+      ctx.uy = uy;
+      ctx.uz = uz;
+
+      binary_dump_spec spec;
+      spec.kind = "povray-cells-inc";
+      spec.notes = "Numeric dump of cells-*.inc. Coordinates relative to system_centre. Box half-extents are cell_size/2. m is the total-magnetisation slot (index = n_materials). rgb from vdc colourmap. PoVRAY cells.pov/cells.ini remain text.";
+      spec.columns = {
+         {"cx", "Angstrom", "cell centre x relative to system_centre"},
+         {"cy", "Angstrom", "cell centre y relative to system_centre"},
+         {"cz", "Angstrom", "cell centre z relative to system_centre"},
+         {"xmin", "Angstrom", "cx - cell_size_x/2"},
+         {"ymin", "Angstrom", "cy - cell_size_y/2"},
+         {"zmin", "Angstrom", "cz - cell_size_z/2"},
+         {"xmax", "Angstrom", "cx + cell_size_x/2"},
+         {"ymax", "Angstrom", "cy + cell_size_y/2"},
+         {"zmax", "Angstrom", "cz + cell_size_z/2"},
+         {"mx", "1", "total cell mx"},
+         {"my", "1", "total cell my"},
+         {"mz", "1", "total cell mz"},
+         {"red", "1", "colour r in [0,1]"},
+         {"green", "1", "colour g in [0,1]"},
+         {"blue", "1", "colour b in [0,1]"}
+      };
+
+      vdc::output_binary_file(bin_name, vdc::total_cells, 15, fill_cells_inc_binary_row, &ctx, spec);
+
+      if(vdc::verbose) std::cout << "done!" << std::endl;
+      return;
+   }
+
    // output informative message to user
    if(vdc::verbose) std::cout << "   Writing povray file " << incpov_file << "..." << std::flush;
 
@@ -78,21 +207,15 @@ void output_cells_inc_file(unsigned int spin_file_id){
    std::ofstream incfile;
    incfile.open(incpov_file.c_str());
 
-   const unsigned int tmid = vdc::materials.size();
-
    //---------------------------------------------------------------------------
    // parallelise stream formatting for better performance
    // step 1: parallel formatted output to stringstream in memory
    // step 2: binary write of formatted text to output file (awesomely fast!)
    //---------------------------------------------------------------------------
-   #pragma omp parallel num_threads(4)
+   #pragma omp parallel
    {
 
       std::stringstream otext;
-
-      const double ux = vdc::cell_size[0]*0.5;
-      const double uy = vdc::cell_size[1]*0.5;
-      const double uz = vdc::cell_size[2]*0.5;
 
       // write to output text stream in parallel
       #pragma omp for
@@ -260,17 +383,48 @@ void output_spin_cells_inc_file(unsigned int spin_file_id){
    incpov_file_sstr << ".inc";
    std::string incpov_file = incpov_file_sstr.str();
 
-   if(vdc::verbose) std::cout << "   Writing povray file " << incpov_file << "..." << std::flush;
-
-   std::ofstream incfile;
-   incfile.open(incpov_file.c_str());
-
    const unsigned int tmid = vdc::materials.size();
    const double max_cell_dim = std::max(vdc::cell_size[0], std::max(vdc::cell_size[1], vdc::cell_size[2]));
    const double arrow_scale = (vdc::arrow_sizes.empty() ? 2.0 : vdc::arrow_sizes[0]);
    const double ss = 0.40 * max_cell_dim * (arrow_scale / 2.0);
 
-   #pragma omp parallel num_threads(4)
+   if(vdc::binary_dump){
+
+      const std::string bin_name = vdc::binary_filename(incpov_file);
+      if(vdc::verbose) std::cout << "   Writing povray file " << bin_name << "..." << std::flush;
+
+      spin_cells_inc_binary_ctx ctx;
+      ctx.tmid = tmid;
+      ctx.ss = ss;
+
+      binary_dump_spec spec;
+      spec.kind = "spin-cells-inc";
+      spec.notes = "Numeric dump of spins-*.inc for --spin-cells. Coordinates relative to system_centre. sx,sy,sz are the unit vector of total cell magnetisation (fallback 0,0,1 if |m|~0). ss is the PoVRAY arrow scale in Angstrom. spins.pov/spins.ini remain text.";
+      spec.columns = {
+         {"cx", "Angstrom", "cell centre x relative to system_centre"},
+         {"cy", "Angstrom", "cell centre y relative to system_centre"},
+         {"cz", "Angstrom", "cell centre z relative to system_centre"},
+         {"sx", "1", "unit mx"},
+         {"sy", "1", "unit my"},
+         {"sz", "1", "unit mz"},
+         {"ss", "Angstrom", "arrow scale"},
+         {"red", "1", "colour r in [0,1]"},
+         {"green", "1", "colour g in [0,1]"},
+         {"blue", "1", "colour b in [0,1]"}
+      };
+
+      vdc::output_binary_file(bin_name, vdc::total_cells, 10, fill_spin_cells_inc_binary_row, &ctx, spec);
+
+      if(vdc::verbose) std::cout << "done!" << std::endl;
+      return;
+   }
+
+   if(vdc::verbose) std::cout << "   Writing povray file " << incpov_file << "..." << std::flush;
+
+   std::ofstream incfile;
+   incfile.open(incpov_file.c_str());
+
+   #pragma omp parallel
    {
 
       std::stringstream otext;

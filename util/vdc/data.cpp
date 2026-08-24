@@ -33,6 +33,8 @@ namespace vdc{
    bool vtk      = false; // flag to specify vtk output
    bool ssc      = false; // flag to specify spin-spin correlation
    bool txt      = false; // flag to specify plain text output
+   bool binary_dump = false; // flag to dump data files as binary
+   int  omp_threads = 0;     // 0 = OpenMP default (used only with --binary)
    bool x_vector = false; // flag to specify direction of povray colouring
    bool z_vector = false; // flag to specify plane for povray colouring
 

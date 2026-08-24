@@ -16,6 +16,7 @@ GCC_CFLAGS=-O3 -std=c++0x -fopenmp -funroll-loops #-mavx2
 
 # Objects
 OBJECTS= \
+obj/binary.o \
 obj/cells.o \
 obj/colour.o \
 obj/colourmaps.o \
