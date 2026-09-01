@@ -44,6 +44,8 @@ void command( int argc, char* argv[] ){
 //    --binary - native-endian binary dump of data files
 //    --omp-threads N - OpenMP threads for --binary write path
 //    --cell-size = x - define cell size
+//    --stray-field - FFT stray field above the sample (needs FFTW3)
+//    --sf-height = h - observation height in nm (default 30)
 //    --povray-cells - generate renderable cell positions for povray
 //    --verbose [= true, false] - set verbose output to screen
 //    --colours = default, rwb [red-white-blue], oyb [orange-yellow-blue], jet, gs [grey-scale], cw [colour-wheel], <filename>
@@ -98,6 +100,25 @@ void command( int argc, char* argv[] ){
       else if (sw == "--povray-cells" ){ // povray cell data
          vdc::cells  = true; // calculate cell data
          vdc::povcells = true; // enable povray cells output
+      }
+      else if (sw == "--stray-field" ){
+         vdc::require_stray_field_support();
+         vdc::cells = true;         // reuse cell binning of spins / magnetisation
+         vdc::stray_field = true;
+      }
+      else if (sw == "--sf-height"){
+         check_arg(arg, argc, argv, temp_str, "Error - height in nm required for \'--sf-height\'." );
+         try {
+            vdc::sf_height_nm = std::stod(temp_str);
+         }
+         catch(...){
+            std::cerr << "Error - invalid value \'" << temp_str << "\' for --sf-height." << std::endl;
+            std::exit(EXIT_FAILURE);
+         }
+         if(vdc::sf_height_nm < 0.0){
+            std::cerr << "Error - --sf-height must be >= 0 nm." << std::endl;
+            std::exit(EXIT_FAILURE);
+         }
       }
       else if (sw == "--ssc" || sw == "--spin-spin-correlation"){ vdc::ssc = true; }
       //------------------------------------------------------------------------
@@ -243,6 +264,7 @@ void command( int argc, char* argv[] ){
       std::cerr << "\t\t --spins  Same as --text" << std::endl;
       std::cerr << "\t\t --cells  Data output in plain text format in cells" << std::endl;
       std::cerr << "\t\t --spin-cells  PoVRAY cell-scale spin arrows (use same --slice, --camera-*, --colourmap, etc. as --povray)" << std::endl;
+      std::cerr << "\t\t --stray-field  FFT stray field above the sample (requires FFTW3); set height with --sf-height <nm> (default 30)" << std::endl;
       std::cerr << "\t\t --ssc    Spin-spin correlation data in text format" << std::endl;
       std::cerr << "\t\t --binary Native-endian binary dump of data files; also writes vdc-binary.meta" << std::endl;
       std::cerr << "\t\t --omp-threads N  OpenMP threads for --binary write path (ignored without --binary)" << std::endl;

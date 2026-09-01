@@ -230,11 +230,15 @@ void write_binary_metadata(){
    out << "  n_materials: " << vdc::materials.size() << "\n";
    if(vdc::cells){
       out << "  cell_size_Angstrom: [" << vdc::cell_size[0] << ", " << vdc::cell_size[1] << ", " << vdc::cell_size[2] << "]\n";
+      out << "  cell_origin_Angstrom: [" << vdc::cell_origin[0] << ", " << vdc::cell_origin[1] << ", " << vdc::cell_origin[2] << "]\n";
       out << "  nx_cells: " << vdc::nx_cells << "\n";
       out << "  ny_cells: " << vdc::ny_cells << "\n";
       out << "  nz_cells: " << vdc::nz_cells << "\n";
       out << "  n_occupied_cells: " << vdc::total_cells << "\n";
       out << "  n_cell_material_slots: " << (1u + static_cast<unsigned int>(vdc::materials.size())) << "  # materials + total\n";
+   }
+   if(vdc::stray_field){
+      out << "  sf_height_nm: " << vdc::sf_height_nm << "\n";
    }
    out << "\n";
    out << "materials:\n";
@@ -268,6 +272,7 @@ void write_binary_metadata(){
    out << "  track: " << (vdc::track ? "true" : "false") << "\n";
    out << "  povray_cells: " << (vdc::povcells ? "true" : "false") << "\n";
    out << "  spin_cells: " << (vdc::povspincells ? "true" : "false") << "\n";
+   out << "  stray_field: " << (vdc::stray_field ? "true" : "false") << "\n";
    out << "  binary: true\n";
    out << "  omp_write_threads: " << vdc::omp_threads << "\n";
    out << "\n";

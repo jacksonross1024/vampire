@@ -37,6 +37,8 @@ namespace vdc{
    extern bool cells;
    extern bool cellsf;
    extern bool spin_cellsf;
+   extern bool stray_field;   // --stray-field: FFT stray field above the sample
+   extern double sf_height_nm; // --sf-height: height above sample top (nm); default 30
    extern bool vtk;
    extern bool ssc; // flag to specify spin-spin correlation
    extern bool txt;
@@ -154,6 +156,7 @@ namespace vdc{
 
    // cell data
    extern double cell_size[3]; // Angstroms
+   extern double cell_origin[3]; // Angstroms; lower corner of cell (0,0,0)
    extern unsigned int total_cells;
    extern unsigned int nx_cells;
    extern unsigned int ny_cells;
@@ -161,6 +164,7 @@ namespace vdc{
 
    extern std::vector<int> atom_cell_id;
    extern std::vector<int> num_atoms_in_cell;
+   extern std::vector<int> cell_ijk; // 3 * occupied cell: ix, iy, iz on the full nx,ny,nz grid
    extern std::vector<double> cell_coords;
    extern std::vector< std::vector< std::vector <double> > > cell_magnetization;
 
@@ -227,6 +231,10 @@ namespace vdc{
    // CELL
    void initialise_cells();
    void output_cell_file(unsigned int spin_file_id);
+
+   // STRAY FIELD (FFT; requires FFTW3)
+   void require_stray_field_support();
+   void output_stray_field_file(unsigned int spin_file_id);
 
    // Binary dump helper (write path only). Payload is native-endian:
    //   uint64_t n_rows, uint64_t n_cols, double data[n_rows * n_cols]

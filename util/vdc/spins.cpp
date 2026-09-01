@@ -64,6 +64,7 @@ void process_spins(){
 
       // output cells raw data
       if(vdc::cells) vdc::output_cell_file(file_id);
+      if(vdc::stray_field) vdc::output_stray_field_file(file_id);
       if(vdc::povspincells) vdc::output_spin_cells_inc_file(file_id);
 
       // output povray files

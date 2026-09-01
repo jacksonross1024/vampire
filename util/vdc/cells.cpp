@@ -68,6 +68,11 @@ namespace vdc{
       if( ny == 0 ) ny = 1;
       if( nz == 0 ) nz = 1;
 
+      // lab-frame origin of cell (0,0,0); cell_coords = origin + ijk * cell_size
+      vdc::cell_origin[0] = atoms_min[0];
+      vdc::cell_origin[1] = atoms_min[1];
+      vdc::cell_origin[2] = atoms_min[2];
+
       // save in vdc namespace for calculating newlines for gnuplot compatible 3d data
       vdc::nx_cells = nx;
       vdc::ny_cells = ny;
@@ -172,6 +177,14 @@ namespace vdc{
             vdc::cell_coords.push_back( init_cell_coords[3*cell + 0] + atoms_min[0] );
             vdc::cell_coords.push_back( init_cell_coords[3*cell + 1] + atoms_min[1] );
             vdc::cell_coords.push_back( init_cell_coords[3*cell + 2] + atoms_min[2] );
+
+            // original i,j,k on the full nx,ny,nz grid (cell = k + nz*(j + ny*i))
+            const unsigned int ix = cell / (ny * nz);
+            const unsigned int iy = (cell / nz) % ny;
+            const unsigned int iz = cell % nz;
+            vdc::cell_ijk.push_back(static_cast<int>(ix));
+            vdc::cell_ijk.push_back(static_cast<int>(iy));
+            vdc::cell_ijk.push_back(static_cast<int>(iz));
 
             // save number of atoms in final cell array
            

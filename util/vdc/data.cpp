@@ -30,6 +30,8 @@ namespace vdc{
    bool cells    = false; // flag to specify cells output
    bool cellsf   = false; // flag to output cell file
    bool spin_cellsf   = false; // flag to output cell file
+   bool stray_field = false; // flag to output FFT stray field above the sample
+   double sf_height_nm = 30.0; // height above sample top (nm); vdc coords are Angstroms
    bool vtk      = false; // flag to specify vtk output
    bool ssc      = false; // flag to specify spin-spin correlation
    bool txt      = false; // flag to specify plain text output
@@ -105,6 +107,7 @@ namespace vdc{
 
    // cell data
    double cell_size[3] = { 10.0, 10.0, 10.0 }; // Angstroms
+   double cell_origin[3] = { 0.0, 0.0, 0.0 }; // Angstroms
    unsigned int total_cells = 0;
    unsigned int nx_cells = 1;
    unsigned int ny_cells = 1;
@@ -112,6 +115,7 @@ namespace vdc{
 
    std::vector<int> atom_cell_id;
    std::vector<int> num_atoms_in_cell;
+   std::vector<int> cell_ijk;
    std::vector<double> cell_coords;
    std::vector<std::vector<std::vector <double>>> cell_magnetization;
 
