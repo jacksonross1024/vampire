@@ -198,9 +198,26 @@ void require_stray_field_support(){
 
 //------------------------------------------------------------------------------
 void output_stray_field_file(unsigned int spin_file_id){
-   const int nx = static_cast<int>(vdc::nx_cells);
-   const int ny = static_cast<int>(vdc::ny_cells);
-   const int nz = static_cast<int>(vdc::nz_cells);
+
+   if(vdc::total_cells == 0){
+      std::cerr << "Error - stray-field FFT: no occupied cells." << std::endl;
+      std::exit(EXIT_FAILURE);
+   }
+   if(vdc::cell_ijk.size() != 3ull * vdc::total_cells){
+      std::cerr << "Error - stray-field FFT: cell_ijk size does not match occupied cells." << std::endl;
+      std::exit(EXIT_FAILURE);
+   }
+
+   // FFT grid is the occupied ijk span (not 1+ceil nx_cells, which can add an empty strip)
+   int nx = 0, ny = 0, nz = 0;
+   for(unsigned int cell = 0; cell < vdc::total_cells; cell++){
+      const int ix = vdc::cell_ijk[3 * cell + 0];
+      const int iy = vdc::cell_ijk[3 * cell + 1];
+      const int iz = vdc::cell_ijk[3 * cell + 2];
+      if(ix + 1 > nx) nx = ix + 1;
+      if(iy + 1 > ny) ny = iy + 1;
+      if(iz + 1 > nz) nz = iz + 1;
+   }
 
    if(nx < 2 || ny < 2){
       std::cerr << "Error - stray-field FFT needs at least a 2x2 in-plane cell grid "
@@ -210,14 +227,6 @@ void output_stray_field_file(unsigned int spin_file_id){
    }
    if(nz < 1){
       std::cerr << "Error - stray-field FFT: no z cells." << std::endl;
-      std::exit(EXIT_FAILURE);
-   }
-   if(vdc::total_cells == 0){
-      std::cerr << "Error - stray-field FFT: no occupied cells." << std::endl;
-      std::exit(EXIT_FAILURE);
-   }
-   if(vdc::cell_ijk.size() != 3ull * vdc::total_cells){
-      std::cerr << "Error - stray-field FFT: cell_ijk size does not match occupied cells." << std::endl;
       std::exit(EXIT_FAILURE);
    }
 
@@ -243,9 +252,6 @@ void output_stray_field_file(unsigned int spin_file_id){
    const double z_obs_A = z_top_A + vdc::sf_height_nm * NM_TO_ANGSTROM;
    const double z_obs_m = z_obs_A * ANGSTROM_TO_M;
 
-   const unsigned int tmid = 1u + static_cast<unsigned int>(vdc::materials.size());
-   const unsigned int tot = tmid - 1u;
-
    const size_t nxy = static_cast<size_t>(nx) * static_cast<size_t>(ny);
    ensure_fft_workspace(nx, ny);
 
@@ -258,6 +264,7 @@ void output_stray_field_file(unsigned int spin_file_id){
    for(int j = 0; j < ny; j++) ky[static_cast<size_t>(j)] = k_component(j, ny, dy_m);
 
    const double inv_area = 1.0 / area_m2;
+   const unsigned int tmid = 1u + static_cast<unsigned int>(vdc::materials.size());
 
    for(int iz = 0; iz < nz; iz++){
 
@@ -273,16 +280,16 @@ void output_stray_field_file(unsigned int spin_file_id){
          const int iy = vdc::cell_ijk[3 * cell + 1];
          if(ix < 0 || iy < 0 || ix >= nx || iy >= ny) continue;
 
-         double sum_mu = 0.0; // Bohr magnetons in the cell (all materials)
-         for(unsigned int m = 0; m < tot; m++){
-            sum_mu += static_cast<double>(vdc::num_atoms_in_cell[cell * tmid + m]) * vdc::materials[m].moment;
+         // Cells file stores (mx,my,mz) of length |m| = |M|/sum(μ), plus |m| and n.
+         // True moment (μ_B) is n * μ * stored_m (do not multiply by |m| again).
+         double mux = 0.0, muy = 0.0, muz = 0.0;
+         for(unsigned int m = 0; m + 1 < tmid; m++){
+            const double nmu = static_cast<double>(vdc::num_atoms_in_cell[cell * tmid + m])
+                             * vdc::materials[m].moment;
+            mux += vdc::cell_magnetization[cell][m][0] * nmu;
+            muy += vdc::cell_magnetization[cell][m][1] * nmu;
+            muz += vdc::cell_magnetization[cell][m][2] * nmu;
          }
-         if(sum_mu <= 0.0) continue;
-
-         // stored mx = M_x / sum_mu after output_cell_file normalisation
-         const double mux = vdc::cell_magnetization[cell][tot][0] * sum_mu;
-         const double muy = vdc::cell_magnetization[cell][tot][1] * sum_mu;
-         const double muz = vdc::cell_magnetization[cell][tot][2] * sum_mu;
 
          const size_t id = static_cast<size_t>(ix) * static_cast<size_t>(ny) + static_cast<size_t>(iy);
          g_fft.px[id][0] += mux * MU_B * inv_area;
@@ -394,7 +401,7 @@ void output_stray_field_file(unsigned int spin_file_id){
 
       binary_dump_spec spec;
       spec.kind = "stray-field";
-      spec.notes = "2D FFT magnetostatic stray field in a vacuum plane above the sample. One row per in-plane cell (full nx*ny grid, empty cells included as zero moment). Coordinates are lab-frame cell centres in Angstroms. B is vacuum flux density in tesla. Height is --sf-height nm above the top face of the highest occupied cell.";
+      spec.notes = "2D FFT magnetostatic stray field in a vacuum plane above the sample. One row per in-plane cell on the occupied nx*ny grid. Dipole moment per cell is reconstructed from the cells magnetisation: n_spins * mu_spin * stored (mx,my,mz) in mu_B (stored vector already has length |m|; |m| is not applied again). Each z-slice is a separate sheet; k=0 (uniform net M) is set to zero. Coordinates are lab-frame cell centres in Angstroms. B is vacuum flux density in tesla.";
       spec.columns = {
          {"x", "Angstrom", "in-plane cell centre x"},
          {"y", "Angstrom", "in-plane cell centre y"},
@@ -437,8 +444,8 @@ void output_stray_field_file(unsigned int spin_file_id){
    }
 
    if(vdc::verbose){
-      std::cout << "   stray-field grid " << nx << " x " << ny
-                << ", z_obs = " << z_obs_A << " A ("
+      std::cout << "   stray-field grid " << nx << " x " << ny << " x " << nz
+                << " (occupied ijk span), z_obs = " << z_obs_A << " A ("
                 << vdc::sf_height_nm << " nm above sample top)\n";
       std::cout << "   B range (T): x [" << bxmin << ", " << bxmax
                 << "], y [" << bymin << ", " << bymax
