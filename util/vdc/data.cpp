@@ -32,6 +32,7 @@ namespace vdc{
    bool spin_cellsf   = false; // flag to output cell file
    bool stray_field = false; // flag to output FFT stray field above the sample
    double sf_height_nm = 30.0; // height above sample top (nm); vdc coords are Angstroms
+   int sf_pad = 2;            // FFT zero-padding; 1 = periodic tile, 2 = finite flake (default)
    bool vtk      = false; // flag to specify vtk output
    bool ssc      = false; // flag to specify spin-spin correlation
    bool txt      = false; // flag to specify plain text output

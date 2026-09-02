@@ -239,6 +239,7 @@ void write_binary_metadata(){
    }
    if(vdc::stray_field){
       out << "  sf_height_nm: " << vdc::sf_height_nm << "\n";
+      out << "  sf_pad: " << vdc::sf_pad << "\n";
    }
    out << "\n";
    out << "materials:\n";

@@ -46,6 +46,7 @@ void command( int argc, char* argv[] ){
 //    --cell-size = x - define cell size
 //    --stray-field - FFT stray field above the sample (needs FFTW3)
 //    --sf-height = h - observation height in nm (default 30)
+//    --sf-pad = n - FFT zero-padding factor (1 = periodic, default 2)
 //    --povray-cells - generate renderable cell positions for povray
 //    --verbose [= true, false] - set verbose output to screen
 //    --colours = default, rwb [red-white-blue], oyb [orange-yellow-blue], jet, gs [grey-scale], cw [colour-wheel], <filename>
@@ -117,6 +118,20 @@ void command( int argc, char* argv[] ){
          }
          if(vdc::sf_height_nm < 0.0){
             std::cerr << "Error - --sf-height must be >= 0 nm." << std::endl;
+            std::exit(EXIT_FAILURE);
+         }
+      }
+      else if (sw == "--sf-pad"){
+         check_arg(arg, argc, argv, temp_str, "Error - integer padding factor required for \'--sf-pad\'." );
+         try {
+            vdc::sf_pad = std::stoi(temp_str);
+         }
+         catch(...){
+            std::cerr << "Error - invalid value \'" << temp_str << "\' for --sf-pad." << std::endl;
+            std::exit(EXIT_FAILURE);
+         }
+         if(vdc::sf_pad < 1){
+            std::cerr << "Error - --sf-pad must be >= 1 (1 = periodic, 2 = finite flake)." << std::endl;
             std::exit(EXIT_FAILURE);
          }
       }
@@ -264,7 +279,7 @@ void command( int argc, char* argv[] ){
       std::cerr << "\t\t --spins  Same as --text" << std::endl;
       std::cerr << "\t\t --cells  Data output in plain text format in cells" << std::endl;
       std::cerr << "\t\t --spin-cells  PoVRAY cell-scale spin arrows (use same --slice, --camera-*, --colourmap, etc. as --povray)" << std::endl;
-      std::cerr << "\t\t --stray-field  FFT stray field above the sample (requires FFTW3); set height with --sf-height <nm> (default 30)" << std::endl;
+      std::cerr << "\t\t --stray-field  FFT stray field above the sample (requires FFTW3); --sf-height <nm> (default 30), --sf-pad <n> (default 2)" << std::endl;
       std::cerr << "\t\t --ssc    Spin-spin correlation data in text format" << std::endl;
       std::cerr << "\t\t --binary Native-endian binary dump of data files; also writes vdc-binary.meta" << std::endl;
       std::cerr << "\t\t --omp-threads N  OpenMP threads for --binary write path (ignored without --binary)" << std::endl;

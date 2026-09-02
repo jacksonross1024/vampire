@@ -39,6 +39,7 @@ namespace vdc{
    extern bool spin_cellsf;
    extern bool stray_field;   // --stray-field: FFT stray field above the sample
    extern double sf_height_nm; // --sf-height: height above sample top (nm); default 30
+   extern int sf_pad;         // --sf-pad: FFT zero-padding factor; 1 = periodic, default 2
    extern bool vtk;
    extern bool ssc; // flag to specify spin-spin correlation
    extern bool txt;

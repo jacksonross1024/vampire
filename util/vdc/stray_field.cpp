@@ -12,21 +12,19 @@
 // FFT magnetostatic stray field in a vacuum plane above the sample.
 //
 // Spins are binned with the existing vdc cell algorithm (cell magnetisation,
-// not atomistic coordinates). Each occupied z-slice of the cell grid is a
-// surface-dipole sheet. The in-plane field map at
+// not atomistic coordinates). Each occupied z-slice is a sheet of point
+// dipoles at cell centres. The in-plane field map at
 //
 //    z_obs = z_sample_top + --sf-height
 //
-// is obtained from the 2D k-space continuation (same kernel as
-// util/vdc/dipole_stray_fft.py):
+// is the discrete dipole sum
 //
-//   Hx = -mu0 * sum_l exp(-k |z_obs-z_l|) * ( (kx^2 px + kx ky py)/k^2 + kx pz / k )
-//   Hy = -mu0 * sum_l exp(-k |z_obs-z_l|) * ( (kx ky px + ky^2 py)/k^2 + ky pz / k )
-//   Hz = -mu0 * sum_l exp(-k |z_obs-z_l|) * ( (kx px + ky py)/k + k pz )
+//    B(r) = (μ0/4π) Σ_src [ 3(m·R)R - m R² ] / R⁵
 //
-// with the k=0 mode set to zero. Output is B = mu0 H in tesla. Coordinates
-// in the file are Angstroms (vdc default); --sf-height is in nanometres
-// (default 30 nm = 300 Å).
+// evaluated by 2D FFT convolution of that kernel. Default --sf-pad 2
+// zero-pads the in-plane grid so a finite flake is not tiled (pad 1 is
+// periodic). Output is B in tesla. Coordinates in the file are Angstroms
+// (vdc default); --sf-height is in nanometres (default 30 nm = 300 Å).
 //
 //------------------------------------------------------------------------------
 
@@ -88,16 +86,18 @@ void output_stray_field_file(unsigned int spin_file_id){
 
 namespace {
 
-const double PI = 3.14159265358979323846;
-const double MU0 = 4.0 * PI * 1.0e-7;          // H/m
+const double MU0_4PI = 1.0e-7;                 // T m / A  (μ0/4π)
 const double MU_B = 9.2740100783e-24;          // J/T = A m^2
 const double ANGSTROM_TO_M = 1.0e-10;
 const double NM_TO_ANGSTROM = 10.0;
 
-double k_component(int i, int n, double delta_m){
-   // 2π * numpy.fft.fftfreq(n, d=delta_m)
-   const int ii = (i < (n + 1) / 2) ? i : i - n;
-   return 2.0 * PI * static_cast<double>(ii) / (static_cast<double>(n) * delta_m);
+void cplx_fma(double* acc, const double* n, const double* m){
+   acc[0] += n[0] * m[0] - n[1] * m[1];
+   acc[1] += n[0] * m[1] + n[1] * m[0];
+}
+
+int fft_index(int i, int n){
+   return (i < (n + 1) / 2) ? i : i - n;
 }
 
 struct stray_fft_workspace {
@@ -108,13 +108,14 @@ struct stray_fft_workspace {
    fftw_complex* px;
    fftw_complex* py;
    fftw_complex* pz;
+   fftw_complex* scratch;
    fftw_complex* Hx;
    fftw_complex* Hy;
    fftw_complex* Hz;
 };
 
 stray_fft_workspace g_fft = {
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 void free_fft_workspace(){
@@ -124,12 +125,13 @@ void free_fft_workspace(){
    if(g_fft.px) fftw_free(g_fft.px);
    if(g_fft.py) fftw_free(g_fft.py);
    if(g_fft.pz) fftw_free(g_fft.pz);
+   if(g_fft.scratch) fftw_free(g_fft.scratch);
    if(g_fft.Hx) fftw_free(g_fft.Hx);
    if(g_fft.Hy) fftw_free(g_fft.Hy);
    if(g_fft.Hz) fftw_free(g_fft.Hz);
    g_fft.fwd = 0;
    g_fft.bwd = 0;
-   g_fft.px = g_fft.py = g_fft.pz = 0;
+   g_fft.px = g_fft.py = g_fft.pz = g_fft.scratch = 0;
    g_fft.Hx = g_fft.Hy = g_fft.Hz = 0;
    g_fft.nx = 0;
    g_fft.ny = 0;
@@ -148,11 +150,12 @@ void ensure_fft_workspace(int nx, int ny){
    g_fft.px = static_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * nxy));
    g_fft.py = static_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * nxy));
    g_fft.pz = static_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * nxy));
+   g_fft.scratch = static_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * nxy));
    g_fft.Hx = static_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * nxy));
    g_fft.Hy = static_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * nxy));
    g_fft.Hz = static_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * nxy));
 
-   if(!g_fft.px || !g_fft.py || !g_fft.pz || !g_fft.Hx || !g_fft.Hy || !g_fft.Hz){
+   if(!g_fft.px || !g_fft.py || !g_fft.pz || !g_fft.scratch || !g_fft.Hx || !g_fft.Hy || !g_fft.Hz){
       std::cerr << "Error - FFTW malloc failed for stray-field grid " << nx << " x " << ny << std::endl;
       std::exit(EXIT_FAILURE);
    }
@@ -252,25 +255,33 @@ void output_stray_field_file(unsigned int spin_file_id){
    const double z_obs_A = z_top_A + vdc::sf_height_nm * NM_TO_ANGSTROM;
    const double z_obs_m = z_obs_A * ANGSTROM_TO_M;
 
+   const int pad = vdc::sf_pad;
+   if(pad < 1 || nx > 100000000 / pad || ny > 100000000 / pad){
+      std::cerr << "Error - stray-field FFT: --sf-pad " << pad
+                << " is too large for grid " << nx << " x " << ny << "." << std::endl;
+      std::exit(EXIT_FAILURE);
+   }
+   const int nxfft = nx * pad;
+   const int nyfft = ny * pad;
    const size_t nxy = static_cast<size_t>(nx) * static_cast<size_t>(ny);
-   ensure_fft_workspace(nx, ny);
+   const size_t nxy_fft = static_cast<size_t>(nxfft) * static_cast<size_t>(nyfft);
+   ensure_fft_workspace(nxfft, nyfft);
 
-   zero_cplx(g_fft.Hx, nxy);
-   zero_cplx(g_fft.Hy, nxy);
-   zero_cplx(g_fft.Hz, nxy);
+   zero_cplx(g_fft.Hx, nxy_fft);
+   zero_cplx(g_fft.Hy, nxy_fft);
+   zero_cplx(g_fft.Hz, nxy_fft);
 
-   std::vector<double> kx(static_cast<size_t>(nx)), ky(static_cast<size_t>(ny));
-   for(int i = 0; i < nx; i++) kx[static_cast<size_t>(i)] = k_component(i, nx, dx_m);
-   for(int j = 0; j < ny; j++) ky[static_cast<size_t>(j)] = k_component(j, ny, dy_m);
-
-   const double inv_area = 1.0 / area_m2;
    const unsigned int tmid = 1u + static_cast<unsigned int>(vdc::materials.size());
+
+   auto fft_id = [&](int ix, int iy) -> size_t {
+      return static_cast<size_t>(ix) * static_cast<size_t>(nyfft) + static_cast<size_t>(iy);
+   };
 
    for(int iz = 0; iz < nz; iz++){
 
-      zero_cplx(g_fft.px, nxy);
-      zero_cplx(g_fft.py, nxy);
-      zero_cplx(g_fft.pz, nxy);
+      zero_cplx(g_fft.px, nxy_fft);
+      zero_cplx(g_fft.py, nxy_fft);
+      zero_cplx(g_fft.pz, nxy_fft);
 
       bool layer_used = false;
       for(unsigned int cell = 0; cell < vdc::total_cells; cell++){
@@ -280,8 +291,7 @@ void output_stray_field_file(unsigned int spin_file_id){
          const int iy = vdc::cell_ijk[3 * cell + 1];
          if(ix < 0 || iy < 0 || ix >= nx || iy >= ny) continue;
 
-         // Cells file stores (mx,my,mz) of length |m| = |M|/sum(μ), plus |m| and n.
-         // True moment (μ_B) is n * μ * stored_m (do not multiply by |m| again).
+         // Stored (mx,my,mz) already has length |m|. Moment (μ_B) = n * μ_spin * m.
          double mux = 0.0, muy = 0.0, muz = 0.0;
          for(unsigned int m = 0; m + 1 < tmid; m++){
             const double nmu = static_cast<double>(vdc::num_atoms_in_cell[cell * tmid + m])
@@ -291,69 +301,84 @@ void output_stray_field_file(unsigned int spin_file_id){
             muz += vdc::cell_magnetization[cell][m][2] * nmu;
          }
 
-         const size_t id = static_cast<size_t>(ix) * static_cast<size_t>(ny) + static_cast<size_t>(iy);
-         g_fft.px[id][0] += mux * MU_B * inv_area;
-         g_fft.py[id][0] += muy * MU_B * inv_area;
-         g_fft.pz[id][0] += muz * MU_B * inv_area;
+         const size_t id = fft_id(ix, iy);
+         g_fft.px[id][0] += mux * MU_B;
+         g_fft.py[id][0] += muy * MU_B;
+         g_fft.pz[id][0] += muz * MU_B;
          layer_used = true;
       }
       if(!layer_used) continue;
 
       const double z_layer_A = vdc::cell_origin[2] + (static_cast<double>(iz) + 0.5) * dz_A;
-      const double z_layer_m = z_layer_A * ANGSTROM_TO_M;
-      const double abs_dz = std::fabs(z_obs_m - z_layer_m);
+      const double dz = z_obs_m - z_layer_A * ANGSTROM_TO_M;
 
       fftw_execute_dft(g_fft.fwd, g_fft.px, g_fft.px);
       fftw_execute_dft(g_fft.fwd, g_fft.py, g_fft.py);
       fftw_execute_dft(g_fft.fwd, g_fft.pz, g_fft.pz);
 
-      #pragma omp parallel for
-      for(int ix = 0; ix < nx; ix++){
-         for(int iy = 0; iy < ny; iy++){
-            if(ix == 0 && iy == 0) continue;
-
-            const size_t id = static_cast<size_t>(ix) * static_cast<size_t>(ny) + static_cast<size_t>(iy);
-            const double kx_v = kx[static_cast<size_t>(ix)];
-            const double ky_v = ky[static_cast<size_t>(iy)];
-            const double k2 = kx_v * kx_v + ky_v * ky_v;
-            const double k = std::sqrt(k2);
-            const double k_safe = (k > 1.0e-30) ? k : 1.0e-30;
-            const double inv_k = 1.0 / k_safe;
-            const double inv_k2 = 1.0 / ((k2 > 1.0e-60) ? k2 : 1.0e-60);
-            const double decay = std::exp(-k_safe * abs_dz);
-
-            const double px_re = g_fft.px[id][0], px_im = g_fft.px[id][1];
-            const double py_re = g_fft.py[id][0], py_im = g_fft.py[id][1];
-            const double pz_re = g_fft.pz[id][0], pz_im = g_fft.pz[id][1];
-
-            const double hx_re = (kx_v * kx_v * px_re + kx_v * ky_v * py_re) * inv_k2 + (kx_v * pz_re) * inv_k;
-            const double hx_im = (kx_v * kx_v * px_im + kx_v * ky_v * py_im) * inv_k2 + (kx_v * pz_im) * inv_k;
-            const double hy_re = (kx_v * ky_v * px_re + ky_v * ky_v * py_re) * inv_k2 + (ky_v * pz_re) * inv_k;
-            const double hy_im = (kx_v * ky_v * px_im + ky_v * ky_v * py_im) * inv_k2 + (ky_v * pz_im) * inv_k;
-            const double hz_re = (kx_v * px_re + ky_v * py_re) * inv_k + k_safe * pz_re;
-            const double hz_im = (kx_v * px_im + ky_v * py_im) * inv_k + k_safe * pz_im;
-
-            const double s = -MU0 * decay;
-            g_fft.Hx[id][0] += s * hx_re;
-            g_fft.Hx[id][1] += s * hx_im;
-            g_fft.Hy[id][0] += s * hy_re;
-            g_fft.Hy[id][1] += s * hy_im;
-            g_fft.Hz[id][0] += s * hz_re;
-            g_fft.Hz[id][1] += s * hz_im;
+      auto apply_kernel = [&](int which){
+         // which: 0 Nxx, 1 Nxy, 2 Nxz, 3 Nyy, 4 Nyz, 5 Nzz
+         zero_cplx(g_fft.scratch, nxy_fft);
+         #pragma omp parallel for
+         for(int ix = 0; ix < nxfft; ix++){
+            const double x = static_cast<double>(fft_index(ix, nxfft)) * dx_m;
+            for(int iy = 0; iy < nyfft; iy++){
+               const double y = static_cast<double>(fft_index(iy, nyfft)) * dy_m;
+               const double r2 = x * x + y * y + dz * dz;
+               const size_t id = fft_id(ix, iy);
+               if(r2 < 1.0e-60) continue;
+               const double r = std::sqrt(r2);
+               const double r5 = r2 * r2 * r;
+               const double pref = MU0_4PI / r5;
+               double val = 0.0;
+               switch(which){
+                  case 0: val = pref * (3.0 * x * x - r2); break;
+                  case 1: val = pref * (3.0 * x * y); break;
+                  case 2: val = pref * (3.0 * x * dz); break;
+                  case 3: val = pref * (3.0 * y * y - r2); break;
+                  case 4: val = pref * (3.0 * y * dz); break;
+                  default: val = pref * (3.0 * dz * dz - r2); break;
+               }
+               g_fft.scratch[id][0] = val;
+            }
          }
-      }
-   }
+         fftw_execute_dft(g_fft.fwd, g_fft.scratch, g_fft.scratch);
+         for(size_t id = 0; id < nxy_fft; id++){
+            const double* n = g_fft.scratch[id];
+            switch(which){
+               case 0:
+                  cplx_fma(g_fft.Hx[id], n, g_fft.px[id]);
+                  break;
+               case 1:
+                  cplx_fma(g_fft.Hx[id], n, g_fft.py[id]);
+                  cplx_fma(g_fft.Hy[id], n, g_fft.px[id]);
+                  break;
+               case 2:
+                  cplx_fma(g_fft.Hx[id], n, g_fft.pz[id]);
+                  cplx_fma(g_fft.Hz[id], n, g_fft.px[id]);
+                  break;
+               case 3:
+                  cplx_fma(g_fft.Hy[id], n, g_fft.py[id]);
+                  break;
+               case 4:
+                  cplx_fma(g_fft.Hy[id], n, g_fft.pz[id]);
+                  cplx_fma(g_fft.Hz[id], n, g_fft.py[id]);
+                  break;
+               default:
+                  cplx_fma(g_fft.Hz[id], n, g_fft.pz[id]);
+                  break;
+            }
+         }
+      };
 
-   // k = 0: no net monopole / DC stray field
-   g_fft.Hx[0][0] = 0.0; g_fft.Hx[0][1] = 0.0;
-   g_fft.Hy[0][0] = 0.0; g_fft.Hy[0][1] = 0.0;
-   g_fft.Hz[0][0] = 0.0; g_fft.Hz[0][1] = 0.0;
+      for(int which = 0; which < 6; which++) apply_kernel(which);
+   }
 
    fftw_execute_dft(g_fft.bwd, g_fft.Hx, g_fft.Hx);
    fftw_execute_dft(g_fft.bwd, g_fft.Hy, g_fft.Hy);
    fftw_execute_dft(g_fft.bwd, g_fft.Hz, g_fft.Hz);
 
-   const double inv_n = 1.0 / static_cast<double>(nxy);
+   const double inv_n = 1.0 / static_cast<double>(nxy_fft);
    std::vector<double> bx(nxy), by(nxy), bz(nxy), xA(nxy), yA(nxy);
 
    double bxmin = 1.0e300, bxmax = -1.0e300;
@@ -364,11 +389,11 @@ void output_stray_field_file(unsigned int spin_file_id){
       const double x = vdc::cell_origin[0] + (static_cast<double>(ix) + 0.5) * dx_A;
       for(int iy = 0; iy < ny; iy++){
          const size_t id = static_cast<size_t>(ix) * static_cast<size_t>(ny) + static_cast<size_t>(iy);
+         const size_t idf = fft_id(ix, iy);
          const double y = vdc::cell_origin[1] + (static_cast<double>(iy) + 0.5) * dy_A;
-         // Kernel already includes mu0 and is B in tesla; take real part
-         const double Bx = g_fft.Hx[id][0] * inv_n;
-         const double By = g_fft.Hy[id][0] * inv_n;
-         const double Bz = g_fft.Hz[id][0] * inv_n;
+         const double Bx = g_fft.Hx[idf][0] * inv_n;
+         const double By = g_fft.Hy[idf][0] * inv_n;
+         const double Bz = g_fft.Hz[idf][0] * inv_n;
          xA[id] = x;
          yA[id] = y;
          bx[id] = Bx;
@@ -401,7 +426,7 @@ void output_stray_field_file(unsigned int spin_file_id){
 
       binary_dump_spec spec;
       spec.kind = "stray-field";
-      spec.notes = "2D FFT magnetostatic stray field in a vacuum plane above the sample. One row per in-plane cell on the occupied nx*ny grid. Dipole moment per cell is reconstructed from the cells magnetisation: n_spins * mu_spin * stored (mx,my,mz) in mu_B (stored vector already has length |m|; |m| is not applied again). Each z-slice is a separate sheet; k=0 (uniform net M) is set to zero. Coordinates are lab-frame cell centres in Angstroms. B is vacuum flux density in tesla.";
+      spec.notes = "2D FFT discrete-dipole convolution in a vacuum plane above the sample. One row per in-plane cell on the occupied nx*ny grid. Dipole moment per cell is n_spins * mu_spin * stored (mx,my,mz) in mu_B (stored vector already has length |m|; |m| is not applied again), converted to A m^2. Each z-slice is a sheet of point dipoles at cell centres; B = (mu0/4pi) Sum [3(m.R)R - m R^2]/R^5. In-plane zero-padding (sf_pad, default 2) avoids periodic tiling of a finite flake; pad 1 is periodic. Coordinates are lab-frame cell centres in Angstroms. B is vacuum flux density in tesla.";
       spec.columns = {
          {"x", "Angstrom", "in-plane cell centre x"},
          {"y", "Angstrom", "in-plane cell centre y"},
@@ -422,13 +447,15 @@ void output_stray_field_file(unsigned int spin_file_id){
       std::ofstream ofile;
       ofile.open(sf_file_name.c_str());
       ofile << std::setprecision(10);
-      ofile << "# VDC stray field (2D FFT magnetostatic continuation)\n";
+      ofile << "# VDC stray field (2D FFT discrete-dipole convolution)\n";
       ofile << "# height_above_sample_nm = " << vdc::sf_height_nm << "\n";
       ofile << "# z_sample_top_Angstrom = " << z_top_A << "\n";
       ofile << "# z_obs_Angstrom = " << z_obs_A << "\n";
       ofile << "# cell_size_Angstrom = " << dx_A << " " << dy_A << " " << dz_A << "\n";
       ofile << "# grid_nx ny nz = " << nx << " " << ny << " " << nz << "\n";
-      ofile << "# B in tesla; x,y,z in Angstrom (vdc default). Blank line after each y-row for gnuplot.\n";
+      ofile << "# sf_pad = " << pad << " (1 = periodic, >=2 = zero-padded finite flake)\n";
+      ofile << "# fft_grid_nx ny = " << nxfft << " " << nyfft << "\n";
+      ofile << "# B = (mu0/4pi) Sum [3(m.R)R - m R^2]/R^5 at cell centres; tesla. x,y,z in Angstrom. Blank line after each y-row for gnuplot.\n";
       ofile << "#x\ty\tz\tBx\tBy\tBz\n";
 
       for(int iy = 0; iy < ny; iy++){
@@ -445,7 +472,8 @@ void output_stray_field_file(unsigned int spin_file_id){
 
    if(vdc::verbose){
       std::cout << "   stray-field grid " << nx << " x " << ny << " x " << nz
-                << " (occupied ijk span), z_obs = " << z_obs_A << " A ("
+                << " (occupied ijk span), fft pad " << pad << " -> " << nxfft << " x " << nyfft
+                << ", z_obs = " << z_obs_A << " A ("
                 << vdc::sf_height_nm << " nm above sample top)\n";
       std::cout << "   B range (T): x [" << bxmin << ", " << bxmax
                 << "], y [" << bymin << ", " << bymax
