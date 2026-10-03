@@ -20,6 +20,7 @@ namespace constants{
 
    // fundamental constants
    const double muB = 9.27400999e-24; // Bohr Magneton (Joules / Tesla)
+   const double e   = 1.60217662e-19; // Elementary charge (Coulombs)
    const double kB  = 1.3806503e-23;  // Boltzmann constant (Joules / Kelvin)
 
    // derived constants

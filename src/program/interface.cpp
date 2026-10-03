@@ -16,6 +16,7 @@
 // Vampire headers
 #include "program.hpp"
 #include "errors.hpp"
+#include "sim.hpp"
 #include "vio.hpp"
 
 // program module headers
@@ -130,6 +131,11 @@ namespace program{
             program::program = 18;
             return true;
          }
+         test="laser-electrical-pulse";
+         if(value==test){
+            program::program = 19;
+            return true;
+         }
          test="diagnostic-boltzmann";
          if(value==test){
             program::program=50;
@@ -188,6 +194,7 @@ namespace program{
             std::cerr << "\t\"exchange-stiffness\"" << std::endl;
             std::cerr << "\t\"field-cool\"" << std::endl;
             std::cerr << "\t\"field-pulse\"" << std::endl;
+            std::cerr << "\t\"laser-electrical-pulse\"" << std::endl;
             std::cerr << "\t\"laser-pulse\"" << std::endl;
             std::cerr << "\t\"localised-field-cool\"" << std::endl;
             std::cerr << "\t\"localised-temperature-pulse\"" << std::endl;
@@ -278,6 +285,55 @@ namespace program{
          vin::check_for_valid_positive_value(pt, word, line, prefix, unit, "time", 0.0, 1.0,"input","0.0 - 1s");
          // save sanitized value
          program::internal::field_pulse_time = pt;
+         return true;
+      }
+      //-------------------------------------------------------------------
+      // Fraction of the 800 nm excited sheet charge carried by the Jc lobe.
+      // sim:laser-pulse-power is the fluence (J/m^2) that sets that sheet charge.
+      //-------------------------------------------------------------------
+      test = "laser-electrical-eta-t";
+      if(word == test){
+         double eta_t = atof(value.c_str());
+         vin::check_for_valid_value(eta_t, word, line, prefix, unit, "none", 0.0, 1.0,"input","0 - 1");
+         program::internal::laser_electrical_eta_t = eta_t;
+         return true;
+      }
+      //-------------------------------------------------------------------
+      test = "laser-electrical-hot-electron-lifetime";
+      if(word == test){
+         double tau_s = atof(value.c_str());
+         vin::check_for_valid_positive_value(tau_s, word, line, prefix, unit, "time", 1.0e-18, 1.0,"input","1 attosecond - 1 s");
+         program::internal::laser_electrical_tau_s = tau_s;
+         return true;
+      }
+      //-------------------------------------------------------------------
+      test = "laser-electrical-diffusion-time";
+      if(word == test){
+         double lambda = atof(value.c_str());
+         vin::check_for_valid_positive_value(lambda, word, line, prefix, unit, "time", 1.0e-18, 1.0,"input","1 attosecond - 1 s");
+         program::internal::laser_electrical_lambda = lambda;
+         return true;
+      }
+      //-------------------------------------------------------------------
+      test = "laser-electrical-current-ref";
+      if(word == test){
+         double jref = atof(value.c_str());
+         vin::check_for_valid_value(jref, word, line, prefix, unit, "none", 0.0, 1.0e40,"input","0.0 - 1.0E40 A/m^2");
+         program::internal::laser_electrical_current_ref = jref;
+         return true;
+      }
+      //-------------------------------------------------------------------
+      test = "laser-electrical-enable-temperature";
+      if(word == test){
+         program::internal::laser_electrical_enable_temperature = vin::check_for_valid_bool(value, word, line, prefix, "input");
+         return true;
+      }
+      //-------------------------------------------------------------------
+      test = "laser-electrical-pulse-width";
+      if(word == test){
+         double pt = atof(value.c_str());
+         vin::check_for_valid_value(pt, word, line, prefix, unit, "time", 1.0e-18, 1.0,"input","1 attosecond - 1 s");
+         sim::pump_time = pt;
          return true;
       }
       //--------------------------------------------------------------------

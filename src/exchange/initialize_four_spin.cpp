@@ -25,7 +25,7 @@ namespace internal{
 
 void initialize_four_spin_exchange(){
    // Stub - four-spin exchange not implemented in this branch
-   return;
+      return;
 }
 
 } // end of internal namespace

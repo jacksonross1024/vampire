@@ -13,6 +13,7 @@
 // Vampire headers
 #include "ltmp.hpp"
 #include "vmpi.hpp"
+#include "sim.hpp"
 
 // Local temperature pulse headers
 #include "internal.hpp"
@@ -117,7 +118,7 @@ namespace ltmp{
 
          // only output on root process
          if(vmpi::my_rank==0){
-            vertical_temperature_file << temperature_profile_output_counter << "\t";
+            vertical_temperature_file << sim::time * ltmp::internal::dt * 1.0e12 << "\t";
             for(unsigned int cell=0; cell<root_temperature_array.size()/2; ++cell){
                vertical_temperature_file << root_temperature_array[2*cell+0]*root_temperature_array[2*cell+0] << "\t"; //Te
                vertical_temperature_file << root_temperature_array[2*cell+1]*root_temperature_array[2*cell+1] << "\t"; // Tp

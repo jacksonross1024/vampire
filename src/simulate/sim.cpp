@@ -483,6 +483,13 @@ int run(){
 	  		}
 	  		program::electrical_pulse();
 	  		break;
+		case 19:
+	  		if(vmpi::my_rank==0){
+	    		std::cout << "laser-electrical-pulse..." << std::endl;
+	    		zlog << "laser-electrical-pulse..." << std::endl;
+	  		}
+	  		program::laser_electrical_pulse();
+	  		break;
 		case 18:
 			if(vmpi::my_rank==0){
 				std::cout << "timestep scaling..." << std::endl;
@@ -635,6 +642,9 @@ int integrate(uint64_t n_steps){
 
 	// Check for calling of function
 	if(err::check==true) std::cout << "sim::integrate has been called" << std::endl;
+
+	// Spin-current settle with magnetisation frozen, before any LLG step.
+	st::equilibrate_spin_currents_1d();
 
 	// Call serial or parallell depending at compile time
 	#ifdef MPICF

@@ -502,6 +502,21 @@ namespace vout{
       stream << generic_output_double("frac_voltage", program::fractional_electric_field_strength, header);
    }
 
+   // Output Function 89
+   void laser_electrical_current(std::ostream& stream, bool header){
+      stream << generic_output_double("laser_electrical_Jc", program::laser_electrical_current, header);
+   }
+
+   // Output Function 90
+   void laser_electrical_S(std::ostream& stream, bool header){
+      stream << generic_output_double("laser_electrical_S", program::laser_electrical_S, header);
+   }
+
+   // Output Function 91
+   void laser_electrical_B(std::ostream& stream, bool header){
+      stream << generic_output_double("laser_electrical_B", program::laser_electrical_B, header);
+   }
+
     // Output Function 74
    void domain_wall_velocity(std::ostream& stream, bool header) {
       stream << generic_output_double("domain_wall_velocity", sim::domain_wall_velocity, header);

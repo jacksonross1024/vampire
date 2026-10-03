@@ -697,6 +697,24 @@ namespace vin{
             return EXIT_SUCCESS;
         }
         //--------------------------------------------------------------------
+        test="mpi-topology";
+        if(word==test){
+            std::vector<int> n = integers_from_string(value);
+            if(n.size()!=3){
+                terminaltextcolor(RED);
+                std::cerr << "Error - value for \'sim:mpi-topology\' must be nx,ny,nz (e.g. 2,4,1)." << std::endl;
+                terminaltextcolor(WHITE);
+                err::vexit();
+            }
+            check_for_valid_int(n[0], word, line, prefix, 1, 1024,"input","1 - 1024");
+            check_for_valid_int(n[1], word, line, prefix, 1, 1024,"input","1 - 1024");
+            check_for_valid_int(n[2], word, line, prefix, 1, 1024,"input","1 - 1024");
+            vmpi::mpi_topology[0]=n[0];
+            vmpi::mpi_topology[1]=n[1];
+            vmpi::mpi_topology[2]=n[2];
+            return EXIT_SUCCESS;
+        }
+        //--------------------------------------------------------------------
         test="integrator-random-seed";
         if(word==test){
             int is=atoi(value.c_str());
@@ -1473,6 +1491,26 @@ namespace vin{
         test="fractional-electric-field-strength";
         if(word==test){
            output_list.push_back(72);
+           return EXIT_SUCCESS;
+        }
+        test="laser-electrical-current";
+        if(word==test){
+           output_list.push_back(89);
+           return EXIT_SUCCESS;
+        }
+        test="laser-electrical-Jc";
+        if(word==test){
+           output_list.push_back(89);
+           return EXIT_SUCCESS;
+        }
+        test="laser-electrical-S";
+        if(word==test){
+           output_list.push_back(90);
+           return EXIT_SUCCESS;
+        }
+        test="laser-electrical-B";
+        if(word==test){
+           output_list.push_back(91);
            return EXIT_SUCCESS;
         }
         test="lot-strength";
@@ -2423,13 +2461,14 @@ namespace vin{
             else if(create::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(dipole::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(exchange::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
-            else if(sim::match_material_parameter(word, value, unit, line, super_index)) return EXIT_SUCCESS;
-            else if(st::match_material(word, value, unit, line, super_index)) return EXIT_SUCCESS;
+            // ST, LTMP and LET STT share some transport keywords (diffusion-constant, λφ); evaluate all
+            else if(sim::match_material_parameter(word, value, unit, line, super_index) |
+                    st::match_material(word, value, unit, line, super_index) |
+                    ltmp::match_material_parameter(word, value, unit, line, super_index)) return EXIT_SUCCESS;
             else if(spin_transport::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(unitcell::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(micromagnetic::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
             else if(environment::match_material_parameter(word, value, unit, line, super_index, sub_index)) return EXIT_SUCCESS;
-            else if(ltmp::match_material_parameter(word, value, unit, line, super_index)) return EXIT_SUCCESS;
             //--------------------------------------------------------------------
             // keyword not found
             //--------------------------------------------------------------------

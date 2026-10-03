@@ -30,6 +30,9 @@ namespace program
 	extern int program; // program type to be run in vampire
 
 	extern double fractional_electric_field_strength; // factor controlling strength of stt/sot and voltage
+	extern double laser_electrical_current; // laser-driven charge current density Jc (A/m^2)
+	extern double laser_electrical_S; // fast filter state
+	extern double laser_electrical_B; // slow filter state
 
 	//---------------------------------------------------------------------------
 	// Function to initialise program module
@@ -72,6 +75,7 @@ namespace program
    extern void exchange_stiffness();
 	extern void electrical_pulse();
 	extern void field_pulse();
+	extern void laser_electrical_pulse();
 
 	// Sundry programs and diagnostics not under general release
 	extern int LLB_Boltzmann();

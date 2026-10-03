@@ -51,6 +51,7 @@ namespace vmpi{
 	extern int num_processors;			///< Total number of CPUs
 	extern int mpi_mode; 				///< MPI Simulation Mode (0 = Geometric Decomposition, 1 = Replicated Data, 2 = Statistical Parallelism)
    extern unsigned int ppn;			///< Processors per node
+   extern int mpi_topology[3];		///< Forced MPI grid nx,ny,nz (0,0,0 = auto)
 	extern int num_core_atoms;			///< Number of atoms on local CPU with no external communication
 	extern int num_bdry_atoms;			///< Number of atoms on local CPU with external communication
 	extern int num_halo_atoms;			///< Number of atoms on remote CPUs needed for boundary atom integration

@@ -273,6 +273,15 @@ namespace vout{
 			case 72:
 			   vout::fractional_electric_field_strength(stream, header);
 				break;
+			case 89:
+			   vout::laser_electrical_current(stream, header);
+				break;
+			case 90:
+			   vout::laser_electrical_S(stream, header);
+				break;
+			case 91:
+			   vout::laser_electrical_B(stream, header);
+				break;
 			case 73:
 				vout::lot_strength(stream, header);
 				break;

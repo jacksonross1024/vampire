@@ -21,6 +21,7 @@ namespace vmpi{
 
    int mpi_mode=0;
    unsigned int ppn=1;  ///< Processors per node
+   int mpi_topology[3]={0,0,0}; ///< Forced MPI grid nx,ny,nz (0 = auto)
    int my_rank=0;
    int num_processors=1;
    int num_core_atoms;

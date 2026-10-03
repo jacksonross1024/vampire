@@ -33,6 +33,7 @@
 //====================================================================================================
 #include "anisotropy.hpp"
 #include "atoms.hpp"
+#include "constants.hpp"
 #include "material.hpp"
 #include "errors.hpp"
 #include "exchange.hpp"
@@ -47,7 +48,9 @@
 #include "spintransport.hpp"
 #include "stats.hpp"
 #include "vmpi.hpp"
+#include "vio.hpp"
 #include "../micromagnetic/internal.hpp"
+#include "../program/internal.hpp"
 
 // sim module header
 #include "internal.hpp"
@@ -167,11 +170,13 @@ void calculate_external_fields(const int start_index,const int end_index){
 					atoms::y_total_external_field_array,
 					atoms::z_total_external_field_array);
 	}
-   else if(program::program==13 || program::program == 55){
+   else if(program::program==13 || program::program == 55 || (program::program == 19 && ltmp::is_enabled())){
 
-      // Local thermal Fields
-      ltmp::get_localised_thermal_fields(atoms::thermal_x_field,atoms::thermal_y_field,
-            atoms::thermal_z_field, start_index, end_index);
+      // Local thermal fields stay with ltmp. Spin currents read Te and Tp only.
+      if(ltmp::is_enabled()) {
+         ltmp::get_localised_thermal_fields(atoms::thermal_x_field, atoms::thermal_y_field,
+                                            atoms::thermal_z_field, start_index, end_index);
+      }
 
       // Applied Fields
       if(sim::hamiltonian_simulation_flags[2]==1) calculate_applied_fields(start_index,end_index);
@@ -179,7 +184,8 @@ void calculate_external_fields(const int start_index,const int end_index){
    }
 	else{
 
-		// Thermal Fields
+		// Thermal Fields. A laser pulse without ltmp has already written the
+		// global TTM electron temperature into sim::temperature.
 		if(sim::hamiltonian_simulation_flags[3]==1) calculate_thermal_fields(start_index,end_index);
 
 		// Applied Fields
@@ -328,6 +334,15 @@ int calculate_thermal_fields(const int start_index,const int end_index){
       double Tc = mp::material[mat].temperature_rescaling_Tc;
       // if T<Tc T/Tc = (T/Tc)^alpha else T = T
       double rescaled_temperature = temperature < Tc ? Tc*pow(temperature/Tc,alpha) : temperature;
+      if(err::check==true){
+         if(!std::isfinite(rescaled_temperature) || rescaled_temperature < 0.0){
+            terminaltextcolor(RED);
+            std::cerr << "Error: non-physical temperature in thermal field (not capped)." << std::endl;
+            std::cerr << "  material=" << mat << "  T=" << temperature << " K  T_rescaled=" << rescaled_temperature << " K" << std::endl;
+            terminaltextcolor(WHITE);
+            err::vexit();
+         }
+      }
       double sqrt_T=sqrt(rescaled_temperature);
       sigma_prefactor.push_back(sqrt_T*mp::material[mat].H_th_sigma);
    }
@@ -376,9 +391,9 @@ int calculate_dipolar_fields(const int start_index,const int end_index){
          atoms::x_total_external_field_array[atom] += dipole::atom_dipolar_field_array_x[atom];
          atoms::y_total_external_field_array[atom] += dipole::atom_dipolar_field_array_y[atom];
          atoms::z_total_external_field_array[atom] += dipole::atom_dipolar_field_array_z[atom];
-         std::cout << atoms::x_total_external_field_array[atom] << "\t" <<  dipole::atom_dipolar_field_array_x[atom] << "\t";
-         std::cout << atoms::y_total_external_field_array[atom] << "\t" <<  dipole::atom_dipolar_field_array_y[atom] << "\t";
-         std::cout << atoms::z_total_external_field_array[atom] << "\t" <<  dipole::atom_dipolar_field_array_z[atom] << std::endl;
+        //  std::cout << atoms::x_total_external_field_array[atom] << "\t" <<  dipole::atom_dipolar_field_array_x[atom] << "\t";
+        //  std::cout << atoms::y_total_external_field_array[atom] << "\t" <<  dipole::atom_dipolar_field_array_y[atom] << "\t";
+        //  std::cout << atoms::z_total_external_field_array[atom] << "\t" <<  dipole::atom_dipolar_field_array_z[atom] << std::endl;
       }
    }
 
@@ -496,6 +511,11 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 
 	using namespace sim::internal;
 
+	const double jref = program::internal::laser_electrical_current_ref;
+	const double Jc = program::laser_electrical_current;
+	const double let_jfrac = (jref > 0.0) ? Jc / jref : 0.0;
+	const double muB_over_e = constants::muB / constants::e;
+
    for(int atom=start_index;atom<end_index;atom++){
 
 		// temporary variables for field components
@@ -522,7 +542,10 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		// const double stpz = stt_polarization_unit_vector[2];
 
 		int mag_mat = 1;
-		std::array<double, 4> mag_vector = stats::material_magnetization.return_magnetization(mag_mat);
+		std::array<double, 4> mag_vector = {0.0, 0.0, 0.0, 0.0};
+		if(stats::calculate_material_magnetization){
+			mag_vector = stats::material_magnetization.return_magnetization(mag_mat);
+		}
 		// std::cout << mag_vector[0] << ", " << mag_vector[1] << ", " << mag_vector[2] << ", " << mag_vector[3] << std::endl;
 		double mag_y_length = mag_vector[1]*mag_vector[3];
 		//m x B
@@ -585,6 +608,26 @@ void calculate_full_spin_fields(const int start_index,const int end_index){
 		hy += sot_factor * ( (sotrj-alpha*sotpj)*(sz*sotpx - sx*sotpz) + (sotpj+alpha*sotrj)*sotpy );
 		hz += sot_factor * ( (sotrj-alpha*sotpj)*(sx*sotpy - sy*sotpx) + (sotpj+alpha*sotrj)*sotpz );
 		
+		//----------------------------------------------------------------------------------
+		// Laser-electrical STT (Serban Eq. 4, 6). Tesla values × Jc/Jc_ref.
+		// Torkance and Eq. 6 × Js = P (μB/e) Jc. Converted to Tesla for LLG.
+		//----------------------------------------------------------------------------------
+		const double Js = let_P[material] * muB_over_e * Jc;
+		const double letpx = let_px[material];
+		const double letpy = let_py[material];
+		const double letpz = let_pz[material];
+		double letpj = 0.0;
+		double letrj = 0.0;
+		if(let_fl_mode[material] == 1) letpj = let_fl_torkance[material] * Js;
+		else if(let_fl_mode[material] == 2) letpj = let_eq6_fl[material] * Js;
+		else letpj = let_stt_fl[material] * let_jfrac;
+		if(let_dl_mode[material] == 1) letrj = let_dl_torkance[material] * Js;
+		else if(let_dl_mode[material] == 2) letrj = let_eq6_dl[material] * Js;
+		else letrj = let_stt_dl[material] * let_jfrac;
+		hx += ( (letrj-alpha*letpj)*(sy*letpz - sz*letpy) + (letpj+alpha*letrj)*letpx );
+		hy += ( (letrj-alpha*letpj)*(sz*letpx - sx*letpz) + (letpj+alpha*letrj)*letpy );
+		hz += ( (letrj-alpha*letpj)*(sx*letpy - sy*letpx) + (letpj+alpha*letrj)*letpz );
+
 		//get spin angle
 		double phi = atan2(sy, sx);
 			if(phi != phi) phi = 0.0;

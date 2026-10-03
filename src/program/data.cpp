@@ -25,6 +25,9 @@ namespace program{
    //---------------------------------------------------------------------------
    int program = 18; // program type to be run in vampire
    double fractional_electric_field_strength = 0.0; // factor controlling strength of stt/sot and voltage
+   double laser_electrical_current = 0.0; // A/m^2
+   double laser_electrical_S = 0.0;
+   double laser_electrical_B = 0.0;
 
    namespace internal{
 
@@ -59,6 +62,18 @@ namespace program{
       double electrical_pulse_rise_time = 0.0;    // linear rise time for electrical pulse (0.0 default)
       double electrical_pulse_fall_time = 0.0;    // linear fall time for electrical pulse (0.0 default)
       int num_electrical_pulses         = 1;
+
+      //------------------------------------------------------------------------
+      // Laser electrical pulse (Serban two-filter ODE)
+      // eta_t is the fraction of the excited sheet charge, e*F*lambda/(h*c) at
+      // 800 nm, that crosses in the negative Jc lobe. 0.363 with F = 30 J/m^2
+      // recovers the Fig. 1(a) fit A0 = 15.65 C/m^2 at tau_s = 69 fs, lambda = 0.78 ps.
+      //------------------------------------------------------------------------
+      bool laser_electrical_enable_temperature = true;
+      double laser_electrical_eta_t = 0.363;
+      double laser_electrical_tau_s = 69.0e-15;
+      double laser_electrical_lambda = 0.78e-12;
+      double laser_electrical_current_ref = 1.0e12; // 1 TA/m^2
 
       //------------------------------------------------------------------------
       // Material specific program parameters

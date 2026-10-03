@@ -32,6 +32,7 @@ namespace ltmp{
       bool lateral_discretisation=false; /// enable lateral temperature profile
       bool vertical_discretisation=true; /// enable vertical temperature profile
       bool output_microcell_data=false; /// enable verbose output data for temperature cells
+      bool implicit_diffusion=false; /// backward-Euler thermal diffusion
       bool temperature_rescaling=false; /// enable rescaled temperature calculation
       bool gradient=false; /// enable temperature gradient
       bool gradient_only = false;
@@ -56,6 +57,15 @@ namespace ltmp{
       double dt; // time step
       // double TTTeq;
       double Tcool = 0.0;//0.05e12;
+      bool substrate_cool_bottom = true;
+
+      // Spin-currents laser parameters (when spin-currents laser is enabled but not using builtin)
+      bool use_sc1d_laser_params = false;  // flag to use spin-currents laser parameters
+      bool use_serban_laser_envelope = false; // Serban G(t) envelope for laser-electrical-pulse
+      double sc1d_laser_Q0 = 0.0;           // spin-currents laser power density (W/m^3)
+      double sc1d_laser_t0 = 0.0;           // spin-currents laser pulse center time (s)
+      double sc1d_laser_fwhm = 0.0;         // spin-currents laser pulse FWHM (s)
+      double sc1d_optical_absorption_length = 0.0; // spin-currents optical absorption length (m), overrides penetration_depth
 
       double minimum_temperature = 0.0; // Minimum temperature in temperature gradient
       double maximum_temperature = 0.0; // Maximum temperature in temperature gradient

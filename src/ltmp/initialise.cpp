@@ -10,20 +10,32 @@
 // C++ standard library headers
 
 // Vampire headers
+#include "create.hpp"
 #include "ltmp.hpp"
 #include "material.hpp"
 #include "sim.hpp"
 #include "errors.hpp"
 #include "vio.hpp"
+#include "vmpi.hpp"
 
 // Local temperature pulse headers
 #include "internal.hpp"
+
+#include <cmath>
 
 struct uvec{
   int i;
   int j;
   int k;
 };
+
+// Debye kernel: x^4 exp(x) / (exp(x)-1)^2
+static double debye_kernel(const double x) {
+   if(x <= 0.0) return 0.0;
+   const double exp_x = exp(x);
+   const double exp_m1 = exp_x - 1.0;
+   return x*x*x*x*exp_x/(exp_m1*exp_m1);
+}
 
 namespace ltmp{
 
@@ -105,10 +117,18 @@ void initialise(const double system_dimensions_x,
       return;
    }
    zlog << zTs() << "Local discretisation cells < " << dx << ", " << dy << ", " << dz << ">" << std::endl;
-   std::cout << "Local discretisation cells < " << dx << ", " << dy << ", " << dz << ">" << std::endl;
+   if(ltmp::internal::implicit_diffusion){
+      zlog << zTs() << "Using implicit (backward Euler) LTMP thermal diffusion." << std::endl;
+   }
    //-------------------------------------------------------------------------------------
    // Allocate microcell data and initialise starting temperature (Teq)
    //-------------------------------------------------------------------------------------
+   if(!std::isfinite(starting_temperature) || starting_temperature < 0.0){
+      terminaltextcolor(RED);
+      std::cerr << "Error: ltmp starting temperature is invalid: " << starting_temperature << " K" << std::endl;
+      terminaltextcolor(WHITE);
+      err::vexit();
+   }
    const double sqrt_starting_temperature = sqrt(starting_temperature);
    ltmp::internal::root_temperature_array.resize(2*ltmp::internal::num_cells,sqrt_starting_temperature);
    ltmp::internal::cell_position_array.resize(3*ltmp::internal::num_cells);
@@ -227,7 +247,14 @@ void initialise(const double system_dimensions_x,
       int mat = atom_type_array[atom];
          if(mp::material[mat].couple_to_phonon_temperature) ltmp::internal::atom_temperature_index[atom] = 2*cell+1;
          else                                               ltmp::internal::atom_temperature_index[atom]= 2*cell+0;
-         
+
+         if(mat >= static_cast<int>(ltmp::internal::mp.size())){
+            terminaltextcolor(RED);
+            std::cerr << "Error: ltmp material parameters missing for material index " << mat << std::endl;
+            std::cerr << "  Set material:electron-heat-capacity and phonon-heat-capacity." << std::endl;
+            terminaltextcolor(WHITE);
+            err::vexit();
+         }
 
          ltmp::internal::electron_heat_capacity[cell] += ltmp::internal::mp.at(mat).electron_heat_capacity;
          ltmp::internal::phonon_heat_capacity[cell] += ltmp::internal::mp.at(mat).phonon_heat_capacity;
@@ -239,6 +266,75 @@ void initialise(const double system_dimensions_x,
       
          num_atoms_in_cell.at(cell)++;
       
+   }
+
+   // Removed non-magnetic atoms (non-magnetic = remove) seed LTMP cell averages
+   // (Ce, Cp, kappa, G). They are not in the LLG arrays, so they are not mapped
+   // into atom_temperature_index. Keep-nonmagnetic atoms are already in the local
+   // atom list above. Each rank adds the removed atoms it holds into the full
+   // microcell grid; the Allreduce then sums occupation and constants.
+   for(size_t atom=0; atom<cs::non_magnetic_atoms_array.size(); ++atom){
+      const cs::nm_atom_t& nm = cs::non_magnetic_atoms_array[atom];
+      const double c[3] = {nm.x+0.0001, nm.y+0.0001, nm.z+0.0001};
+      int scc[3]={0,0,0};
+      if(     ltmp::internal::lateral_discretisation == true  && ltmp::internal::vertical_discretisation == true ){
+         scc[0]=int(c[0]/cs[0]);
+         scc[1]=int(c[1]/cs[1]);
+         scc[2]=int(c[2]/cs[2]);
+      }
+      else if(     ltmp::internal::lateral_discretisation == true  && ltmp::internal::vertical_discretisation == false ){
+         scc[0]=int(c[0]/cs[0]);
+         scc[1]=int(c[1]/cs[1]);
+         scc[2]=0;
+      }
+      else if(     ltmp::internal::lateral_discretisation == false && ltmp::internal::vertical_discretisation == true ){
+         scc[0]=0;
+         scc[1]=0;
+         scc[2]=int(floor(c[2]/cs[2]));
+      }
+      for(int i=0;i<3;i++){
+         if(scc[i]<0 || scc[i]>= d[i]){
+            terminaltextcolor(RED);
+            std::cerr << "Error - removed non-magnetic atom out of supercell range in local temperature microcell calculation!" << std::endl;
+            terminaltextcolor(WHITE);
+            #ifdef MPICF
+            terminaltextcolor(RED);
+            std::cerr << "\tCPU Rank: " << vmpi::my_rank << std::endl;
+            terminaltextcolor(WHITE);
+            #endif
+            terminaltextcolor(RED);
+            std::cerr << "\tAtom number:      " << atom << std::endl;
+            std::cerr << "\tAtom coordinates: " << c[0] << "\t" << c[1] << "\t" << c[2] << "\t" << std::endl;
+            std::cerr << "\tReal coordinates: " << nm.x << "\t" << nm.y << "\t" << nm.z << "\t" << std::endl;
+            std::cerr << "\tCell coordinates: " << scc[0] << "\t" << scc[1] << "\t" << scc[2] << "\t" << std::endl;
+            std::cerr << "\tCell maxima:      " << d[0] << "\t" << d[1] << "\t" << d[2] << std::endl;
+            terminaltextcolor(WHITE);
+            err::vexit();
+         }
+      }
+      const int cell = supercell_array[scc[0]][scc[1]][scc[2]];
+      const int mat = nm.mat;
+      if(mat >= static_cast<int>(ltmp::internal::mp.size())){
+         terminaltextcolor(RED);
+         std::cerr << "Error: ltmp material parameters missing for material index " << mat << std::endl;
+         std::cerr << "  Set material:electron-heat-capacity and phonon-heat-capacity." << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
+      }
+      ltmp::internal::electron_heat_capacity[cell] += ltmp::internal::mp.at(mat).electron_heat_capacity;
+      ltmp::internal::phonon_heat_capacity[cell] += ltmp::internal::mp.at(mat).phonon_heat_capacity;
+      ltmp::internal::electron_thermal_conductivity[cell] += ltmp::internal::mp.at(mat).electron_thermal_conductivity;
+      ltmp::internal::phonon_thermal_conductivity[cell] += ltmp::internal::mp.at(mat).phonon_thermal_conductivity;
+      ltmp::internal::electron_phonon_coupling_constant[cell] += ltmp::internal::mp.at(mat).electron_phonon_coupling_constant;
+      ltmp::internal::Einstein_temperature[cell] += ltmp::internal::mp.at(mat).einstein_temp;
+      num_atoms_in_cell.at(cell)++;
+   }
+   {
+      const uint64_t n_nm = vmpi::all_reduce_sum(static_cast<uint64_t>(cs::non_magnetic_atoms_array.size()));
+      if(n_nm > 0){
+         zlog << zTs() << "Included " << n_nm
+              << " removed non-magnetic atoms in LTMP microcell averages." << std::endl;
+      }
    }
 
       // reduce microcell properties on all CPUs
@@ -268,6 +364,16 @@ void initialise(const double system_dimensions_x,
             ltmp::internal::phonon_thermal_conductivity[cell] /= num_atoms_in_cell.at(cell);
             ltmp::internal::electron_phonon_coupling_constant[cell] /= num_atoms_in_cell.at(cell);
             ltmp::internal::Einstein_temperature[cell] /= num_atoms_in_cell.at(cell);
+            if(!(ltmp::internal::electron_heat_capacity[cell] > 0.0) || !std::isfinite(ltmp::internal::electron_heat_capacity[cell]) ||
+               !(ltmp::internal::phonon_heat_capacity[cell] > 0.0) || !std::isfinite(ltmp::internal::phonon_heat_capacity[cell])){
+               terminaltextcolor(RED);
+               std::cerr << "Error: ltmp cell " << cell << " has non-positive heat capacity." << std::endl;
+               std::cerr << "  Ce=" << ltmp::internal::electron_heat_capacity[cell]
+                         << "  Cp=" << ltmp::internal::phonon_heat_capacity[cell] << std::endl;
+               std::cerr << "  Set material:electron-heat-capacity and phonon-heat-capacity (zero Ce produces infinite Te)." << std::endl;
+               terminaltextcolor(WHITE);
+               err::vexit();
+            }
            
             // std::cout <<  num_atoms_in_cell.at(cell) << ", " << \
             //              ltmp::internal::electron_heat_capacity[cell] << ", " <<\
@@ -276,7 +382,12 @@ void initialise(const double system_dimensions_x,
             //              ltmp::internal::phonon_thermal_conductivity[cell] << ", " << \
             //              ltmp::internal::electron_phonon_coupling_constant[cell] << std::endl;
          } else {
-            if(cell == 0 && num_atoms_in_cell.at(cell) <= 0) {std::cout << "ltmp cell == 0 needs constants" << std::endl; exit(1);}
+            if(cell == 0 && num_atoms_in_cell.at(cell) <= 0) {
+               terminaltextcolor(RED);
+               std::cerr << "Error: ltmp cell 0 has no atoms and needs constants!" << std::endl;
+               terminaltextcolor(WHITE);
+               err::vexit();
+            }
             ltmp::internal::electron_heat_capacity[cell] = ltmp::internal::electron_heat_capacity[cell-1];
             ltmp::internal::phonon_heat_capacity[cell] = ltmp::internal::phonon_heat_capacity[cell-1];
             ltmp::internal::electron_phonon_coupling_constant[cell] = ltmp::internal::electron_phonon_coupling_constant[cell-1];
@@ -321,43 +432,23 @@ void initialise(const double system_dimensions_x,
    // calculate interpolation for absorption profile
    ltmp::absorption_profile.set_interpolation_table();
 
-   ltmp::internal::Debeye_phonon_constant.resize(12*1000, 0.0);
-
-   double local_phonon_constant = 0.0;
-   double local_Einstein_temperature = 0.0;
-
-   //          //Debeye integral function -> x^4 e^x / (e^x - 1)^2
-
-   //          double exp_x_val = exp(r);
-   //          volatile double function_value = x_val*x_val*x_val*x_val * exp_x_val /( (exp_x_val - 1.0) * (exp_x_val - 1.0));
-
-
-   //  range(T_D / T ) -> (T = T_D/T = 10; T = 2*T_D) -> {0.5, 1000/5 -> 200}
-   auto debeye_function = [](double x) {
-      if(x <= 0.0) return 0.0;
-      return x*x*x*x*exp(x)/((exp(x)-1.0)*(exp(x)-1.0));
-   };
-
-   volatile double integrand = 0.0;// 4.0*M_PI*M_PI*M_PI*M_PI/5.0;
-   // int count = 0;
-   for(double T_D_over_T = 0.0; T_D_over_T < 12.0; T_D_over_T += 0.001) { //1K resolution, small as 1/1000
-      int int_resolution = round((T_D_over_T) * 1000);
-      double left = T_D_over_T + 0.00050;
-      double right = T_D_over_T - 0.00050;
-      double left_right_6 = (2*0.0005) / 8.0;
-      integrand += left_right_6*(debeye_function(left) + 3.0*debeye_function(2.0*left*0.333+right*0.333) + 3.0*debeye_function(left*0.333+2.0*right*0.333)+debeye_function(right));
-
-      ltmp::internal::Debeye_phonon_constant[int_resolution] = 3.0*integrand/(T_D_over_T*T_D_over_T*T_D_over_T);      
+   // Debye reduced heat capacity D(x) = 3/x^3 \int_0^x t^4 e^t/(e^t-1)^2 dt
+   // D(0) = 1 (Dulong-Petit). The previous table started at x=0 and divided by x^3,
+   // filling index 0 with Inf/NaN and poisoning high-T phonon updates.
+   const int ntab = 12*1000;
+   ltmp::internal::Debeye_phonon_constant.assign(ntab, 1.0);
+   double integrand = 0.0;
+   const double dx_tab = 0.001;
+   for(int i = 1; i < ntab; ++i){
+      const double x0 = (i-1)*dx_tab;
+      const double x1 = i*dx_tab;
+      integrand += 0.5*dx_tab*(debye_kernel(x0) + debye_kernel(x1));
+      const double x1_cubed = x1*x1*x1;
+      if(x1_cubed > 0.0){
+         const double factor = 3.0*integrand/x1_cubed;
+         ltmp::internal::Debeye_phonon_constant[i] = std::isfinite(factor) && factor > 0.0 ? factor : 1.0;
+      }
    }
-   
-   std::ofstream debeye_model_out("debeye_model_out.txt");
-   for(int i = 0; i < 12000; i+=1) {
-      double integrand = i/1000.0;
-      debeye_model_out << integrand << ", " << debeye_function(integrand) << ", " << 3.0/(integrand*integrand*integrand) << ", " <<  ltmp::internal::Debeye_phonon_constant[i] << std::endl;
-   }
-   debeye_model_out.close();
-
-   // exit(1);
    //--------------------------------------------------------------------------------------
    // calculate attenuation for each cell depending on lateral and vertical discretisation
    //--------------------------------------------------------------------------------------
@@ -369,8 +460,17 @@ void initialise(const double system_dimensions_x,
       double pre = 4.0*log(2.0);
       double vattn = 1.0;
       if(ltmp::internal::vertical_discretisation){
-         if(profile_file) vattn = ltmp::absorption_profile.get_absorption_constant(z);
-         else vattn = exp(-z/ltmp::internal::penetration_depth); // vertical attenuation
+         // Laser enters from top, so calculate distance from surface (top)
+         // z=0 is bottom of stack, system_dimensions_z is top
+         double z_from_surface = system_dimensions_z - z;
+         if(profile_file) {
+            // Profile file expects z values as distance from top (surface)
+            vattn = ltmp::absorption_profile.get_absorption_constant(z_from_surface);
+         }
+         else {
+            // Default: exponential decay from top of stack
+            vattn = exp(-z_from_surface/ltmp::internal::penetration_depth); // vertical attenuation
+         }
          // Check for gradient and if so overwrite with linear profile
          if(ltmp::internal::gradient) vattn = ltmp::internal::cell_position_array[3*cell+2]/system_dimensions_z;
       }
@@ -460,6 +560,7 @@ void initialise(const double system_dimensions_x,
       if(!ltmp::internal::lateral_discretisation && ltmp::internal::vertical_discretisation) ltmp::internal::open_vertical_temperature_profile_file();
       // initial output file for lateral temperature profile
       if(ltmp::internal::lateral_discretisation && !ltmp::internal::vertical_discretisation) ltmp::internal::open_lateral_temperature_profile_file();
+      ltmp::internal::write_cell_temperature_data();
    }
 
    // Set initialised flag

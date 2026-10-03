@@ -395,6 +395,118 @@ namespace sim{
          sim::internal::enable_spin_torque_fields = true;
          return true;
       }
+      //------------------------------------------------------------
+      test = "let_stt_fl";
+      test2 = "let-stt-fl";
+      if( word==test || word==test2 ){
+         double bj = atof(value.c_str());
+         vin::check_for_valid_value(bj, word, line, prefix, unit, "field", -1.0e2, 1.0e2,"input","-100 - 100T");
+         sim::internal::mp[super_index].let_stt_fl.set(bj);
+         sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
+      //------------------------------------------------------------
+      test = "let_stt_dl";
+      test2 = "let-stt-dl";
+      if( word==test || word==test2 ){
+         double aj = atof(value.c_str());
+         vin::check_for_valid_value(aj, word, line, prefix, unit, "field", -1.0e2, 1.0e2,"input","-100 - 100T");
+         sim::internal::mp[super_index].let_stt_dl.set(aj);
+         sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
+      //------------------------------------------------------------
+      // Tesla / Js. Scaled by Eq. 4 Js = P (μB/e) Jc in fields.cpp.
+      test = "field-like-torkance";
+      test2 = "let-field-like-torkance";
+      if( word==test || word==test2 ){
+         double xi = atof(value.c_str());
+         vin::check_for_valid_value(xi, word, line, prefix, unit, "none", 0.0, 1.0e-3,"material","|xi| <= 1e-3 T s / A");
+         sim::internal::mp[super_index].let_fl_torkance.set(xi);
+         sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
+      //------------------------------------------------------------
+      test = "damping-like-torkance";
+      test2 = "let-damping-like-torkance";
+      if( word==test || word==test2 ){
+         double xi = atof(value.c_str());
+         vin::check_for_valid_value(xi, word, line, prefix, unit, "none", 0.0, 1.0e-3,"material","|xi| <= 1e-3 T s / A");
+         sim::internal::mp[super_index].let_dl_torkance.set(xi);
+         sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
+      //------------------------------------------------------------
+      // De (m^2/s): one value for both field-like and damping-like Eq. 6 terms
+      test = "diffusion-constant";
+      test2 = "let-diffusion-constant";
+      if( word==test || word==test2 ){
+         double dc = atof(value.c_str());
+         vin::check_for_valid_value(dc, word, line, prefix, unit, "none", 1.0e-9, 100.0,"material"," 1.0e-9 - 100 m^2/s");
+         sim::internal::mp[super_index].let_diffusion.set(dc);
+         return true;
+      }
+      //------------------------------------------------------------
+      test = "lambda-J";
+      test2 = "lambda_J";
+      test3 = "exchange-rotation-length";
+      if( word==test || word==test2 || word==test3 ){
+         double lj = atof(value.c_str());
+         vin::check_for_valid_value(lj, word, line, prefix, unit, "length", 0.01, 1.0e10,"material"," 0.01 - 1e10 Angstroms");
+         sim::internal::mp[super_index].let_lambda_J.set(lj*1.e-10);
+         sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
+      //------------------------------------------------------------
+      test = "lambda-phi";
+      test2 = "lambda_phi";
+      test3 = "lambda-varphi";
+      test4 = "spin-dephasing-length";
+      if( word==test || word==test2 || word==test3 || word==test4 ){
+         double lp = atof(value.c_str());
+         const double lp_min = (word=="spin-dephasing-length") ? 0.0 : 0.01;
+         vin::check_for_valid_value(lp, word, line, prefix, unit, "length", lp_min, 1.0e10,"material"," 0.01 - 1e10 Angstroms");
+         sim::internal::mp[super_index].let_lambda_phi.set(lp*1.e-10);
+         if(word!="spin-dephasing-length") sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
+      //------------------------------------------------------------
+      // L = k λ in S = (L/De) Js. Default k = 1 if unset.
+      test = "let-absorption-length-factor";
+      test2 = "spin-absorption-factor";
+      test3 = "lambda-absorption-factor";
+      if( word==test || word==test2 || word==test3 ){
+         double kabs = atof(value.c_str());
+         vin::check_for_valid_value(kabs, word, line, prefix, unit, "none", 0.01, 100.0,"material"," 0.01 - 100");
+         sim::internal::mp[super_index].let_abs_factor.set(kabs);
+         return true;
+      }
+      //------------------------------------------------------------
+      test = "let-polarisation";
+      test2 = "let-polarization";
+      test3 = "let_polarisation";
+      test4 = "current-spin-polarisation";
+      if( word==test || word==test2 || word==test3 || word==test4 ){
+         double P = atof(value.c_str());
+         vin::check_for_valid_value(P, word, line, prefix, unit, "none", 0.0, 1.0,"material"," |P| <= 1");
+         sim::internal::mp[super_index].let_P.set(P);
+         return true;
+      }
+      //------------------------------------------------------------
+      test = "let_polarisation_vector";
+      test2 = "let-polarisation-vector";
+      test3 = "let-polarization-vector";
+      if( word==test || word==test2 || word==test3 ){
+         std::vector<double> u(3);
+         u=vin::doubles_from_string(value);
+         vin::check_for_valid_unit_vector(u, word, line, prefix, "input");
+         sim::internal::mp[super_index].let_pvec[0] = u[0];
+         sim::internal::mp[super_index].let_pvec[1] = u[1];
+         sim::internal::mp[super_index].let_pvec[2] = u[2];
+         sim::internal::mp[super_index].let_pvec_set = true;
+         sim::internal::enable_spin_torque_fields = true;
+         return true;
+      }
       test = "optical-torque";
       if( word==test ){
          std::cout << "Enabling LOT (yJ) material: ";

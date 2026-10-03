@@ -11,6 +11,7 @@
 #include <iomanip>
 
 // Vampire headers
+#include "errors.hpp"
 #include "vmpi.hpp"
 #include "vio.hpp"
 
@@ -53,8 +54,25 @@ namespace vmpi{
       // declare local range
       dim_t local_dimensions;
 
+      const int ntopo = vmpi::mpi_topology[0]*vmpi::mpi_topology[1]*vmpi::mpi_topology[2];
+
+      // User-specified processor grid (e.g. 2x4x1 to avoid empty z-slabs)
+      if(ntopo > 0){
+         if(ntopo != num_cpus){
+            if(vmpi::my_rank==0){
+               terminaltextcolor(RED);
+               std::cerr << "Error: sim:mpi-topology = " << vmpi::mpi_topology[0] << " x "
+                         << vmpi::mpi_topology[1] << " x " << vmpi::mpi_topology[2]
+                         << " requires " << ntopo << " MPI ranks, but " << num_cpus
+                         << " were launched." << std::endl;
+               terminaltextcolor(WHITE);
+            }
+            err::vexit();
+         }
+         local_dimensions = decompose(vmpi::my_rank, vmpi::num_processors, system_dimensions,"System", "processors");
+      }
       // If no node topology required, decompose per processor
-      if(vmpi::ppn == 1){
+      else if(vmpi::ppn == 1){
 
          local_dimensions = decompose(vmpi::my_rank, vmpi::num_processors, system_dimensions,"System", "processors");
 
@@ -194,47 +212,51 @@ namespace vmpi{
       const double lz = dimensions.maxz - dimensions.minz;
 
       // local variables
-      int nx,ny,nz;  /// Number of blocks in x,y,z
-      std::vector<int> factor_array; /// to store the factors of each given num_blocks
-      factor_array.reserve(50);
-      int counter_factor=0; /// to count the number of factors
+      int nx=1,ny=1,nz=num_blocks;  /// Number of blocks in x,y,z
+      const int ntopo = vmpi::mpi_topology[0]*vmpi::mpi_topology[1]*vmpi::mpi_topology[2];
 
       //---------------------------------------------------
       // Determine number of blocks in x,y,z
       //---------------------------------------------------
 
-      // find all the factors of given n_blocks (x)
-      for (int i=1;i<x+1;i++){
-         if ((x%i)==0){
-            factor_array.push_back(i);
-            counter_factor++;
+      if(ntopo == num_blocks && ntopo > 0){
+         nx = vmpi::mpi_topology[0];
+         ny = vmpi::mpi_topology[1];
+         nz = vmpi::mpi_topology[2];
+      }
+      else{
+         std::vector<int> factor_array; /// to store the factors of each given num_blocks
+         factor_array.reserve(50);
+         int counter_factor=0; /// to count the number of factors
+
+         // find all the factors of given n_blocks (x)
+         for (int i=1;i<x+1;i++){
+            if ((x%i)==0){
+               factor_array.push_back(i);
+               counter_factor++;
+            }
          }
-      }
 
-      // set the remaining elements of the array as 1 if there are no other factors
-      for (size_t i=counter_factor+1;i<factor_array.size();i++){
-         factor_array[i]=1;
-      }
+         double surface_volumn=0.0;
+         double compare_sv=100000000.0; /// set a very large number for comparing each surface_volumn to find the minimum
 
-      double surface_volumn=0.0;
-      double compare_sv=100000000.0; /// set a very large number for comparing each surface_volumn to find the minimum
-
-      // determine best decomposition for minimizing surface/volume ratio
-      for (int i=0;i<counter_factor;i++){
-         for (int j=0;j<counter_factor;j++){
-            for (int k=0;k<counter_factor;k++){
-               int n1=factor_array[i];
-               int n2=factor_array[j];
-               int n3=factor_array[k];
-               // check for valid solution for x blocks
-               if (n1*n2*n3==x){
-                  // calculate surface/volume ratio
-                  surface_volumn = 2.0*(double(n1)/lx+double(n2)/ly+double(n3)/lz);
-                  if (surface_volumn < compare_sv) {
-                     compare_sv=surface_volumn;
-                     nx=n1;
-                     ny=n2;
-                     nz=n3;
+         // determine best decomposition for minimizing surface/volume ratio
+         for (int i=0;i<counter_factor;i++){
+            for (int j=0;j<counter_factor;j++){
+               for (int k=0;k<counter_factor;k++){
+                  int n1=factor_array[i];
+                  int n2=factor_array[j];
+                  int n3=factor_array[k];
+                  // check for valid solution for x blocks
+                  if (n1*n2*n3==x){
+                     // calculate surface/volume ratio
+                     surface_volumn = 2.0*(double(n1)/lx+double(n2)/ly+double(n3)/lz);
+                     if (surface_volumn < compare_sv) {
+                        compare_sv=surface_volumn;
+                        nx=n1;
+                        ny=n2;
+                        nz=n3;
+                     }
                   }
                }
             }

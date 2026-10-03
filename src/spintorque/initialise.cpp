@@ -16,7 +16,9 @@
 #include "errors.hpp"
 #include "spintorque.hpp"
 #include "vio.hpp"
+#include "vmpi.hpp"
 #include "atoms.hpp"
+#include "create.hpp"
 
 // Spin Torque headers
 #include "internal.hpp"
@@ -69,6 +71,12 @@ void initialise(const double system_dimensions_x,
       st::internal::stx=0;// c[stx] = c[0] = atom_x
       st::internal::sty=2;// c[sty] = c[2] = atom_y // current direction
       st::internal::stz=1;// c[stz] = c[1] = atom_z
+   }
+
+   if(st::internal::sc1d_enable) {
+      st::internal::stx = 0;
+      st::internal::sty = 1;
+      st::internal::stz = 2;
    }
    // st::internal::micro_cell_thickness = st::internal::micro_cell_size[stx];
    //-------------------------------------------------------------------------------------
@@ -125,6 +133,8 @@ void initialise(const double system_dimensions_x,
    st::internal::sd_exchange.resize(array_size, 0.0); /// diffusion constant Do
    st::internal::lambda_phi.resize(array_size, 0.0); /// transverse spin dephasing length
    st::internal::chi_demag.resize(array_size, 0.0); /// demag-driven accumulation coupling
+   st::internal::seebeck_coefficient.resize(array_size, 0.0); /// Seebeck coefficient S (V/K)
+   st::internal::conductivity.resize(array_size, 0.0); /// electrical conductivity (S/m)
    st::internal::a.resize(array_size, 0.0); // a parameter for spin accumulation
    st::internal::b.resize(array_size, 0.0); // b parameter for spin accumulation
 
@@ -316,7 +326,10 @@ void initialise(const double system_dimensions_x,
       int removed_stacks_y = st::internal::num_stacks_y;
       std::vector<int> mpi_stack_id_y(removed_stacks_y, 0);
    
-      if(vmpi::num_processors > removed_stacks_y ) {
+      // The 1D solver repeats every column on every rank, so extra ranks are
+      // allowed. They still join the collectives. The legacy stack round-robin
+      // below cannot place more than one owner per column.
+      if(!st::internal::sc1d_enable && vmpi::num_processors > removed_stacks_y ) {
          std::cout << "mpirun threads requested larger than spin-torque decomposition allows" << std::endl;
          err::vexit();
       }
@@ -338,14 +351,14 @@ void initialise(const double system_dimensions_x,
       MPI_Reduce(&size_y,&stack_sum_y, 1,MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &mpi_stack_id_y[0],  mpi_stack_id_y.size(),   MPI_INT,MPI_SUM, MPI_COMM_WORLD);
      
-      bool error = false;
+      int error = 0;
       if(vmpi::my_rank == 0 && stack_sum_y != removed_stacks_y ) {
          std::cout << stack_sum_y << " != " << removed_stacks_y << std::endl;
-         error = true;
+         error = 1;
       }  
 
       for(int i = 0; i < mpi_stack_id_y.size(); i++) {
-         if(mpi_stack_id_y[i] != 1) error = true;
+         if(mpi_stack_id_y[i] != 1) error = 1;
       }
 
       MPI_Bcast(&error,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -384,7 +397,7 @@ void initialise(const double system_dimensions_x,
 
          if(vmpi::my_rank == 0 && stack_sum_x != removed_stacks_x ) {
                std::cout << stack_sum_x << " != " << removed_stacks_x << std::endl;
-               error = true;
+               error = 1;
             }
             MPI_Bcast(&error,1,MPI_INT,0,MPI_COMM_WORLD);
             if(error) {
@@ -398,7 +411,7 @@ void initialise(const double system_dimensions_x,
          
 
          for(int i = 0; i < mpi_stack_id_x.size(); i++) {
-               if(mpi_stack_id_x[i] != 1) error = true;
+               if(mpi_stack_id_x[i] != 1) error = 1;
             }
          MPI_Bcast(&error,1,MPI_INT,0,MPI_COMM_WORLD);
             if(error) {
@@ -414,10 +427,20 @@ void initialise(const double system_dimensions_x,
       }
    #endif 
 
+   // Update cell magnetisation from atomic spins BEFORE initializing spin currents
+   // This ensures that m[] is populated with current magnetization values when
+   // initialise_spincurrents_1d() uses them to set the initial spin accumulation direction
+   st::internal::update_cell_magnetisation(atoms::x_spin_array,
+                                           atoms::y_spin_array,
+                                           atoms::z_spin_array,
+                                           atom_type_array,
+                                           mp::mu_s_array);
+
    // initialise optional 1D spin currents solver state (allocates fine-grid arrays per local stack)
    // This MUST be called after MPI stack decomposition so mpi_stack_list_y is populated.
+   // It also requires that update_cell_magnetisation() has been called so m[] is populated.
    st::internal::initialise_spincurrents_1d();
-   
+
    return;
 }
 
@@ -435,17 +458,19 @@ namespace internal{
       // Note: These should be overridden per-material in the .mat file!
       st::internal::default_properties.beta_cond =  0.4;           // spin polarization (conductivity), Co~0.35-0.46
       st::internal::default_properties.beta_diff = 0.4;            // spin polarization (diffusion), similar to beta_c
-      st::internal::default_properties.sa_infinity =  1.48e7;      // intrinsic spin accumulation
+      st::internal::default_properties.sa_infinity =  0.0;         // intrinsic spin accumulation (default: 0.0, must be set per-material)
       st::internal::default_properties.lambda_sdl = 60.0e-10;      // spin diffusion length: Co~6nm, Ni~5nm, Cu~350nm
       st::internal::default_properties.diffusion =  0.001;         // diffusion constant D ~ 1e-3 m^2/s (typical)
       st::internal::default_properties.sd_exchange = 4.0e-20;      // s-d exchange ~ 0.25 eV for 3d FM
       st::internal::default_properties.lambda_phi = 10.0e-10;      // dephasing length ~ 1-5 nm in FM (transverse relaxation)
-      st::internal::default_properties.chi_demag = 0.0;            // demag coupling: disabled by default, enable for AOS studies
+      st::internal::default_properties.chi_demag = 0.0;            // longitudinal demag source off unless set per material
+      st::internal::default_properties.seebeck_coefficient = -10.0e-6; // Seebeck coefficient S (V/K), typical metals: -10 to -50 μV/K
+      st::internal::default_properties.conductivity = -1.0;         // <0 = Einstein from D and Te; explicit 0 = insulator
       
       // SOT defaults (similar to STT but for SOT geometry)
       st::internal::default_properties.sot_beta_cond =  0.4;
       st::internal::default_properties.sot_beta_diff = 0.4;
-      st::internal::default_properties.sot_sa_infinity =  1.48e7;
+      st::internal::default_properties.sot_sa_infinity =  0.0;     // intrinsic spin accumulation (default: 0.0, must be set per-material)
       st::internal::default_properties.sot_lambda_sdl = 60.0e-10;    // m
       st::internal::default_properties.sot_diffusion =  0.001;       // m^2/s
       st::internal::default_properties.sot_sd_exchange = 4.0e-20;    // J (~0.25 eV)
@@ -479,6 +504,8 @@ namespace internal{
          double sd_exchange = st::internal::mp.at(mat).sd_exchange;
          double lambda_phi = st::internal::mp.at(mat).lambda_phi;
          double chi_demag  = st::internal::mp.at(mat).chi_demag;
+         double seebeck_coefficient = st::internal::mp.at(mat).seebeck_coefficient;
+         double conductivity = st::internal::mp.at(mat).conductivity;
 
          //add atomic properties to microcells
          st::internal::beta_cond.at(id) += beta_cond;
@@ -489,6 +516,8 @@ namespace internal{
          st::internal::sd_exchange.at(id) += sd_exchange;
          st::internal::lambda_phi.at(id) += lambda_phi;
          st::internal::chi_demag.at(id)  += chi_demag;
+         st::internal::seebeck_coefficient.at(id) += seebeck_coefficient;
+         st::internal::conductivity.at(id) += conductivity;
 
          //SOT
          if(st::internal::sot_sa) {
@@ -521,6 +550,110 @@ namespace internal{
          }
       }
 
+      // Removed non-magnetic atoms (non-magnetic = remove) seed spin-torque
+      // microcell averages. They are not in the LLG arrays. Keep-nonmagnetic
+      // atoms are already in the local atom list above. Each rank adds the
+      // removed atoms it holds into the full microcell grid; the Allreduce
+      // then sums occupation and constants.
+      const int ncx = st::internal::num_x_stacks;
+      const int ncy = st::internal::num_y_stacks;
+      const int ncz = st::internal::num_microcells_per_stack;
+      const int d[3] = {ncx, ncy, ncz};
+      const double cell_size[3] = {st::internal::micro_cell_size[st::internal::stx], st::internal::micro_cell_size[st::internal::sty], st::internal::micro_cell_thickness};
+      for(size_t atom=0; atom<cs::non_magnetic_atoms_array.size(); ++atom){
+         const cs::nm_atom_t& nm = cs::non_magnetic_atoms_array[atom];
+         double c[3];
+         c[st::internal::stx] = nm.x + 0.0000;
+         c[st::internal::sty] = nm.y + 0.000;
+         c[st::internal::stz] = nm.z + 0.0001;
+         int scc[3] = {0,0,0};
+         for(int i=0;i<3;i++){
+            scc[i] = int(floor(c[i]/cell_size[i]));
+            if(scc[i]<0 || scc[i]>= d[i]){
+               terminaltextcolor(RED);
+               std::cerr << "Error - removed non-magnetic atom out of supercell range in spin torque microcell calculation!" << std::endl;
+               terminaltextcolor(WHITE);
+               #ifdef MPICF
+               terminaltextcolor(RED);
+               std::cerr << "\tCPU Rank: " << vmpi::my_rank << std::endl;
+               terminaltextcolor(WHITE);
+               #endif
+               terminaltextcolor(RED);
+               std::cerr << "\tAtom number:      " << atom << std::endl;
+               std::cerr << "\tAtom coordinates: " << c[0] << "\t" << c[1] << "\t" << c[2] << "\t" << std::endl;
+               std::cerr << "\tReal coordinates: " << nm.x << "\t" << nm.y << "\t" << nm.z << "\t" << std::endl;
+               std::cerr << "\tCell coordinates: " << scc[0] << "\t" << scc[1] << "\t" << scc[2] << "\t" << std::endl;
+               std::cerr << "\tCell maxima:      " << d[0] << "\t" << d[1] << "\t" << d[2] << std::endl;
+               terminaltextcolor(WHITE);
+               err::vexit();
+            }
+         }
+         const int id = ((scc[0] * ncy) + scc[1]) * ncz + scc[2];
+         const int mat = nm.mat;
+         if(mat < 0 || mat >= static_cast<int>(st::internal::mp.size())){
+            terminaltextcolor(RED);
+            std::cerr << "Error: spin-torque material parameters missing for material index " << mat << std::endl;
+            terminaltextcolor(WHITE);
+            err::vexit();
+         }
+
+         double beta_cond = st::internal::mp.at(mat).beta_cond;
+         double beta_diff = st::internal::mp.at(mat).beta_diff;
+         double sa_infinity = st::internal::mp.at(mat).sa_infinity;
+         double lambda_sdl = st::internal::mp.at(mat).lambda_sdl;
+         double diffusion = st::internal::mp.at(mat).diffusion;
+         double sd_exchange = st::internal::mp.at(mat).sd_exchange;
+         double lambda_phi = st::internal::mp.at(mat).lambda_phi;
+         double chi_demag  = st::internal::mp.at(mat).chi_demag;
+         double seebeck_coefficient = st::internal::mp.at(mat).seebeck_coefficient;
+         double conductivity = st::internal::mp.at(mat).conductivity;
+
+         st::internal::beta_cond.at(id) += beta_cond;
+         st::internal::beta_diff.at(id) += beta_diff;
+         st::internal::sa_infinity.at(id) += sa_infinity;
+         st::internal::lambda_sdl.at(id) += lambda_sdl;
+         st::internal::diffusion.at(id) += diffusion;
+         st::internal::sd_exchange.at(id) += sd_exchange;
+         st::internal::lambda_phi.at(id) += lambda_phi;
+         st::internal::chi_demag.at(id)  += chi_demag;
+         st::internal::seebeck_coefficient.at(id) += seebeck_coefficient;
+         st::internal::conductivity.at(id) += conductivity;
+
+         if(st::internal::sot_sa) {
+            double sot_beta_cond = st::internal::mp.at(mat).sot_beta_cond;
+            double sot_beta_diff = st::internal::mp.at(mat).sot_beta_diff;
+            double sot_sa_infinity = st::internal::mp.at(mat).sot_sa_infinity;
+            double sot_lambda_sdl = st::internal::mp.at(mat).sot_lambda_sdl;
+            double sot_diffusion = st::internal::mp.at(mat).sot_diffusion;
+            double sot_sd_exchange = st::internal::mp.at(mat).sot_sd_exchange;
+
+            st::internal::sot_beta_cond.at(id) += sot_beta_cond;
+            st::internal::sot_beta_diff.at(id) += sot_beta_diff;
+            st::internal::sot_sa_infinity.at(id) += sot_sa_infinity;
+            st::internal::sot_lambda_sdl.at(id) += sot_lambda_sdl;
+            st::internal::sot_diffusion.at(id) += sot_diffusion;
+            st::internal::sot_sd_exchange.at(id) += sot_sd_exchange;
+
+            st::internal::spin_acc_sign.at(id) += (mat == 0) ? 0:((mat == 1) ? 1.0:-1.0);
+         }
+
+         count.at(id) += 1.0;
+
+         if(!mat_count.empty()){
+            const std::size_t midx = static_cast<std::size_t>(mat);
+            if(midx < nmat){
+               mat_count[midx*ncells + static_cast<std::size_t>(id)] += 1.0;
+            }
+         }
+      }
+      {
+         const uint64_t n_nm = vmpi::all_reduce_sum(static_cast<uint64_t>(cs::non_magnetic_atoms_array.size()));
+         if(n_nm > 0){
+            zlog << zTs() << "Included " << n_nm
+                 << " removed non-magnetic atoms in spin-torque microcell averages." << std::endl;
+         }
+      }
+
       // reduce microcell properties on all CPUs
       #ifdef MPICF
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::beta_cond[0],   st::internal::beta_cond.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
@@ -529,7 +662,11 @@ namespace internal{
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::lambda_sdl[0],  st::internal::lambda_sdl.size(),  MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::diffusion[0],   st::internal::diffusion.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::sd_exchange[0], st::internal::sd_exchange.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
-          MPI_Allreduce(MPI_IN_PLACE, &count[0],                     count.size(),                     MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &st::internal::lambda_phi[0],  st::internal::lambda_phi.size(),  MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &st::internal::chi_demag[0],   st::internal::chi_demag.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &st::internal::seebeck_coefficient[0], st::internal::seebeck_coefficient.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &st::internal::conductivity[0], st::internal::conductivity.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &count[0],                     count.size(),                     MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
 
           if(!mat_count.empty()){
              MPI_Allreduce(MPI_IN_PLACE, &mat_count[0], mat_count.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -564,6 +701,8 @@ namespace internal{
             st::internal::sd_exchange.at(cell) /= nat;
             st::internal::lambda_phi.at(cell)  /= nat;
             st::internal::chi_demag.at(cell)   /= nat;
+            st::internal::seebeck_coefficient.at(cell) /= nat;
+            st::internal::conductivity.at(cell) /= nat;
             st::internal::default_properties.sa_infinity =  st::internal::sa_infinity.at(cell);
             // if(st::internal::spin_acc_sign.at(cell) != 1.0 && st::internal::spin_acc_sign.at(cell) != -1.0) std::cout << st::internal::spin_acc_sign.at(cell) << std::endl;
          } else{
@@ -575,6 +714,8 @@ namespace internal{
             st::internal::sd_exchange.at(cell) = st::internal::default_properties.sd_exchange;
             st::internal::lambda_phi.at(cell)  = st::internal::default_properties.lambda_phi;
             st::internal::chi_demag.at(cell)   = st::internal::default_properties.chi_demag;
+            st::internal::seebeck_coefficient.at(cell) = st::internal::default_properties.seebeck_coefficient;
+            st::internal::conductivity.at(cell) = st::internal::default_properties.conductivity;
          }
          if(st::internal::sot_sa) {
             if(nat>0.0001){
