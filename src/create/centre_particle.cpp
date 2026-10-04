@@ -32,29 +32,33 @@ void centre_particle_on_atom(std::vector<double>& particle_origin, std::vector<c
 
    // set initial max range
    double max_range_sq = 1e123;
-   unsigned int nearest; // nearest atom to initial particle origin
+   unsigned int nearest = 0; // nearest atom to initial particle origin
 
    // copy to temporary for speed
    const double prx = particle_origin[0];
    const double pry = particle_origin[1];
    const double prz = particle_origin[2];
 
-   // loop over all atoms to find closest atom
-   for(size_t atom=0;atom<catom_array.size();atom++){
-      double dx = catom_array[atom].x - prx;
-      double dy = catom_array[atom].y - pry;
-      double dz = catom_array[atom].z - prz;
-      double r = dx*dx + dy*dy + dz*dz;
-      if(r < max_range_sq){
-         max_range_sq = r;
-         nearest = atom;
+   // A rank whose slab is only removed non-magnetic material has no atoms.
+   // Leave the range at the sentinel so another rank supplies the origin.
+   if(!catom_array.empty()){
+      // loop over all atoms to find closest atom
+      for(size_t atom=0;atom<catom_array.size();atom++){
+         double dx = catom_array[atom].x - prx;
+         double dy = catom_array[atom].y - pry;
+         double dz = catom_array[atom].z - prz;
+         double r = dx*dx + dy*dy + dz*dz;
+         if(r < max_range_sq){
+            max_range_sq = r;
+            nearest = atom;
+         }
       }
-   }
 
-   // set particle origin to nearest atom
-   particle_origin[0] = catom_array[nearest].x;
-   particle_origin[1] = catom_array[nearest].y;
-   particle_origin[2] = catom_array[nearest].z;
+      // set particle origin to nearest atom
+      particle_origin[0] = catom_array[nearest].x;
+      particle_origin[1] = catom_array[nearest].y;
+      particle_origin[2] = catom_array[nearest].z;
+   }
 
    //-----------------------------------------------------
    // For parallel reduce on all CPUs

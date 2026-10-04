@@ -141,6 +141,7 @@ namespace st{
       int sc1d_spin_stride = 1;
       int sc1d_charge_stride = 1;
       double sc1d_temperature = 300.0; // K
+      unsigned long sc1d_relax_steps = 1000UL; // default: allow 1000 steps for equilibration
 
       // Laser-driven charge transient parameters
       bool sc1d_laser_enable = false;
@@ -151,18 +152,77 @@ namespace st{
       double sc1d_laser_t0 = 0.5e-12;                  // s
       double sc1d_laser_fwhm = 0.1e-12;                // s
       double sc1d_tau_s = 200.0e-15;                   // s
+      double sc1d_tau_demag = 1.0e-12;                 // legacy input; unused
 
-      // Coarse-grid charge transient state per local stack
-      std::vector<double> sc1d_ns_coarse;
-      std::vector<double> sc1d_ne_coarse;
-      std::vector<double> sc1d_Jc_edge_coarse;
+      // Superdiffusive transport parameters
+      bool sc1d_superdiffusive_enable = false;         // default: use simplified model
+      double sc1d_tau_e = 100.0e-15;                   // hot electron energy relaxation time (~100 fs)
+      double sc1d_v_e0 = 0.0;                          // base velocity (0 = auto from De/dopt)
+
+      // Temperature coupling parameters
+      bool sc1d_use_ltmp_temperatures = false;         // legacy input; source is chosen from ltmp / TTM
+      double sc1d_reference_temperature = 300.0;      // K
+      bool sc1d_thermal_effects = false;              // transport-constant temperature laws are not filled in
+
+      // Seebeck effect parameters
+      bool sc1d_seebeck_enable = false;                // default: disabled
+
+      // Thermal gradient parameters
+      bool sc1d_thermal_gradients_enable = false;     // default: disabled
+      bool sc1d_thermal_gradients_use_for_llg_fields = false; // default: disabled (only use in program 13/55)
+      bool sc1d_thermal_gradients_initialised = false;
+
+      // Thermal gradient arrays
+      std::vector<double> sc1d_Te;
+      std::vector<double> sc1d_Tp;
+      std::vector<double> sc1d_sqrt_Te;
+      std::vector<double> sc1d_sqrt_Tp;
+
+      // Material properties
+      std::vector<double> sc1d_Ce;
+      std::vector<double> sc1d_Cp;
+      std::vector<double> sc1d_kappa_e;
+      std::vector<double> sc1d_kappa_p;
+      std::vector<double> sc1d_G;
+      std::vector<double> sc1d_T_Debye;
+
+      // Debye lookup table
+      std::vector<double> sc1d_debye_table;
+
+      // Atom mapping
+      std::vector<int> sc1d_atom_cell_idx;
+      std::vector<bool> sc1d_atom_use_phonon;
+
+      std::vector<double> sc1d_ns_fine;
+      std::vector<double> sc1d_ne_fine;
+      std::vector<double> sc1d_ne_seebeck_fine;
+      std::vector<double> sc1d_V_fine;
+      std::vector<double> sc1d_Jc_edge_fine;
+      std::vector<double> sc1d_sigma_fine;
+      std::vector<double> sc1d_seebeck_fine;
+      std::vector<int>    sc1d_mat_fine;
+      std::vector<double> sc1d_sa_demag_fine;
+      std::vector<int> sc1d_atom_ls;
+      std::vector<int> sc1d_atom_fine_lo;
+      std::vector<int> sc1d_atom_fine_hi;
 
       unsigned long sc1d_step_counter = 0;
+
+      double sc1d_time_total = 0.0;
+      double sc1d_time_io = 0.0;
+      double sc1d_time_charge = 0.0;
+      double sc1d_time_spin_current = 0.0;
+      double sc1d_time_spin_acc = 0.0;
+      double sc1d_time_interp = 0.0;
+      double sc1d_time_bcast = 0.0;
+      double sc1d_time_other = 0.0;
 
 
       // Additional per-microcell material parameters
       std::vector<double> lambda_phi; // m
-      std::vector<double> chi_demag;  // model parameter
+      std::vector<double> chi_demag;  // (C/m^3) per muB, longitudinal source on S
+      std::vector<double> seebeck_coefficient; // V/K (Seebeck coefficient)
+      std::vector<double> conductivity; // S/m; <0 Einstein from D and Te; 0 insulator
 
       // State for demag-driven accumulation and stable-axis handling
       std::vector<double> sc1d_m_prev_mag;
@@ -175,6 +235,19 @@ namespace st{
       std::vector<int> sc1d_local_stacks;
       std::vector<int> sc1d_stack_local_index;
       std::vector<double> sc1d_Sfine;
+      std::vector<double> sc1d_k_prev;  // Previous RHS for AB2 integrator
+
+
+      // Persistent fine-grid constant material properties per local stack
+      std::vector<double> sc1d_Bc_fine;
+      std::vector<double> sc1d_Bd_fine;
+      std::vector<double> sc1d_D_fine;
+      std::vector<double> sc1d_lsf_fine;
+      std::vector<double> sc1d_lphi_fine;
+      std::vector<double> sc1d_Jsd_fine;
+      std::vector<double> sc1d_chi_fine;
+      std::vector<double> sc1d_sa_inf_fine;
+      std::vector<double> sc1d_alpha_edge;
 
       
       std::vector<double> coeff_ast_sum;

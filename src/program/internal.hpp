@@ -87,6 +87,15 @@ namespace program{
       extern double electrical_pulse_fall_time; // linear fall time for electrical pulse (0.0 default)
       extern int num_electrical_pulses;
 
+      //------------------------------------------------------------------------
+      // Laser electrical pulse (Serban two-filter ODE)
+      //------------------------------------------------------------------------
+      extern bool laser_electrical_enable_temperature; // enable TTM/LTMP heating
+      extern double laser_electrical_eta_t;           // fraction of the 800 nm sheet charge in the Jc lobe
+      extern double laser_electrical_tau_s;           // hot-electron lifetime tau_s (s)
+      extern double laser_electrical_lambda;          // diffusion / backflow time (s)
+      extern double laser_electrical_current_ref;     // STT scale Jc_ref (A/m^2)
+
       extern std::vector<internal::mp_t> mp; // array of material properties
 
       extern double exchange_stiffness_min_constraint_angle;

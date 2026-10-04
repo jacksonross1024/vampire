@@ -14,6 +14,8 @@
 // Vampire headers
 #include "ltmp.hpp"
 #include "random.hpp"
+#include "errors.hpp"
+#include "vio.hpp"
 
 // Local temperature pulse headers
 #include "internal.hpp"
@@ -59,6 +61,15 @@ namespace ltmp{
             const int cell = ltmp::internal::atom_temperature_index[atom]; /// get cell index for atom temperature (Te or Tp)
             const double rootT = ltmp::internal::root_temperature_array[cell]; /// get sqrt(T) for atom
             const double sigma = ltmp::internal::atom_sigma[atom]; /// unrolled list of thermal prefactor
+            if(err::check==true){
+               if(!std::isfinite(rootT) || rootT < 0.0){
+                  terminaltextcolor(RED);
+                  std::cerr << "Error: non-physical sqrt(T) in local thermal field (not capped)." << std::endl;
+                  std::cerr << "  atom=" << atom << "  cell=" << cell << "  sqrt(T)=" << rootT << std::endl;
+                  terminaltextcolor(WHITE);
+                  err::vexit();
+               }
+            }
 
             // Calculate temperature rescaling (using root_T for performance)
             const double alpha = ltmp::internal::atom_rescaling_alpha[atom];
@@ -78,6 +89,15 @@ namespace ltmp{
             const int cell = ltmp::internal::atom_temperature_index[atom]; /// get cell index for atom temperature (Te or Tp)
             const double rootT = ltmp::internal::root_temperature_array[cell]; /// get sqrt(T) for atom
             const double sigma = ltmp::internal::atom_sigma[atom]; /// unrolled list of thermal prefactor
+            if(err::check==true){
+               if(!std::isfinite(rootT) || rootT < 0.0){
+                  terminaltextcolor(RED);
+                  std::cerr << "Error: non-physical sqrt(T) in local thermal field (not capped)." << std::endl;
+                  std::cerr << "  atom=" << atom << "  cell=" << cell << "  sqrt(T)=" << rootT << std::endl;
+                  terminaltextcolor(WHITE);
+                  err::vexit();
+               }
+            }
 
             
             ltmp::internal::x_field_array[atom]*= sigma*rootT;

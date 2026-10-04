@@ -134,6 +134,49 @@ namespace ltmp{
    bool match_input_parameter(std::string const key, std::string const word, std::string const value, std::string const unit, int const line);
    bool match_material_parameter(std::string const word, std::string const value, std::string const unit, int const line, int const super_index);
 
+   //-----------------------------------------------------------------------------
+   // Getter functions for external modules (e.g., spintorque)
+   //-----------------------------------------------------------------------------
+   
+   // Get electron temperature (K) for a given cell index
+   double get_electron_temperature(int cell);
+   
+   // Get phonon temperature (K) for a given cell index
+   double get_phonon_temperature(int cell);
+   
+   // Get electron temperature (K) at position z (Angstroms)
+   double get_electron_temperature_at_z(double z_angstrom);
+   
+   // Get phonon temperature (K) at position z (Angstroms)
+   double get_phonon_temperature_at_z(double z_angstrom);
+   
+   // Absorbed laser power density (W/m^3) at z (Angstroms): the same pump
+   // the two-temperature step deposits, already multiplied by the cell attenuation.
+   // time_from_start is seconds from the start of the drive phase.
+   // Returns 0 if ltmp is not enabled. The superdiffusive ns source reads this.
+   double get_attenuated_laser_power(double z_angstrom, double time_from_start);
+
+   // Time of the peak of temporal_laser_envelope, measured from the start of
+   // the drive phase. Serban envelope: pump_time. Default envelope: 3*pump_time.
+   double laser_peak_time();
+   
+   // Get the current laser envelope value (0 to 1, gaussian temporal profile)
+   double get_laser_envelope(double time_from_start);
+   
+   // Get number of temperature cells (for iteration/mapping)
+   int get_num_cells();
+   
+   // Get cell z-position (Angstroms)
+   double get_cell_z_position(int cell);
+   
+   // Set spin-currents laser parameters for use in ltmp heat flow
+   // Called when spin-currents laser is enabled but not using builtin laser
+   // optical_absorption_length (m) overrides ltmp's default penetration_depth
+   void set_spin_currents_laser_params(double Q0, double t0, double fwhm, double optical_absorption_length);
+
+   // Drive ltmp with the Serban laser envelope G(t) = exp(-8 ((t-tau_pw)/tau_pw)^2)
+   void set_serban_laser_envelope(const bool enabled);
+
 } // end of ltmp namespace
 
 #endif // LOCALTEMPERATURE_H_

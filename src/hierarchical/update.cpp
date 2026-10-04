@@ -42,7 +42,7 @@ void update(std::vector <double>& x_spin_array, // atomic spin directions
             std::vector <double>& m_spin_array, // atomic spin moment
             std::vector < bool >& magnetic){ // is magnetic
 
-                  std::cout << "\tUpdating hierarchical dipole fields..." << std::endl;
+                  // std::cout << "\tUpdating hierarchical dipole fields..." << std::endl;
    // inverse Bohr magneton
    const double imuB = 1.0/9.27400915e-24;
 

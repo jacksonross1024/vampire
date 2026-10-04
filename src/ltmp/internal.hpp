@@ -25,6 +25,7 @@ namespace ltmp{
       extern bool lateral_discretisation; /// enable lateral temperature profile
       extern bool vertical_discretisation; /// enable vertical temperature profile
       extern bool output_microcell_data; /// enable verbose output data for temperature cells
+      extern bool implicit_diffusion; /// backward-Euler diffusion (explicit coupling/pump unchanged)
       extern bool temperature_rescaling; /// enable rescaled temperature calculation
       extern bool gradient; /// enable temperature gradient
       extern bool gradient_only;
@@ -63,6 +64,15 @@ namespace ltmp{
       extern double dt; // time step
       // extern double TTTeq;
       extern double Tcool;
+      extern bool substrate_cool_bottom;
+
+      // Spin-currents laser parameters (when spin-currents laser is enabled but not using builtin)
+      extern bool use_sc1d_laser_params;  // flag to use spin-currents laser parameters
+      extern bool use_serban_laser_envelope; // Serban G(t) = exp(-8 ((t-tau_pw)/tau_pw)^2)
+      extern double sc1d_laser_Q0;         // spin-currents laser power density (W/m^3)
+      extern double sc1d_laser_t0;         // spin-currents laser pulse center time (s)
+      extern double sc1d_laser_fwhm;       // spin-currents laser pulse FWHM (s)
+      extern double sc1d_optical_absorption_length; // spin-currents optical absorption length (m), overrides penetration_depth
 
       extern double minimum_temperature; // Minimum temperature in temperature gradient
       extern double maximum_temperature; // Maximum temperature in temperature gradient
@@ -98,6 +108,7 @@ namespace ltmp{
       void write_cell_temperature_data();
       void calculate_local_temperature_pulse(const double time_from_start);
       void calculate_local_temperature_gradient(const double time_from_start);
+      double temporal_laser_envelope(const double time_from_start);
 
    } // end of iternal namespace
 } // end of st namespace

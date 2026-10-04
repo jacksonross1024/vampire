@@ -7,6 +7,7 @@ ltmp_objects=\
 absorption_profile.o \
 data.o \
 field.o \
+getters.o \
 initialise.o \
 interface.o \
 is_enabled.o \

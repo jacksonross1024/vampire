@@ -42,7 +42,6 @@ namespace ltmp{
          // Test for valid range
          // vin::doubles_from_string(u);
          ltmp::internal::micro_cell_size = u;
-         std::cout << "local tmp cells: <" << ltmp::internal::micro_cell_size[0] << ", " << ltmp::internal::micro_cell_size[1] << ", " << ltmp::internal::micro_cell_size[2] << ">" << std::endl;
          return true;
       }
       //--------------------------------------------------------------------
@@ -76,6 +75,16 @@ namespace ltmp{
       test="output-microcell-data";
       if(word==test){
          ltmp::internal::output_microcell_data = true;
+         return true;
+      }
+      test="implicit-diffusion";
+      if(word==test){
+         ltmp::internal::implicit_diffusion = true;
+         return true;
+      }
+      test="heat-sink-top";
+      if(word==test){
+         ltmp::internal::substrate_cool_bottom = false;
          return true;
       }
       //--------------------------------------------------------------------
@@ -138,20 +147,20 @@ namespace ltmp{
          }
       }
       //--------------------------------------------------------------------
-      test="absorption-profile-file";
+      test="absorption-file";
       if(word==test){
-         // Open absorption profile file
-         // Absorption (implicitly vs cell height)
+         // Simple keyword for absorption file (defaults to abs.txt if no value)
+         std::string filename = value.empty() ? "abs.txt" : value;
          std::stringstream afile;
-         afile.str( vin::get_string(value.c_str(), "input", line) );
+         afile.str( vin::get_string(filename.c_str(), "input", line) );
 
          std::string linestr; // String to hold line of text
-         double z=0.0; // height value
-         double ab=0.0; // absorption
+         double z=0.0; // height value (distance from top in Angstroms)
+         double ab=0.0; // absorption (0.0 to 1.0)
          // read absorption constants
          while(getline(afile,linestr)){
             std::stringstream line_stream(linestr);
-            line_stream >> z >> ab;
+            if(!(line_stream >> z >> ab)) continue; // skip blank / comment lines
             // check for valid ranges
             if(z < 0.0 || z > 10000.0){
               terminaltextcolor(RED);
@@ -168,6 +177,43 @@ namespace ltmp{
               err::vexit();
             }
             // everything is safe, so add point to class
+            // z values in file are distance from top (surface) in Angstroms
+            ltmp::absorption_profile.add_point(z,ab);
+         }
+         return true;
+      }
+      //--------------------------------------------------------------------
+      test="absorption-profile-file";
+      if(word==test){
+         // Open absorption profile file
+         // Absorption (implicitly vs cell height from top)
+         std::stringstream afile;
+         afile.str( vin::get_string(value.c_str(), "input", line) );
+
+         std::string linestr; // String to hold line of text
+         double z=0.0; // height value (distance from top in Angstroms)
+         double ab=0.0; // absorption (0.0 to 1.0)
+         // read absorption constants
+         while(getline(afile,linestr)){
+            std::stringstream line_stream(linestr);
+            if(!(line_stream >> z >> ab)) continue; // skip blank / comment lines
+            // check for valid ranges
+            if(z < 0.0 || z > 10000.0){
+              terminaltextcolor(RED);
+              std::cerr << "Error on line " << line << " of absorption profile file. Height value " << z << " is outside of valid range (0.0-10000.0 A). Exiting." << std::endl;
+              zlog << zTs() << "Error on line " << line << " of absorption profile file. Height value " << z << " is outside of valid range (0.0-10000.0 A). Exiting." << std::endl;
+              terminaltextcolor(WHITE);
+              err::vexit();
+            }
+            if(ab < 0.0 || ab > 1.0){
+              terminaltextcolor(RED);
+              std::cerr << "Error on line " << line << " of absorption profile file. Absorption value " << ab << " value is outside of valid range (0.0-1.0). Exiting." << std::endl;
+              zlog << zTs() << "Error on line " << line << " of absorption profile file. Absorption value " << ab << " value is outside of valid range (0.0-1.0). Exiting." << std::endl;
+              terminaltextcolor(WHITE);
+              err::vexit();
+            }
+            // everything is safe, so add point to class
+            // z values in file are distance from top (surface) in Angstroms
             ltmp::absorption_profile.add_point(z,ab);
          }
          return true;
@@ -192,7 +238,7 @@ namespace ltmp{
       std::string test="electron-heat-capacity"; 
       if(word==test){
          double num=atof(value.c_str());
-         vin::check_for_valid_value(num, word, line, prefix, unit, "J/K^2/m^3", 1.0e-3, 1.0e10,"material"," 0.001 - 1e10");
+         vin::check_for_valid_value(num, word, line, prefix, unit, "none", 1.0e-3, 1.0e10,"material"," 0.001 - 1e10");
          ltmp::internal::mp[super_index].electron_heat_capacity = num;
          return true;
       }
@@ -200,7 +246,7 @@ namespace ltmp{
       test="phonon-heat-capacity"; 
       if(word==test){
          double num=atof(value.c_str());
-         vin::check_for_valid_value(num, word, line, prefix, unit, "J/K/m^3", 1.0e-3, 1.0e10,"material"," 0.001 - 1e10");
+         vin::check_for_valid_value(num, word, line, prefix, unit, "none", 1.0e-3, 1.0e10,"material"," 0.001 - 1e10");
          ltmp::internal::mp[super_index].phonon_heat_capacity = num;
          return true;
       }
@@ -208,7 +254,7 @@ namespace ltmp{
       test="electron-phonon-coupling"; 
       if(word==test){
          double num=atof(value.c_str());
-         vin::check_for_valid_value(num, word, line, prefix, unit, "J/K/s/m^3", 0.0, 1.0e20,"material"," 0.0 - 1000");
+         vin::check_for_valid_value(num, word, line, prefix, unit, "none", 0.0, 1.0e20,"material"," 0.0 - 1000");
          ltmp::internal::mp[super_index].electron_phonon_coupling_constant = num;
          return true;
       }

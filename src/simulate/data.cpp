@@ -116,6 +116,18 @@ namespace sim{
       std::vector<double> sot_pj2;
       std::vector<double> sot_polarization_unit_vector(3,0.0); // sot spin polarization direction
       std::vector<double> sot_polarization_unit_vector2(3,0.0);
+      std::vector<double> let_stt_fl;
+      std::vector<double> let_stt_dl;
+      std::vector<double> let_fl_torkance;
+      std::vector<double> let_dl_torkance;
+      std::vector<double> let_eq6_fl;
+      std::vector<double> let_eq6_dl;
+      std::vector<int> let_fl_mode;
+      std::vector<int> let_dl_mode;
+      std::vector<double> let_P;
+      std::vector<double> let_px;
+      std::vector<double> let_py;
+      std::vector<double> let_pz;
       double electrical_pulse_strength = 0;
       std::vector<double> vcmak;   // voltage controlled anisotropy coefficient
 

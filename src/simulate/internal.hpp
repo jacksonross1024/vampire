@@ -58,10 +58,26 @@ namespace sim{
          set_double_t sot_asm2; // spin orbit torque asymmetry
          set_double_t sot_rj2;  // spin orbit relaxation torque
          set_double_t sot_pj2;
+         set_double_t let_stt_fl; // laser-electrical STT field-like torque (Tesla at Jc_ref)
+         set_double_t let_stt_dl; // laser-electrical STT damping-like torque (Tesla at Jc_ref)
+         set_double_t let_fl_torkance; // field-like torkance (Tesla / (A/m^2))
+         set_double_t let_dl_torkance; // damping-like torkance (Tesla / (A/m^2))
+         set_double_t let_diffusion; // De (m^2/s), shared by field-like and damping-like Eq. 6
+         set_double_t let_lambda_J; // exchange rotation length λJ (m)
+         set_double_t let_lambda_phi; // spin dephasing length λφ (m)
+         set_double_t let_abs_factor; // S built over k λ; default 1
+         set_double_t let_P; // Eq. 4 current spin polarisation P
+         bool let_pvec_set; // material-level let-polarisation-vector
+         double let_pvec[3];
          set_double_t vcmak;   // voltage controlled anisotropy coefficient
          set_double_t lt_x;
          set_double_t lt_y;
          set_double_t lt_z;
+         mp_t() : let_pvec_set(false) {
+            let_pvec[0] = 0.0;
+            let_pvec[1] = 0.0;
+            let_pvec[2] = 0.0;
+         }
       };
 
       //-----------------------------------------------------------------------------
@@ -86,6 +102,18 @@ namespace sim{
       extern std::vector<double> sot_pj2;
       extern std::vector<double> sot_polarization_unit_vector; // sot spin polarization direction
       extern std::vector<double> sot_polarization_unit_vector2;
+      extern std::vector<double> let_stt_fl; // laser-electrical STT field-like torque (Tesla at Jc_ref)
+      extern std::vector<double> let_stt_dl; // laser-electrical STT damping-like torque (Tesla at Jc_ref)
+      extern std::vector<double> let_fl_torkance; // Tesla / (A/m^2); scaled by Jc
+      extern std::vector<double> let_dl_torkance; // Tesla / (A/m^2); scaled by Jc
+      extern std::vector<double> let_eq6_fl; // Eq. 6 field-like: Tesla per Js (A/s)
+      extern std::vector<double> let_eq6_dl; // Eq. 6 damping-like: Tesla per Js (A/s)
+      extern std::vector<int> let_fl_mode; // 0 Tesla*Jc/Jc_ref, 1 torkance*Js, 2 Eq.6*Js
+      extern std::vector<int> let_dl_mode;
+      extern std::vector<double> let_P; // Eq. 4 current spin polarisation P (per material)
+      extern std::vector<double> let_px; // per-material LET polarisation
+      extern std::vector<double> let_py;
+      extern std::vector<double> let_pz;
       extern double electrical_pulse_strength;
 
       extern std::vector<double> lot_lt_x;

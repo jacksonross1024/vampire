@@ -85,11 +85,28 @@ namespace st{
                                   const std::vector<int>& atom_type_array,
                                   const std::vector<double>& mu_s_array);
 
+   // Spin-current settle before any LLG step. Magnetisation is held fixed,
+   // Jc stays 0, and the step count is spin-currents-1d-relax-steps.
+   void equilibrate_spin_currents_1d();
+
    //-----------------------------------------------------------------------------
    // Function for matching spin torque material parameters
    //-----------------------------------------------------------------------------
    bool match_material(std::string const word, std::string const value, std::string const unit, int const line, int const super_index);
    bool match_input_parameter(std::string const key, std::string const word, std::string const value, std::string const unit, int const line);
+
+   //-----------------------------------------------------------------------------
+   // Function for getting thermal fields from thermal gradients
+   //-----------------------------------------------------------------------------
+   void get_thermal_fields(std::vector<double>& thermal_x,
+                           std::vector<double>& thermal_y,
+                           std::vector<double>& thermal_z,
+                           int start_idx, int end_idx);
+
+   //-----------------------------------------------------------------------------
+   // Check if thermal gradients are enabled and initialized
+   //-----------------------------------------------------------------------------
+   bool thermal_gradients_enabled();
 
 
 } // end of st namespace

@@ -105,6 +105,9 @@ obj/spintorque/matrix.o \
 obj/spintorque/output.o \
 obj/spintorque/spinaccumulation.o \
 obj/spintorque/spincurrents.o \
+obj/spintorque/thermal_init.o \
+obj/spintorque/thermal_solver.o \
+obj/spintorque/thermal_fields.o \
 obj/utility/checkpoint.o \
 obj/utility/errors.o \
 obj/utility/statistics.o \

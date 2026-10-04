@@ -79,7 +79,9 @@ namespace st{
       extern std::vector<double> diffusion; /// spin diffusion length
       extern std::vector<double> sd_exchange; /// spin diffusion length
       extern std::vector<double> lambda_phi; /// transverse spin dephasing length (m)
-      extern std::vector<double> chi_demag;  /// demag-driven accumulation coupling (model parameter)
+      extern std::vector<double> chi_demag;  /// longitudinal demag source on S, (C/m^3) per muB
+      extern std::vector<double> seebeck_coefficient; /// Seebeck coefficient S (V/K) for charge Seebeck effect
+      extern std::vector<double> conductivity; /// electrical conductivity σ (S/m); <0 Einstein from D, Te; 0 insulator
       extern std::vector<double> a; /// spin diffusion length
       extern std::vector<double> b; /// spin diffusion length
 
@@ -103,6 +105,7 @@ namespace st{
       extern int sc1d_spin_stride;     // update stride for spin accumulation (in LLG steps)
       extern int sc1d_charge_stride;   // update stride for charge/spin current fields (in LLG steps)
       extern double sc1d_temperature;  // user-defined temperature (K) placeholder for future thermal coupling
+      extern unsigned long sc1d_relax_steps; // spin-current steps before the LLG is allowed to move spins
 
 // Laser-driven charge transient parameters (Eqs. 1–4)
 extern bool sc1d_laser_enable;
@@ -113,14 +116,80 @@ extern double sc1d_laser_eta;                  // effective electrons excited pe
 extern double sc1d_laser_t0;                   // pulse center time (s), relative to solver step counter
 extern double sc1d_laser_fwhm;                 // pulse width (FWHM, s)
 extern double sc1d_tau_s;                      // non-equilibrium electron lifetime tau_s (s)
+extern double sc1d_tau_demag;                  // legacy input; target-channel lifetime, unused
 
-// Persistent coarse-grid charge transient state per local stack
-extern std::vector<double> sc1d_ns_coarse;     // non-equilibrium charge density ns (C/m^3), size: local_stacks*ncz
-extern std::vector<double> sc1d_ne_coarse;     // excess charge density ne (C/m^3), size: local_stacks*ncz
-extern std::vector<double> sc1d_Jc_edge_coarse;// charge current edges Jc (A/m^2), size: local_stacks*(ncz+1)
+// Superdiffusive transport parameters
+extern bool sc1d_superdiffusive_enable;        // enable enhanced superdiffusive transport model
+extern double sc1d_tau_e;                      // hot electron energy relaxation time (s) ~50-200 fs
+extern double sc1d_v_e0;                       // base hot electron velocity (m/s), if 0 uses De/dopt
+
+// Temperature coupling parameters
+extern bool sc1d_use_ltmp_temperatures;        // legacy input; temperature source is ltmp or the global TTM
+extern double sc1d_reference_temperature;      // reference temperature for scaling (K)
+extern bool sc1d_thermal_effects;              // transport constants may depend on Te, Tp (laws not filled in)
+
+      // Seebeck effect parameters
+      extern bool sc1d_seebeck_enable;               // enable charge Seebeck effect
+
+      // Thermal gradient parameters
+      extern bool sc1d_thermal_gradients_enable;      // enable thermal gradient calculation
+      extern bool sc1d_thermal_gradients_initialised; // initialization flag
+      extern bool sc1d_thermal_gradients_use_for_llg_fields; // use thermal gradients for LLG thermal fields (any program)
+
+      // Thermal gradient arrays: [stack_idx * num_microcells_per_stack + cell_idx]
+      extern std::vector<double> sc1d_Te;            // Electron temperature (K)
+      extern std::vector<double> sc1d_Tp;            // Phonon temperature (K)
+      extern std::vector<double> sc1d_sqrt_Te;       // sqrt(Te) for stability
+      extern std::vector<double> sc1d_sqrt_Tp;       // sqrt(Tp) for stability
+
+      // Material properties: [cell_idx] (same for all stacks, materials vary by z)
+      extern std::vector<double> sc1d_Ce;            // Electron heat capacity (J/m³/K)
+      extern std::vector<double> sc1d_Cp;            // Phonon heat capacity (J/m³/K)
+      extern std::vector<double> sc1d_kappa_e;       // Electron thermal conductivity (J/s/m/K)
+      extern std::vector<double> sc1d_kappa_p;       // Phonon thermal conductivity (J/s/m/K)
+      extern std::vector<double> sc1d_G;             // Electron-phonon coupling (J/s/m³/K)
+      extern std::vector<double> sc1d_T_Debye;       // Debye temperature (K)
+
+      // Debye lookup table (shared, size ~24000)
+      extern std::vector<double> sc1d_debye_table;
+
+      // Atom mapping
+      extern std::vector<int> sc1d_atom_cell_idx;    // Maps atom -> coarse cell index
+      extern std::vector<bool> sc1d_atom_use_phonon; // true if atom couples to phonon temp
+
+      // Fine-grid charge state per local stack (same nf as S)
+      extern std::vector<double> sc1d_ns_fine;       // ns (C/m^3), size: local_stacks*nf
+      extern std::vector<double> sc1d_ne_fine;       // ne (C/m^3), size: local_stacks*nf
+      extern std::vector<double> sc1d_ne_seebeck_fine; // Seebeck excess ne (C/m^3), not the Poisson charge
+      extern std::vector<double> sc1d_V_fine;        // electrostatic potential (V), size: local_stacks*nf
+      extern std::vector<double> sc1d_Jc_edge_fine;  // Jc faces (A/m^2), size: local_stacks*(nf+1)
+      extern std::vector<double> sc1d_sigma_fine;    // electrical conductivity (S/m), prolonged from the coarse cell
+      extern std::vector<double> sc1d_seebeck_fine;  // Seebeck S (V/K), prolonged from the coarse cell
+      extern std::vector<int>    sc1d_mat_fine;      // unused; transport no longer picks a material per fine cell
+      extern std::vector<double> sc1d_sa_demag_fine; // legacy storage; target channel removed
+
+      // Atom ↔ fine-grid map for conservative S → atom torque
+      extern std::vector<int> sc1d_atom_ls;       // global column index into sc1d_Sfine, -1 if unused
+      extern std::vector<int> sc1d_atom_fine_lo;  // inclusive fine-cell range
+      extern std::vector<int> sc1d_atom_fine_hi;
 
 // Internal step counter for the 1D solvers (increments every LLG step when called)
 extern unsigned long sc1d_step_counter;
+
+// 0: no chrono, no timing Allgather, no "sc1d timing" log lines.
+#ifndef ST_SC1D_TIMINGS
+#define ST_SC1D_TIMINGS 0
+#endif
+
+// Cumulative wall time (seconds) on this rank for the 1D spin-current step.
+extern double sc1d_time_total;
+extern double sc1d_time_io;
+extern double sc1d_time_charge;
+extern double sc1d_time_spin_current;
+extern double sc1d_time_spin_acc;
+extern double sc1d_time_interp;
+extern double sc1d_time_bcast;
+extern double sc1d_time_other;
 
 
       // State for demag-driven accumulation and stable-axis handling
@@ -133,7 +202,20 @@ extern unsigned long sc1d_step_counter;
       extern int sc1d_nf;    // fine nodes per stack == nsub*num_microcells_per_stack
       extern std::vector<int> sc1d_local_stacks;       // list of global stack IDs owned by this rank
       extern std::vector<int> sc1d_stack_local_index;  // size num_stacks_y, maps global stack -> local index or -1
-      extern std::vector<double> sc1d_Sfine;           // 3*sc1d_nf per local stack
+      extern std::vector<double> sc1d_Sfine;           // 3*sc1d_nf per column, every column, on every rank
+      extern std::vector<double> sc1d_k_prev;          // Previous RHS for AB2: 3*sc1d_nf per local stack
+
+
+      // Persistent fine-grid constant material properties per local stack
+      extern std::vector<double> sc1d_Bc_fine;        // beta_cond interpolated to fine grid
+      extern std::vector<double> sc1d_Bd_fine;        // beta_diff interpolated to fine grid
+      extern std::vector<double> sc1d_D_fine;         // diffusion interpolated to fine grid
+      extern std::vector<double> sc1d_lsf_fine;       // lambda_sdl interpolated to fine grid
+      extern std::vector<double> sc1d_lphi_fine;      // lambda_phi interpolated to fine grid
+      extern std::vector<double> sc1d_Jsd_fine;       // sd_exchange interpolated to fine grid
+      extern std::vector<double> sc1d_chi_fine;       // chi_demag interpolated to fine grid
+      extern std::vector<double> sc1d_sa_inf_fine;   // sa_infinity interpolated to fine grid
+      extern std::vector<double> sc1d_alpha_edge;     // diffusion operator edge coefficients
 
       extern std::vector<double> coeff_ast;
       extern std::vector<double> coeff_nast;     
@@ -197,7 +279,9 @@ extern unsigned long sc1d_step_counter;
 
          // Extensions for 1D transient spin accumulation
          double lambda_phi;   /// transverse spin dephasing length (m)
-         double chi_demag;    /// demag->spin accumulation coupling (model parameter)
+         double chi_demag;    /// longitudinal demag source on S, (C/m^3) per muB
+         double seebeck_coefficient; /// Seebeck coefficient S (V/K) for charge Seebeck effect
+         double conductivity; /// electrical conductivity σ (S/m); <0 unset (Einstein from D, Te); 0 insulator
 
          //SOT
          double sot_beta_cond;    /// spin polarisation (conductivity)
@@ -206,6 +290,14 @@ extern unsigned long sc1d_step_counter;
          double sot_lambda_sdl;   /// spin diffusion length
          double sot_diffusion;    /// diffusion constant
          double sot_sd_exchange;  /// sd_exchange constant
+
+         // Thermal gradient properties
+         double electron_heat_capacity;        /// electron heat capacity (J/(K^2*m^3))
+         double phonon_heat_capacity;          /// phonon heat capacity (J/(K*m^3))
+         double electron_thermal_conductivity; /// electron thermal conductivity (W/(m*K))
+         double phonon_thermal_conductivity;   /// phonon thermal conductivity (W/(m*K))
+         double electron_phonon_coupling;       /// electron-phonon coupling (W/(m^3*K))
+         double einstein_temperature;           /// Einstein temperature (K)
       };
 
       // three vector type definition
@@ -272,6 +364,7 @@ extern unsigned long sc1d_step_counter;
       void output_microcell_sa_data();
       void output_base_microcell_data();
       void output_sc1d_data();
+      void report_sc1d_timing();
       void calculate_spin_accumulation();
       void calculate_sot_accumulation();
       void initialise_spincurrents_1d();
@@ -286,6 +379,21 @@ extern unsigned long sc1d_step_counter;
       st::internal::three_vector_t transform_vector(const st::internal::three_vector_t& rv, const st::internal::matrix_t& tm);
       st::internal::three_vector_t gaussian_elimination(st::internal::matrix_t& M, st::internal::three_vector_t& V);
 
+
+      //-----------------------------------------------------------------------------
+      // Thermal gradient functions
+      //-----------------------------------------------------------------------------
+      void initialise_thermal_gradients();
+      void update_thermal_gradients_stack(int stack_idx, double time_s, double dt_si);
+      void get_thermal_fields(std::vector<double>& thermal_x,
+                              std::vector<double>& thermal_y,
+                              std::vector<double>& thermal_z,
+                              int start_idx, int end_idx);
+      
+      // Thermal gradient output functions
+      void output_thermal_microcell_data();
+      void open_thermal_temperature_profile_file();
+      void write_thermal_temperature_data();
 
    } // end of iternal namespace
     extern double spin_acc_time;
