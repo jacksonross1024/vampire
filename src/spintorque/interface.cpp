@@ -583,6 +583,26 @@ bool match_material(string const word, string const value, string const unit, in
       return true;
    }
 
+   test="spin-currents-1d-prolongation";
+   if(word==test){
+      if(value == "step"){
+         st::internal::sc1d_prolongation = st::internal::sc1d_prolong_step;
+      } else if(value == "linear"){
+         st::internal::sc1d_prolongation = st::internal::sc1d_prolong_linear;
+      } else if(value == "smoothstep"){
+         st::internal::sc1d_prolongation = st::internal::sc1d_prolong_smooth;
+      } else {
+         terminaltextcolor(RED);
+         std::cerr << "Error - value for \'spin-torque:" << word << "\' must be one of:" << std::endl;
+         std::cerr << "\t\"linear\"" << std::endl;
+         std::cerr << "\t\"step\"" << std::endl;
+         std::cerr << "\t\"smoothstep\"" << std::endl;
+         terminaltextcolor(WHITE);
+         return false;
+      }
+      return true;
+   }
+
    test="spin-currents-1d-spin-stride";
    if(word==test){
       int stride = atoi(value.c_str());

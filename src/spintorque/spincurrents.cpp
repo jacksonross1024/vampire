@@ -3,7 +3,7 @@
 //
 // Minimal 1D (along st::internal::stz) transient spin-accumulation
 // solver, with:
-//  - implicit (backward-Euler) diffusion step (only dzz) on a fine z-grid
+//  - implicit (backward-Euler) anisotropic diffusion on a fine z-grid
 //  - explicit Heun step for local precession/relaxation + drift-divergence.
 //    Equilibrium amplitude is sa_inf (direction follows m-hat). Demagnetization
 //    dumps -chi*(d|m|/dt)*m-hat into S; spin-flip returns the excess to sa_inf.
@@ -288,12 +288,9 @@ static constexpr double kAtomcellVolume = 2.89e-30; // m^3
 static constexpr double kInvMuB = 1.0 / kMuB;
 static constexpr double kInvE   = 1.0 / kE;
 
-// Stable-axis freezing (compile-time flag, no user interface by request)
+// Hold the diffusion, drift and relaxation axis when |m| is inside the thermal
+// floor 3 |m0| / sqrt(2 N). Compile-time flag, no user interface.
 static constexpr bool   kFreezeAxisWhenMsmall = true;
-static constexpr double kFreezeFracOfM0       = 0.05;  // update axis only when |m| > frac * |m0|
-// Interpolate material/axis parameters between neighbouring coarse microcells.
-// Keep OFF by default to avoid unintended smoothing across sharp interfaces.
-static constexpr bool   kInterpolateBetweenMicrocells = false;
 static constexpr double kEps                  = 1e-30;
 
 //------------------------------------------------------------------------------
@@ -349,15 +346,65 @@ static double lerp(const double a, const double b, const double w){
    return (1.0 - w)*a + w*b;
 }
 
-static double microcell_interpolation_weight(const int j,
-                                             const int nsub,
-                                             const int k,
-                                             const int ncz,
-                                             const bool is_interface){
-   if(kInterpolateBetweenMicrocells && k < ncz-1 && !is_interface){
-      return (j + 0.5) / (double)nsub;
+// gamma = beta_c * beta_d, clamped so the parallel resistance stays finite.
+// A non-magnet has beta ~ 0.001, so gamma is ~1e-6 and the tensor is isotropic.
+static double spin_gamma(const double Bc, const double Bd){
+   const double gmax = 1.0 - 1.0e-6;
+   double g = Bc * Bd;
+   if(g < 0.0) g = 0.0;
+   if(g > gmax) g = gmax;
+   return g;
+}
+
+// Fraction t in [0, 1] between coarse centres k and k+1. Outside the first
+// and last centres the end cell is held and t is 0. Step jumps at the coarse
+// face (t = 1/2). Smoothstep is flat at each centre.
+static double prolongation_t(const double s, const int ncz, int& k_left){
+   k_left = 0;
+   if(ncz <= 1) return 0.0;
+   if(s <= 0.5) return 0.0;
+   if(s >= (double)ncz - 0.5){
+      k_left = ncz - 1;
+      return 0.0;
    }
-   return 0.0;
+   k_left = static_cast<int>(std::floor(s - 0.5));
+   if(k_left < 0) k_left = 0;
+   if(k_left > ncz - 2) k_left = ncz - 2;
+   double t = s - ((double)k_left + 0.5);
+   if(t < 0.0) t = 0.0;
+   if(t > 1.0) t = 1.0;
+   if(sc1d_prolongation == sc1d_prolong_step){
+      if(t < 0.5) t = 0.0;
+      else t = 1.0;
+   } else if(sc1d_prolongation == sc1d_prolong_smooth){
+      t = t*t*(3.0 - 2.0*t);
+   }
+   return t;
+}
+
+static double prolong_scalar(const double* field,
+                             const int start_cell,
+                             const int ncz,
+                             const double s){
+   int k = 0;
+   const double t = prolongation_t(s, ncz, k);
+   const double left = field[start_cell + k];
+   if(t == 0.0 || k >= ncz - 1) return left;
+   return lerp(left, field[start_cell + k + 1], t);
+}
+
+// True when a finite floor exists. With the freeze flag off, every finite
+// moment is accepted and thresh is 0. N < 1 or |m0| == 0 keeps the reference.
+static bool axis_floor(const int cell, double& thresh){
+   thresh = 0.0;
+   if(!kFreezeAxisWhenMsmall) return true;
+   if(cell < 0 || cell >= (int)cell_natom.size()) return false;
+   if(cell >= (int)sc1d_m0_mag.size()) return false;
+   const double N = cell_natom[cell];
+   const double m0 = sc1d_m0_mag[cell];
+   if(N < 1.0 || !(m0 > 0.0)) return false;
+   thresh = 3.0 * m0 / std::sqrt(2.0 * N);
+   return true;
 }
 
 static double edge_harmonic_mean(const double left, const double right){
@@ -488,6 +535,153 @@ static void block_thomas(const std::vector<Block2>& L,
    }
 }
 
+// 3x3 block Thomas for the anisotropic spin-diffusion half-step.
+// Same elimination as block_thomas. The inverse is the cofactor formula,
+// with the same pivot guard as block2_inv.
+struct Block3 {
+   double a00;
+   double a01;
+   double a02;
+   double a10;
+   double a11;
+   double a12;
+   double a20;
+   double a21;
+   double a22;
+};
+
+struct Vec3 {
+   double x;
+   double y;
+   double z;
+};
+
+static Block3 block3_zero(){
+   Block3 A;
+   A.a00 = 0.0; A.a01 = 0.0; A.a02 = 0.0;
+   A.a10 = 0.0; A.a11 = 0.0; A.a12 = 0.0;
+   A.a20 = 0.0; A.a21 = 0.0; A.a22 = 0.0;
+   return A;
+}
+
+static Block3 block3_identity(){
+   Block3 A = block3_zero();
+   A.a00 = 1.0;
+   A.a11 = 1.0;
+   A.a22 = 1.0;
+   return A;
+}
+
+static Block3 block3_add(const Block3& A, const Block3& B){
+   Block3 C;
+   C.a00 = A.a00 + B.a00; C.a01 = A.a01 + B.a01; C.a02 = A.a02 + B.a02;
+   C.a10 = A.a10 + B.a10; C.a11 = A.a11 + B.a11; C.a12 = A.a12 + B.a12;
+   C.a20 = A.a20 + B.a20; C.a21 = A.a21 + B.a21; C.a22 = A.a22 + B.a22;
+   return C;
+}
+
+static Block3 block3_sub(const Block3& A, const Block3& B){
+   Block3 C;
+   C.a00 = A.a00 - B.a00; C.a01 = A.a01 - B.a01; C.a02 = A.a02 - B.a02;
+   C.a10 = A.a10 - B.a10; C.a11 = A.a11 - B.a11; C.a12 = A.a12 - B.a12;
+   C.a20 = A.a20 - B.a20; C.a21 = A.a21 - B.a21; C.a22 = A.a22 - B.a22;
+   return C;
+}
+
+static Block3 block3_scale(const Block3& A, const double s){
+   Block3 C;
+   C.a00 = A.a00*s; C.a01 = A.a01*s; C.a02 = A.a02*s;
+   C.a10 = A.a10*s; C.a11 = A.a11*s; C.a12 = A.a12*s;
+   C.a20 = A.a20*s; C.a21 = A.a21*s; C.a22 = A.a22*s;
+   return C;
+}
+
+static Block3 block3_mul(const Block3& A, const Block3& B){
+   Block3 C;
+   C.a00 = A.a00*B.a00 + A.a01*B.a10 + A.a02*B.a20;
+   C.a01 = A.a00*B.a01 + A.a01*B.a11 + A.a02*B.a21;
+   C.a02 = A.a00*B.a02 + A.a01*B.a12 + A.a02*B.a22;
+   C.a10 = A.a10*B.a00 + A.a11*B.a10 + A.a12*B.a20;
+   C.a11 = A.a10*B.a01 + A.a11*B.a11 + A.a12*B.a21;
+   C.a12 = A.a10*B.a02 + A.a11*B.a12 + A.a12*B.a22;
+   C.a20 = A.a20*B.a00 + A.a21*B.a10 + A.a22*B.a20;
+   C.a21 = A.a20*B.a01 + A.a21*B.a11 + A.a22*B.a21;
+   C.a22 = A.a20*B.a02 + A.a21*B.a12 + A.a22*B.a22;
+   return C;
+}
+
+static Vec3 block3_mul_vec(const Block3& A, const Vec3& v){
+   Vec3 r;
+   r.x = A.a00*v.x + A.a01*v.y + A.a02*v.z;
+   r.y = A.a10*v.x + A.a11*v.y + A.a12*v.z;
+   r.z = A.a20*v.x + A.a21*v.y + A.a22*v.z;
+   return r;
+}
+
+static Vec3 vec3_sub(const Vec3& a, const Vec3& b){
+   Vec3 r;
+   r.x = a.x - b.x;
+   r.y = a.y - b.y;
+   r.z = a.z - b.z;
+   return r;
+}
+
+static Block3 block3_inv(const Block3& A){
+   const double c00 = A.a11*A.a22 - A.a12*A.a21;
+   const double c01 = A.a12*A.a20 - A.a10*A.a22;
+   const double c02 = A.a10*A.a21 - A.a11*A.a20;
+   const double c10 = A.a02*A.a21 - A.a01*A.a22;
+   const double c11 = A.a00*A.a22 - A.a02*A.a20;
+   const double c12 = A.a01*A.a20 - A.a00*A.a21;
+   const double c20 = A.a01*A.a12 - A.a02*A.a11;
+   const double c21 = A.a02*A.a10 - A.a00*A.a12;
+   const double c22 = A.a00*A.a11 - A.a01*A.a10;
+   double det = A.a00*c00 + A.a01*c01 + A.a02*c02;
+   if(std::fabs(det) < kEps) det = (det >= 0.0 ? kEps : -kEps);
+   const double idet = 1.0 / det;
+   Block3 I;
+   I.a00 = c00 * idet; I.a01 = c10 * idet; I.a02 = c20 * idet;
+   I.a10 = c01 * idet; I.a11 = c11 * idet; I.a12 = c21 * idet;
+   I.a20 = c02 * idet; I.a21 = c12 * idet; I.a22 = c22 * idet;
+   return I;
+}
+
+static void block3_thomas(const std::vector<Block3>& L,
+                          const std::vector<Block3>& D,
+                          const std::vector<Block3>& U,
+                          std::vector<Vec3>& rhs){
+   const int n = static_cast<int>(rhs.size());
+   if(n <= 0) return;
+   std::vector<Block3> Cp(n, block3_zero());
+   std::vector<Vec3> dp(n);
+
+   Block3 Dinv = block3_inv(D[0]);
+   Cp[0] = block3_mul(Dinv, U[0]);
+   dp[0] = block3_mul_vec(Dinv, rhs[0]);
+
+   for(int i=1;i<n;i++){
+      const Block3 LCp = block3_mul(L[i], Cp[i-1]);
+      const Block3 Di = block3_sub(D[i], LCp);
+      Dinv = block3_inv(Di);
+      if(i < n-1){
+         Cp[i] = block3_mul(Dinv, U[i]);
+      } else {
+         Cp[i] = block3_zero();
+      }
+      const Vec3 Ldp = block3_mul_vec(L[i], dp[i-1]);
+      const Vec3 rhs_i = vec3_sub(rhs[i], Ldp);
+      dp[i] = block3_mul_vec(Dinv, rhs_i);
+   }
+
+   rhs[n-1] = dp[n-1];
+   for(int i=n-2;i>=0;i--){
+      const Vec3 Cpx = block3_mul_vec(Cp[i], rhs[i+1]);
+      rhs[i].x = dp[i].x - Cpx.x;
+      rhs[i].y = dp[i].y - Cpx.y;
+      rhs[i].z = dp[i].z - Cpx.z;
+   }
+}
+
 static void fill_fine_charge_transport(const int nf,
                                        const double dz,
                                        const double t_s,
@@ -508,10 +702,9 @@ static void fill_fine_charge_transport(const int nf,
       Te_cell[i] = Te;
       const double D0 = std::max(0.0, D_cell[i]);
       De_cell[i] = scale_diffusion(D0, Te, Tp);
-      // A negative mat value is unset: Einstein σ from De and Te.
-      // An explicit 0 is an insulator and stays 0. A positive value is used as written.
-      double sigma = (sigma0_cell[i] < 0.0) ? einstein_conductivity(De_cell[i], Te) : sigma0_cell[i];
-      sigma_cell[i] = apply_thermal_effects(sigma, Te, Tp);
+      // sigma0_cell is already a conductivity. The coarse cell resolved the
+      // Einstein sentinel, and that number was prolonged with D and m.
+      sigma_cell[i] = apply_thermal_effects(sigma0_cell[i], Te, Tp);
    }
    sc1d_time_interp += sw_te.elapsed_seconds();
 
@@ -1129,7 +1322,6 @@ static void allocate_sc1d_arrays(){
    sc1d_Jsd_fine.assign(nfn, 0.0);
    sc1d_chi_fine.assign(nfn, 0.0);
    sc1d_sa_inf_fine.assign(nfn, 0.0);
-   sc1d_alpha_edge.assign(nstack * (std::size_t)std::max(0,nf-1), 0.0);
 }
 
 static void initialise_magnetization_history(){
@@ -1143,6 +1335,7 @@ static void initialise_magnetization_history(){
       const double my = m[3*c+1];
       const double mz = m[3*c+2];
       const double mm = std::sqrt(mx*mx + my*my + mz*mz);
+      sc1d_m0_mag[c] = mm;
       if(mm > 1e-12){
          sc1d_mhat_ref[3*c+0] = mx/mm;
          sc1d_mhat_ref[3*c+1] = my/mm;
@@ -1155,24 +1348,38 @@ static void initialise_magnetization_history(){
    }
 }
 
-// Linear interpolation of a coarse-cell field onto a fine-cell centre.
-// Coarse values sit at cell centres. Below the first centre and above the
-// last centre the end cell is used. Robin resistance is separate and sits
-// on the coarse face.
-static double lerp_coarse_centre(const double* field,
-                                 const int start_cell,
-                                 const int ncz,
-                                 const double s){
-   if(ncz <= 1 || s <= 0.5) return field[start_cell];
-   const double s_top = (double)ncz - 0.5;
-   if(s >= s_top) return field[start_cell + ncz - 1];
-   const int k = static_cast<int>(std::floor(s - 0.5));
-   const double w = s - ((double)k + 0.5);
-   return (1.0 - w)*field[start_cell + k] + w*field[start_cell + k + 1];
+// Resolve the coarse conductivity, then prolong that number with the same
+// weight as D and m. A negative sentinel is the Einstein value at the coarse
+// centre. Zero stays an insulator. The face harmonic mean is unchanged.
+static void prolong_conductivity(const int start_cell,
+                                 const int nsub,
+                                 const int nf,
+                                 double* sigma_fine){
+   const int nsub_safe = std::max(1, nsub);
+   const int ncz = std::max(1, num_microcells_per_stack);
+   const double Dz = micro_cell_thickness * 1.0e-10;
+   std::vector<double> sig((std::size_t)ncz, 0.0);
+   for(int k=0;k<ncz;k++){
+      const int cell = start_cell + k;
+      double stored = 0.0;
+      double Dc = 0.0;
+      if(cell >= 0 && cell < (int)conductivity.size()) stored = conductivity[cell];
+      if(cell >= 0 && cell < (int)diffusion.size()) Dc = diffusion[cell];
+      if(stored < 0.0){
+         const double zc = ((double)k + 0.5) * Dz;
+         const double Te = get_local_electron_temperature(zc);
+         sig[(std::size_t)k] = einstein_conductivity(std::max(0.0, Dc), Te);
+      } else {
+         sig[(std::size_t)k] = stored;
+      }
+   }
+   for(int i=0;i<nf;i++){
+      const double s = ((double)i + 0.5) / (double)nsub_safe;
+      sigma_fine[i] = prolong_scalar(sig.data(), 0, ncz, s);
+   }
 }
 
-// Fine-cell constants are the linear interpolation of the coarse averages
-// between neighbouring coarse-cell centres.
+// Fine-cell constants use the selected prolongation between coarse centres.
 static void prolong_coarse_constants(const int start_cell,
                                      const int nsub,
                                      const int nf,
@@ -1190,60 +1397,173 @@ static void prolong_coarse_constants(const int start_cell,
    const int ncz = std::max(1, num_microcells_per_stack);
    for(int i=0;i<nf;i++){
       const double s = ((double)i + 0.5) / (double)nsub_safe;
-      Bc_fine[i] = lerp_coarse_centre(beta_cond.data(), start_cell, ncz, s);
-      Bd_fine[i] = lerp_coarse_centre(beta_diff.data(), start_cell, ncz, s);
-      D_fine[i] = lerp_coarse_centre(diffusion.data(), start_cell, ncz, s);
-      lsf_fine[i] = lerp_coarse_centre(lambda_sdl.data(), start_cell, ncz, s);
-      lphi_fine[i] = lerp_coarse_centre(lambda_phi.data(), start_cell, ncz, s);
-      Jsd_fine[i] = lerp_coarse_centre(sd_exchange.data(), start_cell, ncz, s);
-      chi_fine[i] = lerp_coarse_centre(chi_demag.data(), start_cell, ncz, s);
-      sa_inf_fine[i] = lerp_coarse_centre(sa_infinity.data(), start_cell, ncz, s);
-      // Conductivity is not blended. A negative sentinel means Einstein and a
-      // 0 is an insulator; interpolating the two would conduct part of the silica.
-      const int k_own = std::max(0, std::min(ncz - 1, static_cast<int>(std::floor(s))));
-      sigma_fine[i] = conductivity[start_cell + k_own];
-      seebeck_fine[i] = lerp_coarse_centre(seebeck_coefficient.data(), start_cell, ncz, s);
+      Bc_fine[i] = prolong_scalar(beta_cond.data(), start_cell, ncz, s);
+      Bd_fine[i] = prolong_scalar(beta_diff.data(), start_cell, ncz, s);
+      D_fine[i] = prolong_scalar(diffusion.data(), start_cell, ncz, s);
+      lsf_fine[i] = prolong_scalar(lambda_sdl.data(), start_cell, ncz, s);
+      lphi_fine[i] = prolong_scalar(lambda_phi.data(), start_cell, ncz, s);
+      Jsd_fine[i] = prolong_scalar(sd_exchange.data(), start_cell, ncz, s);
+      chi_fine[i] = prolong_scalar(chi_demag.data(), start_cell, ncz, s);
+      sa_inf_fine[i] = prolong_scalar(sa_infinity.data(), start_cell, ncz, s);
+      seebeck_fine[i] = prolong_scalar(seebeck_coefficient.data(), start_cell, ncz, s);
    }
+   prolong_conductivity(start_cell, nsub, nf, sigma_fine);
 }
 
-static void assemble_alpha_edges_from_coarse(const int start_cell,
-                                             const int nsub,
-                                             const int nf,
-                                             const double dz,
-                                             const double* D_fine,
-                                             double* alpha_edge_stack){
+// R_half = (dz/(2D)) [ I + (gamma/(1-gamma)) m m^T ].
+// Perpendicular eigenvalues are dz/(2D). The parallel one is that over (1-gamma).
+static Block3 half_cell_resistance(const double D,
+                                  const double gamma,
+                                  const double dz,
+                                  const double mx,
+                                  const double my,
+                                  const double mz){
+   const double s = dz / (2.0 * D);
+   const double gfac = (gamma > 0.0) ? (gamma / (1.0 - gamma)) : 0.0;
+   const double sm = s * gfac;
+   Block3 R;
+   R.a00 = s + sm*mx*mx;
+   R.a01 = sm*mx*my;
+   R.a02 = sm*mx*mz;
+   R.a10 = R.a01;
+   R.a11 = s + sm*my*my;
+   R.a12 = sm*my*mz;
+   R.a20 = R.a02;
+   R.a21 = R.a12;
+   R.a22 = s + sm*mz*mz;
+   return R;
+}
+
+// A_face[i] is G/dz between fine cells i and i+1, with G = inv(R_face) in m/s.
+// Same series split as the old scalar alpha. A closed face (D below kEps) is
+// zero and is not inverted. Interface resistance is R_int on the coarse face only.
+static void assemble_diffusion_faces(const int start_cell,
+                                    const int nsub,
+                                    const int nf,
+                                    const double dz,
+                                    const double* D_fine,
+                                    const double* Bc_fine,
+                                    const double* Bd_fine,
+                                    const double* mhat,
+                                    std::vector<Block3>& A_face){
    if(nf < 2) return;
    const int nsub_safe = std::max(1, nsub);
+   const double idz = 1.0 / dz;
    for(int i=0;i<nf-1;i++){
+      const double Di = D_fine[i];
+      const double Dj = D_fine[i+1];
+      if(Di < kEps || Dj < kEps){
+         A_face[(std::size_t)i] = block3_zero();
+         continue;
+      }
       double Rint = 0.0;
-      // The face between the last subcell of coarse cell k and the first of k+1.
       if(((i + 1) % nsub_safe) == 0){
          const int cell = start_cell + (i / nsub_safe);
          if(cell >= 0 && cell < (int)r_int_edge.size()) Rint = r_int_edge[cell];
       }
-      const double Di = D_fine[i];
-      const double Dj = D_fine[i+1];
-      if(Di < kEps || Dj < kEps){
-         alpha_edge_stack[i] = 0.0;
-         continue;
-      }
+      // The smallest eigenvalue is the old scalar series resistance. A non-positive
+      // value is a closed face, same as the previous alpha = 0 branch.
       const double Rseries = dz/(2.0*Di) + Rint + dz/(2.0*Dj);
       if(Rseries <= 0.0){
-         alpha_edge_stack[i] = 0.0;
+         A_face[(std::size_t)i] = block3_zero();
          continue;
       }
-      alpha_edge_stack[i] = (1.0 / Rseries) / dz;
+      const double gi = spin_gamma(Bc_fine[i], Bd_fine[i]);
+      const double gj = spin_gamma(Bc_fine[i+1], Bd_fine[i+1]);
+      Block3 R = block3_add(
+         half_cell_resistance(Di, gi, dz, mhat[3*i+0], mhat[3*i+1], mhat[3*i+2]),
+         half_cell_resistance(Dj, gj, dz, mhat[3*(i+1)+0], mhat[3*(i+1)+1], mhat[3*(i+1)+2]));
+      R.a00 += Rint;
+      R.a11 += Rint;
+      R.a22 += Rint;
+      A_face[(std::size_t)i] = block3_scale(block3_inv(R), idz);
    }
+}
+
+static void add_relax(Block3& A, const double relax){
+   A.a00 += relax;
+   A.a11 += relax;
+   A.a22 += relax;
+}
+
+// Steady operator: D_i S_i - A_{i-1} S_{i-1} - A_i S_{i+1}, plus relax on D.
+static void assemble_steady_blocks(const int nf,
+                                  const double* relax,
+                                  const std::vector<Block3>& A_face,
+                                  std::vector<Block3>& L,
+                                  std::vector<Block3>& D,
+                                  std::vector<Block3>& U){
+   const Block3 Z = block3_zero();
+   if(nf <= 0) return;
+   if(nf == 1){
+      L[0] = Z;
+      D[0] = block3_zero();
+      add_relax(D[0], relax[0]);
+      U[0] = Z;
+      return;
+   }
+   L[0] = Z;
+   D[0] = A_face[0];
+   add_relax(D[0], relax[0]);
+   U[0] = block3_scale(A_face[0], -1.0);
+   for(int i=1;i<nf-1;i++){
+      L[(std::size_t)i] = block3_scale(A_face[(std::size_t)(i-1)], -1.0);
+      D[(std::size_t)i] = block3_add(A_face[(std::size_t)(i-1)], A_face[(std::size_t)i]);
+      add_relax(D[(std::size_t)i], relax[i]);
+      U[(std::size_t)i] = block3_scale(A_face[(std::size_t)i], -1.0);
+   }
+   const int last = nf - 1;
+   L[(std::size_t)last] = block3_scale(A_face[(std::size_t)(last-1)], -1.0);
+   D[(std::size_t)last] = A_face[(std::size_t)(last-1)];
+   add_relax(D[(std::size_t)last], relax[last]);
+   U[(std::size_t)last] = Z;
+}
+
+// Backward Euler: I + dt_half * A, Neumann ends. Built once per stack and
+// reused by both Strang half-steps.
+static void assemble_diffusion_half_blocks(const int nf,
+                                          const double dt_half,
+                                          const std::vector<Block3>& A_face,
+                                          std::vector<Block3>& L,
+                                          std::vector<Block3>& D,
+                                          std::vector<Block3>& U){
+   const Block3 Z = block3_zero();
+   const Block3 I = block3_identity();
+   if(nf <= 0) return;
+   if(nf == 1){
+      L[0] = Z;
+      D[0] = I;
+      U[0] = Z;
+      return;
+   }
+   const Block3 dt0 = block3_scale(A_face[0], dt_half);
+   L[0] = Z;
+   D[0] = block3_add(I, dt0);
+   U[0] = block3_scale(dt0, -1.0);
+   for(int i=1;i<nf-1;i++){
+      const Block3 dtL = block3_scale(A_face[(std::size_t)(i-1)], dt_half);
+      const Block3 dtR = block3_scale(A_face[(std::size_t)i], dt_half);
+      L[(std::size_t)i] = block3_scale(dtL, -1.0);
+      D[(std::size_t)i] = block3_add(I, block3_add(dtL, dtR));
+      U[(std::size_t)i] = block3_scale(dtR, -1.0);
+   }
+   const int last = nf - 1;
+   const Block3 dtL = block3_scale(A_face[(std::size_t)(last-1)], dt_half);
+   L[(std::size_t)last] = block3_scale(dtL, -1.0);
+   D[(std::size_t)last] = block3_add(I, dtL);
+   U[(std::size_t)last] = Z;
 }
 
 static void initialise_fine_spin_if_empty(const int start_cell,
                                          const int nsub,
                                          const int nf,
                                          const double dz,
+                                         const double* Bc_fine,
+                                         const double* Bd_fine,
                                          const double* D_fine,
                                          const double* lsf_fine,
-                                         const double* alpha_edge,
                                          const double* sa_inf_fine,
+                                         const double* mhat,
                                          double* Sbase){
    bool needs_init = true;
    for(int i=0; i<nf*3; ++i){
@@ -1252,53 +1572,57 @@ static void initialise_fine_spin_if_empty(const int start_cell,
          break;
       }
    }
-   if(!needs_init) return;
+   if(!needs_init || nf <= 0) return;
 
-   std::vector<double> sa_eq(3*(std::size_t)nf, 0.0);
-   std::vector<double> relax(nf, 0.0);
+   std::vector<Vec3> sa_eq((std::size_t)nf);
+   std::vector<double> relax((std::size_t)nf, 0.0);
    for(int i=0;i<nf;i++){
-      const int k = i / std::max(1, nsub);
-      const int cell = start_cell + k;
-      const double hx = sc1d_mhat_ref[3*cell+0];
-      const double hy = sc1d_mhat_ref[3*cell+1];
-      const double hz = sc1d_mhat_ref[3*cell+2];
       const double sa = sa_inf_fine[i];
-      sa_eq[3*i+0] = sa * hx;
-      sa_eq[3*i+1] = sa * hy;
-      sa_eq[3*i+2] = sa * hz;
+      sa_eq[(std::size_t)i].x = sa * mhat[3*i+0];
+      sa_eq[(std::size_t)i].y = sa * mhat[3*i+1];
+      sa_eq[(std::size_t)i].z = sa * mhat[3*i+2];
       const double lambda = lsf_fine[i];
       if(lambda > 0.0 && D_fine[i] > 0.0){
-         relax[i] = D_fine[i] / (lambda * lambda);
+         const double gamma = spin_gamma(Bc_fine[i], Bd_fine[i]);
+         const double lambda_sf = lambda / std::sqrt(1.0 - gamma);
+         relax[(std::size_t)i] = D_fine[i] / (lambda_sf * lambda_sf);
       }
    }
 
-   // Steady diffusion-relaxation, Jc = 0: d/dz (De dS/dz) = De (S - sa_eq) / λsf².
-   // sa_eq is sa_inf along the local m-hat. sa_inf is the linear blend of the
-   // coarse averages. Robin mixing sits on the coarse face.
-   // The solve spreads those steps into a continuous tail, so Js = -De dS/dz
-   // is already the gradient of that profile and is not zero everywhere.
-   // Neumann ends.
-   std::vector<double> a(nf, 0.0);
-   std::vector<double> b(nf, 0.0);
-   std::vector<double> c(nf, 0.0);
-   std::vector<double> rhs(nf, 0.0);
-   for(int comp=0; comp<3; ++comp){
-      for(int i=0;i<nf;i++){
-         const double aL = (i > 0) ? alpha_edge[i-1] : 0.0;
-         const double aR = (i < nf-1) ? alpha_edge[i] : 0.0;
-         a[i] = -aL;
-         b[i] = aL + aR + relax[i];
-         c[i] = -aR;
-         rhs[i] = relax[i] * sa_eq[3*i+comp];
-         if(std::fabs(b[i]) < kEps){
-            b[i] = 1.0;
-            rhs[i] = sa_eq[3*i+comp];
-         }
+   // Steady diffusion-relaxation at Jc = 0, on the same faces as the half-step.
+   // lambda_sf = lambda_sdl / sqrt(1-gamma), so the decay length is lambda_sdl.
+   // sa_eq follows the same unit axis as the time stepper. Neumann ends.
+   // A zero diagonal (no diffusion and no relaxation) falls back to sa_eq.
+   const int nface = (nf > 1) ? (nf - 1) : 0;
+   std::vector<Block3> A_face((std::size_t)nface, block3_zero());
+   assemble_diffusion_faces(start_cell, nsub, nf, dz, D_fine, Bc_fine, Bd_fine, mhat, A_face);
+
+   std::vector<Block3> L((std::size_t)nf, block3_zero());
+   std::vector<Block3> Dblk((std::size_t)nf, block3_zero());
+   std::vector<Block3> U((std::size_t)nf, block3_zero());
+   assemble_steady_blocks(nf, relax.data(), A_face, L, Dblk, U);
+
+   std::vector<Vec3> rhs((std::size_t)nf);
+   const Block3 Z = block3_zero();
+   const Block3 I = block3_identity();
+   for(int i=0;i<nf;i++){
+      const double rel = relax[(std::size_t)i];
+      rhs[(std::size_t)i].x = rel * sa_eq[(std::size_t)i].x;
+      rhs[(std::size_t)i].y = rel * sa_eq[(std::size_t)i].y;
+      rhs[(std::size_t)i].z = rel * sa_eq[(std::size_t)i].z;
+      const double tr = Dblk[(std::size_t)i].a00 + Dblk[(std::size_t)i].a11 + Dblk[(std::size_t)i].a22;
+      if(std::fabs(tr) < kEps){
+         L[(std::size_t)i] = Z;
+         Dblk[(std::size_t)i] = I;
+         U[(std::size_t)i] = Z;
+         rhs[(std::size_t)i] = sa_eq[(std::size_t)i];
       }
-      thomas_solve(a, b, c, rhs);
-      for(int i=0;i<nf;i++){
-         Sbase[3*i+comp] = rhs[i];
-      }
+   }
+   block3_thomas(L, Dblk, U, rhs);
+   for(int i=0;i<nf;i++){
+      Sbase[3*i+0] = rhs[(std::size_t)i].x;
+      Sbase[3*i+1] = rhs[(std::size_t)i].y;
+      Sbase[3*i+2] = rhs[(std::size_t)i].z;
    }
 }
 
@@ -1391,6 +1715,14 @@ static void build_atom_fine_map(const int nf, const double dzA){
    }
 }
 
+static void fill_fine_time_dependent_fields(const int start_cell,
+                                            const int ncz,
+                                            const int nsub,
+                                            const double* dm_dt_coarse,
+                                            double* mhat,
+                                            double* msrc,
+                                            double* dmdt);
+
 void initialise_spincurrents_1d(){
    const int nsub = compute_fine_subdivisions();
    sc1d_nsub = nsub;
@@ -1401,11 +1733,12 @@ void initialise_spincurrents_1d(){
    initialise_magnetization_history();
 
    const int nf = sc1d_nf;
+   const int ncz = num_microcells_per_stack;
    const double dz = (micro_cell_thickness * 1.0e-10) / (double)nsub;
    const double dzA = micro_cell_thickness / (double)nsub;
 
-   // Constants are the linear interpolation of the coarse-cell averages
-   // between neighbouring coarse centres. Only the owner integrates that column.
+   // Constants and m use the same prolongation between coarse centres.
+   // Only the owner integrates that column.
    for(int stack=0; stack<num_stacks_y; ++stack){
       const int start_cell = stack_index_y[stack];
 
@@ -1419,25 +1752,21 @@ void initialise_spincurrents_1d(){
       double* sa_inf_fine = sc1d_sa_inf_fine.data() + (std::size_t)stack * (std::size_t)nf;
       double* sigma_fine = sc1d_sigma_fine.data() + (std::size_t)stack * (std::size_t)nf;
       double* seebeck_fine = sc1d_seebeck_fine.data() + (std::size_t)stack * (std::size_t)nf;
-      double* alpha_edge_stack = sc1d_alpha_edge.data() + (std::size_t)stack * (std::size_t)std::max(0,nf-1);
 
       prolong_coarse_constants(start_cell, nsub, nf, Bc_fine, Bd_fine, D_fine, lsf_fine,
                                lphi_fine, Jsd_fine, chi_fine, sa_inf_fine, sigma_fine, seebeck_fine);
-      assemble_alpha_edges_from_coarse(start_cell, nsub, nf, dz, D_fine, alpha_edge_stack);
       if(!rank_owns_column(stack)) continue;
 
-      double* Sbase = sc1d_Sfine.data() + (std::size_t)stack * (std::size_t)nf * 3u;
-      initialise_fine_spin_if_empty(start_cell, nsub, nf, dz, D_fine, lsf_fine,
-                                    alpha_edge_stack, sa_inf_fine, Sbase);
-
+      std::vector<double> dm_coarse((std::size_t)ncz, 0.0);
+      std::vector<double> dmdt_fine((std::size_t)nf, 0.0);
       std::vector<double> mhat_init(3*(std::size_t)nf, 0.0);
-      for(int i=0;i<nf;i++){
-         const int k = i / std::max(1, nsub);
-         const int cell = start_cell + k;
-         mhat_init[3*(std::size_t)i+0] = sc1d_mhat_ref[3*cell+0];
-         mhat_init[3*(std::size_t)i+1] = sc1d_mhat_ref[3*cell+1];
-         mhat_init[3*(std::size_t)i+2] = sc1d_mhat_ref[3*cell+2];
-      }
+      std::vector<double> msrc_init(3*(std::size_t)nf, 0.0);
+      fill_fine_time_dependent_fields(start_cell, ncz, nsub, dm_coarse.data(),
+                                      mhat_init.data(), msrc_init.data(), dmdt_fine.data());
+
+      double* Sbase = sc1d_Sfine.data() + (std::size_t)stack * (std::size_t)nf * 3u;
+      initialise_fine_spin_if_empty(start_cell, nsub, nf, dz, Bc_fine, Bd_fine, D_fine, lsf_fine,
+                                    sa_inf_fine, mhat_init.data(), Sbase);
       double* ns_fine = sc1d_ns_fine.data() + (std::size_t)stack * (std::size_t)nf;
       double* ne_fine = sc1d_ne_fine.data() + (std::size_t)stack * (std::size_t)nf;
       double* V_fine = sc1d_V_fine.data() + (std::size_t)stack * (std::size_t)nf;
@@ -1479,14 +1808,12 @@ static void update_magnetization_rates(const int start_cell,
 
       if(sc1d_m0_mag[cell] <= 0.0 && mm > 0.0) sc1d_m0_mag[cell] = mm;
 
-      const double thresh = kFreezeFracOfM0 * std::max(sc1d_m0_mag[cell], 1e-12);
-
-      if(!kFreezeAxisWhenMsmall || mm > thresh){
-         if(mm > kEps){
-            sc1d_mhat_ref[3*cell+0] = mx/mm;
-            sc1d_mhat_ref[3*cell+1] = my/mm;
-            sc1d_mhat_ref[3*cell+2] = mz/mm;
-         }
+      double thresh = 0.0;
+      const bool have_floor = axis_floor(cell, thresh);
+      if(have_floor && mm >= thresh && mm > kEps){
+         sc1d_mhat_ref[3*cell+0] = mx/mm;
+         sc1d_mhat_ref[3*cell+1] = my/mm;
+         sc1d_mhat_ref[3*cell+2] = mz/mm;
       }
 
       if(sc1d_step_counter <= 1UL){
@@ -1499,6 +1826,32 @@ static void update_magnetization_rates(const int start_cell,
    }
 }
 
+// Above the floor the coarse vector is the live moment, length included, so an
+// antiparallel join passes through zero. Below the floor it is the reference
+// axis at length |m0|: m is a sum over atoms, and a collapsed length would
+// let the neighbour set the geometric weight.
+static void coarse_axis_vector(const int cell, double& vx, double& vy, double& vz){
+   const double mx = m[3*cell+0];
+   const double my = m[3*cell+1];
+   const double mz = m[3*cell+2];
+   const double mm = norm3(mx, my, mz);
+   double thresh = 0.0;
+   const bool ok = axis_floor(cell, thresh);
+   if(ok && mm >= thresh && mm > kEps){
+      vx = mx;
+      vy = my;
+      vz = mz;
+      return;
+   }
+   double scale = 1.0;
+   if(cell >= 0 && cell < (int)sc1d_m0_mag.size() && sc1d_m0_mag[cell] > 0.0){
+      scale = sc1d_m0_mag[cell];
+   }
+   vx = sc1d_mhat_ref[3*cell+0] * scale;
+   vy = sc1d_mhat_ref[3*cell+1] * scale;
+   vz = sc1d_mhat_ref[3*cell+2] * scale;
+}
+
 static void fill_fine_time_dependent_fields(const int start_cell,
                                             const int ncz,
                                             const int nsub,
@@ -1506,53 +1859,73 @@ static void fill_fine_time_dependent_fields(const int start_cell,
                                             double* mhat,
                                             double* msrc,
                                             double* dmdt){
-   for(int k=0;k<ncz;k++){
-      const int cell1 = start_cell + k;
+   const int nsub_safe = std::max(1, nsub);
+   const int nf = ncz * nsub_safe;
+   for(int i=0;i<nf;i++){
+      const double s = ((double)i + 0.5) / (double)nsub_safe;
+      int k = 0;
+      const double t = prolongation_t(s, ncz, k);
+      const int k2 = (t > 0.0 && k < ncz - 1) ? (k + 1) : k;
+      const double w = (k2 == k) ? 0.0 : t;
+      const int c0 = start_cell + k;
+      const int c1 = start_cell + k2;
 
-      const double mx1 = m[3*cell1+0], my1=m[3*cell1+1], mz1=m[3*cell1+2];
-
-      const double dm1 = dm_dt_coarse[k];
-
-      const double sx = sc1d_mhat_ref[3*cell1+0];
-      const double sy = sc1d_mhat_ref[3*cell1+1];
-      const double sz = sc1d_mhat_ref[3*cell1+2];
-
-      for(int j=0;j<nsub;j++){
-         const int i = k*nsub + j;
-
-         double hx = mx1, hy = my1, hz = mz1;
-         const double hm = norm3(hx,hy,hz);
-         if(hm > kEps){ hx/=hm; hy/=hm; hz/=hm; }
-         else { hx = sx; hy = sy; hz = sz; }
-
-         mhat[3*i+0]=hx; mhat[3*i+1]=hy; mhat[3*i+2]=hz;
-         msrc[3*i+0]=sx; msrc[3*i+1]=sy; msrc[3*i+2]=sz;
-         dmdt[i] = dm1;
+      double v0x = 0.0, v0y = 0.0, v0z = 0.0;
+      double v1x = 0.0, v1y = 0.0, v1z = 0.0;
+      coarse_axis_vector(c0, v0x, v0y, v0z);
+      if(c1 == c0){
+         v1x = v0x; v1y = v0y; v1z = v0z;
+      } else {
+         coarse_axis_vector(c1, v1x, v1y, v1z);
       }
-   }
-}
+      const double px = lerp(v0x, v1x, w);
+      const double py = lerp(v0y, v1y, w);
+      const double pz = lerp(v0z, v1z, w);
+      const double hm = norm3(px, py, pz);
 
-static void assemble_diffusion_tridiagonal(const int nf,
-                                           const double dt_half,
-                                           const double* alpha_edge,
-                                           std::vector<double>& a_tr,
-                                           std::vector<double>& b_tr,
-                                           std::vector<double>& c_tr){
-   if(nf == 1){
-      a_tr[0]=0.0; b_tr[0]=1.0; c_tr[0]=0.0;
-      return;
+      const double hx = lerp(sc1d_mhat_ref[3*c0+0], sc1d_mhat_ref[3*c1+0], w);
+      const double hy = lerp(sc1d_mhat_ref[3*c0+1], sc1d_mhat_ref[3*c1+1], w);
+      const double hz = lerp(sc1d_mhat_ref[3*c0+2], sc1d_mhat_ref[3*c1+2], w);
+
+      double f0 = 0.0;
+      double f1 = 0.0;
+      const bool ok0 = axis_floor(c0, f0);
+      const bool ok1 = axis_floor(c1, f1);
+      bool above = false;
+      if(!kFreezeAxisWhenMsmall){
+         above = true;
+      } else if(ok0 && ok1){
+         above = hm >= lerp(f0, f1, w);
+      } else if(ok0){
+         above = (w < 1.0) && (hm >= f0);
+      } else if(ok1){
+         above = (w > 0.0) && (hm >= f1);
+      }
+
+      double ux = sc1d_mhat_ref[3*c0+0];
+      double uy = sc1d_mhat_ref[3*c0+1];
+      double uz = sc1d_mhat_ref[3*c0+2];
+      if(above && hm > kEps){
+         ux = px / hm;
+         uy = py / hm;
+         uz = pz / hm;
+      } else {
+         const double hr = norm3(hx, hy, hz);
+         if(hr > kEps){
+            ux = hx / hr;
+            uy = hy / hr;
+            uz = hz / hr;
+         }
+      }
+
+      mhat[3*i+0] = ux;
+      mhat[3*i+1] = uy;
+      mhat[3*i+2] = uz;
+      msrc[3*i+0] = ux;
+      msrc[3*i+1] = uy;
+      msrc[3*i+2] = uz;
+      dmdt[i] = lerp(dm_dt_coarse[k], dm_dt_coarse[k2], w);
    }
-   a_tr[0] = 0.0;
-   b_tr[0] = 1.0 + dt_half*alpha_edge[0];
-   c_tr[0] = -dt_half*alpha_edge[0];
-   for(int i=1;i<nf-1;i++){
-      a_tr[i] = -dt_half*alpha_edge[i-1];
-      b_tr[i] = 1.0 + dt_half*(alpha_edge[i-1] + alpha_edge[i]);
-      c_tr[i] = -dt_half*alpha_edge[i];
-   }
-   a_tr[nf-1] = -dt_half*alpha_edge[nf-2];
-   b_tr[nf-1] = 1.0 + dt_half*alpha_edge[nf-2];
-   c_tr[nf-1] = 0.0;
 }
 
 static void apply_diffusion_half_step(double* S,
@@ -1562,9 +1935,10 @@ static void apply_diffusion_half_step(double* S,
                                       const double* Bc,
                                       const double* mhat,
                                       const double* Jc_edge_fine,
-                                      const std::vector<double>& a_tr,
-                                      const std::vector<double>& b_tr,
-                                      const std::vector<double>& c_tr){
+                                      const std::vector<Block3>& L,
+                                      const std::vector<Block3>& D,
+                                      const std::vector<Block3>& U){
+   if(nf <= 0) return;
    const double jdl0x = -Bc[0]    * Jc_edge_fine[0]  * mhat[0];
    const double jdl0y = -Bc[0]    * Jc_edge_fine[0]  * mhat[1];
    const double jdl0z = -Bc[0]    * Jc_edge_fine[0]  * mhat[2];
@@ -1575,19 +1949,25 @@ static void apply_diffusion_half_step(double* S,
    const double Jleft[3]  = { -jdl0x, -jdl0y, -jdl0z };
    const double Jright[3] = { -jdrNx, -jdrNy, -jdrNz };
 
-   std::vector<double> rhs(nf, 0.0);
-   for(int comp=0; comp<3; ++comp){
-      for(int i=0;i<nf;i++){
-         rhs[i] = S[3*i + comp];
-      }
-      rhs[0]     += dt_half * (Jleft[comp] / dz);
-      rhs[nf-1]  -= dt_half * (Jright[comp] / dz);
+   std::vector<Vec3> rhs((std::size_t)nf);
+   for(int i=0;i<nf;i++){
+      rhs[(std::size_t)i].x = S[3*i+0];
+      rhs[(std::size_t)i].y = S[3*i+1];
+      rhs[(std::size_t)i].z = S[3*i+2];
+   }
+   rhs[0].x += dt_half * (Jleft[0] / dz);
+   rhs[0].y += dt_half * (Jleft[1] / dz);
+   rhs[0].z += dt_half * (Jleft[2] / dz);
+   rhs[(std::size_t)(nf-1)].x -= dt_half * (Jright[0] / dz);
+   rhs[(std::size_t)(nf-1)].y -= dt_half * (Jright[1] / dz);
+   rhs[(std::size_t)(nf-1)].z -= dt_half * (Jright[2] / dz);
 
-      thomas_solve(a_tr,b_tr,c_tr,rhs);
+   block3_thomas(L, D, U, rhs);
 
-      for(int i=0;i<nf;i++){
-         S[3*i + comp] = rhs[i];
-      }
+   for(int i=0;i<nf;i++){
+      S[3*i+0] = rhs[(std::size_t)i].x;
+      S[3*i+1] = rhs[(std::size_t)i].y;
+      S[3*i+2] = rhs[(std::size_t)i].z;
    }
 }
 
@@ -1749,6 +2129,7 @@ static void fine_cell_spin_current(const double* Sbase,
                                    const double dz,
                                    const double Jc_loc,
                                    const double Bc_i,
+                                   const double Bd_i,
                                    const double D_i,
                                    const double* mhat,
                                    double& jsx,
@@ -1788,9 +2169,15 @@ static void fine_cell_spin_current(const double* Sbase,
       dSdz_z *= scale;
    }
 
-   double jdiff_x = -D_i * dSdz_x;
-   double jdiff_y = -D_i * dSdz_y;
-   double jdiff_z = -D_i * dSdz_z;
+   const double mx = mhat[3*i+0];
+   const double my = mhat[3*i+1];
+   const double mz = mhat[3*i+2];
+   const double gamma = spin_gamma(Bc_i, Bd_i);
+   const double parallel = mx*dSdz_x + my*dSdz_y + mz*dSdz_z;
+   const double along = D_i * gamma * parallel;
+   double jdiff_x = -D_i * dSdz_x + along * mx;
+   double jdiff_y = -D_i * dSdz_y + along * my;
+   double jdiff_z = -D_i * dSdz_z + along * mz;
    if(!std::isfinite(jdiff_x)) jdiff_x = 0.0;
    if(!std::isfinite(jdiff_y)) jdiff_y = 0.0;
    if(!std::isfinite(jdiff_z)) jdiff_z = 0.0;
@@ -1810,6 +2197,7 @@ static void coarsen_spin_and_map_torque(const int start_cell,
                                         const double* ne_fine,
                                         const double* Jc_edge_fine,
                                         const double* Bc,
+                                        const double* Bd,
                                         const double* D,
                                         const double* mhat){
    // Two passes so the Js construction and the fine-to-coarse averages are
@@ -1870,7 +2258,7 @@ static void coarsen_spin_and_map_torque(const int start_cell,
          double jsx = 0.0;
          double jsy = 0.0;
          double jsz = 0.0;
-         fine_cell_spin_current(Sbase, i, nf, dz, Jc_loc, Bc[i], D[i], mhat, jsx, jsy, jsz);
+         fine_cell_spin_current(Sbase, i, nf, dz, Jc_loc, Bc[i], Bd[i], D[i], mhat, jsx, jsy, jsz);
          jsx_sum += jsx;
          jsy_sum += jsy;
          jsz_sum += jsz;
@@ -1978,9 +2366,11 @@ void calculate_spin_accumulation_1d(){
    std::vector<double> dmdt(nf,0.0);
    std::vector<double> mhat(3*nf,0.0);
    std::vector<double> msrc(3*nf,0.0);
-   std::vector<double> a_tr(nf,0.0);
-   std::vector<double> b_tr(nf,0.0);
-   std::vector<double> c_tr(nf,0.0);
+   const int nface = (nf > 1) ? (nf - 1) : 0;
+   std::vector<Block3> A_face((std::size_t)nface, block3_zero());
+   std::vector<Block3> L_blk((std::size_t)std::max(0, nf), block3_zero());
+   std::vector<Block3> D_blk((std::size_t)std::max(0, nf), block3_zero());
+   std::vector<Block3> U_blk((std::size_t)std::max(0, nf), block3_zero());
    std::vector<double> Jd_edge(3*(nf+1),0.0);
    std::vector<double> dm_dt_coarse(ncz,0.0);
 
@@ -2005,8 +2395,7 @@ void calculate_spin_accumulation_1d(){
       const double* Jsd = sc1d_Jsd_fine.data() + (size_t)stack * (size_t)nf;
       const double* chi = sc1d_chi_fine.data() + (size_t)stack * (size_t)nf;
       const double* sa_inf = sc1d_sa_inf_fine.data() + (size_t)stack * (size_t)nf;
-      const double* sigma0 = sc1d_sigma_fine.data() + (size_t)stack * (size_t)nf;
-      const double* alpha_edge = sc1d_alpha_edge.data() + (size_t)stack * (size_t)std::max(0,nf-1);
+      double* sigma_fine = sc1d_sigma_fine.data() + (size_t)stack * (size_t)nf;
       double* k_prev = sc1d_k_prev.data() + (size_t)stack * (size_t)nf * 3u;
 
       update_magnetization_rates(start_cell, ncz, dt, dm_dt_coarse.data());
@@ -2020,16 +2409,18 @@ void calculate_spin_accumulation_1d(){
       if(do_charge_update){
          const double interp_before = sc1d_time_interp;
          sw.start();
+         prolong_conductivity(start_cell, nsub, nf, sigma_fine);
          double* ne_seebeck = sc1d_ne_seebeck_fine.data() + (size_t)stack * (size_t)nf;
          update_charge_transients_1d_stack(ns_fine, ne_fine, V_fine, Jc_edge_fine, ne_seebeck,
                                            nf, dz, dt, t_s,
-                                           D, sigma0, Bd, seebeck_fine, Sbase, mhat.data());
+                                           D, sigma_fine, Bd, seebeck_fine, Sbase, mhat.data());
          account_charge_time(sw.elapsed_seconds(), interp_before);
       }
 
       sw.start();
-      assemble_diffusion_tridiagonal(nf, dt_half, alpha_edge, a_tr, b_tr, c_tr);
-      apply_diffusion_half_step(Sbase, nf, dz, dt_half, Bc, mhat.data(), Jc_edge_fine, a_tr, b_tr, c_tr);
+      assemble_diffusion_faces(start_cell, nsub, nf, dz, D, Bc, Bd, mhat.data(), A_face);
+      assemble_diffusion_half_blocks(nf, dt_half, A_face, L_blk, D_blk, U_blk);
+      apply_diffusion_half_step(Sbase, nf, dz, dt_half, Bc, mhat.data(), Jc_edge_fine, L_blk, D_blk, U_blk);
       sc1d_time_spin_acc += sw.elapsed_seconds();
       sw.start();
       build_drift_edges(nf, Bc, mhat.data(), Jc_edge_fine, Jd_edge.data());
@@ -2038,11 +2429,11 @@ void calculate_spin_accumulation_1d(){
       integrate_local_terms(Sbase, k_prev, nf, dt, first_step, dz,
                             Bc, Bd, D, lsf, lphi, Jsd, chi, sa_inf,
                             mhat.data(), msrc.data(), dmdt.data(), Jd_edge.data());
-      apply_diffusion_half_step(Sbase, nf, dz, dt_half, Bc, mhat.data(), Jc_edge_fine, a_tr, b_tr, c_tr);
+      apply_diffusion_half_step(Sbase, nf, dz, dt_half, Bc, mhat.data(), Jc_edge_fine, L_blk, D_blk, U_blk);
       sc1d_time_spin_acc += sw.elapsed_seconds();
       coarsen_spin_and_map_torque(start_cell, ncz, nsub, nf, dz, Sbase,
                                   ns_fine, ne_fine, Jc_edge_fine,
-                                  Bc, D, mhat.data());
+                                  Bc, Bd, D, mhat.data());
    }
 
    // Owners hold the updated slices. Unowned spin slices still contain the

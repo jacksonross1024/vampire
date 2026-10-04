@@ -102,6 +102,11 @@ namespace st{
       // 1D spin accumulation solver (with optional demag-driven source)
       extern bool sc1d_enable;
       extern double sc1d_fine_dz;      // fine grid spacing in Angstroms (along st::internal::stz)
+      // Coarse-to-fine prolongation: 0 step, 1 linear, 2 smoothstep.
+      extern int sc1d_prolongation;
+      const int sc1d_prolong_step = 0;
+      const int sc1d_prolong_linear = 1;
+      const int sc1d_prolong_smooth = 2;
       extern int sc1d_spin_stride;     // update stride for spin accumulation (in LLG steps)
       extern int sc1d_charge_stride;   // update stride for charge/spin current fields (in LLG steps)
       extern double sc1d_temperature;  // user-defined temperature (K) placeholder for future thermal coupling
@@ -163,7 +168,7 @@ extern bool sc1d_thermal_effects;              // transport constants may depend
       extern std::vector<double> sc1d_ne_seebeck_fine; // Seebeck excess ne (C/m^3), not the Poisson charge
       extern std::vector<double> sc1d_V_fine;        // electrostatic potential (V), size: local_stacks*nf
       extern std::vector<double> sc1d_Jc_edge_fine;  // Jc faces (A/m^2), size: local_stacks*(nf+1)
-      extern std::vector<double> sc1d_sigma_fine;    // electrical conductivity (S/m), prolonged from the coarse cell
+      extern std::vector<double> sc1d_sigma_fine;    // electrical conductivity (S/m), resolved then prolonged
       extern std::vector<double> sc1d_seebeck_fine;  // Seebeck S (V/K), prolonged from the coarse cell
       extern std::vector<int>    sc1d_mat_fine;      // unused; transport no longer picks a material per fine cell
       extern std::vector<double> sc1d_sa_demag_fine; // legacy storage; target channel removed
@@ -215,7 +220,6 @@ extern double sc1d_time_other;
       extern std::vector<double> sc1d_Jsd_fine;       // sd_exchange interpolated to fine grid
       extern std::vector<double> sc1d_chi_fine;       // chi_demag interpolated to fine grid
       extern std::vector<double> sc1d_sa_inf_fine;   // sa_infinity interpolated to fine grid
-      extern std::vector<double> sc1d_alpha_edge;     // diffusion operator edge coefficients
 
       extern std::vector<double> coeff_ast;
       extern std::vector<double> coeff_nast;     

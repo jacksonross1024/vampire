@@ -138,6 +138,7 @@ namespace st{
       // 1D spin accumulation solver controls
       bool sc1d_enable = false;
       double sc1d_fine_dz = 1.0; // Angstroms
+      int sc1d_prolongation = sc1d_prolong_smooth;
       int sc1d_spin_stride = 1;
       int sc1d_charge_stride = 1;
       double sc1d_temperature = 300.0; // K
@@ -247,7 +248,6 @@ namespace st{
       std::vector<double> sc1d_Jsd_fine;
       std::vector<double> sc1d_chi_fine;
       std::vector<double> sc1d_sa_inf_fine;
-      std::vector<double> sc1d_alpha_edge;
 
       
       std::vector<double> coeff_ast_sum;
