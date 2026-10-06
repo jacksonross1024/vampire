@@ -1,0 +1,675 @@
+#===================================================
+# Co/Pt AOS heterostructure material file (16 materials)
+#===================================================
+# Stack (left = bottom = substrate, right = top = laser, units nm):
+#   SiO2(5.0)/Ta(5)/Pt(4)/[Co(0.7)/Pt(1)]x3/Co(0.7)/Cu(10)/[Co(0.35)/Pt(0.8)]x2/Ta(5)
+# Total thickness 37.1 nm. FCC, unit-cell 3.5 A. Co magnetic; metals NM remove.
+# Vampire heights: z=0 bottom (SiO2), z=1 top (Ta-cap, laser).
+# Thick Co(0.7)/Pt(1) sits on the 4 nm Pt, under the Cu. Thin Co(0.35)/Pt(0.8) is above the Cu, under the Ta cap.
+# Numbered from the laser downward. Co-1 and Co-2 are materials 3 and 5 (thin, above the Cu). Co-3 to Co-6 are materials 7, 9, 11 and 13 (thick, under the Cu).
+# Spin-valve transport replaces the laser-electrical torkance block.
+# Co: P=0.6, De=1e-4 m^2/s, lambda_sf=10 nm, lambda_phi=2 nm, Jsd=4e-21 J, sa_inf=3e7 C/m^3.
+#   P, De, lambda_sf, lambda_phi from Lepadatu et al., PRB 113, 094432 (2026), as in the AOS header.
+#   Jsd and sa_inf from CoCuCo-sv.mat in this tree (Levy-Fert sa_inf kept nonzero).
+# Pt: lambda_sf=5 nm, De=1e-4. Ta: lambda_sf=3 nm, De=1e-4. Cu: lambda_sf=350 nm, De=1e-3.
+# SiO2: De=1e-5, lambda_sf=2 nm, sa_inf=0. NM layers are removed from the LLG.
+# Their transport and heat-capacity constants still seed the 1D grid.
+# SiO2 is 5.0 nm at z=0. Metal stack above it is 32.1 nm, in the order on the stack line. Total 37.1 nm. The 0.1 nm LTMP slice is not used here.
+# Co demag-spin-coupling = 1.5066e6 (C/m^3)/muB. Serban low chi_sp = 2.4 kA/m,
+# converted as chi = (e/mu_B)*chi_sp/|m0| with |m0| = 16*1.72 muB per 7.01 x 7.01 x 3.5 A cell.
+# NM layers stay at 0. Directional pumping is the sa_inf*m-hat attractor; there is no second chi_sp term.
+#
+# SiO2 is a 5 nm substrate at z=0. non-magnetic = remove drops those atoms
+# from the LLG. LTMP and the spin-current module still average their constants in.
+#
+# LTMP convention in this code:
+#   electron-heat-capacity = Sommerfeld gamma  (J m^-3 K^-2), Ce = gamma * Te
+#   phonon-heat-capacity   = Dulong-Petit C_inf (J m^-3 K^-1); Debye T from einstein-temp
+#   einstein-temp          = theta_D / 1.25  (code stores 1.25 * value as Debye T)
+#   electron-phonon-coupling G  (W m^-3 K^-1)
+#   thermal conductivities kappa_e, kappa_p  (W m^-1 K^-1)
+#
+# --- Every numeric constant below, with its source ---
+# Ag is commented under Cu (material 6). Same sources as the live metals.
+#
+# gamma (J m^-3 K^-2). Ce = gamma * Te.
+#   Volumetric = (molar gamma) * (density / molar mass).
+#   Co  710    4.73 mJ mol^-1 K^-2, Kang & Choi, Materials 14, 2755 (2021) Table 1
+#   Pt  748    6.8 mJ mol^-1 K^-2, Lin, Zhigilei, Celli, PRB 77, 075133 (2008)
+#   Cu   96.6  Lin, Zhigilei, Celli, PRB 77, 075133 (2008)
+#   Ta  543    5.9 mJ mol^-1 K^-2, Kittel, Introduction to Solid State Physics, 7th ed.
+#   Ag   63.3  0.65 mJ mol^-1 K^-2 * 10.5 g cm^-3 / 107.9 g mol^-1; Lin et al. PRB 77, 075133 (2008)
+#   SiO2 1.55e6   not a Sommerfeld gamma. LTMP needs Ce > 0, so Ce is set equal to C_ph.
+#
+# C_ph (J m^-3 K^-1) = 3 n R, n = rho * N_A / M. Metals, Dulong-Petit limit:
+#   Co  3.75e6   rho 8.86 g cm^-3, M 58.93 g mol^-1
+#                (CRC Co density is 8.90 g cm^-3, which gives 3.77e6)
+#   Pt  2.74e6   rho 21.45, M 195.08
+#   Cu  3.52e6   rho 8.96,  M 63.55
+#   Ta  2.29e6   rho 16.65, M 180.95
+#   Ag  2.43e6   rho 10.49, M 107.87
+#   Densities and molar masses: CRC Handbook of Chemistry and Physics.
+#   SiO2 1.55e6  703 J kg^-1 K^-1 * 2200 kg m^-3.
+#                Specific heat 703 J kg^-1 K^-1 and density 2.20 g cm^-3: Crystran fused-silica table.
+#
+# G (W m^-3 K^-1), ~300 K:
+#   Co  1.09e18  Midpoint of Kang & Choi, Materials 14, 2755 (2021):
+#                9.6e17 (indirect) and 1.22e18 (direct).
+#   Pt  6.0e17   Jang, Kimling, Cahill, PRB 101, 064304 (2020): gep = (6+/-1)e17.
+#                Earlier TDTR: 2.9e17 and 4.2e17. Photoemission: 6.8e17.
+#                Lin et al. PRB 77, 075133 (2008) constant-lambda formula is ~1.1e18.
+#   Cu  1.00e17  Lin et al. PRB 77, 075133 (2008) room-temperature value.
+#                Their DFT G is ~8e16: Karna et al., Nat. Commun. (2024),
+#                doi:10.1038/s41467-024-53441-9.
+#   Ta  3.00e17  Smirnov, arXiv:2301.08625: "several x 10^17" from RT to ~45 kK.
+#                XTANT-3 is lower (~5e16 near 600 K; Medvedev). 3e17 is the 300 K choice.
+#   Ag  3.5e16   Room-temperature noble-metal value, range 2.5-3.5e16.
+#                Lin, Zhigilei, Celli, PRB 77, 075133 (2008), G_Ag(Te).
+#   SiO2 0       Insulator. No free-electron bath, same pattern as Al2O3/hBN in CrSBr-lctmp.
+#
+# kappa_e / kappa_ph (W m^-1 K^-1).
+#   Bulk totals, Kittel 7th ed. (300 K table, W cm^-1 K^-1 x 100):
+#     Co 100, Pt 72, Cu 401, Ta 58, Ag 429.
+#   Kittel does not split electrons and phonons. Phonon piece assumed, then
+#   kappa_e = total - kappa_ph. Phonon pieces are a few to ~16 W m^-1 K^-1,
+#   the usual metal lattice share, not a separate measurement:
+#     Co 10, Pt 6, Cu 16, Ta 5.5 (of 57.5), Ag 16.
+#   Thin-film totals, both pieces scaled so the ratio stays the bulk ratio:
+#     Co and Pt-1..Pt-5: total 15 = 13.5/1.5 (Co) and 13.75/1.25 (Pt).
+#       Shahzadeh, Andriyevska, Salikhov, Fallarino, Hellwig, Pisana,
+#       ACS Appl. Electron. Mater. 3, 1931 (2021), sample ML-1
+#       [Pt(0.7 nm)/Co(0.4 nm)]128: cross-plane kz = 15.0.
+#       (In-plane kr on that sample is 164. Heat flow here is vertical, so kz.)
+#     Pt-seed, 4 nm: total 30 = 27.5/2.5. Below Kittel 72, above kz = 15.
+#       A 7.3 nm Pt film is already ~24 (66% below bulk):
+#       Yoneoka et al., Nano Lett. 12, 683 (2012). 30 is that film, not a new measurement.
+#     Ta cap and Ta bottom, 5 nm: total 35 = 31.7/3.3.
+#       Below Kittel ~58, above the multilayer 15. No 5 nm Ta measurement; interpolated.
+#     Cu, 10 nm: bulk 385/16. Karna et al. (doi above): electron mean free path
+#       ~39 nm, and films stay near bulk kappa while thickness and grains exceed it.
+#       10 nm is under that length; bulk is kept anyway.
+#     Ag swap: bulk 413/16 of the Kittel total 429.
+#     SiO2: kappa_e = 0, kappa_ph = 1.38.
+#       Crystran and Accuratus fused-silica tables, 1.38 W m^-1 K^-1 at room temperature.
+#
+# Debye temperature -> einstein-temp = theta_D / 1.25:
+#   Cu 343 -> 274, Pt 240 -> 192, Ta 240 -> 192, Ag 225 -> 180.
+#     Kittel, Introduction to Solid State Physics, 7th ed.
+#   Co 385 -> 308. Kittel 7th ed. low-T limit for Co is 445 K.
+#     385 K is the lower handbook value used here (room-temperature specific heat).
+#   SiO2 einstein-temp = 274, so theta_D = 342 K in this file.
+#     That is not the calorimetric vitreous-silica Debye temperature.
+#     Anderson, J. Acoust. Soc. Am. 30, 671 (1958): thermal ~130 K, elastic ~1340 K.
+#     274 only rolls C_ph off below theta_D; the glass stays near 300 K.
+#
+# 800 nm optical penetration delta = lambda / (4 pi k). Used in abs.txt, not as a mat key.
+#   Co  n,k ~ 2.49, 4.80  Johnson & Christy, PRB 9, 5056 (1974)       -> 13.3 nm
+#   Cu  n,k ~ 0.25, 5.01  Johnson & Christy, PRB 6, 4370 (1972)       -> 12.7 nm
+#   Ag  n,k ~ 0.04, 5.6   Johnson & Christy, PRB 6, 4370 (1972)       -> 11.4 nm
+#   Pt  n,k ~ 2.86, 4.96  Rakic et al., Appl. Opt. 37, 5271 (1998) BB -> 12.8 nm
+#   Ta  n,k ~ 0.99, 7.29  Werner et al., JPCRD 38, 1013 (2009) REELS   ->  8.7 nm
+#       Ordal et al., Appl. Opt. 27, 1203 (1988) IR table: k ~ 3.48 -> ~18 nm.
+#       REELS is the value used for Ta.
+#   SiO2 n ~ 1.45, k ~ 0 at 800 nm (Malitson, J. Opt. Soc. Am. 55, 1205 (1965) for n).
+#       Transparent; it does not change the metal-average delta.
+#   Piecewise I(z)/delta(z) is in abs.txt (z from the top). Surface Ta sets A = 1.
+#   input-aos: penetration-depth = 87 A so the pump prefactor is 1/delta_Ta.
+#
+# Lattice and moments:
+#   One FCC cell, a = 3.5 A, for every layer. Real cells differ
+#   (Co ~3.54 A, Cu 3.61 A, Pt 3.92 A, Ta is bcc). 3.5 A is the common cell
+#   so height fractions map onto the 37.1 nm stack. V_atom = a^3/4 = 1.072e-29 m^3.
+#   Co atomic-spin-moment = 1.72 muB. Kittel saturation moment of Co;
+#     also Vampire Co.mat.
+#   Ta, Pt, Cu, SiO2 atomic-spin-moment = 1e-7 muB. Numerical floor so
+#     non-magnetic = remove drops them. Not a measured moment.
+#   Co damping-constant = 0.15. Bulk Co in Co.mat is 0.005; CoCuCo-sv.mat uses 0.1.
+#     0.15 is the interface-enhanced Co/Pt value for these thicknesses
+#     (ultrathin Co/Pt is typically 0.1-0.3).
+#   Co exchange-matrix = 6.82e-21 J, taken from CoCuCo-sv.mat in this repo.
+#     Interlayer Co-Co through Pt is omitted (Pt is non-magnetic).
+#     Mean-field fcc, z = 12: Tc = z J / (3 k_B) ~ 1975 K.
+#     Bulk Co Tc = 1388 K (Kittel). Thin-film Tc is the rescaling values below,
+#     and those lines are commented out.
+#
+# Co/Pt PMA. Ku is per atom, from K_eff = 2 Ks / t_Co - (1/2) mu0 Ms^2.
+#   Ks range in the literature ~0.3-1.3 mJ m^-2:
+#     Shan et al., J. Appl. Phys. 73, 6344 (1993): Ks ~ 0.38 mJ m^-2
+#     Krishnan et al.: 0.35 (MgO) to 0.6 (glass) mJ m^-2
+#     Bandiera / nanoGUNE Co/Pt(111): 0.8-1.3 mJ m^-2
+#   Used Ks = 0.8 mJ m^-2, inside the Co/Pt(111) range.
+#   Ms = 1.4 MA m^-1, the usual Co saturation magnetisation
+#     (1.72 muB on a ~3.54 A cell is ~1.44 MA m^-1).
+#     (1/2) mu0 Ms^2 = 1.23 MJ m^-3.
+#   Co 0.70 nm: K_eff = 1.05 MJ m^-3 -> Ku = 1.13e-23 J/atom
+#   Co 0.35 nm: K_eff = 3.34 MJ m^-3 -> Ku = 3.58e-23 J/atom
+#   Demagnetising term is inside Ku so PMA exists with the dipole solver off.
+#   If the dipole solver is on, drop that piece (Ku = 2.45e-23 and 3.81e-23).
+#   Zeper et al., J. Appl. Phys. 65, 4971 (1989): PMA for t_Co < ~1.2 nm;
+#     full remanence for t_Co < 4.5 A.
+#
+# Curie temperatures (commented temperature-rescaling-curie-temperature):
+#   Bulk Co Tc = 1388 K (Kittel).
+#   Co ~4 A / Pt 10-20 A: Tc = 300-400 C = 573-673 K.
+#     Zeper et al., IEEE Trans. Magn. 25, 3764 (1989).
+#   Tc rises with t_Co and falls with t_Pt.
+#     Bloemen et al., J. Appl. Phys. (1990); Hashimoto et al., J. Appl. Phys. 67, 2136 (1990).
+#   Used: Co 0.35 nm (Pt 0.8 nm neighbours) Tc = 580 K
+#         Co 0.70 nm (Pt 1.0 nm neighbours) Tc = 750 K
+#
+# Serban AOS spin-valve STT. Lepadatu et al., Phys. Rev. B 113, 094432 (2026).
+#   Js = P (muB/e) Jc, then T_S = -(De/lambda_J^2) m x S - (De/lambda_phi^2) m x (m x S).
+#   From that paper, for Co: P = 0.6, De = 1e-4 m^2/s, lambda_J = 4 nm,
+#     lambda_phi = 2 nm, lambda_sf = 10 nm. lambda_sf is not an input here.
+#   S = (k * lambda / De) Js. k = let-absorption-length-factor = 1.
+#     k = 1 is the 1/e depth chosen for this file, not a number from the paper.
+#     FL uses lambda_J, DL uses lambda_phi.
+#   Tesla let-stt-fl/dl (commented) would be at sim:laser-electrical-current-ref,
+#     scaled by Jc/Jc_ref. Torkance and De/lambda are scaled by Js.
+#   Priority in the code: torkance > De+lambda > Tesla. One De per material.
+#   let-polarisation-vector is a run choice. Torque is zero if it is parallel to m.
+#   Live Co layers use 0,0,-1 with the initial spin also along z.
+#
+# Charge Seebeck. Serban et al. AOS spin-valve paper, Eq. (1) and Eq. (3):
+#   J = σ Sc ∇Te − De ∇ne,   ∂ne/∂t = −∇·J,   J = 0 on the open walls.
+#   Their Sc = +10 μV/K is one positive upper estimate for every metal, with σ = 1e7 S/m.
+#   The value stored here is the absolute thermopower S (V/K). The solver uses
+#   J = −σ S ∇Te − De ∇ne. With S negative, −S plays the role of their positive Sc:
+#   conventional current points toward the hot end, electrons toward the cold end.
+#   z = 0 is the bottom, so a hot top gives ∇Te > 0 and, for S < 0, J > 0.
+#   Spin current takes this J through Eq. (4), Js = −(μB/e) P Jc m − De ∇S.
+#   There is no separate S↑ − S↓ term. Their supplementary figure is this charge transient.
+#   electrical-conductivity omitted keeps the Einstein value
+#   σ = n e² D / (kB Te) with n = 1e28 m^-3. At 300 K and D = 1e-4 m²/s that is 6.2e6 S/m.
+#   An explicit 0 is an insulator. SiO2 is 0. The metals omit the key.
+#
+# Absolute S at room temperature (V/K):
+#   Co −22e-6, Pt −5e-6, Cu +1.6e-6.
+#     Dejene, Flipse, van Wees, Phys. Rev. B 86, 024436 (2012), Table 2.
+#     Measured on the films used in their Co and NiFe nanopillar spin valves.
+#   Ta +1.5e-6.
+#     Fiflis et al., Seebeck coefficient measurements on Li, Sn, Ta, Mo, and W (2013):
+#     absolute S_Ta = +1.5 μV/K at 30 °C.
+#   SiO2 0. No carrier thermopower in this model.
+#   Ag swap (commented): +1.5e-6. Cu, Ag, Au absolute scale near +1.5 μV/K.
+#
+#===================================================
+
+material:num-materials=16
+
+#---------------------------------------------------
+# Material 1: Ta-cap  5.0 nm  (from top 0.00-5.00 nm)
+#---------------------------------------------------
+material[1]:material-name=Ta-cap
+material[1]:material-element=Ta
+material[1]:minimum-height = 0.86522911
+material[1]:maximum-height = 1.00000000
+material[1]:non-magnetic = remove
+material[1]:atomic-spin-moment = 1e-07 !muB
+material[1]:electron-heat-capacity        = 543.0
+material[1]:phonon-heat-capacity          = 2.29e+06
+material[1]:electron-phonon-coupling      = 3.00e+17
+material[1]:electron-thermal-conductivity = 31.7
+material[1]:phonon-thermal-conductivity   = 3.3
+material[1]:einstein-temp                 = 192
+material[1]:spin-diffusion-length = 30.0
+material[1]:spin-polarisation-conductivity = 0.001
+material[1]:spin-polarisation-diffusion = 0.001
+material[1]:spin-accumulation = 0.0
+material[1]:diffusion-constant = 1.0e-4
+material[1]:sd-exchange-constant = 0.0
+material[1]:spin-dephasing-length = 30.0
+material[1]:demag-spin-coupling = 0.0
+material[1]:seebeck-coefficient = 1.5e-6
+
+#---------------------------------------------------
+# Material 2: Pt-1  0.8 nm  (from top 5.00-5.80 nm)
+#---------------------------------------------------
+material[2]:material-name=Pt-1
+material[2]:material-element=Pt
+material[2]:minimum-height = 0.84366577
+material[2]:maximum-height = 0.86522911
+material[2]:non-magnetic = remove
+material[2]:atomic-spin-moment = 1e-07 !muB
+material[2]:electron-heat-capacity        = 748.0
+material[2]:phonon-heat-capacity          = 2.74e+06
+material[2]:electron-phonon-coupling      = 6.00e+17
+material[2]:electron-thermal-conductivity = 13.75
+material[2]:phonon-thermal-conductivity   = 1.25
+material[2]:einstein-temp                 = 192
+material[2]:spin-diffusion-length = 50.0
+material[2]:spin-polarisation-conductivity = 0.001
+material[2]:spin-polarisation-diffusion = 0.001
+material[2]:spin-accumulation = 0.0
+material[2]:diffusion-constant = 1.0e-4
+material[2]:sd-exchange-constant = 0.0
+material[2]:spin-dephasing-length = 50.0
+material[2]:demag-spin-coupling = 0.0
+material[2]:seebeck-coefficient = -5.0e-6
+
+#---------------------------------------------------
+# Material 3: Co-1  0.35 nm  (from top 5.80-6.15 nm; one FCC cell)
+#---------------------------------------------------
+material[3]:material-name=Co-1
+material[3]:material-element=Co
+material[3]:minimum-height = 0.83423181
+material[3]:maximum-height = 0.84366577
+material[3]:damping-constant=0.15
+material[3]:exchange-matrix[3]=6.82e-21
+material[3]:atomic-spin-moment=1.72 !muB
+material[3]:second-order-uniaxial-anisotropy-constant=3.58e-22
+material[3]:uniaxial-anisotropy-direction = 0,0,1
+material[3]:initial-spin-direction = 0,0,1
+#material[3]:temperature-rescaling-curie-temperature = 580
+material[3]:electron-heat-capacity        = 710.0
+material[3]:phonon-heat-capacity          = 3.75e+06
+material[3]:electron-phonon-coupling      = 1.09e+18
+material[3]:electron-thermal-conductivity = 13.5
+material[3]:phonon-thermal-conductivity   = 1.5
+material[3]:einstein-temp                 = 308
+material[3]:spin-diffusion-length = 100.0
+material[3]:spin-polarisation-conductivity = 0.6
+material[3]:spin-polarisation-diffusion = 0.6
+material[3]:spin-accumulation = 3.0e7
+material[3]:diffusion-constant = 1.0e-4
+material[3]:sd-exchange-constant = 4.0e-21
+material[3]:spin-dephasing-length = 20.0
+material[3]:demag-spin-coupling = 1.5066e6
+material[3]:seebeck-coefficient = -22.0e-6
+# 1D spin-valve transport (Levy-Fert sa_inf, paper Co holders).
+#material[3]:diffusion-constant = 1.0e-4
+
+#---------------------------------------------------
+# Material 4: Pt-2  0.8 nm  (from top 6.15-6.95 nm)
+#---------------------------------------------------
+material[4]:material-name=Pt-2
+material[4]:material-element=Pt
+material[4]:minimum-height = 0.81266846
+material[4]:maximum-height = 0.83423181
+material[4]:non-magnetic = remove
+material[4]:atomic-spin-moment = 1e-07 !muB
+material[4]:electron-heat-capacity        = 748.0
+material[4]:phonon-heat-capacity          = 2.74e+06
+material[4]:electron-phonon-coupling      = 6.00e+17
+material[4]:electron-thermal-conductivity = 13.75
+material[4]:phonon-thermal-conductivity   = 1.25
+material[4]:einstein-temp                 = 192
+material[4]:spin-diffusion-length = 50.0
+material[4]:spin-polarisation-conductivity = 0.001
+material[4]:spin-polarisation-diffusion = 0.001
+material[4]:spin-accumulation = 0.0
+material[4]:diffusion-constant = 1.0e-4
+material[4]:sd-exchange-constant = 0.0
+material[4]:spin-dephasing-length = 50.0
+material[4]:demag-spin-coupling = 0.0
+material[4]:seebeck-coefficient = -5.0e-6
+
+#---------------------------------------------------
+# Material 5: Co-2  0.35 nm  (from top 6.95-7.30 nm; one FCC cell)
+#---------------------------------------------------
+material[5]:material-name=Co-2
+material[5]:material-element=Co
+material[5]:minimum-height = 0.80323450
+material[5]:maximum-height = 0.81266846
+material[5]:damping-constant=0.15
+material[5]:exchange-matrix[5]=6.82e-21
+material[5]:atomic-spin-moment=1.72 !muB
+material[5]:second-order-uniaxial-anisotropy-constant=3.58e-22
+material[5]:uniaxial-anisotropy-direction = 0,0,1
+material[5]:initial-spin-direction = 0,0,1
+#material[5]:temperature-rescaling-curie-temperature = 580
+material[5]:electron-heat-capacity        = 710.0
+material[5]:phonon-heat-capacity          = 3.75e+06
+material[5]:electron-phonon-coupling      = 1.09e+18
+material[5]:electron-thermal-conductivity = 13.5
+material[5]:phonon-thermal-conductivity   = 1.5
+material[5]:einstein-temp                 = 308
+material[5]:spin-diffusion-length = 100.0
+material[5]:spin-polarisation-conductivity = 0.6
+material[5]:spin-polarisation-diffusion = 0.6
+material[5]:spin-accumulation = 3.0e7
+material[5]:diffusion-constant = 1.0e-4
+material[5]:sd-exchange-constant = 4.0e-21
+material[5]:spin-dephasing-length = 20.0
+material[5]:demag-spin-coupling = 1.5066e6
+material[5]:seebeck-coefficient = -22.0e-6
+# 1D spin-valve transport (Levy-Fert sa_inf, paper Co holders).
+#material[5]:diffusion-constant = 1.0e-4
+
+#---------------------------------------------------
+# Material 6: Cu-spacer  10.0 nm  (from top 7.30-17.30 nm)
+#---------------------------------------------------
+material[6]:material-name=Cu-spacer
+material[6]:material-element=Cu
+material[6]:minimum-height = 0.53369272
+material[6]:maximum-height = 0.80323450
+material[6]:non-magnetic = remove
+material[6]:atomic-spin-moment = 1e-07 !muB
+material[6]:electron-heat-capacity        = 96.6
+material[6]:phonon-heat-capacity          = 3.52e+06
+material[6]:electron-phonon-coupling      = 1.00e+17
+material[6]:electron-thermal-conductivity = 385.0
+material[6]:phonon-thermal-conductivity   = 16.0
+material[6]:einstein-temp                 = 274
+material[6]:spin-diffusion-length = 3500.0
+material[6]:spin-polarisation-conductivity = 0.001
+material[6]:spin-polarisation-diffusion = 0.001
+material[6]:spin-accumulation = 0.0
+material[6]:diffusion-constant = 0.001
+material[6]:sd-exchange-constant = 0.0
+material[6]:spin-dephasing-length = 3500.0
+material[6]:demag-spin-coupling = 0.0
+material[6]:seebeck-coefficient = 1.6e-6
+# Ag spacer swap. Sources are in the header. Uncomment these and comment the Cu
+# heat-transport lines above. Heights stay.
+#material[6]:material-element=Ag
+#material[6]:electron-heat-capacity        = 63.3
+#material[6]:phonon-heat-capacity          = 2.43e+06
+#material[6]:electron-phonon-coupling      = 3.50e+16
+#material[6]:electron-thermal-conductivity = 413.0
+#material[6]:phonon-thermal-conductivity   = 16.0
+#material[6]:einstein-temp                 = 180
+#material[6]:seebeck-coefficient = 1.5e-6
+
+#---------------------------------------------------
+# Material 7: Co-3  0.7 nm  (from top 17.30-18.00 nm)
+#---------------------------------------------------
+material[7]:material-name=Co-3
+material[7]:material-element=Co
+material[7]:minimum-height = 0.51482480
+material[7]:maximum-height = 0.53369272
+material[7]:damping-constant=0.15
+material[7]:exchange-matrix[7]=6.82e-21
+material[7]:atomic-spin-moment=1.72 !muB
+material[7]:second-order-uniaxial-anisotropy-constant=1.13e-23
+material[7]:uniaxial-anisotropy-direction = 0,0,1
+material[7]:initial-spin-direction = 1,1,0.1
+#material[7]:temperature-rescaling-curie-temperature = 750
+material[7]:electron-heat-capacity        = 710.0
+material[7]:phonon-heat-capacity          = 3.75e+06
+material[7]:electron-phonon-coupling      = 1.09e+18
+material[7]:electron-thermal-conductivity = 13.5
+material[7]:phonon-thermal-conductivity   = 1.5
+material[7]:einstein-temp                 = 308
+# 1D spin-valve transport (Levy-Fert sa_inf, paper Co holders).
+material[7]:diffusion-constant = 1.0e-4
+material[7]:spin-diffusion-length = 100.0
+material[7]:spin-polarisation-conductivity = 0.6
+material[7]:spin-polarisation-diffusion = 0.6
+material[7]:spin-accumulation = 3.0e7
+material[7]:diffusion-constant = 1.0e-4
+material[7]:sd-exchange-constant = 4.0e-21
+material[7]:spin-dephasing-length = 20.0
+material[7]:demag-spin-coupling = 1.5066e6
+material[7]:seebeck-coefficient = -22.0e-6
+
+#---------------------------------------------------
+# Material 8: Pt-3  1.0 nm  (from top 18.00-19.00 nm)
+#---------------------------------------------------
+material[8]:material-name=Pt-3
+material[8]:material-element=Pt
+material[8]:minimum-height = 0.48787062
+material[8]:maximum-height = 0.51482480
+material[8]:non-magnetic = remove
+material[8]:atomic-spin-moment = 1e-07 !muB
+material[8]:electron-heat-capacity        = 748.0
+material[8]:phonon-heat-capacity          = 2.74e+06
+material[8]:electron-phonon-coupling      = 6.00e+17
+material[8]:electron-thermal-conductivity = 13.75
+material[8]:phonon-thermal-conductivity   = 1.25
+material[8]:einstein-temp                 = 192
+material[8]:spin-diffusion-length = 50.0
+material[8]:spin-polarisation-conductivity = 0.001
+material[8]:spin-polarisation-diffusion = 0.001
+material[8]:spin-accumulation = 0.0
+material[8]:diffusion-constant = 1.0e-4
+material[8]:sd-exchange-constant = 0.0
+material[8]:spin-dephasing-length = 50.0
+material[8]:demag-spin-coupling = 0.0
+material[8]:seebeck-coefficient = -5.0e-6
+
+#---------------------------------------------------
+# Material 9: Co-4  0.7 nm  (from top 19.00-19.70 nm)
+#---------------------------------------------------
+material[9]:material-name=Co-4
+material[9]:material-element=Co
+material[9]:minimum-height = 0.46900270
+material[9]:maximum-height = 0.48787062
+material[9]:damping-constant=0.15
+material[9]:exchange-matrix[9]=6.82e-21
+material[9]:atomic-spin-moment=1.72 !muB
+material[9]:second-order-uniaxial-anisotropy-constant=1.13e-23
+material[9]:uniaxial-anisotropy-direction = 0,0,1
+material[9]:initial-spin-direction = 1,1,0.1
+#material[9]:temperature-rescaling-curie-temperature = 750
+material[9]:electron-heat-capacity        = 710.0
+material[9]:phonon-heat-capacity          = 3.75e+06
+material[9]:electron-phonon-coupling      = 1.09e+18
+material[9]:electron-thermal-conductivity = 13.5
+material[9]:phonon-thermal-conductivity   = 1.5
+material[9]:einstein-temp                 = 308
+# 1D spin-valve transport (Levy-Fert sa_inf, paper Co holders).
+material[9]:diffusion-constant = 1.0e-4
+material[9]:spin-diffusion-length = 100.0
+material[9]:spin-polarisation-conductivity = 0.6
+material[9]:spin-polarisation-diffusion = 0.6
+material[9]:spin-accumulation = 3.0e7
+material[9]:diffusion-constant = 1.0e-4
+material[9]:sd-exchange-constant = 4.0e-21
+material[9]:spin-dephasing-length = 20.0
+material[9]:demag-spin-coupling = 1.5066e6
+material[9]:seebeck-coefficient = -22.0e-6
+
+#---------------------------------------------------
+# Material 10: Pt-4  1.0 nm  (from top 19.70-20.70 nm)
+#---------------------------------------------------
+material[10]:material-name=Pt-4
+material[10]:material-element=Pt
+material[10]:minimum-height = 0.44204852
+material[10]:maximum-height = 0.46900270
+material[10]:non-magnetic = remove
+material[10]:atomic-spin-moment = 1e-07 !muB
+material[10]:electron-heat-capacity        = 748.0
+material[10]:phonon-heat-capacity          = 2.74e+06
+material[10]:electron-phonon-coupling      = 6.00e+17
+material[10]:electron-thermal-conductivity = 13.75
+material[10]:phonon-thermal-conductivity   = 1.25
+material[10]:einstein-temp                 = 192
+material[10]:spin-diffusion-length = 50.0
+material[10]:spin-polarisation-conductivity = 0.001
+material[10]:spin-polarisation-diffusion = 0.001
+material[10]:spin-accumulation = 0.0
+material[10]:diffusion-constant = 1.0e-4
+material[10]:sd-exchange-constant = 0.0
+material[10]:spin-dephasing-length = 50.0
+material[10]:demag-spin-coupling = 0.0
+material[10]:seebeck-coefficient = -5.0e-6
+
+#---------------------------------------------------
+# Material 11: Co-5  0.7 nm  (from top 20.70-21.40 nm)
+#---------------------------------------------------
+material[11]:material-name=Co-5
+material[11]:material-element=Co
+material[11]:minimum-height = 0.42318059
+material[11]:maximum-height = 0.44204852
+material[11]:damping-constant=0.15
+material[11]:exchange-matrix[11]=6.82e-21
+material[11]:atomic-spin-moment=1.72 !muB
+material[11]:second-order-uniaxial-anisotropy-constant=1.13e-23
+material[11]:uniaxial-anisotropy-direction = 0,0,1
+material[11]:initial-spin-direction = 1,1,0.1
+#material[11]:temperature-rescaling-curie-temperature = 750
+material[11]:electron-heat-capacity        = 710.0
+material[11]:phonon-heat-capacity          = 3.75e+06
+material[11]:electron-phonon-coupling      = 1.09e+18
+material[11]:electron-thermal-conductivity = 13.5
+material[11]:phonon-thermal-conductivity   = 1.5
+material[11]:einstein-temp                 = 308
+# 1D spin-valve transport (Levy-Fert sa_inf, paper Co holders).
+material[11]:diffusion-constant = 1.0e-4
+material[11]:spin-diffusion-length = 100.0
+material[11]:spin-polarisation-conductivity = 0.6
+material[11]:spin-polarisation-diffusion = 0.6
+material[11]:spin-accumulation = 3.0e7
+material[11]:diffusion-constant = 1.0e-4
+material[11]:sd-exchange-constant = 4.0e-21
+material[11]:spin-dephasing-length = 20.0
+material[11]:demag-spin-coupling = 1.5066e6
+material[11]:seebeck-coefficient = -22.0e-6
+
+#---------------------------------------------------
+# Material 12: Pt-5  1.0 nm  (from top 21.40-22.40 nm)
+#---------------------------------------------------
+material[12]:material-name=Pt-5
+material[12]:material-element=Pt
+material[12]:minimum-height = 0.39622642
+material[12]:maximum-height = 0.42318059
+material[12]:non-magnetic = remove
+material[12]:atomic-spin-moment = 1e-07 !muB
+material[12]:electron-heat-capacity        = 748.0
+material[12]:phonon-heat-capacity          = 2.74e+06
+material[12]:electron-phonon-coupling      = 6.00e+17
+material[12]:electron-thermal-conductivity = 13.75
+material[12]:phonon-thermal-conductivity   = 1.25
+material[12]:einstein-temp                 = 192
+material[12]:spin-diffusion-length = 50.0
+material[12]:spin-polarisation-conductivity = 0.001
+material[12]:spin-polarisation-diffusion = 0.001
+material[12]:spin-accumulation = 0.0
+material[12]:diffusion-constant = 1.0e-4
+material[12]:sd-exchange-constant = 0.0
+material[12]:spin-dephasing-length = 50.0
+material[12]:demag-spin-coupling = 0.0
+material[12]:seebeck-coefficient = -5.0e-6
+
+#---------------------------------------------------
+# Material 13: Co-6  0.7 nm  (from top 22.40-23.10 nm)
+#---------------------------------------------------
+material[13]:material-name=Co-6
+material[13]:material-element=Co
+material[13]:minimum-height = 0.37735849
+material[13]:maximum-height = 0.39622642
+material[13]:damping-constant=0.15
+material[13]:exchange-matrix[13]=6.82e-21
+material[13]:atomic-spin-moment=1.72 !muB
+material[13]:second-order-uniaxial-anisotropy-constant=1.13e-23
+material[13]:uniaxial-anisotropy-direction = 0,0,1
+material[13]:initial-spin-direction = 1,1,0.1
+#material[13]:temperature-rescaling-curie-temperature = 750
+material[13]:electron-heat-capacity        = 710.0
+material[13]:phonon-heat-capacity          = 3.75e+06
+material[13]:electron-phonon-coupling      = 1.09e+18
+material[13]:electron-thermal-conductivity = 13.5
+material[13]:phonon-thermal-conductivity   = 1.5
+material[13]:einstein-temp                 = 308
+# 1D spin-valve transport (Levy-Fert sa_inf, paper Co holders).
+material[13]:diffusion-constant = 1.0e-4
+material[13]:spin-diffusion-length = 100.0
+material[13]:spin-polarisation-conductivity = 0.6
+material[13]:spin-polarisation-diffusion = 0.6
+material[13]:spin-accumulation = 3.0e7
+material[13]:diffusion-constant = 1.0e-4
+material[13]:sd-exchange-constant = 4.0e-21
+material[13]:spin-dephasing-length = 20.0
+material[13]:demag-spin-coupling = 1.5066e6
+material[13]:seebeck-coefficient = -22.0e-6
+
+#---------------------------------------------------
+# Material 14: Pt-seed  4.0 nm  (from top 23.10-27.10 nm)
+#---------------------------------------------------
+material[14]:material-name=Pt-seed
+material[14]:material-element=Pt
+material[14]:minimum-height = 0.26954178
+material[14]:maximum-height = 0.37735849
+material[14]:non-magnetic = remove
+material[14]:atomic-spin-moment = 1e-07 !muB
+material[14]:electron-heat-capacity        = 748.0
+material[14]:phonon-heat-capacity          = 2.74e+06
+material[14]:electron-phonon-coupling      = 6.00e+17
+material[14]:electron-thermal-conductivity = 27.5
+material[14]:phonon-thermal-conductivity   = 2.5
+material[14]:einstein-temp                 = 192
+material[14]:spin-diffusion-length = 50.0
+material[14]:spin-polarisation-conductivity = 0.001
+material[14]:spin-polarisation-diffusion = 0.001
+material[14]:spin-accumulation = 0.0
+material[14]:diffusion-constant = 1.0e-4
+material[14]:sd-exchange-constant = 0.0
+material[14]:spin-dephasing-length = 50.0
+material[14]:demag-spin-coupling = 0.0
+material[14]:seebeck-coefficient = -5.0e-6
+
+#---------------------------------------------------
+# Material 15: Ta-bottom  5.0 nm  (from top 27.10-32.10 nm)
+#---------------------------------------------------
+material[15]:material-name=Ta-bottom
+material[15]:material-element=Ta
+material[15]:minimum-height = 0.13477089
+material[15]:maximum-height = 0.26954178
+material[15]:non-magnetic = remove
+material[15]:atomic-spin-moment = 1e-07 !muB
+material[15]:electron-heat-capacity        = 543.0
+material[15]:phonon-heat-capacity          = 2.29e+06
+material[15]:electron-phonon-coupling      = 3.00e+17
+material[15]:electron-thermal-conductivity = 31.7
+material[15]:phonon-thermal-conductivity   = 3.3
+material[15]:einstein-temp                 = 192
+material[15]:spin-diffusion-length = 30.0
+material[15]:spin-polarisation-conductivity = 0.001
+material[15]:spin-polarisation-diffusion = 0.001
+material[15]:spin-accumulation = 0.0
+material[15]:diffusion-constant = 1.0e-4
+material[15]:sd-exchange-constant = 0.0
+material[15]:spin-dephasing-length = 30.0
+material[15]:demag-spin-coupling = 0.0
+material[15]:seebeck-coefficient = 1.5e-6
+
+
+#---------------------------------------------------
+# Material 16: SiO2 substrate  5.0 nm physical (5.0 nm at z=0)
+# Removed from the LLG. Constants still seed the bottom cells.
+#---------------------------------------------------
+material[16]:material-name=SiO2
+material[16]:material-element=Si
+material[16]:minimum-height = 0.00000000
+material[16]:maximum-height = 0.13477089
+material[16]:non-magnetic = remove
+material[16]:atomic-spin-moment = 1e-07 !muB
+material[16]:electron-heat-capacity        = 1.55e6
+material[16]:phonon-heat-capacity          = 1.55e6
+material[16]:electron-phonon-coupling      = 0.0
+material[16]:electron-thermal-conductivity = 0.0
+material[16]:phonon-thermal-conductivity   = 1.38
+material[16]:einstein-temp                 = 274
+material[16]:spin-diffusion-length = 20.0
+material[16]:spin-polarisation-conductivity = 0.001
+material[16]:spin-polarisation-diffusion = 0.001
+material[16]:spin-accumulation = 0.0
+material[16]:diffusion-constant = 1.0e-5
+material[16]:sd-exchange-constant = 0.0
+material[16]:spin-dephasing-length = 20.0
+material[16]:demag-spin-coupling = 0.0
+material[16]:seebeck-coefficient = 0.0
+# Explicit 0. Omitted would be the Einstein value from De, about 6e5 S/m.
+material[16]:electrical-conductivity = 0.0
+
+# Adjacent-layer interface conductance (m/s). Symmetric Robin resistance 1/G.
+# These finite values are the default. Co/Pt and Pt/Co, and Ta/Pt: 2e4.
+# Co/Cu and Cu/Co: 3e4. Ta/SiO2: 0.1. A literal 0 is ignored and stays
+# transparent; 1e12 m/s is the transparent comparison limit, not this file.
+# Neighbours from the substrate upward. Each value is the layer above.
+material[16]:spin-interface-conductance = 15, 0.1       # SiO2/Ta
+material[15]:spin-interface-conductance = 14, 2.0e4     # Ta/Pt
+material[14]:spin-interface-conductance = 13, 2.0e4     # Pt/Co
+material[13]:spin-interface-conductance = 12, 2.0e4     # Co/Pt
+material[12]:spin-interface-conductance = 11, 2.0e4     # Pt/Co
+material[11]:spin-interface-conductance = 10, 2.0e4     # Co/Pt
+material[10]:spin-interface-conductance = 9, 2.0e4      # Pt/Co
+material[9]:spin-interface-conductance = 8, 2.0e4       # Co/Pt
+material[8]:spin-interface-conductance = 7, 2.0e4       # Pt/Co
+material[7]:spin-interface-conductance = 6, 3.0e4       # Co/Cu
+material[6]:spin-interface-conductance = 5, 3.0e4       # Cu/Co
+material[5]:spin-interface-conductance = 4, 2.0e4       # Co/Pt
+material[4]:spin-interface-conductance = 3, 2.0e4       # Pt/Co
+material[3]:spin-interface-conductance = 2, 2.0e4       # Co/Pt
+material[2]:spin-interface-conductance = 1, 2.0e4       # Pt/Ta

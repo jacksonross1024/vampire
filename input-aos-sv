@@ -1,0 +1,95 @@
+#---------------------------------------------------
+# Co/Pt spin valve, laser pulse through the ltmp two-temperature model.
+# Lateral size and spin microcell are as set below. Dipole off.
+# 0.1 fs steps. Three phases, in order:
+#   spin-currents-1d-relax-steps : spin current only, LLG frozen, laser off
+#   sim:equilibration-time-steps : LLG on at 300 K, laser still off
+#   sim:total-time-steps         : laser on. Temperatures come from ltmp.
+# Profiles: spin-acc/relax-NNNNNNN, eq-NNNNNNN, drive-NNNNNNN
+# every ST-output-rate steps inside that stage.
+# Electron temperatures for the spin solver are ltmp::get_electron_temperature_at_z.
+# The spin-current module does not run its own thermal solver or its own laser.
+#---------------------------------------------------
+
+dimensions:unit-cell-size = 3.5 !A
+dimensions:system-size-x = 20.5 !nm
+dimensions:system-size-y = 20.5 !nm
+dimensions:system-size-z = 37.1 !nm
+
+create:periodic-boundaries-x
+create:periodic-boundaries-y
+create:crystal-structure = fcc
+
+material:file = CoPt-aos-sv.mat
+
+#dipole:solver = hierarchical
+cells:macro-cell-size-x = 20
+cells:macro-cell-size-y = 20
+cells:macro-cell-size-z = 3.5
+dipole:cutoff-radius = 5
+dipole:field-update-rate = 100
+
+
+# Vertical TTM cells: 3.5 A high (one fcc cell). Lateral size >> film so 1 cell in x,y.
+# Same controls as input-aos. Piecewise Beer-Lambert in abs.txt (z from top in A).
+# penetration-depth is the Ta normalisation (8.7 nm) so Q = I/delta_layer.
+local-temperature-pulse:cell-size = 500,500,3.5
+local-temperature-pulse:temperature-profile = vertical
+local-temperature-pulse:output-microcell-data
+local-temperature-pulse:implicit-diffusion
+local-temperature-pulse:penetration-depth = 87 !A
+local-temperature-pulse:absorption-profile-file = abs.txt
+
+sim:mpi-topology = 2,4,1
+
+sim:temperature = 300.0
+sim:equilibration-temperature = 300.0
+sim:time-steps-increment = 100
+sim:preconditioning-steps = 5000
+sim:equilibration-time-steps = 10000
+sim:total-time-steps = 100000
+sim:time-step = 0.1 !fs
+sim:program = laser-electrical-pulse
+sim:integrator = llg-heun
+
+#sim:load-checkpoint = restart 
+# Laser envelope and fluence. LTMP integrates the cell Te/Tp.
+# enable-temperature selects that path. The pulse peaks at laser-pulse-time.
+#sim:laser-electrical-enable-temperature = true
+#sim:laser-electrical-eta-t = 0.363
+#sim:laser-electrical-hot-electron-lifetime = 69 !fs
+#sim:laser-electrical-diffusion-time = 0.1 !ps
+sim:laser-pulse-power = 55
+sim:laser-pulse-time = 0.1 !ps
+# Bottom-cell phonon sink: dTp/dt = -G (Tp-Teq). G = 1e9 /s.
+sim:two-temperature-heat-sink-coupling = 1.0e9
+
+# 1D spin accumulation along z.
+# ltmp is set, so the spin solver reads cell Te and Tp from ltmp.
+# The Langevin field stays in the normal ltmp call. Spin currents do not
+# write that field or step the temperature profile.
+# spin-currents-1d-thermal-effects is the switch for D, lambda, tau, S, sigma(T).
+# Those laws are not filled in, so the constants stay at their input values.
+# Superdiffusion is on, so ltmp is required. ns is sourced from the attenuated
+# ltmp laser power. ve = -De (dTe/dz) / Te uses that same electron-temperature
+# gradient, then sqrt(Te/Tref) * exp(-(t-t_peak)/tau_e), floored at 0.1.
+# tau_e is spin-currents-1d-tau-e (default 100 fs), not the electrical-pulse lifetime.
+# Seebeck stays on. The gradient also enters J = -sigma S dTe/dz.
+# FCC (001) planes are a/2 = 1.75 A apart.
+# 4 S cells per plane spacing: fine dz = 0.4375 A (8 per cubic cell).
+spin-torque:spin-currents-1d-enable
+spin-torque:micro-cell-decomp = A
+spin-torque:micro-cell-size = 240.01,240.01,3.5 !A
+spin-torque:micro-cell-thickness = 3.5
+spin-torque:spin-currents-1d-fine-dz = 0.4375 !A
+spin-torque:spin-currents-1d-relax-steps = 30000
+spin-torque:spin-currents-1d-reference-temperature = 300
+spin-torque:spin-currents-1d-thermal-effects = false
+spin-torque:spin-currents-1d-superdiffusive-enable = true
+spin-torque:spin-currents-1d-seebeck-enable = true
+spin-torque:ST-output-rate = 100
+
+output:output-rate = 1
+output:column-headers
+output:real-time
+output:material-magnetisation
