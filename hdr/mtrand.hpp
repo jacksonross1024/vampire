@@ -45,8 +45,11 @@
 #ifndef MTRAND_H
 #define MTRAND_H
 
+#include <cstdint>
 #include <vector>
-#include <stdint.h>
+
+using std::int32_t;
+using std::uint32_t;
 
 class MTRand_int32 { // Mersenne Twister random number generator
 public:

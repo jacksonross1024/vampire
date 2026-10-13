@@ -14,8 +14,11 @@
 #define UNITCELL_H_
 
 // C++ standard library headers
+#include <cstdint>
 #include <string>
 #include <vector>
+
+using std::uint64_t;
 
 // Vampire headers
 #include "exchange_types.hpp" // needed for exchange interaction type definition

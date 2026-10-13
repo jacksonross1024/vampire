@@ -14,7 +14,10 @@
 #define NEIGHBOURS_H_
 
 // C++ standard library headers
+#include <cstdint>
 #include <string>
+
+using std::uint64_t;
 
 // Vampire headers
 #include "create_atoms_class.hpp"

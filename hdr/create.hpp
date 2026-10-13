@@ -50,6 +50,9 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <cstdint>
+
+using std::uint64_t;
 
 // Vampire headers
 #include "create_atoms_class.hpp" // class definition for atoms in create module

@@ -28,13 +28,15 @@
 // Includes
 //==========================================================
 #include "create.hpp"
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <vector>
 
 // Load standard forms of fixed-width types (needed for some compilers)
-using std::uint64_t;
 using std::int64_t;
+using std::uint32_t;
+using std::uint64_t;
 
 #ifdef MPICF
 	#include <mpi.h>
