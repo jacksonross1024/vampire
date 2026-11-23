@@ -214,6 +214,7 @@ namespace st{
       std::vector<double> sc1d_Jc_edge_fine;
       std::vector<double> sc1d_joule_fine;
       std::vector<int> sc1d_mat_fine;
+      std::vector<std::vector<fine_mix_t>> sc1d_mix_fine;
       std::vector<double> sc1d_sigma_fine;
       std::vector<double> sc1d_sigma_bulk_fine;
       std::vector<double> sc1d_seebeck_fine;
@@ -244,6 +245,7 @@ namespace st{
       double sc1d_time_diffusion = 0.0;
       double sc1d_time_eom = 0.0;
       double sc1d_time_interp = 0.0;
+      double sc1d_time_thermal = 0.0;
       double sc1d_time_bcast = 0.0;
       double sc1d_time_coarsen = 0.0;
       double sc1d_time_other = 0.0;
@@ -283,8 +285,15 @@ namespace st{
       std::vector<double> sc1d_msat_fine;
       std::vector<double> sc1d_m_prev_fine;
       std::vector<double> sc1d_m0_fine;
+      std::vector<double> sc1d_ml_fine;
       std::vector<double> sc1d_mhat_ref_fine;
       std::vector<double> sc1d_dmdt_fine;
+      std::vector<double> sc1d_sheet_acc_up_fine;
+      std::vector<double> sc1d_sheet_acc_dn_fine;
+      std::vector<double> sc1d_sheet_acc_re_fine;
+      std::vector<double> sc1d_sheet_acc_im_fine;
+      std::vector<double> sc1d_sheet_acc_d2_fine;
+      std::vector<double> sc1d_Rint_base_face;
       std::vector<int> sc1d_atom_fine;
       std::vector<double> sc1d_plane_z;
       std::vector<int> sc1d_plane_lo;
@@ -299,6 +308,8 @@ namespace st{
       std::vector<double> sc1d_Jsd_fine;
       std::vector<double> sc1d_chi_fine;
       std::vector<double> sc1d_sa_inf_fine;
+      std::vector<double> sc1d_PN_fine;
+      std::vector<double> sc1d_alpha_fine;
 
       
       std::vector<double> coeff_ast_sum;
@@ -345,12 +356,14 @@ namespace st{
       std::vector<double> tunnel_li_pair;
       std::vector<double> tunnel_pe_pair;
       std::vector<double> tunnel_pp_pair;
+      std::vector<double> tunnel_vhalf_pair;
       std::vector<char> tunnel_pair_set;
 
       void ensure_tunnel_matrix_size(const std::size_t nmat){
          const std::size_t new_sz = nmat * nmat;
          if(tunnel_g_up_pair.size() == new_sz && tunnel_pair_set.size() == new_sz
-            && tunnel_l_up_pair.size() == new_sz && tunnel_gi_e_pair.size() == new_sz) return;
+            && tunnel_l_up_pair.size() == new_sz && tunnel_gi_e_pair.size() == new_sz
+            && tunnel_vhalf_pair.size() == new_sz) return;
          const std::vector<double> old_up = tunnel_g_up_pair;
          const std::vector<double> old_dn = tunnel_g_down_pair;
          const std::vector<double> old_lu = tunnel_l_up_pair;
@@ -360,6 +373,7 @@ namespace st{
          const std::vector<double> old_li = tunnel_li_pair;
          const std::vector<double> old_pe = tunnel_pe_pair;
          const std::vector<double> old_pp = tunnel_pp_pair;
+         const std::vector<double> old_vh = tunnel_vhalf_pair;
          const std::vector<char> old_set = tunnel_pair_set;
          const std::size_t old_n = (old_up.empty()) ? 0 : static_cast<std::size_t>(std::sqrt(static_cast<double>(old_up.size())));
          tunnel_g_up_pair.assign(new_sz, 0.0);
@@ -371,6 +385,7 @@ namespace st{
          tunnel_li_pair.assign(new_sz, 0.0);
          tunnel_pe_pair.assign(new_sz, 0.0);
          tunnel_pp_pair.assign(new_sz, 0.0);
+         tunnel_vhalf_pair.assign(new_sz, 0.0);
          tunnel_pair_set.assign(new_sz, 0);
          const std::size_t ncopy = std::min(old_n, nmat);
          for(std::size_t i = 0; i < ncopy; ++i){
@@ -386,6 +401,7 @@ namespace st{
                if(io < old_li.size()) tunnel_li_pair[in] = old_li[io];
                if(io < old_pe.size()) tunnel_pe_pair[in] = old_pe[io];
                if(io < old_pp.size()) tunnel_pp_pair[in] = old_pp[io];
+               if(io < old_vh.size()) tunnel_vhalf_pair[in] = old_vh[io];
                if(io < old_set.size()) tunnel_pair_set[in] = old_set[io];
             }
          }

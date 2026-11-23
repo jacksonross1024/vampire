@@ -39,6 +39,10 @@ static void extend_spintorque_materials(const std::size_t n){
    st::internal::mp.resize(n);
    for(std::size_t i = old; i < n; ++i){
       st::internal::mp[i].conductivity = -1.0;
+      // Neutral DOS defaults: q = 0 and K = I.
+      st::internal::mp[i].spin_dos_polarization = 0.0;
+      st::internal::mp[i].spin_dos_alpha = 1.0;
+      st::internal::mp[i].spin_currents_thermal = false;
    }
 }
 
@@ -238,6 +242,39 @@ bool match_material(string const word, string const value, string const unit, in
       return true;
    }
 
+   test="spin-dos-polarization";
+   if(word==test){
+      double pn=atof(value.c_str());
+      vin::check_for_valid_value(pn, word, line, prefix, unit, "none", -1.0, 1.0,"material"," -1 - 1");
+      st::internal::mp[super_index].spin_dos_polarization=pn;
+      return true;
+   }
+
+   test="spin-dos-alpha";
+   if(word==test){
+      double alpha=atof(value.c_str());
+      vin::check_for_valid_value(alpha, word, line, prefix, unit, "none", 1.0e-300, 1.0e300,"material"," positive");
+      st::internal::mp[super_index].spin_dos_alpha=alpha;
+      return true;
+   }
+
+   test="spin-currents-thermal";
+   if(word==test){
+      if(value == "true"){
+         st::internal::mp[super_index].spin_currents_thermal = true;
+      } else if(value == "false"){
+         st::internal::mp[super_index].spin_currents_thermal = false;
+      } else {
+         terminaltextcolor(RED);
+         std::cerr << "Error - value for \'material:" << word << "\' must be one of:" << std::endl;
+         std::cerr << "\t\"true\"" << std::endl;
+         std::cerr << "\t\"false\"" << std::endl;
+         terminaltextcolor(WHITE);
+         return false;
+      }
+      return true;
+   }
+
    //--------------------------------------------------------------------
    // Pair-wise interfacial spin conductance (Robin coupling)
    // Syntax: material[i]:spin-interface-conductance = j, <value>
@@ -330,13 +367,12 @@ bool match_material(string const word, string const value, string const unit, in
       }
       const std::size_t nmat = st::internal::mp.size();
       st::internal::ensure_tunnel_matrix_size(nmat);
-      const int ij[2][2] = {{super_index, other_index}, {other_index, super_index}};
-      for(int n = 0; n < 2; ++n){
-         const std::size_t idx = static_cast<std::size_t>(ij[n][0]) * nmat + static_cast<std::size_t>(ij[n][1]);
-         st::internal::tunnel_g_up_pair[idx] = gup;
-         st::internal::tunnel_g_down_pair[idx] = gdn;
-         st::internal::tunnel_pair_set[idx] = 1;
-      }
+      // One direction only. The reverse line has to be written on the other
+      // material and must match; the solver rejects a one-sided pair.
+      const std::size_t idx = static_cast<std::size_t>(super_index) * nmat + static_cast<std::size_t>(other_index);
+      st::internal::tunnel_g_up_pair[idx] = gup;
+      st::internal::tunnel_g_down_pair[idx] = gdn;
+      st::internal::tunnel_pair_set[idx] = static_cast<char>(st::internal::tunnel_pair_set[idx] | 1);
       st::internal::tunnel_enabled = true;
       return true;
    }
@@ -361,12 +397,10 @@ bool match_material(string const word, string const value, string const unit, in
       }
       const std::size_t nmat = st::internal::mp.size();
       st::internal::ensure_tunnel_matrix_size(nmat);
-      const int ij[2][2] = {{super_index, other_index}, {other_index, super_index}};
-      for(int n = 0; n < 2; ++n){
-         const std::size_t idx = static_cast<std::size_t>(ij[n][0]) * nmat + static_cast<std::size_t>(ij[n][1]);
-         st::internal::tunnel_l_up_pair[idx] = lup_A * 1.0e-10;
-         st::internal::tunnel_l_down_pair[idx] = ldn_A * 1.0e-10;
-      }
+      const std::size_t idx = static_cast<std::size_t>(super_index) * nmat + static_cast<std::size_t>(other_index);
+      st::internal::tunnel_l_up_pair[idx] = lup_A * 1.0e-10;
+      st::internal::tunnel_l_down_pair[idx] = ldn_A * 1.0e-10;
+      st::internal::tunnel_pair_set[idx] = static_cast<char>(st::internal::tunnel_pair_set[idx] | 2);
       return true;
    }
    //--------------------------------------------------------------------
@@ -404,15 +438,37 @@ bool match_material(string const word, string const value, string const unit, in
       }
       const std::size_t nmat = st::internal::mp.size();
       st::internal::ensure_tunnel_matrix_size(nmat);
-      const int ij[2][2] = {{super_index, other_index}, {other_index, super_index}};
-      for(int n = 0; n < 2; ++n){
-         const std::size_t idx = static_cast<std::size_t>(ij[n][0]) * nmat + static_cast<std::size_t>(ij[n][1]);
-         st::internal::tunnel_gi_e_pair[idx] = ge;
-         st::internal::tunnel_gi_p_pair[idx] = gp;
-         st::internal::tunnel_li_pair[idx] = lam_A * 1.0e-10;
-         st::internal::tunnel_pe_pair[idx] = pe;
-         st::internal::tunnel_pp_pair[idx] = pp;
+      const std::size_t idx = static_cast<std::size_t>(super_index) * nmat + static_cast<std::size_t>(other_index);
+      st::internal::tunnel_gi_e_pair[idx] = ge;
+      st::internal::tunnel_gi_p_pair[idx] = gp;
+      st::internal::tunnel_li_pair[idx] = lam_A * 1.0e-10;
+      st::internal::tunnel_pe_pair[idx] = pe;
+      st::internal::tunnel_pp_pair[idx] = pp;
+      st::internal::tunnel_pair_set[idx] = static_cast<char>(st::internal::tunnel_pair_set[idx] | 4);
+      return true;
+   }
+   //--------------------------------------------------------------------
+   // Voltage scale for empirical TMR collapse. Syntax:
+   // material[i]:tunnel-half-bias = j, V_half
+   // V_half is the magnitude of oxide voltage drop where the zero-bias TMR
+   // contribution is reduced by half. A missing keyword leaves the pair ohmic.
+   test="tunnel-half-bias";
+   if(word == test){
+      int other_index = 0;
+      std::vector<double> params;
+      parse_sheet_partner(word, value, line, super_index, 2, other_index, params);
+      const double vhalf = params[1];
+      if(vhalf <= 0.0 || vhalf > 100.0){
+         terminaltextcolor(RED);
+         std::cerr << "Error - tunnel half-bias out of range (0 - 100 V) at line " << line << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
       }
+      const std::size_t nmat = st::internal::mp.size();
+      st::internal::ensure_tunnel_matrix_size(nmat);
+      const std::size_t idx = static_cast<std::size_t>(super_index) * nmat + static_cast<std::size_t>(other_index);
+      st::internal::tunnel_vhalf_pair[idx] = vhalf;
+      st::internal::tunnel_pair_set[idx] = static_cast<char>(st::internal::tunnel_pair_set[idx] | 8);
       return true;
    }
    //--------------------------------------------------------------------

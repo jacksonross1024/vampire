@@ -489,6 +489,9 @@ namespace internal{
       st::internal::default_properties.beta_seebeck_set = false;
       st::internal::default_properties.superdiffusion_polarization = 0.0;
       st::internal::default_properties.conductivity = -1.0;         // <0 = Einstein from D and Te; explicit 0 = insulator
+      st::internal::default_properties.spin_dos_polarization = 0.0; // P_N off by default
+      st::internal::default_properties.spin_dos_alpha = 1.0;         // alpha ratios/log gradients neutral by default
+      st::internal::default_properties.spin_currents_thermal = false;
       
       // SOT defaults (similar to STT but for SOT geometry)
       st::internal::default_properties.sot_beta_cond =  0.4;

@@ -3,7 +3,8 @@
 //
 // Minimal 1D (along st::internal::stz) transient spin-accumulation
 // solver, with:
-//  - implicit (backward-Euler) anisotropic diffusion on a fine z-grid
+//  - implicit (backward-Euler) anisotropic diffusion of the excess spin
+//    accumulation on a fine z-grid
 //  - explicit Heun step for local precession/relaxation + drift-divergence.
 //    Equilibrium amplitude is sa_inf (direction follows m-hat). This is the
 //    full equilibrium spin accumulation, the spin-split Fermi density, not the
@@ -25,6 +26,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <cstdio>
 
 #include "internal.hpp"
 #include "material.hpp"
@@ -58,7 +60,7 @@ static void close_sc1d_step_timer(stopwatch_t& sw_total){
    sc1d_time_other = sc1d_time_total
       - (sc1d_time_io + sc1d_time_charge + sc1d_time_spin_current
          + sc1d_time_diffusion + sc1d_time_eom + sc1d_time_interp
-         + sc1d_time_bcast + sc1d_time_coarsen);
+         + sc1d_time_thermal + sc1d_time_bcast + sc1d_time_coarsen);
    sc1d_step_timer_active = false;
 }
 
@@ -66,6 +68,7 @@ static void close_sc1d_step_timer(stopwatch_t& sw_total){
 static constexpr double kHbar = 1.05457162e-34;      // J s
 static constexpr double kMuB  = 9.27400968e-24;      // J/T
 static constexpr double kE    = 1.60217662e-19;      // C
+static constexpr double kMe   = 9.1093837015e-31;    // kg
 
 
 // Planck constant and speed of light (SI)
@@ -93,10 +96,12 @@ static inline double gaussian_pulse(const double t, const double t0, const doubl
 // Laser power density function
 // Can use either built-in laser or ltmp attenuated laser depending on flag
 //------------------------------------------------------------------------------
-// Drive phase is the ASD integration after sim:equilibration-time-steps.
-// Spin-current equilibration and ASD equilibration both leave the laser off.
+// Drive phase: after preconditioning, spin-current relax, and
+// sim:equilibration-time-steps. Relax (pre-LLG) and ASD equilibration leave
+// the laser and the applied bias off.
 static bool sc1d_drive_active(){
-   return sim::time > sim::equilibration_time;
+   if(sc1d_step_counter <= sc1d_relax_steps) return false;
+   return sim::time >= sim::equilibration_time;
 }
 
 // Seconds from the start of the drive phase, matching the time ltmp is given.
@@ -223,11 +228,10 @@ static void configure_temperature_source(){
    }
 }
 
-// spin-currents-1d-thermal-effects. D, lambda, tau_s, S and sigma would be
-// replaced here by functions of Te and Tp. Those laws are not specified yet,
-// so the constants are returned unchanged.
+// The transport constants that now live on the fine grid are refreshed before
+// each solve. These helpers remain identities for the charge, Seebeck, and hot
+// lifetime paths that the thermal-constant refresh intentionally leaves alone.
 static inline double apply_thermal_effects(const double value, const double Te, const double Tp){
-   if(!sc1d_thermal_effects) return value;
    (void)Te;
    (void)Tp;
    return value;
@@ -235,10 +239,6 @@ static inline double apply_thermal_effects(const double value, const double Te, 
 
 static inline double scale_diffusion(const double D0, const double Te, const double Tp){
    return apply_thermal_effects(D0, Te, Tp);
-}
-
-static inline double scale_lambda_sdl(const double lambda0, const double Te, const double Tp){
-   return apply_thermal_effects(lambda0, Te, Tp);
 }
 
 static inline double scale_tau_s(const double tau0, const double Te, const double Tp){
@@ -610,6 +610,22 @@ static Vec3 vec3_sub(const Vec3& a, const Vec3& b){
    return r;
 }
 
+static Vec3 vec3_add(const Vec3& a, const Vec3& b){
+   Vec3 r;
+   r.x = a.x + b.x;
+   r.y = a.y + b.y;
+   r.z = a.z + b.z;
+   return r;
+}
+
+static Vec3 vec3_scale(const Vec3& a, const double s){
+   Vec3 r;
+   r.x = a.x * s;
+   r.y = a.y * s;
+   r.z = a.z * s;
+   return r;
+}
+
 static Block3 block3_inv(const Block3& A){
    const double c00 = A.a11*A.a22 - A.a12*A.a21;
    const double c01 = A.a12*A.a20 - A.a10*A.a22;
@@ -944,13 +960,47 @@ struct ChargeBarrier {
    double pe;
    double pp;
    double G;
+   double G0;
+   double Gparallel0;
+   double Gs0;
+   double vhalf;
+   double gcurv;
    double P;
    double sfrac;
+   double Jspin_offset;
    double mx;
    double my;
    double mz;
+   // Prolonged electrode directions. The injector axis is chosen from these
+   // once the series current is known.
+   double mLx;
+   double mLy;
+   double mLz;
+   double mRx;
+   double mRy;
+   double mRz;
    bool thick;
 };
+
+static double compute_tunnel_charge_offset(const ChargeBarrier& seg,
+                                           const int stack,
+                                           const int nf,
+                                           const double dz,
+                                           const int* mat,
+                                           const double* V,
+                                           const double* S,
+                                           const double* sa_inf,
+                                           const double* mhat,
+                                           const double* Dmat,
+                                           const double* sigma_bulk);
+
+// A sigma == 0 segment with no tunnel pair is a resistor, not a short.
+// 1 S/m^2 is an RA of 1 ohm m^2. The two channels are equal, so there is no TMR.
+static const double k_insulator_conductance = 1.0;
+
+static double barrier_G(const ChargeBarrier& seg){
+   return (seg.G > 0.0) ? seg.G : k_insulator_conductance;
+}
 
 static void abort_charge(const char* msg){
    terminaltextcolor(RED);
@@ -958,16 +1008,6 @@ static void abort_charge(const char* msg){
    terminaltextcolor(WHITE);
    zlog << zTs() << "Error - " << msg << std::endl;
    err::vexit();
-}
-
-// The electrical endpoint can be an empty fine cell. Walk out to the nearest
-// cell that actually carries a material, which is the electrode.
-static int electrode_material(const int* mat, const int start, const int dir, const int nf){
-   if(mat == nullptr || dir == 0) return -1;
-   for(int i = start; i >= 0 && i < nf; i += dir){
-      if(mat[i] >= 0) return mat[i];
-   }
-   return -1;
 }
 
 static bool lookup_tunnel(const int a, const int b, double& gup, double& gdn, double& lup, double& ldn){
@@ -982,7 +1022,8 @@ static bool lookup_tunnel(const int a, const int b, double& gup, double& gdn, do
    const std::size_t nmat = mp.size();
    if(nmat == 0) return false;
    const std::size_t idx = static_cast<std::size_t>(a) * nmat + static_cast<std::size_t>(b);
-   if(idx >= tunnel_pair_set.size() || !tunnel_pair_set[idx]) return false;
+   // Bit 1 is an explicit tunnel-conductance line. Decay and inelastic use other bits.
+   if(idx >= tunnel_pair_set.size() || (tunnel_pair_set[idx] & 1) == 0) return false;
    gup = tunnel_g_up_pair[idx];
    gdn = tunnel_g_down_pair[idx];
    if(idx < tunnel_l_up_pair.size()) lup = tunnel_l_up_pair[idx];
@@ -1064,6 +1105,15 @@ static void load_inelastic(const int a, const int b, ChargeBarrier& seg){
    if(idx < tunnel_pp_pair.size()) seg.pp = tunnel_pp_pair[idx];
 }
 
+static double load_tunnel_half_bias(const int a, const int b){
+   if(a < 0 || b < 0) return 0.0;
+   ensure_tunnel_matrix_size(mp.size());
+   const std::size_t nmat = mp.size();
+   if(nmat == 0) return 0.0;
+   const std::size_t idx = static_cast<std::size_t>(a) * nmat + static_cast<std::size_t>(b);
+   return (idx < tunnel_vhalf_pair.size()) ? tunnel_vhalf_pair[idx] : 0.0;
+}
+
 static double thermal_power(const double T, const double power){
    if(!(power > 0.0)) return 1.0;
    if(!(T > 0.0)) return 0.0;
@@ -1107,30 +1157,195 @@ static double channel_conductance(const double g0, const double lambda, const do
    return g0 * std::exp(-thickness / lambda);
 }
 
+static double tunnel_channel_curvature(const double lambda, const double thickness){
+   if(!(lambda > 0.0) || !(thickness > 0.0)) return 0.0;
+   const double phi_J = (kHbar * kHbar) / (8.0 * kMe * lambda * lambda);
+   const double phi_eV = phi_J / kE;
+   if(!(phi_eV > 1.0e-6)) return 0.0;
+   const double A = (thickness / lambda) / std::sqrt(phi_eV);
+   auto f = [&](const double x){
+      const double xc = std::max(x, 1.0e-12);
+      return xc * std::exp(-A * std::sqrt(xc));
+   };
+   auto chord = [&](const double V){
+      const double v = 0.5 * std::fabs(V);
+      const double I = f(phi_eV - v) - f(phi_eV + v);
+      return (std::fabs(V) > 0.0) ? (I / V) : 0.0;
+   };
+   const double probe = std::min(1.0e-2, 0.02 * phi_eV);
+   if(!(probe > 0.0)) return 0.0;
+   const double g0 = chord(1.0e-6);
+   const double gp = chord(probe);
+   if(!(std::fabs(g0) > 0.0) || !(gp / g0 > 1.0)) return 0.0;
+   return (gp / g0 - 1.0) / (probe * probe);
+}
+
+static double barrier_conductance_at_drop(const ChargeBarrier& seg, const double drop){
+   const double G0 = barrier_G(seg);
+   if(!(seg.vhalf > 0.0) || !(seg.Gparallel0 > 0.0) || !(G0 > 0.0)) return G0;
+   const double V2 = drop * drop;
+   const double pcurv = std::max(1.0, 1.0 + seg.gcurv * V2);
+   const double x = V2 / (seg.vhalf * seg.vhalf);
+   const double t0 = std::max(seg.Gparallel0 / G0 - 1.0, 0.0);
+   return G0 * pcurv * (1.0 + t0) * (1.0 + x) / (1.0 + t0 + x);
+}
+
+static double barrier_sfrac_at_drop(const ChargeBarrier& seg, const double drop){
+   const double G = barrier_conductance_at_drop(seg, drop);
+   if(!(G > 0.0)) return 0.0;
+   const double pcurv = std::max(1.0, 1.0 + seg.gcurv * drop * drop);
+   return seg.Gs0 * pcurv / G;
+}
+
+struct MatWeight {
+   int mat;
+   double w;
+};
+
+static int electrode_cell(const int* mat, const int start, const int dir, const int nf){
+   if(mat == nullptr || dir == 0) return -1;
+   for(int i = start; i >= 0 && i < nf; i += dir){
+      if(mat[i] >= 0) return i;
+   }
+   return -1;
+}
+
+static void cell_weights(const int stack, const int cell, const int nf, const int* mat,
+                         std::vector<MatWeight>& out){
+   out.clear();
+   if(cell < 0 || cell >= nf) return;
+   const std::size_t slot = static_cast<std::size_t>(stack) * static_cast<std::size_t>(nf) + static_cast<std::size_t>(cell);
+   if(slot < sc1d_mix_fine.size() && sc1d_mix_fine[slot].size() > 1){
+      double sum = 0.0;
+      for(std::size_t n = 0; n < sc1d_mix_fine[slot].size(); ++n) sum += sc1d_mix_fine[slot][n].count;
+      if(sum > 0.0){
+         for(std::size_t n = 0; n < sc1d_mix_fine[slot].size(); ++n){
+            MatWeight w;
+            w.mat = sc1d_mix_fine[slot][n].mat;
+            w.w = sc1d_mix_fine[slot][n].count / sum;
+            out.push_back(w);
+         }
+         return;
+      }
+   }
+   const int id = (mat != nullptr) ? mat[cell] : -1;
+   if(id >= 0){
+      MatWeight w;
+      w.mat = id;
+      w.w = 1.0;
+      out.push_back(w);
+   }
+}
+
+static char tunnel_bits(const int a, const int b){
+   ensure_tunnel_matrix_size(mp.size());
+   const std::size_t nmat = mp.size();
+   if(a < 0 || b < 0 || nmat == 0) return 0;
+   const std::size_t idx = static_cast<std::size_t>(a) * nmat + static_cast<std::size_t>(b);
+   if(idx >= tunnel_pair_set.size()) return 0;
+   return tunnel_pair_set[idx];
+}
+
+static bool tunnel_close(const double x, const double y){
+   const double scale = std::max(std::fabs(x), std::fabs(y));
+   if(!(scale > 0.0)) return true;
+   return std::fabs(x - y) <= 1.0e-5 * scale;
+}
+
+static void abort_tunnel_pair(const int a, const int b){
+   char buf[160];
+   std::snprintf(buf, sizeof(buf),
+      "tunnel constants for materials %d and %d must be declared both ways and match",
+      a + 1, b + 1);
+   abort_charge(buf);
+}
+
+// True when this ordered pair carries a tunnel declaration. Absent both ways
+// is not an error. A one-sided or unequal declaration aborts.
+static bool tunnel_pair_usable(const int a, const int b){
+   const char forward = tunnel_bits(a, b);
+   const char reverse = tunnel_bits(b, a);
+   if(forward == 0 && reverse == 0) return false;
+   if(forward != reverse) abort_tunnel_pair(a, b);
+   ensure_tunnel_matrix_size(mp.size());
+   const std::size_t nmat = mp.size();
+   const std::size_t ij = static_cast<std::size_t>(a) * nmat + static_cast<std::size_t>(b);
+   const std::size_t ji = static_cast<std::size_t>(b) * nmat + static_cast<std::size_t>(a);
+   const bool same =
+      tunnel_close(tunnel_g_up_pair[ij], tunnel_g_up_pair[ji]) &&
+      tunnel_close(tunnel_g_down_pair[ij], tunnel_g_down_pair[ji]) &&
+      tunnel_close(tunnel_l_up_pair[ij], tunnel_l_up_pair[ji]) &&
+      tunnel_close(tunnel_l_down_pair[ij], tunnel_l_down_pair[ji]) &&
+      tunnel_close(tunnel_gi_e_pair[ij], tunnel_gi_e_pair[ji]) &&
+      tunnel_close(tunnel_gi_p_pair[ij], tunnel_gi_p_pair[ji]) &&
+      tunnel_close(tunnel_li_pair[ij], tunnel_li_pair[ji]) &&
+      tunnel_close(tunnel_pe_pair[ij], tunnel_pe_pair[ji]) &&
+      tunnel_close(tunnel_pp_pair[ij], tunnel_pp_pair[ji]) &&
+      tunnel_close(tunnel_vhalf_pair[ij], tunnel_vhalf_pair[ji]);
+   if(!same) abort_tunnel_pair(a, b);
+   return true;
+}
+
+static bool cells_have_tunnel(const int stack, const int left, const int right, const int nf, const int* mat){
+   std::vector<MatWeight> wL;
+   std::vector<MatWeight> wR;
+   cell_weights(stack, left, nf, mat, wL);
+   cell_weights(stack, right, nf, mat, wR);
+   bool any = false;
+   for(std::size_t i = 0; i < wL.size(); ++i){
+      for(std::size_t j = 0; j < wR.size(); ++j){
+         if(tunnel_pair_usable(wL[i].mat, wR[j].mat)) any = true;
+      }
+   }
+   return any;
+}
+
+// Positive J0 is positive charge toward +z, so electrons leave the high-z contact.
+static void set_injector_axis(ChargeBarrier& seg, const double J0){
+   if(J0 > 0.0){
+      seg.mx = seg.mRx;
+      seg.my = seg.mRy;
+      seg.mz = seg.mRz;
+   } else if(J0 < 0.0){
+      seg.mx = seg.mLx;
+      seg.my = seg.mLy;
+      seg.mz = seg.mLz;
+   } else {
+      seg.mx = 0.0;
+      seg.my = 0.0;
+      seg.mz = 0.0;
+   }
+}
+
 // Two spin channels. Each decays with its own length across the oxide thickness.
-// Parallel is g_up + g_down. Antiparallel is the series combination of the two
-// channels. The angle weight is the magnetisation sampled from each electrode.
+// Charge: parallel is g_up + g_down, antiparallel is the series combination,
+// mixed by the angle of the two interface magnetisations.
+// Spin: elastic current carries the emitter polarisation at every angle.
+// A material pair with no tunnel line adds the spin-independent default resistance.
 static void set_barrier_angle(ChargeBarrier& seg, const double* mhat, const int* mat,
                               const int stack, const int nf, const double dz){
    seg.G = 0.0;
+   seg.G0 = 0.0;
+   seg.Gparallel0 = 0.0;
+   seg.Gs0 = 0.0;
+   seg.vhalf = 0.0;
+   seg.gcurv = 0.0;
    seg.P = 0.0;
    seg.sfrac = 0.0;
+   seg.Jspin_offset = 0.0;
    seg.mx = 0.0;
    seg.my = 0.0;
-   seg.mz = 1.0;
+   seg.mz = 0.0;
+   seg.mLx = 0.0;
+   seg.mLy = 0.0;
+   seg.mLz = 0.0;
+   seg.mRx = 0.0;
+   seg.mRy = 0.0;
+   seg.mRz = 0.0;
    const double thickness = (seg.thick && seg.n_cells > 0) ? (static_cast<double>(seg.n_cells) * dz) : 0.0;
-   const double gup = channel_conductance(seg.Gup, seg.lup, thickness);
-   const double gdn = channel_conductance(seg.Gdn, seg.ldn, thickness);
-   const double Gp = gup + gdn;
-   const double Gap = (Gp > 0.0) ? (2.0 * gup * gdn / Gp) : 0.0;
-   seg.P = (Gp > 0.0) ? ((gup - gdn) / Gp) : 0.0;
    double Te = 0.0;
    double Tp = 0.0;
    barrier_temperatures(stack, seg, nf, Te, Tp);
-   const double g_inel =
-      channel_conductance(seg.ge, seg.li, thickness) * thermal_power(Te, seg.pe)
-      + channel_conductance(seg.gp, seg.li, thickness) * thermal_power(Tp, seg.pp);
-   if(!(Gp > 0.0) && !(g_inel > 0.0)) return;
 
    double lx = 0.0;
    double ly = 0.0;
@@ -1142,6 +1357,12 @@ static void set_barrier_angle(ChargeBarrier& seg, const double* mhat, const int*
    electrode_magnetisation(mhat, seg.vR, +1, nf, dz, rx, ry, rz);
    const double nL = unit_or_zero(lx, ly, lz);
    const double nR = unit_or_zero(rx, ry, rz);
+   seg.mLx = lx;
+   seg.mLy = ly;
+   seg.mLz = lz;
+   seg.mRx = rx;
+   seg.mRy = ry;
+   seg.mRz = rz;
    double cos_th = 1.0;
    if(nL > 0.0 && nR > 0.0 && seg.vL != seg.vR){
       cos_th = lx * rx + ly * ry + lz * rz;
@@ -1150,38 +1371,90 @@ static void set_barrier_angle(ChargeBarrier& seg, const double* mhat, const int*
    }
    const double wp = 0.5 * (1.0 + cos_th);
    const double wa = 0.5 * (1.0 - cos_th);
-   const double g_el = Gp * wp + Gap * wa;
-   seg.G = g_el + g_inel;
-   // The inelastic channel is unpolarised, so only the elastic imbalance
-   // contributes to the spin flux. Heating lowers the polarisation by
-   // increasing the charge conductance in the denominator.
-   const double Gs = (gup - gdn) * wp;
-   seg.sfrac = (seg.G > 0.0) ? (Gs / seg.G) : 0.0;
 
-   double mx = lx;
-   double my = ly;
-   double mz = lz;
-   if(mat != nullptr && mat[seg.vR] == reference_layer && nR > 0.0){
-      mx = rx;
-      my = ry;
-      mz = rz;
+   const int cL = electrode_cell(mat, seg.vL, -1, nf);
+   const int cR = electrode_cell(mat, seg.vR, +1, nf);
+   std::vector<MatWeight> wL;
+   std::vector<MatWeight> wR;
+   cell_weights(stack, cL, nf, mat, wL);
+   cell_weights(stack, cR, nf, mat, wR);
+
+   double G = 0.0;
+   double Gs = 0.0;
+   double Gp_sum = 0.0;
+   double Pnum = 0.0;
+   double Gpar = 0.0;
+   double curve_num = 0.0;
+   double vhalf_num = 0.0;
+   double vhalf_den = 0.0;
+   if(wL.empty() || wR.empty()){
+      G = k_insulator_conductance;
    }
-   if(mat != nullptr && mat[seg.vL] == reference_layer && nL > 0.0){
-      mx = lx;
-      my = ly;
-      mz = lz;
+   for(std::size_t i = 0; i < wL.size(); ++i){
+      for(std::size_t j = 0; j < wR.size(); ++j){
+         const double weight = wL[i].w * wR[j].w;
+         if(!(weight > 0.0)) continue;
+         if(!tunnel_pair_usable(wL[i].mat, wR[j].mat)){
+            G += weight * k_insulator_conductance;
+            continue;
+         }
+         double gup0 = 0.0;
+         double gdn0 = 0.0;
+         double lup = 0.0;
+         double ldn = 0.0;
+         lookup_tunnel(wL[i].mat, wR[j].mat, gup0, gdn0, lup, ldn);
+         ChargeBarrier part = seg;
+         load_inelastic(wL[i].mat, wR[j].mat, part);
+         const double gup = channel_conductance(gup0, lup, thickness);
+         const double gdn = channel_conductance(gdn0, ldn, thickness);
+         const double Gp = gup + gdn;
+         const double Gap = (Gp > 0.0) ? (2.0 * gup * gdn / Gp) : 0.0;
+         const double g_el = Gp * wp + Gap * wa;
+         const double g_inel =
+            channel_conductance(part.ge, part.li, thickness) * thermal_power(Te, part.pe)
+            + channel_conductance(part.gp, part.li, thickness) * thermal_power(Tp, part.pp);
+         if(!(g_el > 0.0) && !(g_inel > 0.0)){
+            G += weight * k_insulator_conductance;
+            continue;
+         }
+         G += weight * (g_el + g_inel);
+         // Elastic electrons leave polarized by the emitter, (g↑−g↓)/(g↑+g↓),
+         // at every angle. The collector angle is already in g_el (Jullière
+         // charge). It is not a second factor on the spin. Inelastic charge
+         // carries no spin, so it only dilutes through G. Parallel reduces
+         // to (g↑−g↓)/G. Antiparallel stays finite: the crossed channels
+         // lower the charge, and the electrons that cross are still filtered.
+         double gs = 0.0;
+         if(Gp > 0.0) gs = (gup - gdn) * (g_el / Gp);
+         Gs += weight * gs;
+         Gp_sum += weight * Gp;
+         Pnum += weight * (gup - gdn);
+         const double gpar_pair = Gp + g_inel;
+         Gpar += weight * gpar_pair;
+         const double cup = tunnel_channel_curvature(lup, thickness);
+         const double cdn = tunnel_channel_curvature(ldn, thickness);
+         curve_num += weight * (gup * cup + gdn * cdn);
+         const double vh = load_tunnel_half_bias(wL[i].mat, wR[j].mat);
+         if(vh > 0.0 && gpar_pair > 0.0){
+            vhalf_num += weight * gpar_pair * vh;
+            vhalf_den += weight * gpar_pair;
+         }
+      }
    }
-   if(!(nL > 0.0) && !(nR > 0.0)){
-      mx = 0.0;
-      my = 0.0;
-      mz = 1.0;
-   }
-   seg.mx = mx;
-   seg.my = my;
-   seg.mz = mz;
+   if(!(G > 0.0)) G = k_insulator_conductance;
+   seg.G = G;
+   seg.G0 = G;
+   seg.Gparallel0 = Gpar;
+   seg.Gs0 = Gs;
+   seg.gcurv = (Gpar > 0.0) ? (curve_num / Gpar) : 0.0;
+   seg.vhalf = (vhalf_den > 0.0) ? (vhalf_num / vhalf_den) : 0.0;
+   seg.P = (Gp_sum > 0.0) ? (Pnum / Gp_sum) : 0.0;
+   // Inelastic and the default resistor carry no spin. Heating lowers the
+   // polarisation by increasing the charge conductance in the denominator.
+   seg.sfrac = (seg.G > 0.0) ? (Gs / seg.G) : 0.0;
 }
 
-static std::vector<ChargeBarrier> find_charge_barriers(const int nf, const double* sigma, const int* mat){
+static std::vector<ChargeBarrier> find_charge_barriers(const int stack, const int nf, const double* sigma, const int* mat){
    std::vector<ChargeBarrier> barriers;
    if(nf <= 1 || sigma == nullptr) return barriers;
    std::vector<char> owned(static_cast<std::size_t>(nf), 0);
@@ -1213,15 +1486,23 @@ static std::vector<ChargeBarrier> find_charge_barriers(const int nf, const doubl
          seg.pe = 0.0;
          seg.pp = 0.0;
          seg.G = 0.0;
+         seg.G0 = 0.0;
+         seg.Gparallel0 = 0.0;
+         seg.Gs0 = 0.0;
+         seg.vhalf = 0.0;
+         seg.gcurv = 0.0;
          seg.P = 0.0;
          seg.sfrac = 0.0;
+         seg.Jspin_offset = 0.0;
          seg.mx = 0.0;
          seg.my = 0.0;
-         seg.mz = 1.0;
-         const int matL = electrode_material(mat, seg.vL, -1, nf);
-         const int matR = electrode_material(mat, seg.vR, +1, nf);
-         lookup_tunnel(matL, matR, seg.Gup, seg.Gdn, seg.lup, seg.ldn);
-         load_inelastic(matL, matR, seg);
+         seg.mz = 0.0;
+         seg.mLx = 0.0;
+         seg.mLy = 0.0;
+         seg.mLz = 0.0;
+         seg.mRx = 0.0;
+         seg.mRy = 0.0;
+         seg.mRz = 0.0;
          if(seg.face_lo <= seg.face_hi){
             for(int e = seg.face_lo; e <= seg.face_hi; ++e) owned[static_cast<std::size_t>(e)] = 1;
             barriers.push_back(seg);
@@ -1234,12 +1515,9 @@ static std::vector<ChargeBarrier> find_charge_barriers(const int nf, const doubl
    for(int e = 1; e < nf; ++e){
       if(owned[static_cast<std::size_t>(e)]) continue;
       if(!(sigma[e - 1] > 0.0) || !(sigma[e] > 0.0)) continue;
-      double gup = 0.0;
-      double gdn = 0.0;
-      double lup = 0.0;
-      double ldn = 0.0;
-      if(!lookup_tunnel(electrode_material(mat, e - 1, -1, nf),
-                        electrode_material(mat, e, +1, nf), gup, gdn, lup, ldn)) continue;
+      const int cL = electrode_cell(mat, e - 1, -1, nf);
+      const int cR = electrode_cell(mat, e, +1, nf);
+      if(!cells_have_tunnel(stack, cL, cR, nf, mat)) continue;
       ChargeBarrier seg;
       seg.vL = e - 1;
       seg.vR = e;
@@ -1250,18 +1528,33 @@ static std::vector<ChargeBarrier> find_charge_barriers(const int nf, const doubl
       seg.face_lo = e;
       seg.face_hi = e;
       seg.jump_face = e;
-      seg.Gup = gup;
-      seg.Gdn = gdn;
-      seg.lup = lup;
-      seg.ldn = ldn;
-      load_inelastic(electrode_material(mat, e - 1, -1, nf),
-                     electrode_material(mat, e, +1, nf), seg);
+      seg.Gup = 0.0;
+      seg.Gdn = 0.0;
+      seg.lup = 0.0;
+      seg.ldn = 0.0;
+      seg.ge = 0.0;
+      seg.gp = 0.0;
+      seg.li = 0.0;
+      seg.pe = 0.0;
+      seg.pp = 0.0;
       seg.G = 0.0;
+      seg.G0 = 0.0;
+      seg.Gparallel0 = 0.0;
+      seg.Gs0 = 0.0;
+      seg.vhalf = 0.0;
+      seg.gcurv = 0.0;
       seg.P = 0.0;
       seg.sfrac = 0.0;
+      seg.Jspin_offset = 0.0;
       seg.mx = 0.0;
       seg.my = 0.0;
-      seg.mz = 1.0;
+      seg.mz = 0.0;
+      seg.mLx = 0.0;
+      seg.mLy = 0.0;
+      seg.mLz = 0.0;
+      seg.mRx = 0.0;
+      seg.mRy = 0.0;
+      seg.mRz = 0.0;
       barriers.push_back(seg);
    }
    return barriers;
@@ -1299,7 +1592,7 @@ static void solve_metal_charge_block(const int lo,
    std::vector<double> rhs((std::size_t)n, 0.0);
    const ChargeBarrier* nxt = (nxt_b >= 0) ? &barriers[static_cast<std::size_t>(nxt_b)] : nullptr;
    const double nspan = nxt ? static_cast<double>(nxt->vR - nxt->vL) : 1.0;
-   const double delta = (nxt && nxt->G > 0.0) ? (J0 / nxt->G) : 0.0;
+   const double delta = nxt ? ((J0 - nxt->Jspin_offset) / barrier_G(*nxt)) : 0.0;
 
    struct Placer {
       int lo, hi, n, nf;
@@ -1353,7 +1646,7 @@ static void solve_metal_charge_block(const int lo,
          if(kind == 1){
             place_into.place(row, seg.vL, 1.0);
             place_into.place(row, seg.vR, -1.0);
-            rhs[static_cast<std::size_t>(row)] += (seg.G > 0.0) ? (J0 / seg.G) : 0.0;
+            rhs[static_cast<std::size_t>(row)] += (J0 - seg.Jspin_offset) / barrier_G(seg);
          } else {
             place_into.place(row, face - 1, -1.0);
             place_into.place(row, face, 2.0);
@@ -1449,7 +1742,7 @@ static void solve_charge_wide_schur(const int nf,
       solve_metal_charge_block(lo, seg.vL, nf, dz, J0, De_edge, sigma_edge, eps_edge,
                                J_diffusion, J_seebeck, J_hot, face_kind, face_barrier,
                                wide_face, barriers, b, V);
-      const double delta = (seg.G > 0.0) ? (J0 / seg.G) : 0.0;
+      const double delta = (J0 - seg.Jspin_offset) / barrier_G(seg);
       const int vL = seg.vL;
       const int vR = seg.vR;
       V[vR] = V[vL] - delta;
@@ -1545,7 +1838,7 @@ static void solve_charge_potentials(const int nf,
          if(kind == 1){
             add_coeff(row, seg.vL, 1.0);
             add_coeff(row, seg.vR, -1.0);
-            rhs[row] = (seg.G > 0.0) ? (J0 / seg.G) : 0.0;
+            rhs[row] = (J0 - seg.Jspin_offset) / barrier_G(seg);
          } else {
             add_coeff(row, face - 1, -1.0);
             add_coeff(row, face, 2.0);
@@ -1649,6 +1942,95 @@ static void charge_from_electron_flux(const int nf, const double* Jns, double* J
 static std::vector<std::vector<ChargeBarrier>> saved_barriers;
 static std::vector<double> saved_J0;
 
+static double solve_voltage_dependent_drop(const ChargeBarrier& seg,
+                                           const double r_metal,
+                                           const double v_part_top,
+                                           const double dV){
+   auto current = [&](const double drop){
+      return seg.Jspin_offset + barrier_conductance_at_drop(seg, drop) * drop;
+   };
+   auto f = [&](const double drop){
+      return v_part_top - r_metal * current(drop) - drop - dV;
+   };
+   const double G0 = barrier_G(seg);
+   double guess = 0.0;
+   if(G0 > 0.0){
+      guess = (v_part_top - r_metal * seg.Jspin_offset - dV) / (1.0 + r_metal * G0);
+   }
+   double span = std::max(1.0, 2.0 * std::fabs(guess) + std::fabs(dV) + std::fabs(v_part_top));
+   double lo = guess - span;
+   double hi = guess + span;
+   for(int i = 0; i < 80 && f(lo) < 0.0; ++i){
+      span *= 2.0;
+      lo = guess - span;
+   }
+   span = std::max(1.0, 2.0 * std::fabs(guess) + std::fabs(dV) + std::fabs(v_part_top));
+   for(int i = 0; i < 80 && f(hi) > 0.0; ++i){
+      span *= 2.0;
+      hi = guess + span;
+   }
+   for(int i = 0; i < 100; ++i){
+      const double mid = 0.5 * (lo + hi);
+      if(f(mid) > 0.0) lo = mid;
+      else hi = mid;
+   }
+   return 0.5 * (lo + hi);
+}
+
+static double solve_open_voltage_dependent_drop(const ChargeBarrier& seg){
+   auto f = [&](const double drop){
+      return seg.Jspin_offset + barrier_conductance_at_drop(seg, drop) * drop;
+   };
+   const double G0 = barrier_G(seg);
+   const double guess = (G0 > 0.0) ? (-seg.Jspin_offset / G0) : 0.0;
+   double span = std::max(1.0e-6, 2.0 * std::fabs(guess));
+   double lo = guess - span;
+   double hi = guess + span;
+   for(int i = 0; i < 80 && f(lo) > 0.0; ++i){
+      span *= 2.0;
+      lo = guess - span;
+   }
+   span = std::max(1.0e-6, 2.0 * std::fabs(guess));
+   for(int i = 0; i < 80 && f(hi) < 0.0; ++i){
+      span *= 2.0;
+      hi = guess + span;
+   }
+   for(int i = 0; i < 100; ++i){
+      const double mid = 0.5 * (lo + hi);
+      if(f(mid) < 0.0) lo = mid;
+      else hi = mid;
+   }
+   return 0.5 * (lo + hi);
+}
+
+static int voltage_dependent_barrier_index(const std::vector<ChargeBarrier>& barriers){
+   int idx = -1;
+   for(std::size_t b = 0; b < barriers.size(); ++b){
+      const ChargeBarrier& seg = barriers[b];
+      if(!(seg.vhalf > 0.0)) continue;
+      if(idx >= 0) abort_charge("voltage-dependent tunnel solve currently supports one oxide barrier per stack");
+      idx = static_cast<int>(b);
+   }
+   return idx;
+}
+
+static void apply_barrier_drop_correction(const ChargeBarrier& seg,
+                                          const double diff,
+                                          const int nf,
+                                          double* V){
+   if(!(diff != 0.0) || V == nullptr) return;
+   const int span = seg.vR - seg.vL;
+   if(span <= 0) return;
+   for(int i = 0; i < nf; ++i){
+      if(i <= seg.vL) continue;
+      if(i >= seg.vR){
+         V[i] -= diff;
+      } else {
+         V[i] -= diff * (static_cast<double>(i - seg.vL) / static_cast<double>(span));
+      }
+   }
+}
+
 static void screen_open_circuit_faces(const int stack,
                                       const int nf,
                                       const double dz,
@@ -1659,7 +2041,9 @@ static void screen_open_circuit_faces(const int stack,
                                       const double* eps_edge,
                                       const double* Bd_cell,
                                       const double* S,
+                                      const double* sa_inf,
                                       const double* mhat,
+                                      const double* Dmat_cell,
                                       const double* Jns,
                                       double* J_hot,
                                       double* J_seebeck,
@@ -1672,9 +2056,11 @@ static void screen_open_circuit_faces(const int stack,
    charge_from_electron_flux(nf, Jns, J_hot);
    build_jknown_fine(nf, dz, De_edge, Bd_cell, S, mhat, Jns, J_spin);
 
-   std::vector<ChargeBarrier> barriers = find_charge_barriers(nf, sigma_cell, mat_cell);
+   std::vector<ChargeBarrier> barriers = find_charge_barriers(stack, nf, sigma_cell, mat_cell);
    for(std::size_t b = 0; b < barriers.size(); ++b){
       set_barrier_angle(barriers[b], mhat, mat_cell, stack, nf, dz);
+      barriers[b].Jspin_offset = compute_tunnel_charge_offset(barriers[b], stack, nf, dz, mat_cell,
+                                                               V, S, sa_inf, mhat, Dmat_cell, sigma_cell);
    }
 
    std::vector<char> barrier_face(static_cast<std::size_t>(nf + 1), 0);
@@ -1692,20 +2078,50 @@ static void screen_open_circuit_faces(const int stack,
    std::vector<double> V_part(static_cast<std::size_t>(std::max(nf, 0)), 0.0);
    solve_charge_potentials(nf, dz, 0.0, De_edge, sigma_edge, eps_edge,
                            J_spin, J_seebeck, J_hot, barriers, V_part.data());
+   const int nonlinear_barrier = voltage_dependent_barrier_index(barriers);
 
+   // Applied electrode bias is a drive-only load. Relax and equilibration keep
+   // the open-circuit (series J0) solve even when spin-currents-1d-bias=true.
+   const bool bias_now = sc1d_bias_enable && sc1d_drive_active();
    double J0 = 0.0;
-   if(!sc1d_bias_enable){
+   if(!bias_now){
       for(int i = 0; i < nf; ++i) V[i] = V_part[static_cast<std::size_t>(i)];
+      if(nonlinear_barrier >= 0){
+         ChargeBarrier& seg = barriers[static_cast<std::size_t>(nonlinear_barrier)];
+         const double G0 = barrier_G(seg);
+         const double old_drop = (G0 > 0.0) ? (-seg.Jspin_offset / G0) : 0.0;
+         const double drop = solve_open_voltage_dependent_drop(seg);
+         apply_barrier_drop_correction(seg, drop - old_drop, nf, V);
+         seg.G = barrier_conductance_at_drop(seg, drop);
+         seg.sfrac = barrier_sfrac_at_drop(seg, drop);
+      }
    } else {
       std::vector<double> V_unit(static_cast<std::size_t>(nf), 0.0);
+      std::vector<ChargeBarrier> unit_barriers = barriers;
+      for(std::size_t b = 0; b < unit_barriers.size(); ++b) unit_barriers[b].Jspin_offset = 0.0;
       solve_charge_potentials(nf, dz, 1.0, De_edge, sigma_edge, eps_edge,
-                              nullptr, nullptr, nullptr, barriers, V_unit.data());
+                              nullptr, nullptr, nullptr, unit_barriers, V_unit.data());
       const double denom = V_unit[static_cast<std::size_t>(nf - 1)];
       const double vpart = V_part[static_cast<std::size_t>(nf - 1)];
       const double dV = sc1d_voltage_top - sc1d_voltage_bottom;
       J0 = (dV - vpart) / denom;
       for(int i = 0; i < nf; ++i){
          V[i] = V_part[static_cast<std::size_t>(i)] + J0 * V_unit[static_cast<std::size_t>(i)];
+      }
+      if(nonlinear_barrier >= 0){
+         ChargeBarrier& seg = barriers[static_cast<std::size_t>(nonlinear_barrier)];
+         const double G0 = barrier_G(seg);
+         double r_metal = -denom - ((G0 > 0.0) ? (1.0 / G0) : 0.0);
+         if(!(r_metal > 0.0)) r_metal = 0.0;
+         const double drop = solve_voltage_dependent_drop(seg, r_metal, vpart, dV);
+         J0 = seg.Jspin_offset + barrier_conductance_at_drop(seg, drop) * drop;
+         for(int i = 0; i < nf; ++i){
+            V[i] = V_part[static_cast<std::size_t>(i)] + J0 * V_unit[static_cast<std::size_t>(i)];
+         }
+         const double old_drop = (G0 > 0.0) ? ((J0 - seg.Jspin_offset) / G0) : 0.0;
+         apply_barrier_drop_correction(seg, drop - old_drop, nf, V);
+         seg.G = barrier_conductance_at_drop(seg, drop);
+         seg.sfrac = barrier_sfrac_at_drop(seg, drop);
       }
    }
 
@@ -1792,10 +2208,11 @@ static void screen_open_circuit_faces(const int stack,
          if(nface_p > 0) joule[i] += acc / static_cast<double>(nface_p);
       }
 
-   if(sc1d_bias_enable){
+   if(bias_now){
       for(int i = 0; i < nf; ++i) V[i] += sc1d_voltage_bottom;
    }
 
+   for(std::size_t b = 0; b < barriers.size(); ++b) set_injector_axis(barriers[b], J0);
    saved_J0[static_cast<std::size_t>(stack)] = J0;
    saved_barriers[static_cast<std::size_t>(stack)] = barriers;
 }
@@ -1871,7 +2288,7 @@ static void solve_open_circuit_charge_steady(const int stack,
    screen_open_circuit_faces(stack, nf, dz, charge_scratch.sigma.data(), mat_cell,
                              charge_scratch.De_edge.data(), charge_scratch.sigma_edge.data(),
                              charge_scratch.eps_edge.data(),
-                             Bd_cell, S, mhat, charge_scratch.Jns.data(),
+                             Bd_cell, S, nullptr, mhat, nullptr, charge_scratch.Jns.data(),
                              J_hot, J_seebeck, J_spin, J_field, J_cd, ne, V, Jc_edge);
 }
 
@@ -1896,6 +2313,7 @@ static void update_charge_transients_1d_stack(const int stack,
                                               const double* Bd_cell,
                                               const double* seebeck_cell,
                                               const double* S,
+                                              const double* sa_inf,
                                               const double* mhat){
    fill_fine_charge_transport(nf, dz, t_s, D_charge, D_hot, sigma0_cell,
                               charge_scratch.Te.data(), charge_scratch.De.data(),
@@ -1920,7 +2338,7 @@ static void update_charge_transients_1d_stack(const int stack,
    screen_open_circuit_faces(stack, nf, dz, charge_scratch.sigma.data(), mat_cell,
                              charge_scratch.De_edge.data(), charge_scratch.sigma_edge.data(),
                              charge_scratch.eps_edge.data(),
-                             Bd_cell, S, mhat, charge_scratch.Jns.data(),
+                             Bd_cell, S, sa_inf, mhat, D_hot, charge_scratch.Jns.data(),
                              J_hot, J_seebeck, J_spin, J_field, J_cd, ne, V, Jc_edge);
 }
 
@@ -1985,6 +2403,7 @@ static std::vector<Block3> step_L_blk;
 static std::vector<Block3> step_D_blk;
 static std::vector<Block3> step_U_blk;
 static std::vector<double> step_Jd_edge;
+static std::vector<double> step_tunnel_source;
 
 static void allocate_sc1d_arrays(){
    // Every rank stores every column. Only the owner steps a column; the
@@ -2018,6 +2437,13 @@ static void allocate_sc1d_arrays(){
    sc1d_sigma_bulk_fine.assign(nfn, 0.0);
    sc1d_Rint_face.assign(nfn, 0.0);
    sc1d_dmdt_fine.assign(nfn, 0.0);
+   sc1d_ml_fine.assign(nfn, 0.0);
+   sc1d_sheet_acc_up_fine.assign(nfn, 0.0);
+   sc1d_sheet_acc_dn_fine.assign(nfn, 0.0);
+   sc1d_sheet_acc_re_fine.assign(nfn, 0.0);
+   sc1d_sheet_acc_im_fine.assign(nfn, 0.0);
+   sc1d_sheet_acc_d2_fine.assign(nfn, 0.0);
+   sc1d_Rint_base_face.assign(nfn, 0.0);
    sc1d_seebeck_fine.assign(nfn, 0.0);
    sc1d_beta_seebeck_fine.assign(nfn, 0.0);
    sc1d_phot_fine.assign(nfn, 0.0);
@@ -2042,6 +2468,8 @@ static void allocate_sc1d_arrays(){
    sc1d_Jsd_fine.assign(nfn, 0.0);
    sc1d_chi_fine.assign(nfn, 0.0);
    sc1d_sa_inf_fine.assign(nfn, 0.0);
+   sc1d_PN_fine.assign(nfn, 0.0);
+   sc1d_alpha_fine.assign(nfn, 1.0);
    saved_J0.assign(nstack, 0.0);
    saved_barriers.assign(nstack, std::vector<ChargeBarrier>());
    charge_scratch.fit(nf);
@@ -2051,6 +2479,7 @@ static void allocate_sc1d_arrays(){
    step_D_blk.assign(static_cast<std::size_t>(std::max(0, nf)), block3_zero());
    step_U_blk.assign(static_cast<std::size_t>(std::max(0, nf)), block3_zero());
    step_Jd_edge.assign(3u * static_cast<std::size_t>(nf + 1), 0.0);
+   step_tunnel_source.assign(3u * static_cast<std::size_t>(std::max(0, nf)), 0.0);
 }
 
 
@@ -2193,6 +2622,46 @@ static void assemble_diffusion_half_blocks(const int nf,
    U[(std::size_t)last] = Z;
 }
 
+static void equilibrium_spin(const int nf,
+                             const double* sa_inf,
+                             const double* mhat,
+                             std::vector<Vec3>& seq);
+
+static void apply_alpha_operator(const int nf,
+                                 const std::vector<Block3>& A_face,
+                                 const double* alpha,
+                                 const double* mhat,
+                                 const std::vector<Vec3>& S,
+                                 std::vector<Vec3>& out);
+
+static void alpha_equilibrium_source(const int nf,
+                                     const std::vector<Block3>& A_face,
+                                     const double* alpha,
+                                     const double* PN,
+                                     const double* ne,
+                                     const double* sa_inf,
+                                     const double* mhat,
+                                     std::vector<Vec3>& out);
+
+static void assemble_alpha_diffusion_half_blocks(const int nf,
+                                                 const double dt_half,
+                                                 const std::vector<Block3>& A_face,
+                                                 const double* alpha,
+                                                 const double* mhat,
+                                                 std::vector<Block3>& L,
+                                                 std::vector<Block3>& D,
+                                                 std::vector<Block3>& U);
+
+static void diffusion_boundary_source(const int nf,
+                                      const double dz,
+                                      const double* Bc,
+                                      const double* mhat,
+                                      const double* Jc_edge_fine,
+                                      std::vector<Vec3>& g);
+
+// S = sa_inf * m-hat. m-hat is unit length, so the attractor is the full
+// equilibrium accumulation along the local direction (m_l = 1). The thermal
+// cell length after preconditioning only chooses that direction.
 static void initialise_fine_spin_if_empty(const int nf,
                                          const double dz,
                                          const double* Bc_fine,
@@ -2220,40 +2689,17 @@ static void initialise_fine_spin_if_empty(const int nf,
       }
    }
 
-   // Steady diffusion-relaxation at Jc = 0, on the same faces as the half-step.
-   // lambda_sf = lambda_sdl / sqrt(1-gamma), so the decay length is lambda_sdl.
-   // sa_eq follows the same unit axis as the time stepper. Neumann ends.
-   // A zero diagonal (no diffusion and no relaxation) falls back to sa_eq.
-   const int nface = (nf > 1) ? (nf - 1) : 0;
-   std::vector<Block3> A_face((std::size_t)nface, block3_zero());
-   assemble_diffusion_faces(nf, dz, D_fine, Bc_fine, Bd_fine, mhat, Rint_face, A_face);
-
-   std::vector<Block3> L((std::size_t)nf, block3_zero());
-   std::vector<Block3> Dblk((std::size_t)nf, block3_zero());
-   std::vector<Block3> U((std::size_t)nf, block3_zero());
-   assemble_steady_blocks(nf, relax.data(), A_face, L, Dblk, U);
-
-   std::vector<Vec3> rhs((std::size_t)nf);
-   const Block3 Z = block3_zero();
-   const Block3 I = block3_identity();
+   (void)dz;
+   (void)Bc_fine;
+   (void)Bd_fine;
+   (void)D_fine;
+   (void)lsf_fine;
+   (void)Rint_face;
+   (void)relax;
    for(int i=0;i<nf;i++){
-      const double rel = relax[(std::size_t)i];
-      rhs[(std::size_t)i].x = rel * sa_eq[(std::size_t)i].x;
-      rhs[(std::size_t)i].y = rel * sa_eq[(std::size_t)i].y;
-      rhs[(std::size_t)i].z = rel * sa_eq[(std::size_t)i].z;
-      const double tr = Dblk[(std::size_t)i].a00 + Dblk[(std::size_t)i].a11 + Dblk[(std::size_t)i].a22;
-      if(std::fabs(tr) < kEps){
-         L[(std::size_t)i] = Z;
-         Dblk[(std::size_t)i] = I;
-         U[(std::size_t)i] = Z;
-         rhs[(std::size_t)i] = sa_eq[(std::size_t)i];
-      }
-   }
-   block3_thomas(L, Dblk, U, rhs);
-   for(int i=0;i<nf;i++){
-      Sbase[3*i+0] = rhs[(std::size_t)i].x;
-      Sbase[3*i+1] = rhs[(std::size_t)i].y;
-      Sbase[3*i+2] = rhs[(std::size_t)i].z;
+      Sbase[3*i+0] = sa_eq[(std::size_t)i].x;
+      Sbase[3*i+1] = sa_eq[(std::size_t)i].y;
+      Sbase[3*i+2] = sa_eq[(std::size_t)i].z;
    }
 }
 
@@ -2422,6 +2868,20 @@ static void require_spin_channels(){
    }
 }
 
+static void require_positive_alpha(){
+   for(std::size_t i = 0; i < sc1d_alpha_fine.size(); ++i){
+      const double a = sc1d_alpha_fine[i];
+      if(std::isfinite(a) && a > 0.0) continue;
+      terminaltextcolor(RED);
+      std::cerr << "Error - spin DOS alpha must be positive on fine cell "
+                << i << ", got " << a << "." << std::endl;
+      terminaltextcolor(WHITE);
+      zlog << zTs() << "Error - spin DOS alpha must be positive on fine cell "
+           << i << ", got " << a << "." << std::endl;
+      err::vexit();
+   }
+}
+
 // Two passes, once, after the grid, the magnetisation prolongation, and the
 // steady charge solve. The time step does not repeat these tests.
 static void smoke_test_sc1d(){
@@ -2443,6 +2903,8 @@ static void smoke_test_sc1d(){
    require_finite_values("Jsd", sc1d_Jsd_fine);
    require_finite_values("chi", sc1d_chi_fine);
    require_finite_values("sa_inf", sc1d_sa_inf_fine);
+   require_finite_values("P_N", sc1d_PN_fine);
+   require_finite_values("alpha", sc1d_alpha_fine);
    require_finite_values("sigma_bulk", sc1d_sigma_bulk_fine);
    require_finite_values("seebeck", sc1d_seebeck_fine);
    require_finite_values("beta_seebeck", sc1d_beta_seebeck_fine);
@@ -2455,6 +2917,7 @@ static void smoke_test_sc1d(){
    require_finite_values("Tp", sc1d_Tp_fine);
    require_resolved_conductivity();
    require_spin_channels();
+   require_positive_alpha();
 
    // Pass 2. Faces and the steady charge state written during initialisation.
    require_finite_values("Rint", sc1d_Rint_face);
@@ -2489,6 +2952,10 @@ void initialise_spincurrents_1d(){
    build_atom_fine_map(nf, dzA);
    build_fine_material_grid();
    cache_prolong_maps();
+   // Provisional m-hat and S from the as-created spins. Monte-Carlo
+   // preconditioning runs after this call (sim.cpp). The first transport step
+   // then prolongs again and reseeds S = sa_inf * m-hat from those spins,
+   // still with |m-hat| = 1 so the attractor uses the full msat length.
    prolong_fine_magnetisation(mp::dt_SI);
 
    // Constants are baked. Only the owner integrates that column.
@@ -2546,46 +3013,59 @@ void initialise_spincurrents_1d(){
 // Per-step 1D spin-accumulation helpers
 //------------------------------------------------------------------------------
 
+static double cell_factor(const double* a, const int i){
+   if(a == nullptr) return 0.0;
+   return a[i];
+}
+
 static void apply_diffusion_half_step(double* S,
                                       const int nf,
                                       const double dz,
                                       const double dt_half,
                                       const double* Bc,
                                       const double* mhat,
+                                      const double* sa_inf,
+                                      const double* PN,
+                                      const double* alpha,
+                                      const double* ne,
                                       const double* Jc_edge_fine,
-                                      const std::vector<Block3>& L,
-                                      const std::vector<Block3>& D,
-                                      const std::vector<Block3>& U){
+                                      const std::vector<Block3>& A_face,
+                                      std::vector<Block3>& L,
+                                      std::vector<Block3>& D,
+                                      std::vector<Block3>& U){
    if(nf <= 0) return;
-   const double jdl0x = -Bc[0]    * Jc_edge_fine[0]  * mhat[0];
-   const double jdl0y = -Bc[0]    * Jc_edge_fine[0]  * mhat[1];
-   const double jdl0z = -Bc[0]    * Jc_edge_fine[0]  * mhat[2];
-   const double jdrNx = -Bc[nf-1] * Jc_edge_fine[nf] * mhat[3*(nf-1)+0];
-   const double jdrNy = -Bc[nf-1] * Jc_edge_fine[nf] * mhat[3*(nf-1)+1];
-   const double jdrNz = -Bc[nf-1] * Jc_edge_fine[nf] * mhat[3*(nf-1)+2];
-
-   const double Jleft[3]  = { -jdl0x, -jdl0y, -jdl0z };
-   const double Jright[3] = { -jdrNx, -jdrNy, -jdrNz };
 
    std::vector<Vec3> rhs((std::size_t)nf);
+   std::vector<Vec3> fE((std::size_t)nf);
+   std::vector<Vec3> g((std::size_t)nf);
+   alpha_equilibrium_source(nf, A_face, alpha, PN, ne, sa_inf, mhat, fE);
+   diffusion_boundary_source(nf, dz, Bc, mhat, Jc_edge_fine, g);
    for(int i=0;i<nf;i++){
-      rhs[(std::size_t)i].x = S[3*i+0];
-      rhs[(std::size_t)i].y = S[3*i+1];
-      rhs[(std::size_t)i].z = S[3*i+2];
+      rhs[(std::size_t)i].x = S[3*i+0] + dt_half * (fE[(std::size_t)i].x + g[(std::size_t)i].x);
+      rhs[(std::size_t)i].y = S[3*i+1] + dt_half * (fE[(std::size_t)i].y + g[(std::size_t)i].y);
+      rhs[(std::size_t)i].z = S[3*i+2] + dt_half * (fE[(std::size_t)i].z + g[(std::size_t)i].z);
    }
-   rhs[0].x += dt_half * (Jleft[0] / dz);
-   rhs[0].y += dt_half * (Jleft[1] / dz);
-   rhs[0].z += dt_half * (Jleft[2] / dz);
-   rhs[(std::size_t)(nf-1)].x -= dt_half * (Jright[0] / dz);
-   rhs[(std::size_t)(nf-1)].y -= dt_half * (Jright[1] / dz);
-   rhs[(std::size_t)(nf-1)].z -= dt_half * (Jright[2] / dz);
 
+   assemble_alpha_diffusion_half_blocks(nf, dt_half, A_face, alpha, mhat, L, D, U);
    block3_thomas(L, D, U, rhs);
 
    for(int i=0;i<nf;i++){
       S[3*i+0] = rhs[(std::size_t)i].x;
       S[3*i+1] = rhs[(std::size_t)i].y;
       S[3*i+2] = rhs[(std::size_t)i].z;
+   }
+}
+
+static void equilibrium_spin(const int nf,
+                             const double* sa_inf,
+                             const double* mhat,
+                             std::vector<Vec3>& seq){
+   seq.resize((std::size_t)nf);
+   for(int i = 0; i < nf; ++i){
+      const double sa = (sa_inf != nullptr) ? sa_inf[i] : 0.0;
+      seq[(std::size_t)i].x = sa * mhat[3*i+0];
+      seq[(std::size_t)i].y = sa * mhat[3*i+1];
+      seq[(std::size_t)i].z = sa * mhat[3*i+2];
    }
 }
 
@@ -2624,6 +3104,147 @@ static void apply_face_operator(const int nf,
    out[(std::size_t)last].x = -from_left.x + centre.x;
    out[(std::size_t)last].y = -from_left.y + centre.y;
    out[(std::size_t)last].z = -from_left.z + centre.z;
+}
+
+static double alpha_value(const double* alpha, const int i){
+   if(alpha == nullptr) return 1.0;
+   const double a = alpha[i];
+   return (std::isfinite(a) && a > 0.0) ? a : 1.0;
+}
+
+static double alpha_log_mean(const double a_in, const double b_in){
+   const double a = (std::isfinite(a_in) && a_in > 0.0) ? a_in : 1.0;
+   const double b = (std::isfinite(b_in) && b_in > 0.0) ? b_in : 1.0;
+   const double diff = b - a;
+   const double scale = std::max(std::fabs(a), std::fabs(b));
+   if(std::fabs(diff) <= 1.0e-12 * std::max(scale, 1.0)) return 0.5 * (a + b);
+   const double ldiff = std::log(b) - std::log(a);
+   if(std::fabs(ldiff) <= kEps) return 0.5 * (a + b);
+   return diff / ldiff;
+}
+
+static Block3 alpha_K_matrix(const int i,
+                             const double alpha_face,
+                             const double* alpha,
+                             const double* mhat){
+   Block3 K = block3_identity();
+   const double af = (alpha_face > 0.0) ? alpha_face : 1.0;
+   const double scale = alpha_value(alpha, i) / af;
+   const double c = scale - 1.0;
+   const double mx = mhat[3 * i + 0];
+   const double my = mhat[3 * i + 1];
+   const double mz = mhat[3 * i + 2];
+   K.a00 += c * mx * mx; K.a01 += c * mx * my; K.a02 += c * mx * mz;
+   K.a10 += c * my * mx; K.a11 += c * my * my; K.a12 += c * my * mz;
+   K.a20 += c * mz * mx; K.a21 += c * mz * my; K.a22 += c * mz * mz;
+   return K;
+}
+
+static Vec3 alpha_equilibrium_face(const int i,
+                                   const double alpha_face,
+                                   const double* alpha,
+                                   const double* PN,
+                                   const double* ne,
+                                   const double* sa_inf,
+                                   const double* mhat){
+   const double af = (alpha_face > 0.0) ? alpha_face : 1.0;
+   const double scale = alpha_value(alpha, i) / af;
+   const double q = -cell_factor(PN, i) * cell_factor(ne, i);
+   const double target = ((sa_inf != nullptr) ? sa_inf[i] : 0.0) - q;
+   Vec3 e;
+   e.x = scale * target * mhat[3 * i + 0];
+   e.y = scale * target * mhat[3 * i + 1];
+   e.z = scale * target * mhat[3 * i + 2];
+   return e;
+}
+
+static Vec3 alpha_face_vector(const int i,
+                              const double* Sbase,
+                              const double alpha_face,
+                              const double* alpha,
+                              const double* PN,
+                              const double* ne,
+                              const double* sa_inf,
+                              const double* mhat){
+   Vec3 s;
+   s.x = Sbase[3 * i + 0];
+   s.y = Sbase[3 * i + 1];
+   s.z = Sbase[3 * i + 2];
+   const Block3 K = alpha_K_matrix(i, alpha_face, alpha, mhat);
+   const Vec3 ks = block3_mul_vec(K, s);
+   const Vec3 e = alpha_equilibrium_face(i, alpha_face, alpha, PN, ne, sa_inf, mhat);
+   return vec3_sub(ks, e);
+}
+
+static void assemble_alpha_diffusion_half_blocks(const int nf,
+                                                 const double dt_half,
+                                                 const std::vector<Block3>& A_face,
+                                                 const double* alpha,
+                                                 const double* mhat,
+                                                 std::vector<Block3>& L,
+                                                 std::vector<Block3>& D,
+                                                 std::vector<Block3>& U){
+   const Block3 Z = block3_zero();
+   const Block3 I = block3_identity();
+   if(nf <= 0) return;
+   for(int i = 0; i < nf; ++i){
+      L[(std::size_t)i] = Z;
+      D[(std::size_t)i] = I;
+      U[(std::size_t)i] = Z;
+   }
+   for(int f = 0; f < nf - 1; ++f){
+      const double af = alpha_log_mean(alpha_value(alpha, f), alpha_value(alpha, f + 1));
+      const Block3 Ki = alpha_K_matrix(f, af, alpha, mhat);
+      const Block3 Kj = alpha_K_matrix(f + 1, af, alpha, mhat);
+      const Block3 AKi = block3_mul(A_face[(std::size_t)f], Ki);
+      const Block3 AKj = block3_mul(A_face[(std::size_t)f], Kj);
+      const Block3 dtAKi = block3_scale(AKi, dt_half);
+      const Block3 dtAKj = block3_scale(AKj, dt_half);
+      D[(std::size_t)f] = block3_add(D[(std::size_t)f], dtAKi);
+      U[(std::size_t)f] = block3_sub(U[(std::size_t)f], dtAKj);
+      L[(std::size_t)(f + 1)] = block3_sub(L[(std::size_t)(f + 1)], dtAKi);
+      D[(std::size_t)(f + 1)] = block3_add(D[(std::size_t)(f + 1)], dtAKj);
+   }
+}
+
+static void apply_alpha_operator(const int nf,
+                                 const std::vector<Block3>& A_face,
+                                 const double* alpha,
+                                 const double* mhat,
+                                 const std::vector<Vec3>& S,
+                                 std::vector<Vec3>& out){
+   out.assign((std::size_t)std::max(nf, 0), Vec3());
+   if(nf <= 1) return;
+   for(int f = 0; f < nf - 1; ++f){
+      const double af = alpha_log_mean(alpha_value(alpha, f), alpha_value(alpha, f + 1));
+      const Block3 Ki = alpha_K_matrix(f, af, alpha, mhat);
+      const Block3 Kj = alpha_K_matrix(f + 1, af, alpha, mhat);
+      const Vec3 left = block3_mul_vec(Ki, S[(std::size_t)f]);
+      const Vec3 right = block3_mul_vec(Kj, S[(std::size_t)(f + 1)]);
+      const Vec3 flux = block3_mul_vec(A_face[(std::size_t)f], vec3_sub(left, right));
+      out[(std::size_t)f] = vec3_add(out[(std::size_t)f], flux);
+      out[(std::size_t)(f + 1)] = vec3_sub(out[(std::size_t)(f + 1)], flux);
+   }
+}
+
+static void alpha_equilibrium_source(const int nf,
+                                     const std::vector<Block3>& A_face,
+                                     const double* alpha,
+                                     const double* PN,
+                                     const double* ne,
+                                     const double* sa_inf,
+                                     const double* mhat,
+                                     std::vector<Vec3>& out){
+   out.assign((std::size_t)std::max(nf, 0), Vec3());
+   if(nf <= 1) return;
+   for(int f = 0; f < nf - 1; ++f){
+      const double af = alpha_log_mean(alpha_value(alpha, f), alpha_value(alpha, f + 1));
+      const Vec3 left = alpha_equilibrium_face(f, af, alpha, PN, ne, sa_inf, mhat);
+      const Vec3 right = alpha_equilibrium_face(f + 1, af, alpha, PN, ne, sa_inf, mhat);
+      const Vec3 flux = block3_mul_vec(A_face[(std::size_t)f], vec3_sub(left, right));
+      out[(std::size_t)f] = vec3_add(out[(std::size_t)f], flux);
+      out[(std::size_t)(f + 1)] = vec3_sub(out[(std::size_t)(f + 1)], flux);
+   }
 }
 
 // Neumann data at the outer ends. Same signs as the backward-Euler half-step.
@@ -2668,6 +3289,10 @@ static void apply_diffusion_tr_bdf2_half_step(double* S,
                                               const std::vector<Block3>& A_face,
                                               const double* Bc,
                                               const double* mhat,
+                                              const double* sa_inf,
+                                              const double* PN,
+                                              const double* alpha,
+                                              const double* ne,
                                               const double* Jc_edge_fine,
                                               std::vector<Block3>& L,
                                               std::vector<Block3>& D,
@@ -2681,6 +3306,7 @@ static void apply_diffusion_tr_bdf2_half_step(double* S,
 
    std::vector<Vec3> S0((std::size_t)nf);
    std::vector<Vec3> AS((std::size_t)nf);
+   std::vector<Vec3> fE((std::size_t)nf);
    std::vector<Vec3> g((std::size_t)nf);
    std::vector<Vec3> rhs((std::size_t)nf);
    for(int i = 0; i < nf; ++i){
@@ -2688,23 +3314,30 @@ static void apply_diffusion_tr_bdf2_half_step(double* S,
       S0[(std::size_t)i].y = S[3 * i + 1];
       S0[(std::size_t)i].z = S[3 * i + 2];
    }
+   alpha_equilibrium_source(nf, A_face, alpha, PN, ne, sa_inf, mhat, fE);
    diffusion_boundary_source(nf, dz, Bc, mhat, Jc_edge_fine, g);
-   apply_face_operator(nf, A_face, S0, AS);
+   apply_alpha_operator(nf, A_face, alpha, mhat, S0, AS);
    for(int i = 0; i < nf; ++i){
-      rhs[(std::size_t)i].x = S0[(std::size_t)i].x - c_tr * dt_half * AS[(std::size_t)i].x + gamma * dt_half * g[(std::size_t)i].x;
-      rhs[(std::size_t)i].y = S0[(std::size_t)i].y - c_tr * dt_half * AS[(std::size_t)i].y + gamma * dt_half * g[(std::size_t)i].y;
-      rhs[(std::size_t)i].z = S0[(std::size_t)i].z - c_tr * dt_half * AS[(std::size_t)i].z + gamma * dt_half * g[(std::size_t)i].z;
+      rhs[(std::size_t)i].x = S0[(std::size_t)i].x - c_tr * dt_half * AS[(std::size_t)i].x
+         + gamma * dt_half * (fE[(std::size_t)i].x + g[(std::size_t)i].x);
+      rhs[(std::size_t)i].y = S0[(std::size_t)i].y - c_tr * dt_half * AS[(std::size_t)i].y
+         + gamma * dt_half * (fE[(std::size_t)i].y + g[(std::size_t)i].y);
+      rhs[(std::size_t)i].z = S0[(std::size_t)i].z - c_tr * dt_half * AS[(std::size_t)i].z
+         + gamma * dt_half * (fE[(std::size_t)i].z + g[(std::size_t)i].z);
    }
-   assemble_diffusion_half_blocks(nf, c_tr * dt_half, A_face, L, D, U);
+   assemble_alpha_diffusion_half_blocks(nf, c_tr * dt_half, A_face, alpha, mhat, L, D, U);
    block3_thomas(L, D, U, rhs);
 
    std::vector<Vec3> Sstar(rhs);
    for(int i = 0; i < nf; ++i){
-      rhs[(std::size_t)i].x = w_star * Sstar[(std::size_t)i].x + w_n * S0[(std::size_t)i].x + c_bdf * dt_half * g[(std::size_t)i].x;
-      rhs[(std::size_t)i].y = w_star * Sstar[(std::size_t)i].y + w_n * S0[(std::size_t)i].y + c_bdf * dt_half * g[(std::size_t)i].y;
-      rhs[(std::size_t)i].z = w_star * Sstar[(std::size_t)i].z + w_n * S0[(std::size_t)i].z + c_bdf * dt_half * g[(std::size_t)i].z;
+      rhs[(std::size_t)i].x = w_star * Sstar[(std::size_t)i].x + w_n * S0[(std::size_t)i].x
+         + c_bdf * dt_half * (fE[(std::size_t)i].x + g[(std::size_t)i].x);
+      rhs[(std::size_t)i].y = w_star * Sstar[(std::size_t)i].y + w_n * S0[(std::size_t)i].y
+         + c_bdf * dt_half * (fE[(std::size_t)i].y + g[(std::size_t)i].y);
+      rhs[(std::size_t)i].z = w_star * Sstar[(std::size_t)i].z + w_n * S0[(std::size_t)i].z
+         + c_bdf * dt_half * (fE[(std::size_t)i].z + g[(std::size_t)i].z);
    }
-   assemble_diffusion_half_blocks(nf, c_bdf * dt_half, A_face, L, D, U);
+   assemble_alpha_diffusion_half_blocks(nf, c_bdf * dt_half, A_face, alpha, mhat, L, D, U);
    block3_thomas(L, D, U, rhs);
 
    for(int i = 0; i < nf; ++i){
@@ -2718,11 +3351,6 @@ static void apply_diffusion_tr_bdf2_half_step(double* S,
 static double face_current(const double* a, const int e){
    if(a == nullptr) return 0.0;
    return a[e];
-}
-
-static double cell_factor(const double* a, const int i){
-   if(a == nullptr) return 0.0;
-   return a[i];
 }
 
 // P_charge matches P_field. P_spin is zero, and that term is still written.
@@ -2790,6 +3418,351 @@ static void build_drift_edges(const int nf,
    Jd_edge[3*nf+2] = jN*mhat[3*iN+2];
 }
 
+struct TunnelSideState {
+   std::vector<int> cells;
+   std::vector<double> weights;
+   double V;
+   double sx;
+   double sy;
+   double sz;
+   double mx;
+   double my;
+   double mz;
+   double eta;
+};
+
+static void build_tunnel_contact_window(const int contact,
+                                        const int away,
+                                        const int nf,
+                                        const double dz,
+                                        const double* sigma_bulk,
+                                        TunnelSideState& side){
+   side.cells.clear();
+   side.weights.clear();
+   if(contact < 0 || contact >= nf || away == 0 || sigma_bulk == nullptr) return;
+   const double decay = sc1d_prolongation_decay * 1.0e-10;
+   for(int i = contact; i >= 0 && i < nf; i += away){
+      if(!(sigma_bulk[i] > 0.0)) break;
+      double w = 1.0;
+      if(sc1d_prolongation != sc1d_prolong_step && decay > 0.0 && dz > 0.0){
+         const double x = std::fabs(static_cast<double>(i - contact)) * dz / decay;
+         if(!(x < 1.0)) break;
+         w = 1.0 - x;
+         if(sc1d_prolongation == sc1d_prolong_smooth){
+            const double t = 1.0 - x;
+            w = t * t * (3.0 - 2.0 * t);
+         }
+      } else if(i != contact){
+         break;
+      }
+      if(w > 0.0){
+         side.cells.push_back(i);
+         side.weights.push_back(w);
+      }
+   }
+   double sum = 0.0;
+   for(std::size_t n = 0; n < side.weights.size(); ++n) sum += side.weights[n];
+   if(sum > 0.0){
+      for(std::size_t n = 0; n < side.weights.size(); ++n) side.weights[n] /= sum;
+   }
+}
+
+static bool sample_tunnel_side_state(const int contact,
+                                     const int away,
+                                     const int nf,
+                                     const double dz,
+                                     const double* V,
+                                     const double* S,
+                                     const double* sa_inf,
+                                     const double* mhat,
+                                     const double* Dmat,
+                                     const double* sigma_bulk,
+                                     TunnelSideState& side){
+   side.V = 0.0;
+   side.sx = side.sy = side.sz = 0.0;
+   side.mx = side.my = side.mz = 0.0;
+   side.eta = 0.0;
+   build_tunnel_contact_window(contact, away, nf, dz, sigma_bulk, side);
+   if(side.cells.empty()) return false;
+   double Dacc = 0.0;
+   double sigacc = 0.0;
+   double sa_eq_x = 0.0;
+   double sa_eq_y = 0.0;
+   double sa_eq_z = 0.0;
+   for(std::size_t n = 0; n < side.cells.size(); ++n){
+      const int i = side.cells[n];
+      const double w = side.weights[n];
+      if(V != nullptr) side.V += w * V[i];
+      side.sx += w * S[3*i+0];
+      side.sy += w * S[3*i+1];
+      side.sz += w * S[3*i+2];
+      side.mx += w * mhat[3*i+0];
+      side.my += w * mhat[3*i+1];
+      side.mz += w * mhat[3*i+2];
+      sa_eq_x += w * sa_inf[i] * mhat[3*i+0];
+      sa_eq_y += w * sa_inf[i] * mhat[3*i+1];
+      sa_eq_z += w * sa_inf[i] * mhat[3*i+2];
+      Dacc += w * Dmat[i];
+      sigacc += w * sigma_bulk[i];
+   }
+   normalize3(side.mx, side.my, side.mz);
+   side.sx -= sa_eq_x;
+   side.sy -= sa_eq_y;
+   side.sz -= sa_eq_z;
+   if(sigacc > 0.0) side.eta = Dacc / sigacc;
+   return true;
+}
+
+static void add_weighted_tunnel_source(const TunnelSideState& side,
+                                       const double fx,
+                                       const double fy,
+                                       const double fz,
+                                       const double dz,
+                                       double* source){
+   if(source == nullptr || !(dz > 0.0)) return;
+   for(std::size_t n = 0; n < side.cells.size(); ++n){
+      const int i = side.cells[n];
+      const double scale = side.weights[n] / dz;
+      source[3*i+0] += scale * fx;
+      source[3*i+1] += scale * fy;
+      source[3*i+2] += scale * fz;
+   }
+}
+
+static void add_tunnel_channel_current(const double c,
+                                       const double conductance,
+                                       const int sigma,
+                                       const int tau,
+                                       const TunnelSideState& L,
+                                       const TunnelSideState& R,
+                                       double& Jc,
+                                       double JL[3],
+                                       double JR[3]){
+   if(!(conductance > 0.0)) return;
+   const double pi = 0.5 * (1.0 + static_cast<double>(sigma * tau) * c);
+   if(!(pi > 0.0)) return;
+   const double VsL = L.eta * (L.sx * L.mx + L.sy * L.my + L.sz * L.mz);
+   const double VsR = R.eta * (R.sx * R.mx + R.sy * R.my + R.sz * R.mz);
+   const double dV = (L.V + static_cast<double>(sigma) * VsL)
+                   - (R.V + static_cast<double>(tau) * VsR);
+   const double j = pi * conductance * dV;
+   Jc += j;
+   // Positive j is positive charge toward +z, so the electrons leave R.
+   // Negative j sends the electrons out of L. Js is that spin flux toward +z.
+   const bool leave_R = (j >= 0.0);
+   const double pol = leave_R ? static_cast<double>(tau) : static_cast<double>(sigma);
+   const double emx = leave_R ? R.mx : L.mx;
+   const double emy = leave_R ? R.my : L.my;
+   const double emz = leave_R ? R.mz : L.mz;
+   const double sx = -pol * emx * j;
+   const double sy = -pol * emy * j;
+   const double sz = -pol * emz * j;
+   JL[0] += sx; JL[1] += sy; JL[2] += sz;
+   JR[0] += sx; JR[1] += sy; JR[2] += sz;
+}
+
+static void add_polarized_tunnel_process(const double gup,
+                                         const double gdn,
+                                         const double c,
+                                         const TunnelSideState& L,
+                                         const TunnelSideState& R,
+                                         double& Jc,
+                                         double JL[3],
+                                         double JR[3]){
+   const double Gp = gup + gdn;
+   if(!(Gp > 0.0)) return;
+   const double Gap = 2.0 * gup * gdn / Gp;
+   add_tunnel_channel_current(c, gup, +1, +1, L, R, Jc, JL, JR);
+   add_tunnel_channel_current(c, gdn, -1, -1, L, R, Jc, JL, JR);
+   add_tunnel_channel_current(c, 0.5 * Gap, +1, -1, L, R, Jc, JL, JR);
+   add_tunnel_channel_current(c, 0.5 * Gap, -1, +1, L, R, Jc, JL, JR);
+}
+
+static void add_unpolarized_tunnel_process(const double G,
+                                           const double c,
+                                           const TunnelSideState& L,
+                                           const TunnelSideState& R,
+                                           double& Jc,
+                                           double JL[3],
+                                           double JR[3]){
+   if(!(G > 0.0)) return;
+   const double g = 0.5 * G;
+   add_tunnel_channel_current(c, g, +1, +1, L, R, Jc, JL, JR);
+   add_tunnel_channel_current(c, g, -1, -1, L, R, Jc, JL, JR);
+   add_tunnel_channel_current(c, g, +1, -1, L, R, Jc, JL, JR);
+   add_tunnel_channel_current(c, g, -1, +1, L, R, Jc, JL, JR);
+}
+
+static double compute_tunnel_charge_offset(const ChargeBarrier& seg,
+                                           const int stack,
+                                           const int nf,
+                                           const double dz,
+                                           const int* mat,
+                                           const double* V,
+                                           const double* S,
+                                           const double* sa_inf,
+                                           const double* mhat,
+                                           const double* Dmat,
+                                           const double* sigma_bulk){
+   (void)V;
+   if(!seg.thick || seg.cell_lo < 0 || S == nullptr || sa_inf == nullptr ||
+      mhat == nullptr || Dmat == nullptr || sigma_bulk == nullptr) return 0.0;
+   TunnelSideState L, R;
+   if(!sample_tunnel_side_state(seg.vL, -1, nf, dz, nullptr, S, sa_inf, mhat, Dmat, sigma_bulk, L)) return 0.0;
+   if(!sample_tunnel_side_state(seg.vR, +1, nf, dz, nullptr, S, sa_inf, mhat, Dmat, sigma_bulk, R)) return 0.0;
+   const double nL2 = L.mx * L.mx + L.my * L.my + L.mz * L.mz;
+   const double nR2 = R.mx * R.mx + R.my * R.my + R.mz * R.mz;
+   if(nL2 <= 1.0e-24 && nR2 > 1.0e-24){
+      L.mx = R.mx; L.my = R.my; L.mz = R.mz;
+   } else if(nR2 <= 1.0e-24 && nL2 > 1.0e-24){
+      R.mx = L.mx; R.my = L.my; R.mz = L.mz;
+   } else if(nL2 <= 1.0e-24 && nR2 <= 1.0e-24){
+      L.mx = R.mx = 0.0;
+      L.my = R.my = 0.0;
+      L.mz = R.mz = 1.0;
+   }
+   double c = L.mx * R.mx + L.my * R.my + L.mz * R.mz;
+   if(c > 1.0) c = 1.0;
+   if(c < -1.0) c = -1.0;
+
+   const double thickness = (seg.n_cells > 0) ? (static_cast<double>(seg.n_cells) * dz) : 0.0;
+   double Te = 0.0;
+   double Tp = 0.0;
+   barrier_temperatures(stack, seg, nf, Te, Tp);
+
+   const int cL = electrode_cell(mat, seg.vL, -1, nf);
+   const int cR = electrode_cell(mat, seg.vR, +1, nf);
+   std::vector<MatWeight> wL;
+   std::vector<MatWeight> wR;
+   cell_weights(stack, cL, nf, mat, wL);
+   cell_weights(stack, cR, nf, mat, wR);
+
+   double Jc = 0.0;
+   double JL[3] = {0.0, 0.0, 0.0};
+   double JR[3] = {0.0, 0.0, 0.0};
+   for(std::size_t i = 0; i < wL.size(); ++i){
+      for(std::size_t j = 0; j < wR.size(); ++j){
+         const double weight = wL[i].w * wR[j].w;
+         if(!(weight > 0.0) || !tunnel_pair_usable(wL[i].mat, wR[j].mat)) continue;
+         double gup0 = 0.0;
+         double gdn0 = 0.0;
+         double lup = 0.0;
+         double ldn = 0.0;
+         lookup_tunnel(wL[i].mat, wR[j].mat, gup0, gdn0, lup, ldn);
+         ChargeBarrier part = seg;
+         load_inelastic(wL[i].mat, wR[j].mat, part);
+         const double gup = weight * channel_conductance(gup0, lup, thickness);
+         const double gdn = weight * channel_conductance(gdn0, ldn, thickness);
+         add_polarized_tunnel_process(gup, gdn, c, L, R, Jc, JL, JR);
+         const double ginel =
+            weight * (channel_conductance(part.ge, part.li, thickness) * thermal_power(Te, part.pe)
+                    + channel_conductance(part.gp, part.li, thickness) * thermal_power(Tp, part.pp));
+         add_unpolarized_tunnel_process(ginel, c, L, R, Jc, JL, JR);
+      }
+   }
+   return Jc;
+}
+
+static void add_tunnel_mixing_sink(const TunnelSideState& side,
+                                   const double Gmix_re,
+                                   const double Gmix_im,
+                                   const double dz,
+                                   double* source){
+   if(source == nullptr || (!(Gmix_re != 0.0) && !(Gmix_im != 0.0))) return;
+   const double ge = 2.0;
+   const double vx = side.eta * side.sx;
+   const double vy = side.eta * side.sy;
+   const double vz = side.eta * side.sz;
+   const double vdot = vx * side.mx + vy * side.my + vz * side.mz;
+   const double vpx = vx - vdot * side.mx;
+   const double vpy = vy - vdot * side.my;
+   const double vpz = vz - vdot * side.mz;
+   double cx, cy, cz;
+   cross3(vx, vy, vz, side.mx, side.my, side.mz, cx, cy, cz);
+   const double sx = -ge * (Gmix_re * vpx + Gmix_im * cx);
+   const double sy = -ge * (Gmix_re * vpy + Gmix_im * cy);
+   const double sz = -ge * (Gmix_re * vpz + Gmix_im * cz);
+   add_weighted_tunnel_source(side, sx, sy, sz, dz, source);
+}
+
+static void add_tunnel_barrier_sources(const ChargeBarrier& seg,
+                                       const int stack,
+                                       const int nf,
+                                       const double dz,
+                                       const int* mat,
+                                       const double* V,
+                                       const double* S,
+                                       const double* sa_inf,
+                                       const double* mhat,
+                                       const double* Dmat,
+                                       const double* sigma_bulk,
+                                       double* source){
+   if(!seg.thick || seg.cell_lo < 0 || source == nullptr) return;
+   TunnelSideState L, R;
+   if(!sample_tunnel_side_state(seg.vL, -1, nf, dz, V, S, sa_inf, mhat, Dmat, sigma_bulk, L)) return;
+   if(!sample_tunnel_side_state(seg.vR, +1, nf, dz, V, S, sa_inf, mhat, Dmat, sigma_bulk, R)) return;
+   const double nL2 = L.mx * L.mx + L.my * L.my + L.mz * L.mz;
+   const double nR2 = R.mx * R.mx + R.my * R.my + R.mz * R.mz;
+   if(nL2 <= 1.0e-24 && nR2 > 1.0e-24){
+      L.mx = R.mx; L.my = R.my; L.mz = R.mz;
+   } else if(nR2 <= 1.0e-24 && nL2 > 1.0e-24){
+      R.mx = L.mx; R.my = L.my; R.mz = L.mz;
+   } else if(nL2 <= 1.0e-24 && nR2 <= 1.0e-24){
+      L.mx = R.mx = 0.0;
+      L.my = R.my = 0.0;
+      L.mz = R.mz = 1.0;
+   }
+   double c = L.mx * R.mx + L.my * R.my + L.mz * R.mz;
+   if(c > 1.0) c = 1.0;
+   if(c < -1.0) c = -1.0;
+
+   const double thickness = (seg.n_cells > 0) ? (static_cast<double>(seg.n_cells) * dz) : 0.0;
+   double Te = 0.0;
+   double Tp = 0.0;
+   barrier_temperatures(stack, seg, nf, Te, Tp);
+
+   const int cL = electrode_cell(mat, seg.vL, -1, nf);
+   const int cR = electrode_cell(mat, seg.vR, +1, nf);
+   std::vector<MatWeight> wL;
+   std::vector<MatWeight> wR;
+   cell_weights(stack, cL, nf, mat, wL);
+   cell_weights(stack, cR, nf, mat, wR);
+
+   double Jc = 0.0;
+   double JL[3] = {0.0, 0.0, 0.0};
+   double JR[3] = {0.0, 0.0, 0.0};
+   double Gmix_re = 0.0;
+   double Gmix_im = 0.0;
+
+   for(std::size_t i = 0; i < wL.size(); ++i){
+      for(std::size_t j = 0; j < wR.size(); ++j){
+         const double weight = wL[i].w * wR[j].w;
+         if(!(weight > 0.0) || !tunnel_pair_usable(wL[i].mat, wR[j].mat)) continue;
+         double gup0 = 0.0;
+         double gdn0 = 0.0;
+         double lup = 0.0;
+         double ldn = 0.0;
+         lookup_tunnel(wL[i].mat, wR[j].mat, gup0, gdn0, lup, ldn);
+         ChargeBarrier part = seg;
+         load_inelastic(wL[i].mat, wR[j].mat, part);
+         const double gup = weight * channel_conductance(gup0, lup, thickness);
+         const double gdn = weight * channel_conductance(gdn0, ldn, thickness);
+         add_polarized_tunnel_process(gup, gdn, c, L, R, Jc, JL, JR);
+         const double ginel =
+            weight * (channel_conductance(part.ge, part.li, thickness) * thermal_power(Te, part.pe)
+                    + channel_conductance(part.gp, part.li, thickness) * thermal_power(Tp, part.pp));
+         add_unpolarized_tunnel_process(ginel, c, L, R, Jc, JL, JR);
+         Gmix_re += 0.5 * (gup + gdn);
+      }
+   }
+
+   (void)Jc;
+   add_weighted_tunnel_source(L, -JL[0], -JL[1], -JL[2], dz, source);
+   add_weighted_tunnel_source(R,  JR[0],  JR[1],  JR[2], dz, source);
+   add_tunnel_mixing_sink(L, Gmix_re, Gmix_im, dz, source);
+   add_tunnel_mixing_sink(R, Gmix_re, Gmix_im, dz, source);
+}
+
 static void compute_local_rhs(const double* S,
                               std::vector<double>& kout,
                               const int nf,
@@ -2805,7 +3778,8 @@ static void compute_local_rhs(const double* S,
                               const double* mhat,
                               const double* msrc,
                               const double* dmdt,
-                              const double* Jd_edge){
+                              const double* Jd_edge,
+                              const double* source){
    (void)msrc;
    for(int i=0;i<nf;i++){
       const double divx = -(Jd_edge[3*(i+1)+0] - Jd_edge[3*i+0]) / dz;
@@ -2816,12 +3790,6 @@ static void compute_local_rhs(const double* S,
       const double BBp = 1.0 / std::sqrt(denom);
       double lambda0 = lsf[i];
       double D0 = D[i];
-      if(sc1d_thermal_effects){
-         const double Te = sc1d_Te_fine[(std::size_t)i];
-         const double Tp = sc1d_Tp_fine[(std::size_t)i];
-         lambda0 = scale_lambda_sdl(lambda0, Te, Tp);
-         D0 = scale_diffusion(D0, Te, Tp);
-      }
       const double lambda_sf = lambda0 * BBp;
       const double Di = std::max(D0, 1e-30);
       const double inv_lambda_sf_sq = (lambda_sf > 0.0) ? (1.0 / (lambda_sf*lambda_sf)) : 0.0;
@@ -2865,9 +3833,13 @@ static void compute_local_rhs(const double* S,
       const double dephy = Di * (-spy * inv_lambda_phi_sq);
       const double dephz = Di * (-spz * inv_lambda_phi_sq);
 
-      kout[3*i+0] = divx + prex + relx + dephx + demag*hx;
-      kout[3*i+1] = divy + prey + rely + dephy + demag*hy;
-      kout[3*i+2] = divz + prez + relz + dephz + demag*hz;
+      const double srcx = (source != nullptr) ? source[3*i+0] : 0.0;
+      const double srcy = (source != nullptr) ? source[3*i+1] : 0.0;
+      const double srcz = (source != nullptr) ? source[3*i+2] : 0.0;
+
+      kout[3*i+0] = divx + prex + relx + dephx + demag*hx + srcx;
+      kout[3*i+1] = divy + prey + rely + dephy + demag*hy + srcy;
+      kout[3*i+2] = divz + prez + relz + dephz + demag*hz + srcz;
    }
 }
 
@@ -2888,7 +3860,8 @@ static void integrate_local_terms(double* S,
                                   const double* mhat,
                                   const double* msrc,
                                   const double* dmdt,
-                                  const double* Jd_edge){
+                                  const double* Jd_edge,
+                                  const double* source){
    const int n3 = 3*nf;
    std::vector<double> k1(n3,0.0);
 
@@ -2897,13 +3870,13 @@ static void integrate_local_terms(double* S,
       std::vector<double> Spred(n3,0.0);
       compute_local_rhs(S, k1, nf, dz,
                         Bc, Bd, D, lsf, lphi, Jsd, chi, sa_inf,
-                        mhat, msrc, dmdt, Jd_edge);
+                        mhat, msrc, dmdt, Jd_edge, source);
       for(int i=0;i<n3;i++){
          Spred[i] = S[i] + dt * k1[i];
       }
       compute_local_rhs(Spred.data(), k2, nf, dz,
                         Bc, Bd, D, lsf, lphi, Jsd, chi, sa_inf,
-                        mhat, msrc, dmdt, Jd_edge);
+                        mhat, msrc, dmdt, Jd_edge, source);
       for(int i=0;i<n3;i++){
          S[i] = S[i] + 0.5*dt*(k1[i] + k2[i]);
          k_prev[i] = k1[i];
@@ -2911,7 +3884,7 @@ static void integrate_local_terms(double* S,
    } else {
       compute_local_rhs(S, k1, nf, dz,
                         Bc, Bd, D, lsf, lphi, Jsd, chi, sa_inf,
-                        mhat, msrc, dmdt, Jd_edge);
+                        mhat, msrc, dmdt, Jd_edge, source);
       for(int i=0;i<n3;i++){
          S[i] = S[i] + dt * (1.5*k1[i] - 0.5*k_prev[i]);
          k_prev[i] = k1[i];
@@ -2919,52 +3892,82 @@ static void integrate_local_terms(double* S,
    }
 }
 
+// Face current the step carries, positive toward +z.
+// Interior diffusion is dz*A*(K_L S_L - K_R S_R - E_L + E_R), the
+// alpha-weighted parallel excess drop. A closed face (either neighbour has
+// D = 0, including the oxide) has A = 0, so that piece is zero.
+// Drift is the edge used by the explicit divergence, already replaced by the
+// tunnel value on an insulating segment. The two walls add beta*Jc*m, which
+// is the Neumann source in the diffusion half-step, and no diffusion.
+static void face_spin_current(const int face,
+                              const int nf,
+                              const double dz,
+                              const double* Sbase,
+                              const std::vector<Block3>& A_face,
+                              const double* Jd_edge,
+                              const double* Bc,
+                              const double* mhat,
+                              const double* sa_inf,
+                              const double* PN,
+                              const double* alpha,
+                              const double* ne,
+                              const double* Jc_edge,
+                              double j[3]){
+   j[0] = Jd_edge[3 * face + 0];
+   j[1] = Jd_edge[3 * face + 1];
+   j[2] = Jd_edge[3 * face + 2];
+   if(face == 0){
+      const double b = Bc[0] * Jc_edge[0];
+      j[0] += b * mhat[0];
+      j[1] += b * mhat[1];
+      j[2] += b * mhat[2];
+      return;
+   }
+   if(face == nf){
+      const int iN = nf - 1;
+      const double b = Bc[iN] * Jc_edge[nf];
+      j[0] += b * mhat[3 * iN + 0];
+      j[1] += b * mhat[3 * iN + 1];
+      j[2] += b * mhat[3 * iN + 2];
+      return;
+   }
+   if(face < 1 || face >= nf) return;
+   if(static_cast<int>(A_face.size()) < face) return;
+   const int il = face - 1;
+   const int ir = face;
+   const double af = alpha_log_mean(alpha_value(alpha, il), alpha_value(alpha, ir));
+   const Vec3 left = alpha_face_vector(il, Sbase, af, alpha, PN, ne, sa_inf, mhat);
+   const Vec3 right = alpha_face_vector(ir, Sbase, af, alpha, PN, ne, sa_inf, mhat);
+   const Vec3 flux = block3_mul_vec(A_face[static_cast<std::size_t>(face - 1)], vec3_sub(left, right));
+   j[0] += dz * flux.x;
+   j[1] += dz * flux.y;
+   j[2] += dz * flux.z;
+}
+
+// Cell value is the average of the two faces. Same binning as Jc.
 static void fine_cell_spin_current(const double* Sbase,
                                    const int i,
                                    const int nf,
                                    const double dz,
+                                   const std::vector<Block3>& A_face,
                                    const double* Jd_edge,
-                                   const double Bc_i,
-                                   const double Bd_i,
-                                   const double D_i,
+                                   const double* Bc,
                                    const double* mhat,
+                                   const double* sa_inf,
+                                   const double* PN,
+                                   const double* alpha,
+                                   const double* ne,
+                                   const double* Jc_edge,
                                    double& jsx,
                                    double& jsy,
                                    double& jsz){
-   const double jdr_x = 0.5*(Jd_edge[3*i+0] + Jd_edge[3*(i+1)+0]);
-   const double jdr_y = 0.5*(Jd_edge[3*i+1] + Jd_edge[3*(i+1)+1]);
-   const double jdr_z = 0.5*(Jd_edge[3*i+2] + Jd_edge[3*(i+1)+2]);
-
-   double dSdz_x = 0.0;
-   double dSdz_y = 0.0;
-   double dSdz_z = 0.0;
-   if(i==0){
-      dSdz_x = (Sbase[3*(i+1)+0] - Sbase[3*i+0])/dz;
-      dSdz_y = (Sbase[3*(i+1)+1] - Sbase[3*i+1])/dz;
-      dSdz_z = (Sbase[3*(i+1)+2] - Sbase[3*i+2])/dz;
-   } else if(i==nf-1){
-      dSdz_x = (Sbase[3*i+0] - Sbase[3*(i-1)+0])/dz;
-      dSdz_y = (Sbase[3*i+1] - Sbase[3*(i-1)+1])/dz;
-      dSdz_z = (Sbase[3*i+2] - Sbase[3*(i-1)+2])/dz;
-   } else {
-      dSdz_x = (Sbase[3*(i+1)+0] - Sbase[3*(i-1)+0])/(2.0*dz);
-      dSdz_y = (Sbase[3*(i+1)+1] - Sbase[3*(i-1)+1])/(2.0*dz);
-      dSdz_z = (Sbase[3*(i+1)+2] - Sbase[3*(i-1)+2])/(2.0*dz);
-   }
-
-   const double mx = mhat[3*i+0];
-   const double my = mhat[3*i+1];
-   const double mz = mhat[3*i+2];
-   const double gamma = spin_gamma(Bc_i, Bd_i);
-   const double parallel = mx*dSdz_x + my*dSdz_y + mz*dSdz_z;
-   const double along = D_i * gamma * parallel;
-   const double jdiff_x = -D_i * dSdz_x + along * mx;
-   const double jdiff_y = -D_i * dSdz_y + along * my;
-   const double jdiff_z = -D_i * dSdz_z + along * mz;
-
-   jsx = jdr_x + jdiff_x;
-   jsy = jdr_y + jdiff_y;
-   jsz = jdr_z + jdiff_z;
+   double left[3];
+   double right[3];
+   face_spin_current(i, nf, dz, Sbase, A_face, Jd_edge, Bc, mhat, sa_inf, PN, alpha, ne, Jc_edge, left);
+   face_spin_current(i + 1, nf, dz, Sbase, A_face, Jd_edge, Bc, mhat, sa_inf, PN, alpha, ne, Jc_edge, right);
+   jsx = 0.5 * (left[0] + right[0]);
+   jsy = 0.5 * (left[1] + right[1]);
+   jsz = 0.5 * (left[2] + right[2]);
 }
 
 static void coarsen_spin_and_map_torque(const int stack,
@@ -2978,10 +3981,12 @@ static void coarsen_spin_and_map_torque(const int stack,
                                         const double* ne_fine,
                                         const double* Jc_edge_fine,
                                         const double* Jd_edge,
+                                        const std::vector<Block3>& A_face,
                                         const double* Bc,
-                                        const double* Bd,
-                                        const double* D,
-                                        const double* mhat){
+                                        const double* mhat,
+                                        const double* sa_inf,
+                                        const double* PN,
+                                        const double* alpha){
    // Two passes so the Js construction and the fine-to-coarse averages are
    // timed separately. Each sum is unchanged.
    stopwatch_t sw;
@@ -3039,7 +4044,7 @@ static void coarsen_spin_and_map_torque(const int stack,
          double jsx = 0.0;
          double jsy = 0.0;
          double jsz = 0.0;
-         fine_cell_spin_current(Sbase, i, nf, dz, Jd_edge, Bc[i], Bd[i], D[i], mhat, jsx, jsy, jsz);
+         fine_cell_spin_current(Sbase, i, nf, dz, A_face, Jd_edge, Bc, mhat, sa_inf, PN, alpha, ne_fine, Jc_edge_fine, jsx, jsy, jsz);
          const std::size_t slot = ((std::size_t)stack * (std::size_t)nf + (std::size_t)i) * 3u;
          sc1d_Js_fine[slot + 0u] = jsx;
          sc1d_Js_fine[slot + 1u] = jsy;
@@ -3115,6 +4120,7 @@ void calculate_spin_accumulation_1d(){
       sc1d_time_diffusion = 0.0;
       sc1d_time_eom = 0.0;
       sc1d_time_interp = 0.0;
+      sc1d_time_thermal = 0.0;
       sc1d_time_bcast = 0.0;
       sc1d_time_coarsen = 0.0;
       sc1d_time_other = 0.0;
@@ -3146,12 +4152,54 @@ void calculate_spin_accumulation_1d(){
    const int nf   = sc1d_nf;
    const double dz = (micro_cell_thickness * 1.0e-10) / (double)nsub;
    refresh_fine_temperature_profile();
-   // Relax holds the atomic spins fixed, so the profile from initialise stays
-   // valid. Equilibration and drive move m, and those steps prolong again.
-   if(sc1d_step_counter > sc1d_relax_steps){
+   // Order: Monte-Carlo preconditioning (sim.cpp) → first transport step seeds
+   // m-hat and S from those spins → relax freezes that profile → eq → drive.
+   // m-hat stays a unit axis for torque, dephasing and the equilibrium direction.
+   // The reduced length |m|/msat is sc1d_ml_fine: the same |sum mu s|/sum mu as
+   // the material M_norm_l column, per fine cell. The transport polynomial,
+   // sa_inf, and J_sd = J_sd(1) * m_l^1.7 use that length. J_sd is then
+   // prolonged with the other temperature-dependent constants. Demag pumping
+   // uses its time derivative. Verbose
+   // m is length times the axis, so the fine-grid |m| plot follows it.
+   if(sc1d_step_counter == 1UL){
       sw.start();
       prolong_fine_magnetisation(dt);
       sc1d_time_interp += sw.elapsed_seconds();
+   } else if(sc1d_step_counter > sc1d_relax_steps){
+      // Equilibration and drive move m; prolong again each step.
+      sw.start();
+      prolong_fine_magnetisation(dt);
+      sc1d_time_interp += sw.elapsed_seconds();
+   }
+
+   if(sc1d_thermal_effects){
+      sw.start();
+      refresh_fine_transport_constants();
+      cache_sc1d_torque_atoms();
+      sc1d_time_thermal += sw.elapsed_seconds();
+   }
+
+   if(sc1d_step_counter == 1UL){
+      for(int ls = 0; ls < (int)sc1d_local_stacks.size(); ++ls){
+         const int stack = sc1d_local_stacks[ls];
+         double* Bc_fine = sc1d_Bc_fine.data() + (std::size_t)stack * (std::size_t)nf;
+         double* Bd_fine = sc1d_Bd_fine.data() + (std::size_t)stack * (std::size_t)nf;
+         double* D_fine = sc1d_D_fine.data() + (std::size_t)stack * (std::size_t)nf;
+         double* lsf_fine = sc1d_lsf_fine.data() + (std::size_t)stack * (std::size_t)nf;
+         double* sa_inf_fine = sc1d_sa_inf_fine.data() + (std::size_t)stack * (std::size_t)nf;
+         const double* mhat = sc1d_mhat_fine.data() + (std::size_t)stack * (std::size_t)nf * 3u;
+         const double* Rint = sc1d_Rint_face.data() + (std::size_t)stack * (std::size_t)nf;
+         double* Sbase = sc1d_Sfine.data() + (std::size_t)stack * (std::size_t)nf * 3u;
+         initialise_fine_spin_if_empty(nf, dz, Bc_fine, Bd_fine, D_fine, lsf_fine,
+                                       sa_inf_fine, mhat, Rint, Sbase);
+      }
+   }
+
+   // Index 0 of relax: seeded S, before this step diffuses it.
+   if(sc1d_step_counter == 1UL && sc1d_relax_steps > 0UL){
+      sw.start();
+      output_sc1d_relax_origin();
+      sc1d_time_io += sw.elapsed_seconds();
    }
 
    const bool first_step = (sc1d_step_counter == 1UL) ||
@@ -3178,51 +4226,66 @@ void calculate_spin_accumulation_1d(){
       double* Bc = sc1d_Bc_fine.data() + (size_t)stack * (size_t)nf;
       double* Bd = sc1d_Bd_fine.data() + (size_t)stack * (size_t)nf;
       double* D = sc1d_D_fine.data() + (size_t)stack * (size_t)nf;
+      const double* Dmat = sc1d_Dmat_fine.data() + (size_t)stack * (size_t)nf;
       double* lsf = sc1d_lsf_fine.data() + (size_t)stack * (size_t)nf;
       double* lphi = sc1d_lphi_fine.data() + (size_t)stack * (size_t)nf;
       double* Jsd = sc1d_Jsd_fine.data() + (size_t)stack * (size_t)nf;
       const double* chi = sc1d_chi_fine.data() + (size_t)stack * (size_t)nf;
       const double* sa_inf = sc1d_sa_inf_fine.data() + (size_t)stack * (size_t)nf;
+      const double* PN = sc1d_PN_fine.data() + (size_t)stack * (size_t)nf;
+      const double* alpha = sc1d_alpha_fine.data() + (size_t)stack * (size_t)nf;
       double* sigma_fine = sc1d_sigma_fine.data() + (size_t)stack * (size_t)nf;
       double* k_prev = sc1d_k_prev.data() + (size_t)stack * (size_t)nf * 3u;
       const double* mhat = sc1d_mhat_fine.data() + (size_t)stack * (size_t)nf * 3u;
       const double* dmdt = sc1d_dmdt_fine.data() + (size_t)stack * (size_t)nf;
       const double* Rint = sc1d_Rint_face.data() + (size_t)stack * (size_t)nf;
       const double* sigma_bulk = sc1d_sigma_bulk_fine.data() + (size_t)stack * (size_t)nf;
+      const int* mat_cell = sc1d_mat_fine.data() + (size_t)stack * (size_t)nf;
 
       const bool do_charge_update = (sc1d_charge_stride <= 1) || ((sc1d_step_counter % (unsigned long)sc1d_charge_stride) == 0UL);
       if(do_charge_update){
          const double interp_before = sc1d_time_interp;
          sw.start();
-         const double* Dmat = sc1d_Dmat_fine.data() + (size_t)stack * (size_t)nf;
          update_charge_transients_1d_stack(stack, ns_fine, ne_fine, V_fine, Jc_edge_fine,
                                            J_seebeck, J_restore, J_hot, J_cd, J_spin,
                                            nf, dz, dt, t_s, sigma_bulk,
-                                           D, Dmat, sigma_fine, Bd, seebeck_fine, Sbase, mhat);
+                                           D, Dmat, sigma_fine, Bd, seebeck_fine, Sbase, sa_inf, mhat);
          account_charge_time(sw.elapsed_seconds(), interp_before);
       }
 
       sw.start();
       assemble_diffusion_faces(nf, dz, D, Bc, Bd, mhat, Rint, step_A_face);
       if(want_bdf2){
-         apply_diffusion_tr_bdf2_half_step(Sbase, nf, dz, dt_half, step_A_face, Bc, mhat, Jc_edge_fine, step_L_blk, step_D_blk, step_U_blk);
+         apply_diffusion_tr_bdf2_half_step(Sbase, nf, dz, dt_half, step_A_face, Bc, mhat, sa_inf, PN, alpha, ne_fine, Jc_edge_fine, step_L_blk, step_D_blk, step_U_blk);
       } else {
-         assemble_diffusion_half_blocks(nf, dt_half, step_A_face, step_L_blk, step_D_blk, step_U_blk);
-         apply_diffusion_half_step(Sbase, nf, dz, dt_half, Bc, mhat, Jc_edge_fine, step_L_blk, step_D_blk, step_U_blk);
+         apply_diffusion_half_step(Sbase, nf, dz, dt_half, Bc, mhat, sa_inf, PN, alpha, ne_fine, Jc_edge_fine, step_A_face, step_L_blk, step_D_blk, step_U_blk);
       }
       sc1d_time_diffusion += sw.elapsed_seconds();
       sw.start();
       build_drift_edges(nf, Bc, Bs, Ph, mhat, J_restore, J_spin, J_cd, J_seebeck, J_hot, step_Jd_edge.data());
+      std::fill(step_tunnel_source.begin(), step_tunnel_source.end(), 0.0);
       {
          const double J0_tunnel = saved_J0[static_cast<std::size_t>(stack)];
          const std::vector<ChargeBarrier>& segs = saved_barriers[static_cast<std::size_t>(stack)];
          for(std::size_t b = 0; b < segs.size(); ++b){
             const ChargeBarrier& seg = segs[b];
             if(seg.face_lo > seg.face_hi) continue;
+            if(seg.thick){
+               add_tunnel_barrier_sources(seg, stack, nf, dz, mat_cell, V_fine, Sbase,
+                                          sa_inf, mhat, Dmat, sigma_bulk,
+                                          step_tunnel_source.data());
+               continue;
+            }
+            // J_s = -sfrac J_c m_inj. sfrac is the emitter filter, finite at
+            // every angle. m_inj is the electrode the electrons leave, so the
+            // accumulation that builds in the other magnet is along the
+            // emitter. The torque is that accumulation crossed with the
+            // local moment, not a Slonczewski angular factor.
+            const double flux = -seg.sfrac * J0_tunnel;
             for(int e = seg.face_lo; e <= seg.face_hi; ++e){
-               step_Jd_edge[3 * e + 0] = seg.sfrac * J0_tunnel * seg.mx;
-               step_Jd_edge[3 * e + 1] = seg.sfrac * J0_tunnel * seg.my;
-               step_Jd_edge[3 * e + 2] = seg.sfrac * J0_tunnel * seg.mz;
+               step_Jd_edge[3 * e + 0] = flux * seg.mx;
+               step_Jd_edge[3 * e + 1] = flux * seg.my;
+               step_Jd_edge[3 * e + 2] = flux * seg.mz;
             }
          }
       }
@@ -3230,18 +4293,18 @@ void calculate_spin_accumulation_1d(){
       sw.start();
       integrate_local_terms(Sbase, k_prev, nf, dt, first_step, dz,
                             Bc, Bd, D, lsf, lphi, Jsd, chi, sa_inf,
-                            mhat, mhat, dmdt, step_Jd_edge.data());
+                            mhat, mhat, dmdt, step_Jd_edge.data(), step_tunnel_source.data());
       sc1d_time_eom += sw.elapsed_seconds();
       sw.start();
       if(want_bdf2){
-         apply_diffusion_tr_bdf2_half_step(Sbase, nf, dz, dt_half, step_A_face, Bc, mhat, Jc_edge_fine, step_L_blk, step_D_blk, step_U_blk);
+         apply_diffusion_tr_bdf2_half_step(Sbase, nf, dz, dt_half, step_A_face, Bc, mhat, sa_inf, PN, alpha, ne_fine, Jc_edge_fine, step_L_blk, step_D_blk, step_U_blk);
       } else {
-         apply_diffusion_half_step(Sbase, nf, dz, dt_half, Bc, mhat, Jc_edge_fine, step_L_blk, step_D_blk, step_U_blk);
+         apply_diffusion_half_step(Sbase, nf, dz, dt_half, Bc, mhat, sa_inf, PN, alpha, ne_fine, Jc_edge_fine, step_A_face, step_L_blk, step_D_blk, step_U_blk);
       }
       sc1d_time_diffusion += sw.elapsed_seconds();
       coarsen_spin_and_map_torque(stack, start_cell, ncz, nsub, nf, dz, Sbase,
                                   ns_fine, ne_fine, Jc_edge_fine, step_Jd_edge.data(),
-                                  Bc, Bd, D, mhat);
+                                  step_A_face, Bc, mhat, sa_inf, PN, alpha);
    }
 
    // Owners hold the updated slices. Unowned spin slices still contain the

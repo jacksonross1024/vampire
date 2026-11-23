@@ -203,6 +203,13 @@ extern bool sc1d_thermal_effects;              // transport constants may depend
       extern std::vector<double> sc1d_Jc_edge_fine;  // series current on fine faces (A/m^2)
       extern std::vector<double> sc1d_joule_fine;   // Joule power density on fine cells (W/m^3)
       extern std::vector<int> sc1d_mat_fine;        // majority material of an occupied fine cell, else -1
+      // Extra materials in a mixed fine cell. Empty when the cell is pure or empty,
+      // so the tunnel weight falls back to sc1d_mat_fine.
+      struct fine_mix_t {
+         int mat;
+         double count;
+      };
+      extern std::vector<std::vector<fine_mix_t>> sc1d_mix_fine;
       extern std::vector<double> sc1d_sigma_fine;    // electrical conductivity after the interface bake (S/m)
       extern std::vector<double> sc1d_sigma_bulk_fine; // same prolongation before the analytic sheet
       extern std::vector<double> sc1d_seebeck_fine; // Seebeck S (V/K), prolonged from the coarse cell
@@ -214,7 +221,7 @@ extern bool sc1d_thermal_effects;              // transport constants may depend
       extern std::vector<double> sc1d_J_cd_edge; // Thomas-Fermi charge diffusion -De d(ne)/dz (A/m^2)
       extern std::vector<double> sc1d_J_sd_edge; // spin-diffusion charge beta_d*De*d(S·m)/dz (A/m^2)
       extern std::vector<double> sc1d_Js_fine;   // total fine-cell spin current, verbose output
-      extern std::vector<double> sc1d_mhat_fine; // fine-cell unit axis, verbose output
+      extern std::vector<double> sc1d_mhat_fine; // fine-cell axis, verbose output. Non-magnetic cells are the zero vector.
       extern std::vector<double> sc1d_Te_fine;   // electron temperature on the fine cells (K), one vertical profile
       extern std::vector<double> sc1d_Tp_fine;   // phonon temperature on the fine cells (K)
       extern std::vector<double> sc1d_dTe_dz_edge; // dTe/dz on fine faces (K/m), from the ltmp cell centres
@@ -242,8 +249,15 @@ extern bool sc1d_thermal_effects;              // transport constants may depend
       extern std::vector<double> sc1d_msat_fine;
       extern std::vector<double> sc1d_m_prev_fine;
       extern std::vector<double> sc1d_m0_fine;
+      extern std::vector<double> sc1d_ml_fine;
       extern std::vector<double> sc1d_mhat_ref_fine;
       extern std::vector<double> sc1d_dmdt_fine;
+      extern std::vector<double> sc1d_sheet_acc_up_fine;
+      extern std::vector<double> sc1d_sheet_acc_dn_fine;
+      extern std::vector<double> sc1d_sheet_acc_re_fine;
+      extern std::vector<double> sc1d_sheet_acc_im_fine;
+      extern std::vector<double> sc1d_sheet_acc_d2_fine;
+      extern std::vector<double> sc1d_Rint_base_face;
       // Atomic planes that own a field window. z in Angstroms. lo < 0 if unused.
       extern std::vector<double> sc1d_plane_z;
       extern std::vector<int> sc1d_plane_lo;
@@ -257,6 +271,7 @@ extern bool sc1d_thermal_effects;              // transport constants may depend
       // The atom map and the anchor slots are fixed for the run.
       void cache_prolong_maps();
       void prolong_fine_magnetisation(const double dt);
+      void refresh_fine_transport_constants();
       // Per-atom Eq. 6 coefficients. The fine-grid rates and the atom windows are fixed.
       void cache_sc1d_torque_atoms();
 
@@ -277,6 +292,7 @@ extern double sc1d_time_spin_acc;
 extern double sc1d_time_diffusion;
 extern double sc1d_time_eom;
 extern double sc1d_time_interp;
+extern double sc1d_time_thermal;
 extern double sc1d_time_bcast;
 extern double sc1d_time_coarsen;
 extern double sc1d_time_other;
@@ -310,6 +326,8 @@ extern double sc1d_time_other;
       extern std::vector<double> sc1d_Jsd_fine;       // sd_exchange interpolated to fine grid
       extern std::vector<double> sc1d_chi_fine;       // chi_demag interpolated to fine grid
       extern std::vector<double> sc1d_sa_inf_fine;   // sa_infinity interpolated to fine grid
+      extern std::vector<double> sc1d_PN_fine;       // DOS polarization P_N interpolated to fine grid
+      extern std::vector<double> sc1d_alpha_fine;    // DOS alpha interpolated to fine grid
 
       extern std::vector<double> coeff_ast;
       extern std::vector<double> coeff_nast;     
@@ -381,6 +399,9 @@ extern double sc1d_time_other;
          bool beta_seebeck_set; /// true when beta-seebeck was given in the material file
          double superdiffusion_polarization; /// hot-electron polarization. Default 0.
          double conductivity; /// electrical conductivity σ (S/m); <0 unset (Einstein from D, Te); 0 insulator
+         double spin_dos_polarization; /// P_N = (N_up - N_down)/(N_up + N_down). Default 0.
+         double spin_dos_alpha;        /// alpha = (N_up + N_down)/(2 N_up N_down). Default 1.
+         bool spin_currents_thermal;   /// opt into spin-currents-1d-thermal-effects laws
 
          //SOT
          double sot_beta_cond;    /// spin polarisation (conductivity)
@@ -490,6 +511,9 @@ extern double sc1d_time_other;
       extern std::vector<double> tunnel_li_pair;
       extern std::vector<double> tunnel_pe_pair;
       extern std::vector<double> tunnel_pp_pair;
+      // Bias at which the zero-bias TMR contribution is halved (V).
+      // A non-positive value leaves the tunnel pair voltage independent.
+      extern std::vector<double> tunnel_vhalf_pair;
       extern std::vector<char> tunnel_pair_set;
       void ensure_tunnel_matrix_size(const std::size_t nmat);
 
@@ -500,6 +524,8 @@ extern double sc1d_time_other;
       void output_microcell_sa_data();
       void output_base_microcell_data();
       void output_sc1d_data();
+      void output_sc1d_stage_origin(const std::string& stage);
+      void output_sc1d_relax_origin();
       void output_sc1d_fine_constants();
       void report_sc1d_timing();
       void report_sc1d_profile(double run_s);

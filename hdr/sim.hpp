@@ -74,7 +74,8 @@ namespace sim{
 
 	// enumerated list for integrators
 	enum integrator_t{ llg_heun = 0, monte_carlo = 1, llg_midpoint = 2,
-							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5, suzuki_trotter_spin=6};
+							 cmc = 3, hybrid_cmc = 4, llg_quantum = 5, suzuki_trotter_spin=6,
+							 llg_rkmk2 = 7, llg_rkmk4 = 8, llg_dm = 9};
 
 	
 	extern std::ofstream mag_file;
@@ -258,6 +259,8 @@ namespace sim{
 
 	void calculate_spin_fields(const int start_index,const int end_index);
 	void calculate_external_fields(const int start_index,const int end_index);
+	void calculate_deterministic_external_fields(const int start_index,const int end_index);
+	void calculate_thermal_fields_only(const int start_index,const int end_index);
 	void calculate_piezomagnetic_dipole(const int start_index,const int end_index);
    // LaGrange multiplier variables
    extern double lagrange_lambda_x;

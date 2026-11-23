@@ -9,6 +9,7 @@
 
 // C++ standard library headers
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 // Vampire headers
@@ -102,18 +103,24 @@ namespace sim{
             const double V_atom = cs::unit_cell.dimensions[0]*cs::unit_cell.dimensions[1]*cs::unit_cell.dimensions[2] / natom * 1.0e-30;
             const double mu = mp::material[m].mu_s_SI;
             const double g = mp::gamma_SI * mp::material[m].gamma_rel;
-            const double pref = V_atom / (g * mu);
             const double De = sim::internal::mp[m].let_diffusion.get();
             const double kabs = sim::internal::mp[m].let_abs_factor.is_set() ? sim::internal::mp[m].let_abs_factor.get() : 1.0;
-            if(have_lj){
+            const bool finite_base = (mu > 0.0) && (g > 0.0) && (De > 0.0)
+               && std::isfinite(mu) && std::isfinite(g) && std::isfinite(De);
+            const double pref = finite_base ? (V_atom / (g * mu)) : 0.0;
+            if(finite_base && have_lj){
                const double lJ = sim::internal::mp[m].let_lambda_J.get();
-               const double S_per_Js = kabs * lJ / De;
-               sim::internal::let_eq6_fl[m] = pref * (De / (lJ * lJ)) * S_per_Js;
+               if(lJ > 0.0 && std::isfinite(lJ)){
+                  const double S_per_Js = kabs * lJ / De;
+                  sim::internal::let_eq6_fl[m] = pref * (De / (lJ * lJ)) * S_per_Js;
+               }
             }
-            if(have_lp){
+            if(finite_base && have_lp){
                const double lphi = sim::internal::mp[m].let_lambda_phi.get();
-               const double S_per_Js = kabs * lphi / De;
-               sim::internal::let_eq6_dl[m] = pref * (De / (lphi * lphi)) * S_per_Js;
+               if(lphi > 0.0 && std::isfinite(lphi)){
+                  const double S_per_Js = kabs * lphi / De;
+                  sim::internal::let_eq6_dl[m] = pref * (De / (lphi * lphi)) * S_per_Js;
+               }
             }
             zlog << zTs() << "LET STT Eq. 6 for material " << m+1
                  << ": P " << sim::internal::let_P[m]

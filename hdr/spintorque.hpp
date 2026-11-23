@@ -89,6 +89,9 @@ namespace st{
    // Jc stays 0, and the step count is spin-currents-1d-relax-steps.
    void equilibrate_spin_currents_1d();
 
+   // Before one LLG iteration: index-0 spin-acc frame for equilibration or drive.
+   void begin_sc1d_llg_stage_output();
+
    // End-of-run spin-solver profile. Initialisation is not included.
    // run_s is the simulation wall time printed just above this report.
    void report_sc1d_profile(double run_s);

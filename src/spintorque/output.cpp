@@ -14,6 +14,7 @@
 #include <sstream>
 #include <cmath>
 #include <algorithm>
+#include <sys/stat.h>
 
 // Vampire headers
 #include "spintorque.hpp"
@@ -29,6 +30,16 @@
 
 namespace st{
    namespace internal{
+
+      static void ensure_sc1d_output_directory(){
+         if(vmpi::my_rank == 0){
+            const int rc = mkdir("spin-acc", 0775);
+            (void)rc;
+         }
+#ifdef MPICF
+         MPI_Barrier(MPI_COMM_WORLD);
+#endif
+      }
 
       static void stack_xy(const int stack, int& ix, int& iy){
          const int ny = std::max(1, num_y_stacks);
@@ -70,6 +81,7 @@ namespace st{
 
       void output_sc1d_fine_constants(){
          if(!sc1d_enable) return;
+         ensure_sc1d_output_directory();
          if(vmpi::my_rank != 0) return;
          const int nf = sc1d_nf;
          const int nsub = std::max(1, sc1d_nsub);
@@ -88,7 +100,7 @@ namespace st{
          ofile << "# beta_c is the up/down imbalance. sigma_bulk is the conductivity before the sheet.\n";
          ofile << "# The hot-electron speed keeps the pre-sheet diffusivity and is not a column.\n";
          ofile << "# ix, iy are the column. iz is the fine cell along that column. Each column is written.\n";
-         ofile << "# ix\tiy\tiz\tx(A)\ty(A)\tz(A)\tbeta_c\tbeta_d\tD(m^2/s)\tDe(m^2/s)\tlambda_sdl(m)\tlambda_phi(m)\tJsd(J)\tchi\tsa_inf(C/m^3)\tsigma(S/m)\tsigma_bulk(S/m)\tS(V/K)\tbeta_seebeck\tP_hot\toccupied\tconnected\tspacing\tnatom\n";
+         ofile << "# ix\tiy\tiz\tx(A)\ty(A)\tz(A)\tbeta_c\tbeta_d\tD(m^2/s)\tDe(m^2/s)\tlambda_sdl(m)\tlambda_phi(m)\tJsd(J)\tchi\tsa_inf(C/m^3)\tP_N\talpha\tsigma(S/m)\tsigma_bulk(S/m)\tS(V/K)\tbeta_seebeck\tP_hot\toccupied\tconnected\tspacing\tnatom\n";
          ofile << std::scientific << std::setprecision(6);
          for(int stack = 0; stack < num_stacks_y; ++stack){
             const int start = stack_index_y[stack];
@@ -112,7 +124,9 @@ namespace st{
                      << sc1d_D_fine[c] << "\t" << sc1d_D_fine[c] << "\t"
                      << sc1d_lsf_fine[c] << "\t" << sc1d_lphi_fine[c] << "\t"
                      << sc1d_Jsd_fine[c] << "\t" << sc1d_chi_fine[c] << "\t"
-                     << sc1d_sa_inf_fine[c] << "\t" << sc1d_sigma_fine[c] << "\t"
+                     << sc1d_sa_inf_fine[c] << "\t"
+                     << sc1d_PN_fine[c] << "\t" << sc1d_alpha_fine[c] << "\t"
+                     << sc1d_sigma_fine[c] << "\t"
                      << sigma_bulk << "\t"
                      << sc1d_seebeck_fine[c] << "\t" << sc1d_beta_seebeck_fine[c] << "\t"
                      << sc1d_phot_fine[c] << "\t"
@@ -152,10 +166,14 @@ namespace st{
                << " step " << sc1d_step_counter << " sim_time " << sim::time << "\n";
          ofile << "# One row per fine cell of each column. z is the cell centre.\n";
          ofile << "# ix, iy are the column. iz is the fine cell. Verbose keeps the columns separate.\n";
-         ofile << "# Charge components and Jc are the average of the two faces of that cell, in A/m^2.\n";
+         ofile << "# Charge components, Jc and Js are the average of the two faces of that cell, in A/m^2.\n";
          ofile << "# Jc is the stored series current, including the tunnel current on an insulating face.\n";
+         ofile << "# Js is the face current the step carries. Diffusion is dz*A*(S_left-S_right),\n";
+         ofile << "# which is zero on a closed face (either neighbour has D = 0). Drift is the edge\n";
+         ofile << "# used by the divergence, including the tunnel value. Walls add beta*Jc*m and no diffusion.\n";
          ofile << "# V is the fine-cell potential in volts.\n";
-         ofile << "# ix\tiy\tiz\tx(A)\ty(A)\tz(A)\tns(m^-3)\tne(m^-3)\tV(V)\tJ_field\tJ_cd\tJ_sd\tJ_seebeck\tJ_hot\tJc\tJs_x(A/m^2)\tJs_y(A/m^2)\tJs_z(A/m^2)\tSa_x(C/m^3)\tSa_y(C/m^3)\tSa_z(C/m^3)\tm_x\tm_y\tm_z\n";
+         ofile << "# beta_c through sigma_bulk are the live fine-grid constants used by this step.\n";
+         ofile << "# ix\tiy\tiz\tx(A)\ty(A)\tz(A)\tns(m^-3)\tne(m^-3)\tV(V)\tJ_field\tJ_cd\tJ_sd\tJ_seebeck\tJ_hot\tJc\tJs_x(A/m^2)\tJs_y(A/m^2)\tJs_z(A/m^2)\tSa_x(C/m^3)\tSa_y(C/m^3)\tSa_z(C/m^3)\tm_x\tm_y\tm_z\tTe(K)\tTp(K)\tbeta_c\tbeta_d\tbeta_seebeck\tP_hot\tD(m^2/s)\tDe(m^2/s)\tlambda_sdl(m)\tlambda_phi(m)\tJsd(J)\tsa_inf(C/m^3)\tP_N\talpha\tsigma(S/m)\tsigma_bulk(S/m)\n";
          for(int stack = 0; stack < num_stacks_y; ++stack){
             const int start = stack_index_y[stack];
             int ix = 0;
@@ -172,11 +190,26 @@ namespace st{
             const double* S = sc1d_Sfine.data() + base * 3u;
             const double* Js = sc1d_Js_fine.data() + base * 3u;
             const double* mh = sc1d_mhat_fine.data() + base * 3u;
+            const double* mlv = sc1d_ml_fine.data() + base;
             const double* Jf = sc1d_J_restore_edge.data() + ebase;
             const double* Jcd = sc1d_J_cd_edge.data() + ebase;
             const double* Jsd = sc1d_J_sd_edge.data() + ebase;
             const double* Jsee = sc1d_J_seebeck_edge.data() + ebase;
             const double* Jhot = sc1d_J_hot_edge.data() + ebase;
+            const double* Bc = sc1d_Bc_fine.data() + base;
+            const double* Bd = sc1d_Bd_fine.data() + base;
+            const double* Bs = sc1d_beta_seebeck_fine.data() + base;
+            const double* Ph = sc1d_phot_fine.data() + base;
+            const double* D = sc1d_D_fine.data() + base;
+            const double* De = sc1d_Dmat_fine.data() + base;
+            const double* lsf = sc1d_lsf_fine.data() + base;
+            const double* lphi = sc1d_lphi_fine.data() + base;
+            const double* Jsd_fine = sc1d_Jsd_fine.data() + base;
+            const double* sa_inf = sc1d_sa_inf_fine.data() + base;
+            const double* PN = sc1d_PN_fine.data() + base;
+            const double* alpha = sc1d_alpha_fine.data() + base;
+            const double* sigma = sc1d_sigma_fine.data() + base;
+            const double* sigma_bulk = sc1d_sigma_bulk_fine.data() + base;
             for(int i = 0; i < nf; ++i){
                const double zA = (static_cast<double>(i) + 0.5) * dzA;
                ofile << ix << "\t" << iy << "\t" << i << "\t";
@@ -195,7 +228,14 @@ namespace st{
                      << jc << "\t"
                      << Js[3*i+0] << "\t" << Js[3*i+1] << "\t" << Js[3*i+2] << "\t"
                      << S[3*i+0] << "\t" << S[3*i+1] << "\t" << S[3*i+2] << "\t"
-                     << mh[3*i+0] << "\t" << mh[3*i+1] << "\t" << mh[3*i+2] << "\n";
+                     << mlv[i] * mh[3*i+0] << "\t" << mlv[i] * mh[3*i+1] << "\t" << mlv[i] * mh[3*i+2] << "\t"
+                     << sc1d_Te_fine[static_cast<std::size_t>(i)] << "\t"
+                     << sc1d_Tp_fine[static_cast<std::size_t>(i)] << "\t"
+                     << Bc[i] << "\t" << Bd[i] << "\t" << Bs[i] << "\t" << Ph[i] << "\t"
+                     << D[i] << "\t" << De[i] << "\t"
+                     << lsf[i] << "\t" << lphi[i] << "\t" << Jsd_fine[i] << "\t"
+                     << sa_inf[i] << "\t" << PN[i] << "\t"
+                     << alpha[i] << "\t" << sigma[i] << "\t" << sigma_bulk[i] << "\n";
             }
          }
       }
@@ -311,7 +351,8 @@ namespace st{
                << " step " << sc1d_step_counter << " sim_time " << sim::time << "\n";
          ofile << "# One row per output cell. The columns are summed. ix and iy are -1.\n";
          ofile << "# Coarse bins average a unit cell. Atomic bins average a field window. The sum is over columns.\n";
-         ofile << "# Jc is the open-circuit residual, averaged with the same cells as the other columns.\n";
+         ofile << "# Jc and Js are the face currents the step carries, averaged with the same cells.\n";
+         ofile << "# Js diffusion is zero on a closed face. It is not a centred difference of S.\n";
          ofile << "# ix\tiy\tiz\tx(A)\ty(A)\tz(A)\tns(m^-3)\tne(m^-3)\tJ_field\tJ_cd\tJ_sd\tJ_seebeck\tJ_hot\tJc\tJs_x(A/m^2)\tJs_y(A/m^2)\tJs_z(A/m^2)\tSa_x(C/m^3)\tSa_y(C/m^3)\tSa_z(C/m^3)\tSa_mag(C/m^3)\tm_x\tm_y\tm_z\n";
          const double xA = 0.5 * cs::system_dimensions[0];
          const double yA = 0.5 * cs::system_dimensions[1];
@@ -357,50 +398,127 @@ namespace st{
          }
       }
 
+      // Stage of a completed transport step.
+      // relax: sc1d_step_counter is 1..relax-steps and sim::time is still 0.
+      // eq: the update that runs as sim::time advances to equilibration-time-steps
+      // is the last equilibration step, so the test is <=, not <.
+      // drive: sim::time has moved past equilibration. The index is the count
+      // inside that stage. sim_time in the header is always sim::time, which
+      // stays 0 through relax.
+      static void sc1d_completed_stage(std::string& stage, unsigned long& index){
+         if(sc1d_step_counter <= sc1d_relax_steps){
+            stage = "relax";
+            index = sc1d_step_counter;
+            return;
+         }
+         if(sim::time <= sim::equilibration_time){
+            stage = "eq";
+            index = static_cast<unsigned long>(sim::time);
+            return;
+         }
+         stage = "drive";
+         index = static_cast<unsigned long>(sim::time - sim::equilibration_time);
+      }
+
+      // Index 0 is the stage-entry frame, written once by the origin path.
+      // A later step writes only when its stage index is a positive multiple
+      // of ST-output-rate, so a zero-length stage cannot emit index 0 twice.
+      static bool sc1d_periodic_due(const unsigned long index){
+         const unsigned long rate = static_cast<unsigned long>(std::max(ST_output_rate, 1));
+         return (index > 0UL) && (index % rate == 0UL);
+      }
+
+      static void write_sc1d_frame_body(const std::string& stage, const unsigned long index){
+         std::stringstream filename;
+         filename << "spin-acc/" << stage << "-"
+                  << std::setw(7) << std::setfill('0') << index;
+         if(sc1d_output_mode == sc1d_out_verbose) output_sc1d_verbose(filename.str(), stage, index);
+         else output_sc1d_profile(filename.str(), stage, index);
+         config_file_counter++;
+      }
+
+      static void write_sc1d_frame(const std::string& stage, const unsigned long index){
+         ensure_sc1d_output_directory();
+         #ifdef MPICF
+            MPI_Barrier(MPI_COMM_WORLD);
+         #endif
+         write_sc1d_frame_body(stage, index);
+      }
+
       //-----------------------------------------------------------------------------
       // Function to output 1D spin currents data
       //-----------------------------------------------------------------------------
       void output_sc1d_data(){
          if(!sc1d_enable) return;
+         ensure_sc1d_output_directory();
 
          #ifdef MPICF
             MPI_Barrier(MPI_COMM_WORLD);
          #endif
 
-         // relax: before the LLG, sim::time stays 0. eq: LLG equilibration.
-         // drive: sim::time past equilibration-time-steps. The index is the
-         // step count inside that stage. ST-output-rate applies in every stage.
-         const int rate = std::max(ST_output_rate, 1);
          std::string stage;
-         unsigned long index = 0;
-         if(sc1d_step_counter <= sc1d_relax_steps){
-            stage = "relax";
-            index = sc1d_step_counter;
-         } else if(sim::time <= sim::equilibration_time){
-            stage = "eq";
-            index = static_cast<unsigned long>(sim::time);
-         } else {
-            stage = "drive";
-            index = static_cast<unsigned long>(sim::time - sim::equilibration_time);
-         }
-         const bool due = (index > 0UL) && (index % static_cast<unsigned long>(rate) == 0UL);
-         if(due && sc1d_output_mode == sc1d_out_verbose){
-            std::stringstream filename;
-            filename << "spin-acc/" << stage << "-"
-                     << std::setw(7) << std::setfill('0') << index;
-            output_sc1d_verbose(filename.str(), stage, index);
-            config_file_counter++;
-            return;
-         }
-         if(due){
-            std::stringstream filename;
-            filename << "spin-acc/" << stage << "-"
-                     << std::setw(7) << std::setfill('0') << index;
-            output_sc1d_profile(filename.str(), stage, index);
-            config_file_counter++;
-            return;
-         }
+         unsigned long index = 0UL;
+         sc1d_completed_stage(stage, index);
+         if(!sc1d_periodic_due(index)) return;
+         write_sc1d_frame_body(stage, index);
+      }
 
+      // One index-0 file when an LLG stage is entered. A stage whose step
+      // count is zero is not entered by the integrator, so it is not created.
+      void output_sc1d_stage_origin(const std::string& stage){
+         if(!sc1d_enable) return;
+         static bool eq_done = false;
+         static bool drive_done = false;
+         if(stage == "eq"){
+            if(eq_done) return;
+            eq_done = true;
+            if(sim::equilibration_time == 0) return;
+            if(sim::time != 0) return;
+            write_sc1d_frame("eq", 0UL);
+            return;
+         }
+         if(stage == "drive"){
+            if(drive_done) return;
+            drive_done = true;
+            if(sim::time != sim::equilibration_time) return;
+            write_sc1d_frame("drive", 0UL);
+         }
+      }
+
+      // Starting relax frame: S has been reseeded from the preconditioned
+      // moments and the first diffusion step has not run. The transport
+      // counter is already 1, because that seed lives in the first step.
+      // Rank 0's gather is undone so the diffusion step still sees owner data.
+      void output_sc1d_relax_origin(){
+         if(!sc1d_enable || sc1d_relax_steps == 0UL) return;
+         static bool wrote = false;
+         if(wrote) return;
+         wrote = true;
+
+         struct kept_field {
+            std::vector<double>* live;
+            std::vector<double> saved;
+         };
+         std::vector<kept_field> kept;
+         if(vmpi::my_rank == 0){
+            std::vector<double>* fields[] = {
+               &sc1d_Sfine, &sc1d_ns_fine, &sc1d_ne_fine, &sc1d_V_fine,
+               &sc1d_Jc_edge_fine, &sc1d_J_restore_edge, &sc1d_J_cd_edge,
+               &sc1d_J_sd_edge, &sc1d_J_seebeck_edge, &sc1d_J_hot_edge,
+               &sc1d_Js_fine, &sc1d_mhat_fine
+            };
+            const int nfields = static_cast<int>(sizeof(fields) / sizeof(fields[0]));
+            kept.reserve(static_cast<std::size_t>(nfields));
+            for(int f = 0; f < nfields; ++f){
+               kept_field item;
+               item.live = fields[f];
+               item.saved = *fields[f];
+               kept.push_back(item);
+            }
+         }
+         if(sc1d_nf > 0) reduce_owned_sum(sc1d_Sfine, 3 * sc1d_nf);
+         write_sc1d_frame("relax", 0UL);
+         for(std::size_t i = 0; i < kept.size(); ++i) kept[i].live->swap(kept[i].saved);
       }
 
       //-----------------------------------------------------------------------------
@@ -426,17 +544,11 @@ namespace st{
 #else
          if(!sc1d_enable) return;
 
-         const int rate = std::max(ST_output_rate, 1);
-         unsigned long index = 0;
-         if(sc1d_step_counter <= sc1d_relax_steps){
-            index = sc1d_step_counter;
-         } else if(sim::time <= sim::equilibration_time){
-            index = static_cast<unsigned long>(sim::time);
-         } else {
-            index = static_cast<unsigned long>(sim::time - sim::equilibration_time);
-         }
-         const bool due = (index > 0UL) && (index % static_cast<unsigned long>(rate) == 0UL);
-         if(!due) return;
+         std::string stage_name;
+         unsigned long index = 0UL;
+         sc1d_completed_stage(stage_name, index);
+         (void)stage_name;
+         if(!sc1d_periodic_due(index)) return;
 
          double total = sc1d_time_total;
          double io = sc1d_time_io;
@@ -444,35 +556,37 @@ namespace st{
          double spin_current = sc1d_time_spin_current;
          double spin_acc = sc1d_time_spin_acc;
          double interp = sc1d_time_interp;
+         double thermal = sc1d_time_thermal;
          double bcast = sc1d_time_bcast;
          double other = sc1d_time_other;
 #ifdef MPICF
          // Print the rank that did the most column work. Idle ranks still
          // sit in the broadcast, so a plain rank-0 sample can miss the solve.
-         double local_times[8] = {total, io, charge, spin_current, spin_acc, interp, bcast, other};
+         double local_times[9] = {total, io, charge, spin_current, spin_acc, interp, thermal, bcast, other};
          const int nrank = std::max(1, vmpi::num_processors);
-         std::vector<double> all_times((std::size_t)nrank * 8u, 0.0);
-         MPI_Allgather(local_times, 8, MPI_DOUBLE, all_times.data(), 8, MPI_DOUBLE, MPI_COMM_WORLD);
+         std::vector<double> all_times((std::size_t)nrank * 9u, 0.0);
+         MPI_Allgather(local_times, 9, MPI_DOUBLE, all_times.data(), 9, MPI_DOUBLE, MPI_COMM_WORLD);
          if(vmpi::my_rank != 0) return;
          int busiest = 0;
          double busiest_work = -1.0;
          for(int r=0; r<nrank; ++r){
-            const double* row = all_times.data() + (std::size_t)r * 8u;
-            const double work = row[2] + row[3] + row[4] + row[5];
+            const double* row = all_times.data() + (std::size_t)r * 9u;
+            const double work = row[2] + row[3] + row[4] + row[5] + row[6];
             if(work > busiest_work){
                busiest_work = work;
                busiest = r;
             }
          }
-         const double* best = all_times.data() + (std::size_t)busiest * 8u;
+         const double* best = all_times.data() + (std::size_t)busiest * 9u;
          total = best[0];
          io = best[1];
          charge = best[2];
          spin_current = best[3];
          spin_acc = best[4];
          interp = best[5];
-         bcast = best[6];
-         other = best[7];
+         thermal = best[6];
+         bcast = best[7];
+         other = best[8];
 #endif
          const double inv_pct = (total > 0.0) ? (100.0 / total) : 0.0;
 
@@ -485,6 +599,7 @@ namespace st{
          append_sc1d_bucket(line, "spin_current", spin_current, inv_pct);
          append_sc1d_bucket(line, "spin_acc", spin_acc, inv_pct);
          append_sc1d_bucket(line, "interp_coarse", interp, inv_pct);
+         append_sc1d_bucket(line, "thermal_refresh", thermal, inv_pct);
          append_sc1d_bucket(line, "bcast", bcast, inv_pct);
          append_sc1d_bucket(line, "other", other, inv_pct);
 
@@ -501,6 +616,7 @@ namespace st{
          double charge = sc1d_time_charge;
          double eom = sc1d_time_eom;
          double prolong = sc1d_time_interp;
+         double thermal = sc1d_time_thermal;
          double io = sc1d_time_io;
          double drift = sc1d_time_spin_current;
          double bcast = sc1d_time_bcast;
@@ -508,34 +624,35 @@ namespace st{
          double other = sc1d_time_other;
          double total = sc1d_time_total;
 #ifdef MPICF
-         double local_times[10] = {
-            diffusion, charge, eom, prolong, io, drift, bcast, coarsen, other, total
+         double local_times[11] = {
+            diffusion, charge, eom, prolong, thermal, io, drift, bcast, coarsen, other, total
          };
          const int nrank = std::max(1, vmpi::num_processors);
-         std::vector<double> all_times((std::size_t)nrank * 10u, 0.0);
-         MPI_Allgather(local_times, 10, MPI_DOUBLE, all_times.data(), 10, MPI_DOUBLE, MPI_COMM_WORLD);
+         std::vector<double> all_times((std::size_t)nrank * 11u, 0.0);
+         MPI_Allgather(local_times, 11, MPI_DOUBLE, all_times.data(), 11, MPI_DOUBLE, MPI_COMM_WORLD);
          if(vmpi::my_rank != 0) return;
          int busiest = 0;
          double busiest_work = -1.0;
          for(int r = 0; r < nrank; ++r){
-            const double* row = all_times.data() + (std::size_t)r * 10u;
-            const double work = row[0] + row[1] + row[2] + row[3];
+            const double* row = all_times.data() + (std::size_t)r * 11u;
+            const double work = row[0] + row[1] + row[2] + row[3] + row[4];
             if(work > busiest_work){
                busiest_work = work;
                busiest = r;
             }
          }
-         const double* best = all_times.data() + (std::size_t)busiest * 10u;
+         const double* best = all_times.data() + (std::size_t)busiest * 11u;
          diffusion = best[0];
          charge = best[1];
          eom = best[2];
          prolong = best[3];
-         io = best[4];
-         drift = best[5];
-         bcast = best[6];
-         coarsen = best[7];
-         other = best[8];
-         total = best[9];
+         thermal = best[4];
+         io = best[5];
+         drift = best[6];
+         bcast = best[7];
+         coarsen = best[8];
+         other = best[9];
+         total = best[10];
 #endif
          const double inv = (total > 0.0) ? (100.0 / total) : 0.0;
          const double of_run = (run_s > 0.0) ? (100.0 * total / run_s) : 0.0;
@@ -547,6 +664,7 @@ namespace st{
          out << "  charge_poisson         " << charge << " s  " << (charge * inv) << "% of spin steps\n";
          out << "  spin_eom               " << eom << " s  " << (eom * inv) << "% of spin steps\n";
          out << "  m_prolongation         " << prolong << " s  " << (prolong * inv) << "% of spin steps\n";
+         out << "  thermal_refresh        " << thermal << " s  " << (thermal * inv) << "% of spin steps\n";
          out << "  io                     " << io << " s  " << (io * inv) << "% of spin steps\n";
          out << "  drift_assembly         " << drift << " s  " << (drift * inv) << "% of spin steps\n";
          out << "  coarsen_torque         " << coarsen << " s  " << (coarsen * inv) << "% of spin steps\n";
@@ -563,6 +681,7 @@ namespace st{
       // Function to output base microcell properties
       //-----------------------------------------------------------------------------
       void output_base_microcell_data(){
+         ensure_sc1d_output_directory();
 
          using st::internal::beta_cond;
          using st::internal::beta_diff;
@@ -982,6 +1101,14 @@ namespace st{
 
    void report_sc1d_profile(const double run_s){
       internal::report_sc1d_profile(run_s);
+   }
+
+   // Called before each LLG iteration. Writes the index-0 frame once, at the
+   // first step of equilibration and the first step of the drive.
+   void begin_sc1d_llg_stage_output(){
+      if(!internal::sc1d_enable) return;
+      if(sim::time < sim::equilibration_time) internal::output_sc1d_stage_origin("eq");
+      else internal::output_sc1d_stage_origin("drive");
    }
 
 } // end of st namespace
