@@ -645,7 +645,8 @@ int integrate(uint64_t n_steps){
 	// Check for calling of function
 	if(err::check==true) std::cout << "sim::integrate has been called" << std::endl;
 
-	// Spin-current settle with magnetisation frozen, before any LLG step.
+	// After Monte-Carlo preconditioning: seed S from those spins, then relax
+	// the spin current with magnetisation frozen, before any LLG step.
 	st::equilibrate_spin_currents_1d();
 
 	// Call serial or parallell depending at compile time
@@ -697,6 +698,7 @@ void integrate_serial(uint64_t n_steps){
 
       case 0: // LLG Heun
          for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
             // Optionally select GPU accelerated version
             if(gpu::acceleration) gpu::llg_heun();
             // Otherwise use CPU version
@@ -711,6 +713,7 @@ void integrate_serial(uint64_t n_steps){
 
 		case 1: // Montecarlo
 			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 
                 // Optionally select GPU accelerated version
                 if(gpu::acceleration) gpu::mc_step();
@@ -724,6 +727,7 @@ void integrate_serial(uint64_t n_steps){
 
       case 2: // LLG Midpoint
          for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
             sim::LLG_Midpoint();
             // increment time
             sim::internal::increment_time();
@@ -732,6 +736,7 @@ void integrate_serial(uint64_t n_steps){
 
 		case 3: // Constrained Monte Carlo
 			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 				montecarlo::cmc_step();
 				// increment time
 				sim::internal::increment_time();
@@ -740,6 +745,7 @@ void integrate_serial(uint64_t n_steps){
 
 		case 4: // Hybrid Constrained Monte Carlo
 			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 				montecarlo::cmc_mc_step();
 				// increment time
 				sim::internal::increment_time();
@@ -748,6 +754,7 @@ void integrate_serial(uint64_t n_steps){
 
 		case sim::llg_quantum: // LLG quantum noise
 			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 				sim::internal::llg_quantum_step();
 				// increment time
 				sim::internal::increment_time();
@@ -755,11 +762,37 @@ void integrate_serial(uint64_t n_steps){
 			break;
 		case 6: //suzuki-trotter-decomposition for spin
 		for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 			sim::STDspin();
 			// increment time
 			sim::internal::increment_time();
 		}
 		break;
+
+		case sim::llg_rkmk2:
+			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
+				sim::internal::llg_rkmk2_step();
+				sim::internal::increment_time();
+			}
+			break;
+
+		case sim::llg_rkmk4:
+			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
+				sim::internal::llg_rkmk4_step();
+				sim::internal::increment_time();
+			}
+			break;
+
+		case sim::llg_dm:
+			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
+				sim::internal::llg_dm_step();
+				sim::internal::increment_time();
+			}
+			break;
+
 		default:{
 			std::cerr << "Unknown integrator type "<< sim::integrator << " requested, exiting" << std::endl;
          err::vexit();
@@ -808,6 +841,7 @@ int integrate_mpi(uint64_t n_steps){
 	switch(sim::integrator){
 		case 0: // LLG Heun
 			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 			#ifdef MPICF
 				// Select CUDA version if supported
 				#ifdef CUDA
@@ -832,6 +866,7 @@ int integrate_mpi(uint64_t n_steps){
 		case 1: // Montecarlo
 
 			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 				#ifdef MPICF
                if(montecarlo::mc_parallel_initialized == false) {
                   montecarlo::mc_parallel_init(atoms::x_coord_array, atoms::y_coord_array, atoms::z_coord_array,
@@ -848,6 +883,7 @@ int integrate_mpi(uint64_t n_steps){
 
 		case 2: // LLG Midpoint
 			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 			#ifdef MPICF
 			// Select CUDA version if supported
 				#ifdef CUDA
@@ -863,6 +899,7 @@ int integrate_mpi(uint64_t n_steps){
 
 		case 3: // Constrained Monte Carlo
 			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 				terminaltextcolor(RED);
 				std::cerr << "Error - Constrained Monte Carlo Integrator unavailable for parallel execution" << std::endl;
 				terminaltextcolor(WHITE);
@@ -874,6 +911,7 @@ int integrate_mpi(uint64_t n_steps){
 			case 6: // Suzuki Trotter decomposition
 
 			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
 				#ifdef MPICF
                if(sim::STDspin_parallel_initialized == false) {
                   sim::STDspin_parallel_init(atoms::x_coord_array, atoms::y_coord_array, atoms::z_coord_array,
@@ -884,6 +922,36 @@ int integrate_mpi(uint64_t n_steps){
             #endif
 
 				// increment time
+				sim::internal::increment_time();
+			}
+			break;
+
+		case sim::llg_rkmk2:
+			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
+			#ifdef MPICF
+				sim::internal::llg_rkmk2_mpi_step();
+			#endif
+				sim::internal::increment_time();
+			}
+			break;
+
+		case sim::llg_rkmk4:
+			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
+			#ifdef MPICF
+				sim::internal::llg_rkmk4_mpi_step();
+			#endif
+				sim::internal::increment_time();
+			}
+			break;
+
+		case sim::llg_dm:
+			for(uint64_t ti=0;ti<n_steps;ti++){
+				st::begin_sc1d_llg_stage_output();
+			#ifdef MPICF
+				sim::internal::llg_dm_mpi_step();
+			#endif
 				sim::internal::increment_time();
 			}
 			break;

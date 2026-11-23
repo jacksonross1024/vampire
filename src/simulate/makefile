@@ -11,7 +11,10 @@ initialize_modules.o \
 interface.o \
 STDspin.o\
 STDmpi.o\
-llg_quantum.o
+llg_quantum.o \
+llg_rotation.o \
+llg_rkmk.o \
+llg_dm.o
 
 # Append module objects to global tree
 OBJECTS+=$(addprefix obj/simulate/,$(sim_objects))

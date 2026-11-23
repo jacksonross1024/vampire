@@ -26,6 +26,9 @@
 #include "vio.hpp"
 #include "vmpi.hpp"
 
+// simulate module headers
+#include "internal.hpp"
+
 // sim namespace
 namespace sim{
 
@@ -46,6 +49,9 @@ namespace internal{
 void initialize_modules(){
 
    zlog << zTs() << "Initializing vampire modules" << std::endl;
+
+   // Check support and log references for rotation based LLG integrators
+   initialize_rotation_integrators();
 
    // Determine number of local atoms
    #ifdef MPICF

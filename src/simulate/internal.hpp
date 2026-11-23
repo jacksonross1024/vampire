@@ -132,6 +132,29 @@ namespace sim{
       extern void initialize_modules();
       extern void increment_time();
 
+      // Rotation based LLG integrators (ported from JAMS / vampire-v8)
+      void initialize_rotation_integrators();
+      int LLG_rotation_init();
+      void llg_rotation_noise_half_step(const int start_index, const int end_index);
+      void llg_rotation_copy_storage_to_spins(const int start_index, const int end_index);
+      void llg_rotation_stage(void (*stage)(const int, const int), const bool calculate_external_fields);
+      void llg_rotation_stage_mpi(void (*stage)(const int, const int), const bool calculate_external_fields);
+
+      void rkmk_stage_1(const int start_index, const int end_index);
+      void rkmk2_stage_2(const int start_index, const int end_index);
+      void rkmk4_stage_2(const int start_index, const int end_index);
+      void rkmk4_stage_3(const int start_index, const int end_index);
+      void rkmk4_stage_4(const int start_index, const int end_index);
+      void llg_rkmk2_step();
+      void llg_rkmk4_step();
+      void llg_rkmk2_mpi_step();
+      void llg_rkmk4_mpi_step();
+
+      void dm_predictor_stage(const int start_index, const int end_index);
+      void dm_corrector_stage(const int start_index, const int end_index);
+      void llg_dm_step();
+      void llg_dm_mpi_step();
+
    //MPI variables
        extern std::vector<std::vector<int> > c_octants; //Core atoms of each octant
        extern std::vector<std::vector<int> > b_octants; //Boundary atoms of each octant

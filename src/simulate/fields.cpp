@@ -133,6 +133,28 @@ void calculate_spin_fields(const int start_index,const int end_index) {
 }
 
 
+//------------------------------------------------------------------------------
+// Non-thermal external fields (applied, STT, spin transport, FMR, dipole).
+// Shared by calculate_external_fields and calculate_deterministic_external_fields.
+//------------------------------------------------------------------------------
+void add_deterministic_external_fields(const int start_index, const int end_index){
+
+	// Applied field is folded into hamr::fields for program 7
+	if(program::program != 7 && sim::hamiltonian_simulation_flags[2]==1){
+		calculate_applied_fields(start_index, end_index);
+	}
+
+	st::get_spin_torque_fields(atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array, start_index, end_index);
+
+	spin_transport::calculate_field(start_index, end_index, atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array);
+
+	if(sim::enable_fmr) calculate_fmr_fields(start_index, end_index);
+
+	calculate_dipolar_fields(start_index, end_index);
+
+	return;
+}
+
 void calculate_external_fields(const int start_index,const int end_index){
 	///======================================================
 	/// 		Subroutine to calculate external fields
@@ -150,11 +172,6 @@ void calculate_external_fields(const int start_index,const int end_index){
 	fill (atoms::x_total_external_field_array.begin()+start_index,atoms::x_total_external_field_array.begin()+end_index,0.0);
 	fill (atoms::y_total_external_field_array.begin()+start_index,atoms::y_total_external_field_array.begin()+end_index,0.0);
 	fill (atoms::z_total_external_field_array.begin()+start_index,atoms::z_total_external_field_array.begin()+end_index,0.0);
-
-	// //reset thermal field arrays
-	// fill (atoms::thermal_x_field.begin()+start_index,atoms::thermal_x_field.begin()+end_index,0.0);
-	// fill (atoms::thermal_y_field.begin()+start_index,atoms::thermal_y_field.begin()+end_index,0.0);
-	// fill (atoms::thermal_z_field.begin()+start_index,atoms::thermal_z_field.begin()+end_index,0.0);
 
 	if(program::program==7){
 
@@ -178,9 +195,6 @@ void calculate_external_fields(const int start_index,const int end_index){
                                             atoms::thermal_z_field, start_index, end_index);
       }
 
-      // Applied Fields
-      if(sim::hamiltonian_simulation_flags[2]==1) calculate_applied_fields(start_index,end_index);
-
    }
 	else{
 
@@ -188,22 +202,54 @@ void calculate_external_fields(const int start_index,const int end_index){
 		// global TTM electron temperature into sim::temperature.
 		if(sim::hamiltonian_simulation_flags[3]==1) calculate_thermal_fields(start_index,end_index);
 
-		// Applied Fields
-		if(sim::hamiltonian_simulation_flags[2]==1) calculate_applied_fields(start_index,end_index);
-
 	}
 
-   // Get updated spin torque fields
-   st::get_spin_torque_fields(atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array, start_index, end_index);
+	add_deterministic_external_fields(start_index, end_index);
 
-   // Get updated spin torque fields
-   spin_transport::calculate_field(start_index, end_index, atoms::x_total_external_field_array, atoms::y_total_external_field_array, atoms::z_total_external_field_array);
+	return;
+}
 
-	// FMR Fields only for fmr program
-	if(sim::enable_fmr) calculate_fmr_fields(start_index,end_index);
+void calculate_deterministic_external_fields(const int start_index, const int end_index){
+	///======================================================
+	/// External fields excluding thermal noise. Safe to call
+	/// outside the integrator without changing the RNG path.
+	/// HAMR applied field is handled inside hamr::fields and
+	/// is not included here.
+	///======================================================
 
-	// Dipolar Fields
-	calculate_dipolar_fields(start_index,end_index);
+	if(err::check==true){std::cout << "calculate_deterministic_external_fields has been called" << std::endl;}
+
+	fill (atoms::x_total_external_field_array.begin()+start_index,atoms::x_total_external_field_array.begin()+end_index,0.0);
+	fill (atoms::y_total_external_field_array.begin()+start_index,atoms::y_total_external_field_array.begin()+end_index,0.0);
+	fill (atoms::z_total_external_field_array.begin()+start_index,atoms::z_total_external_field_array.begin()+end_index,0.0);
+
+	add_deterministic_external_fields(start_index, end_index);
+
+	return;
+}
+
+void calculate_thermal_fields_only(const int start_index, const int end_index){
+	///======================================================
+	/// Thermal fields only, for rotation integrators that
+	/// Strang-split noise from the deterministic step.
+	/// HAMR mixes thermal into hamr::fields and is unsupported.
+	///======================================================
+
+	if(err::check==true){std::cout << "calculate_thermal_fields_only has been called" << std::endl;}
+
+	if(program::program==13 || program::program == 55 || (program::program == 19 && ltmp::is_enabled())){
+
+		if(ltmp::is_enabled()) {
+			ltmp::get_localised_thermal_fields(atoms::thermal_x_field, atoms::thermal_y_field,
+			                                   atoms::thermal_z_field, start_index, end_index);
+		}
+
+	}
+	else{
+
+		if(sim::hamiltonian_simulation_flags[3]==1) calculate_thermal_fields(start_index,end_index);
+
+	}
 
 	return;
 }

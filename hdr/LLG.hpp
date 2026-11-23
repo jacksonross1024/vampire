@@ -50,4 +50,34 @@ namespace LLG_arrays{
 	extern bool LLG_set;
 
 }
+
+namespace LLG_rotation_arrays{
+
+//==========================================================
+// Arrays for rotation based LLG integrators (RKMK2/4, DM)
+//==========================================================
+
+	extern std::vector<double> x_initial_spin_array;
+	extern std::vector<double> y_initial_spin_array;
+	extern std::vector<double> z_initial_spin_array;
+
+	extern std::vector<double> x_k1_array;
+	extern std::vector<double> y_k1_array;
+	extern std::vector<double> z_k1_array;
+
+	extern std::vector<double> x_k2_array;
+	extern std::vector<double> y_k2_array;
+	extern std::vector<double> z_k2_array;
+
+	extern std::vector<double> x_k3_array;
+	extern std::vector<double> y_k3_array;
+	extern std::vector<double> z_k3_array;
+
+	extern std::vector<double> x_spin_storage_array;
+	extern std::vector<double> y_spin_storage_array;
+	extern std::vector<double> z_spin_storage_array;
+
+	extern bool LLG_rotation_set;
+
+}
 #endif /*LLG_H_*/

@@ -177,11 +177,32 @@ namespace sim{
             return true;
          }
          //--------------------------------------------------------------------
+         test="llg-rkmk2";
+         if( value == test ){
+            sim::integrator = sim::llg_rkmk2;
+            return true;
+         }
+         //--------------------------------------------------------------------
+         test="llg-rkmk4";
+         if( value == test ){
+            sim::integrator = sim::llg_rkmk4;
+            return true;
+         }
+         //--------------------------------------------------------------------
+         test="llg-dm";
+         if( value == test ){
+            sim::integrator = sim::llg_dm;
+            return true;
+         }
+         //--------------------------------------------------------------------
          else{
             terminaltextcolor(RED);
                std::cerr << "Error - value for \'sim:" << word << "\' must be one of:" << std::endl;
                std::cerr << "\t\"llg-heun\"" << std::endl;
                std::cerr << "\t\"llg-midpoint\"" << std::endl;
+               std::cerr << "\t\"llg-rkmk2\"" << std::endl;
+               std::cerr << "\t\"llg-rkmk4\"" << std::endl;
+               std::cerr << "\t\"llg-dm\"" << std::endl;
                std::cerr << "\t\"llg-quantum\"" << std::endl;
                std::cerr << "\t\"monte-carlo\"" << std::endl;
                std::cerr << "\t\"constrained-monte-carlo\"" << std::endl;
