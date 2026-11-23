@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <cmath>
+#include <algorithm>
 
 // Vampire headers
 #include "spintorque.hpp"
@@ -20,12 +22,341 @@
 #include "sim.hpp"
 #include "material.hpp"
 #include "ltmp.hpp"
+#include "create.hpp"
 
 // Spin Torque headers
 #include "internal.hpp"
 
 namespace st{
    namespace internal{
+
+      static void stack_xy(const int stack, int& ix, int& iy){
+         const int ny = std::max(1, num_y_stacks);
+         ix = stack / ny;
+         iy = stack - ix * ny;
+      }
+
+      static bool sc1d_rank_owns_column(const int stack){
+#ifdef MPICF
+         const int nrank = std::max(1, vmpi::num_processors);
+         return (stack % nrank) == vmpi::my_rank;
+#else
+         (void)stack;
+         return true;
+#endif
+      }
+
+      // Owners hold their columns. Sum onto rank 0 without leaving another
+      // rank's values in the root buffer for the next step.
+      static void reduce_owned_sum(std::vector<double>& field, const int stride){
+#ifdef MPICF
+         if(vmpi::num_processors <= 1 || field.empty() || stride <= 0) return;
+         std::vector<double> send = field;
+         for(int s = 0; s < num_stacks_y; ++s){
+            if(sc1d_rank_owns_column(s)) continue;
+            const std::size_t off = (std::size_t)s * (std::size_t)stride;
+            const std::size_t n = std::min(send.size(), off + (std::size_t)stride);
+            for(std::size_t i = off; i < n; ++i) send[i] = 0.0;
+         }
+         std::vector<double> recv(vmpi::my_rank == 0 ? field.size() : 0);
+         MPI_Reduce(send.data(), vmpi::my_rank == 0 ? recv.data() : nullptr,
+                    static_cast<int>(send.size()), MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+         if(vmpi::my_rank == 0) field.swap(recv);
+#else
+         (void)field;
+         (void)stride;
+#endif
+      }
+
+      void output_sc1d_fine_constants(){
+         if(!sc1d_enable) return;
+         if(vmpi::my_rank != 0) return;
+         const int nf = sc1d_nf;
+         const int nsub = std::max(1, sc1d_nsub);
+         if(nf <= 0 || num_stacks_y <= 0) return;
+         const double dzA = micro_cell_thickness / (double)nsub;
+         const double cell_xy = micro_cell_size[0];
+
+         zlog << zTs() << "Fine-grid constants go to spin-acc/fine-constants." << std::endl;
+         std::ofstream ofile("spin-acc/fine-constants");
+         if(!ofile){
+            zlog << zTs() << "Could not open spin-acc/fine-constants. Create the spin-acc directory before the run." << std::endl;
+            return;
+         }
+         ofile << "# Fine-grid constants after initialisation, before the laser changes conductivity.\n";
+         ofile << "# z is Angstroms from the substrate. D and De include the mixing sheet through sigma_up+sigma_down.\n";
+         ofile << "# beta_c is the up/down imbalance. sigma_bulk is the conductivity before the sheet.\n";
+         ofile << "# The hot-electron speed keeps the pre-sheet diffusivity and is not a column.\n";
+         ofile << "# ix, iy are the column. iz is the fine cell along that column. Each column is written.\n";
+         ofile << "# ix\tiy\tiz\tx(A)\ty(A)\tz(A)\tbeta_c\tbeta_d\tD(m^2/s)\tDe(m^2/s)\tlambda_sdl(m)\tlambda_phi(m)\tJsd(J)\tchi\tsa_inf(C/m^3)\tsigma(S/m)\tsigma_bulk(S/m)\tS(V/K)\tbeta_seebeck\tP_hot\toccupied\tconnected\tspacing\tnatom\n";
+         ofile << std::scientific << std::setprecision(6);
+         for(int stack = 0; stack < num_stacks_y; ++stack){
+            const int start = stack_index_y[stack];
+            int ix = 0;
+            int iy = 0;
+            stack_xy(stack, ix, iy);
+            const double xA = (pos[3*start+0] + 0.5) * cell_xy;
+            const double yA = (pos[3*start+1] + 0.5) * cell_xy;
+            const std::size_t base = (std::size_t)stack * (std::size_t)nf;
+            for(int i = 0; i < nf; ++i){
+               const std::size_t c = base + (std::size_t)i;
+               const double zA = (i + 0.5) * dzA;
+               ofile << ix << "\t" << iy << "\t" << i << "\t";
+               ofile << std::fixed << std::setprecision(2);
+               ofile << xA << "\t" << yA << "\t" << zA << "\t";
+               ofile << std::scientific << std::setprecision(6);
+               const unsigned char mask = (c < sc1d_cell_mask.size()) ? sc1d_cell_mask[c] : 0;
+               const double natom = (c < sc1d_natom_fine.size()) ? sc1d_natom_fine[c] : 0.0;
+               const double sigma_bulk = (c < sc1d_sigma_bulk_fine.size()) ? sc1d_sigma_bulk_fine[c] : 0.0;
+               ofile << sc1d_Bc_fine[c] << "\t" << sc1d_Bd_fine[c] << "\t"
+                     << sc1d_D_fine[c] << "\t" << sc1d_D_fine[c] << "\t"
+                     << sc1d_lsf_fine[c] << "\t" << sc1d_lphi_fine[c] << "\t"
+                     << sc1d_Jsd_fine[c] << "\t" << sc1d_chi_fine[c] << "\t"
+                     << sc1d_sa_inf_fine[c] << "\t" << sc1d_sigma_fine[c] << "\t"
+                     << sigma_bulk << "\t"
+                     << sc1d_seebeck_fine[c] << "\t" << sc1d_beta_seebeck_fine[c] << "\t"
+                     << sc1d_phot_fine[c] << "\t"
+                     << ((mask & sc1d_mask_occupied) ? 1 : 0) << "\t"
+                     << ((mask & sc1d_mask_connected) ? 1 : 0) << "\t"
+                     << ((mask & sc1d_mask_spacing) ? 1 : 0) << "\t"
+                     << natom << "\n";
+            }
+         }
+      }
+
+      static void output_sc1d_verbose(const std::string& filename,
+                                      const std::string& stage,
+                                      const unsigned long index){
+         const int nf = sc1d_nf;
+         const int nsub = std::max(1, sc1d_nsub);
+         const int nface = nf + 1;
+         if(nf <= 0) return;
+         reduce_owned_sum(sc1d_ns_fine, nf);
+         reduce_owned_sum(sc1d_ne_fine, nf);
+         reduce_owned_sum(sc1d_V_fine, nf);
+         reduce_owned_sum(sc1d_Jc_edge_fine, nface);
+         reduce_owned_sum(sc1d_J_restore_edge, nface);
+         reduce_owned_sum(sc1d_J_cd_edge, nface);
+         reduce_owned_sum(sc1d_J_sd_edge, nface);
+         reduce_owned_sum(sc1d_J_seebeck_edge, nface);
+         reduce_owned_sum(sc1d_J_hot_edge, nface);
+         reduce_owned_sum(sc1d_Js_fine, 3 * nf);
+         reduce_owned_sum(sc1d_mhat_fine, 3 * nf);
+         if(vmpi::my_rank != 0) return;
+
+         const double dzA = micro_cell_thickness / (double)nsub;
+         const double cell_xy = micro_cell_size[0];
+         std::ofstream ofile(filename.c_str());
+         if(!ofile) return;
+         ofile << "# stage " << stage << " index " << index
+               << " step " << sc1d_step_counter << " sim_time " << sim::time << "\n";
+         ofile << "# One row per fine cell of each column. z is the cell centre.\n";
+         ofile << "# ix, iy are the column. iz is the fine cell. Verbose keeps the columns separate.\n";
+         ofile << "# Charge components and Jc are the average of the two faces of that cell, in A/m^2.\n";
+         ofile << "# Jc is the stored series current, including the tunnel current on an insulating face.\n";
+         ofile << "# V is the fine-cell potential in volts.\n";
+         ofile << "# ix\tiy\tiz\tx(A)\ty(A)\tz(A)\tns(m^-3)\tne(m^-3)\tV(V)\tJ_field\tJ_cd\tJ_sd\tJ_seebeck\tJ_hot\tJc\tJs_x(A/m^2)\tJs_y(A/m^2)\tJs_z(A/m^2)\tSa_x(C/m^3)\tSa_y(C/m^3)\tSa_z(C/m^3)\tm_x\tm_y\tm_z\n";
+         for(int stack = 0; stack < num_stacks_y; ++stack){
+            const int start = stack_index_y[stack];
+            int ix = 0;
+            int iy = 0;
+            stack_xy(stack, ix, iy);
+            const double xA = (pos[3*start+0] + 0.5) * cell_xy;
+            const double yA = (pos[3*start+1] + 0.5) * cell_xy;
+            const std::size_t base = (std::size_t)stack * (std::size_t)nf;
+            const std::size_t ebase = (std::size_t)stack * (std::size_t)nface;
+            const double* ns = sc1d_ns_fine.data() + base;
+            const double* ne = sc1d_ne_fine.data() + base;
+            const double* Vp = sc1d_V_fine.data() + base;
+            const double* Jc = sc1d_Jc_edge_fine.data() + ebase;
+            const double* S = sc1d_Sfine.data() + base * 3u;
+            const double* Js = sc1d_Js_fine.data() + base * 3u;
+            const double* mh = sc1d_mhat_fine.data() + base * 3u;
+            const double* Jf = sc1d_J_restore_edge.data() + ebase;
+            const double* Jcd = sc1d_J_cd_edge.data() + ebase;
+            const double* Jsd = sc1d_J_sd_edge.data() + ebase;
+            const double* Jsee = sc1d_J_seebeck_edge.data() + ebase;
+            const double* Jhot = sc1d_J_hot_edge.data() + ebase;
+            for(int i = 0; i < nf; ++i){
+               const double zA = (static_cast<double>(i) + 0.5) * dzA;
+               ofile << ix << "\t" << iy << "\t" << i << "\t";
+               const double jf = 0.5 * (Jf[i] + Jf[i + 1]);
+               const double jcd = 0.5 * (Jcd[i] + Jcd[i + 1]);
+               const double jsd = 0.5 * (Jsd[i] + Jsd[i + 1]);
+               const double jsee = 0.5 * (Jsee[i] + Jsee[i + 1]);
+               const double jhot = 0.5 * (Jhot[i] + Jhot[i + 1]);
+               const double jc = 0.5 * (Jc[i] + Jc[i + 1]);
+               ofile << std::fixed << std::setprecision(2);
+               ofile << xA << "\t" << yA << "\t" << zA << "\t";
+               ofile << std::scientific << std::setprecision(6);
+               ofile << ns[i] << "\t" << ne[i] << "\t" << Vp[i] << "\t"
+                     << jf << "\t" << jcd << "\t" << jsd << "\t"
+                     << jsee << "\t" << jhot << "\t"
+                     << jc << "\t"
+                     << Js[3*i+0] << "\t" << Js[3*i+1] << "\t" << Js[3*i+2] << "\t"
+                     << S[3*i+0] << "\t" << S[3*i+1] << "\t" << S[3*i+2] << "\t"
+                     << mh[3*i+0] << "\t" << mh[3*i+1] << "\t" << mh[3*i+2] << "\n";
+            }
+         }
+      }
+
+      static void reduce_sc1d_dynamics(){
+         const int nf = sc1d_nf;
+         const int nface = nf + 1;
+         if(nf <= 0) return;
+         reduce_owned_sum(sc1d_ns_fine, nf);
+         reduce_owned_sum(sc1d_ne_fine, nf);
+         reduce_owned_sum(sc1d_J_restore_edge, nface);
+         reduce_owned_sum(sc1d_J_cd_edge, nface);
+         reduce_owned_sum(sc1d_J_sd_edge, nface);
+         reduce_owned_sum(sc1d_J_seebeck_edge, nface);
+         reduce_owned_sum(sc1d_J_hot_edge, nface);
+         reduce_owned_sum(sc1d_Js_fine, 3 * nf);
+         reduce_owned_sum(sc1d_mhat_fine, 3 * nf);
+      }
+
+      struct sc1d_sample_t {
+         double ns, ne, jf, jcd, jsd, jsee, jhot;
+         double jsx, jsy, jsz, sax, say, saz, mx, my, mz;
+         int n;
+      };
+
+      static void add_fine_cell(const int stack, const int i, sc1d_sample_t& s){
+         const int nf = sc1d_nf;
+         if(i < 0 || i >= nf) return;
+         const std::size_t base = (std::size_t)stack * (std::size_t)nf + (std::size_t)i;
+         const std::size_t ebase = (std::size_t)stack * (std::size_t)(nf + 1);
+         const double* S = sc1d_Sfine.data() + (std::size_t)stack * (std::size_t)nf * 3u;
+         const double* Js = sc1d_Js_fine.data() + (std::size_t)stack * (std::size_t)nf * 3u;
+         const double* mh = sc1d_mhat_fine.data() + (std::size_t)stack * (std::size_t)nf * 3u;
+         s.ns += sc1d_ns_fine[base];
+         s.ne += sc1d_ne_fine[base];
+         s.jf += 0.5 * (sc1d_J_restore_edge[ebase + (std::size_t)i] + sc1d_J_restore_edge[ebase + (std::size_t)i + 1u]);
+         s.jcd += 0.5 * (sc1d_J_cd_edge[ebase + (std::size_t)i] + sc1d_J_cd_edge[ebase + (std::size_t)i + 1u]);
+         s.jsd += 0.5 * (sc1d_J_sd_edge[ebase + (std::size_t)i] + sc1d_J_sd_edge[ebase + (std::size_t)i + 1u]);
+         s.jsee += 0.5 * (sc1d_J_seebeck_edge[ebase + (std::size_t)i] + sc1d_J_seebeck_edge[ebase + (std::size_t)i + 1u]);
+         s.jhot += 0.5 * (sc1d_J_hot_edge[ebase + (std::size_t)i] + sc1d_J_hot_edge[ebase + (std::size_t)i + 1u]);
+         s.jsx += Js[3 * i + 0];
+         s.jsy += Js[3 * i + 1];
+         s.jsz += Js[3 * i + 2];
+         s.sax += S[3 * i + 0];
+         s.say += S[3 * i + 1];
+         s.saz += S[3 * i + 2];
+         s.mx += mh[3 * i + 0];
+         s.my += mh[3 * i + 1];
+         s.mz += mh[3 * i + 2];
+         s.n += 1;
+      }
+
+      static void add_sample(sc1d_sample_t& dst, const sc1d_sample_t& src){
+         dst.ns += src.ns;
+         dst.ne += src.ne;
+         dst.jf += src.jf;
+         dst.jcd += src.jcd;
+         dst.jsd += src.jsd;
+         dst.jsee += src.jsee;
+         dst.jhot += src.jhot;
+         dst.jsx += src.jsx;
+         dst.jsy += src.jsy;
+         dst.jsz += src.jsz;
+         dst.sax += src.sax;
+         dst.say += src.say;
+         dst.saz += src.saz;
+         dst.mx += src.mx;
+         dst.my += src.my;
+         dst.mz += src.mz;
+         dst.n += src.n;
+      }
+
+      static void write_sc1d_sample(std::ofstream& ofile, const int ix, const int iy, const int iz,
+                                    const double xA, const double yA, const double zA, const sc1d_sample_t& s){
+         if(s.n <= 0) return;
+         const double inv = 1.0 / static_cast<double>(s.n);
+         const double sax = s.sax * inv;
+         const double say = s.say * inv;
+         const double saz = s.saz * inv;
+         double mx = s.mx * inv;
+         double my = s.my * inv;
+         double mz = s.mz * inv;
+         const double mm = std::sqrt(mx * mx + my * my + mz * mz);
+         if(mm > 1.0e-12){
+            mx /= mm;
+            my /= mm;
+            mz /= mm;
+         }
+         const double sa_mag = std::sqrt(sax * sax + say * say + saz * saz);
+         ofile << ix << "\t" << iy << "\t" << iz << "\t";
+         ofile << std::fixed << std::setprecision(2);
+         ofile << xA << "\t" << yA << "\t" << zA << "\t";
+         ofile << std::scientific << std::setprecision(6);
+         ofile << (s.ns * inv) << "\t" << (s.ne * inv) << "\t"
+               << (s.jf * inv) << "\t" << (s.jcd * inv) << "\t" << (s.jsd * inv) << "\t"
+               << (s.jsee * inv) << "\t" << (s.jhot * inv) << "\t"
+               << ((s.jf + s.jcd + s.jsd + s.jsee + s.jhot) * inv) << "\t"
+               << (s.jsx * inv) << "\t" << (s.jsy * inv) << "\t" << (s.jsz * inv) << "\t"
+               << sax << "\t" << say << "\t" << saz << "\t" << sa_mag << "\t"
+               << mx << "\t" << my << "\t" << mz << "\n";
+      }
+
+      static void output_sc1d_profile(const std::string& filename, const std::string& stage, const unsigned long index){
+         const int nf = sc1d_nf;
+         const int nsub = std::max(1, sc1d_nsub);
+         if(nf <= 0) return;
+         reduce_sc1d_dynamics();
+         if(vmpi::my_rank != 0) return;
+         const double dzA = micro_cell_thickness / static_cast<double>(nsub);
+         std::ofstream ofile(filename.c_str());
+         if(!ofile) return;
+         ofile << "# stage " << stage << " index " << index
+               << " step " << sc1d_step_counter << " sim_time " << sim::time << "\n";
+         ofile << "# One row per output cell. The columns are summed. ix and iy are -1.\n";
+         ofile << "# Coarse bins average a unit cell. Atomic bins average a field window. The sum is over columns.\n";
+         ofile << "# Jc is the open-circuit residual, averaged with the same cells as the other columns.\n";
+         ofile << "# ix\tiy\tiz\tx(A)\ty(A)\tz(A)\tns(m^-3)\tne(m^-3)\tJ_field\tJ_cd\tJ_sd\tJ_seebeck\tJ_hot\tJc\tJs_x(A/m^2)\tJs_y(A/m^2)\tJs_z(A/m^2)\tSa_x(C/m^3)\tSa_y(C/m^3)\tSa_z(C/m^3)\tSa_mag(C/m^3)\tm_x\tm_y\tm_z\n";
+         const double xA = 0.5 * cs::system_dimensions[0];
+         const double yA = 0.5 * cs::system_dimensions[1];
+         if(sc1d_output_mode == sc1d_out_atomic){
+            for(std::size_t p = 0; p < sc1d_plane_z.size(); ++p){
+               const int lo = sc1d_plane_lo[p];
+               const int hi = sc1d_plane_hi[p];
+               if(lo < 0 || hi < lo) continue;
+               sc1d_sample_t sum = {};
+               int per = 0;
+               for(int stack = 0; stack < num_stacks_y; ++stack){
+                  sc1d_sample_t s = {};
+                  for(int i = lo; i <= hi; ++i) add_fine_cell(stack, i, s);
+                  if(per == 0) per = s.n;
+                  add_sample(sum, s);
+               }
+               sum.n = per;
+               write_sc1d_sample(ofile, -1, -1, static_cast<int>(p), xA, yA, sc1d_plane_z[p], sum);
+            }
+         } else {
+            double uc = cs::unit_cell.dimensions[2];
+            if(!(uc > 0.0)) uc = micro_cell_thickness;
+            const double z_max = static_cast<double>(nf) * dzA;
+            const int nbin = std::max(1, static_cast<int>(std::ceil(z_max / uc)));
+            for(int b = 0; b < nbin; ++b){
+               const double z0 = static_cast<double>(b) * uc;
+               const double z1 = z0 + uc;
+               sc1d_sample_t sum = {};
+               int per = 0;
+               for(int stack = 0; stack < num_stacks_y; ++stack){
+                  sc1d_sample_t s = {};
+                  for(int i = 0; i < nf; ++i){
+                     const double z = (static_cast<double>(i) + 0.5) * dzA;
+                     if(z < z0 || z >= z1) continue;
+                     add_fine_cell(stack, i, s);
+                  }
+                  if(per == 0) per = s.n;
+                  add_sample(sum, s);
+               }
+               sum.n = per;
+               write_sc1d_sample(ofile, -1, -1, b, xA, yA, z0 + 0.5 * uc, sum);
+            }
+         }
+      }
+
       //-----------------------------------------------------------------------------
       // Function to output 1D spin currents data
       //-----------------------------------------------------------------------------
@@ -53,69 +384,21 @@ namespace st{
             index = static_cast<unsigned long>(sim::time - sim::equilibration_time);
          }
          const bool due = (index > 0UL) && (index % static_cast<unsigned long>(rate) == 0UL);
-         if(due){
-            const int size = ns_final.size(); // number of cells
-            const int size3 = js_final.size();
-
-            // determine file name
+         if(due && sc1d_output_mode == sc1d_out_verbose){
             std::stringstream filename;
             filename << "spin-acc/" << stage << "-"
                      << std::setw(7) << std::setfill('0') << index;
-
-            const int size_sa = sa_final.size(); // spin accumulation size (3*cells)
-            #ifdef MPICF
-               // Cell fields were summed onto every rank in broadcast_cell_fields.
-               // Only rank 0 writes the file.
-               if(vmpi::my_rank == 0) {
-                  ns_sum = ns_final;
-                  ne_sum = ne_final;
-                  jc_sum = jc_final;
-                  js_sum = js_final;
-                  sa_sum = sa_final;
-               }
-            #else
-               // serial copy
-               ns_sum = ns_final;
-               ne_sum = ne_final;
-               jc_sum = jc_final;
-               js_sum = js_final;
-               sa_sum = sa_final;
-            #endif
-
-            if(vmpi::my_rank == 0) {
-               std::ofstream ofile;
-               ofile.open(std::string(filename.str()).c_str());
-               // Header: positions in Angstroms, densities in SI, currents in A/m^2, spin accumulation in C/m^3
-               ofile << "# stage " << stage << " index " << index
-                     << " step " << sc1d_step_counter << " sim_time " << sim::time << std::endl;
-               ofile << "# x(A)\ty(A)\tz(A)\tns(m^-3)\tne(m^-3)\tJc(A/m^2)\tJs_x(A/m^2)\tJs_y(A/m^2)\tJs_z(A/m^2)\tSa_x(C/m^3)\tSa_y(C/m^3)\tSa_z(C/m^3)\tSa_mag(C/m^3)\tm_x\tm_y\tm_z" << std::endl;
-               
-               // Get cell size for converting indices to physical positions
-               const double cell_size_xy = micro_cell_size[0]; // Angstroms
-               const double cell_size_z  = micro_cell_thickness; // Angstroms
-               
-               for(int cell=0; cell<size; ++cell){
-                  if(cell_natom[cell] == 0) continue;
-                  
-                  // Convert cell indices to physical position (center of cell, in Angstroms)
-                  const double x_A = (pos[3*cell+0] + 0.5) * cell_size_xy;
-                  const double y_A = (pos[3*cell+1] + 0.5) * cell_size_xy;
-                  const double z_A = (pos[3*cell+2] + 0.5) * cell_size_z;
-                  const double mag = sqrt(m[3*cell+0]*m[3*cell+0] + m[3*cell+1]*m[3*cell+1] + m[3*cell+2]*m[3*cell+2]);
-                  const double mag_norm = (mag <= 1.0e-4) ? 0.0: 1/mag;
-                  const double sa_mag = sqrt(sa_sum[3*cell+0]*sa_sum[3*cell+0] + sa_sum[3*cell+1]*sa_sum[3*cell+1] + sa_sum[3*cell+2]*sa_sum[3*cell+2]);
-                  ofile << std::fixed << std::setprecision(2);
-                  ofile << x_A << "\t" << y_A << "\t" << z_A << "\t";
-                  ofile << std::scientific << std::setprecision(6);
-                  ofile << ns_sum[cell] << "\t" << ne_sum[cell] << "\t" << jc_sum[cell] << "\t";
-                  ofile << js_sum[3*cell+0] << "\t" << js_sum[3*cell+1] << "\t" << js_sum[3*cell+2] << "\t";
-                  ofile << sa_sum[3*cell+0] << "\t" << sa_sum[3*cell+1] << "\t" << sa_sum[3*cell+2] << "\t" << sa_mag << "\t";
-                  
-                  ofile << m[3*cell+0]*mag_norm << "\t" << m[3*cell+1]*mag_norm << "\t" << m[3*cell+2]*mag_norm << "\n";
-               }
-               ofile.close();
-            }
+            output_sc1d_verbose(filename.str(), stage, index);
             config_file_counter++;
+            return;
+         }
+         if(due){
+            std::stringstream filename;
+            filename << "spin-acc/" << stage << "-"
+                     << std::setw(7) << std::setfill('0') << index;
+            output_sc1d_profile(filename.str(), stage, index);
+            config_file_counter++;
+            return;
          }
 
       }
@@ -208,6 +491,71 @@ namespace st{
          std::cout << line.str() << std::endl;
          zlog << zTs() << line.str() << std::endl;
 #endif
+      }
+
+      void report_sc1d_profile(const double run_s){
+         if(!sc1d_enable) return;
+
+         const char* scheme = (sc1d_diffusion == sc1d_diff_bdf2) ? "bdf2" : "backward-euler";
+         double diffusion = sc1d_time_diffusion;
+         double charge = sc1d_time_charge;
+         double eom = sc1d_time_eom;
+         double prolong = sc1d_time_interp;
+         double io = sc1d_time_io;
+         double drift = sc1d_time_spin_current;
+         double bcast = sc1d_time_bcast;
+         double coarsen = sc1d_time_coarsen;
+         double other = sc1d_time_other;
+         double total = sc1d_time_total;
+#ifdef MPICF
+         double local_times[10] = {
+            diffusion, charge, eom, prolong, io, drift, bcast, coarsen, other, total
+         };
+         const int nrank = std::max(1, vmpi::num_processors);
+         std::vector<double> all_times((std::size_t)nrank * 10u, 0.0);
+         MPI_Allgather(local_times, 10, MPI_DOUBLE, all_times.data(), 10, MPI_DOUBLE, MPI_COMM_WORLD);
+         if(vmpi::my_rank != 0) return;
+         int busiest = 0;
+         double busiest_work = -1.0;
+         for(int r = 0; r < nrank; ++r){
+            const double* row = all_times.data() + (std::size_t)r * 10u;
+            const double work = row[0] + row[1] + row[2] + row[3];
+            if(work > busiest_work){
+               busiest_work = work;
+               busiest = r;
+            }
+         }
+         const double* best = all_times.data() + (std::size_t)busiest * 10u;
+         diffusion = best[0];
+         charge = best[1];
+         eom = best[2];
+         prolong = best[3];
+         io = best[4];
+         drift = best[5];
+         bcast = best[6];
+         coarsen = best[7];
+         other = best[8];
+         total = best[9];
+#endif
+         const double inv = (total > 0.0) ? (100.0 / total) : 0.0;
+         const double of_run = (run_s > 0.0) ? (100.0 * total / run_s) : 0.0;
+
+         std::ostringstream out;
+         out << std::fixed << std::setprecision(3);
+         out << "Spin-current profile, initialisation excluded. Scheme " << scheme << "\n";
+         out << "  diffusion_solve        " << diffusion << " s  " << (diffusion * inv) << "% of spin steps\n";
+         out << "  charge_poisson         " << charge << " s  " << (charge * inv) << "% of spin steps\n";
+         out << "  spin_eom               " << eom << " s  " << (eom * inv) << "% of spin steps\n";
+         out << "  m_prolongation         " << prolong << " s  " << (prolong * inv) << "% of spin steps\n";
+         out << "  io                     " << io << " s  " << (io * inv) << "% of spin steps\n";
+         out << "  drift_assembly         " << drift << " s  " << (drift * inv) << "% of spin steps\n";
+         out << "  coarsen_torque         " << coarsen << " s  " << (coarsen * inv) << "% of spin steps\n";
+         out << "  broadcast              " << bcast << " s  " << (bcast * inv) << "% of spin steps\n";
+         out << "  other                  " << other << " s  " << (other * inv) << "% of spin steps\n";
+         out << "  spin_steps_total       " << total << " s  " << of_run << "% of simulation run time\n";
+
+         std::cout << out.str() << std::flush;
+         zlog << zTs() << out.str() << std::flush;
       }
 
 
@@ -631,4 +979,9 @@ namespace st{
    }
 
    } // end of internal namespace
+
+   void report_sc1d_profile(const double run_s){
+      internal::report_sc1d_profile(run_s);
+   }
+
 } // end of st namespace

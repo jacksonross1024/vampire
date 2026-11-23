@@ -442,7 +442,7 @@ namespace sim{
       test2 = "let-diffusion-constant";
       if( word==test || word==test2 ){
          double dc = atof(value.c_str());
-         vin::check_for_valid_value(dc, word, line, prefix, unit, "none", 1.0e-9, 100.0,"material"," 1.0e-9 - 100 m^2/s");
+         vin::check_for_valid_value(dc, word, line, prefix, unit, "none", 0.0, 100.0,"material"," 0 - 100 m^2/s");
          sim::internal::mp[super_index].let_diffusion.set(dc);
          return true;
       }

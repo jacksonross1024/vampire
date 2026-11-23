@@ -38,6 +38,8 @@ namespace ltmp{
          double electron_thermal_conductivity = 0.0;   /// spin diffusion length
          double phonon_thermal_conductivity = 0.0;    /// diffusion constant
          double einstein_temp = 0.0;
+         double joule_electron_fraction = 0.0; /// fraction of Joule power added to Te
+         double joule_phonon_fraction = 0.0;   /// fraction of Joule power added to Tp
       
       };
 
@@ -54,6 +56,8 @@ namespace ltmp{
       extern std::vector<double> phonon_heat_capacity; //J/m^3/K
       extern std::vector<double> electron_heat_capacity; //J/m^3/K 
       extern std::vector<double> Einstein_temperature;
+      extern std::vector<double> joule_electron_fraction;
+      extern std::vector<double> joule_phonon_fraction;
 
       extern std::vector< double> Debeye_phonon_constant;
       extern double pump_power; // laser pump power

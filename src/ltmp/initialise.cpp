@@ -185,6 +185,8 @@ void initialise(const double system_dimensions_x,
    ltmp::internal::phonon_heat_capacity.resize(ltmp::internal::num_cells, 0.0);  //J/m^3/K
    ltmp::internal::electron_heat_capacity.resize(ltmp::internal::num_cells, 0.0);  //J/m^3/K
    ltmp::internal::Einstein_temperature.resize(ltmp::internal::num_cells, 0.0);  //J/m^3/K
+   ltmp::internal::joule_electron_fraction.resize(ltmp::internal::num_cells, 0.0);
+   ltmp::internal::joule_phonon_fraction.resize(ltmp::internal::num_cells, 0.0);
 
    std::vector<int> num_atoms_in_cell(ltmp::internal::num_cells, 0);
 
@@ -262,6 +264,8 @@ void initialise(const double system_dimensions_x,
          ltmp::internal::phonon_thermal_conductivity[cell] += ltmp::internal::mp.at(mat).phonon_thermal_conductivity;
          ltmp::internal::electron_phonon_coupling_constant[cell] += ltmp::internal::mp.at(mat).electron_phonon_coupling_constant;
          ltmp::internal::Einstein_temperature[cell] += ltmp::internal::mp.at(mat).einstein_temp;
+         ltmp::internal::joule_electron_fraction[cell] += ltmp::internal::mp.at(mat).joule_electron_fraction;
+         ltmp::internal::joule_phonon_fraction[cell] += ltmp::internal::mp.at(mat).joule_phonon_fraction;
          // std::cout << ltmp::internal::mp.at(mat).electron_heat_capacity << ", " << ltmp::internal::mp.at(mat).phonon_heat_capacity << ", " << ltmp::internal::mp.at(mat).electron_heat_capacity
       
          num_atoms_in_cell.at(cell)++;
@@ -327,6 +331,8 @@ void initialise(const double system_dimensions_x,
       ltmp::internal::phonon_thermal_conductivity[cell] += ltmp::internal::mp.at(mat).phonon_thermal_conductivity;
       ltmp::internal::electron_phonon_coupling_constant[cell] += ltmp::internal::mp.at(mat).electron_phonon_coupling_constant;
       ltmp::internal::Einstein_temperature[cell] += ltmp::internal::mp.at(mat).einstein_temp;
+      ltmp::internal::joule_electron_fraction[cell] += ltmp::internal::mp.at(mat).joule_electron_fraction;
+      ltmp::internal::joule_phonon_fraction[cell] += ltmp::internal::mp.at(mat).joule_phonon_fraction;
       num_atoms_in_cell.at(cell)++;
    }
    {
@@ -345,6 +351,8 @@ void initialise(const double system_dimensions_x,
          MPI_Allreduce(MPI_IN_PLACE, &ltmp::internal::phonon_thermal_conductivity[0],   ltmp::internal::num_cells,   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &ltmp::internal::electron_phonon_coupling_constant[0],   ltmp::internal::num_cells,   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &ltmp::internal::Einstein_temperature[0],   ltmp::internal::num_cells,   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &ltmp::internal::joule_electron_fraction[0],   ltmp::internal::num_cells,   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &ltmp::internal::joule_phonon_fraction[0],   ltmp::internal::num_cells,   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &num_atoms_in_cell[0],   ltmp::internal::num_cells,   MPI_INT,MPI_SUM, MPI_COMM_WORLD);
 
          
@@ -364,6 +372,8 @@ void initialise(const double system_dimensions_x,
             ltmp::internal::phonon_thermal_conductivity[cell] /= num_atoms_in_cell.at(cell);
             ltmp::internal::electron_phonon_coupling_constant[cell] /= num_atoms_in_cell.at(cell);
             ltmp::internal::Einstein_temperature[cell] /= num_atoms_in_cell.at(cell);
+            ltmp::internal::joule_electron_fraction[cell] /= num_atoms_in_cell.at(cell);
+            ltmp::internal::joule_phonon_fraction[cell] /= num_atoms_in_cell.at(cell);
             if(!(ltmp::internal::electron_heat_capacity[cell] > 0.0) || !std::isfinite(ltmp::internal::electron_heat_capacity[cell]) ||
                !(ltmp::internal::phonon_heat_capacity[cell] > 0.0) || !std::isfinite(ltmp::internal::phonon_heat_capacity[cell])){
                terminaltextcolor(RED);
@@ -394,6 +404,8 @@ void initialise(const double system_dimensions_x,
             ltmp::internal::electron_thermal_conductivity[cell] = ltmp::internal::electron_thermal_conductivity[cell-1];
             ltmp::internal::phonon_thermal_conductivity[cell] = ltmp::internal::phonon_thermal_conductivity[cell-1];
             ltmp::internal::Einstein_temperature[cell] = ltmp::internal::Einstein_temperature[cell-1];
+            ltmp::internal::joule_electron_fraction[cell] = ltmp::internal::joule_electron_fraction[cell-1];
+            ltmp::internal::joule_phonon_fraction[cell] = ltmp::internal::joule_phonon_fraction[cell-1];
          // std::cout << "empty cells: " << cell << ", " << ltmp::internal::electron_heat_capacity[cell] << ", " <<\
          //                ltmp::internal::phonon_heat_capacity[cell] << ", " << \
          //                ltmp::internal::electron_thermal_conductivity[cell] << ", " << \

@@ -73,20 +73,11 @@ void initialize_modules(){
       );
 
    //----------------------------------------
-   // Initialise spin torque data
-   //----------------------------------------
-   st::initialise(cs::system_dimensions[0],
-                  cs::system_dimensions[1],
-                  cs::system_dimensions[2],
-                  atoms::x_coord_array,
-                  atoms::y_coord_array,
-                  atoms::z_coord_array,
-                  atoms::type_array,
-                  num_local_atoms);
-
-   //----------------------------------------
    // Initialise local temperature data
    //----------------------------------------
+   // Before spin torque. The 1D spin-current solver reads this profile
+   // while it sizes the fine-grid temperatures and the Einstein conductivity.
+   // The local-temperature module does not read spin-torque state.
    ltmp::initialise(cs::system_dimensions[0],
                   cs::system_dimensions[1],
                   cs::system_dimensions[2],
@@ -104,6 +95,18 @@ void initialize_modules(){
                   mp::dt_SI,
 					   sim::Tmin,
 					   sim::Tmax);
+
+   //----------------------------------------
+   // Initialise spin torque data
+   //----------------------------------------
+   st::initialise(cs::system_dimensions[0],
+                  cs::system_dimensions[1],
+                  cs::system_dimensions[2],
+                  atoms::x_coord_array,
+                  atoms::y_coord_array,
+                  atoms::z_coord_array,
+                  atoms::type_array,
+                  num_local_atoms);
 
    //---------------------------------------------------------------------------
    // Spin transport module

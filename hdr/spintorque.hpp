@@ -89,6 +89,10 @@ namespace st{
    // Jc stays 0, and the step count is spin-currents-1d-relax-steps.
    void equilibrate_spin_currents_1d();
 
+   // End-of-run spin-solver profile. Initialisation is not included.
+   // run_s is the simulation wall time printed just above this report.
+   void report_sc1d_profile(double run_s);
+
    //-----------------------------------------------------------------------------
    // Function for matching spin torque material parameters
    //-----------------------------------------------------------------------------
@@ -107,6 +111,10 @@ namespace st{
    // Check if thermal gradients are enabled and initialized
    //-----------------------------------------------------------------------------
    bool thermal_gradients_enabled();
+
+   // Mean Joule power density (W/m^3) of fine cells whose centres lie in [z_lo, z_hi).
+   // Angstroms. Returns 0 before the first charge solve.
+   double mean_joule_power(double z_lo_angstrom, double z_hi_angstrom);
 
 
 } // end of st namespace

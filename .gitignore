@@ -14,10 +14,18 @@
 *.swp
 *.swo
 
+tests/
 CoF2/*
 Mn2Au/*
 Mn3Sn/*
 ex-stiff/*
+input 
+*.mat 
+dipole-field 
+*.ucf 
+*.log 
+*.dat
+!spintorque/
 #----------------------------------------------
 # Povray files
 #----------------------------------------------
@@ -38,6 +46,7 @@ ex-stiff/*
 *old.hpp
 *.bkp
 *.json
+!compile_commands.json
 vampire.pkg # installation package
 
 dw/*
@@ -55,6 +64,7 @@ vampire_manual.out
 vampire_manual.synctex.gz
 .texpadtmp
 spin*/
+!src/spintorque/
 js*
 sa*
 #----------------------------------------------

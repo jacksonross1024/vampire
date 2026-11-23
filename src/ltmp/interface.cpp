@@ -243,6 +243,22 @@ namespace ltmp{
          return true;
       }
 
+      test="joule-electron-fraction";
+      if(word==test){
+         double num=atof(value.c_str());
+         vin::check_for_valid_value(num, word, line, prefix, unit, "none", 0.0, 1.0,"material"," 0 - 1");
+         ltmp::internal::mp[super_index].joule_electron_fraction = num;
+         return true;
+      }
+
+      test="joule-phonon-fraction";
+      if(word==test){
+         double num=atof(value.c_str());
+         vin::check_for_valid_value(num, word, line, prefix, unit, "none", 0.0, 1.0,"material"," 0 - 1");
+         ltmp::internal::mp[super_index].joule_phonon_fraction = num;
+         return true;
+      }
+
       test="phonon-heat-capacity"; 
       if(word==test){
          double num=atof(value.c_str());

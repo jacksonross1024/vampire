@@ -35,6 +35,19 @@ static double eq6_atom_volume(){
           / natom * 1.0e-30;
 }
 
+// One atom that receives Eq. (6). Window, scale, and the two Tesla coefficients
+// are fixed after the fine grid is built. S and m are the step quantities.
+struct TorqueTerm {
+   int atom;
+   int ncell;
+   std::size_t s_off;
+   double s_scale;
+   double along;
+   double cross;
+};
+
+std::vector<TorqueTerm> torque_terms;
+
 // Serban Eq. (6) as a field the LLG can cross, same algebra as calculate_full_spin_fields.
 // T_S = -(De/λ_J²) m×S − (De/λ_φ²) m×(m×S), added as (V/μ_S) T_S.
 // De/λ_J² is J_sd/(2ℏ), the precession rate already used for S.
@@ -45,80 +58,132 @@ static void apply_sc1d_atom_spin_torque_fields(const std::vector<double>& x_spin
                                                const std::vector<double>& z_spin_array,
                                                const std::vector<int>& atom_type_array,
                                                const std::vector<double>& mu_s_array){
+   (void)atom_type_array;
    (void)mu_s_array;
-   const int natoms = st::internal::num_local_atoms;
-   const int nf = st::internal::sc1d_nf;
-   const bool in_equilibration = (st::internal::sc1d_step_counter <= st::internal::sc1d_relax_steps);
-   const double V_atom = eq6_atom_volume();
-   const double muB_over_e = kMuB / kE;
+   // Relax holds m fixed and the torque at zero. The field arrays are already
+   // zero from initialisation, and this function is the only writer.
+   if(st::internal::sc1d_step_counter <= st::internal::sc1d_relax_steps) return;
 
-   for(int atom=0; atom<natoms; ++atom){
-      st::internal::x_field_array[atom] = 0.0;
-      st::internal::y_field_array[atom] = 0.0;
-      st::internal::z_field_array[atom] = 0.0;
-
-      if(nf <= 0 || st::internal::sc1d_Sfine.empty()) continue;
-      if(atom >= (int)st::internal::sc1d_atom_ls.size()) continue;
-
-      const int ls = st::internal::sc1d_atom_ls[atom];
-      const int i_lo = st::internal::sc1d_atom_fine_lo[atom];
-      const int i_hi = st::internal::sc1d_atom_fine_hi[atom];
-      if(ls < 0 || i_lo < 0 || i_hi < i_lo || i_hi >= nf) continue;
-
-      const int mat = atom_type_array[atom];
-      if(mat < 0 || mat >= (int)st::internal::mp.size()) continue;
-      const double Jsd = st::internal::mp[mat].sd_exchange;
-      if(Jsd <= 0.0) continue;
-      if(in_equilibration) continue;
-
-      const double* Sbase = st::internal::sc1d_Sfine.data() + (std::size_t)ls * (std::size_t)nf * 3u;
-
+   const double* Sfine = st::internal::sc1d_Sfine.data();
+   const double* mx = x_spin_array.data();
+   const double* my = y_spin_array.data();
+   const double* mz = z_spin_array.data();
+   double* Hx = st::internal::x_field_array.data();
+   double* Hy = st::internal::y_field_array.data();
+   double* Hz = st::internal::z_field_array.data();
+   const TorqueTerm* terms = torque_terms.data();
+   const std::size_t nterm = torque_terms.size();
+   for(std::size_t t = 0; t < nterm; ++t){
+      const TorqueTerm& term = terms[t];
+      const double* S = Sfine + term.s_off;
       double sx = 0.0;
       double sy = 0.0;
       double sz = 0.0;
-      int ncell = 0;
-      for(int i=i_lo; i<=i_hi; ++i){
-         sx += Sbase[3*i+0];
-         sy += Sbase[3*i+1];
-         sz += Sbase[3*i+2];
-         ncell++;
+      const int ncell = term.ncell;
+      for(int i = 0; i < ncell; ++i){
+         sx += S[3 * i];
+         sy += S[3 * i + 1];
+         sz += S[3 * i + 2];
       }
-      if(ncell <= 0) continue;
-      const double inv = 1.0 / (double)ncell;
-      sx *= inv * muB_over_e;
-      sy *= inv * muB_over_e;
-      sz *= inv * muB_over_e;
+      const double scale = term.s_scale;
+      sx *= scale;
+      sy *= scale;
+      sz *= scale;
 
-      const double mu = mp::material[mat].mu_s_SI;
-      const double gamma = mp::gamma_SI * mp::material[mat].gamma_rel;
-      if(!(mu > 0.0) || !(gamma > 0.0) || !(V_atom > 0.0)) continue;
-
-      const double De = st::internal::mp[mat].diffusion;
-      const double lphi = st::internal::mp[mat].lambda_phi;
-      const double c_field = Jsd / (2.0 * kHbar);
-      const double c_damp = (lphi > 0.0 && De > 0.0) ? (De / (lphi * lphi)) : 0.0;
-      const double pref = V_atom / (gamma * mu);
-      const double alpha = mp::material[mat].alpha;
-      const double along = pref * (c_field + alpha * c_damp);
-      const double cross = pref * (c_damp - alpha * c_field);
-
-      const double mx = x_spin_array[atom];
-      const double my = y_spin_array[atom];
-      const double mz = z_spin_array[atom];
-      const double cx = my * sz - mz * sy;
-      const double cy = mz * sx - mx * sz;
-      const double cz = mx * sy - my * sx;
-
-      st::internal::x_field_array[atom] = along * sx + cross * cx;
-      st::internal::y_field_array[atom] = along * sy + cross * cy;
-      st::internal::z_field_array[atom] = along * sz + cross * cz;
+      const int atom = term.atom;
+      const double px = mx[atom];
+      const double py = my[atom];
+      const double pz = mz[atom];
+      const double cx = py * sz - pz * sy;
+      const double cy = pz * sx - px * sz;
+      const double cz = px * sy - py * sx;
+      Hx[atom] = term.along * sx + term.cross * cx;
+      Hy[atom] = term.along * sy + term.cross * cy;
+      Hz[atom] = term.along * sz + term.cross * cz;
    }
 }
 
 }
 
 namespace st{
+namespace internal{
 
+void cache_sc1d_torque_atoms(){
+   torque_terms.clear();
+   const int natoms = num_local_atoms;
+   const int nf = sc1d_nf;
+   const int nmat = static_cast<int>(mp.size());
+   const double V_atom = eq6_atom_volume();
+   if(natoms <= 0 || nf <= 0 || !(V_atom > 0.0) || nmat <= 0) return;
+
+   const double muB_over_e = kMuB / kE;
+   const bool use_fine_rates = !sc1d_Jsd_fine.empty()
+      && !sc1d_D_fine.empty()
+      && !sc1d_lphi_fine.empty();
+   const int* stack_of = sc1d_atom_ls.data();
+   const int* lo_of = sc1d_atom_fine_lo.data();
+   const int* hi_of = sc1d_atom_fine_hi.data();
+   const int* mat_of = atoms::type_array.data();
+   const double* Jf_all = sc1d_Jsd_fine.data();
+   const double* Df_all = sc1d_D_fine.data();
+   const double* Lf_all = sc1d_lphi_fine.data();
+   const std::size_t nf_sz = static_cast<std::size_t>(nf);
+
+   torque_terms.reserve(static_cast<std::size_t>(natoms));
+   for(int atom = 0; atom < natoms; ++atom){
+      const int ls = stack_of[atom];
+      const int i_lo = lo_of[atom];
+      const int i_hi = hi_of[atom];
+      if(ls < 0 || i_lo < 0 || i_hi < i_lo || i_hi >= nf) continue;
+
+      const int mat = mat_of[atom];
+      if(mat < 0 || mat >= nmat) continue;
+      const double Jsd = mp[static_cast<std::size_t>(mat)].sd_exchange;
+      // Zero marks no s-d coupling. A negative material exchange is kept.
+      if(Jsd == 0.0) continue;
+
+      const double mu = mp::material[static_cast<std::size_t>(mat)].mu_s_SI;
+      const double gamma = mp::gamma_SI * mp::material[static_cast<std::size_t>(mat)].gamma_rel;
+      if(!(mu > 0.0) || !(gamma > 0.0)) continue;
+
+      const int ncell = i_hi - i_lo + 1;
+      double c_field = Jsd / (2.0 * kHbar);
+      double c_damp = 0.0;
+      const double De = mp[static_cast<std::size_t>(mat)].diffusion;
+      const double lphi = mp[static_cast<std::size_t>(mat)].lambda_phi;
+      c_damp = (lphi > 0.0 && De > 0.0) ? (De / (lphi * lphi)) : 0.0;
+      // The fine grid already holds the prolonged rates, including an analytic
+      // sheet or a diffuse in-cell mix.
+      if(use_fine_rates){
+         const std::size_t base = static_cast<std::size_t>(ls) * nf_sz;
+         const double* Jf = Jf_all + base;
+         const double* Df = Df_all + base;
+         const double* Lf = Lf_all + base;
+         double sum_j = 0.0;
+         double sum_d = 0.0;
+         for(int i = i_lo; i <= i_hi; ++i){
+            sum_j += Jf[i];
+            if(Lf[i] > 0.0 && Df[i] > 0.0) sum_d += Df[i] / (Lf[i] * Lf[i]);
+         }
+         const double invn = 1.0 / static_cast<double>(ncell);
+         c_field = (sum_j * invn) / (2.0 * kHbar);
+         c_damp = sum_d * invn;
+      }
+
+      const double pref = V_atom / (gamma * mu);
+      const double alpha = mp::material[static_cast<std::size_t>(mat)].alpha;
+      TorqueTerm term;
+      term.atom = atom;
+      term.ncell = ncell;
+      term.s_off = (static_cast<std::size_t>(ls) * nf_sz + static_cast<std::size_t>(i_lo)) * 3u;
+      term.s_scale = muB_over_e / static_cast<double>(ncell);
+      term.along = pref * (c_field + alpha * c_damp);
+      term.cross = pref * (c_damp - alpha * c_field);
+      torque_terms.push_back(term);
+   }
+}
+
+} // namespace internal
 
    //-----------------------------------------------------------------------------
    // Function for updating spin torque fields
@@ -131,28 +196,29 @@ namespace st{
        
       if(st::internal::enabled==false) return;
 
+      if(st::internal::sc1d_enable){
+         st::internal::calculate_spin_accumulation_1d();
+         // Calibrate keeps the magnetisation source and every output, and
+         // leaves the atom field at the zero it was given at initialisation.
+         if(!st::internal::sc1d_calibrate){
+            apply_sc1d_atom_spin_torque_fields(x_spin_array, y_spin_array, z_spin_array,
+                                               atom_type_array, mu_s_array);
+         }
+         return;
+      }
 
       // update magnetisations
       st::internal::update_cell_magnetisation(x_spin_array, y_spin_array, z_spin_array, atom_type_array, mu_s_array);
 
       // calculate spin_accumulation
       if(st::internal::sot_sa) st::internal::calculate_sot_accumulation();
-      else {
-         if(st::internal::sc1d_enable) st::internal::calculate_spin_accumulation_1d();
-         else st::internal::calculate_spin_accumulation();
-      }
-
-      if(st::internal::sc1d_enable){
-         apply_sc1d_atom_spin_torque_fields(x_spin_array, y_spin_array, z_spin_array,
-                                            atom_type_array, mu_s_array);
-      } else {
-         for(int atom=0; atom<st::internal::num_local_atoms; ++atom) {
-            const int cell3 = 3*st::internal::atom_st_index[atom];
-            const double i_mu_s = 1.0/(mu_s_array[atom_type_array[atom]]);
-            st::internal::x_field_array[atom] = st::internal::spin_torque[cell3+0]*i_mu_s;
-            st::internal::y_field_array[atom] = st::internal::spin_torque[cell3+1]*i_mu_s;
-            st::internal::z_field_array[atom] = st::internal::spin_torque[cell3+2]*i_mu_s;
-         }
+      else st::internal::calculate_spin_accumulation();
+      for(int atom=0; atom<st::internal::num_local_atoms; ++atom) {
+         const int cell3 = 3*st::internal::atom_st_index[atom];
+         const double i_mu_s = 1.0/(mu_s_array[atom_type_array[atom]]);
+         st::internal::x_field_array[atom] = st::internal::spin_torque[cell3+0]*i_mu_s;
+         st::internal::y_field_array[atom] = st::internal::spin_torque[cell3+1]*i_mu_s;
+         st::internal::z_field_array[atom] = st::internal::spin_torque[cell3+2]*i_mu_s;
       }
    }
 
@@ -166,6 +232,8 @@ namespace st{
                                const int end_index){
      
       if(st::internal::enabled==false) return;
+      // Calibrate: the solver still ran, but the atom does not feel the field.
+      if(st::internal::sc1d_enable && st::internal::sc1d_calibrate) return;
 
 
       // Add spin torque fields

@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 
 // C++ standard library headers
+#include <cmath>
 #include <complex>
 #include <iostream>
 #include <vector>
@@ -19,6 +20,8 @@
 #include "vmpi.hpp"
 #include "atoms.hpp"
 #include "create.hpp"
+#include "material.hpp"
+#include "sim.hpp"
 
 // Spin Torque headers
 #include "internal.hpp"
@@ -77,6 +80,9 @@ void initialise(const double system_dimensions_x,
       st::internal::stx = 0;
       st::internal::sty = 1;
       st::internal::stz = 2;
+      if(st::internal::sc1d_calibrate){
+         std::cout << "spin-currents-1d-calibrate: atom spin-torque field is not applied" << std::endl;
+      }
    }
    // st::internal::micro_cell_thickness = st::internal::micro_cell_size[stx];
    //-------------------------------------------------------------------------------------
@@ -134,6 +140,8 @@ void initialise(const double system_dimensions_x,
    st::internal::lambda_phi.resize(array_size, 0.0); /// transverse spin dephasing length
    st::internal::chi_demag.resize(array_size, 0.0); /// demag-driven accumulation coupling
    st::internal::seebeck_coefficient.resize(array_size, 0.0); /// Seebeck coefficient S (V/K)
+   st::internal::beta_c_seebeck.resize(array_size, 0.0); /// open-circuit Seebeck spin factor
+   st::internal::superdiffusion_polarization.resize(array_size, 0.0); /// hot-electron polarization
    st::internal::conductivity.resize(array_size, 0.0); /// electrical conductivity (S/m)
    st::internal::a.resize(array_size, 0.0); // a parameter for spin accumulation
    st::internal::b.resize(array_size, 0.0); // b parameter for spin accumulation
@@ -152,6 +160,7 @@ void initialise(const double system_dimensions_x,
    st::internal::coeff_ast.resize(array_size, 0.0);
    st::internal::coeff_nast.resize(array_size, 0.0);
    st::internal::cell_natom.resize(array_size, 0.0);
+   st::internal::cell_msat.resize(array_size, 0.0);
    const int three_vec_array_size = 3*array_size;
    st::internal::spin_acc_sign.resize(three_vec_array_size, 0.0);
 
@@ -428,23 +437,33 @@ void initialise(const double system_dimensions_x,
    #endif 
 
    // Update cell magnetisation from atomic spins BEFORE initializing spin currents
-   // This ensures that m[] is populated with current magnetization values when
-   // initialise_spincurrents_1d() uses them to set the initial spin accumulation direction
-   st::internal::update_cell_magnetisation(atoms::x_spin_array,
-                                           atoms::y_spin_array,
-                                           atoms::z_spin_array,
-                                           atom_type_array,
-                                           mp::mu_s_array);
+   // only for the coarse solver. The 1D solver prolongs magnetisation from the
+   // atoms onto the fine grid and does not read m[].
+   if(!st::internal::sc1d_enable){
+      st::internal::update_cell_magnetisation(atoms::x_spin_array,
+                                              atoms::y_spin_array,
+                                              atoms::z_spin_array,
+                                              atom_type_array,
+                                              mp::mu_s_array);
+   }
 
    // initialise optional 1D spin currents solver state (allocates fine-grid arrays per local stack)
    // This MUST be called after MPI stack decomposition so mpi_stack_list_y is populated.
-   // It also requires that update_cell_magnetisation() has been called so m[] is populated.
    st::internal::initialise_spincurrents_1d();
 
    return;
 }
 
 namespace internal{
+
+   // Seebeck spin factor. A polarized field return means Dejene's open-circuit
+   // value is the difference P_seebeck - beta_c, so the stored factor is the sum.
+   // beta-seebeck in the material file replaces the whole factor.
+   double beta_c_seebeck_of(const mp_t& mat){
+      if(mat.beta_seebeck_set) return mat.beta_seebeck;
+      const double b = mat.beta_cond;
+      return b + 0.5 * mat.seebeck_polarization * (1.0 - b * b);
+   }
 
    //--------------------------------------------------------------------------------
    // Function to determine spin torque properties from atomic material properties
@@ -465,6 +484,10 @@ namespace internal{
       st::internal::default_properties.lambda_phi = 10.0e-10;      // dephasing length ~ 1-5 nm in FM (transverse relaxation)
       st::internal::default_properties.chi_demag = 0.0;            // longitudinal demag source off unless set per material
       st::internal::default_properties.seebeck_coefficient = -10.0e-6; // Seebeck coefficient S (V/K), typical metals: -10 to -50 μV/K
+      st::internal::default_properties.seebeck_polarization = 0.0;
+      st::internal::default_properties.beta_seebeck = 0.0;
+      st::internal::default_properties.beta_seebeck_set = false;
+      st::internal::default_properties.superdiffusion_polarization = 0.0;
       st::internal::default_properties.conductivity = -1.0;         // <0 = Einstein from D and Te; explicit 0 = insulator
       
       // SOT defaults (similar to STT but for SOT geometry)
@@ -482,7 +505,7 @@ namespace internal{
       const std::size_t ncells = st::internal::beta_cond.size();
       const std::size_t nmat   = st::internal::mp.size();
       std::vector<double> mat_count;
-      if(st::internal::interface_coupling_enabled && nmat > 0){
+      if((st::internal::interface_coupling_enabled || st::internal::sheet_enabled) && nmat > 0){
          mat_count.assign(nmat*ncells, 0.0);
       }
 
@@ -505,6 +528,8 @@ namespace internal{
          double lambda_phi = st::internal::mp.at(mat).lambda_phi;
          double chi_demag  = st::internal::mp.at(mat).chi_demag;
          double seebeck_coefficient = st::internal::mp.at(mat).seebeck_coefficient;
+         double beta_c_seebeck = beta_c_seebeck_of(st::internal::mp.at(mat));
+         double superdiffusion_polarization = st::internal::mp.at(mat).superdiffusion_polarization;
          double conductivity = st::internal::mp.at(mat).conductivity;
 
          //add atomic properties to microcells
@@ -517,6 +542,8 @@ namespace internal{
          st::internal::lambda_phi.at(id) += lambda_phi;
          st::internal::chi_demag.at(id)  += chi_demag;
          st::internal::seebeck_coefficient.at(id) += seebeck_coefficient;
+         st::internal::beta_c_seebeck.at(id) += beta_c_seebeck;
+         st::internal::superdiffusion_polarization.at(id) += superdiffusion_polarization;
          st::internal::conductivity.at(id) += conductivity;
 
          //SOT
@@ -540,6 +567,9 @@ namespace internal{
          }
 
          count.at(id) += 1.0;
+         if(mat >= 0 && mat < (int)mp::mu_s_array.size()){
+            st::internal::cell_msat.at(id) += mp::mu_s_array[mat];
+         }
 
          // store composition if interface coupling is enabled
          if(!mat_count.empty()){
@@ -606,6 +636,8 @@ namespace internal{
          double lambda_phi = st::internal::mp.at(mat).lambda_phi;
          double chi_demag  = st::internal::mp.at(mat).chi_demag;
          double seebeck_coefficient = st::internal::mp.at(mat).seebeck_coefficient;
+         double beta_c_seebeck = beta_c_seebeck_of(st::internal::mp.at(mat));
+         double superdiffusion_polarization = st::internal::mp.at(mat).superdiffusion_polarization;
          double conductivity = st::internal::mp.at(mat).conductivity;
 
          st::internal::beta_cond.at(id) += beta_cond;
@@ -617,6 +649,8 @@ namespace internal{
          st::internal::lambda_phi.at(id) += lambda_phi;
          st::internal::chi_demag.at(id)  += chi_demag;
          st::internal::seebeck_coefficient.at(id) += seebeck_coefficient;
+         st::internal::beta_c_seebeck.at(id) += beta_c_seebeck;
+         st::internal::superdiffusion_polarization.at(id) += superdiffusion_polarization;
          st::internal::conductivity.at(id) += conductivity;
 
          if(st::internal::sot_sa) {
@@ -665,8 +699,11 @@ namespace internal{
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::lambda_phi[0],  st::internal::lambda_phi.size(),  MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::chi_demag[0],   st::internal::chi_demag.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::seebeck_coefficient[0], st::internal::seebeck_coefficient.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &st::internal::beta_c_seebeck[0], st::internal::beta_c_seebeck.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &st::internal::superdiffusion_polarization[0], st::internal::superdiffusion_polarization.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &st::internal::conductivity[0], st::internal::conductivity.size(), MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
          MPI_Allreduce(MPI_IN_PLACE, &count[0],                     count.size(),                     MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+         MPI_Allreduce(MPI_IN_PLACE, &st::internal::cell_msat[0],   st::internal::cell_msat.size(),   MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
 
           if(!mat_count.empty()){
              MPI_Allreduce(MPI_IN_PLACE, &mat_count[0], mat_count.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -702,6 +739,8 @@ namespace internal{
             st::internal::lambda_phi.at(cell)  /= nat;
             st::internal::chi_demag.at(cell)   /= nat;
             st::internal::seebeck_coefficient.at(cell) /= nat;
+            st::internal::beta_c_seebeck.at(cell) /= nat;
+            st::internal::superdiffusion_polarization.at(cell) /= nat;
             st::internal::conductivity.at(cell) /= nat;
             st::internal::default_properties.sa_infinity =  st::internal::sa_infinity.at(cell);
             // if(st::internal::spin_acc_sign.at(cell) != 1.0 && st::internal::spin_acc_sign.at(cell) != -1.0) std::cout << st::internal::spin_acc_sign.at(cell) << std::endl;
@@ -715,6 +754,8 @@ namespace internal{
             st::internal::lambda_phi.at(cell)  = st::internal::default_properties.lambda_phi;
             st::internal::chi_demag.at(cell)   = st::internal::default_properties.chi_demag;
             st::internal::seebeck_coefficient.at(cell) = st::internal::default_properties.seebeck_coefficient;
+            st::internal::beta_c_seebeck.at(cell) = 0.0;
+            st::internal::superdiffusion_polarization.at(cell) = 0.0;
             st::internal::conductivity.at(cell) = st::internal::default_properties.conductivity;
          }
          if(st::internal::sot_sa) {
@@ -768,6 +809,79 @@ namespace internal{
             }
             st::internal::r_int_edge[cell] = r_edge;
          }
+      }
+
+      // Mixing sheet on the same coarse z-edges. A set pair drops that
+      // pair's lumped m/s resistance so it is not added on top of the sheet.
+      // Unset pairs keep r_int_edge. Pt/Ta with no new keys stays on the old path.
+      st::internal::sheet_g_up_edge.assign(ncells, 0.0);
+      st::internal::sheet_g_down_edge.assign(ncells, 0.0);
+      st::internal::sheet_re_edge.assign(ncells, 0.0);
+      st::internal::sheet_im_edge.assign(ncells, 0.0);
+      st::internal::sheet_delta_edge.assign(ncells, 0.0);
+      st::internal::sheet_edge_on.assign(ncells, 0);
+      if(st::internal::sheet_enabled && !mat_count.empty() && !st::internal::sheet_pair_set.empty()){
+         const int ncz = st::internal::num_microcells_per_stack;
+         int n_sheet = 0;
+         for(std::size_t cell=0; cell<ncells; ++cell){
+            const int kz = static_cast<int>(st::internal::pos[3*cell + 2]);
+            if(kz >= ncz-1) continue;
+            const std::size_t cell2 = cell + 1;
+            const double n1 = count[cell];
+            const double n2 = count[cell2];
+            if(n1 < 0.5 || n2 < 0.5) continue;
+            double gup = 0.0, gdn = 0.0, re = 0.0, im = 0.0, delta = 0.0;
+            bool any = false;
+            for(std::size_t a=0; a<nmat; ++a){
+               const double fa = mat_count[a*ncells + cell] / n1;
+               if(fa <= 0.0) continue;
+               for(std::size_t b=0; b<nmat; ++b){
+                  const double fb = mat_count[b*ncells + cell2] / n2;
+                  if(fb <= 0.0) continue;
+                  const std::size_t ip = a*nmat + b;
+                  if(ip >= st::internal::sheet_pair_set.size() || !st::internal::sheet_pair_set[ip]) continue;
+                  const double w = fa * fb;
+                  any = true;
+                  gup += w * st::internal::sheet_g_up_pair[ip];
+                  gdn += w * st::internal::sheet_g_down_pair[ip];
+                  re += w * st::internal::sheet_re_pair[ip];
+                  im += w * st::internal::sheet_im_pair[ip];
+                  delta += w * st::internal::sheet_delta_pair[ip];
+                  if(!st::internal::r_int_pair.empty() && ip < st::internal::r_int_pair.size()){
+                     st::internal::r_int_edge[cell] -= w * st::internal::r_int_pair[ip];
+                  }
+               }
+            }
+            if(!any) continue;
+            if(st::internal::r_int_edge[cell] < 0.0) st::internal::r_int_edge[cell] = 0.0;
+            st::internal::sheet_edge_on[cell] = 1;
+            st::internal::sheet_g_up_edge[cell] = gup;
+            st::internal::sheet_g_down_edge[cell] = gdn;
+            st::internal::sheet_re_edge[cell] = re;
+            st::internal::sheet_im_edge[cell] = im;
+            st::internal::sheet_delta_edge[cell] = delta;
+            ++n_sheet;
+         }
+         zlog << zTs() << "Spin-mixing sheets on " << n_sheet << " coarse z-edges." << std::endl;
+      }
+
+      if(st::internal::sc1d_superdiffusive_enable && st::internal::sc1d_superdiffusive_type == 0){
+         const double tau_pw = (sim::pump_time > 0.0) ? sim::pump_time : st::internal::sc1d_tau_e;
+         zlog << zTs() << "Gradient hot-electron velocity is -De sqrt(Te/Tref) (dTe/dz)/Te "
+              << "exp(-(t-t_peak)/tau_pw), tau_pw = " << tau_pw
+              << " s. The sqrt*exp factor is floored at 0.1. "
+              << "De is the material-file diffusion; the mixing sheet does not scale it."
+              << std::endl;
+      }
+
+      if(st::internal::sc1d_superdiffusive_type == 1){
+         zlog << zTs() << "Superdiffusive velocity is constant "
+              << -std::fabs(st::internal::sc1d_superdiffusive_speed)
+              << " m/s, toward the substrate. De and the mixing sheet do not set this speed." << std::endl;
+      } else if(st::internal::sc1d_superdiffusive_type == 2){
+         zlog << zTs() << "Superdiffusive velocity decays from -1e6 m/s to -1e5 m/s over "
+              << st::internal::sc1d_superdiffusive_lifetime
+              << " s. De and the mixing sheet do not set this speed." << std::endl;
       }
 
 

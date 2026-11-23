@@ -117,42 +117,44 @@ double get_phonon_temperature(int cell) {
 }
 
 //-----------------------------------------------------------------------------
+// Temperature at height z. The stored value is the cell-centre temperature.
+// A point between two centres is the linear interpolation, so a finer grid
+// recovers (T_right - T_left) / ΔZ instead of a step that is zero inside the
+// cell and a spike on the cell face.
+//-----------------------------------------------------------------------------
+static double temperature_at_z(const double z_angstrom, const bool electron){
+   if(!ltmp::internal::enabled || !ltmp::internal::initialised) return 300.0;
+   if(!ltmp::internal::vertical_discretisation){
+      return electron ? get_electron_temperature(0) : get_phonon_temperature(0);
+   }
+   const double dz = ltmp::internal::micro_cell_size[2];
+   const int n = ltmp::internal::num_cells;
+   if(!(dz > 0.0) || n <= 0) return 300.0;
+   auto at = [&](const int cell){
+      return electron ? get_electron_temperature(cell) : get_phonon_temperature(cell);
+   };
+   if(n == 1) return at(0);
+   const double s = z_angstrom / dz;
+   if(s <= 0.5) return at(0);
+   if(s >= static_cast<double>(n) - 0.5) return at(n - 1);
+   const int k = static_cast<int>(std::floor(s - 0.5));
+   const int k0 = std::max(0, std::min(k, n - 2));
+   const double w = std::max(0.0, std::min(1.0, s - (static_cast<double>(k0) + 0.5)));
+   return (1.0 - w) * at(k0) + w * at(k0 + 1);
+}
+
+//-----------------------------------------------------------------------------
 // Get electron temperature (K) at position z (Angstroms)
-// For vertical discretisation, find the cell containing this z position
 //-----------------------------------------------------------------------------
 double get_electron_temperature_at_z(double z_angstrom) {
-   if(!ltmp::internal::enabled || !ltmp::internal::initialised) {
-      return 300.0;
-   }
-   
-   // Find the cell index for this z position
-   if(ltmp::internal::vertical_discretisation) {
-      const double dz = ltmp::internal::micro_cell_size[2];
-      int cell = static_cast<int>(z_angstrom / dz);
-      cell = std::max(0, std::min(cell, ltmp::internal::num_cells - 1));
-      return get_electron_temperature(cell);
-   }
-   
-   // If no vertical discretisation, return the single temperature
-   return get_electron_temperature(0);
+   return temperature_at_z(z_angstrom, true);
 }
 
 //-----------------------------------------------------------------------------
 // Get phonon temperature (K) at position z (Angstroms)
 //-----------------------------------------------------------------------------
 double get_phonon_temperature_at_z(double z_angstrom) {
-   if(!ltmp::internal::enabled || !ltmp::internal::initialised) {
-      return 300.0;
-   }
-   
-   if(ltmp::internal::vertical_discretisation) {
-      const double dz = ltmp::internal::micro_cell_size[2];
-      int cell = static_cast<int>(z_angstrom / dz);
-      cell = std::max(0, std::min(cell, ltmp::internal::num_cells - 1));
-      return get_phonon_temperature(cell);
-   }
-   
-   return get_phonon_temperature(0);
+   return temperature_at_z(z_angstrom, false);
 }
 
 //-----------------------------------------------------------------------------

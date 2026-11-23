@@ -13,6 +13,7 @@ matrix.o \
 output.o \
 spinaccumulation.o \
 spincurrents.o \
+fine_grid.o \
 
 
 # Append module objects to global tree

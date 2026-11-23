@@ -18,6 +18,7 @@
 #include "sim.hpp"
 #include "errors.hpp"
 #include "vio.hpp"
+#include "spintorque.hpp"
 // Local temperature pulse headers
 #include "internal.hpp"
 
@@ -119,10 +120,18 @@ namespace ltmp{
 
       const double coupling_Te = ltmp::internal::electron_phonon_coupling_constant[cell]*(Tp_old - Te_old);
       const double coupling_Tp = ltmp::internal::electron_phonon_coupling_constant[cell]*(Te_old - Tp_old);
-      const double source_Te = pump*attenuation_array[cell];
+      const double z_lo = ltmp::internal::cell_position_array[3*cell+2];
+      const double z_hi = z_lo + ltmp::internal::micro_cell_size[2];
+      const double joule = st::mean_joule_power(z_lo, z_hi);
+      if(!std::isfinite(joule)){
+         abort_invalid_ltmp_temperature("joule power", static_cast<int>(cell), joule, Te_old, pump, Ce, Tp_old, dt);
+      }
+      const double source_Te = pump*attenuation_array[cell]
+         + joule * ltmp::internal::joule_electron_fraction[cell];
+      const double source_Tp = joule * ltmp::internal::joule_phonon_fraction[cell];
       const double Te_new = electron_temperature_step(Te_old, (coupling_Te + source_Te)*dt, Ce);
 
-      const double delta_Jp = coupling_Tp*dt;
+      const double delta_Jp = (coupling_Tp + source_Tp)*dt;
       const double phonon_temp_dep = phonon_temperature_projector_step(Tp_old, delta_Jp, static_cast<int>(cell));
       const double Tp_new = Tp_old + delta_Jp/phonon_temp_dep;
 

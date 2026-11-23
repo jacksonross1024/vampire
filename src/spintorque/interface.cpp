@@ -11,12 +11,15 @@
 
 // C++ standard library headers
 #include <algorithm>
+#include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 
 // Vampire headers
 #include "errors.hpp"
 #include "spintorque.hpp"
+#include "units.hpp"
 #include "vio.hpp"
 #include "vmpi.hpp"
 #include "sim.hpp"
@@ -37,6 +40,55 @@ static void extend_spintorque_materials(const std::size_t n){
    for(std::size_t i = old; i < n; ++i){
       st::internal::mp[i].conductivity = -1.0;
    }
+}
+
+// Directed pair, mirrored so cell k -> k+1 and the reverse share one value.
+// Each keyword writes only its own fields.
+static void store_sheet_pair(const int a, const int b,
+                             const bool have_g, const double gup, const double gdn,
+                             const bool have_mix, const double re, const double im,
+                             const bool have_delta, const double delta){
+   const std::size_t nmat = st::internal::mp.size();
+   st::internal::ensure_sheet_matrix_size(nmat);
+   const int ij[2][2] = {{a, b}, {b, a}};
+   for(int n=0; n<2; ++n){
+      const std::size_t idx = static_cast<std::size_t>(ij[n][0]) * nmat + static_cast<std::size_t>(ij[n][1]);
+      if(have_g){
+         st::internal::sheet_g_up_pair[idx] = gup;
+         st::internal::sheet_g_down_pair[idx] = gdn;
+      }
+      if(have_mix){
+         st::internal::sheet_re_pair[idx] = re;
+         st::internal::sheet_im_pair[idx] = im;
+      }
+      if(have_delta) st::internal::sheet_delta_pair[idx] = delta;
+      st::internal::sheet_pair_set[idx] = 1;
+   }
+   st::internal::sheet_enabled = true;
+}
+
+static bool parse_sheet_partner(const std::string& word, const std::string& value, const int line,
+                                const int super_index, const int nparam, int& other_index,
+                                std::vector<double>& params){
+   params = vin::doubles_from_string(value);
+   if((int)params.size() < nparam){
+      terminaltextcolor(RED);
+      std::cerr << "Error - expected " << nparam << " comma-separated values for " << word
+                << " at line " << line << std::endl;
+      terminaltextcolor(WHITE);
+      err::vexit();
+   }
+   other_index = static_cast<int>(params[0]) - 1;
+   if(other_index < 0 || other_index > 99){
+      terminaltextcolor(RED);
+      std::cerr << "Error - invalid partner material index for " << word << " at line " << line << std::endl;
+      terminaltextcolor(WHITE);
+      err::vexit();
+   }
+   const std::size_t want = static_cast<std::size_t>(std::max(super_index, other_index) + 1);
+   if(want > st::internal::mp.size() && want < 101) extend_spintorque_materials(want);
+   st::internal::ensure_sheet_matrix_size(st::internal::mp.size());
+   return true;
 }
 
 bool match_material(string const word, string const value, string const unit, int const line, int const super_index){
@@ -69,7 +121,7 @@ bool match_material(string const word, string const value, string const unit, in
       */
    if(word==test){
       double betac=atof(value.c_str());
-      vin::check_for_valid_value(betac, word, line, prefix, unit, "none", 1.0e-3, 1.0e3,"material"," 0.001 - 1000");
+      vin::check_for_valid_value(betac, word, line, prefix, unit, "none", 0.0, 1.0,"material"," -1 - 1");
       st::internal::mp[super_index].beta_cond=betac;
       return true;
    }
@@ -81,7 +133,7 @@ bool match_material(string const word, string const value, string const unit, in
       */
    if(word==test){
       double betad=atof(value.c_str());
-      vin::check_for_valid_value(betad, word, line, prefix, unit, "none", 1.0e-3, 1.0e3,"material"," 0.001 - 1000");
+      vin::check_for_valid_value(betad, word, line, prefix, unit, "none", 0.0, 1.0,"material"," -1 - 1");
       st::internal::mp[super_index].beta_diff=betad;
       return true;
    }
@@ -105,7 +157,8 @@ bool match_material(string const word, string const value, string const unit, in
       */
    if(word==test){
       double dc=atof(value.c_str());
-      vin::check_for_valid_value(dc, word, line, prefix, unit, "none", 1.0e-9, 100.0,"material"," 1.0e-9 - 100"); //m^2/s
+      // Zero is an insulator: the face harmonic mean closes and no flux crosses.
+      vin::check_for_valid_value(dc, word, line, prefix, unit, "none", 0.0, 100.0,"material"," 0 - 100"); //m^2/s
       st::internal::mp[super_index].diffusion=dc;
       return true;
    }
@@ -132,7 +185,7 @@ bool match_material(string const word, string const value, string const unit, in
    }
 
    //--------------------------------------------------------------------
-   test="demag-spin-coupling"; // chi, (C/m^3) per muB: longitudinal source -chi*d|m|/dt on S
+   test="demag-spin-coupling"; // chi (C/m^3): source -chi*d(|m|/msat)/dt on S
    if(word==test){
       double chi=atof(value.c_str());
       vin::check_for_valid_value(chi, word, line, prefix, unit, "none", 0.0, 1.0e30,"material"," 0.0 - 1e30");
@@ -146,6 +199,34 @@ bool match_material(string const word, string const value, string const unit, in
       double S=atof(value.c_str());
       vin::check_for_valid_value(S, word, line, prefix, unit, "none", -1.0e-3, 1.0e-3,"material"," -1e-3 - 1e-3 V/K");
       st::internal::mp[super_index].seebeck_coefficient=S;
+      return true;
+   }
+
+   // P_S = (S_up - S_down) / S. beta_c_seebeck is computed at init unless beta-seebeck is set.
+   test="seebeck-polarization";
+   if(word==test){
+      double ps=atof(value.c_str());
+      vin::check_for_valid_value(ps, word, line, prefix, unit, "none", -5.0, 5.0,"material"," -5 - 5");
+      st::internal::mp[super_index].seebeck_polarization=ps;
+      return true;
+   }
+
+   test="beta-seebeck";
+   if(word==test){
+      double bs=atof(value.c_str());
+      vin::check_for_valid_value(bs, word, line, prefix, unit, "none", -5.0, 5.0,"material"," -5 - 5");
+      st::internal::mp[super_index].beta_seebeck=bs;
+      st::internal::mp[super_index].beta_seebeck_set=true;
+      return true;
+   }
+
+   // Polarization of the transported hot current, (j_up - j_down)/(j_up + j_down).
+   // Same sign as beta_c: positive is majority. Default 0.
+   test="superdiffusion-polarization";
+   if(word==test){
+      double ph=atof(value.c_str());
+      vin::check_for_valid_value(ph, word, line, prefix, unit, "none", -5.0, 5.0,"material"," -5 - 5");
+      st::internal::mp[super_index].superdiffusion_polarization=ph;
       return true;
    }
 
@@ -210,6 +291,165 @@ bool match_material(string const word, string const value, string const unit, in
          if(st::internal::r_int_pair[rev] == 0.0) st::internal::r_int_pair[rev] = rint;
          st::internal::interface_coupling_enabled = true;
       }
+      return true;
+   }
+   //--------------------------------------------------------------------
+   // Channel conductances in S/m^2. Unset pairs stay transparent.
+   // Syntax: material[i]:spin-interface-conductance-up-down = j, G_up, G_down
+   test="spin-interface-conductance-up-down";
+   if(word == test){
+      int other_index = 0;
+      std::vector<double> params;
+      parse_sheet_partner(word, value, line, super_index, 3, other_index, params);
+      const double gup = params[1];
+      const double gdn = params[2];
+      if(gup < 0.0 || gdn < 0.0 || gup > 1.0e20 || gdn > 1.0e20){
+         terminaltextcolor(RED);
+         std::cerr << "Error - channel conductance out of range (0 - 1e20 S/m^2) at line " << line << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
+      }
+      store_sheet_pair(super_index, other_index, true, gup, gdn, false, 0.0, 0.0, false, 0.0);
+      return true;
+   }
+   //--------------------------------------------------------------------
+   // Tunnel conductance of an insulating segment or a zero-thickness face.
+   // Not written into the bulk conductivity. Syntax: material[i]:tunnel-conductance = j, G_up, G_down
+   test="tunnel-conductance";
+   if(word == test){
+      int other_index = 0;
+      std::vector<double> params;
+      parse_sheet_partner(word, value, line, super_index, 3, other_index, params);
+      const double gup = params[1];
+      const double gdn = params[2];
+      if(gup < 0.0 || gdn < 0.0 || gup > 1.0e20 || gdn > 1.0e20){
+         terminaltextcolor(RED);
+         std::cerr << "Error - tunnel conductance out of range (0 - 1e20 S/m^2) at line " << line << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
+      }
+      const std::size_t nmat = st::internal::mp.size();
+      st::internal::ensure_tunnel_matrix_size(nmat);
+      const int ij[2][2] = {{super_index, other_index}, {other_index, super_index}};
+      for(int n = 0; n < 2; ++n){
+         const std::size_t idx = static_cast<std::size_t>(ij[n][0]) * nmat + static_cast<std::size_t>(ij[n][1]);
+         st::internal::tunnel_g_up_pair[idx] = gup;
+         st::internal::tunnel_g_down_pair[idx] = gdn;
+         st::internal::tunnel_pair_set[idx] = 1;
+      }
+      st::internal::tunnel_enabled = true;
+      return true;
+   }
+   //--------------------------------------------------------------------
+   // Decay length of each tunnel channel, in the length unit (Angstroms).
+   // Syntax: material[i]:tunnel-decay = j, lambda_up, lambda_down
+   // The conductance used by the oxide is G_sigma * exp(-t / lambda_sigma),
+   // with t the thickness of the insulating segment. A missing keyword leaves
+   // that channel at its zero-thickness conductance.
+   test="tunnel-decay";
+   if(word == test){
+      int other_index = 0;
+      std::vector<double> params;
+      parse_sheet_partner(word, value, line, super_index, 3, other_index, params);
+      const double lup_A = params[1];
+      const double ldn_A = params[2];
+      if(lup_A < 0.01 || ldn_A < 0.01 || lup_A > 1.0e6 || ldn_A > 1.0e6){
+         terminaltextcolor(RED);
+         std::cerr << "Error - tunnel decay length out of range (0.01 - 1e6 Angstroms) at line " << line << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
+      }
+      const std::size_t nmat = st::internal::mp.size();
+      st::internal::ensure_tunnel_matrix_size(nmat);
+      const int ij[2][2] = {{super_index, other_index}, {other_index, super_index}};
+      for(int n = 0; n < 2; ++n){
+         const std::size_t idx = static_cast<std::size_t>(ij[n][0]) * nmat + static_cast<std::size_t>(ij[n][1]);
+         st::internal::tunnel_l_up_pair[idx] = lup_A * 1.0e-10;
+         st::internal::tunnel_l_down_pair[idx] = ldn_A * 1.0e-10;
+      }
+      return true;
+   }
+   //--------------------------------------------------------------------
+   // Unpolarised inelastic conductance in parallel with the elastic channels.
+   // Syntax: material[i]:tunnel-inelastic = j, G_e, G_p, lambda, p_e, p_p
+   // G_e and G_p are the 300 K prefactors (S/m^2) of the Te and Tp pieces.
+   // Each is multiplied by (T/300)^p and by exp(-t/lambda). Neither carries spin.
+   test="tunnel-inelastic";
+   if(word == test){
+      int other_index = 0;
+      std::vector<double> params;
+      parse_sheet_partner(word, value, line, super_index, 6, other_index, params);
+      const double ge = params[1];
+      const double gp = params[2];
+      const double lam_A = params[3];
+      const double pe = params[4];
+      const double pp = params[5];
+      if(ge < 0.0 || gp < 0.0 || ge > 1.0e20 || gp > 1.0e20){
+         terminaltextcolor(RED);
+         std::cerr << "Error - inelastic tunnel conductance out of range at line " << line << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
+      }
+      if(lam_A < 0.01 || lam_A > 1.0e6){
+         terminaltextcolor(RED);
+         std::cerr << "Error - inelastic tunnel decay length out of range (0.01 - 1e6 Angstroms) at line " << line << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
+      }
+      if(pe < 0.0 || pp < 0.0 || pe > 10.0 || pp > 10.0){
+         terminaltextcolor(RED);
+         std::cerr << "Error - inelastic tunnel temperature power out of range (0 - 10) at line " << line << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
+      }
+      const std::size_t nmat = st::internal::mp.size();
+      st::internal::ensure_tunnel_matrix_size(nmat);
+      const int ij[2][2] = {{super_index, other_index}, {other_index, super_index}};
+      for(int n = 0; n < 2; ++n){
+         const std::size_t idx = static_cast<std::size_t>(ij[n][0]) * nmat + static_cast<std::size_t>(ij[n][1]);
+         st::internal::tunnel_gi_e_pair[idx] = ge;
+         st::internal::tunnel_gi_p_pair[idx] = gp;
+         st::internal::tunnel_li_pair[idx] = lam_A * 1.0e-10;
+         st::internal::tunnel_pe_pair[idx] = pe;
+         st::internal::tunnel_pp_pair[idx] = pp;
+      }
+      return true;
+   }
+   //--------------------------------------------------------------------
+   // Real and imaginary mixing conductance in S/m^2.
+   // Syntax: material[i]:spin-mixing-conductance = j, Re, Im
+   test="spin-mixing-conductance";
+   if(word == test){
+      int other_index = 0;
+      std::vector<double> params;
+      parse_sheet_partner(word, value, line, super_index, 3, other_index, params);
+      const double re = params[1];
+      const double im = params[2];
+      if(re < -1.0e20 || re > 1.0e20 || im < -1.0e20 || im > 1.0e20){
+         terminaltextcolor(RED);
+         std::cerr << "Error - mixing conductance out of range at line " << line << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
+      }
+      store_sheet_pair(super_index, other_index, false, 0.0, 0.0, true, re, im, false, 0.0);
+      return true;
+   }
+   //--------------------------------------------------------------------
+   // Spin memory loss, dimensionless.
+   // Syntax: material[i]:spin-memory-loss = j, delta
+   test="spin-memory-loss";
+   if(word == test){
+      int other_index = 0;
+      std::vector<double> params;
+      parse_sheet_partner(word, value, line, super_index, 2, other_index, params);
+      const double delta = params[1];
+      if(delta < 0.0 || delta > 100.0){
+         terminaltextcolor(RED);
+         std::cerr << "Error - spin memory loss out of range (0 - 100) at line " << line << std::endl;
+         terminaltextcolor(WHITE);
+         err::vexit();
+      }
+      store_sheet_pair(super_index, other_index, false, 0.0, 0.0, false, 0.0, 0.0, true, delta);
       return true;
    }
    //--------------------------------------------------------------------
@@ -575,11 +815,69 @@ bool match_material(string const word, string const value, string const unit, in
       return true;
    }
 
+   // Accumulation, currents, and output stay on. The atom spin-torque field is not applied.
+   test="spin-currents-1d-calibrate";
+   if(word==test){
+      if(value == "true"){
+         st::internal::sc1d_calibrate = true;
+      } else if(value == "false"){
+         st::internal::sc1d_calibrate = false;
+      } else {
+         terminaltextcolor(RED);
+         std::cerr << "Error - value for \'spin-torque:" << word << "\' must be one of:" << std::endl;
+         std::cerr << "\t\"true\"" << std::endl;
+         std::cerr << "\t\"false\"" << std::endl;
+         terminaltextcolor(WHITE);
+         return false;
+      }
+      return true;
+   }
+
+   // coarse: unit-cell bins, columns summed. atomic: one row per field window, columns summed.
+   // verbose: every fine cell of every column.
+   // The fine-grid constants file is written at initialisation for every mode.
+   test="spin-currents-1d-output";
+   if(word==test){
+      if(value == "coarse"){
+         st::internal::sc1d_output_mode = st::internal::sc1d_out_coarse;
+      } else if(value == "atomic"){
+         st::internal::sc1d_output_mode = st::internal::sc1d_out_atomic;
+      } else if(value == "verbose"){
+         st::internal::sc1d_output_mode = st::internal::sc1d_out_verbose;
+      } else {
+         terminaltextcolor(RED);
+         std::cerr << "Error - value for \'spin-torque:" << word << "\' must be one of:" << std::endl;
+         std::cerr << "\t\"coarse\"" << std::endl;
+         std::cerr << "\t\"atomic\"" << std::endl;
+         std::cerr << "\t\"verbose\"" << std::endl;
+         terminaltextcolor(WHITE);
+         return false;
+      }
+      return true;
+   }
+
    test="spin-currents-1d-fine-dz";
    if(word==test){
       double dz=atof(value.c_str());
       vin::check_for_valid_value(dz, word, line, prefix, unit, "length", 0.01, 1.0e10,"input"," 0.01 - 1e10 Angstroms");
       st::internal::sc1d_fine_dz = dz;
+      return true;
+   }
+
+   test="spin-currents-1d-diffusion";
+   if(word==test){
+      if(value == "backward-euler" || value == "be"){
+         st::internal::sc1d_diffusion = st::internal::sc1d_diff_be;
+      } else if(value == "bdf2"){
+         st::internal::sc1d_diffusion = st::internal::sc1d_diff_bdf2;
+      } else {
+         terminaltextcolor(RED);
+         std::cerr << "Error - value for \'spin-torque:" << word << "\' must be one of:" << std::endl;
+         std::cerr << "\t\"backward-euler\"" << std::endl;
+         std::cerr << "\t\"bdf2\"" << std::endl;
+         terminaltextcolor(WHITE);
+         return false;
+      }
       return true;
    }
 
@@ -597,6 +895,35 @@ bool match_material(string const word, string const value, string const unit, in
          std::cerr << "\t\"linear\"" << std::endl;
          std::cerr << "\t\"step\"" << std::endl;
          std::cerr << "\t\"smoothstep\"" << std::endl;
+         terminaltextcolor(WHITE);
+         return false;
+      }
+      return true;
+   }
+
+   // Width of the linear and smoothstep blend, in Angstroms. Step ignores it.
+   // Omitted or non-positive values use the crystallographic unit-cell height.
+   test="spin-currents-1d-prolongation-decay";
+   if(word==test){
+      double decay=atof(value.c_str());
+      vin::check_for_valid_value(decay, word, line, prefix, unit, "length", 0.01, 1.0e10,"input"," 0.01 - 1e10 Angstroms");
+      st::internal::sc1d_prolongation_decay = decay;
+      return true;
+   }
+
+   // analytic: broaden the material-file interface with the prolongation kernel.
+   // diffuse: average that same interface by the atomic populations, then prolong.
+   test="spin-currents-1d-interface";
+   if(word==test){
+      if(value == "analytic"){
+         st::internal::sc1d_interface = st::internal::sc1d_interface_analytic;
+      } else if(value == "diffuse"){
+         st::internal::sc1d_interface = st::internal::sc1d_interface_diffuse;
+      } else {
+         terminaltextcolor(RED);
+         std::cerr << "Error - value for \'spin-torque:" << word << "\' must be one of:" << std::endl;
+         std::cerr << "\t\"analytic\"" << std::endl;
+         std::cerr << "\t\"diffuse\"" << std::endl;
          terminaltextcolor(WHITE);
          return false;
       }
@@ -727,6 +1054,67 @@ if(word==test){
    return true;
 }
 
+// gradient, a velocity (constant speed), or a time (decay lifetime).
+// Velocity is stored in m/s. Vampire's velocity unit is angstrom/second,
+// and m/s converts by 1e10, so divide that factor back out here.
+// Time is already seconds after units::convert.
+test="spin-currents-1d-superdiffusive-type";
+if(word==test){
+   if(value == "gradient"){
+      st::internal::sc1d_superdiffusive_type = 0;
+      return true;
+   }
+   if(unit.size() == 0){
+      terminaltextcolor(RED);
+      std::cerr << "Error - value for \'spin-torque:" << word << "\' must be \"gradient\", a velocity, or a time." << std::endl;
+      terminaltextcolor(WHITE);
+      zlog << zTs() << "Error - spin-torque:" << word << " needs \"gradient\", a velocity unit, or a time unit." << std::endl;
+      err::vexit();
+   }
+   double num = std::atof(value.c_str());
+   std::string utype;
+   if(units::convert(unit, num, utype) == EXIT_FAILURE){
+      terminaltextcolor(RED);
+      std::cerr << "Error: Unit \'" << unit << "\' specified on line " << line << " of input file is not a valid unit." << std::endl;
+      terminaltextcolor(WHITE);
+      zlog << zTs() << "Error: Unit \'" << unit << "\' specified on line " << line << " of input file is not a valid unit." << std::endl;
+      err::vexit();
+   }
+   if(utype == "velocity"){
+      const double v_mps = num / 1.0e10;
+      if(!std::isfinite(v_mps) || std::fabs(v_mps) > 1.0e8){
+         terminaltextcolor(RED);
+         std::cerr << "Error: spin-torque:" << word << " velocity on line " << line << " must be within 1e8 m/s." << std::endl;
+         terminaltextcolor(WHITE);
+         zlog << zTs() << "Error: spin-torque:" << word << " velocity on line " << line << " must be within 1e8 m/s." << std::endl;
+         err::vexit();
+      }
+      // The number is a speed. signed_hot_electron_velocity points it toward the substrate.
+      st::internal::sc1d_superdiffusive_type = 1;
+      st::internal::sc1d_superdiffusive_speed = v_mps;
+      return true;
+   }
+   if(utype == "time"){
+      if(!std::isfinite(num) || num < 1.0e-18 || num > 1.0){
+         terminaltextcolor(RED);
+         std::cerr << "Error: spin-torque:" << word << " lifetime on line " << line << " must be in the range 1e-18 - 1 s." << std::endl;
+         terminaltextcolor(WHITE);
+         zlog << zTs() << "Error: spin-torque:" << word << " lifetime on line " << line << " must be in the range 1e-18 - 1 s." << std::endl;
+         err::vexit();
+      }
+      st::internal::sc1d_superdiffusive_type = 2;
+      st::internal::sc1d_superdiffusive_lifetime = num;
+      return true;
+   }
+   terminaltextcolor(RED);
+   std::cerr << "Error: Unit \'" << unit << "\' of type \'" << utype << "\' on line " << line
+             << " is invalid for spin-torque:" << word << ". Use a velocity or a time." << std::endl;
+   terminaltextcolor(WHITE);
+   zlog << zTs() << "Error: Unit \'" << unit << "\' of type \'" << utype << "\' on line " << line
+        << " is invalid for spin-torque:" << word << "." << std::endl;
+   err::vexit();
+}
+
 test="spin-currents-1d-tau-e";
 if(word==test){
    double tau_e = atof(value.c_str());
@@ -796,6 +1184,39 @@ if(word==test){
 //--------------------------------------------------------------------
 // Seebeck effect parameters
 //--------------------------------------------------------------------
+test="spin-currents-1d-bias";
+if(word==test){
+   if(value == "true"){
+      st::internal::sc1d_bias_enable = true;
+   } else if(value == "false"){
+      st::internal::sc1d_bias_enable = false;
+   } else {
+      terminaltextcolor(RED);
+      std::cerr << "Error - value for \'spin-torque:" << word << "\' must be one of:" << std::endl;
+      std::cerr << "\t\"true\"" << std::endl;
+      std::cerr << "\t\"false\"" << std::endl;
+      terminaltextcolor(WHITE);
+      return false;
+   }
+   return true;
+}
+
+test="spin-currents-1d-voltage-bottom";
+if(word==test){
+   double volts = atof(value.c_str());
+   vin::check_for_valid_value(volts, word, line, prefix, unit, "none", -1.0e3, 1.0e3,"input"," -1000 - 1000 V");
+   st::internal::sc1d_voltage_bottom = volts;
+   return true;
+}
+
+test="spin-currents-1d-voltage-top";
+if(word==test){
+   double volts = atof(value.c_str());
+   vin::check_for_valid_value(volts, word, line, prefix, unit, "none", -1.0e3, 1.0e3,"input"," -1000 - 1000 V");
+   st::internal::sc1d_voltage_top = volts;
+   return true;
+}
+
 test="spin-currents-1d-seebeck-enable";
 if(word==test){
    if(value == "true"){

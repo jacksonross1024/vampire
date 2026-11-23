@@ -1,0 +1,30 @@
+# Clang language server config for the VAMPIRE serial build.
+# compile_commands.json is generated from `make -n -B serial`.
+CompileFlags:
+  CompilationDatabase: .
+  Add:
+    - -std=c++11
+    - -w
+  Remove:
+    - -fopenmp
+    - -m*
+    - -O*
+    - -fexpensive-optimizations
+    - -funroll-all-loops
+    - -funroll-loops
+    - -std=c++0x
+    - -W*
+    - -pedantic
+    - -pg
+    - -fprofile-arcs
+    - -ftest-coverage
+    - -fbounds-check
+
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+  ClangTidy:
+    Remove: ["*"]
+
+Index:
+  Background: Build

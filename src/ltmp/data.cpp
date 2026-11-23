@@ -47,6 +47,8 @@ namespace ltmp{
        std::vector<double> phonon_heat_capacity; //J/m^3/K
        std::vector<double> electron_heat_capacity; //J/m^3/K
        std::vector<double> Einstein_temperature;
+       std::vector<double> joule_electron_fraction;
+       std::vector<double> joule_phonon_fraction;
 
        std::vector< double> Debeye_phonon_constant;
       double pump_power; // laser pump power

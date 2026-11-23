@@ -63,6 +63,7 @@ namespace st{
       
       int ST_output_rate;
       std::string output_torque_data;
+      int sc1d_output_mode = sc1d_out_coarse;
       std::vector<double> initial_m(3);
      
       std::vector<double> init_stack_mag;
@@ -98,6 +99,7 @@ namespace st{
       std::vector<double> coeff_ast; // adiabatic spin torque
       std::vector<double> coeff_nast; // non-adiabatic spin torque
       std::vector<double> cell_natom;
+      std::vector<double> cell_msat;
       
       // three-vector arrays
       std::vector<double> pos; /// stack position
@@ -137,8 +139,13 @@ namespace st{
 
       // 1D spin accumulation solver controls
       bool sc1d_enable = false;
+      bool sc1d_calibrate = false;
       double sc1d_fine_dz = 1.0; // Angstroms
       int sc1d_prolongation = sc1d_prolong_smooth;
+      int sc1d_diffusion = sc1d_diff_be;
+      bool sc1d_bdf2_primed = false;
+      double sc1d_prolongation_decay = -1.0; // Angstroms; negative selects the unit-cell height
+      int sc1d_interface = sc1d_interface_analytic;
       int sc1d_spin_stride = 1;
       int sc1d_charge_stride = 1;
       double sc1d_temperature = 300.0; // K
@@ -159,6 +166,9 @@ namespace st{
       bool sc1d_superdiffusive_enable = false;         // default: use simplified model
       double sc1d_tau_e = 100.0e-15;                   // hot electron energy relaxation time (~100 fs)
       double sc1d_v_e0 = 0.0;                          // base velocity (0 = auto from De/dopt)
+      int sc1d_superdiffusive_type = 0;                // 0 gradient, 1 constant, 2 decay
+      double sc1d_superdiffusive_speed = 0.0;          // m/s
+      double sc1d_superdiffusive_lifetime = 0.0;       // s
 
       // Temperature coupling parameters
       bool sc1d_use_ltmp_temperatures = false;         // legacy input; source is chosen from ltmp / TTM
@@ -167,6 +177,10 @@ namespace st{
 
       // Seebeck effect parameters
       bool sc1d_seebeck_enable = false;                // default: disabled
+
+      bool sc1d_bias_enable = false;
+      double sc1d_voltage_bottom = 0.0;
+      double sc1d_voltage_top = 0.0;
 
       // Thermal gradient parameters
       bool sc1d_thermal_gradients_enable = false;     // default: disabled
@@ -196,13 +210,26 @@ namespace st{
 
       std::vector<double> sc1d_ns_fine;
       std::vector<double> sc1d_ne_fine;
-      std::vector<double> sc1d_ne_seebeck_fine;
       std::vector<double> sc1d_V_fine;
       std::vector<double> sc1d_Jc_edge_fine;
+      std::vector<double> sc1d_joule_fine;
+      std::vector<int> sc1d_mat_fine;
       std::vector<double> sc1d_sigma_fine;
+      std::vector<double> sc1d_sigma_bulk_fine;
       std::vector<double> sc1d_seebeck_fine;
-      std::vector<int>    sc1d_mat_fine;
-      std::vector<double> sc1d_sa_demag_fine;
+      std::vector<double> sc1d_beta_seebeck_fine;
+      std::vector<double> sc1d_phot_fine;
+      std::vector<double> sc1d_J_seebeck_edge;
+      std::vector<double> sc1d_J_restore_edge;
+      std::vector<double> sc1d_J_hot_edge;
+      std::vector<double> sc1d_J_cd_edge;
+      std::vector<double> sc1d_J_sd_edge;
+      std::vector<double> sc1d_Js_fine;
+      std::vector<double> sc1d_mhat_fine;
+      std::vector<double> sc1d_Te_fine;
+      std::vector<double> sc1d_Tp_fine;
+      std::vector<double> sc1d_dTe_dz_edge;
+      std::vector<double> sc1d_dTp_dz_edge;
       std::vector<int> sc1d_atom_ls;
       std::vector<int> sc1d_atom_fine_lo;
       std::vector<int> sc1d_atom_fine_hi;
@@ -214,15 +241,20 @@ namespace st{
       double sc1d_time_charge = 0.0;
       double sc1d_time_spin_current = 0.0;
       double sc1d_time_spin_acc = 0.0;
+      double sc1d_time_diffusion = 0.0;
+      double sc1d_time_eom = 0.0;
       double sc1d_time_interp = 0.0;
       double sc1d_time_bcast = 0.0;
+      double sc1d_time_coarsen = 0.0;
       double sc1d_time_other = 0.0;
 
 
       // Additional per-microcell material parameters
       std::vector<double> lambda_phi; // m
-      std::vector<double> chi_demag;  // (C/m^3) per muB, longitudinal source on S
+      std::vector<double> chi_demag;  // C/m^3, source -chi*d(|m|/msat)/dt on S
       std::vector<double> seebeck_coefficient; // V/K (Seebeck coefficient)
+      std::vector<double> beta_c_seebeck; // open-circuit Seebeck spin factor
+      std::vector<double> superdiffusion_polarization; // hot-electron polarization
       std::vector<double> conductivity; // S/m; <0 Einstein from D and Te; 0 insulator
 
       // State for demag-driven accumulation and stable-axis handling
@@ -237,12 +269,31 @@ namespace st{
       std::vector<int> sc1d_stack_local_index;
       std::vector<double> sc1d_Sfine;
       std::vector<double> sc1d_k_prev;  // Previous RHS for AB2 integrator
+      std::vector<double> sc1d_S_bdf2_h1;
+      std::vector<double> sc1d_S_bdf2_h2;
 
 
       // Persistent fine-grid constant material properties per local stack
+      std::vector<unsigned char> sc1d_cell_mask;
+      std::vector<int> sc1d_anchor_left;
+      std::vector<int> sc1d_anchor_right;
+      std::vector<double> sc1d_anchor_t;
+      std::vector<double> sc1d_Rint_face;
+      std::vector<double> sc1d_natom_fine;
+      std::vector<double> sc1d_msat_fine;
+      std::vector<double> sc1d_m_prev_fine;
+      std::vector<double> sc1d_m0_fine;
+      std::vector<double> sc1d_mhat_ref_fine;
+      std::vector<double> sc1d_dmdt_fine;
+      std::vector<int> sc1d_atom_fine;
+      std::vector<double> sc1d_plane_z;
+      std::vector<int> sc1d_plane_lo;
+      std::vector<int> sc1d_plane_hi;
+
       std::vector<double> sc1d_Bc_fine;
       std::vector<double> sc1d_Bd_fine;
       std::vector<double> sc1d_D_fine;
+      std::vector<double> sc1d_Dmat_fine;
       std::vector<double> sc1d_lsf_fine;
       std::vector<double> sc1d_lphi_fine;
       std::vector<double> sc1d_Jsd_fine;
@@ -269,6 +320,107 @@ namespace st{
       bool interface_coupling_enabled = false;
       std::vector<double> r_int_pair; // size nmat*nmat, units s/m
       std::vector<double> r_int_edge; // size ncells, units s/m
+
+      bool sheet_enabled = false;
+      std::vector<double> sheet_g_up_pair;
+      std::vector<double> sheet_g_down_pair;
+      std::vector<double> sheet_re_pair;
+      std::vector<double> sheet_im_pair;
+      std::vector<double> sheet_delta_pair;
+      std::vector<char> sheet_pair_set;
+      std::vector<double> sheet_g_up_edge;
+      std::vector<double> sheet_g_down_edge;
+      std::vector<double> sheet_re_edge;
+      std::vector<double> sheet_im_edge;
+      std::vector<double> sheet_delta_edge;
+      std::vector<char> sheet_edge_on;
+
+      bool tunnel_enabled = false;
+      std::vector<double> tunnel_g_up_pair;
+      std::vector<double> tunnel_g_down_pair;
+      std::vector<double> tunnel_l_up_pair;
+      std::vector<double> tunnel_l_down_pair;
+      std::vector<double> tunnel_gi_e_pair;
+      std::vector<double> tunnel_gi_p_pair;
+      std::vector<double> tunnel_li_pair;
+      std::vector<double> tunnel_pe_pair;
+      std::vector<double> tunnel_pp_pair;
+      std::vector<char> tunnel_pair_set;
+
+      void ensure_tunnel_matrix_size(const std::size_t nmat){
+         const std::size_t new_sz = nmat * nmat;
+         if(tunnel_g_up_pair.size() == new_sz && tunnel_pair_set.size() == new_sz
+            && tunnel_l_up_pair.size() == new_sz && tunnel_gi_e_pair.size() == new_sz) return;
+         const std::vector<double> old_up = tunnel_g_up_pair;
+         const std::vector<double> old_dn = tunnel_g_down_pair;
+         const std::vector<double> old_lu = tunnel_l_up_pair;
+         const std::vector<double> old_ld = tunnel_l_down_pair;
+         const std::vector<double> old_ge = tunnel_gi_e_pair;
+         const std::vector<double> old_gp = tunnel_gi_p_pair;
+         const std::vector<double> old_li = tunnel_li_pair;
+         const std::vector<double> old_pe = tunnel_pe_pair;
+         const std::vector<double> old_pp = tunnel_pp_pair;
+         const std::vector<char> old_set = tunnel_pair_set;
+         const std::size_t old_n = (old_up.empty()) ? 0 : static_cast<std::size_t>(std::sqrt(static_cast<double>(old_up.size())));
+         tunnel_g_up_pair.assign(new_sz, 0.0);
+         tunnel_g_down_pair.assign(new_sz, 0.0);
+         tunnel_l_up_pair.assign(new_sz, 0.0);
+         tunnel_l_down_pair.assign(new_sz, 0.0);
+         tunnel_gi_e_pair.assign(new_sz, 0.0);
+         tunnel_gi_p_pair.assign(new_sz, 0.0);
+         tunnel_li_pair.assign(new_sz, 0.0);
+         tunnel_pe_pair.assign(new_sz, 0.0);
+         tunnel_pp_pair.assign(new_sz, 0.0);
+         tunnel_pair_set.assign(new_sz, 0);
+         const std::size_t ncopy = std::min(old_n, nmat);
+         for(std::size_t i = 0; i < ncopy; ++i){
+            for(std::size_t j = 0; j < ncopy; ++j){
+               const std::size_t io = i * old_n + j;
+               const std::size_t in = i * nmat + j;
+               if(io < old_up.size()) tunnel_g_up_pair[in] = old_up[io];
+               if(io < old_dn.size()) tunnel_g_down_pair[in] = old_dn[io];
+               if(io < old_lu.size()) tunnel_l_up_pair[in] = old_lu[io];
+               if(io < old_ld.size()) tunnel_l_down_pair[in] = old_ld[io];
+               if(io < old_ge.size()) tunnel_gi_e_pair[in] = old_ge[io];
+               if(io < old_gp.size()) tunnel_gi_p_pair[in] = old_gp[io];
+               if(io < old_li.size()) tunnel_li_pair[in] = old_li[io];
+               if(io < old_pe.size()) tunnel_pe_pair[in] = old_pe[io];
+               if(io < old_pp.size()) tunnel_pp_pair[in] = old_pp[io];
+               if(io < old_set.size()) tunnel_pair_set[in] = old_set[io];
+            }
+         }
+      }
+
+      void ensure_sheet_matrix_size(const std::size_t nmat){
+         const std::size_t new_sz = nmat * nmat;
+         if(sheet_g_up_pair.size() == new_sz && sheet_pair_set.size() == new_sz) return;
+         const std::vector<double> old_up = sheet_g_up_pair;
+         const std::vector<double> old_dn = sheet_g_down_pair;
+         const std::vector<double> old_re = sheet_re_pair;
+         const std::vector<double> old_im = sheet_im_pair;
+         const std::vector<double> old_de = sheet_delta_pair;
+         const std::vector<char> old_set = sheet_pair_set;
+         const std::size_t old_n = (old_up.empty()) ? 0 : static_cast<std::size_t>(std::sqrt(static_cast<double>(old_up.size())));
+         sheet_g_up_pair.assign(new_sz, 0.0);
+         sheet_g_down_pair.assign(new_sz, 0.0);
+         sheet_re_pair.assign(new_sz, 0.0);
+         sheet_im_pair.assign(new_sz, 0.0);
+         sheet_delta_pair.assign(new_sz, 0.0);
+         sheet_pair_set.assign(new_sz, 0);
+         const std::size_t ncopy = std::min(old_n, nmat);
+         for(std::size_t i=0;i<ncopy;i++){
+            for(std::size_t j=0;j<ncopy;j++){
+               const std::size_t io = i*old_n + j;
+               const std::size_t in = i*nmat + j;
+               if(io < old_up.size()) sheet_g_up_pair[in] = old_up[io];
+               if(io < old_dn.size()) sheet_g_down_pair[in] = old_dn[io];
+               if(io < old_re.size()) sheet_re_pair[in] = old_re[io];
+               if(io < old_im.size()) sheet_im_pair[in] = old_im[io];
+               if(io < old_de.size()) sheet_delta_pair[in] = old_de[io];
+               if(io < old_set.size()) sheet_pair_set[in] = old_set[io];
+            }
+         }
+      }
 
       void ensure_interface_matrix_size(const std::size_t nmat){
          const std::size_t new_sz = nmat*nmat;

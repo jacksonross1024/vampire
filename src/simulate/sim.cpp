@@ -574,8 +574,10 @@ int run(){
 			}
 	}
 
-   std::cout <<     "Simulation run time [s]: " << stopwatch.elapsed_seconds() << std::endl;
-   zlog << zTs() << "Simulation run time [s]: " << stopwatch.elapsed_seconds() << std::endl;
+   const double run_s = stopwatch.elapsed_seconds();
+   std::cout <<     "Simulation run time [s]: " << run_s << std::endl;
+   zlog << zTs() << "Simulation run time [s]: " << run_s << std::endl;
+   st::report_sc1d_profile(run_s);
 
    //------------------------------------------------
    // Output Monte Carlo statistics if applicable
